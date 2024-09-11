@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Debugging logging configuration -->
+<Configuration status="info">
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd'T'HH:mm:ssXXX} %-5p : %m%n" />
+		</Console>
+	</Appenders>
+	<Loggers>
+		<Root level="info">
+			<AppenderRef ref="Console" />
+		</Root>
+		<Logger name="com.wci.termhub" level="debug" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="org" level="warn" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<!-- See JsonLoggingFilter -->
+		<Logger name="HttpLogger" level="info" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+	</Loggers>
+</Configuration>
