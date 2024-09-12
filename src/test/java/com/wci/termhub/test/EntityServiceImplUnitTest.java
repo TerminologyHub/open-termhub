@@ -46,6 +46,11 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 	private final TestDocument documentObj3 = new TestDocument("3", "3000", "three", "3 description");
 	private final TestDocument documentObj4 = new TestDocument("4", "4000", "four", "4 description");
 
+//	@BeforeEach
+//	public void setup() {
+//		MockitoAnnotations.openMocks(this);
+//	}
+
 	@Test
 	@Order(1)
 	public void testCreateIndex() {
