@@ -173,9 +173,7 @@ public class EntityServiceImplUnitTest {
 				logger.debug("TestDocumentObject found: {}", object);
 			}
 			assertTrue(count == 4);
-		}
-
-		catch (final Exception e) {
+		} catch (final Exception e) {
 			logger.error("Error finding all documents", e);
 			fail("Error finding all documents");
 		}
@@ -198,9 +196,7 @@ public class EntityServiceImplUnitTest {
 				logger.debug("TestDocumentObject found: {}", object);
 			}
 			assertTrue(count == 2);
-		}
-
-		catch (final Exception e) {
+		} catch (final Exception e) {
 			logger.error("Error finding all documents", e);
 			fail("Error finding all documents");
 		}
@@ -229,6 +225,31 @@ public class EntityServiceImplUnitTest {
 				count++;
 			}
 			assertTrue(count == 3);
+		} catch (final Exception e) {
+			logger.error("Error finding all documents", e);
+			fail("Error finding all documents");
+		}
+	}
+
+	@Test
+	@Order(9)
+	public void testUdpdate() {
+
+		final String documentId = "4";
+		documentObj4.setName("four updated");
+
+		try {
+
+			entityServiceImpl.update(TestDocumentObject.class, documentId, documentObj4);
+
+			final Optional<BaseModel> result = entityServiceImpl.findById(TestDocumentObject.class, documentId);
+			assertNotNull(result);
+			logger.info("Result: {}", result);
+			assertTrue(result.isPresent());
+			final TestDocumentObject documentObj = (TestDocumentObject) result.get();
+			assertEquals(documentObj4, documentObj);
+			assertEquals(documentId, documentObj.getId());
+
 		}
 
 		catch (final Exception e) {

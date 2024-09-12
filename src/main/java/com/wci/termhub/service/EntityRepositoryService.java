@@ -30,13 +30,23 @@ public interface EntityRepositoryService<T extends BaseModel, ID> {
 	public void deleteIndex(final Class<? extends T> clazz) throws Exception;
 
 	/**
-	 * Adds the.
+	 * Adds the entity
 	 *
 	 * @param entity the entity
 	 * @param clazz  the clazz
 	 * @throws Exception the exception
 	 */
 	public void add(final Class<? extends T> clazz, final T entity) throws Exception;
+
+	/**
+	 * Update the entity.
+	 *
+	 * @param clazz  the clazz
+	 * @param id     the id
+	 * @param entity the entity
+	 * @throws Exception the exception
+	 */
+	public void update(final Class<? extends T> clazz, final String id, final T entity) throws Exception;
 
 	/**
 	 * Find all.

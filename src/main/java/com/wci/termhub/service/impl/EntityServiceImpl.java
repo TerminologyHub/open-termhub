@@ -54,7 +54,7 @@ public class EntityServiceImpl<T extends BaseModel, ID> implements EntityReposit
 	}
 
 	/**
-	 * Adds the.
+	 * Adds the entity.
 	 *
 	 * @param entity the entity
 	 * @param clazz  the clazz
@@ -65,6 +65,22 @@ public class EntityServiceImpl<T extends BaseModel, ID> implements EntityReposit
 
 		checkIfEntityHasDocumentAnnotation(clazz);
 		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
+		luceneData.add(entity);
+	}
+
+	/**
+	 * Update the entity
+	 *
+	 * @param entity the entity
+	 * @param clazz  the clazz
+	 * @throws Exception the exception
+	 */
+	@Override
+	public void update(final Class<? extends T> clazz, final String id, final T entity) throws Exception {
+
+		checkIfEntityHasDocumentAnnotation(clazz);
+		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
+		luceneData.remove(clazz, id);
 		luceneData.add(entity);
 	}
 
