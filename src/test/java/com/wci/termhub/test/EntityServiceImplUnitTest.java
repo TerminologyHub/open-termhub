@@ -229,6 +229,7 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 		}
 
 	}
+	}
 
 	@Test
 	@Order(9)
