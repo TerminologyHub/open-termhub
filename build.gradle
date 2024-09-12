@@ -108,9 +108,22 @@ configurations {
 }
 
 // usage ./gradlew runLoadConcepts -PinputFile=location of concepts JSON file -Plimit=1000
-// limit is optional, if not present, the entire file will be loaded.
+// limit is optional, if not present, the entire file will be loaded.  Used for developing.
 task runLoadConcepts(type: JavaExec) {
     main = 'com.wci.termhub.loader.ConceptLoader'
+    classpath = sourceSets.main.runtimeClasspath
+    if (project.hasProperty('inputFile')) {
+        args += [project.getProperty('inputFile')]
+    }
+    if (project.hasProperty('limit')) {
+        args += [project.getProperty('limit')]
+    }
+}
+
+// usage ./gradlew runLoadConceptRels -PinputFile=location of concepts relationship JSON file -Plimit=1000
+// limit is optional, if not present, the entire file will be loaded. Used for developing.
+task runLoadConceptRels(type: JavaExec) {
+    main = 'com.wci.termhub.loader.ConceptRelationshipLoader'
     classpath = sourceSets.main.runtimeClasspath
     if (project.hasProperty('inputFile')) {
         args += [project.getProperty('inputFile')]

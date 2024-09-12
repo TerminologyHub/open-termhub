@@ -59,7 +59,7 @@ public class TermUnitTest {
 
 		logger.info("Creating object test data");
 		// string, FiedType.Text, FieldType.Keyword
-		term1.setId("1234567890");
+		term1.setId("36ab1ce6-4fbb-4f86-a5bb-6974b7aa38f8");
 		term1.setName("name-a");
 		term1.setTerminology("terminology-a");
 		term1.setVersion("version-a");
@@ -75,7 +75,7 @@ public class TermUnitTest {
 		attributes1.put("key2-a", "value2-a");
 		term1.setAttributes(attributes1);
 
-		term2.setId("9876543210");
+		term2.setId("910b9c92-1074-4734-ac2b-3664efb54ac1");
 		term2.setName("name-b");
 		term2.setTerminology("terminology-b");
 		term2.setVersion("version-b");
@@ -91,7 +91,7 @@ public class TermUnitTest {
 		attributes2.put("key2-b", "value2-b");
 		term2.setAttributes(attributes2);
 
-		term3.setId("dummyid");
+		term3.setId("722b9816-3226-40aa-9935-3bcd0ebd47aa");
 		term3.setName("dummyname");
 		term3.setTerminology("dummyterminology");
 		term3.setVersion("dummyversion");
@@ -265,16 +265,16 @@ public class TermUnitTest {
 	 */
 	@Test
 	@Order(7)
-	public void testDelete() throws Exception {
+	public void testRemove() throws Exception {
 
 		final LuceneDataAccess<Term> luceneData = new LuceneDataAccess<>();
 		logger.info("Deleting objects");
-		assertDoesNotThrow(() -> luceneData.remove(Term.class, term1.getCode()));
+		assertDoesNotThrow(() -> luceneData.remove(Term.class, term1.getId()));
 		logger.info("Done deleting");
 
 		// find the term by code
 		final SearchParameters searchParameters = new SearchParameters();
-		searchParameters.setQuery("code:1234567890");
+		searchParameters.setQuery("id:722b9816-3226-40aa-9935-3bcd0ebd47aa");
 		final Iterable<Term> foundTermsObjects = luceneData.find(Term.class, searchParameters);
 		logger.info("Found: {}", getSize(foundTermsObjects));
 		assertTrue(getSize(foundTermsObjects) == 0);

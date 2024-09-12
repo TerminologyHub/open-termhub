@@ -63,7 +63,7 @@ public final class LuceneQueryBuilder {
 			if (startsWithWildcard) {
 				escapedValue = "*" + escapedValue;
 			}
-			if (endsWithWildcard) {
+			if (endsWithWildcard && escapedValue.length() > 1) {
 				escapedValue = escapedValue + "*";
 			}
 
@@ -78,7 +78,6 @@ public final class LuceneQueryBuilder {
 		}
 
 		final Query query = queryParser.parse(escapedQueryText);
-
 		logger.info("Parsed Query: {}", query.toString());
 
 		return query;

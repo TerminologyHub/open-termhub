@@ -22,6 +22,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.wci.termhub.app.Sort;
 import com.wci.termhub.util.StringUtility;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -65,6 +66,7 @@ public class Term extends AbstractHasModified
 
 	/** The terminology. */
 	@Field(type = FieldType.Keyword)
+	@Sort
 	private String terminology;
 
 	/** The version. */

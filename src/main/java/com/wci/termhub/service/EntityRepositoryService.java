@@ -36,7 +36,7 @@ public interface EntityRepositoryService<T extends BaseModel, ID> {
 	 * @param clazz  the clazz
 	 * @throws Exception the exception
 	 */
-	public void add(final T entity, final Class<? extends T> clazz) throws Exception;
+	public void add(final Class<? extends T> clazz, final T entity) throws Exception;
 
 	/**
 	 * Find all.
@@ -57,7 +57,7 @@ public interface EntityRepositoryService<T extends BaseModel, ID> {
 	 * @return the optional
 	 * @throws Exception the exception
 	 */
-	public Optional<T> findById(final String id, final Class<? extends T> clazz) throws Exception;
+	public Optional<T> findById(final Class<? extends T> clazz, final String id) throws Exception;
 
 	/**
 	 * Find.

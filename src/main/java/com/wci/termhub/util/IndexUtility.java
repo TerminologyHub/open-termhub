@@ -60,6 +60,7 @@ public final class IndexUtility {
 
 			org.springframework.data.elasticsearch.annotations.Field annotation = field
 					.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
+
 			if (annotation != null) {
 				final String indexName = ((StringUtils.isNotEmpty(indexNamePrefix)
 						? indexNamePrefix + "." + field.getName()
