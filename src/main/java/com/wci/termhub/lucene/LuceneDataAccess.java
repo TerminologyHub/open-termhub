@@ -9,11 +9,7 @@ import java.util.List;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.NumericDocValuesField;
-import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.StoredField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -29,20 +25,19 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.elasticsearch.annotations.InnerField;
-import org.springframework.data.elasticsearch.annotations.MultiField;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.model.BaseModel;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.util.FileUtility;
 import com.wci.termhub.util.IndexUtility;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.PropertyUtility;
 
 /**
  * The Class LuceneDao1.
@@ -53,7 +48,6 @@ import com.wci.termhub.util.ModelUtility;
 public class LuceneDataAccess<T> {
 
 	/** The logger. */
-	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(LuceneDataAccess.class);
 
 	/** The Constant INDEX_DIRECTORY. */
@@ -61,12 +55,10 @@ public class LuceneDataAccess<T> {
 
 	/**
 	 * Instantiates a new lucene data access.
-	 *
-	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
 	public LuceneDataAccess() {
 		// n/a
-		indexRootDirectory = "C:\\tmp\\index"; // PropertyUtility.getProperty("lucuene.index.directory");
+		indexRootDirectory = PropertyUtility.getProperty("lucene.index.directory");
 	}
 
 	/**
@@ -98,6 +90,31 @@ public class LuceneDataAccess<T> {
 	}
 
 	/**
+	 * Adds the batch.
+	 *
+	 * @param entities the entities
+	 * @throws IOException            Signals that an I/O exception has occurred.
+	 * @throws IllegalAccessException the illegal access exception
+	 */
+	public void add(final List<T> entities) throws IOException, IllegalAccessException {
+
+		final IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+
+		final String indexDirectory = entities.get(0).getClass().getCanonicalName();
+		try (final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, indexDirectory));
+				final IndexWriter writer = new IndexWriter(fsDirectory, config);) {
+
+			for (final T entity : entities) {
+				final Document document = getDocument(entity);
+				writer.addDocument(document);
+			}
+
+			writer.commit();
+			writer.close();
+		}
+	}
+
+	/**
 	 * Adds the entity to the index specified by the entity class name.
 	 *
 	 * @param entity the entity
@@ -106,126 +123,93 @@ public class LuceneDataAccess<T> {
 	 */
 	public void add(final T entity) throws IOException, IllegalAccessException {
 
-		final IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+		add(List.of(entity));
+	}
 
-		final String indexDirectory = entity.getClass().getCanonicalName();
-		try (final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, indexDirectory));
-				final IndexWriter writer = new IndexWriter(fsDirectory, config);) {
+	/**
+	 * Gets the document.
+	 *
+	 * @param entity the entity
+	 * @return the document
+	 * @throws IOException            Signals that an I/O exception has occurred.
+	 * @throws IllegalAccessException the illegal access exception
+	 */
+	private Document getDocument(final T entity) throws IOException, IllegalAccessException {
 
-			final Document document = new Document();
-			document.add(new StoredField("entity", ModelUtility.toJson(entity)));
-			Class<?> currentClass = entity.getClass();
+		final Document document = new Document();
+		document.add(new StoredField("entity", ModelUtility.toJson(entity)));
+		Class<?> currentClass = entity.getClass();
 
-			while (currentClass != null) {
-				logger.info("Add: Current class: {}", currentClass.getName());
+		while (currentClass != null) {
+			logger.debug("Add: Current class: {}", currentClass.getName());
 
-				for (final java.lang.reflect.Field field : currentClass.getDeclaredFields()) {
+			for (final java.lang.reflect.Field field : currentClass.getDeclaredFields()) {
 
-					field.setAccessible(true);
-					final Field annotation = field.getAnnotation(Field.class);
-					final Object fieldValue = field.get(entity);
+				field.setAccessible(true);
+				final Object fieldValue = field.get(entity);
+				if (fieldValue == null) {
+					continue;
+				}
 
-					logger.info("Add: Field: {}, value: {}, annotation: {}", field.getName(), fieldValue, annotation);
+				final Field annotation = field.getAnnotation(Field.class);
+				logger.debug("Field: {}, value: {}, annotation: {}", field.getName(), fieldValue, annotation);
 
-					if (annotation != null && fieldValue != null) {
+				if (annotation != null) {
 
-						final FieldType fieldType = annotation.type();
-						logger.debug("AddField: {}, value: {}, type: {}", field.getName(), fieldValue, fieldType);
+					final FieldType fieldType = annotation.type();
 
-						// if not collection of objects, add the field to the document
-						if (fieldType != FieldType.Object) {
+					// if not collection of objects, add the field to the document
+					if (fieldType != FieldType.Object) {
 
-							final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity,
-									field, null);
+						logger.debug("Add: field instance of NOT Object OR Collection");
+						final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field,
+								null);
+						for (final IndexableField indexableField : indexableFieldsList) {
+							document.add(indexableField);
+						}
+
+					} else if (fieldType == FieldType.Object && fieldValue instanceof Collection) {
+
+						logger.debug("Add: object field instance of Collection");
+						final Collection<?> collection = (Collection<?>) fieldValue;
+						final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(collection,
+								field);
+						for (final IndexableField indexableField : indexableFieldsList) {
+							document.add(indexableField);
+						}
+
+					} else if (fieldType == FieldType.Object && fieldValue instanceof BaseModel) {
+
+						logger.debug("Add: object field instance of BaseModel");
+						final Object refEntity = fieldValue;
+						for (final java.lang.reflect.Field subClassField : refEntity.getClass().getDeclaredFields()) {
+
+							subClassField.setAccessible(true);
+							final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(refEntity,
+									subClassField, field.getName());
 							for (final IndexableField indexableField : indexableFieldsList) {
 								document.add(indexableField);
 							}
 
-						} else if (fieldType == FieldType.Object && fieldValue instanceof Collection) {
-
-							logger.info("Add: object field instance of Collection");
-							final Collection<?> collection = (Collection<?>) fieldValue;
-							for (final Object item : collection) {
-								if (item instanceof String) {
-									document.add(new StringField(field.getName(), (String) item,
-											org.apache.lucene.document.Field.Store.YES));
-								} else if (item instanceof Integer) {
-									document.add(new NumericDocValuesField(field.getName(), (Integer) item));
-									document.add(new StoredField(field.getName(), (Integer) item));
-								} else {
-									/*
-									 * Class<?> currentRefClass = item.getClass(); while (currentRefClass != null) {
-									 * logger.info("Add: Current ref class: {}", currentRefClass.getName()); for
-									 * (final java.lang.reflect.Field currentRefClassField : currentRefClass
-									 * .getDeclaredFields()) {
-									 * 
-									 * final List<IndexableField> indexableFieldsList =
-									 * IndexUtility.getIndexableFields(item, currentRefClassField,
-									 * item.getClass().getSimpleName().toLowerCase());
-									 * 
-									 * for (final IndexableField indexableField : indexableFieldsList) {
-									 * document.add(indexableField); } } currentRefClass =
-									 * currentRefClass.getSuperclass(); }
-									 */
-								}
-							}
-						} else {
-
-							final MultiField multiFieldAnnotation = field.getAnnotation(MultiField.class);
-
-							if (multiFieldAnnotation != null && fieldValue != null) {
-
-								logger.debug("MF Field: {}, value: {}, annotation: {}",
-										multiFieldAnnotation.annotationType(), fieldValue, multiFieldAnnotation);
-
-								for (final InnerField innerFieldAnnotation : multiFieldAnnotation.otherFields()) {
-
-									logger.debug("MF innerFieldAnnotation {}", innerFieldAnnotation.toString());
-									final FieldType fieldTypeMF = innerFieldAnnotation.type();
-
-									logger.debug("MF Adding multi-field: fieldName: {}, type: {}", field.getName(),
-											fieldTypeMF);
-
-									switch (fieldTypeMF) {
-									case Text:
-										logger.debug("MF Adding text field: {}, value:{}", field.getName(),
-												fieldValue.toString());
-										document.add(new TextField(field.getName(), fieldValue.toString(),
-												org.apache.lucene.document.Field.Store.YES));
-										break;
-									case Keyword:
-										logger.debug("MF Adding keyword field: {}, value:{}", field.getName(),
-												fieldValue.toString());
-										document.add(new TextField(field.getName(), fieldValue.toString(),
-												org.apache.lucene.document.Field.Store.YES));
-										document.add(new SortedDocValuesField(field.getName(),
-												new BytesRef(fieldValue.toString())));
-										break;
-									default:
-										logger.info("MultiField field not found Adding default field: {}", fieldTypeMF);
-									}
-								}
-							}
 						}
 					}
+
+				} else {
+
+					logger.debug("Add: object field instance of MultiField");
+					final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field,
+							null);
+					for (final IndexableField indexableField : indexableFieldsList) {
+						document.add(indexableField);
+					}
+
 				}
-				currentClass = currentClass.getSuperclass();
 			}
-
-			logger.info("Adding document: {}", document);
-
-			writer.addDocument(document);
-			writer.commit();
-			writer.close();
-
-			logger.info("");
-
-		} catch (
-
-		final Exception e) {
-			logger.error("Error: {}", e.getMessage(), e);
-			throw e;
+			currentClass = currentClass.getSuperclass();
 		}
+
+		logger.debug("Adding document: {}", document);
+		return document;
 	}
 
 	/**
@@ -295,10 +279,6 @@ public class LuceneDataAccess<T> {
 			searchParameters.setActive(true);
 		}
 
-		if (searchParameters.getSort() == null || searchParameters.getSort().isEmpty()) {
-			searchParameters.setSort(List.of("code"));
-		}
-
 		if (searchParameters.getAscending() == null) {
 			searchParameters.setAscending(true);
 		}
@@ -309,9 +289,9 @@ public class LuceneDataAccess<T> {
 	/**
 	 * Find stored entities by search parameters.
 	 *
+	 * @param clazz            the clazz
 	 * @param searchParameters the search parameters
 	 * @param phraseQuery      the phrase query
-	 * @param clazz            the clazz
 	 * @return the list
 	 * @throws Exception the exception
 	 */
@@ -326,15 +306,20 @@ public class LuceneDataAccess<T> {
 			logger.info("Query: {}", queryBuilder);
 
 			final IndexSearcher searcher = new IndexSearcher(reader);
-			final Sort sort = IndexUtility.getSortOrder(searchParameters, clazz);
 
+			final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
+					? IndexUtility.getDefaultSortOrder(clazz)
+					: IndexUtility.getSortOrder(searchParameters, clazz);
 			logger.info("Sort: {}", sort);
+
 			logger.info("Search Parameters: {}", searchParameters);
-
 			final int start = searchParameters.getOffset();
-			final int end = searchParameters.getLimit() * (searchParameters.getOffset() + 1);
+			final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-			final TopDocs topDocs = searcher.search(queryBuilder, end, sort);
+			logger.info("Search Parameters: start:{}, end:{}", start, end);
+
+			final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
+					: searcher.search(queryBuilder, end);
 			logger.info("Query topDocs: {}", topDocs.totalHits.value);
 
 			final List<T> results = new ArrayList<>();

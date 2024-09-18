@@ -1,11 +1,17 @@
 package com.wci.termhub.util;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +65,67 @@ public final class FileUtility {
 				return FileVisitResult.CONTINUE;
 			}
 		});
+	}
+
+	/**
+	 * Extract zip file.
+	 *
+	 * @param zipFilePath the zip file path
+	 * @param destDir     the dest dir
+	 */
+	public static void extractZipFile(final String zipFilePath, final String destDir) {
+
+		final File destinationDir = new File(destDir);
+		// create output directory if it doesn't exist
+		if (!destinationDir.exists()) {
+			destinationDir.mkdirs();
+		}
+		logger.info("Starting extracting files to " + destinationDir.getAbsolutePath());
+
+		try (final InputStream fis = Files.newInputStream(Paths.get(zipFilePath));
+				final ZipInputStream zis = new ZipInputStream(fis)) {
+
+			ZipEntry zipEntry = zis.getNextEntry();
+
+			while (zipEntry != null) {
+
+				final File newFile = getZippedFile(destinationDir, zipEntry);
+
+				logger.info("Extracting file to " + newFile.getAbsolutePath());
+
+				try (final FileOutputStream fos = new FileOutputStream(newFile)) {
+					byte[] buffer = new byte[1024];
+					int len;
+					while ((len = zis.read(buffer)) > 0) {
+						fos.write(buffer, 0, len);
+					}
+				}
+				zipEntry = zis.getNextEntry();
+			}
+			zis.closeEntry();
+
+		} catch (IOException e) {
+			logger.error("Error occurred while extracting zip file", e);
+		}
+	}
+
+	/**
+	 * Get zipped file.
+	 *
+	 * @param destinationDir the destination dir
+	 * @param zipEntry       the zip entry
+	 * @return the file
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
+	public static File getZippedFile(final File destinationDir, final ZipEntry zipEntry) throws IOException {
+
+		final File destFile = new File(destinationDir, zipEntry.getName());
+		final String destDirPath = destinationDir.getCanonicalPath();
+		final String destFilePath = destFile.getCanonicalPath();
+		if (!destFilePath.startsWith(destDirPath + File.separator)) {
+			throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
+		}
+		return destFile;
 	}
 
 }

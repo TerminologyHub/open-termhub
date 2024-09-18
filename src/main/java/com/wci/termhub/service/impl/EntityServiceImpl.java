@@ -1,5 +1,6 @@
 package com.wci.termhub.service.impl;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -54,17 +55,48 @@ public class EntityServiceImpl<T extends BaseModel, ID> implements EntityReposit
 	}
 
 	/**
-	 * Adds the.
+	 * Adds the entity.
 	 *
 	 * @param entity the entity
 	 * @param clazz  the clazz
 	 * @throws Exception the exception
 	 */
 	@Override
-	public void add(final T entity, final Class<? extends T> clazz) throws Exception {
+	public void add(final Class<? extends T> clazz, final T entity) throws Exception {
 
 		checkIfEntityHasDocumentAnnotation(clazz);
 		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
+		luceneData.add(entity);
+	}
+
+	/**
+	 * Adds the entity.
+	 *
+	 * @param entity the entity
+	 * @param clazz  the clazz
+	 * @throws Exception the exception
+	 */
+	@Override
+	public void add(final Class<? extends T> clazz, final List<T> entity) throws Exception {
+
+		checkIfEntityHasDocumentAnnotation(clazz);
+		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
+		luceneData.add(entity);
+	}
+
+	/**
+	 * Update the entity
+	 *
+	 * @param entity the entity
+	 * @param clazz  the clazz
+	 * @throws Exception the exception
+	 */
+	@Override
+	public void update(final Class<? extends T> clazz, final String id, final T entity) throws Exception {
+
+		checkIfEntityHasDocumentAnnotation(clazz);
+		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
+		luceneData.remove(clazz, id);
 		luceneData.add(entity);
 	}
 
@@ -81,10 +113,10 @@ public class EntityServiceImpl<T extends BaseModel, ID> implements EntityReposit
 			throws Exception {
 
 		checkIfEntityHasDocumentAnnotation(clazz);
-		// TODO: implement this
-		// final LuceneDao1<T> luceneData = new LuceneDao1<>();
-		// luceneData.findAll(clazz, entity);
-		return null;
+
+		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
+		// searchParameters.setQuery("*:*");
+		return luceneData.find(clazz, new SearchParameters());
 	}
 
 	/**
@@ -96,9 +128,18 @@ public class EntityServiceImpl<T extends BaseModel, ID> implements EntityReposit
 	 * @throws Exception the exception
 	 */
 	@Override
-	public Optional<T> findById(String id, final Class<? extends T> clazz) throws Exception {
+	public Optional<T> findById(final Class<? extends T> clazz, final String id) throws Exception {
+
 		checkIfEntityHasDocumentAnnotation(clazz);
-		// TODO: implement this
+		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
+		final SearchParameters searchParameters = new SearchParameters();
+		searchParameters.setQuery("id:" + id);
+		final Iterable<T> result = luceneData.find(clazz, searchParameters);
+
+		if (result.iterator().hasNext()) {
+			return Optional.of(result.iterator().next());
+		}
+
 		return Optional.empty();
 	}
 
@@ -112,6 +153,7 @@ public class EntityServiceImpl<T extends BaseModel, ID> implements EntityReposit
 	 */
 	@Override
 	public Iterable<T> find(final Class<? extends T> clazz, final SearchParameters searchParameters) throws Exception {
+
 		checkIfEntityHasDocumentAnnotation(clazz);
 		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
 		return luceneData.find(clazz, searchParameters);
@@ -126,6 +168,7 @@ public class EntityServiceImpl<T extends BaseModel, ID> implements EntityReposit
 	 */
 	@Override
 	public void remove(final Class<? extends T> clazz, final String id) throws Exception {
+
 		checkIfEntityHasDocumentAnnotation(clazz);
 		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
 		luceneData.remove(clazz, id);
@@ -138,6 +181,7 @@ public class EntityServiceImpl<T extends BaseModel, ID> implements EntityReposit
 	 * @throws IllegalArgumentException the illegal argument exception
 	 */
 	private void checkIfEntityHasDocumentAnnotation(final Class<? extends T> clazz) throws IllegalArgumentException {
+
 		// check if the clazz has annotation @Document in the class
 		if (!clazz.isAnnotationPresent(Document.class)) {
 			throw new IllegalArgumentException("Entity " + clazz.getName() + " should have @Document annotation.");

@@ -1,15 +1,21 @@
 package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.jupiter.api.BeforeEach;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,102 +24,232 @@ import org.springframework.test.context.TestPropertySource;
 import com.wci.termhub.Application;
 import com.wci.termhub.model.BaseModel;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.repository.EntityRepository;
 import com.wci.termhub.service.impl.EntityServiceImpl;
 
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class EntityServiceImplUnitTest {
+@TestMethodOrder(OrderAnnotation.class)
+public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 	/** The logger. */
 	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(EntityServiceImplUnitTest.class);
 
-	@Mock
-	private EntityRepository entityRepository;
-
 	@InjectMocks
 	private EntityServiceImpl<BaseModel, String> entityServiceImpl;
 
-	@BeforeEach
-	public void setup() {
-		MockitoAnnotations.openMocks(this);
-	}
+	private final TestDocumentObject documentObj1 = new TestDocumentObject("1", "1000", "one", "1 description");
+	private final TestDocumentObject documentObj2 = new TestDocumentObject("2", "2000", "two", "2 description");
+	private final TestDocumentObject documentObj3 = new TestDocumentObject("3", "3000", "three", "3 description");
+	private final TestDocumentObject documentObj4 = new TestDocumentObject("4", "4000", "four", "4 description");
 
 	@Test
+	@Order(1)
 	public void testCreateIndex() {
 
-		final Class<TestDocumentObject> documentClass = TestDocumentObject.class;
-		assertDoesNotThrow(() -> entityServiceImpl.createIndex(documentClass));
+		logger.info("Testing CreateIndex");
 
-		// Object without @Document annotation
-		final Class<TestNoDocumentObject> noDocumentClass = TestNoDocumentObject.class;
-		assertThrows(IllegalArgumentException.class, () -> entityServiceImpl.createIndex(noDocumentClass));
+		assertThrows(IllegalArgumentException.class, () -> entityServiceImpl.createIndex(TestNoDocumentObject.class));
+		assertDoesNotThrow(() -> entityServiceImpl.createIndex(TestDocumentObject.class));
 	}
 
 	@Test
+	@Order(2)
 	public void testDeleteIndex() {
 
-		final Class<TestDocumentObject> documentClass = TestDocumentObject.class;
-		assertDoesNotThrow(() -> entityServiceImpl.deleteIndex(documentClass));
+		logger.info("Testing DeleteIndex");
+
+		assertThrows(IllegalArgumentException.class, () -> entityServiceImpl.deleteIndex(TestNoDocumentObject.class));
+		assertDoesNotThrow(() -> entityServiceImpl.deleteIndex(TestDocumentObject.class));
+
 	}
 
 	@Test
+	@Order(3)
 	public void testAdd() {
 
-		final TestDocumentObject documentClass = new TestDocumentObject();
-		documentClass.setName("name");
-		documentClass.setDescription("description");
+		logger.info("Testing Add");
 
-		assertDoesNotThrow(() -> entityServiceImpl.add(documentClass, documentClass.getClass()));
+		final TestNoDocumentObject noDocumentObj = new TestNoDocumentObject();
+		assertThrows(IllegalArgumentException.class,
+				() -> entityServiceImpl.add(TestNoDocumentObject.class, noDocumentObj));
+
+		assertDoesNotThrow(() -> entityServiceImpl.createIndex(TestDocumentObject.class));
+
 	}
 
 	@Test
+	@Order(4)
+	public void testAddBatch() {
+
+		logger.info("Testing Add Batch");
+
+		final List<BaseModel> listOfDocuments = List.of(documentObj1, documentObj2, documentObj3, documentObj4);
+
+		assertDoesNotThrow(() -> entityServiceImpl.add(TestDocumentObject.class, listOfDocuments));
+
+	}
+
+	@Test
+	@Order(5)
 	public void testFind() {
-		final SearchParameters searchParameters = new SearchParameters();
-		final Class<TestDocumentObject> clazz = TestDocumentObject.class;
+
+		logger.info("Testing Find");
+
+		final SearchParameters searchParameters = new SearchParameters("name:" + documentObj1.getName(), 100, 0);
+
+		assertThrows(IllegalArgumentException.class,
+				() -> entityServiceImpl.find(TestNoDocumentObject.class, searchParameters));
 
 		try {
-			final Iterable<BaseModel> result = entityServiceImpl.find(clazz, searchParameters);
 
+			final Iterable<BaseModel> result = entityServiceImpl.find(TestDocumentObject.class, searchParameters);
 			assertNotNull(result);
-			assertFalse(result.iterator().hasNext());
+			assertTrue(result.iterator().hasNext());
+			final TestDocumentObject documentObj = (TestDocumentObject) result.iterator().next();
+			assertEquals(documentObj1, documentObj);
 
-			logger.info("Result: " + result.toString());
+			int count = 0;
+			for (final BaseModel object : result) {
+				count++;
+				logger.debug("TestDocumentObject found: {}", object);
+			}
+			assertEquals(1, count);
 
 		} catch (final Exception e) {
 			logger.error("Error finding document", e);
+			fail("Error finding document");
 		}
 	}
 
-	// TODO: Implement the following test methods
-//	@Test
-//	public void testFindAll() {
-//
-//		final TestDocumentObject documentClass = new TestDocumentObject();
-//		Iterable<Object> result = entityServiceImpl.findAll(documentClass.getClass());
-//		assertNull(result);
-//	}
-//
-//	@Test
-//	public void testFindById() {
-//		String id = "1";
-//		Class<Object> clazz = Object.class;
-//
-//		Optional<Object> result = entityServiceImpl.findById(id, clazz);
-//
-//		assertNotNull(result);
-//		assertFalse(result.isPresent());
-//	}
-//
+	@Test
+	@Order(5)
+	public void testFindById() {
 
-//
-//	@Test
-//	public void testDelete() {
-//		Class<Object> clazz = Object.class;
-//		Object entity = new Object();
-//
-//		assertDoesNotThrow(() -> entityServiceImpl.delete(clazz, entity));
-//	}
+		logger.info("Testing Find By Id");
+
+		final String documentId = "4";
+		assertThrows(IllegalArgumentException.class,
+				() -> entityServiceImpl.findById(TestNoDocumentObject.class, documentId));
+
+		try {
+
+			final Optional<BaseModel> result = entityServiceImpl.findById(TestDocumentObject.class, documentId);
+			assertNotNull(result);
+			logger.info("Result: {}", result);
+			assertTrue(result.isPresent());
+			final TestDocumentObject documentObj = (TestDocumentObject) result.get();
+			assertEquals(documentObj4, documentObj);
+			assertEquals(documentId, documentObj.getId());
+
+		} catch (final Exception e) {
+			logger.error("Error finding document by id", e);
+			fail("Error finding document by id");
+		}
+	}
+
+	@Test
+	@Order(6)
+	public void testFindAll() {
+
+		logger.info("Testing Find All");
+
+		final SearchParameters searchParameters = new SearchParameters();
+		assertThrows(IllegalArgumentException.class,
+				() -> entityServiceImpl.findAll(TestNoDocumentObject.class, searchParameters));
+
+		try {
+
+			final Iterable<BaseModel> result = entityServiceImpl.findAll(TestDocumentObject.class, searchParameters);
+			assertNotNull(result);
+			assertTrue(result.iterator().hasNext());
+			int count = 0;
+			for (final BaseModel object : result) {
+				count++;
+				logger.debug("TestDocumentObject found: {}", object);
+			}
+			assertEquals(4, count);
+
+		} catch (final Exception e) {
+			logger.error("Error finding all documents", e);
+			fail("Error finding all documents");
+		}
+	}
+
+	@Test
+	@Order(7)
+	public void testCombinedQuery() {
+
+		final SearchParameters searchParameters = new SearchParameters("name:one OR name:two", 100, 0);
+
+		try {
+
+			final Iterable<BaseModel> result = entityServiceImpl.find(TestDocumentObject.class, searchParameters);
+			assertNotNull(result);
+			assertTrue(result.iterator().hasNext());
+			int count = 0;
+			for (final BaseModel object : result) {
+				count++;
+				logger.debug("TestDocumentObject found: {}", object);
+			}
+			assertEquals(2, count);
+
+		} catch (final Exception e) {
+			logger.error("Error finding all documents", e);
+			fail("Error finding all documents");
+		}
+	}
+
+	@Test
+	@Order(8)
+	public void testRemove() {
+
+		final String documentId = "4";
+		assertDoesNotThrow(() -> entityServiceImpl.remove(TestDocumentObject.class, documentId));
+
+		try {
+
+			final Optional<BaseModel> result = entityServiceImpl.findById(TestDocumentObject.class, documentId);
+			assertNotNull(result);
+			logger.info("Result: {}", result);
+			assertFalse(result.isPresent());
+
+			final Iterable<BaseModel> resultAll = entityServiceImpl.findAll(TestDocumentObject.class,
+					new SearchParameters());
+			assertNotNull(resultAll);
+			assertTrue(resultAll.iterator().hasNext());
+			assertEquals(3, getSize(resultAll));
+
+		} catch (final Exception e) {
+			logger.error("Error finding all documents", e);
+			fail("Error finding all documents");
+		}
+	}
+
+	@Test
+	@Order(9)
+	public void testUdpdate() {
+
+		final String documentId = "4";
+		documentObj4.setName("four updated");
+
+		try {
+
+			entityServiceImpl.update(TestDocumentObject.class, documentId, documentObj4);
+
+			final Optional<BaseModel> result = entityServiceImpl.findById(TestDocumentObject.class, documentId);
+			assertNotNull(result);
+			logger.info("Result: {}", result);
+			assertTrue(result.isPresent());
+			final TestDocumentObject documentObj = (TestDocumentObject) result.get();
+			assertEquals(documentObj4, documentObj);
+			assertEquals(documentId, documentObj.getId());
+
+		} catch (final Exception e) {
+			logger.error("Error finding all documents", e);
+			fail("Error finding all documents");
+		}
+
+	}
 
 }

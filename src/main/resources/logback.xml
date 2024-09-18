@@ -11,6 +11,7 @@
         <appender-ref ref="CONSOLE" />
     </root>
 
-    <logger name="org.springframework" level="DEBUG" />
+    <logger name="org.springframework" level="INFO" />
+    <logger name="org" level="WARN"/>
 
 </configuration>

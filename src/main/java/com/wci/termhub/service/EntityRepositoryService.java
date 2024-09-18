@@ -1,5 +1,6 @@
 package com.wci.termhub.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.wci.termhub.model.BaseModel;
@@ -30,13 +31,32 @@ public interface EntityRepositoryService<T extends BaseModel, ID> {
 	public void deleteIndex(final Class<? extends T> clazz) throws Exception;
 
 	/**
-	 * Adds the.
+	 * Adds the entity
 	 *
 	 * @param entity the entity
 	 * @param clazz  the clazz
 	 * @throws Exception the exception
 	 */
-	public void add(final T entity, final Class<? extends T> clazz) throws Exception;
+	public void add(final Class<? extends T> clazz, final T entity) throws Exception;
+
+	/**
+	 * Adds the entity
+	 *
+	 * @param entity the entity
+	 * @param clazz  the clazz
+	 * @throws Exception the exception
+	 */
+	public void add(final Class<? extends T> clazz, final List<T> entity) throws Exception;
+
+	/**
+	 * Update the entity.
+	 *
+	 * @param clazz  the clazz
+	 * @param id     the id
+	 * @param entity the entity
+	 * @throws Exception the exception
+	 */
+	public void update(final Class<? extends T> clazz, final String id, final T entity) throws Exception;
 
 	/**
 	 * Find all.
@@ -57,7 +77,7 @@ public interface EntityRepositoryService<T extends BaseModel, ID> {
 	 * @return the optional
 	 * @throws Exception the exception
 	 */
-	public Optional<T> findById(final String id, final Class<? extends T> clazz) throws Exception;
+	public Optional<T> findById(final Class<? extends T> clazz, final String id) throws Exception;
 
 	/**
 	 * Find.
