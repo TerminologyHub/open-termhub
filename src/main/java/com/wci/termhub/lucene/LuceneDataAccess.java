@@ -37,6 +37,7 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.util.FileUtility;
 import com.wci.termhub.util.IndexUtility;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.PropertyUtility;
 
 /**
  * The Class LuceneDao1.
@@ -57,7 +58,7 @@ public class LuceneDataAccess<T> {
 	 */
 	public LuceneDataAccess() {
 		// n/a
-		indexRootDirectory = "C:\\tmp\\index";
+		indexRootDirectory = PropertyUtility.getProperty("lucene.index.directory");
 	}
 
 	/**

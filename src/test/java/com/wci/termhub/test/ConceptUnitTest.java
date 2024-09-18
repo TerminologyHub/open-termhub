@@ -12,13 +12,11 @@ import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +28,7 @@ import com.wci.termhub.service.impl.EntityServiceImpl;
 /**
  * The Class ConceptUnitTest.
  */
-@ExtendWith(SpringExtension.class)
+// @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
 @TestMethodOrder(OrderAnnotation.class)
@@ -241,8 +239,8 @@ public class ConceptUnitTest extends BaseUnitTest {
 	/** The concept. */
 	private static Concept concept;
 
-	/** The Constant INDEX_DIRECTORY. */
-	private static final String INDEX_DIRECTORY = "C:\\tmp\\index"; // "./build/index";
+	/** The Constant INDEX_NAME. */
+	private static final String INDEX_NAME = Concept.class.getCanonicalName();
 
 	/**
 	 * Delete index.
@@ -257,7 +255,7 @@ public class ConceptUnitTest extends BaseUnitTest {
 		entityServiceImpl.deleteIndex(Concept.class);
 
 		// assert directory does not exist
-		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, Concept.class.getCanonicalName())));
+		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
 	}
 
 	/**
@@ -273,7 +271,7 @@ public class ConceptUnitTest extends BaseUnitTest {
 		entityServiceImpl.createIndex(Concept.class);
 
 		// test if directory exists
-		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, Concept.class.getCanonicalName())));
+		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
 	}
 
 	/**

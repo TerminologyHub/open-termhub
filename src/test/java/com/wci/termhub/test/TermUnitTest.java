@@ -48,15 +48,12 @@ public class TermUnitTest extends BaseUnitTest {
 	/** The term 3. */
 	private final static Term term3 = new Term();
 
-//	/** The Constant LUCENE_DATA. */
-//	private static final LuceneDataAccess<Term> LUCENE_DATA = new LuceneDataAccess<>();
-
 	/** The entity service impl. */
 	@Autowired
 	private EntityServiceImpl<Term, String> entityServiceImpl;
 
-	/** The Constant INDEX_DIRECTORY. */
-	private static final String INDEX_DIRECTORY = "C:\\tmp\\index"; // "./build/index";
+	/** The Constant INDEX_NAME. */
+	private static final String INDEX_NAME = Term.class.getCanonicalName();
 
 	/**
 	 * Setup.
@@ -142,10 +139,10 @@ public class TermUnitTest extends BaseUnitTest {
 		logger.info("Deleting index for Term");
 		entityServiceImpl.deleteIndex(Term.class);
 
-		logger.info("Deleted index for Term: {}", INDEX_DIRECTORY + "/" + Term.class.getCanonicalName());
+		logger.info("Deleted index for Term: {}", INDEX_DIRECTORY + "/" + INDEX_NAME);
 
 		// assert directory does not exist
-		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, Term.class.getCanonicalName())));
+		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
 	}
 
 	/**
@@ -161,7 +158,7 @@ public class TermUnitTest extends BaseUnitTest {
 		entityServiceImpl.createIndex(Term.class);
 
 		// assert directory exists
-		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, Term.class.getCanonicalName())));
+		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
 	}
 
 	/**

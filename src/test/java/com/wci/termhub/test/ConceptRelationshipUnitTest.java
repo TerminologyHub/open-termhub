@@ -95,9 +95,8 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 	/** The concept. */
 	private static ConceptRelationship conceptRelationship;
 
-	/** The Constant INDEX_DIRECTORY. */
-
-	private static final String INDEX_DIRECTORY = "C:\\tmp\\index"; // "./build/index";
+	/** The Constant INDEX_NAME. */
+	private static final String INDEX_NAME = ConceptRelationship.class.getCanonicalName();
 
 	/**
 	 * Delete index.
@@ -112,7 +111,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 		entityServiceImpl.deleteIndex(ConceptRelationship.class);
 
 		// assert directory does not exist
-		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, ConceptRelationship.class.getCanonicalName())));
+		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
 	}
 
 	/**
@@ -128,7 +127,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 		entityServiceImpl.createIndex(ConceptRelationship.class);
 
 		// test if directory exists
-		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, ConceptRelationship.class.getCanonicalName())));
+		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
 	}
 
 	/**

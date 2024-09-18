@@ -4,6 +4,9 @@ import java.util.Collection;
 
 public class BaseUnitTest {
 
+	/** The Constant INDEX_DIRECTORY. */
+	protected static final String INDEX_DIRECTORY = "./build/index";
+
 	/**
 	 * Gets the size.
 	 *

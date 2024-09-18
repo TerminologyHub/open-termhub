@@ -91,12 +91,12 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 	}
 
 	@Test
-	@Order(4)
+	@Order(5)
 	public void testFind() {
 
 		logger.info("Testing Find");
 
-		final SearchParameters searchParameters = new SearchParameters("name:one", 100, 0);
+		final SearchParameters searchParameters = new SearchParameters("name:" + documentObj1.getName(), 100, 0);
 
 		assertThrows(IllegalArgumentException.class,
 				() -> entityServiceImpl.find(TestNoDocumentObject.class, searchParameters));
