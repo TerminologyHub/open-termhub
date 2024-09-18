@@ -1,5 +1,6 @@
 package com.wci.termhub.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.wci.termhub.model.BaseModel;
@@ -37,6 +38,15 @@ public interface EntityRepositoryService<T extends BaseModel, ID> {
 	 * @throws Exception the exception
 	 */
 	public void add(final Class<? extends T> clazz, final T entity) throws Exception;
+
+	/**
+	 * Adds the entity
+	 *
+	 * @param entity the entity
+	 * @param clazz  the clazz
+	 * @throws Exception the exception
+	 */
+	public void add(final Class<? extends T> clazz, final List<T> entity) throws Exception;
 
 	/**
 	 * Update the entity.

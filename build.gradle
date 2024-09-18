@@ -51,6 +51,7 @@ apply plugin: "io.spring.dependency-management"
 apply plugin: "org.springframework.boot"
 apply plugin: "java"
 apply plugin: "eclipse"
+// apply plugin: "checkstyle"
 
 configurations.all {
    exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
@@ -107,7 +108,27 @@ configurations {
     }
 }
 
-// usage ./gradlew runLoadConcepts -PinputFile=location of concepts JSON file -Plimit=1000
+//checkstyle {
+//    toolVersion = '9.2'
+//    configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
+//    sourceSets = [sourceSets.main]
+//    showViolations = true
+//}
+
+//checkstyleTest {
+//    toolVersion = '9.2'
+//    configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
+//    sourceSets = [sourceSets.test]
+//    showViolations = true
+//}
+
+//task checkstyle(type: Checkstyle) {
+//    configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
+//    source = sourceSets.main.allJava
+//    classpath = sourceSets.main.runtimeClasspath
+//}
+
+// usage ./gradlew runLoadConcepts -PinputFile=location of concepts JSON file -PbatchSize=1000 -Plimit=1000
 // limit is optional, if not present, the entire file will be loaded.  Used for developing.
 task runLoadConcepts(type: JavaExec) {
     main = 'com.wci.termhub.loader.ConceptLoader'
@@ -118,9 +139,13 @@ task runLoadConcepts(type: JavaExec) {
     if (project.hasProperty('limit')) {
         args += [project.getProperty('limit')]
     }
+    if (project.hasProperty('batchSize')) {
+        args += [project.getProperty('batchSize')]
+    }
+    jvmArgs = ['-Xms1G', '-Xmx8G']
 }
 
-// usage ./gradlew runLoadConceptRels -PinputFile=location of concepts relationship JSON file -Plimit=1000
+// usage ./gradlew runLoadConceptRels -PinputFile=location of concepts relationship JSON file -PbatchSize=1000 -Plimit=1000
 // limit is optional, if not present, the entire file will be loaded. Used for developing.
 task runLoadConceptRels(type: JavaExec) {
     main = 'com.wci.termhub.loader.ConceptRelationshipLoader'
@@ -131,6 +156,10 @@ task runLoadConceptRels(type: JavaExec) {
     if (project.hasProperty('limit')) {
         args += [project.getProperty('limit')]
     }
+    if (project.hasProperty('batchSize')) {
+        args += [project.getProperty('batchSize')]
+    }
+    jvmArgs = ['-Xms1G', '-Xmx8G']
 }
 
 tasks.withType(JavaExec) {

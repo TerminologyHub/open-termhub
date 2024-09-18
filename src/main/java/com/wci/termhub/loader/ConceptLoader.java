@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -17,10 +19,9 @@ import com.wci.termhub.model.Concept;
 /**
  * The Class ConceptLoader.
  */
-public class ConceptLoader {
+public final class ConceptLoader {
 
 	/** The logger. */
-	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(ConceptLoader.class);
 
 	/**
@@ -30,23 +31,56 @@ public class ConceptLoader {
 	 */
 	public static void main(final String[] args) {
 
-		if (args == null || args.length == 0 || StringUtils.isBlank(args[0])) {
-			logger.error("File name is required.");
+		try {
+
+			if (args == null || args.length == 0 || StringUtils.isBlank(args[0])) {
+				logger.error("File name is required.");
+				System.exit(1);
+			}
+
+			// get file name from command line
+			final String fullFileName = args[0];
+			if (!Files.exists(Paths.get(fullFileName))) {
+				logger.error("File does not exist at " + fullFileName);
+				System.exit(1);
+			}
+
+			int batchSize = 1000;
+			if (args.length > 1 && StringUtils.isNotBlank(args[1])) {
+				batchSize = Integer.parseInt(args[1]);
+			}
+
+			int limit = -1;
+			if (args.length > 2 && StringUtils.isNotBlank(args[2])) {
+				limit = Integer.parseInt(args[2]);
+			}
+
+			index(fullFileName, batchSize, limit);
+
+		} catch (Exception e) {
+			logger.error("An error occurred while loading the file.");
+			e.printStackTrace();
 			System.exit(1);
 		}
 
-		// get file name from command line
-		final String fullFileName = args[0];
-		if (!Files.exists(Paths.get(fullFileName))) {
-			logger.error("File does not exist at " + fullFileName);
-			System.exit(1);
-		}
+		System.exit(0);
 
-		int limit = -1;
-		if (args.length == 2 && StringUtils.isNotBlank(args[1])) {
-			limit = Integer.parseInt(args[1]);
-		}
-		System.out.println("limit: " + limit);
+	}
+
+	/**
+	 * Index.
+	 *
+	 * @param fullFileName the full file name
+	 * @param batchSize    the batch size
+	 * @param limit        the limit
+	 * @throws Exception the exception
+	 */
+	public static void index(final String fullFileName, final int batchSize, final int limit) throws Exception {
+
+		System.out.println("batch size: " + batchSize + " limit: " + limit);
+		final long startTime = System.currentTimeMillis();
+
+		final List<Concept> conceptBatch = new ArrayList<>(batchSize);
 
 		// read the file
 		// for each line in the file, convert to Concept object.
@@ -57,7 +91,7 @@ public class ConceptLoader {
 			luceneData.createIndex(Concept.class);
 
 			String line;
-			int count = 0;
+			int count = 1;
 			while ((line = br.readLine()) != null && (limit == -1 || count < limit)) {
 
 				// convert to Concept object
@@ -65,18 +99,29 @@ public class ConceptLoader {
 				final JsonNode conceptNode = rootNode.get("_source");
 				final Concept concept = objectMapper.treeToValue(conceptNode, Concept.class);
 
-				// add to LuceneDao object
-				luceneData.add(concept);
-				System.out.println("count: " + count);
+				conceptBatch.add(concept);
+
+				if (conceptBatch.size() == batchSize) {
+					luceneData.add(conceptBatch);
+					conceptBatch.clear();
+					System.out.println("count: " + count);
+				}
+
 				count++;
 			}
+
+			if (!conceptBatch.isEmpty()) {
+				luceneData.add(conceptBatch);
+			}
+
+			System.out.println("final count: " + count);
+			System.out.println("duration: " + (System.currentTimeMillis() - startTime) + " ms");
+
 		} catch (Exception e) {
 			logger.error("An error occurred while processing the file.");
 			e.printStackTrace();
 			System.exit(1);
 		}
-
-		System.exit(0);
 
 	}
 

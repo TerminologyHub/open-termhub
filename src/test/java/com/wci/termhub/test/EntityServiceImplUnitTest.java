@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,20 +24,16 @@ import org.springframework.test.context.TestPropertySource;
 import com.wci.termhub.Application;
 import com.wci.termhub.model.BaseModel;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.repository.EntityRepository;
 import com.wci.termhub.service.impl.EntityServiceImpl;
 
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
 @TestMethodOrder(OrderAnnotation.class)
-public class EntityServiceImplUnitTest {
+public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 	/** The logger. */
 	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(EntityServiceImplUnitTest.class);
-
-	@Mock
-	private EntityRepository entityRepository;
 
 	@InjectMocks
 	private EntityServiceImpl<BaseModel, String> entityServiceImpl;
@@ -47,18 +43,12 @@ public class EntityServiceImplUnitTest {
 	private final TestDocumentObject documentObj3 = new TestDocumentObject("3", "3000", "three", "3 description");
 	private final TestDocumentObject documentObj4 = new TestDocumentObject("4", "4000", "four", "4 description");
 
-//	@BeforeEach
-//	public void setup() {
-//		MockitoAnnotations.openMocks(this);
-//	}
-
 	@Test
 	@Order(1)
 	public void testCreateIndex() {
 
 		logger.info("Testing CreateIndex");
 
-		// Object without @Document annotation
 		assertThrows(IllegalArgumentException.class, () -> entityServiceImpl.createIndex(TestNoDocumentObject.class));
 		assertDoesNotThrow(() -> entityServiceImpl.createIndex(TestDocumentObject.class));
 	}
@@ -86,10 +76,17 @@ public class EntityServiceImplUnitTest {
 
 		assertDoesNotThrow(() -> entityServiceImpl.createIndex(TestDocumentObject.class));
 
-		assertDoesNotThrow(() -> entityServiceImpl.add(documentObj1.getClass(), documentObj1));
-		assertDoesNotThrow(() -> entityServiceImpl.add(documentObj2.getClass(), documentObj2));
-		assertDoesNotThrow(() -> entityServiceImpl.add(documentObj3.getClass(), documentObj3));
-		assertDoesNotThrow(() -> entityServiceImpl.add(documentObj4.getClass(), documentObj4));
+	}
+
+	@Test
+	@Order(4)
+	public void testAddBatch() {
+
+		logger.info("Testing Add Batch");
+
+		final List<BaseModel> listOfDocuments = List.of(documentObj1, documentObj2, documentObj3, documentObj4);
+
+		assertDoesNotThrow(() -> entityServiceImpl.add(TestDocumentObject.class, listOfDocuments));
 
 	}
 
@@ -99,8 +96,7 @@ public class EntityServiceImplUnitTest {
 
 		logger.info("Testing Find");
 
-		final SearchParameters searchParameters = new SearchParameters();
-		searchParameters.setQuery("name:one");
+		final SearchParameters searchParameters = new SearchParameters("name:one", 100, 0);
 
 		assertThrows(IllegalArgumentException.class,
 				() -> entityServiceImpl.find(TestNoDocumentObject.class, searchParameters));
@@ -118,7 +114,7 @@ public class EntityServiceImplUnitTest {
 				count++;
 				logger.debug("TestDocumentObject found: {}", object);
 			}
-			assertTrue(count == 1);
+			assertEquals(1, count);
 
 		} catch (final Exception e) {
 			logger.error("Error finding document", e);
@@ -172,7 +168,8 @@ public class EntityServiceImplUnitTest {
 				count++;
 				logger.debug("TestDocumentObject found: {}", object);
 			}
-			assertTrue(count == 4);
+			assertEquals(4, count);
+
 		} catch (final Exception e) {
 			logger.error("Error finding all documents", e);
 			fail("Error finding all documents");
@@ -182,8 +179,8 @@ public class EntityServiceImplUnitTest {
 	@Test
 	@Order(7)
 	public void testCombinedQuery() {
-		final SearchParameters searchParameters = new SearchParameters();
-		searchParameters.setQuery("name:one OR name:two");
+
+		final SearchParameters searchParameters = new SearchParameters("name:one OR name:two", 100, 0);
 
 		try {
 
@@ -195,7 +192,8 @@ public class EntityServiceImplUnitTest {
 				count++;
 				logger.debug("TestDocumentObject found: {}", object);
 			}
-			assertTrue(count == 2);
+			assertEquals(2, count);
+
 		} catch (final Exception e) {
 			logger.error("Error finding all documents", e);
 			fail("Error finding all documents");
@@ -209,7 +207,6 @@ public class EntityServiceImplUnitTest {
 		final String documentId = "4";
 		assertDoesNotThrow(() -> entityServiceImpl.remove(TestDocumentObject.class, documentId));
 
-		final SearchParameters searchParameters = new SearchParameters();
 		try {
 
 			final Optional<BaseModel> result = entityServiceImpl.findById(TestDocumentObject.class, documentId);
@@ -217,14 +214,12 @@ public class EntityServiceImplUnitTest {
 			logger.info("Result: {}", result);
 			assertFalse(result.isPresent());
 
-			final Iterable<BaseModel> resultAll = entityServiceImpl.findAll(TestDocumentObject.class, searchParameters);
+			final Iterable<BaseModel> resultAll = entityServiceImpl.findAll(TestDocumentObject.class,
+					new SearchParameters());
 			assertNotNull(resultAll);
 			assertTrue(resultAll.iterator().hasNext());
-			int count = 0;
-			for (final BaseModel object : resultAll) {
-				count++;
-			}
-			assertTrue(count == 3);
+			assertEquals(3, getSize(resultAll));
+
 		} catch (final Exception e) {
 			logger.error("Error finding all documents", e);
 			fail("Error finding all documents");
@@ -250,9 +245,7 @@ public class EntityServiceImplUnitTest {
 			assertEquals(documentObj4, documentObj);
 			assertEquals(documentId, documentObj.getId());
 
-		}
-
-		catch (final Exception e) {
+		} catch (final Exception e) {
 			logger.error("Error finding all documents", e);
 			fail("Error finding all documents");
 		}

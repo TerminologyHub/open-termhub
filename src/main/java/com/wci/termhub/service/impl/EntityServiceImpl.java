@@ -1,5 +1,6 @@
 package com.wci.termhub.service.impl;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -62,6 +63,21 @@ public class EntityServiceImpl<T extends BaseModel, ID> implements EntityReposit
 	 */
 	@Override
 	public void add(final Class<? extends T> clazz, final T entity) throws Exception {
+
+		checkIfEntityHasDocumentAnnotation(clazz);
+		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();
+		luceneData.add(entity);
+	}
+
+	/**
+	 * Adds the entity.
+	 *
+	 * @param entity the entity
+	 * @param clazz  the clazz
+	 * @throws Exception the exception
+	 */
+	@Override
+	public void add(final Class<? extends T> clazz, final List<T> entity) throws Exception {
 
 		checkIfEntityHasDocumentAnnotation(clazz);
 		final LuceneDataAccess<T> luceneData = new LuceneDataAccess<>();

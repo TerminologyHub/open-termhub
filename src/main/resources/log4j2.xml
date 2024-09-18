@@ -17,9 +17,5 @@
 		<Logger name="org" level="warn" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
-		<!-- See JsonLoggingFilter -->
-		<Logger name="HttpLogger" level="info" additivity="false">
-			<AppenderRef ref="Console" />
-		</Logger>
 	</Loggers>
 </Configuration>
