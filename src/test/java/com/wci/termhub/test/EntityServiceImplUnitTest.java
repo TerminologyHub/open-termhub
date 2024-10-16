@@ -1,3 +1,6 @@
+/*
+ *
+ */
 package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -224,10 +227,7 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 			logger.error("Error finding all documents", e);
 			fail("Error finding all documents");
 		}
-		} catch (final Exception e) {
-			logger.error("Error finding all documents", e);
-			fail("Error finding all documents");
-	}
+
 	}
 
 	@Test
