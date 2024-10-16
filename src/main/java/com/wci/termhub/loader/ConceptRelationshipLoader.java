@@ -14,15 +14,15 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.lucene.LuceneDataAccess;
-import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptRelationship;
 
 /**
  * The Class ConceptLoader.
  */
-public final class ConceptLoader {
+public class ConceptRelationshipLoader {
 
 	/** The logger. */
-	private static Logger logger = LoggerFactory.getLogger(ConceptLoader.class);
+	private static Logger logger = LoggerFactory.getLogger(ConceptRelationshipLoader.class);
 
 	/**
 	 * The main method.
@@ -80,15 +80,15 @@ public final class ConceptLoader {
 		System.out.println("batch size: " + batchSize + " limit: " + limit);
 		final long startTime = System.currentTimeMillis();
 
-		final List<Concept> conceptBatch = new ArrayList<>(batchSize);
+		final List<ConceptRelationship> conceptRelBatch = new ArrayList<>(batchSize);
 
 		// read the file
 		// for each line in the file, convert to Concept object.
 		try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
 
 			final ObjectMapper objectMapper = new ObjectMapper();
-			final LuceneDataAccess<Concept> luceneData = new LuceneDataAccess<>();
-			luceneData.createIndex(Concept.class);
+			final LuceneDataAccess<ConceptRelationship> luceneData = new LuceneDataAccess<>();
+			luceneData.createIndex(ConceptRelationship.class);
 
 			String line;
 			int count = 1;
@@ -96,22 +96,23 @@ public final class ConceptLoader {
 
 				// convert to Concept object
 				final JsonNode rootNode = objectMapper.readTree(line);
-				final JsonNode conceptNode = rootNode.get("_source");
-				final Concept concept = objectMapper.treeToValue(conceptNode, Concept.class);
+				final JsonNode conceptRelNode = rootNode.get("_source");
+				final ConceptRelationship conceptRel = objectMapper.treeToValue(conceptRelNode,
+						ConceptRelationship.class);
 
-				conceptBatch.add(concept);
+				conceptRelBatch.add(conceptRel);
 
-				if (conceptBatch.size() == batchSize) {
-					luceneData.add(conceptBatch);
-					conceptBatch.clear();
+				if (conceptRelBatch.size() == batchSize) {
+					luceneData.add(conceptRelBatch);
+					conceptRelBatch.clear();
 					System.out.println("count: " + count);
 				}
 
 				count++;
 			}
 
-			if (!conceptBatch.isEmpty()) {
-				luceneData.add(conceptBatch);
+			if (!conceptRelBatch.isEmpty()) {
+				luceneData.add(conceptRelBatch);
 			}
 
 			System.out.println("final count: " + count);
@@ -122,7 +123,6 @@ public final class ConceptLoader {
 			e.printStackTrace();
 			System.exit(1);
 		}
-
 	}
 
 }

@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -18,14 +18,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.Application;
-import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Term;
+import com.wci.termhub.service.impl.EntityServiceImpl;
 
 /**
  * The Class TermUnitTest.
@@ -33,10 +34,9 @@ import com.wci.termhub.model.Term;
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
 @TestMethodOrder(OrderAnnotation.class)
-public class TermUnitTest {
+public class TermUnitTest extends BaseUnitTest {
 
 	/** The logger. */
-	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(TermUnitTest.class);
 
 	/** The term 1. */
@@ -48,8 +48,12 @@ public class TermUnitTest {
 	/** The term 3. */
 	private final static Term term3 = new Term();
 
-	/** The Constant INDEX_DIRECTORY. */
-	private static final String INDEX_DIRECTORY = "C:\\tmp\\index"; // ./build/index";
+	/** The entity service impl. */
+	@Autowired
+	private EntityServiceImpl<Term, String> entityServiceImpl;
+
+	/** The Constant INDEX_NAME. */
+	private static final String INDEX_NAME = Term.class.getCanonicalName();
 
 	/**
 	 * Setup.
@@ -59,10 +63,10 @@ public class TermUnitTest {
 
 		logger.info("Creating object test data");
 		// string, FiedType.Text, FieldType.Keyword
-		term1.setId("1234567890");
+		term1.setId("36ab1ce6-4fbb-4f86-a5bb-6974b7aa38f8");
 		term1.setName("name-a");
-		term1.setTerminology("terminology-a");
-		term1.setVersion("version-a");
+		term1.setTerminology("terminology");
+		term1.setVersion("version");
 		term1.setPublisher("publisher-a");
 		term1.setComponentId("08098098-a");
 		term1.setConceptId("12345-a");
@@ -75,10 +79,10 @@ public class TermUnitTest {
 		attributes1.put("key2-a", "value2-a");
 		term1.setAttributes(attributes1);
 
-		term2.setId("9876543210");
+		term2.setId("910b9c92-1074-4734-ac2b-3664efb54ac1");
 		term2.setName("name-b");
-		term2.setTerminology("terminology-b");
-		term2.setVersion("version-b");
+		term2.setTerminology("terminology");
+		term2.setVersion("version");
 		term2.setPublisher("publisher-b");
 		term2.setComponentId("08098098-b");
 		term2.setConceptId("12345-b");
@@ -91,7 +95,7 @@ public class TermUnitTest {
 		attributes2.put("key2-b", "value2-b");
 		term2.setAttributes(attributes2);
 
-		term3.setId("dummyid");
+		term3.setId("722b9816-3226-40aa-9935-3bcd0ebd47aa");
 		term3.setName("dummyname");
 		term3.setTerminology("dummyterminology");
 		term3.setVersion("dummyversion");
@@ -106,7 +110,6 @@ public class TermUnitTest {
 		attributes3.put("key1-dummy", "value1-dummy");
 		attributes3.put("key2-dummy", "value2-dummy");
 		term3.setAttributes(attributes3);
-
 	}
 
 	/**
@@ -122,7 +125,6 @@ public class TermUnitTest {
 		final Term term = new Term();
 		final Class<?> clazz1 = term.getClass();
 		assertTrue(clazz1.isAnnotationPresent(Document.class));
-
 	}
 
 	/**
@@ -134,15 +136,13 @@ public class TermUnitTest {
 	@Order(3)
 	public void deleteIndex() throws Exception {
 
-		final LuceneDataAccess<Term> luceneData = new LuceneDataAccess<>();
 		logger.info("Deleting index for Term");
-		luceneData.deleteIndex(Term.class);
+		entityServiceImpl.deleteIndex(Term.class);
 
-		logger.info("Deleted index for Term: {}", INDEX_DIRECTORY + "/" + Term.class.getCanonicalName());
+		logger.info("Deleted index for Term: {}", INDEX_DIRECTORY + "/" + INDEX_NAME);
 
 		// assert directory does not exist
-		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, Term.class.getCanonicalName())));
-
+		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
 	}
 
 	/**
@@ -154,13 +154,11 @@ public class TermUnitTest {
 	@Order(4)
 	public void createIndex() throws Exception {
 
-		final LuceneDataAccess<Term> luceneData = new LuceneDataAccess<>();
 		logger.info("Creating index for Term");
-		luceneData.createIndex(Term.class);
+		entityServiceImpl.createIndex(Term.class);
 
 		// assert directory exists
-		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, Term.class.getCanonicalName())));
-
+		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
 	}
 
 	/**
@@ -172,12 +170,10 @@ public class TermUnitTest {
 	@Order(5)
 	public void testAddTerm() throws Exception {
 
-		final LuceneDataAccess<Term> luceneData = new LuceneDataAccess<>();
 		logger.info("Creating objects");
-		assertDoesNotThrow(() -> luceneData.add(term1));
-		assertDoesNotThrow(() -> luceneData.add(term2));
-		assertDoesNotThrow(() -> luceneData.add(term3));
-
+		assertDoesNotThrow(() -> entityServiceImpl.add(Term.class, term1));
+		assertDoesNotThrow(() -> entityServiceImpl.add(Term.class, term2));
+		assertDoesNotThrow(() -> entityServiceImpl.add(Term.class, term3));
 	}
 
 	/**
@@ -189,15 +185,14 @@ public class TermUnitTest {
 	@Order(6)
 	public void testFind() throws Exception {
 
-		final LuceneDataAccess<Term> luceneData = new LuceneDataAccess<>();
 		Iterable<Term> foundTermsObjects = null;
 		final SearchParameters searchParameters = new SearchParameters();
 
 		// find the term by code
-		searchParameters.setQuery("code:1234567890");
+		searchParameters.setQuery("code:" + term1.getCode());
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = luceneData.find(Term.class, searchParameters);
-		assertTrue(getSize(foundTermsObjects) == 1);
+		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
+		assertEquals(1, getSize(foundTermsObjects));
 
 		for (final Object foundTermObject : foundTermsObjects) {
 			final Term foundTerm = (Term) foundTermObject;
@@ -206,10 +201,10 @@ public class TermUnitTest {
 		}
 
 		// now find the term by code
-		searchParameters.setQuery("code:9876543210");
+		searchParameters.setQuery("code:" + term2.getCode());
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = luceneData.find(Term.class, searchParameters);
-		assertTrue(getSize(foundTermsObjects) == 1);
+		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
+		assertEquals(1, getSize(foundTermsObjects));
 
 		for (final Object foundTermObject : foundTermsObjects) {
 			final Term foundTerm = (Term) foundTermObject;
@@ -219,8 +214,8 @@ public class TermUnitTest {
 
 		searchParameters.setQuery("code:1234567*");
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = luceneData.find(Term.class, searchParameters);
-		assertTrue(getSize(foundTermsObjects) == 1);
+		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
+		assertEquals(1, getSize(foundTermsObjects));
 
 		for (final Object foundTermObject : foundTermsObjects) {
 			final Term foundTerm = (Term) foundTermObject;
@@ -229,33 +224,38 @@ public class TermUnitTest {
 			logger.info("Term found: {}", foundTerm.toString());
 		}
 
-		searchParameters.setQuery("code:1234567890 OR code:9876543210");
+		searchParameters.setQuery("code:" + term1.getCode() + " OR code:" + term2.getCode());
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = luceneData.find(Term.class, searchParameters);
-		assertTrue(getSize(foundTermsObjects) == 2);
+		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
+		assertEquals(2, getSize(foundTermsObjects));
 
 		// add more complex queries
-//		searchParameters.setQuery("name:dummyname");
-//		logger.info("Search for : {}", searchParameters.getQuery());
-//		foundTermsObjects = luceneData.find(Term.class, searchParameters);
-//		assertTrue(getSize(foundTermsObjects) == 1);
+		searchParameters.setQuery("name:" + term3.getName());
+		logger.info("Search for : {}", searchParameters.getQuery());
+		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
+		assertEquals(1, getSize(foundTermsObjects));
 
 		// add more complex queries
-		searchParameters.setQuery("code:1234567890 AND name:name-b");
+		searchParameters.setQuery("code:" + term1.getCode() + " AND name:" + term2.getName());
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = luceneData.find(Term.class, searchParameters);
-		assertTrue(getSize(foundTermsObjects) == 0);
+		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
+		assertEquals(0, getSize(foundTermsObjects));
 
-		// no longer working
-		// query is breaking up to code:1234567890 (name:name name:b)
-//		searchParameters.setQuery("code:1234567890 OR name:name-b");
-//		logger.info("Search for : {}", searchParameters.getQuery());
-//		foundTermsObjects = luceneData.find(Term.class, searchParameters);
-//		assertTrue(getSize(foundTermsObjects) == 2);
+		// wild card search
+		searchParameters.setQuery("*:*");
+		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
+		assertEquals(3, getSize(foundTermsObjects));
 
-//		logger.info("Search for all");
-//		foundTermsObjects = luceneData.findAll(Term.class, searchParameters);
-//		assertTrue(getSize(foundTermsObjects) == 3);
+		// search for all
+		searchParameters.setQuery(null);
+		foundTermsObjects = entityServiceImpl.findAll(Term.class, searchParameters);
+		assertEquals(3, getSize(foundTermsObjects));
+
+		// search by id
+		searchParameters.setQuery(null);
+		final Optional<Term> foundTermOjbect = entityServiceImpl.findById(Term.class, term3.getId());
+		assertTrue(foundTermOjbect.isPresent());
+		assertEquals(term3.toString(), foundTermOjbect.get().toString());
 	}
 
 	/**
@@ -265,40 +265,18 @@ public class TermUnitTest {
 	 */
 	@Test
 	@Order(7)
-	public void testDelete() throws Exception {
+	public void testRemove() throws Exception {
 
-		final LuceneDataAccess<Term> luceneData = new LuceneDataAccess<>();
 		logger.info("Deleting objects");
-		assertDoesNotThrow(() -> luceneData.remove(Term.class, term1.getCode()));
+		assertDoesNotThrow(() -> entityServiceImpl.remove(Term.class, term1.getId()));
 		logger.info("Done deleting");
 
 		// find the term by code
 		final SearchParameters searchParameters = new SearchParameters();
-		searchParameters.setQuery("code:1234567890");
-		final Iterable<Term> foundTermsObjects = luceneData.find(Term.class, searchParameters);
+		searchParameters.setQuery("id:" + term1.getId());
+		final Iterable<Term> foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
 		logger.info("Found: {}", getSize(foundTermsObjects));
-		assertTrue(getSize(foundTermsObjects) == 0);
-
-	}
-
-	/**
-	 * Gets the size.
-	 *
-	 * @param <T>      the generic type
-	 * @param iterable the iterable
-	 * @return the size
-	 */
-	@SuppressWarnings("unused")
-	private static <T> int getSize(final Iterable<T> iterable) {
-		if (iterable instanceof Collection) {
-			return ((Collection<T>) iterable).size();
-		} else {
-			int size = 0;
-			for (final T item : iterable) {
-				size++;
-			}
-			return size;
-		}
+		assertEquals(0, getSize(foundTermsObjects));
 	}
 
 }

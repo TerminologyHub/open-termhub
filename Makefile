@@ -21,7 +21,7 @@ clean:
 
 # Build the library without tests
 build:
-	./gradlew build -x test -x javadoc
+	./gradlew build test -x javadoc
 
 scan:
 	/bin/rm -rf gradle/dependency-locks
@@ -32,7 +32,7 @@ scan:
 	/bin/rm -rf gradle/dependency-locks
 
 test:
-	./gradlew test spotbugsMain spotbugsTest
+	./gradlew test -x spotbugsMain -x spotbugsTest
 
 install:
 	./gradlew install -x test -x javadoc

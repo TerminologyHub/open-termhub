@@ -78,6 +78,7 @@ public class SearchParameters extends BaseModel {
 	 * @param offset the offset
 	 */
 	public SearchParameters(final int limit, final int offset) {
+
 		this.limit = limit;
 		this.offset = offset;
 	}
@@ -90,6 +91,7 @@ public class SearchParameters extends BaseModel {
 	 * @param offset the offset
 	 */
 	public SearchParameters(final String query, final int limit, final int offset) {
+
 		this.query = query;
 		this.limit = limit;
 		this.offset = offset;
@@ -107,6 +109,7 @@ public class SearchParameters extends BaseModel {
 	 */
 	public SearchParameters(final String query, final Integer offset, final Integer limit, final String sort,
 			final Boolean ascending) {
+
 		if (query != null) {
 			setQuery(query);
 		} else {
