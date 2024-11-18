@@ -156,6 +156,7 @@ spotbugsTest {
     }
 }
 
+
 test {
   useJUnitPlatform()
   exclude '**/*IntegrationTest.*'
