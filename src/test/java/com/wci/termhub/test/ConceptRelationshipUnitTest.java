@@ -1,8 +1,12 @@
+/*
+ *
+ */
 package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
@@ -24,8 +28,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.Application;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.service.impl.EntityServiceImpl;
+import com.wci.termhub.service.EntityRepositoryService;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
@@ -90,7 +95,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 
 	/** The entity service impl. */
 	@Autowired
-	private EntityServiceImpl<ConceptRelationship, String> entityServiceImpl;
+	private EntityRepositoryService searchService;
 
 	/** The concept. */
 	private static ConceptRelationship conceptRelationship;
@@ -108,7 +113,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 	public void deleteIndex() throws Exception {
 
 		logger.info("Deleting index for Concept Relationship");
-		entityServiceImpl.deleteIndex(ConceptRelationship.class);
+		searchService.deleteIndex(ConceptRelationship.class);
 
 		// assert directory does not exist
 		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
@@ -124,7 +129,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 	public void createIndex() throws Exception {
 
 		logger.info("Creating index for Concept Relationship");
-		entityServiceImpl.createIndex(ConceptRelationship.class);
+		searchService.createIndex(ConceptRelationship.class);
 
 		// test if directory exists
 		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
@@ -146,35 +151,28 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 		if (conceptRelNode != null) {
 			conceptRelationship = objectMapper.treeToValue(conceptRelNode, ConceptRelationship.class);
 			logger.info("Concept Relationship: {}", conceptRelationship.toString());
-			assertDoesNotThrow(() -> entityServiceImpl.add(ConceptRelationship.class, conceptRelationship));
+			assertDoesNotThrow(() -> searchService.add(ConceptRelationship.class, conceptRelationship));
 		} else {
 			logger.error("No '_source' node found in the provided JSON.");
 		}
 	}
 
-//	/**
-//	 * Find concept by code.
-//	 *
-//	 * @throws Exception the exception
-//	 */
-//	@Test
-//	@Order(4)
-//	public void findConceptRelationshipById() throws Exception {
-//
-//		final SearchParameters searchParameters = new SearchParameters();
-//		searchParameters.setQuery("id:84234204-cfc9-4258-a07b-9c13cf02b70b");
-//		logger.info("Search for : {}", searchParameters.getQuery());
-//
-//		final Iterable<ConceptRelationship> foundConceptRelObjects = LUCENE_DATA.find(ConceptRelationship.class,
-//				searchParameters);
-//		assertEquals(1, getSize(foundConceptRelObjects));
-//
-//		for (final Object foundConceptObject : foundConceptRelObjects) {
-//			final ConceptRelationship foundConceptRel = (ConceptRelationship) foundConceptObject;
-//			logger.info("Concept Relationship found: {}", foundConceptRel.toString());
-//			assertEquals(conceptRelationship.toString(), foundConceptRel.toString());
-//		}
-//	}
+	/**
+	 * Find concept by code.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	@Order(4)
+	public void findConceptRelationshipById() throws Exception {
+
+		final ConceptRelationship foundConceptRelObjects = searchService.get("84234204-cfc9-4258-a07b-9c13cf02b70b",
+				ConceptRelationship.class);
+
+		assertNotNull(foundConceptRelObjects);
+		assertEquals(conceptRelationship.toString(), foundConceptRelObjects.toString());
+
+	}
 
 	/**
 	 * Find concept by code.
@@ -189,11 +187,11 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 		searchParameters.setQuery("from.code:100476003");
 		logger.info("Search for : {}", searchParameters.getQuery());
 
-		final Iterable<ConceptRelationship> foundConceptRelObjects = entityServiceImpl.find(ConceptRelationship.class,
-				searchParameters);
-		assertEquals(1, getSize(foundConceptRelObjects));
+		final ResultList<ConceptRelationship> foundConceptRelObjects = searchService.find(searchParameters,
+				ConceptRelationship.class);
+		assertEquals(1, foundConceptRelObjects.getItems().size());
 
-		for (final Object foundConceptObject : foundConceptRelObjects) {
+		for (final Object foundConceptObject : foundConceptRelObjects.getItems()) {
 			final ConceptRelationship foundConceptRel = (ConceptRelationship) foundConceptObject;
 			logger.info("Concept Relationship found: {}", foundConceptRel.toString());
 			assertEquals(conceptRelationship.toString(), foundConceptRel.toString());

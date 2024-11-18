@@ -1,3 +1,6 @@
+/*
+ *
+ */
 package com.wci.termhub.loader;
 
 import java.io.BufferedReader;
@@ -15,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.util.ModelUtility;
 
 /**
  * The Class ConceptLoader.
@@ -57,7 +61,7 @@ public class ConceptRelationshipLoader {
 
 			index(fullFileName, batchSize, limit);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("An error occurred while loading the file.");
 			e.printStackTrace();
 			System.exit(1);
@@ -65,6 +69,17 @@ public class ConceptRelationshipLoader {
 
 		System.exit(0);
 
+	}
+
+	/**
+	 * Index all.
+	 *
+	 * @param fullFileName the full file name
+	 * @param batchSize    the batch size
+	 * @throws Exception the exception
+	 */
+	public static void indexAll(final String fullFileName, final int batchSize) throws Exception {
+		index(fullFileName, batchSize, -1);
 	}
 
 	/**
@@ -87,23 +102,21 @@ public class ConceptRelationshipLoader {
 		try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
 
 			final ObjectMapper objectMapper = new ObjectMapper();
-			final LuceneDataAccess<ConceptRelationship> luceneData = new LuceneDataAccess<>();
-			luceneData.createIndex(ConceptRelationship.class);
+			final LuceneDataAccess luceneDataAccess = new LuceneDataAccess();
+			luceneDataAccess.createIndex(ConceptRelationship.class);
 
 			String line;
 			int count = 1;
 			while ((line = br.readLine()) != null && (limit == -1 || count < limit)) {
 
-				// convert to Concept object
 				final JsonNode rootNode = objectMapper.readTree(line);
 				final JsonNode conceptRelNode = rootNode.get("_source");
-				final ConceptRelationship conceptRel = objectMapper.treeToValue(conceptRelNode,
+				final ConceptRelationship conceptRel = ModelUtility.fromJson(conceptRelNode.toString(),
 						ConceptRelationship.class);
-
 				conceptRelBatch.add(conceptRel);
 
 				if (conceptRelBatch.size() == batchSize) {
-					luceneData.add(conceptRelBatch);
+					luceneDataAccess.add(conceptRelBatch);
 					conceptRelBatch.clear();
 					System.out.println("count: " + count);
 				}
@@ -112,13 +125,13 @@ public class ConceptRelationshipLoader {
 			}
 
 			if (!conceptRelBatch.isEmpty()) {
-				luceneData.add(conceptRelBatch);
+				luceneDataAccess.add(conceptRelBatch);
 			}
 
 			System.out.println("final count: " + count);
 			System.out.println("duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("An error occurred while processing the file.");
 			e.printStackTrace();
 			System.exit(1);

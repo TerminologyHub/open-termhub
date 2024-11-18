@@ -1,3 +1,6 @@
+/*
+ *
+ */
 package com.wci.termhub.test;
 
 import java.util.Objects;
@@ -6,17 +9,13 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
-import com.wci.termhub.model.BaseModel;
+import com.wci.termhub.model.AbstractHasId;
 
 /**
- * The Class TestDocumentObject.
+ * The Class TestDocument.
  */
 @Document(indexName = "test")
-public class TestDocumentObject extends BaseModel {
-
-	/** The id. */
-	@Field(type = FieldType.Keyword)
-	private String id;
+public class TestDocument extends AbstractHasId {
 
 	/** The code. */
 	@Field(type = FieldType.Keyword)
@@ -33,7 +32,7 @@ public class TestDocumentObject extends BaseModel {
 	/**
 	 * Instantiates a new test document object.
 	 */
-	public TestDocumentObject() {
+	public TestDocument() {
 		super();
 	}
 
@@ -44,30 +43,12 @@ public class TestDocumentObject extends BaseModel {
 	 * @param name        the name
 	 * @param description the description
 	 */
-	public TestDocumentObject(final String id, final String code, final String name, final String description) {
+	public TestDocument(final String id, final String code, final String name, final String description) {
 		super();
-		this.id = id;
+		super.setId(id);
 		this.code = code;
 		this.name = name;
 		this.description = description;
-	}
-
-	/**
-	 * Gets the id.
-	 *
-	 * @return the id
-	 */
-	public String getId() {
-		return id;
-	}
-
-	/**
-	 * Sets the id.
-	 *
-	 * @param id the new id
-	 */
-	public void setId(final String id) {
-		this.id = id;
 	}
 
 	/**
@@ -131,7 +112,7 @@ public class TestDocumentObject extends BaseModel {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hash(code, description, id, name);
+		return Objects.hash(code, description, name);
 	}
 
 	/**
@@ -141,16 +122,19 @@ public class TestDocumentObject extends BaseModel {
 	 * @return true, if successful
 	 */
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		TestDocumentObject other = (TestDocumentObject) obj;
-		return Objects.equals(description, other.description) && Objects.equals(id, other.id)
-				&& Objects.equals(code, other.code) && Objects.equals(name, other.name);
+		}
+		final TestDocument other = (TestDocument) obj;
+		return Objects.equals(description, other.description) && Objects.equals(code, other.code)
+				&& Objects.equals(name, other.name);
 	}
 
 	/**
@@ -160,8 +144,7 @@ public class TestDocumentObject extends BaseModel {
 	 */
 	@Override
 	public String toString() {
-		return "TestDocumentObject [id=" + id + ", code=" + code + ", name=" + name + ", description=" + description
-				+ "]";
+		return "TestDocumentObject [code=" + code + ", name=" + name + ", description=" + description + "]";
 	}
 
 }

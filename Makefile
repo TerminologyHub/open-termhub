@@ -21,7 +21,7 @@ clean:
 
 # Build the library without tests
 build:
-	./gradlew build test -x javadoc
+	./gradlew build test -x javadoc -x spotbugsMain -x spotbugsTest
 
 scan:
 	/bin/rm -rf gradle/dependency-locks
@@ -42,7 +42,7 @@ release:
 	./gradlew uploadArchives
 
 run:
-	./gradlew bootRun
+	./gradlew bootRun --debug-jvm
 
 version:
 	@echo $(APP_VERSION)

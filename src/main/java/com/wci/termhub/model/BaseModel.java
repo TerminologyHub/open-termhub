@@ -1,11 +1,11 @@
 package com.wci.termhub.model;
 
-import javax.persistence.MappedSuperclass;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.wci.termhub.util.ModelUtility;
+
+import jakarta.persistence.MappedSuperclass;
 
 /**
  * Base model for all classes.

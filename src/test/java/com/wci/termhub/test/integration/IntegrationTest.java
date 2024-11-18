@@ -1,7 +1,10 @@
+/*
+ *
+ */
 package com.wci.termhub.test.integration;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -22,8 +25,9 @@ import com.wci.termhub.loader.ConceptLoader;
 import com.wci.termhub.loader.ConceptRelationshipLoader;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.service.impl.EntityServiceImpl;
+import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.test.BaseUnitTest;
 import com.wci.termhub.util.FileUtility;
 
@@ -38,13 +42,9 @@ public class IntegrationTest extends BaseUnitTest {
 	/** The logger. */
 	private static Logger logger = LoggerFactory.getLogger(IntegrationTest.class);
 
-	/** The entity service impl. */
+	/** The search service. */
 	@Autowired
-	private EntityServiceImpl<Concept, String> conceptEntityServiceImpl;
-
-	/** The concept rel entity service impl. */
-	@Autowired
-	EntityServiceImpl<ConceptRelationship, String> conceptRelEntityServiceImpl;
+	private EntityRepositoryService searchService;
 
 	/**
 	 * Setup.
@@ -65,7 +65,7 @@ public class IntegrationTest extends BaseUnitTest {
 			ConceptRelationshipLoader.index("./build/data/snomedctus-nlm-20230901-concept-relationship-v1.json",
 					batchSize, limit);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("Error occurred while loading concepts", e);
 		}
 
@@ -80,9 +80,9 @@ public class IntegrationTest extends BaseUnitTest {
 	public void testFindConceptById() throws Exception {
 
 		final String id = "e8963408-bd8c-4e8f-a00b-527f1d10257b";
-		assertDoesNotThrow(() -> conceptEntityServiceImpl.findById(Concept.class, id).ifPresent(concept -> {
-			assertEquals(id, concept.getId());
-		}));
+		final Concept concept = searchService.get(id, Concept.class);
+		assertNotNull(concept);
+		assertEquals(id, concept.getId());
 
 	}
 
@@ -95,10 +95,9 @@ public class IntegrationTest extends BaseUnitTest {
 	public void testFindConceptRelationshipById() throws Exception {
 
 		final String id = "97569a2c-c002-4c63-bab3-c25eb";
-		assertDoesNotThrow(
-				() -> conceptRelEntityServiceImpl.findById(ConceptRelationship.class, id).ifPresent(concept -> {
-					assertEquals(id, concept.getId());
-				}));
+		final ConceptRelationship conceptRel = searchService.get(id, ConceptRelationship.class);
+		assertNotNull(conceptRel);
+		assertEquals(id, conceptRel.getId());
 
 	}
 
@@ -113,8 +112,8 @@ public class IntegrationTest extends BaseUnitTest {
 		final String code = "100455008";
 		final SearchParameters sp = new SearchParameters("code:" + code, 100, 0);
 
-		final Iterable<Concept> results = conceptEntityServiceImpl.find(Concept.class, sp);
-		results.forEach(concept -> {
+		final ResultList<Concept> results = searchService.find(sp, Concept.class);
+		results.getItems().forEach(concept -> {
 			assertEquals(code, concept.getCode());
 		});
 
@@ -131,8 +130,8 @@ public class IntegrationTest extends BaseUnitTest {
 		final String code = "100455008";
 		final SearchParameters sp = new SearchParameters("from.code:" + code, 100, 0);
 
-		final Iterable<ConceptRelationship> results = conceptRelEntityServiceImpl.find(ConceptRelationship.class, sp);
-		results.forEach(conceptRel -> {
+		final ResultList<ConceptRelationship> results = searchService.find(sp, ConceptRelationship.class);
+		results.getItems().forEach(conceptRel -> {
 			assertEquals(code, conceptRel.getFrom().getCode());
 		});
 
@@ -149,8 +148,8 @@ public class IntegrationTest extends BaseUnitTest {
 		final String code = "6266001";
 		final SearchParameters sp = new SearchParameters("to.code:" + code, 100, 0);
 
-		final Iterable<ConceptRelationship> results = conceptRelEntityServiceImpl.find(ConceptRelationship.class, sp);
-		results.forEach(conceptRel -> {
+		final ResultList<ConceptRelationship> results = searchService.find(sp, ConceptRelationship.class);
+		results.getItems().forEach(conceptRel -> {
 			assertEquals(code, conceptRel.getTo().getCode());
 		});
 
@@ -167,14 +166,14 @@ public class IntegrationTest extends BaseUnitTest {
 		final String term = "heart";
 		final SearchParameters sp = new SearchParameters("term.name:" + term, 100, 0);
 
-		final Iterable<Concept> results = conceptEntityServiceImpl.find(Concept.class, sp);
+		final ResultList<Concept> results = searchService.find(sp, Concept.class);
 
-		for (final Concept concept : results) {
+		for (final Concept concept : results.getItems()) {
 			logger.info(concept.toString());
 		}
 
 		// check that each concept has at least a term has the word 'heart' in it
-		results.forEach(concept -> {
+		results.getItems().forEach(concept -> {
 			assertTrue(concept.getTerms().stream().anyMatch(t -> t.getName().toLowerCase().contains(term)));
 		});
 
@@ -192,27 +191,27 @@ public class IntegrationTest extends BaseUnitTest {
 		final SearchParameters sp = new SearchParameters("term.name:" + term, 10, 0);
 		final List<String> conceptCodes = new ArrayList<>();
 
-		Iterable<Concept> results = conceptEntityServiceImpl.find(Concept.class, sp);
-		assertEquals(10, results.spliterator().getExactSizeIfKnown());
-		results.forEach(concept -> {
+		ResultList<Concept> results = searchService.find(sp, Concept.class);
+		assertEquals(10, results.getItems().size());
+		results.getItems().forEach(concept -> {
 			conceptCodes.add(concept.getCode());
 		});
 
 		sp.setOffset(10);
-		results = conceptEntityServiceImpl.find(Concept.class, sp);
-		assertEquals(10, results.spliterator().getExactSizeIfKnown());
-		results.forEach(concept -> {
+		results = searchService.find(sp, Concept.class);
+		assertEquals(10, results.getItems().size());
+		results.getItems().forEach(concept -> {
 			assertTrue(!conceptCodes.contains(concept.getCode()));
 		});
 
-		results.forEach(concept -> {
+		results.getItems().forEach(concept -> {
 			conceptCodes.add(concept.getCode());
 		});
 
 		sp.setOffset(20);
-		results = conceptEntityServiceImpl.find(Concept.class, sp);
-		assertEquals(10, results.spliterator().getExactSizeIfKnown());
-		results.forEach(concept -> {
+		results = searchService.find(sp, Concept.class);
+		assertEquals(10, results.getItems().size());
+		results.getItems().forEach(concept -> {
 			assertTrue(!conceptCodes.contains(concept.getCode()));
 		});
 	}

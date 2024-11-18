@@ -1,9 +1,11 @@
+/*
+ *
+ */
 package com.wci.termhub.lucene;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -33,6 +35,8 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.model.BaseModel;
+import com.wci.termhub.model.HasId;
+import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.util.FileUtility;
 import com.wci.termhub.util.IndexUtility;
@@ -40,18 +44,16 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
 
 /**
- * The Class LuceneDao1.
- *
- * @param <T> the generic type
+ * The Class LuceneDataAccess.
  */
 @Component
-public class LuceneDataAccess<T> {
+public class LuceneDataAccess {
 
 	/** The logger. */
-	private static Logger logger = LoggerFactory.getLogger(LuceneDataAccess.class);
+	private static final Logger LOG = LoggerFactory.getLogger(LuceneDataAccess.class);
 
 	/** The Constant INDEX_DIRECTORY. */
-	private String indexRootDirectory;
+	private static String indexRootDirectory;
 
 	/**
 	 * Instantiates a new lucene data access.
@@ -67,11 +69,11 @@ public class LuceneDataAccess<T> {
 	 * @param clazz the clazz
 	 * @throws Exception the exception
 	 */
-	public void createIndex(final Class<? extends T> clazz) throws Exception {
+	public void createIndex(final Class<? extends HasId> clazz) throws Exception {
 
 		final String indexDirectory = clazz.getCanonicalName();
 		final Path indexPath = Paths.get(indexRootDirectory, indexDirectory);
-		logger.info("Index path: {}, directory: {}", indexRootDirectory, indexDirectory);
+		LOG.info("Index path: {}, directory: {}", indexRootDirectory, indexDirectory);
 		FSDirectory.open(indexPath);
 	}
 
@@ -81,11 +83,11 @@ public class LuceneDataAccess<T> {
 	 * @param clazz the clazz
 	 * @throws Exception the exception
 	 */
-	public void deleteIndex(final Class<? extends T> clazz) throws Exception {
+	public void deleteIndex(final Class<? extends HasId> clazz) throws Exception {
 
 		final String indexDirectory = clazz.getCanonicalName();
 		final Path indexPath = Paths.get(indexRootDirectory, indexDirectory);
-		logger.info("Deleting index {} from {}", indexDirectory, indexRootDirectory);
+		LOG.info("Deleting index {} from {}", indexDirectory, indexRootDirectory);
 		FileUtility.deleteDirectoryAndAllFiles(indexPath);
 	}
 
@@ -96,7 +98,7 @@ public class LuceneDataAccess<T> {
 	 * @throws IOException            Signals that an I/O exception has occurred.
 	 * @throws IllegalAccessException the illegal access exception
 	 */
-	public void add(final List<T> entities) throws IOException, IllegalAccessException {
+	public void add(final List<? extends HasId> entities) throws IOException, IllegalAccessException {
 
 		final IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
 
@@ -104,7 +106,7 @@ public class LuceneDataAccess<T> {
 		try (final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, indexDirectory));
 				final IndexWriter writer = new IndexWriter(fsDirectory, config);) {
 
-			for (final T entity : entities) {
+			for (final HasId entity : entities) {
 				final Document document = getDocument(entity);
 				writer.addDocument(document);
 			}
@@ -121,7 +123,7 @@ public class LuceneDataAccess<T> {
 	 * @throws IOException            Signals that an I/O exception has occurred.
 	 * @throws IllegalAccessException the illegal access exception
 	 */
-	public void add(final T entity) throws IOException, IllegalAccessException {
+	public void add(final HasId entity) throws IOException, IllegalAccessException {
 
 		add(List.of(entity));
 	}
@@ -134,14 +136,14 @@ public class LuceneDataAccess<T> {
 	 * @throws IOException            Signals that an I/O exception has occurred.
 	 * @throws IllegalAccessException the illegal access exception
 	 */
-	private Document getDocument(final T entity) throws IOException, IllegalAccessException {
+	private Document getDocument(final HasId entity) throws IOException, IllegalAccessException {
 
 		final Document document = new Document();
 		document.add(new StoredField("entity", ModelUtility.toJson(entity)));
 		Class<?> currentClass = entity.getClass();
 
 		while (currentClass != null) {
-			logger.debug("Add: Current class: {}", currentClass.getName());
+			LOG.debug("Add: Current class: {}", currentClass.getName());
 
 			for (final java.lang.reflect.Field field : currentClass.getDeclaredFields()) {
 
@@ -152,7 +154,7 @@ public class LuceneDataAccess<T> {
 				}
 
 				final Field annotation = field.getAnnotation(Field.class);
-				logger.debug("Field: {}, value: {}, annotation: {}", field.getName(), fieldValue, annotation);
+				LOG.debug("Field: {}, value: {}, annotation: {}", field.getName(), fieldValue, annotation);
 
 				if (annotation != null) {
 
@@ -161,7 +163,7 @@ public class LuceneDataAccess<T> {
 					// if not collection of objects, add the field to the document
 					if (fieldType != FieldType.Object) {
 
-						logger.debug("Add: field instance of NOT Object OR Collection");
+						LOG.debug("Add: field instance of NOT Object OR Collection");
 						final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field,
 								null);
 						for (final IndexableField indexableField : indexableFieldsList) {
@@ -170,7 +172,7 @@ public class LuceneDataAccess<T> {
 
 					} else if (fieldType == FieldType.Object && fieldValue instanceof Collection) {
 
-						logger.debug("Add: object field instance of Collection");
+						LOG.debug("Add: object field instance of Collection");
 						final Collection<?> collection = (Collection<?>) fieldValue;
 						final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(collection,
 								field);
@@ -180,7 +182,7 @@ public class LuceneDataAccess<T> {
 
 					} else if (fieldType == FieldType.Object && fieldValue instanceof BaseModel) {
 
-						logger.debug("Add: object field instance of BaseModel");
+						LOG.debug("Add: object field instance of BaseModel");
 						final Object refEntity = fieldValue;
 						for (final java.lang.reflect.Field subClassField : refEntity.getClass().getDeclaredFields()) {
 
@@ -196,7 +198,7 @@ public class LuceneDataAccess<T> {
 
 				} else {
 
-					logger.debug("Add: object field instance of MultiField");
+					LOG.debug("Add: object field instance of MultiField");
 					final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field,
 							null);
 					for (final IndexableField indexableField : indexableFieldsList) {
@@ -208,19 +210,19 @@ public class LuceneDataAccess<T> {
 			currentClass = currentClass.getSuperclass();
 		}
 
-		logger.debug("Adding document: {}", document);
+		LOG.debug("Adding document: {}", document);
 		return document;
 	}
 
 	/**
 	 * Removes the entity from the index specified by the Class name.
-	 * 
+	 *
 	 * @param clazz the clazz
 	 * @param id    the id
 	 * @throws IOException            Signals that an I/O exception has occurred.
 	 * @throws IllegalAccessException the illegal access exception
 	 */
-	public void remove(final Class<? extends T> clazz, final String id) throws IOException, IllegalAccessException {
+	public void remove(final Class<? extends HasId> clazz, final String id) throws IOException, IllegalAccessException {
 
 		if (id == null) {
 			throw new IllegalArgumentException("id cannot be null");
@@ -229,7 +231,7 @@ public class LuceneDataAccess<T> {
 		final String indexDirectory = clazz.getCanonicalName();
 		final IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
 
-		logger.info("Removing id: {} for index:{}", id, indexDirectory);
+		LOG.info("Removing id: {} for index:{}", id, indexDirectory);
 
 		try (final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, indexDirectory));
 				final IndexWriter writer = new IndexWriter(fsDirectory, config)) {
@@ -239,10 +241,9 @@ public class LuceneDataAccess<T> {
 
 			writer.deleteDocuments(booleanQuery);
 			writer.commit();
-			writer.close();
 
 		} catch (final Exception e) {
-			logger.error("Error: {}", e.getMessage(), e);
+			LOG.error("Error: {}", e.getMessage(), e);
 			throw e;
 		}
 
@@ -256,7 +257,8 @@ public class LuceneDataAccess<T> {
 	 * @return the list
 	 * @throws Exception the exception
 	 */
-	public Iterable<T> find(final Class<? extends T> clazz, SearchParameters searchParameters) throws Exception {
+	public <T extends HasId> ResultList<T> find(final Class<T> clazz, SearchParameters searchParameters)
+			throws Exception {
 
 		// default search parameters if not provided
 		if (searchParameters == null) {
@@ -283,8 +285,64 @@ public class LuceneDataAccess<T> {
 			searchParameters.setAscending(true);
 		}
 
-		return find(clazz, searchParameters, LuceneQueryBuilder.parse(clazz, searchParameters.getQuery()));
+		return find(clazz, searchParameters, LuceneQueryBuilder.parse(searchParameters.getQuery()));
 	}
+
+//	/**
+//	 * Find.
+//	 *
+//	 * @param <T>              the generic type
+//	 * @param clazz            the clazz
+//	 * @param searchParameters the search parameters
+//	 * @param phraseQuery      the phrase query
+//	 * @return the result list
+//	 * @throws Exception the exception
+//	 */
+//	private <T extends HasId> ResultList<T> find(final Class<T> clazz, final SearchParameters searchParameters,
+//			final Query phraseQuery) throws Exception {
+//
+//		final LuceneIndexManager indexManager = LuceneIndexManager.getInstance(indexRootDirectory,
+//				clazz.getCanonicalName());
+//		indexManager.refresh(); // Refresh the reader if there are changes
+//
+//		final BooleanQuery queryBuilder = new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD)
+//				.build();
+//
+//		LOG.info("Query: {}", queryBuilder);
+//
+//		final IndexSearcher searcher = indexManager.getIndexSearcher();
+//
+//		final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
+//				? IndexUtility.getDefaultSortOrder(clazz)
+//				: IndexUtility.getSortOrder(searchParameters, clazz);
+//		LOG.info("Sort: {}", sort);
+//
+//		LOG.info("Search Parameters: {}", searchParameters);
+//		final int start = searchParameters.getOffset();
+//		final int end = searchParameters.getLimit() + (searchParameters.getOffset());
+//
+//		LOG.info("Search Parameters: start:{}, end:{}", start, end);
+//
+//		final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
+//				: searcher.search(queryBuilder, end);
+//		LOG.info("Query topDocs: {}", topDocs.totalHits.value);
+//
+//		final ResultList<T> results = new ResultList<>();
+//		final ObjectMapper mapper = new ObjectMapper();
+//		for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
+//
+//			final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
+//			LOG.info("Score: {}", scoreDoc.score);
+//			@SuppressWarnings("deprecation")
+//			final Document doc = searcher.doc(scoreDoc.doc);
+//			final String jsonEntityString = doc.get("entity");
+//			final T obj = mapper.readValue(jsonEntityString, clazz);
+//			LOG.info("search result: {}", obj);
+//			results.getItems().add(obj);
+//		}
+//		results.setTotal(results.getItems().size());
+//		return results;
+//	}
 
 	/**
 	 * Find stored entities by search parameters.
@@ -295,50 +353,52 @@ public class LuceneDataAccess<T> {
 	 * @return the list
 	 * @throws Exception the exception
 	 */
-	private Iterable<T> find(final Class<? extends T> clazz, final SearchParameters searchParameters,
+	public <T extends HasId> ResultList<T> find(final Class<T> clazz, final SearchParameters searchParameters,
 			final Query phraseQuery) throws Exception {
 
 		try (final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, clazz.getCanonicalName()));
 				final IndexReader reader = DirectoryReader.open(fsDirectory)) {
 
-			final BooleanQuery queryBuilder = new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.MUST)
+			final BooleanQuery queryBuilder = new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD)
 					.build();
-			logger.info("Query: {}", queryBuilder);
+
+			LOG.info("Query: {}", queryBuilder);
 
 			final IndexSearcher searcher = new IndexSearcher(reader);
 
 			final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
 					? IndexUtility.getDefaultSortOrder(clazz)
 					: IndexUtility.getSortOrder(searchParameters, clazz);
-			logger.info("Sort: {}", sort);
+			LOG.info("Sort: {}", sort);
 
-			logger.info("Search Parameters: {}", searchParameters);
+			LOG.info("Search Parameters: {}", searchParameters);
 			final int start = searchParameters.getOffset();
 			final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-			logger.info("Search Parameters: start:{}, end:{}", start, end);
+			LOG.info("Search Parameters: start:{}, end:{}", start, end);
 
 			final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
 					: searcher.search(queryBuilder, end);
-			logger.info("Query topDocs: {}", topDocs.totalHits.value);
+			LOG.info("Query topDocs: {}", topDocs.totalHits.value);
 
-			final List<T> results = new ArrayList<>();
+			final ResultList<T> results = new ResultList();
 			final ObjectMapper mapper = new ObjectMapper();
 			for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
 
 				final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
-				logger.info("Score: {}", scoreDoc.score);
+				LOG.info("Score: {}", scoreDoc.score);
 				@SuppressWarnings("deprecation")
 				final Document doc = searcher.doc(scoreDoc.doc);
 				final String jsonEntityString = doc.get("entity");
 				final T obj = mapper.readValue(jsonEntityString, clazz);
-				logger.info("search result: {}", obj);
-				results.add(obj);
+				LOG.info("search result: {}", obj);
+				results.getItems().add(obj);
 			}
+			results.setTotal(results.getItems().size());
 			return results;
 
 		} catch (final Exception e) {
-			logger.error("Error: {}", e);
+			LOG.error("Error: {}", e);
 			throw e;
 		}
 	}
