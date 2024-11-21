@@ -49,7 +49,7 @@ rundebug:
 	./gradlew bootRun --debug-jvm
 	
 run:
-	./gradlew bootRun --debug-jvm
+	./gradlew bootRun
 
 version:
 	@echo $(APP_VERSION)
