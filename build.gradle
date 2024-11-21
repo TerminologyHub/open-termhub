@@ -23,7 +23,7 @@ plugins {
   id 'org.springframework.boot' version '3.3.4'
   id 'io.spring.dependency-management' version '1.1.6'
   id 'java'
-//   id "com.github.hierynomus.license" version "0.15.0"
+  // id "com.github.hierynomus.license" version "0.15.0"
 }
 
 group = 'com.wci.open-termhub'
@@ -156,12 +156,10 @@ spotbugsTest {
     }
 }
 
-
 test {
   useJUnitPlatform()
   exclude '**/*IntegrationTest.*'
 }
-
 
 //checkstyle {
 //  // config = resources.text.fromFile(file("${project.rootDir}/config/checkstyle/checkstyle.xml"))
@@ -226,7 +224,7 @@ tasks.withType(JavaExec) {
 
 bootRun {
     if (project.hasProperty('debug')) {
-        jvmArgs = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"]
+        jvmArgs = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"]
     }
 }
 

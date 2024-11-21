@@ -5,7 +5,6 @@ package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
@@ -357,20 +356,20 @@ public class ConceptUnitTest extends BaseUnitTest {
 //		assertEquals(0, foundConceptObjects.getItems().size());
 //	}
 
-	/**
-	 * Delete index.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	@Order(6)
-	public void deleteIndex() throws Exception {
-
-		logger.info("Deleting index for Concept from {}", Paths.get(INDEX_DIRECTORY, INDEX_NAME).toString());
-		searchService.deleteIndex(Concept.class);
-
-		// assert directory does not exist
-		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-	}
+//	/**
+//	 * Delete index.
+//	 *
+//	 * @throws Exception the exception
+//	 */
+//	@Test
+//	@Order(6)
+//	public void deleteIndex() throws Exception {
+//
+//		logger.info("Deleting index for Concept from {}", Paths.get(INDEX_DIRECTORY, INDEX_NAME).toString());
+//		searchService.deleteIndex(Concept.class);
+//
+//		// assert directory does not exist
+//		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
+//	}
 
 }

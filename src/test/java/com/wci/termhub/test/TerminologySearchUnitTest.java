@@ -19,15 +19,15 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
- * The Class Terminology2UnitTest.
+ * The Class TerminologySearchUnitTest.
  */
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class Terminology2UnitTest {
+public class TerminologySearchUnitTest {
 
 	/** The logger. */
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(Terminology2UnitTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TerminologySearchUnitTest.class);
 
 	/** The search service. */
 	@Autowired

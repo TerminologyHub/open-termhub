@@ -127,9 +127,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	@SuppressWarnings("unused")
 	private final static DecimalFormat DF = new DecimalFormat("#.#####");
 
-//	/** The cache. */
-//	private static TimerCache<Project> projectCache = new TimerCache<>(1000, 10000);
-
 	/** The terminologies cache. */
 	private static TimerCache<Map<String, Terminology>> terminologyCache = new TimerCache<>(1000, 10000);
 
@@ -143,10 +140,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	/** The operations service. */
 	@Autowired
 	private EntityRepositoryService searchService;
-
-//	/** The s3 storage handler. */
-//	@Autowired
-//	private List<FileStorageHandler> handlers;
 
 	/** The builders. */
 	@Autowired
@@ -292,9 +285,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			if (terminology == null) {
 				throw new RestException(false, 404, "Not Found", "Unable to find terminology for " + id);
 			}
-//			Metric.addMetric(operationsService, context.getUserId(), null, terminology.getPublisher(),
-//					terminology.getAbbreviation(), terminology.getVersion(), "TERMINOLOGY", null, null);
-
 			terminology.cleanForApi();
 
 			// Return the object
@@ -323,6 +313,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({ @Parameter(name = "id", description = "Mapset id, e.g. \"uuid\"", required = true) })
+	@Hidden
 	public ResponseEntity<Mapset> getMapset(@PathVariable("id") final String id) throws Exception {
 
 		@SuppressWarnings("unused")
@@ -333,9 +324,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			if (mapset == null) {
 				throw new RestException(false, 404, "Not Found", "Unable to find mapset for " + id);
 			}
-//			Metric.addMetric(operationsService, context.getUserId(), null, mapset.getPublisher(),
-//					mapset.getAbbreviation(), mapset.getVersion(), "MAPSET", null, null);
-
 			mapset.cleanForApi();
 
 			// Return the object
@@ -375,8 +363,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			if (terminology == null) {
 				throw new RestException(false, 404, "Not Found", "Unable to find terminology = " + id);
 			}
-//			Metric.addMetric(operationsService, context.getUserId(), null, terminology.getPublisher(),
-//					terminology.getAbbreviation(), terminology.getVersion(), "METADATA", null, null);
 
 			final SearchParameters params = new SearchParameters();
 			params.setQuery(StringUtility.composeQuery("AND", "terminology:" + terminology.getAbbreviation(),
@@ -437,9 +423,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 						"The priorVersion must be earlier than for the specified terminology = "
 								+ terminology.getVersion() + " < " + priorVersion);
 			}
-
-//			Metric.addMetric(operationsService, context.getUserId(), null, terminology.getPublisher(),
-//					terminology.getAbbreviation(), terminology.getVersion(), "HISTORY", "new since", priorVersion);
 
 			final Exception[] errors = new Exception[2];
 			final List<Concept> concepts = new ArrayList<>();
@@ -556,9 +539,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 						"The priorVersion must be earlier than for the specified terminology = "
 								+ terminology.getVersion() + " < " + priorVersion);
 			}
-
-//			Metric.addMetric(operationsService, context.getUserId(), null, terminology.getPublisher(),
-//					terminology.getAbbreviation(), terminology.getVersion(), "HISTORY", "retired since", priorVersion);
 
 			final Exception[] errors = new Exception[2];
 			final List<Concept> concepts = new ArrayList<>();
@@ -793,15 +773,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		final AuthContext context = authorize(request);
 		try {
 
-//			Metric.addMetric(operationsService, context.getUserId(), null, null, null, null, "TERMINOLOGY", null, null);
-
 			// limit return objects to 1000 regardless of user request
 			final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
-
-			// Limit to loaded terminologies
-			final SearchParameters params = new SearchParameters(
-					"loaded:true" + ((query == null || query.isEmpty()) ? "" : " AND " + query), offset, maxLimit, sort,
-					ascending);
+			final SearchParameters params = new SearchParameters(((query == null || query.isEmpty()) ? "*:*" : query),
+					offset, maxLimit, sort, ascending);
 			final ResultList<Terminology> list = searchService.find(params, Terminology.class);
 			list.setParameters(params);
 			list.getItems().forEach(t -> t.cleanForApi());
@@ -842,6 +817,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@Parameter(name = "sort", description = "Comma-separated list of fields to sort on", required = false, schema = @Schema(implementation = String.class)),
 			@Parameter(name = "ascending", description = "<code>true</code> for ascending, <code>false</code> for descending,"
 					+ " <code>null</code> for unspecified", required = false, schema = @Schema(implementation = Boolean.class)) })
+	@Hidden
 	public ResponseEntity<ResultListMapset> findMapsets(
 			@RequestParam(name = "query", required = false) final String query,
 			@RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
@@ -852,8 +828,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		@SuppressWarnings("unused")
 		final AuthContext context = authorize(request);
 		try {
-
-//			Metric.addMetric(operationsService, context.getUserId(), null, null, null, null, "MAPSET", null, null);
 
 			// limit return objects to 1000 regardless of user request
 			final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -893,9 +867,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
-			@Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
+	@Parameters({ @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
 			@Parameter(name = "include", description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
 					+ "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
 					+ "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
@@ -913,7 +885,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			final Map<String, Terminology> map = lookupTerminologyMap();
 
 			// Get the concept
-			final String query = "id:" + StringUtility.escapeQuery(conceptId);
+			final String query = "id:" + conceptId;
 
 			// then do a find on the query
 			// don't use 'get' because it doesn't work with include param fields
@@ -930,9 +902,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			}
 
 			final Concept concept = results.getItems().get(0);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-BY-ID", concept.getCode(), null);
 
 			concept.cleanForApi();
 
@@ -973,7 +942,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
 					+ " e.g. \"uuid1\" or \"ICD10CM\".", required = true),
 			@Parameter(name = "code", description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"", required = true),
@@ -1014,9 +982,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			}
 
 			final Concept concept = results.getItems().get(0);
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-BY-CODE", concept.getCode(), null);
-
 			concept.cleanForApi();
 
 			TerminologyUtility.populateConcept(concept, ip, term, searchService);
@@ -1048,9 +1013,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
-			@Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true) })
+	@Parameters({ @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true) })
+	@Hidden
 	public ResponseEntity<List<Mapping>> getConceptMappings(@PathVariable("conceptId") final String conceptId)
 			throws Exception {
 
@@ -1058,10 +1022,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		try {
 			final IncludeParam ip = new IncludeParam("minimal");
 
-			final Map<String, Terminology> map = lookupTerminologyMap();
-
 			// Get the concept
-			final String query = "id:" + StringUtility.escapeQuery(conceptId);
+			final String query = "id:" + conceptId;
 
 			// then do a find on the query
 			// don't use 'get' because it doesn't work with include param fields
@@ -1078,10 +1040,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			}
 
 			final Concept concept = results.getItems().get(0);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-MAPPINGS-BY-ID", concept.getCode(), null);
-
 			// Find mappings
 			final List<Mapset> mapsets = lookupMapsets(context, null, true);
 			final List<Mapping> mappings = findMappingsHelper(mapsets,
@@ -1116,9 +1074,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
-			@Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true) })
+	@Parameters({ @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true) })
+	@Hidden
 	public ResponseEntity<List<Mapping>> getConceptInverseMappings(@PathVariable("conceptId") final String conceptId)
 			throws Exception {
 
@@ -1126,10 +1083,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		try {
 			final IncludeParam ip = new IncludeParam("minimal");
 
-			final Map<String, Terminology> map = lookupTerminologyMap();
-
 			// Get the concept
-			final String query = "id:" + StringUtility.escapeQuery(conceptId);
+			final String query = "id:" + conceptId;
 
 			// then do a find on the query
 			// don't use 'get' because it doesn't work with include param fields
@@ -1146,9 +1101,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			}
 
 			final Concept concept = results.getItems().get(0);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-MAPPINGS-BY-ID", concept.getCode(), null);
 
 			// Find mappings
 			final List<Mapset> mapsets = lookupMapsets(context, null, true);
@@ -1188,10 +1140,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
 					+ " e.g. \"uuid1\" or \"ICD10CM\".", required = true),
 			@Parameter(name = "code", description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"", required = true) })
+	@Hidden
 	public ResponseEntity<List<Mapping>> getConceptMappings(@PathVariable("terminology") final String terminology,
 			@PathVariable("code") final String code) throws Exception {
 
@@ -1221,9 +1173,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			}
 
 			final Concept concept = results.getItems().get(0);
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-MAPPINGS-BY-CODE", concept.getCode(),
-//					null);
 
 			// Find mappings
 			final List<Mapset> mapsets = lookupMapsets(context, null, true);
@@ -1263,10 +1212,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
 					+ " e.g. \"uuid1\" or \"ICD10CM\".", required = true),
 			@Parameter(name = "code", description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"", required = true) })
+	@Hidden
 	public ResponseEntity<List<Mapping>> getConceptInverseMappings(
 
 			@PathVariable("terminology") final String terminology, @PathVariable("code") final String code)
@@ -1298,9 +1247,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			}
 
 			final Concept concept = results.getItems().get(0);
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-MAPPINGS-BY-CODE", concept.getCode(),
-//					null);
 
 			// Find mappings
 			final List<Mapset> mapsets = lookupMapsets(context, null, true);
@@ -1341,7 +1287,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
 					+ " e.g. \"uuid1\" or \"ICD10CM\".", required = true),
 			@Parameter(name = "codes", description = "Comma-separated list of terminology codes, e.g. \"1119,1149\" or \"64572001,22298006 \"", required = true),
@@ -1359,9 +1304,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		try {
 
 			final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
-
 			final Terminology term = lookupTerminology(context, terminology);
-
 			if (StringUtility.isEmpty(codes)) {
 				throw new RestException(false, 417, "Expecation failed", "Codes parameter must be specified");
 			}
@@ -1371,9 +1314,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 				throw new RestException(false, 417, "Expecation failed",
 						"Too many codes specified in list (max is 500) = " + codeArray.length);
 			}
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, term.getPublisher(),
-//					term.getAbbreviation(), term.getVersion(), "CONCEPT-BY-CODE", codes, null);
 
 			// find with code, term, pub, version
 			final String query = StringUtility.composeQuery("AND",
@@ -1436,7 +1376,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "idOrUriLabel", description = "Project id or uriLabel", required = true),
+	@Parameters({
 			@Parameter(name = "terminology", description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
 					+ " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".", required = false),
 			@Parameter(name = "query", description = "Search text"
@@ -1479,9 +1419,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 			final IncludeParam ip = new IncludeParam(include == null ? "highlights" : include);
 			final List<Terminology> tlist = lookupTerminologies(context, terminology, true);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, tlist.get(0).getPublisher(),
-//					tlist.get(0).getAbbreviation(), tlist.get(0).getVersion(), "CONCEPT", null, null);
 
 			// Build a query from the handler and use it in findHelper
 			final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
@@ -1528,7 +1465,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "idOrUriLabel", description = "Project id or uriLabel", required = true),
+	@Parameters({
 			@Parameter(name = "mapset", description = "Comma-separated list of mapset ids or abbreviations (or null for all mapsets)."
 					+ " e.g. \"uuid1,uuid2\", \"SNOMEDCT_US-ICD10CM,CVX-NDC\".", required = false),
 			@Parameter(name = "query", description = "Search text", required = false),
@@ -1556,9 +1493,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 			// Allow mapset to be blank here
 			final List<Mapset> mapsets = lookupMapsets(context, mapset, true);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, mapsets.get(0).getPublisher(),
-//					mapsets.get(0).getAbbreviation(), mapsets.get(0).getVersion(), "MAPPING", null, null);
 
 			// Build a query from the handler and use it in findHelper
 			// limit return objects to 1000 regardless of user request
@@ -1601,7 +1535,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "idOrUriLabel", description = "Project id or uriLabel", required = true),
+	@Parameters({
 			@Parameter(name = "mapset", description = "Mapset id or abbreviation" + " e.g. \"uuid1\" or \"CVX-NDC\"."),
 			@Parameter(name = "query", description = "Search text", required = false),
 			@Parameter(name = "offset", description = "Start index for search results", required = false, schema = @Schema(implementation = Integer.class), example = "0"),
@@ -1613,6 +1547,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 					+ " <code>null</code> for both", required = false, schema = @Schema(implementation = Boolean.class)),
 			@Parameter(name = "leaf", description = "<code>true</code> for leaf nodes only, <code>false</code> for non-leaf nodes,"
 					+ " <code>null</code> for either", required = false, schema = @Schema(implementation = Boolean.class)), })
+	@Hidden
 	public ResponseEntity<ResultListMapping> findMapsetMappings(@PathVariable("mapset") final String mapsetId,
 			@RequestParam(name = "query", required = false) final String query,
 			@RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
@@ -1627,9 +1562,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 			// Allow mapset to be blank here
 			final List<Mapset> mapsets = lookupMapsets(context, mapsetId, false);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, mapsets.get(0).getPublisher(),
-//					mapsets.get(0).getAbbreviation(), mapsets.get(0).getVersion(), "MAPPING", null, null);
 
 			// Build a query from the handler and use it in findHelper
 			// limit return objects to 1000 regardless of user request
@@ -1672,7 +1604,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "idOrUriLabel", description = "Project id or uriLabel", required = true),
+	@Parameters({
 			@Parameter(name = "terminology", description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
 					+ " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".", required = false),
 			@Parameter(name = "query", description = "Search text"
@@ -1696,13 +1628,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@RequestParam(name = "handler", required = false) @Parameter(hidden = true) final String handler)
 			throws Exception {
 
+		@SuppressWarnings("unused")
 		final AuthContext context = authorize(request);
 		try {
-
-			final List<Terminology> tlist = lookupTerminologies(context, terminology);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, tlist.get(0).getPublisher(),
-//					tlist.get(0).getAbbreviation(), tlist.get(0).getVersion(), "TERM", null, null);
 
 			// Build a query from the handler and use it in findHelper
 			final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
@@ -1714,8 +1642,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			if (active != null && active) {
 				params.setActive(true);
 			}
-//			final ResultList<Term> list = searchService.find(params, Term.class, null,
-//					tlist.stream().map(t -> t.getIndexName()).collect(Collectors.toList()));
 			final ResultList<Term> list = searchService.find(params, Term.class);
 
 			list.getItems().forEach(t -> t.cleanForApi());
@@ -1753,7 +1679,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "idOrUriLabel", description = "Project id or uriLabel", required = true),
+	@Parameters({
 			@Parameter(name = "terminology", description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
 					+ " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".", required = false),
 			@Parameter(name = "query", description = "Search text", required = true),
@@ -1763,20 +1689,17 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@RequestParam(name = "query", required = true) final String query,
 			@RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit) throws Exception {
 
+		@SuppressWarnings("unused")
 		final AuthContext context = authorize(request);
 		try {
-
-			// Get project terminologies (that support autocomplete)
-			final List<Terminology> tlist = lookupTerminologies(context, terminology, true).stream()
-					.filter(t -> t.getAttributes().containsKey(Terminology.Attributes.autocomplete.property()))
-					.collect(Collectors.toList());
 
 			// Perform ngram search for chars typed
 			final Integer maxLimit = (limit == null) ? 10 : Math.min(limit, 1000);
 			final int doubleQueryLength = (query.length() < 5 ? 5 : query.length()) * 2;
+			// TODO: NUNO - not working with Lucene
 			final SearchParameters params = new SearchParameters(
-					"name.ngram:\"" + StringUtility.escapeQuery(query) + "\"" + " AND ((length:[* TO "
-							+ doubleQueryLength + "])^100" + " OR length:[" + (doubleQueryLength + 1) + " TO *])",
+					"name.ngram:" + StringUtility.escapeQuery(query) + "" + " AND ((length:[* TO " + doubleQueryLength
+							+ "])^100" + " OR length:[" + (doubleQueryLength + 1) + " TO *])",
 					0, maxLimit * 2, null, null);
 			final ResultList<Term> list = searchService.findFields(params, ModelUtility.asList("name"), Term.class);
 			final Set<String> seen = new HashSet<>();
@@ -1817,7 +1740,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "idOrUriLabel", description = "Project id or uriLabel", required = true),
+	@Parameters({
 			@Parameter(name = "terminology", description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
 					+ " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".", required = false),
 			@Parameter(name = "expression", description = "ECL-style expression"
@@ -1853,10 +1776,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			final IncludeParam ip = new IncludeParam(include == null ? "semanticTypes" : include);
 			final List<Terminology> tlist = lookupTerminologies(context, terminology);
 			final String[] array = ModelUtility.nvl(queries, "").split("\n");
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, tlist.get(0).getPublisher(),
-//					tlist.get(0).getAbbreviation(), tlist.get(0).getVersion(), "CONCEPT-BATCH", "size",
-//					array.length + "");
 
 			final List<ResultListConcept> list = new ArrayList<>();
 			for (final String query : array) {
@@ -1921,7 +1840,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "idOrUriLabel", description = "Project id or uriLabel", required = true),
+	@Parameters({
 			@Parameter(name = "terminology", description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
 					+ " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".", required = false),
 			@Parameter(name = "expression", description = "ECL-style expression"
@@ -1950,9 +1869,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			final IncludeParam ip = new IncludeParam("semanticTypes");
 			final List<Terminology> tlist = lookupTerminologies(context, terminology);
 			final String[] array = ModelUtility.nvl(queries, "").split("\n");
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, tlist.get(0).getPublisher(),
-//					tlist.get(0).getAbbreviation(), tlist.get(0).getVersion(), "EXPORT", "lookup", array.length + "");
 
 			// Build export file
 			final StringBuilder sb = new StringBuilder("term\tterminology\tcode\tname\ttype\tconfidence\n");
@@ -2044,7 +1960,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "idOrUriLabel", description = "Project id or uriLabel", required = true),
+	@Parameters({
 			@Parameter(name = "terminology", description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
 					+ " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".", required = false),
 			@Parameter(name = "query", description = "Search text"
@@ -2070,13 +1986,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@RequestParam(name = "handler", required = false) @Parameter(hidden = true) final String handler)
 			throws Exception {
 
+		// TODO: NUNO seems like there is something off with
+		// Terminology.getExpressionQuery as everything is returned rather than limited
+		// to terminology
+
 		final AuthContext context = authorize(request);
 		try {
 
 			final List<Terminology> tlist = lookupTerminologies(context, terminology);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, tlist.get(0).getPublisher(),
-//					tlist.get(0).getAbbreviation(), tlist.get(0).getVersion(), "EXPORT", "search", null);
 
 			// Check for a single terminology
 			final Terminology single = tlist.size() == 0 ? null : tlist.get(0);
@@ -2314,7 +2231,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "query", description = "Search text"
 					+ " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
 					+ "See here for more info</a>)", required = false),
@@ -2333,9 +2249,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		@SuppressWarnings("unused")
 		final AuthContext context = authorize(request);
 		try {
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, null, null, null, "METADATA", "find",
-//					null);
 
 			final Map<String, Terminology> map = lookupTerminologyMap();
 			if (map.size() == 0) {
@@ -2382,9 +2295,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
-			@Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
+	@Parameters({ @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
 			@Parameter(name = "query", description = "Search text"
 					+ " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
 					+ "See here for more info</a>)", required = false),
@@ -2393,7 +2304,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@Parameter(name = "sort", description = "Comma-separated list of fields to sort on", required = false),
 			@Parameter(name = "ascending", description = "<code>true</code> for ascending, <code>false</code> for descending,"
 					+ " <code>null</code> for unspecified", required = false) })
-
 	public ResponseEntity<ResultListConceptRelationship> findConceptRelationships(
 			@PathVariable("conceptId") final String conceptId,
 			@RequestParam(name = "query", required = false) final String query,
@@ -2408,19 +2318,11 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		final AuthContext context = authorize(request);
 		try {
 
-			final Map<String, Terminology> indexMap = lookupTerminologyMap();
-
 			// look up concept first and get code
 			final Concept concept = searchService.get(conceptId, Concept.class);
 			if (concept == null) {
 				throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
 			}
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-BY-ID", "relationships", null);
-
-			// Choose indexName for the concept
-			final Terminology terminology = getTerminology(indexMap, concept);
 
 			// limit return objects to 1000 regardless of user request
 			final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -2468,7 +2370,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
 					+ " e.g. \"uuid1\" or \"ICD10CM\"."),
 			@Parameter(name = "code", description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"", required = true),
@@ -2491,13 +2392,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@RequestParam(name = "handler", required = false) @Parameter(hidden = true) final String handler)
 			throws Exception {
 
+		@SuppressWarnings("unused")
 		final AuthContext context = authorize(request);
 		try {
-
-			final Terminology term = lookupTerminology(context, terminology);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, term.getPublisher(),
-//					term.getAbbreviation(), term.getVersion(), "CONCEPT-BY-CODE", "relationships", null);
 
 			// limit return objects to 1000 regardless of user request
 			final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -2548,9 +2445,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
-			@Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
+	@Parameters({ @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
 			@Parameter(name = "query", description = "Search text"
 					+ " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
 					+ "See here for more info</a>)", required = false),
@@ -2573,20 +2468,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		final AuthContext context = authorize(request);
 		try {
 
-			final Map<String, Terminology> indexMap = lookupTerminologyMap();
-
 			// look up concept first and get code
 			// then do a find on the query
 			final Concept concept = searchService.get(conceptId, Concept.class);
 			if (concept == null) {
 				throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
 			}
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-BY-ID", "inverseRelationships", null);
-
-			// Choose indexName for the concept
-			final Terminology terminology = getTerminology(indexMap, concept);
 
 			// limit return objects to 1000 regardless of user request
 			final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -2635,7 +2522,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
 					+ " e.g. \"uuid1\" or \"ICD10CM\"."),
 			@Parameter(name = "code", description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"", required = true),
@@ -2658,13 +2544,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@RequestParam(name = "handler", required = false) @Parameter(hidden = true) final String handler)
 			throws Exception {
 
+		@SuppressWarnings("unused")
 		final AuthContext context = authorize(request);
 		try {
-
-			final Terminology term = lookupTerminology(context, terminology);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, term.getPublisher(),
-//					term.getAbbreviation(), term.getVersion(), "CONCEPT-BY-CODE", "inverseRelationships", null);
 
 			// limit return objects to 1000 regardless of user request
 			final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -2714,9 +2596,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
-			@Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
+	@Parameters({ @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
 			@Parameter(name = "query", description = "Search text"
 					+ " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
 					+ "See here for more info</a>)", required = false),
@@ -2747,9 +2627,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			if (concept == null) {
 				throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
 			}
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-BY-ID", "treePositions", null);
 
 			// Choose indexName for the concept
 			final Terminology terminology = getTerminology(map, concept);
@@ -2809,7 +2686,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
 					+ " e.g. \"uuid1\" or \"ICD10CM\"."),
 			@Parameter(name = "code", description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"", required = true),
@@ -2836,9 +2712,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		try {
 
 			final Terminology term = lookupTerminology(context, terminology);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, term.getPublisher(),
-//					term.getAbbreviation(), term.getVersion(), "CONCEPT-BY-CODE", "treePositions", null);
 
 			// limit return objects to 1000 regardless of user request
 			final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -2896,9 +2769,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
-			@Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
+	@Parameters({ @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
 			@Parameter(name = "query", description = "Search text"
 					+ " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
 					+ "See here for more info</a>)", required = false),
@@ -2923,20 +2794,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		final AuthContext context = authorize(request);
 		try {
 
-			final Map<String, Terminology> map = lookupTerminologyMap();
-
 			// look up concept first and get code
 			// then do a find on the query
 			final Concept concept = searchService.get(conceptId, Concept.class);
 			if (concept == null) {
 				throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
 			}
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-BY-ID", "treePosition.children", null);
-
-			// Choose indexName for the concept
-			final Terminology terminology = getTerminology(map, concept);
 
 			// Find this thing
 			final SearchParameters params = new SearchParameters(1, 0);
@@ -3018,7 +2881,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
 					+ " e.g. \"uuid1\" or \"ICD10CM\"."),
 			@Parameter(name = "code", description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"", required = true),
@@ -3041,13 +2903,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@RequestParam(name = "handler", required = false) @Parameter(hidden = true) final String handler)
 			throws Exception {
 
+		@SuppressWarnings("unused")
 		final AuthContext context = authorize(request);
 		try {
-
-			final Terminology term = lookupTerminology(context, terminology);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, term.getPublisher(),
-//					term.getAbbreviation(), term.getVersion(), "CONCEPT-BY-CODE", "treePosition.children", null);
 
 			// Find this thing
 			final SearchParameters params = new SearchParameters(1, 0);
@@ -3121,9 +2979,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
 			@ApiResponse(responseCode = "417", description = "Not found", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = MediaType.APPLICATION_JSON)) })
-	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
-			@Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true) })
+	@Parameters({ @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true) })
 	public @ResponseBody ResponseEntity<Resource> getConceptDiagram(@PathVariable("conceptId") final String conceptId)
 			throws Exception {
 
@@ -3134,9 +2990,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 			// look up concept first and get code
 			// Get the concept
-			final Concept concept = searchService.findSingle(
-					new SearchParameters("id:" + StringUtility.escapeQuery(conceptId), null, null, null, null),
-					Concept.class);
+			final Concept concept = searchService
+					.findSingle(new SearchParameters("id:" + conceptId, null, null, null, null), Concept.class);
 			if (concept == null) {
 				throw new RestException(false, 417, "Expectation failed", "Specified concept is null " + conceptId);
 
@@ -3157,11 +3012,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			concept.setRelationships(rels.getItems());
 
 			// lookup metadata
-			params = new SearchParameters("", null, 100000, null, null);
+			params = new SearchParameters("*:*", null, 100000, null, null);
 			final ResultList<Metadata> metadata = searchService.find(params, Metadata.class);
-
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-BY-ID", "diagram", null);
 
 			// call diagram application to generate image
 			final HttpClient httpClient = HttpClientBuilder.create().build();
@@ -3221,9 +3073,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 			// look up concept first and get code
 			// Get the concept
-			final Concept concept = searchService.findSingle(
-					new SearchParameters("id:" + StringUtility.escapeQuery(conceptId), null, null, null, null),
-					Concept.class);
+			final Concept concept = searchService
+					.findSingle(new SearchParameters("id:" + conceptId, null, null, null, null), Concept.class);
 			if (concept == null) {
 				throw new RestException(false, 417, "Expectation failed", "Specified concept is null " + conceptId);
 
@@ -3304,7 +3155,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@ApiResponse(responseCode = "417", description = "Not found", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
 			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = MediaType.APPLICATION_JSON)) })
 	@Parameters({
-			@Parameter(name = "idOrUriLabel", description = "Project id or uriLabel, e.g. \"sandbox\"", required = true),
 			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
 					+ " e.g. \"uuid1\" or \"ICD10CM\".", required = true),
 			@Parameter(name = "code", description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"", required = true) })
@@ -3349,9 +3199,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			params = new SearchParameters("", null, 100000, null, null);
 			final ResultList<Metadata> metadata = searchService.find(params, Metadata.class);
 
-//			Metric.addMetric(operationsService, context.getUserId(), idOrUriLabel, concept.getPublisher(),
-//					concept.getTerminology(), concept.getVersion(), "CONCEPT-BY-CODE", "diagram", null);
-
 			// call diagram application to generate image
 			final HttpClient httpClient = HttpClientBuilder.create().build();
 			final String diagramUrl = PropertyUtility.getProperties().getProperty("api.url.termhub-diagram-service");
@@ -3383,7 +3230,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	 * @return the list
 	 * @throws Exception the exception
 	 */
-	public Map<String, Terminology> lookupTerminologyMap() throws Exception {
+	private Map<String, Terminology> lookupTerminologyMap() throws Exception {
 
 		final String query = "*:*"; // "latest:true";
 		Map<String, Terminology> indexMap = terminologyCache.get(query);
@@ -3411,7 +3258,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	 * @return the map
 	 * @throws Exception the exception
 	 */
-	public Map<String, Mapset> lookupMapsetMap(final AuthContext context) throws Exception {
+	private Map<String, Mapset> lookupMapsetMap(final AuthContext context) throws Exception {
 
 		final String query = "latest:true";
 		Map<String, Mapset> indexMap = mapsetCache.get(query);
@@ -3440,7 +3287,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	 * @return the map
 	 * @throws Exception the exception
 	 */
-	public Terminology lookupTerminology(final AuthContext context, final String terminology) throws Exception {
+	private Terminology lookupTerminology(final AuthContext context, final String terminology) throws Exception {
 
 		final List<Terminology> terminologies = lookupTerminologyMap().values().stream()
 				.filter(t -> t.getId().equals(terminology) || t.getAbbreviation().equals(terminology))
@@ -3466,7 +3313,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	 * @return the list
 	 * @throws Exception the exception
 	 */
-	public List<Terminology> lookupTerminologies(final AuthContext context, final String terminology) throws Exception {
+	private List<Terminology> lookupTerminologies(final AuthContext context, final String terminology)
+			throws Exception {
 		return lookupTerminologies(context, terminology, false);
 	}
 
@@ -3479,7 +3327,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	 * @return the list
 	 * @throws Exception the exception
 	 */
-	public List<Terminology> lookupTerminologies(final AuthContext context, final String terminology,
+	private List<Terminology> lookupTerminologies(final AuthContext context, final String terminology,
 			final boolean allowBlank) throws Exception {
 
 		if (!allowBlank && StringUtility.isEmpty(terminology)) {
@@ -3513,7 +3361,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	 * @return the list
 	 * @throws Exception the exception
 	 */
-	public List<Mapset> lookupMapsets(final AuthContext context, final String mapset) throws Exception {
+	private List<Mapset> lookupMapsets(final AuthContext context, final String mapset) throws Exception {
 		return lookupMapsets(context, mapset, false);
 	}
 
@@ -3526,7 +3374,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	 * @return the list
 	 * @throws Exception the exception
 	 */
-	public List<Mapset> lookupMapsets(final AuthContext context, final String mapset, final boolean allowBlank)
+	private List<Mapset> lookupMapsets(final AuthContext context, final String mapset, final boolean allowBlank)
 			throws Exception {
 
 		if (!allowBlank && StringUtility.isEmpty(mapset)) {
@@ -3558,7 +3406,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	 * @return the terminology
 	 * @throws Exception the exception
 	 */
-	public Terminology getTerminology(final Map<String, Terminology> map, final Concept concept) throws Exception {
+	private Terminology getTerminology(final Map<String, Terminology> map, final Concept concept) throws Exception {
 		// Choose indexName for the concept
 		final Terminology terminology = map
 				.get(concept.getTerminology() + concept.getPublisher() + concept.getVersion());
@@ -3570,50 +3418,5 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		}
 		return terminology;
 	}
-
-//	/**
-//	 * Lookup project.
-//	 *
-//	 * @param context      the context
-//	 * @param idOrUriLabel the project id or uri label
-//	 * @return the project
-//	 * @throws Exception the exception
-//	 */
-//	private Project lookupProject(final AuthContext context, final String idOrUriLabel) throws Exception {
-//
-//		final boolean projectToken = "PROJECT".equals(context.getRole());
-//
-//		// If the "context" is a PROJECT token, verify the project id matches
-//		if (projectToken && !ClientFactory.get(ConfigClient.class).checkApiKey(context.getJwt())) {
-//			throw new RestException(false, 403, "Forbidden", "Project api key is no longer valid");
-//		}
-//
-//		// Lookup project in cache or get
-//		Project project = projectCache.get(idOrUriLabel);
-//		if (project == null) {
-//			project = ClientFactory.get(ProjectClient.class).getOrFindProject(idOrUriLabel);
-//			projectCache.put(idOrUriLabel, project);
-//		}
-//
-//		// Check to see if project exists
-//		if (project == null) {
-//			throw new RestException(false, 404, "Not found", "Unable to find project for " + idOrUriLabel);
-//		}
-//
-//		// Verify project token is for this project
-//		if (projectToken && !project.getId().equals(context.getProjectId())) {
-//			// NOTE: this means that the api key can't be used for public projects either
-//			throw new RestException(false, 403, "Forbidden",
-//					"Project API key can only access project = " + context.getProjectId());
-//
-//		}
-//
-//		// Handle expired - expired is only allowed to access public projects
-//		if (context.isPlanExpired() && (project.getPublic() == null || !project.getPublic())) {
-//			throw new RestException(false, 403, "Forbidden",
-//					"User plan is expired, only public projects are allowed to be accesed");
-//		}
-//		return project;
-//	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2023 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -9,12 +9,15 @@
  */
 package com.wci.termhub.test;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
+import org.apache.logging.log4j.ThreadContext;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.wci.termhub.model.User;
+import com.wci.termhub.util.JwtUtility;
+import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.util.TestUtility;
 
 /**
  * Abstract superclass for source code tests.
@@ -22,10 +25,23 @@ import org.slf4j.LoggerFactory;
 public class AbstractTest {
 
 	/** The logger. */
+	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(AbstractTest.class);
 
 	/** The setup. */
 	private static boolean setup = false;
+
+	/** The test id. */
+	private static String testId = null;
+
+	/** The test jwt. */
+	private static String testJwt = null;
+
+	/** The admin id. */
+	private static String adminId = null;
+
+	/** The admin jwt. */
+	private static String adminJwt = null;
 
 	/**
 	 * Setup once. NOTE: Using @BeforeAll means the PropertyUtility is not yet
@@ -35,48 +51,55 @@ public class AbstractTest {
 	 */
 	@BeforeEach
 	public void setupOnce() throws Exception {
-//        if (!setup) {
-//            setup = true;
-//            if (!PropertyUtility.getProperties().getProperty("hibernate.hbm2ddl.auto")
-//                    .equals("create")) {
-//                MigrationUtility.migrateDatabase("MODEL");
-//            } else {
-//                try (final RootService service = new RootServiceImpl()) {
-//                    service.close();
-//                }
-//            }
-//
-//        }
+		if (!setup) {
+			setup = true;
+			PropertyUtility.getProperties();
+			// Prepare JWTs for testing
+			final User testUser = TestUtility.getMockUser("test");
+			testId = testUser.getId();
+			testJwt = JwtUtility.mockJwt(testId, "UNLIMITED", "USER");
+
+			final User adminUser = TestUtility.getMockUser("admin");
+			adminId = adminUser.getId();
+			adminJwt = JwtUtility.mockJwt(adminId, "UNLIMITED", "ADMIN");
+
+			// Start with testuser
+			setTestUser();
+		}
 	}
 
 	/**
-	 * Sets the up.
-	 *
-	 * @param testInfo the up
+	 * Sets the test user.
 	 */
-	@BeforeEach
-	void setUp(final TestInfo testInfo) {
-		logger.info("Starting test - {}", testInfo.getDisplayName());
+	public static void setTestUser() {
+		ThreadContext.put("jwt", testJwt);
+		ThreadContext.put("user-id", testId);
 	}
 
 	/**
-	 * Tear down.
-	 *
-	 * @param testInfo the test info
+	 * Sets the admin user.
 	 */
-	@AfterEach
-	void tearDown(final TestInfo testInfo) {
-		logger.info("Finish test - {}", testInfo.getDisplayName());
+	public static void setAdminUser() {
+		ThreadContext.put("jwt", adminJwt);
+		ThreadContext.put("user-id", adminId);
 	}
 
 	/**
-	 * Teardown once.
+	 * Returns the test jwt.
 	 *
-	 * @throws Exception the exception
+	 * @return the test jwt
 	 */
-	@AfterAll
-	public static void teardownOnce() throws Exception {
-		// n/a - use in memory db, this just goes away
+	public static String getTestJwt() {
+		return testJwt;
+	}
+
+	/**
+	 * Returns the admin jwt.
+	 *
+	 * @return the admin jwt
+	 */
+	public static String getAdminJwt() {
+		return adminJwt;
 	}
 
 }

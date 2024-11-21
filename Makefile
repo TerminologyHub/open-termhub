@@ -41,9 +41,11 @@ install:
 release:
 	./gradlew uploadArchives
 
-run:
+rundebug:
 	./gradlew bootRun --debug-jvm
+	
+run:
+	./gradlew bootRun
 
 version:
 	@echo $(APP_VERSION)
-

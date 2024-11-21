@@ -37,7 +37,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
 	private static final Logger LOG = LoggerFactory.getLogger(EntityServiceImpl.class);
 
 	/** The find all page size. */
-	private static int findAllPageSize = 10000;
+	private int findAllPageSize = 10000;
 
 	/** The builders. */
 	@Autowired
@@ -265,10 +265,12 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
 	/* see superclass */
 	@Override
-	public <T extends HasId> ResultList<T> findFields(final SearchParameters params, final List<String> fields,
-			final Class<T> clazz) throws Exception {
+	public <T extends HasId> ResultList<T> findFields(final SearchParameters searchParameters,
+			final List<String> fields, final Class<T> clazz) throws Exception {
 
-		return null;
+		checkIfEntityHasDocumentAnnotation(clazz);
+		final LuceneDataAccess luceneData = new LuceneDataAccess();
+		return luceneData.find(clazz, searchParameters);
 	}
 
 	/* see superclass */

@@ -19,15 +19,15 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
- * The Class Concept2UnitTest.
+ * The Class ConceptSearchUnitTest.
  */
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class Concept2UnitTest {
+public class ConceptSearchUnitTest {
 
 	/** The logger. */
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(Concept2UnitTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ConceptSearchUnitTest.class);
 
 	/** The Constant SEARCH_PARAMETERS. */
 	private static final SearchParameters SEARCH_PARAMETERS = new SearchParameters(1000, 0);

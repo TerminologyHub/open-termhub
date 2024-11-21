@@ -59,7 +59,7 @@ public class DefaultQueryBuilder implements QueryBuilder {
 	/* see superclass */
 	@Override
 	public String buildQuery(final String query) {
-		return (StringUtility.isEmpty(query) || query.equals("*")) ? "*" : query;
+		return (StringUtility.isEmpty(query) || query.equals("*")) ? "*:*" : query;
 	}
 
 	/* see superclass */
@@ -80,7 +80,7 @@ public class DefaultQueryBuilder implements QueryBuilder {
 	/* see superclass */
 	@Override
 	public String buildEscapedQuery(final String query) {
-		return (StringUtility.isEmpty(query) || query.equals("*")) ? "*"
+		return (StringUtility.isEmpty(query) || query.equals("*")) ? "*:*"
 				: ("\"" + StringUtility.escapeQuery(query) + "\"");
 	}
 

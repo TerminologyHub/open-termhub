@@ -19,15 +19,15 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
- * The Class Metadata2UnitTest.
+ * The Class MetadataSearchUnitTest.
  */
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class Metadata2UnitTest {
+public class MetadataSearchUnitTest {
 
 	/** The logger. */
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(Metadata2UnitTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(MetadataSearchUnitTest.class);
 
 	/** The search service. */
 	@Autowired

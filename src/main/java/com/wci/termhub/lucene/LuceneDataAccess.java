@@ -356,6 +356,8 @@ public class LuceneDataAccess {
 	public <T extends HasId> ResultList<T> find(final Class<T> clazz, final SearchParameters searchParameters,
 			final Query phraseQuery) throws Exception {
 
+		IndexSearcher searcher = null;
+
 		try (final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, clazz.getCanonicalName()));
 				final IndexReader reader = DirectoryReader.open(fsDirectory)) {
 
@@ -364,7 +366,7 @@ public class LuceneDataAccess {
 
 			LOG.info("Query: {}", queryBuilder);
 
-			final IndexSearcher searcher = new IndexSearcher(reader);
+			searcher = new IndexSearcher(reader);
 
 			final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
 					? IndexUtility.getDefaultSortOrder(clazz)
@@ -381,7 +383,7 @@ public class LuceneDataAccess {
 					: searcher.search(queryBuilder, end);
 			LOG.info("Query topDocs: {}", topDocs.totalHits.value);
 
-			final ResultList<T> results = new ResultList();
+			final ResultList<T> results = new ResultList<>();
 			final ObjectMapper mapper = new ObjectMapper();
 			for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
 
@@ -400,6 +402,10 @@ public class LuceneDataAccess {
 		} catch (final Exception e) {
 			LOG.error("Error: {}", e);
 			throw e;
+		} finally {
+			if (searcher != null && searcher.getIndexReader() != null) {
+				searcher.getIndexReader().close();
+			}
 		}
 	}
 

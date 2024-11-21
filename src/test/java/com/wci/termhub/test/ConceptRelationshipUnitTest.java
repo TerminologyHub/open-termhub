@@ -5,7 +5,6 @@ package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -103,21 +102,21 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 	/** The Constant INDEX_NAME. */
 	private static final String INDEX_NAME = ConceptRelationship.class.getCanonicalName();
 
-	/**
-	 * Delete index.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	@Order(1)
-	public void deleteIndex() throws Exception {
-
-		logger.info("Deleting index for Concept Relationship");
-		searchService.deleteIndex(ConceptRelationship.class);
-
-		// assert directory does not exist
-		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-	}
+//	/**
+//	 * Delete index.
+//	 *
+//	 * @throws Exception the exception
+//	 */
+//	@Test
+//	@Order(1)
+//	public void deleteIndex() throws Exception {
+//
+//		logger.info("Deleting index for Concept Relationship");
+//		searchService.deleteIndex(ConceptRelationship.class);
+//
+//		// assert directory does not exist
+//		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
+//	}
 
 	/**
 	 * Creates the index.

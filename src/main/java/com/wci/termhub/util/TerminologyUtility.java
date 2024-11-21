@@ -720,10 +720,8 @@ public final class TerminologyUtility {
 			final Set<EclToLuceneConverter.InternalFunction> x = CONVERTER_MAP.keySet();
 			for (final EclToLuceneConverter.InternalFunction internalFunction : x) {
 				while (luceneQuery.contains(internalFunction.name())) {
-					luceneQuery =
-
-							processInternalFunction(searchService, terminology, publisher, version, luceneQuery,
-									internalFunction, indexName);
+					luceneQuery = processInternalFunction(searchService, terminology, publisher, version, luceneQuery,
+							internalFunction, indexName);
 				}
 			}
 

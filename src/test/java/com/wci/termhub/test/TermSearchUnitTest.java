@@ -25,11 +25,11 @@ import com.wci.termhub.service.EntityRepositoryService;
 
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class Term2UnitTest {
+public class TermSearchUnitTest {
 
 	/** The logger. */
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(Term2UnitTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TermSearchUnitTest.class);
 
 	/** The Constant SEARCH_PARAMETERS. */
 	private static final SearchParameters SEARCH_PARAMETERS = new SearchParameters(1000, 0);
