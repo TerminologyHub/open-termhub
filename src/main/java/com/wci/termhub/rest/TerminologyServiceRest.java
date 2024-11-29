@@ -10,14 +10,10 @@ import org.springframework.http.ResponseEntity;
 
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
-import com.wci.termhub.model.Mapping;
-import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
-import com.wci.termhub.model.ResultListMapping;
-import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -38,15 +34,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
 	public ResponseEntity<Terminology> getTerminology(String id) throws Exception;
 
 	/**
-	 * Gets the mapset.
-	 *
-	 * @param id the id
-	 * @return the mapset
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<Mapset> getMapset(String id) throws Exception;
-
-	/**
 	 * Returns the terminology metadata. GET /terminology/{id:[a-f0-9].+}/metadata
 	 * tag=metadata
 	 *
@@ -55,8 +42,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
 	 * @throws Exception the exception
 	 */
 	public ResponseEntity<List<Metadata>> getTerminologyMetadata(String id) throws Exception;
-
-	// Mapset metadata?? - not yet
 
 	/**
 	 * Returns the concept names and codes for the terminology that are new relative
@@ -130,20 +115,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
 			String sort, Boolean ascending) throws Exception;
 
 	/**
-	 * Find mapsets.
-	 *
-	 * @param query     the query
-	 * @param offset    the offset
-	 * @param limit     the limit
-	 * @param sort      the sort
-	 * @param ascending the ascending
-	 * @return the response entity
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<ResultListMapset> findMapsets(String query, Integer offset, Integer limit, String sort,
-			Boolean ascending) throws Exception;
-
-	/**
 	 * Gets the concept. GET /concept/{conceptId} tag=concept by id
 	 *
 	 * @param conceptId the concept id
@@ -202,78 +173,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
 			String handler) throws Exception;
 
 	/**
-	 * Find mappings.
-	 *
-	 * @param mapset    the mapset
-	 * @param query     the query
-	 * @param offset    the offset
-	 * @param limit     the limit
-	 * @param sort      the sort
-	 * @param ascending the ascending
-	 * @param active    the active
-	 * @param leaf      the leaf
-	 * @return the response entity
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<ResultListMapping> findMappings(String mapset, String query, Integer offset, Integer limit,
-			String sort, Boolean ascending, Boolean active, Boolean leaf) throws Exception;
-
-	/**
-	 * Find mapset.
-	 *
-	 * @param mapset    the mapset id
-	 * @param query     the query
-	 * @param offset    the offset
-	 * @param limit     the limit
-	 * @param sort      the sort
-	 * @param ascending the ascending
-	 * @param active    the active
-	 * @param leaf      the leaf
-	 * @return the response entity
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<ResultListMapping> findMapsetMappings(String mapset, String query, Integer offset,
-			Integer limit, String sort, Boolean ascending, Boolean active, Boolean leaf) throws Exception;
-
-	/**
-	 * Find concept mappings.
-	 *
-	 * @param conceptId the concept id
-	 * @return the response entity
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<List<Mapping>> getConceptMappings(String conceptId) throws Exception;
-
-	/**
-	 * Gets the concept inverse mappings.
-	 *
-	 * @param conceptId the concept id
-	 * @return the concept inverse mappings
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<List<Mapping>> getConceptInverseMappings(String conceptId) throws Exception;
-
-	/**
-	 * Gets the concept mappings.
-	 *
-	 * @param terminology the terminology
-	 * @param code        the code
-	 * @return the concept mappings
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<List<Mapping>> getConceptMappings(String terminology, String code) throws Exception;
-
-	/**
-	 * Gets the concept inverse mappings.
-	 *
-	 * @param terminology the terminology
-	 * @param code        the code
-	 * @return the concept inverse mappings
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<List<Mapping>> getConceptInverseMappings(String terminology, String code) throws Exception;
-
-	/**
 	 * Find terms.
 	 *
 	 * @param terminology the terminology
@@ -291,17 +190,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
 			String sort, Boolean ascending, Boolean active, String handler) throws Exception;
 
 	/**
-	 * Autocomplete.
-	 *
-	 * @param terminology the terminology
-	 * @param query       the query
-	 * @param limit       the limit
-	 * @return the response entity
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<List<String>> autocomplete(String terminology, String query, Integer limit) throws Exception;
-
-	/**
 	 * Lookup.
 	 *
 	 * @param terminology the terminology
@@ -317,61 +205,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
 	 */
 	public ResponseEntity<List<ResultListConcept>> lookup(String terminology, String expression, Integer limit,
 			Boolean active, Boolean leaf, String include, String handler, String queries) throws Exception;
-
-	/**
-	 * Export lookup.
-	 *
-	 * @param terminology the terminology
-	 * @param expression  the expression
-	 * @param limit       the limit
-	 * @param active      the active
-	 * @param leaf        the leaf
-	 * @param handler     the handler
-	 * @param queries     the queries
-	 * @return the response entity
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<Resource> exportLookup(String terminology, String expression, Integer limit, Boolean active,
-			Boolean leaf, String handler, String queries) throws Exception;
-
-	/**
-	 * Export concepts.
-	 *
-	 * @param terminology the terminology
-	 * @param query       the query
-	 * @param expression  the expression
-	 * @param sort        the sort
-	 * @param ascending   the ascending
-	 * @param active      the active
-	 * @param leaf        the leaf
-	 * @param handler     the handler
-	 * @return the response entity
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<Resource> exportConcepts(String terminology, String query, String expression, String sort,
-			Boolean ascending, Boolean active, Boolean leaf, String handler) throws Exception;
-
-//	/**
-//	 * Export Terminologies.
-//	 *
-//	 * @param idOrUriLabel the projectId
-//	 * @param terminology  the terminology
-//	 * @param format       the format
-//	 * @return the response entity
-//	 * @throws Exception the exception
-//	 */
-//	public ResponseEntity<Resource> exportTerminology(String terminology, String format) throws Exception;
-
-//	/**
-//	 * Export mapset.
-//	 *
-//	 * @param idOrUriLabel the id or uri label
-//	 * @param mapset       the mapset
-//	 * @param format       the format
-//	 * @return the response entity
-//	 * @throws Exception the exception
-//	 */
-//	public ResponseEntity<Resource> exportMapset(String mapset, String format) throws Exception;
 
 	/**
 	 * Find metadata across project terminologies. GET /metadata tag=metadata
