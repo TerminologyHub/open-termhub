@@ -164,12 +164,26 @@ task runLoadConceptRels(type: JavaExec) {
 }
 
 tasks.withType(JavaExec) {
+<<<<<<< Updated upstream
     if (System.getProperty('DEBUG', 'false') == 'true') {
         jvmArgs '-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5555'
+=======
+  if (System.getProperty('DEBUG', 'false') == 'true') {
+    jvmArgs '-Xdebug'
+    jvmArgs += '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005'
+  }
+  jvmArgs += '--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED'
+}
+
+bootRun {
+    if (project.hasProperty('debug')) {
+        jvmArgs += '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005'
+>>>>>>> Stashed changes
     }
+    jvmArgs += '--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED'
 }
 
 
 bootJar {
-  mainClass = 'com.wci.termhub.open.Application'
+  mainClass = 'com.wci.termhub.Application'
 }
