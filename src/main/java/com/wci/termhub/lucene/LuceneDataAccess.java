@@ -60,7 +60,7 @@ public class LuceneDataAccess {
 	 */
 	public LuceneDataAccess() {
 		// n/a
-		indexRootDirectory = PropertyUtility.getProperty("lucene.index.directory");
+		indexRootDirectory = PropertyUtility.getProperties().getProperty("lucene.index.directory");
 	}
 
 	/**

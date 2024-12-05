@@ -99,7 +99,7 @@ public class TermLoader {
 			while ((line = br.readLine()) != null && (limit == -1 || count < limit)) {
 
 				final JsonNode rootNode = objectMapper.readTree(line);
-				final JsonNode termNode = rootNode.get("_source");
+				final JsonNode termNode = (rootNode.has("_source")) ? rootNode.get("_source") : rootNode;
 				final Term term = ModelUtility.fromJson(termNode.toString(), Term.class);
 				termBatch.add(term);
 

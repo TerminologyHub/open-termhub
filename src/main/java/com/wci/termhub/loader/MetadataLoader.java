@@ -107,7 +107,7 @@ public class MetadataLoader {
 			while ((line = br.readLine()) != null && (limit == -1 || conceptCount < limit)) {
 
 				final JsonNode rootNode = objectMapper.readTree(line);
-				final JsonNode metadataNode = rootNode.get("_source");
+				final JsonNode metadataNode = (rootNode.has("_source")) ? rootNode.get("_source") : rootNode;
 				final Metadata metadata = ModelUtility.fromJson(metadataNode.toString(), Metadata.class);
 				metadataBatch.add(metadata);
 

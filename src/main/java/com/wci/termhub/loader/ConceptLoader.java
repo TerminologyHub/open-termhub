@@ -114,7 +114,7 @@ public final class ConceptLoader {
 			while ((line = br.readLine()) != null && (limit == -1 || conceptCount < limit)) {
 
 				final JsonNode rootNode = objectMapper.readTree(line);
-				final JsonNode conceptNode = rootNode.get("_source");
+				final JsonNode conceptNode = (rootNode.has("_source")) ? rootNode.get("_source") : rootNode;
 				final Concept concept = ModelUtility.fromJson(conceptNode.toString(), Concept.class);
 
 				if (concept.getTerms() != null) {

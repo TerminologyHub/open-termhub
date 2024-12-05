@@ -110,7 +110,7 @@ public class TerminologyLoader {
 			while ((line = br.readLine()) != null && (limit == -1 || count < limit)) {
 
 				final JsonNode rootNode = objectMapper.readTree(line);
-				final JsonNode terminologyNode = rootNode.get("_source");
+				final JsonNode terminologyNode = (rootNode.has("_source")) ? rootNode.get("_source") : rootNode;
 				final Terminology terminology = ModelUtility.fromJson(terminologyNode.toString(), Terminology.class);
 				terminologyBatch.add(terminology);
 
