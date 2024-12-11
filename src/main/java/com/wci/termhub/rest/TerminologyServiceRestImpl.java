@@ -1821,6 +1821,48 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		}
 	}
 
+	@RequestMapping(value = "/terminology/{terminology}/trees", method = RequestMethod.POST)
+	@Operation(summary = "Compute concept tree positions by terminology, publisher and version", description = "Computes concept tree positions for the specified terminology, publisher and version.", security = @SecurityRequirement(name = "bearerAuth"), tags = {
+			"concept by code" })
+	@ApiResponses({ @ApiResponse(responseCode = "200", description = "Result list of matching concept tree positions"),
+			@ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
+			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
+			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
+	@Parameters({ @Parameter(name = "terminology", description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\"."),
+			@Parameter(name = "publisher", description = "Terminology publisher. e.g. \"SANDBOX\"."),
+			@Parameter(name = "version", description = "Terminology version. e.g. \"20240301\"."), })
+	public ResponseEntity<String> computeTreePositions(@PathVariable("terminology") final String terminology,
+			@RequestParam("publisher") final String publisher, @RequestParam("version") final String version)
+			throws Exception {
+
+		final AuthContext context = authorize(request);
+		try {
+
+			// throw exception if any parameter is null or empty
+			if (StringUtils.isAnyEmpty(terminology, publisher, version)) {
+				throw new RestException(false, 417, "Expectation failed",
+						"Terminology, publisher and version parameters must not be blank.");
+			}
+
+			final Terminology term = lookupTerminology(context, terminology);
+
+			final TreePositionAlgorithm treepos = applicationContext.getBean(TreePositionAlgorithm.class);
+			treepos.setTerminology(terminology);
+			treepos.setPublisher(publisher);
+			treepos.setVersion(version);
+			treepos.checkPreconditions();
+			treepos.compute();
+
+			return new ResponseEntity<>("Successful", new HttpHeaders(), HttpStatus.OK);
+
+		} catch (final Exception e) {
+			handleException(e, "trying to compute tree positions for terminology = " + terminology);
+			return null;
+		}
+	}
+
 	/**
 	 * Lookup project terminologies.
 	 *
