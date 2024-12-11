@@ -332,12 +332,12 @@ public class LuceneDataAccess {
 			for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
 
 				final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
-				LOG.info("Score: {}", scoreDoc.score);
+				LOG.debug("Score: {}", scoreDoc.score);
 				@SuppressWarnings("deprecation")
 				final Document doc = searcher.doc(scoreDoc.doc);
 				final String jsonEntityString = doc.get("entity");
 				final T obj = mapper.readValue(jsonEntityString, clazz);
-				LOG.info("search result: {}", obj);
+				LOG.debug("search result: {}", obj);
 				results.getItems().add(obj);
 			}
 			results.setTotal(results.getItems().size());

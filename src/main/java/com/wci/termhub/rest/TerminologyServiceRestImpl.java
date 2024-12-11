@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -23,6 +24,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -37,10 +39,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.wci.termhub.Application;
+import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.handler.QueryBuilder;
 import com.wci.termhub.model.AuthContext;
 import com.wci.termhub.model.Concept;
-import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.HasId;
@@ -129,6 +131,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	/** The operations service. */
 	@Autowired
 	private EntityRepositoryService searchService;
+
+	@Autowired
+	private ApplicationContext applicationContext;
 
 	/** The builders. */
 	@Autowired
@@ -326,239 +331,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			handleException(e, "trying to get metadata for terminology = " + id);
 			return null;
 		}
-	}
-
-	/**
-	 * Gets the terminology history new concepts.
-	 *
-	 * @param id           the id
-	 * @param priorVersion the prior version
-	 * @return the terminology history new concepts
-	 * @throws Exception the exception
-	 */
-	/* see superclass */
-	@Override
-	@RequestMapping(value = "/terminology/{id:[a-f0-9].+}/history/{priorVersion}/concepts/new", method = RequestMethod.GET)
-	@Operation(summary = "Get terminology concepts added since older version", description = "Gets concept code/name for new active concepts in the terminology "
-			+ "since the specified older version", security = @SecurityRequirement(name = "bearerAuth"), tags = {
-					"history" })
-	@ApiResponses({ @ApiResponse(responseCode = "200", description = "List of concept code/name that are new"),
-			@ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
-			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
-			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "id", description = "Terminology id, e.g. \"uuid\"", required = true),
-			@Parameter(name = "priorVersion", description = "Prior terminology version, e.g. \"20240101\"", required = true), })
-	public ResponseEntity<List<ConceptRef>> getTerminologyHistoryNewConcepts(@PathVariable("id") final String id,
-			@PathVariable("priorVersion") final String priorVersion) throws Exception {
-
-		@SuppressWarnings("unused")
-		final AuthContext context = authorize(request);
-		try {
-
-			final Terminology terminology = searchService.get(id, Terminology.class);
-			// not found - 404
-			if (terminology == null) {
-				throw new RestException(false, 404, "Not Found", "Unable to find terminology = " + id);
-			}
-
-			final Terminology priorTerminology = TerminologyUtility.getTerminology(searchService,
-					terminology.getAbbreviation(), terminology.getPublisher(), priorVersion);
-			if (priorTerminology == null) {
-				throw new RestException(false, 404, "Not Found", "Unable to find terminology = "
-						+ terminology.getAbbreviation() + ", " + terminology.getPublisher() + ", " + priorVersion);
-			}
-			if (priorTerminology.getReleaseDate().compareTo(terminology.getReleaseDate()) > 0) {
-				throw new RestException(false, 404, "Not Found",
-						"The priorVersion must be earlier than for the specified terminology = "
-								+ terminology.getVersion() + " < " + priorVersion);
-			}
-
-			final Exception[] errors = new Exception[2];
-			final List<Concept> concepts = new ArrayList<>();
-			final Thread t1 = new Thread(new Runnable() {
-				/* see superclass */
-				@Override
-				public void run() {
-					try {
-						concepts.addAll(searchService.findAllWithFields(
-								StringUtility.composeQuery("AND", "terminology:" + terminology.getAbbreviation(),
-										"publisher:" + terminology.getPublisher(),
-										"version:" + terminology.getVersion(), "active:true"),
-								ModelUtility.asList("code", "name"), Concept.class));
-					} catch (final Exception e) {
-						errors[0] = e;
-					}
-				}
-			});
-
-			final List<Concept> priorConcepts = new ArrayList<>();
-			final Thread t2 = new Thread(new Runnable() {
-				/* see superclass */
-				@Override
-				public void run() {
-					try {
-						priorConcepts.addAll(searchService.findAllWithFields(
-								StringUtility.composeQuery("AND", "terminology:" + terminology.getAbbreviation(),
-										"publisher:" + terminology.getPublisher(),
-										"version:" + priorTerminology.getVersion(), "active:true"),
-								ModelUtility.asList("code", "name"), Concept.class));
-					} catch (final Exception e) {
-						errors[0] = e;
-					}
-				}
-
-			});
-			// Start threads
-			t1.start();
-			t2.start();
-			// Wait for threads
-			t1.join();
-			t2.join();
-			// Check errors
-			if (errors[0] != null) {
-				throw errors[0];
-			}
-			if (errors[1] != null) {
-				throw errors[1];
-			}
-			final Set<String> codes = concepts.stream().map(c -> c.getCode()).collect(Collectors.toSet());
-			final Set<String> priorCodes = priorConcepts.stream().map(c -> c.getCode()).collect(Collectors.toSet());
-			// things active now that were not active before
-			codes.removeAll(priorCodes);
-
-			// Find and return the list
-			return new ResponseEntity<>(concepts.stream().filter(c -> codes.contains(c.getCode())).peek(c -> {
-				c.setId(null);
-				c.setConfidence(null);
-				c.setLocal(null);
-				c.setActive(null);
-				c.setLeaf(null);
-			}).sorted((a, b) -> a.getCode().compareTo(b.getCode())).collect(Collectors.toList()), new HttpHeaders(),
-					HttpStatus.OK);
-
-		} catch (final Exception e) {
-			handleException(e, "trying to get new concept history for terminology = " + id + ", " + priorVersion);
-			return null;
-		}
-
-	}
-
-	/**
-	 * Gets the terminology history retired concepts.
-	 *
-	 * @param id           the id
-	 * @param priorVersion the prior version
-	 * @return the terminology history retired concepts
-	 * @throws Exception the exception
-	 */
-	/* see superclass */
-	@Override
-	@RequestMapping(value = "/terminology/{id:[a-f0-9].+}/history/{priorVersion}/concepts/retired", method = RequestMethod.GET)
-	@Operation(summary = "Get terminology concepts retired since older version", description = "Gets concept code/name for concepts retired in the terminology "
-			+ "since the specified older version", security = @SecurityRequirement(name = "bearerAuth"), tags = {
-					"history" })
-	@ApiResponses({ @ApiResponse(responseCode = "200", description = "List of concept code/name that are now retired"),
-			@ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
-			@ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
-			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
-	@Parameters({ @Parameter(name = "id", description = "Terminology id, e.g. \"uuid\"", required = true),
-			@Parameter(name = "priorVersion", description = "Prior terminology version, e.g. \"20240101\"", required = true), })
-	public ResponseEntity<List<ConceptRef>> getTerminologyHistoryRetiredConcepts(@PathVariable("id") final String id,
-			@PathVariable("priorVersion") final String priorVersion) throws Exception {
-
-		@SuppressWarnings("unused")
-		final AuthContext context = authorize(request);
-		try {
-
-			final Terminology terminology = searchService.get(id, Terminology.class);
-			// not found - 404
-			if (terminology == null) {
-				throw new RestException(false, 404, "Not Found", "Unable to find terminology = " + id);
-			}
-
-			final Terminology priorTerminology = TerminologyUtility.getTerminology(searchService,
-					terminology.getAbbreviation(), terminology.getPublisher(), priorVersion);
-			if (priorTerminology == null) {
-				throw new RestException(false, 404, "Not Found", "Unable to find terminology = "
-						+ terminology.getAbbreviation() + ", " + terminology.getPublisher() + ", " + priorVersion);
-			}
-			if (priorTerminology.getReleaseDate().compareTo(terminology.getReleaseDate()) > 0) {
-				throw new RestException(false, 404, "Not Found",
-						"The priorVersion must be earlier than for the specified terminology = "
-								+ terminology.getVersion() + " < " + priorVersion);
-			}
-
-			final Exception[] errors = new Exception[2];
-			final List<Concept> concepts = new ArrayList<>();
-			final Thread t1 = new Thread(new Runnable() {
-				/* see superclass */
-				@Override
-				public void run() {
-					try {
-						concepts.addAll(searchService.findAllWithFields(
-								StringUtility.composeQuery("AND", "terminology:" + terminology.getAbbreviation(),
-										"publisher:" + terminology.getPublisher(),
-										"version:" + terminology.getVersion(), "active:true"),
-								ModelUtility.asList("code", "name"), Concept.class));
-					} catch (final Exception e) {
-						errors[0] = e;
-					}
-				}
-			});
-
-			final List<Concept> priorConcepts = new ArrayList<>();
-			final Thread t2 = new Thread(new Runnable() {
-				/* see superclass */
-				@Override
-				public void run() {
-					try {
-						priorConcepts.addAll(searchService.findAllWithFields(
-								StringUtility.composeQuery("AND", "terminology:" + terminology.getAbbreviation(),
-										"publisher:" + terminology.getPublisher(),
-										"version:" + priorTerminology.getVersion(), "active:true"),
-								ModelUtility.asList("code", "name"), Concept.class));
-					} catch (final Exception e) {
-						errors[0] = e;
-					}
-				}
-
-			});
-			// Start threads
-			t1.start();
-			t2.start();
-			// Wait for threads
-			t1.join();
-			t2.join();
-			// Check errors
-			if (errors[0] != null) {
-				throw errors[0];
-			}
-			if (errors[1] != null) {
-				throw errors[1];
-			}
-
-			final Set<String> codes = concepts.stream().map(c -> c.getCode()).collect(Collectors.toSet());
-			final Set<String> priorCodes = priorConcepts.stream().map(c -> c.getCode()).collect(Collectors.toSet());
-			// Things active before that are not active now
-			priorCodes.removeAll(codes);
-
-			// Find and return the list
-			return new ResponseEntity<>(priorConcepts.stream().filter(c -> priorCodes.contains(c.getCode())).peek(c -> {
-				c.setId(null);
-				c.setConfidence(null);
-				c.setLocal(null);
-				c.setActive(null);
-				c.setLeaf(null);
-			}).sorted((a, b) -> a.getCode().compareTo(b.getCode())).collect(Collectors.toList()), new HttpHeaders(),
-					HttpStatus.OK);
-
-		} catch (final Exception e) {
-			handleException(e, "trying to get retired concept history for terminology = " + id + ", " + priorVersion);
-			return null;
-		}
-
 	}
 
 	/**
@@ -2317,6 +2089,48 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 	}
 
+	@RequestMapping(value = "/terminology/{terminology}/trees", method = RequestMethod.POST)
+	@Operation(summary = "Compute concept tree positions by terminology, publisher and version", description = "Computes concept tree positions for the specified terminology, publisher and version.", security = @SecurityRequirement(name = "bearerAuth"), tags = {
+			"concept by code" })
+	@ApiResponses({ @ApiResponse(responseCode = "200", description = "Result list of matching concept tree positions"),
+			@ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
+			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
+			@ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+			@ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content()) })
+	@Parameters({ @Parameter(name = "terminology", description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\"."),
+			@Parameter(name = "publisher", description = "Terminology publisher. e.g. \"SANDBOX\"."),
+			@Parameter(name = "version", description = "Terminology version. e.g. \"20240301\"."), })
+	public ResponseEntity<String> computeTreePositions(@PathVariable("terminology") final String terminology,
+			@RequestParam("publisher") final String publisher, @RequestParam("version") final String version)
+			throws Exception {
+
+		final AuthContext context = authorize(request);
+		try {
+
+			// throw exception if any parameter is null or empty
+			if (StringUtils.isAnyEmpty(terminology, publisher, version)) {
+				throw new RestException(false, 417, "Expectation failed",
+						"Terminology, publisher and version parameters must not be blank.");
+			}
+
+			final Terminology term = lookupTerminology(context, terminology);
+
+			final TreePositionAlgorithm treepos = applicationContext.getBean(TreePositionAlgorithm.class);
+			treepos.setTerminology(terminology);
+			treepos.setPublisher(publisher);
+			treepos.setVersion(version);
+			treepos.checkPreconditions();
+			treepos.compute();
+
+			return new ResponseEntity<>("Successful", new HttpHeaders(), HttpStatus.OK);
+
+		} catch (final Exception e) {
+			handleException(e, "trying to compute tree positions for terminology = " + terminology);
+			return null;
+		}
+	}
+
 	/**
 	 * Lookup project terminologies.
 	 *
@@ -2340,34 +2154,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 				indexMap.put(t.getAbbreviation() + t.getPublisher() + t.getVersion(), t);
 			}
 			terminologyCache.put(query, indexMap);
-		}
-		return indexMap;
-	}
-
-	/**
-	 * Lookup project mapset map.
-	 *
-	 * @param context the context
-	 * @return the map
-	 * @throws Exception the exception
-	 */
-	private Map<String, Mapset> lookupMapsetMap(final AuthContext context) throws Exception {
-
-		final String query = "latest:true";
-		Map<String, Mapset> indexMap = mapsetCache.get(query);
-
-		if (indexMap == null) {
-			// then do a find on the query
-			final SearchParameters params = new SearchParameters(query, null, 100000, null, null);
-			final ResultList<Mapset> results = searchService.find(params, Mapset.class);
-			final List<Mapset> mapsets = results.getItems();
-
-			// then sort the results (just use the natural mapset sort order)
-			indexMap = new HashMap<>();
-			for (final Mapset mapset : mapsets) {
-				indexMap.put(mapset.getAbbreviation() + mapset.getPublisher() + mapset.getVersion(), mapset);
-			}
-			mapsetCache.put(query, indexMap);
 		}
 		return indexMap;
 	}

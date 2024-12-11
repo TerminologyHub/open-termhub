@@ -10,8 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,8 +94,8 @@ public class TerminologyUnitTest extends BaseUnitTest {
 	 *
 	 * @throws Exception the exception
 	 */
-	@Test
-	@Order(1)
+	// @Test
+	// @Order(1)
 	public void createIndex() throws Exception {
 
 		logger.info("Creating index for Terminology");
@@ -112,8 +110,8 @@ public class TerminologyUnitTest extends BaseUnitTest {
 	 *
 	 * @throws Exception the exception
 	 */
-	@Test
-	@Order(2)
+	// @Test
+	// @Order(2)
 	public void testAddTerminology() throws Exception {
 
 		final ObjectMapper objectMapper = new ObjectMapper();

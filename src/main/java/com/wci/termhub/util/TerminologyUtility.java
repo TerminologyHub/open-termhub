@@ -884,28 +884,27 @@ public final class TerminologyUtility {
 //
 //	}
 
-//	/**
-//	 * Count tree positions.
-//	 *
-//	 * @param searchService the search service
-//	 * @param terminology   the terminology
-//	 * @param publisher     the publisher
-//	 * @param version       the version
-//	 * @param indexName     the index name
-//	 * @return the long
-//	 * @throws Exception the exception
-//	 */
-//	public static long countTreePositions(final ElasticSearchService searchService, final String terminology,
-//			final String publisher, final String version, final String indexName) throws Exception {
-//
-//		final SearchParameters params = new SearchParameters(2, 0);
-//		params.setQuery("terminology:" + StringUtility.escapeQuery(terminology) + " AND publisher:" + publisher
-//				+ " AND version:" + version);
-//
-//		return searchService.find(params, ConceptTreePosition.class, null, null, ModelUtility.asList(indexName))
-//				.getTotal();
-//
-//	}
+	/**
+	 * Count tree positions.
+	 *
+	 * @param searchService the search service
+	 * @param terminology   the terminology
+	 * @param publisher     the publisher
+	 * @param version       the version
+	 * @param indexName     the index name
+	 * @return the long
+	 * @throws Exception the exception
+	 */
+	public static long countTreePositions(final EntityRepositoryService searchService, final String terminology,
+			final String publisher, final String version, final String indexName) throws Exception {
+
+		final SearchParameters params = new SearchParameters(2, 0);
+		params.setQuery("terminology:" + StringUtility.escapeQuery(terminology) + " AND publisher:" + publisher
+				+ " AND version:" + version);
+
+		final ResultList<ConceptTreePosition> result = searchService.find(params, ConceptTreePosition.class);
+		return result.getTotal();
+	}
 
 	/**
 	 * To diagram model.
