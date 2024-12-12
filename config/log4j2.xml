@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info">
+	<Appenders>
+		<!-- Console for logging HTTP events -->
+		<Console name="HttpConsole" target="SYSTEM_OUT">
+			<!-- <ThresholdFilter level="INFO" /> -->
+			<JsonLayout complete="false" compact="true"
+				eventEol="true" objectMessageAsJsonObject="true">
+				<!-- See https://logging.apache.org/log4j/2.x/manual/lookups.html for 
+					how to interpolate vars. -->
+				<KeyValuePair key="time"
+					value="$${date:yyyy-MM-dd'T'HH:mm:ss.SSSXXX}" />
+				<KeyValuePair key="user-id" value="$${ctx:user-id}" />
+				<KeyValuePair key="correlation-id"
+					value="$${ctx:correlation-id}" />
+				<KeyValuePair key="req-uri" value="$${ctx:req-uri}" />
+				<KeyValuePair key="req-method"
+					value="$${ctx:req-method}" />
+				<KeyValuePair key="req-querystring"
+					value="$${ctx:req-querystring}" />
+				<KeyValuePair key="http-version"
+					value="$${ctx:http-version}" />
+				<KeyValuePair key="remote-address"
+					value="$${ctx:remote-address}" />
+				<KeyValuePair key="referer" value="$${ctx:referer}" />
+				<KeyValuePair key="user-agent"
+					value="$${ctx:user-agent}" />
+				<KeyValuePair key="status-code"
+					value="$${ctx:status-code}" />
+			</JsonLayout>
+		</Console>
+		<Console name="AppConsole" target="SYSTEM_OUT">
+			<!-- <ThresholdFilter level="INFO" /> -->
+			<JsonLayout complete="false" compact="true"
+				eventEol="true" objectMessageAsJsonObject="true">
+				<!-- See https://logging.apache.org/log4j/2.x/manual/lookups.html for 
+					how to interpolate vars. -->
+				<KeyValuePair key="time"
+					value="$${date:yyyy-MM-dd'T'HH:mm:ss.SSSXXX}" />
+				<KeyValuePair key="user-id" value="$${ctx:user-id}" />
+				<KeyValuePair key="correlation-id"
+					value="$${ctx:correlation-id}" />
+			</JsonLayout>
+		</Console>
+		<Console name="Console" target="SYSTEM_OUT">
+			<!-- <PatternLayout pattern="%d{yyyy-MM-dd'T'HH:mm:ssXXX} %c %-5p : %m%n" 
+				/> -->
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd'T'HH:mm:ssXXX} %-5p : %m%n" />
+		</Console>
+	</Appenders>
+	<Loggers>
+		<Root level="info">
+			<AppenderRef ref="AppConsole" />
+		</Root>
+		<Logger name="com.wci.termhub" level="debug" additivity="false">
+			<AppenderRef ref="AppConsole" />
+		</Logger>
+		<Logger name="org.hibernate" level="info" additivity="false">
+			<AppenderRef ref="AppConsole" />
+		</Logger>
+		<Logger name="org" level="warn" additivity="false">
+			<AppenderRef ref="AppConsole" />
+		</Logger>
+		<!-- See JsonLoggingFilter -->
+		<Logger name="HttpLogger" level="info" additivity="false">
+			<AppenderRef ref="HttpConsole" />
+		</Logger>
+	</Loggers>
+</Configuration>

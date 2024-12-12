@@ -1,3 +1,6 @@
+/*
+ *
+ */
 package com.wci.termhub.loader;
 
 import java.io.BufferedReader;
@@ -15,6 +18,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.Term;
+import com.wci.termhub.util.ModelUtility;
 
 /**
  * The Class ConceptLoader.
@@ -57,7 +62,7 @@ public final class ConceptLoader {
 
 			index(fullFileName, batchSize, limit);
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("An error occurred while loading the file.");
 			e.printStackTrace();
 			System.exit(1);
@@ -65,6 +70,17 @@ public final class ConceptLoader {
 
 		System.exit(0);
 
+	}
+
+	/**
+	 * Index all.
+	 *
+	 * @param fullFileName the full file name
+	 * @param batchSize    the batch size
+	 * @throws Exception the exception
+	 */
+	public static void indexAll(final String fullFileName, final int batchSize) throws Exception {
+		index(fullFileName, batchSize, -1);
 	}
 
 	/**
@@ -81,43 +97,60 @@ public final class ConceptLoader {
 		final long startTime = System.currentTimeMillis();
 
 		final List<Concept> conceptBatch = new ArrayList<>(batchSize);
+		final List<Term> termBatch = new ArrayList<>(batchSize);
 
 		// read the file
 		// for each line in the file, convert to Concept object.
 		try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
 
 			final ObjectMapper objectMapper = new ObjectMapper();
-			final LuceneDataAccess<Concept> luceneData = new LuceneDataAccess<>();
-			luceneData.createIndex(Concept.class);
+			final LuceneDataAccess luceneDataAccess = new LuceneDataAccess();
+			luceneDataAccess.createIndex(Concept.class);
+			luceneDataAccess.createIndex(Term.class);
 
 			String line;
-			int count = 1;
-			while ((line = br.readLine()) != null && (limit == -1 || count < limit)) {
+			int conceptCount = 1;
+			int termCount = 0;
+			while ((line = br.readLine()) != null && (limit == -1 || conceptCount < limit)) {
 
-				// convert to Concept object
 				final JsonNode rootNode = objectMapper.readTree(line);
-				final JsonNode conceptNode = rootNode.get("_source");
-				final Concept concept = objectMapper.treeToValue(conceptNode, Concept.class);
+				final JsonNode conceptNode = (rootNode.has("_source")) ? rootNode.get("_source") : rootNode;
+				final Concept concept = ModelUtility.fromJson(conceptNode.toString(), Concept.class);
+
+				if (concept.getTerms() != null) {
+					for (final Term term : concept.getTerms()) {
+						termBatch.add(term);
+						if (termBatch.size() == batchSize) {
+							luceneDataAccess.add(termBatch);
+							termBatch.clear();
+						}
+						termCount++;
+					}
+				}
 
 				conceptBatch.add(concept);
 
 				if (conceptBatch.size() == batchSize) {
-					luceneData.add(conceptBatch);
+					luceneDataAccess.add(conceptBatch);
 					conceptBatch.clear();
-					System.out.println("count: " + count);
+					System.out.println("count: " + conceptCount);
 				}
 
-				count++;
+				conceptCount++;
 			}
 
 			if (!conceptBatch.isEmpty()) {
-				luceneData.add(conceptBatch);
+				luceneDataAccess.add(conceptBatch);
+			}
+			if (!termBatch.isEmpty()) {
+				luceneDataAccess.add(termBatch);
 			}
 
-			System.out.println("final count: " + count);
+			System.out.println("final concepts added count: " + conceptCount);
+			System.out.println("final terms added count: " + termCount);
 			System.out.println("duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("An error occurred while processing the file.");
 			e.printStackTrace();
 			System.exit(1);

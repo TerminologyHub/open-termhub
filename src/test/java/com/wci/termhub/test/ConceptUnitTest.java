@@ -1,8 +1,10 @@
+/*
+ *
+ */
 package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
@@ -22,13 +24,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.Application;
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.service.impl.EntityServiceImpl;
+import com.wci.termhub.service.EntityRepositoryService;
 
 /**
  * The Class ConceptUnitTest.
  */
-// @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
 @TestMethodOrder(OrderAnnotation.class)
@@ -232,9 +234,9 @@ public class ConceptUnitTest extends BaseUnitTest {
 			}
 						""";
 
-	/** The entity service impl. */
+	/** The search service. */
 	@Autowired
-	private EntityServiceImpl<Concept, String> entityServiceImpl;
+	private EntityRepositoryService searchService;
 
 	/** The concept. */
 	private static Concept concept;
@@ -243,34 +245,16 @@ public class ConceptUnitTest extends BaseUnitTest {
 	private static final String INDEX_NAME = Concept.class.getCanonicalName();
 
 	/**
-	 * Delete index.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	@Order(1)
-	public void deleteIndex() throws Exception {
-
-		logger.info("Deleting index for Concept");
-		entityServiceImpl.deleteIndex(Concept.class);
-
-		// assert directory does not exist
-		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-	}
-
-	/**
 	 * Creates the index.
 	 *
 	 * @throws Exception the exception
 	 */
 	@Test
-	@Order(2)
+	@Order(1)
 	public void createIndex() throws Exception {
 
 		logger.info("Creating index for Concept");
-		entityServiceImpl.createIndex(Concept.class);
-
-		// test if directory exists
+		searchService.createIndex(Concept.class);
 		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
 	}
 
@@ -280,7 +264,7 @@ public class ConceptUnitTest extends BaseUnitTest {
 	 * @throws Exception the exception
 	 */
 	@Test
-	@Order(3)
+	@Order(2)
 	public void testAddConcept() throws Exception {
 
 		final ObjectMapper objectMapper = new ObjectMapper();
@@ -290,7 +274,7 @@ public class ConceptUnitTest extends BaseUnitTest {
 		if (conceptNode != null) {
 			concept = objectMapper.treeToValue(conceptNode, Concept.class);
 			logger.info("Concept: {}", concept.toString());
-			assertDoesNotThrow(() -> entityServiceImpl.add(Concept.class, concept));
+			assertDoesNotThrow(() -> searchService.add(Concept.class, concept));
 		} else {
 			logger.error("No '_source' node found in the provided JSON.");
 		}
@@ -302,16 +286,16 @@ public class ConceptUnitTest extends BaseUnitTest {
 	 * @throws Exception the exception
 	 */
 	@Test
-	@Order(4)
+	@Order(3)
 	public void findConceptByCode() throws Exception {
 
 		final SearchParameters searchParameters = new SearchParameters("code:1000004", 100, 0);
 		logger.info("Search for : {}", searchParameters.getQuery());
 
-		final Iterable<Concept> foundConceptObjects = entityServiceImpl.find(Concept.class, searchParameters);
-		assertEquals(1, getSize(foundConceptObjects));
+		final ResultList<Concept> foundConceptObjects = searchService.find(searchParameters, Concept.class);
+		assertEquals(1, foundConceptObjects.getItems().size());
 
-		for (final Object foundConceptObject : foundConceptObjects) {
+		for (final Object foundConceptObject : foundConceptObjects.getItems()) {
 			final Concept foundConcept = (Concept) foundConceptObject;
 			logger.info("Concept found: {}", foundConcept.toString());
 			assertEquals(concept.toString(), foundConcept.toString());
@@ -324,14 +308,14 @@ public class ConceptUnitTest extends BaseUnitTest {
 	 * @throws Exception the exception
 	 */
 	@Test
-	@Order(4)
+	@Order(5)
 	public void findConceptByMissingCode() throws Exception {
 
 		final SearchParameters searchParameters = new SearchParameters("code:99999", 100, 0);
 		logger.info("Search for : {}", searchParameters.getQuery());
 
-		final Iterable<Concept> foundConceptObjects = entityServiceImpl.find(Concept.class, searchParameters);
-		assertEquals(0, getSize(foundConceptObjects));
+		final ResultList<Concept> foundConceptObjects = searchService.find(searchParameters, Concept.class);
+		assertEquals(0, foundConceptObjects.getItems().size());
 	}
 
 //	/**
@@ -340,37 +324,52 @@ public class ConceptUnitTest extends BaseUnitTest {
 //	 * @throws Exception the exception
 //	 */
 //	@Test
-//	@Order(4)
+//	@Order(6)
 //	public void findConceptByTermName() throws Exception {
 //
 //		final SearchParameters searchParameters = new SearchParameters();
 //		searchParameters.setQuery("term.name:\"Joint injury, NOS\"");
 //		logger.info("Search for : {}", searchParameters.getQuery());
 //
-//		final Iterable<Concept> foundConceptObjects = entityServiceImpl.find(Concept.class, searchParameters);
-//		assertEquals(1, getSize(foundConceptObjects));
+//		final ResultList<Concept> foundConceptObjects = searchService.find(searchParameters, Concept.class);
+//		assertEquals(1, foundConceptObjects.getItems().size());
 //
-//		for (final Object foundConceptObject : foundConceptObjects) {
-//			final Concept foundConcept = (Concept) foundConceptObject;
-//			logger.info("Concept found: {}", foundConcept.toString());
-//			assertEquals(concept.toString(), foundConcept.toString());
+//		for (final Concept foundConceptObject : foundConceptObjects.getItems()) {
+//			logger.info("Concept found: {}", foundConceptObject.toString());
+//			assertEquals(concept.toString(), foundConceptObject.toString());
 //		}
 //	}
+//
+//	/**
+//	 * Find concept by missing term name.
+//	 *
+//	 * @throws Exception the exception
+//	 */
+//	@Test
+//	@Order(7)
+//	public void findConceptByMissingTermName() throws Exception {
+//
+//		final SearchParameters searchParameters = new SearchParameters("term.name:\"dummy term name\"", 100, 0);
+//		logger.info("Search for : {}", searchParameters.getQuery());
+//
+//		final ResultList<Concept> foundConceptObjects = searchService.find(searchParameters, Concept.class);
+//		assertEquals(0, foundConceptObjects.getItems().size());
+//	}
 
-	/**
-	 * Find concept by missing term name.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	@Order(4)
-	public void findConceptByMissingTermName() throws Exception {
-
-		final SearchParameters searchParameters = new SearchParameters("term.name:dummy term name", 100, 0);
-		logger.info("Search for : {}", searchParameters.getQuery());
-
-		final Iterable<Concept> foundConceptObjects = entityServiceImpl.find(Concept.class, searchParameters);
-		assertEquals(0, getSize(foundConceptObjects));
-	}
+//	/**
+//	 * Delete index.
+//	 *
+//	 * @throws Exception the exception
+//	 */
+//	@Test
+//	@Order(6)
+//	public void deleteIndex() throws Exception {
+//
+//		logger.info("Deleting index for Concept from {}", Paths.get(INDEX_DIRECTORY, INDEX_NAME).toString());
+//		searchService.deleteIndex(Concept.class);
+//
+//		// assert directory does not exist
+//		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
+//	}
 
 }

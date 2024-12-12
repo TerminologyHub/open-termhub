@@ -1,0 +1,11 @@
+# Admin User - owner of organization "wci"
+{"id":"124225f6-4866-41f4-98ec-8329e5f0e6bd","local":false,"active":true,"username":"admin","password":"testpwd","uriLabel":"admin","verified":true,"role":"ADMIN"}
+
+# Test User - member of organization "wci"
+{"id":"eaa7f268-9b9f-45f4-8698-5e5e61627e2a","local":false,"active":true,"username":"test","password":"testpwd","uriLabel":"test","verified":false,"role":"USER","plan":"UNLIMITED","planStart":"2024-01-31T00:00:00.000+00:00"}
+
+# Test User2 - member of organization "wci"
+{"id":"ff96896a-9c0f-45a7-982b-bae1c2c9c412","local":false,"active":true,"username":"test2","password":"testpwd","uriLabel":"test2","verified":false,"role":"USER"}
+
+# Test User3 - member of no organizations
+{"id":"1ef01513-ec25-4453-88f5-68e6ff4d4d47","local":false,"active":true,"username":"test3","password":"testpwd","uriLabel":"test3","verified":false,"role":"USER"}

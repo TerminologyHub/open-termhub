@@ -1,5 +1,9 @@
+/*
+ *
+ */
 package com.wci.termhub.util;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Properties;
@@ -36,6 +40,14 @@ public class PropertyUtility {
 	/** The is test mode. */
 	private static Boolean isTestMode = null;
 
+	static {
+		try {
+			properties.load(PropertyUtility.class.getClassLoader().getResourceAsStream("application.properties"));
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * initialize the properties.
 	 */
@@ -51,6 +63,7 @@ public class PropertyUtility {
 				.map(ps -> ((EnumerablePropertySource) ps).getPropertyNames()).flatMap(Arrays::stream).distinct()
 				.forEach(prop -> properties.setProperty(prop, env.getProperty(prop)));
 
+		System.out.println("Loaded properties: " + properties);
 		logger.info("Loaded properties: {}", properties);
 	}
 

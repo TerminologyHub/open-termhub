@@ -1,6 +1,6 @@
 buildscript {
   ext {
-    springBootVersion = "3.3.3"
+    springBootVersion = "3.3.4"
   }
   repositories {
     mavenLocal()
@@ -14,14 +14,16 @@ buildscript {
   dependencies {
     classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
     classpath "gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.5"
+    classpath "com.bmuschko:gradle-nexus-plugin:2.3.1"
   }
 }
 
 // This must be at the top of the file (only can be below buildscript)
 plugins {
-  id 'org.springframework.boot' version '3.3.3'
+  id 'org.springframework.boot' version '3.3.4'
   id 'io.spring.dependency-management' version '1.1.6'
   id 'java'
+  // id "com.github.hierynomus.license" version "0.15.0"
 }
 
 group = 'com.wci.open-termhub'
@@ -51,124 +53,180 @@ apply plugin: "io.spring.dependency-management"
 apply plugin: "org.springframework.boot"
 apply plugin: "java"
 apply plugin: "eclipse"
+apply plugin: "com.github.spotbugs"
 // apply plugin: "checkstyle"
+// apply plugin: "com.bmuschko.nexus" // error
 
-configurations.all {
-   exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
-}
+//configurations.all {
+//   exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
+//}
 
 dependencies {
-	  // Spring
-	implementation 'org.springframework.boot:spring-boot-starter'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+  // NOTE: "spring-boot-starter-web" must be the first dependency
+  implementation('org.springframework.boot:spring-boot-starter-web')
 
-    // Docs: https://docs.spring.io/spring-data/elasticsearch/docs/4.2.12/reference/html/#reference
-	implementation 'org.springframework.data:spring-data-elasticsearch:5.3.3'
-	implementation 'org.apache.lucene:lucene-core:9.11.1'
-	implementation 'org.apache.lucene:lucene-analysis-common:9.11.1'
-	implementation 'org.apache.lucene:lucene-queryparser:9.11.1'
+  // Spring
+  implementation 'org.springframework.boot:spring-boot-starter'
+  implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-    // Other 3rd party Libraries
-	implementation 'javax.persistence:javax.persistence-api:2.2'
-	implementation 'org.springdoc:springdoc-openapi-ui:1.8.0'
-	implementation 'org.apache.commons:commons-text:1.12.0'
-	implementation 'org.apache.commons:commons-lang3:3.16.0'
-	implementation 'org.apache.tika:tika-core:2.9.2'
-	implementation ('org.apache.tika:tika-parsers:2.9.2') {
-    	// Avoid conflicts
-		exclude group: 'org.apache.cxf', module: 'cxf-rt-rs-client'
-		exclude group: 'c3p0', module: 'c3p0'
-		exclude group: 'org.ow2.asm'
-		exclude group: 'com.google.guava', module: 'guava'
-  	}
-	implementation 'info.debatty:java-string-similarity:2.0.0'
-	implementation 'org.reflections:reflections:0.10.2'
-	implementation ('com.google.guava:guava:32.1.1-jre') {
-		attributes{
-			attribute(Attribute.of('org.gradle.jvm.environment', String),'standard-jvm')
-		}
+  // Docs: https://docs.spring.io/spring-data/elasticsearch/docs/4.2.12/reference/html/#reference
+  implementation 'org.springframework.data:spring-data-elasticsearch:5.3.4'
+  implementation 'org.apache.lucene:lucene-core:9.11.1'
+  implementation 'org.apache.lucene:lucene-analysis-common:9.11.1'
+  implementation 'org.apache.lucene:lucene-queryparser:9.11.1'
+
+  // Security
+  implementation 'com.auth0:java-jwt:4.4.0' //3.8.3'
+  implementation ('com.auth0:jwks-rsa:0.22.1') {
+    exclude group: 'com.google.guava', module: 'guava'
+  }
+
+  // Other 3rd party Libraries
+  implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+
+  // REST
+  implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.0.0'
+  implementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+
+  implementation 'org.springdoc:springdoc-openapi-ui:1.8.0'
+  implementation 'org.apache.commons:commons-text:1.12.0'
+  implementation 'org.apache.commons:commons-lang3:3.17.0'
+  implementation 'org.apache.commons:commons-math3:3.6.1'
+  implementation 'org.apache.tika:tika-core:2.9.2'
+  implementation ('org.apache.tika:tika-parsers:2.9.2') {
+    // Avoid conflicts
+	exclude group: 'org.apache.cxf', module: 'cxf-rt-rs-client'
+	exclude group: 'c3p0', module: 'c3p0'
+	exclude group: 'org.ow2.asm'
+	exclude group: 'com.google.guava', module: 'guava'
+  }
+  implementation 'info.debatty:java-string-similarity:2.0.0'
+  implementation 'org.reflections:reflections:0.10.2'
+  implementation ('com.google.guava:guava:32.1.1-jre') {
+	attributes{
+	  attribute(Attribute.of('org.gradle.jvm.environment', String),'standard-jvm')
 	}
-    implementation 'ch.qos.logback:logback-classic:1.5.7'
-    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+  }
+  implementation 'org.apache.logging.log4j:log4j-core'
+  implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
 
-  	// For Test
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
+  // For Test
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+  testImplementation 'org.junit.platform:junit-platform-suite-engine:1.9.3'
+  
 }
 
-test {
-    useJUnitPlatform()
-    exclude '**/*IntegrationTest.*'
+// use "gradle licenseFormatMain/Test" to automatically generate headers
+//license {
+//  header rootProject.file("config/LICENSE")
+//  mapping("java", "SLASHSTAR_STYLE")
+//  includes(["**/*.java"])
+//  excludes(["**/*.txt", "**/*.conf", "**/*package-info.java", "**/*.properties"])
+//  strictCheck true
+//  ext.year = Calendar.getInstance().get(Calendar.YEAR)
+//  ext.company = "West Coast Informatics"
+//}
+
+//licenseTest.dependsOn licenseFormatTest
+//licenseMain.dependsOn licenseFormatMain
+
+// SpotBugs and CheckStyle
+spotbugs {
+    ignoreFailures = false
+    showStackTraces = true
+    showProgress = true
+    excludeFilter = file("config/spotbugs/exclude.xml")
+    // onlyAnalyze = [ "com.foobar.MyClass", "com.foobar.mypkg.*" ]
+    // jvmArgs = [ "-Duser.language=ja" ]
 }
-
-
-// To enact - ./gradlew dependencies --write-locks
-configurations {
-    implementation {
-        resolutionStrategy.activateDependencyLocking()
+spotbugsMain {
+    enabled = true
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+spotbugsTest {
+    enabled = true
+    reports {
+        xml.enabled = false
+        html.enabled = true
     }
 }
 
+test {
+  useJUnitPlatform()
+  exclude '**/*IntegrationTest.*'
+}
+
 //checkstyle {
-//    toolVersion = '9.2'
-//    configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
-//    sourceSets = [sourceSets.main]
-//    showViolations = true
+//  // config = resources.text.fromFile(file("${project.rootDir}/config/checkstyle/checkstyle.xml"))
+//  //toolVersion = "8.29"
+//  toolVersion = "7.6.1"
+//  ignoreFailures = true
+//  checkstyleMain.exclude "**/package-info.java"
+//  checkstyleTest.exclude "**/package-info.java"
+//  // checkstyleIntegrationTest.exclude "**/package-info.java"
+//  configProperties = [
+//    "checkstyle.cache.file"         : rootProject.file(".out/checkstyle/checkstyle.cache"),
+//    "checkstyle.suppressions.file"  : rootProject.file("config/checkstyle/suppressions.xml"),
+//    "checkstyle.header.file"        : "",
+//    "checkstyle.regexp.header.file" : "",
+//    "checkstyle.importcontrol.file" : ""
+//  ]
+//}
+//tasks.withType(Checkstyle) {
+//  ignoreFailures = true
 //}
 
-//checkstyleTest {
-//    toolVersion = '9.2'
-//    configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
-//    sourceSets = [sourceSets.test]
-//    showViolations = true
-//}
-
-//task checkstyle(type: Checkstyle) {
-//    configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
-//    source = sourceSets.main.allJava
-//    classpath = sourceSets.main.runtimeClasspath
-//}
 
 // usage ./gradlew runLoadConcepts -PinputFile=location of concepts JSON file -PbatchSize=1000 -Plimit=1000
 // limit is optional, if not present, the entire file will be loaded.  Used for developing.
 task runLoadConcepts(type: JavaExec) {
-    main = 'com.wci.termhub.loader.ConceptLoader'
-    classpath = sourceSets.main.runtimeClasspath
-    if (project.hasProperty('inputFile')) {
-        args += [project.getProperty('inputFile')]
-    }
-    if (project.hasProperty('limit')) {
-        args += [project.getProperty('limit')]
-    }
-    if (project.hasProperty('batchSize')) {
-        args += [project.getProperty('batchSize')]
-    }
-    jvmArgs = ['-Xms1G', '-Xmx8G']
+  main = 'com.wci.termhub.loader.ConceptLoader'
+  classpath = sourceSets.main.runtimeClasspath
+  if (project.hasProperty('inputFile')) {
+    args += [project.getProperty('inputFile')]
+  }
+  if (project.hasProperty('limit')) {
+    args += [project.getProperty('limit')]
+  }
+  if (project.hasProperty('batchSize')) {
+    args += [project.getProperty('batchSize')]
+  }
+  jvmArgs = ['-Xms1G', '-Xmx8G']
 }
 
 // usage ./gradlew runLoadConceptRels -PinputFile=location of concepts relationship JSON file -PbatchSize=1000 -Plimit=1000
 // limit is optional, if not present, the entire file will be loaded. Used for developing.
 task runLoadConceptRels(type: JavaExec) {
-    main = 'com.wci.termhub.loader.ConceptRelationshipLoader'
-    classpath = sourceSets.main.runtimeClasspath
-    if (project.hasProperty('inputFile')) {
-        args += [project.getProperty('inputFile')]
-    }
-    if (project.hasProperty('limit')) {
-        args += [project.getProperty('limit')]
-    }
-    if (project.hasProperty('batchSize')) {
-        args += [project.getProperty('batchSize')]
-    }
-    jvmArgs = ['-Xms1G', '-Xmx8G']
+  main = 'com.wci.termhub.loader.ConceptRelationshipLoader'
+  classpath = sourceSets.main.runtimeClasspath
+  if (project.hasProperty('inputFile')) {
+    args += [project.getProperty('inputFile')]
+  }
+  if (project.hasProperty('limit')) {
+    args += [project.getProperty('limit')]
+  }
+  if (project.hasProperty('batchSize')) {
+    args += [project.getProperty('batchSize')]
+  }
+  jvmArgs = ['-Xms1G', '-Xmx8G']
 }
 
 tasks.withType(JavaExec) {
-    if (System.getProperty('DEBUG', 'false') == 'true') {
-        jvmArgs '-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5555'
-    }
+  if (System.getProperty('DEBUG', 'false') == 'true') {
+    jvmArgs '-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005'
+  }
 }
 
+bootRun {
+    if (project.hasProperty('debug')) {
+        jvmArgs = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"]
+    }
+}
 
 bootJar {
   mainClass = 'com.wci.termhub.open.Application'
