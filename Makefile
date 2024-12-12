@@ -19,6 +19,10 @@ GIT_BRANCH               ?= $(shell echo `git branch --show-current`)
 clean:
 	./gradlew clean
 
+scandocker:
+	trivy image $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
+	grep CRITICAL report.html
+
 # Build the library without tests
 build:
 	./gradlew build test -x javadoc -x spotbugsMain -x spotbugsTest
