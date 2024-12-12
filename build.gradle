@@ -222,6 +222,10 @@ tasks.withType(JavaExec) {
   }
 }
 
+tasks.named('bootRun') {
+    args = ['--spring.profiles.active=your-profile']
+}
+
 bootRun {
     if (project.hasProperty('debug')) {
         jvmArgs = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"]
@@ -229,5 +233,5 @@ bootRun {
 }
 
 bootJar {
-  mainClass = 'com.wci.termhub.open.Application'
+  mainClass = 'com.wci.termhub.Application'
 }
