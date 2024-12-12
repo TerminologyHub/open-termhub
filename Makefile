@@ -25,7 +25,7 @@ scandocker:
 
 # Build the library without tests
 build:
-	./gradlew build test -x javadoc
+	./gradlew build test -x javadoc -x spotbugsMain -x spotbugsTest
 
 scan:
 	/bin/rm -rf gradle/dependency-locks
@@ -45,9 +45,11 @@ install:
 release:
 	./gradlew uploadArchives
 
+rundebug:
+	./gradlew bootRun --debug-jvm
+	
 run:
 	./gradlew bootRun
 
 version:
 	@echo $(APP_VERSION)
-

@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.tika.utils.ExceptionUtils;
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.model.HasId;
+import com.wci.termhub.service.RootService;
+
+import jakarta.persistence.metamodel.EntityType;
 
 /**
  * Utility for interacting with domain objects.
@@ -566,107 +571,109 @@ public final class ModelUtility<T> {
 		return null;
 	}
 
-//    /**
-//     * Returns the managed objects.
-//     *
-//     * @param service the service
-//     * @param objects the comma separated list of simple object names (null for all managed objects)
-//     * @return the managed objects
-//     * @throws Exception the exception
-//     */
-//    @SuppressWarnings("unchecked")
-//    public static List<Class<? extends HasId>> getManagedObjects(final RootService service,
-//        final String objects) throws Exception {
-//
-//        // Turn objects param into a set
-//        final Set<String> objectsSet =
-//                (objects == null || objects.isEmpty() || objects.equals("null")) ? new HashSet<>()
-//                        : Arrays.asList(objects.split(",")).stream().collect(Collectors.toSet());
-//        logger.info("  objects = " + objects);
-//
-//        // Find indexed objects
-//        final Reflections reflections = new Reflections("com.wci.termhub.model");
-//        final Set<Class<?>> indexedSet = new HashSet<>(reflections.getTypesAnnotatedWith(
-//                org.springframework.data.elasticsearch.annotations.Document.class));
-//        logger.info("  indexedSet = " + indexedSet);
-//
-//        // Find managed classes
-//        final Set<EntityType<?>> entities = service.getEntityManager().getMetamodel().getEntities();
-//        final List<Class<?>> classes = entities.stream().map(EntityType::getJavaType)
-//                .filter(o -> o != null).collect(Collectors.toList());
-//        logger.info("  classes = " + classes);
-//
-//        // Ensure all objects to delete are in indexedSet, otherwise fail
-//        if (!objectsSet.isEmpty()) {
-//
-//            int ct = 0;
-//            for (final Class<?> clazz : classes) {
-//                if (indexedSet.contains(clazz) && objectsSet.contains(clazz.getSimpleName())) {
-//                    ct++;
-//                }
-//            }
-//            if (ct != objectsSet.size()) {
-//                throw new Exception("Not all specified objects are indexed");
-//            }
-//        }
-//
-//        // Go through entity classes and identify indexed ones and any specific object ones
-//        return classes.stream().filter(clazz -> {
-//            if (indexedSet.contains(clazz)) {
-//                // Verify that its specified or that nothing was specified
-//                if (objects == null || objects.isEmpty() || objects.equals("null")
-//                        || objectsSet.contains(clazz.getSimpleName())) {
-//                    return true;
-//                }
-//            }
-//            return false;
-//        }).map(c -> (Class<? extends HasId>) c).collect(Collectors.toList());
-//    }
+	/**
+	 * Returns the managed objects.
+	 *
+	 * @param service the service
+	 * @param objects the comma separated list of simple object names (null for all
+	 *                managed objects)
+	 * @return the managed objects
+	 * @throws Exception the exception
+	 */
+	@SuppressWarnings("unchecked")
+	public static List<Class<? extends HasId>> getManagedObjects(final RootService service, final String objects)
+			throws Exception {
 
-//    /**
-//     * Gets the indexed objects.
-//     *
-//     * @param objects the objects
-//     * @return the indexed objects
-//     * @throws Exception the exception
-//     */
-//    @SuppressWarnings("unchecked")
-//    public static List<Class<? extends HasId>> getIndexedObjects(final String objects)
-//        throws Exception {
-//
-//        // Turn objects param into a set
-//        final Set<String> objectsSet =
-//                (objects == null || objects.isEmpty() || objects.equals("null")) ? new HashSet<>()
-//                        : Arrays.asList(objects.split(",")).stream().collect(Collectors.toSet());
-//        logger.info("  objects = " + objects);
-//
-//        // Find indexed objects
-//        final Reflections reflections = new Reflections("com.wci.termhub.model");
-//        final Set<Class<?>> indexedSet = new HashSet<>(reflections.getTypesAnnotatedWith(
-//                org.springframework.data.elasticsearch.annotations.Document.class));
-//        logger.info("  indexedSet = " + indexedSet);
-//
-//        // Ensure all objects to delete are in indexedSet, otherwise fail
-//        if (!objectsSet.isEmpty()) {
-//
-//            int ct = 0;
-//            for (final Class<?> clazz : indexedSet) {
-//                if (objectsSet.contains(clazz.getSimpleName())) {
-//                    ct++;
-//                }
-//            }
-//            if (ct != objectsSet.size()) {
-//                throw new Exception("Not all specified objects are indexed");
-//            }
-//        }
-//
-//        // Go through entity classes and identify indexed ones and any specific object ones
-//        return indexedSet.stream()
-//                .filter(clazz -> objects == null || objects.isEmpty() || objects.equals("null")
-//                        || objectsSet.contains(clazz.getSimpleName()))
-//                .map(c -> (Class<? extends HasId>) c).collect(Collectors.toList());
-//
-//    }
+		// Turn objects param into a set
+		final Set<String> objectsSet = (objects == null || objects.isEmpty() || objects.equals("null"))
+				? new HashSet<>()
+				: Arrays.asList(objects.split(",")).stream().collect(Collectors.toSet());
+		logger.info("  objects = " + objects);
+
+		// Find indexed objects
+		final Reflections reflections = new Reflections("com.wci.termhub.model");
+		final Set<Class<?>> indexedSet = new HashSet<>(
+				reflections.getTypesAnnotatedWith(org.springframework.data.elasticsearch.annotations.Document.class));
+		logger.info("  indexedSet = " + indexedSet);
+
+		// Find managed classes
+		final Set<EntityType<?>> entities = service.getEntityManager().getMetamodel().getEntities();
+		final List<Class<?>> classes = entities.stream().map(EntityType::getJavaType).filter(o -> o != null)
+				.collect(Collectors.toList());
+		logger.info("  classes = " + classes);
+
+		// Ensure all objects to delete are in indexedSet, otherwise fail
+		if (!objectsSet.isEmpty()) {
+
+			int ct = 0;
+			for (final Class<?> clazz : classes) {
+				if (indexedSet.contains(clazz) && objectsSet.contains(clazz.getSimpleName())) {
+					ct++;
+				}
+			}
+			if (ct != objectsSet.size()) {
+				throw new Exception("Not all specified objects are indexed");
+			}
+		}
+
+		// Go through entity classes and identify indexed ones and any specific object
+		// ones
+		return classes.stream().filter(clazz -> {
+			if (indexedSet.contains(clazz)) {
+				// Verify that its specified or that nothing was specified
+				if (objects == null || objects.isEmpty() || objects.equals("null")
+						|| objectsSet.contains(clazz.getSimpleName())) {
+					return true;
+				}
+			}
+			return false;
+		}).map(c -> (Class<? extends HasId>) c).collect(Collectors.toList());
+	}
+
+	/**
+	 * Gets the indexed objects.
+	 *
+	 * @param objects the objects
+	 * @return the indexed objects
+	 * @throws Exception the exception
+	 */
+	@SuppressWarnings("unchecked")
+	public static List<Class<? extends HasId>> getIndexedObjects(final String objects) throws Exception {
+
+		// Turn objects param into a set
+		final Set<String> objectsSet = (objects == null || objects.isEmpty() || objects.equals("null"))
+				? new HashSet<>()
+				: Arrays.asList(objects.split(",")).stream().collect(Collectors.toSet());
+		logger.info("  objects = " + objects);
+
+		// Find indexed objects
+		final Reflections reflections = new Reflections("com.wci.termhub.model");
+		final Set<Class<?>> indexedSet = new HashSet<>(
+				reflections.getTypesAnnotatedWith(org.springframework.data.elasticsearch.annotations.Document.class));
+		logger.info("  indexedSet = " + indexedSet);
+
+		// Ensure all objects to delete are in indexedSet, otherwise fail
+		if (!objectsSet.isEmpty()) {
+
+			int ct = 0;
+			for (final Class<?> clazz : indexedSet) {
+				if (objectsSet.contains(clazz.getSimpleName())) {
+					ct++;
+				}
+			}
+			if (ct != objectsSet.size()) {
+				throw new Exception("Not all specified objects are indexed");
+			}
+		}
+
+		// Go through entity classes and identify indexed ones and any specific object
+		// ones
+		return indexedSet.stream()
+				.filter(clazz -> objects == null || objects.isEmpty() || objects.equals("null")
+						|| objectsSet.contains(clazz.getSimpleName()))
+				.map(c -> (Class<? extends HasId>) c).collect(Collectors.toList());
+
+	}
 
 	/**
 	 * Gets the base fields.

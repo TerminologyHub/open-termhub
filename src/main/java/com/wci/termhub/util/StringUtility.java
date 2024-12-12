@@ -1,8 +1,12 @@
+/*
+ *
+ */
 package com.wci.termhub.util;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URLEncoder;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,7 +15,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,6 +57,9 @@ public final class StringUtility {
 
 	/** The Constant UUID_REGEX. */
 	public static final String UUID_REGEX = "\\p{XDigit}{8}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{12}";
+
+	/** The Constant RANDOM. */
+	private static final SecureRandom RANDOM = new SecureRandom();
 
 //	/** The stopwords. */
 //	private static Set<String> stopwords = getStopWords();
@@ -127,7 +133,7 @@ public final class StringUtility {
 	/**
 	 * Convert roman numeral to arabic. For example MCMXLIX returns 1949. The roman
 	 * numeral is first validated and then converted.
-	 * 
+	 *
 	 * @param number the number
 	 * @return the int
 	 * @throws Exception the exception
@@ -741,15 +747,13 @@ public final class StringUtility {
 	 * @return the string
 	 */
 	public static String randomString(final int length) {
-		String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-		StringBuilder salt = new StringBuilder();
-		Random rnd = new Random();
+		final String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+		final StringBuilder salt = new StringBuilder();
 		while (salt.length() < length) {
-			int index = (int) (rnd.nextFloat() * SALTCHARS.length());
+			final int index = RANDOM.nextInt(SALTCHARS.length());
 			salt.append(SALTCHARS.charAt(index));
 		}
-		String saltStr = salt.toString();
-		return saltStr;
+		return salt.toString();
 	}
 
 }

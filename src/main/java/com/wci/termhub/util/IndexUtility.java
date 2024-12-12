@@ -28,7 +28,6 @@ import com.wci.termhub.app.Direction;
 import com.wci.termhub.model.BaseModel;
 import com.wci.termhub.model.SearchParameters;
 
-// TODO: Auto-generated Javadoc
 /**
  * Performs utility functions relating to Lucene indexes.
  */

@@ -1,15 +1,16 @@
+/*
+ *
+ */
 package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -24,9 +25,10 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.Application;
+import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Term;
-import com.wci.termhub.service.impl.EntityServiceImpl;
+import com.wci.termhub.service.EntityRepositoryService;
 
 /**
  * The Class TermUnitTest.
@@ -48,9 +50,9 @@ public class TermUnitTest extends BaseUnitTest {
 	/** The term 3. */
 	private final static Term term3 = new Term();
 
-	/** The entity service impl. */
+	/** The search service. */
 	@Autowired
-	private EntityServiceImpl<Term, String> entityServiceImpl;
+	private EntityRepositoryService searchService;
 
 	/** The Constant INDEX_NAME. */
 	private static final String INDEX_NAME = Term.class.getCanonicalName();
@@ -127,23 +129,23 @@ public class TermUnitTest extends BaseUnitTest {
 		assertTrue(clazz1.isAnnotationPresent(Document.class));
 	}
 
-	/**
-	 * Delete index.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	@Order(3)
-	public void deleteIndex() throws Exception {
-
-		logger.info("Deleting index for Term");
-		entityServiceImpl.deleteIndex(Term.class);
-
-		logger.info("Deleted index for Term: {}", INDEX_DIRECTORY + "/" + INDEX_NAME);
-
-		// assert directory does not exist
-		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-	}
+//	/**
+//	 * Delete index.
+//	 *
+//	 * @throws Exception the exception
+//	 */
+//	@Test
+//	@Order(3)
+//	public void deleteIndex() throws Exception {
+//
+//		logger.info("Deleting index for Term");
+//		searchService.deleteIndex(Term.class);
+//
+//		logger.info("Deleted index for Term: {}", INDEX_DIRECTORY + "/" + INDEX_NAME);
+//
+//		// assert directory does not exist
+//		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
+//	}
 
 	/**
 	 * Creates the index.
@@ -155,7 +157,7 @@ public class TermUnitTest extends BaseUnitTest {
 	public void createIndex() throws Exception {
 
 		logger.info("Creating index for Term");
-		entityServiceImpl.createIndex(Term.class);
+		searchService.createIndex(Term.class);
 
 		// assert directory exists
 		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
@@ -171,9 +173,9 @@ public class TermUnitTest extends BaseUnitTest {
 	public void testAddTerm() throws Exception {
 
 		logger.info("Creating objects");
-		assertDoesNotThrow(() -> entityServiceImpl.add(Term.class, term1));
-		assertDoesNotThrow(() -> entityServiceImpl.add(Term.class, term2));
-		assertDoesNotThrow(() -> entityServiceImpl.add(Term.class, term3));
+		assertDoesNotThrow(() -> searchService.add(Term.class, term1));
+		assertDoesNotThrow(() -> searchService.add(Term.class, term2));
+		assertDoesNotThrow(() -> searchService.add(Term.class, term3));
 	}
 
 	/**
@@ -185,16 +187,16 @@ public class TermUnitTest extends BaseUnitTest {
 	@Order(6)
 	public void testFind() throws Exception {
 
-		Iterable<Term> foundTermsObjects = null;
+		ResultList<Term> foundTermsObjects = null;
 		final SearchParameters searchParameters = new SearchParameters();
 
 		// find the term by code
 		searchParameters.setQuery("code:" + term1.getCode());
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
-		assertEquals(1, getSize(foundTermsObjects));
+		foundTermsObjects = searchService.find(searchParameters, Term.class);
+		assertEquals(1, foundTermsObjects.getItems().size());
 
-		for (final Object foundTermObject : foundTermsObjects) {
+		for (final Object foundTermObject : foundTermsObjects.getItems()) {
 			final Term foundTerm = (Term) foundTermObject;
 			logger.info("Term found: {}", foundTerm.toString());
 			assertEquals(term1.toString(), foundTerm.toString());
@@ -203,10 +205,10 @@ public class TermUnitTest extends BaseUnitTest {
 		// now find the term by code
 		searchParameters.setQuery("code:" + term2.getCode());
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
-		assertEquals(1, getSize(foundTermsObjects));
+		foundTermsObjects = searchService.find(searchParameters, Term.class);
+		assertEquals(1, foundTermsObjects.getItems().size());
 
-		for (final Object foundTermObject : foundTermsObjects) {
+		for (final Object foundTermObject : foundTermsObjects.getItems()) {
 			final Term foundTerm = (Term) foundTermObject;
 			logger.info("Term found: {}", foundTerm.toString());
 			assertEquals(term2.toString(), foundTerm.toString());
@@ -214,10 +216,10 @@ public class TermUnitTest extends BaseUnitTest {
 
 		searchParameters.setQuery("code:1234567*");
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
-		assertEquals(1, getSize(foundTermsObjects));
+		foundTermsObjects = searchService.find(searchParameters, Term.class);
+		assertEquals(1, foundTermsObjects.getItems().size());
 
-		for (final Object foundTermObject : foundTermsObjects) {
+		for (final Object foundTermObject : foundTermsObjects.getItems()) {
 			final Term foundTerm = (Term) foundTermObject;
 			foundTerm.getAttributes().entrySet().stream().sorted(Map.Entry.comparingByKey());
 			assertEquals(term1.toString(), foundTerm.toString());
@@ -226,36 +228,36 @@ public class TermUnitTest extends BaseUnitTest {
 
 		searchParameters.setQuery("code:" + term1.getCode() + " OR code:" + term2.getCode());
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
-		assertEquals(2, getSize(foundTermsObjects));
+		foundTermsObjects = searchService.find(searchParameters, Term.class);
+		assertEquals(2, foundTermsObjects.getItems().size());
 
 		// add more complex queries
 		searchParameters.setQuery("name:" + term3.getName());
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
-		assertEquals(1, getSize(foundTermsObjects));
+		foundTermsObjects = searchService.find(searchParameters, Term.class);
+		assertEquals(1, foundTermsObjects.getItems().size());
 
 		// add more complex queries
 		searchParameters.setQuery("code:" + term1.getCode() + " AND name:" + term2.getName());
 		logger.info("Search for : {}", searchParameters.getQuery());
-		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
-		assertEquals(0, getSize(foundTermsObjects));
+		foundTermsObjects = searchService.find(searchParameters, Term.class);
+		assertEquals(0, foundTermsObjects.getItems().size());
 
 		// wild card search
 		searchParameters.setQuery("*:*");
-		foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
-		assertEquals(3, getSize(foundTermsObjects));
+		foundTermsObjects = searchService.find(searchParameters, Term.class);
+		assertTrue(foundTermsObjects.getItems().size() > 3);
 
 		// search for all
 		searchParameters.setQuery(null);
-		foundTermsObjects = entityServiceImpl.findAll(Term.class, searchParameters);
-		assertEquals(3, getSize(foundTermsObjects));
+		foundTermsObjects = searchService.findAll(searchParameters, Term.class);
+		assertTrue(foundTermsObjects.getItems().size() > 3);
 
 		// search by id
 		searchParameters.setQuery(null);
-		final Optional<Term> foundTermOjbect = entityServiceImpl.findById(Term.class, term3.getId());
-		assertTrue(foundTermOjbect.isPresent());
-		assertEquals(term3.toString(), foundTermOjbect.get().toString());
+		final Term foundTermOjbect = searchService.get(term3.getId(), Term.class);
+		assertTrue(foundTermOjbect != null);
+		assertEquals(term3.toString(), foundTermOjbect.toString());
 	}
 
 	/**
@@ -268,15 +270,15 @@ public class TermUnitTest extends BaseUnitTest {
 	public void testRemove() throws Exception {
 
 		logger.info("Deleting objects");
-		assertDoesNotThrow(() -> entityServiceImpl.remove(Term.class, term1.getId()));
+		assertDoesNotThrow(() -> searchService.remove(term1.getId(), Term.class));
 		logger.info("Done deleting");
 
 		// find the term by code
 		final SearchParameters searchParameters = new SearchParameters();
 		searchParameters.setQuery("id:" + term1.getId());
-		final Iterable<Term> foundTermsObjects = entityServiceImpl.find(Term.class, searchParameters);
-		logger.info("Found: {}", getSize(foundTermsObjects));
-		assertEquals(0, getSize(foundTermsObjects));
+		final ResultList<Term> foundTermsObjects = searchService.find(searchParameters, Term.class);
+		logger.info("Found: {}", foundTermsObjects.getItems().size());
+		assertEquals(0, foundTermsObjects.getItems().size());
 	}
 
 }

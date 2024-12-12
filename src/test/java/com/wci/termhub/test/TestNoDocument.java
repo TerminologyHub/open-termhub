@@ -1,13 +1,16 @@
+/*
+ *
+ */
 package com.wci.termhub.test;
 
 import java.util.Objects;
 
-import com.wci.termhub.model.BaseModel;
+import com.wci.termhub.model.AbstractHasId;
 
 /**
- * The Class TestNoDocumentObject.
+ * The Class TestNoDocument.
  */
-public class TestNoDocumentObject extends BaseModel {
+public class TestNoDocument extends AbstractHasId {
 
 	/** The name. */
 	private String name;
@@ -29,7 +32,7 @@ public class TestNoDocumentObject extends BaseModel {
 	 *
 	 * @param name the new name
 	 */
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
@@ -47,7 +50,7 @@ public class TestNoDocumentObject extends BaseModel {
 	 *
 	 * @param description the new description
 	 */
-	public void setDescription(String description) {
+	public void setDescription(final String description) {
 		this.description = description;
 	}
 
@@ -68,14 +71,17 @@ public class TestNoDocumentObject extends BaseModel {
 	 * @return true, if successful
 	 */
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		TestNoDocumentObject other = (TestNoDocumentObject) obj;
+		}
+		final TestNoDocument other = (TestNoDocument) obj;
 		return Objects.equals(description, other.description) && Objects.equals(name, other.name);
 	}
 

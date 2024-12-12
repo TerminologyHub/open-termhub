@@ -1,30 +1,33 @@
+/*
+ *
+ */
 package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.mockito.InjectMocks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.Application;
-import com.wci.termhub.model.BaseModel;
+import com.wci.termhub.model.HasId;
+import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.service.impl.EntityServiceImpl;
+import com.wci.termhub.service.EntityRepositoryService;
 
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
@@ -35,13 +38,13 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(EntityServiceImplUnitTest.class);
 
-	@InjectMocks
-	private EntityServiceImpl<BaseModel, String> entityServiceImpl;
+	@Autowired
+	private EntityRepositoryService searchService;
 
-	private final TestDocumentObject documentObj1 = new TestDocumentObject("1", "1000", "one", "1 description");
-	private final TestDocumentObject documentObj2 = new TestDocumentObject("2", "2000", "two", "2 description");
-	private final TestDocumentObject documentObj3 = new TestDocumentObject("3", "3000", "three", "3 description");
-	private final TestDocumentObject documentObj4 = new TestDocumentObject("4", "4000", "four", "4 description");
+	private final TestDocument documentObj1 = new TestDocument("1", "1000", "one", "1 description");
+	private final TestDocument documentObj2 = new TestDocument("2", "2000", "two", "2 description");
+	private final TestDocument documentObj3 = new TestDocument("3", "3000", "three", "3 description");
+	private final TestDocument documentObj4 = new TestDocument("4", "4000", "four", "4 description");
 
 	@Test
 	@Order(1)
@@ -49,8 +52,8 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 		logger.info("Testing CreateIndex");
 
-		assertThrows(IllegalArgumentException.class, () -> entityServiceImpl.createIndex(TestNoDocumentObject.class));
-		assertDoesNotThrow(() -> entityServiceImpl.createIndex(TestDocumentObject.class));
+		assertThrows(IllegalArgumentException.class, () -> searchService.createIndex(TestNoDocument.class));
+		assertDoesNotThrow(() -> searchService.createIndex(TestDocument.class));
 	}
 
 	@Test
@@ -59,8 +62,8 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 		logger.info("Testing DeleteIndex");
 
-		assertThrows(IllegalArgumentException.class, () -> entityServiceImpl.deleteIndex(TestNoDocumentObject.class));
-		assertDoesNotThrow(() -> entityServiceImpl.deleteIndex(TestDocumentObject.class));
+		assertThrows(IllegalArgumentException.class, () -> searchService.deleteIndex(TestNoDocument.class));
+		assertDoesNotThrow(() -> searchService.deleteIndex(TestDocument.class));
 
 	}
 
@@ -70,11 +73,10 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 		logger.info("Testing Add");
 
-		final TestNoDocumentObject noDocumentObj = new TestNoDocumentObject();
-		assertThrows(IllegalArgumentException.class,
-				() -> entityServiceImpl.add(TestNoDocumentObject.class, noDocumentObj));
+		final TestNoDocument noDocumentObj = new TestNoDocument();
+		assertThrows(IllegalArgumentException.class, () -> searchService.add(TestNoDocument.class, noDocumentObj));
 
-		assertDoesNotThrow(() -> entityServiceImpl.createIndex(TestDocumentObject.class));
+		assertDoesNotThrow(() -> searchService.createIndex(TestDocument.class));
 
 	}
 
@@ -84,9 +86,9 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 		logger.info("Testing Add Batch");
 
-		final List<BaseModel> listOfDocuments = List.of(documentObj1, documentObj2, documentObj3, documentObj4);
+		final List<HasId> listOfDocuments = List.of(documentObj1, documentObj2, documentObj3, documentObj4);
 
-		assertDoesNotThrow(() -> entityServiceImpl.add(TestDocumentObject.class, listOfDocuments));
+		assertDoesNotThrow(() -> searchService.addBulk(TestDocument.class, listOfDocuments));
 
 	}
 
@@ -98,19 +100,18 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 		final SearchParameters searchParameters = new SearchParameters("name:" + documentObj1.getName(), 100, 0);
 
-		assertThrows(IllegalArgumentException.class,
-				() -> entityServiceImpl.find(TestNoDocumentObject.class, searchParameters));
+		assertThrows(IllegalArgumentException.class, () -> searchService.find(searchParameters, TestNoDocument.class));
 
 		try {
 
-			final Iterable<BaseModel> result = entityServiceImpl.find(TestDocumentObject.class, searchParameters);
+			final ResultList<TestDocument> result = searchService.find(searchParameters, TestDocument.class);
 			assertNotNull(result);
-			assertTrue(result.iterator().hasNext());
-			final TestDocumentObject documentObj = (TestDocumentObject) result.iterator().next();
+			assertTrue(result.getItems().iterator().hasNext());
+			final TestDocument documentObj = result.getItems().iterator().next();
 			assertEquals(documentObj1, documentObj);
 
 			int count = 0;
-			for (final BaseModel object : result) {
+			for (final HasId object : result.getItems()) {
 				count++;
 				logger.debug("TestDocumentObject found: {}", object);
 			}
@@ -129,16 +130,14 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 		logger.info("Testing Find By Id");
 
 		final String documentId = "4";
-		assertThrows(IllegalArgumentException.class,
-				() -> entityServiceImpl.findById(TestNoDocumentObject.class, documentId));
+		assertThrows(IllegalArgumentException.class, () -> searchService.get(documentId, TestNoDocument.class));
 
 		try {
 
-			final Optional<BaseModel> result = entityServiceImpl.findById(TestDocumentObject.class, documentId);
-			assertNotNull(result);
+			final TestDocument result = searchService.get(documentId, TestDocument.class);
+			assertNotNull(result); // failed
 			logger.info("Result: {}", result);
-			assertTrue(result.isPresent());
-			final TestDocumentObject documentObj = (TestDocumentObject) result.get();
+			final TestDocument documentObj = result;
 			assertEquals(documentObj4, documentObj);
 			assertEquals(documentId, documentObj.getId());
 
@@ -156,15 +155,15 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 		final SearchParameters searchParameters = new SearchParameters();
 		assertThrows(IllegalArgumentException.class,
-				() -> entityServiceImpl.findAll(TestNoDocumentObject.class, searchParameters));
+				() -> searchService.findAll(searchParameters, TestNoDocument.class));
 
 		try {
 
-			final Iterable<BaseModel> result = entityServiceImpl.findAll(TestDocumentObject.class, searchParameters);
+			final ResultList<TestDocument> result = searchService.findAll(searchParameters, TestDocument.class);
 			assertNotNull(result);
-			assertTrue(result.iterator().hasNext());
+			assertTrue(result.getItems().iterator().hasNext());
 			int count = 0;
-			for (final BaseModel object : result) {
+			for (final TestDocument object : result.getItems()) {
 				count++;
 				logger.debug("TestDocumentObject found: {}", object);
 			}
@@ -184,11 +183,11 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 		try {
 
-			final Iterable<BaseModel> result = entityServiceImpl.find(TestDocumentObject.class, searchParameters);
+			final ResultList<TestDocument> result = searchService.find(searchParameters, TestDocument.class);
 			assertNotNull(result);
-			assertTrue(result.iterator().hasNext());
+			assertTrue(result.getItems().iterator().hasNext());
 			int count = 0;
-			for (final BaseModel object : result) {
+			for (final TestDocument object : result.getItems()) {
 				count++;
 				logger.debug("TestDocumentObject found: {}", object);
 			}
@@ -205,25 +204,25 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 	public void testRemove() {
 
 		final String documentId = "4";
-		assertDoesNotThrow(() -> entityServiceImpl.remove(TestDocumentObject.class, documentId));
+		assertDoesNotThrow(() -> searchService.remove(documentId, TestDocument.class));
 
 		try {
 
-			final Optional<BaseModel> result = entityServiceImpl.findById(TestDocumentObject.class, documentId);
-			assertNotNull(result);
+			final TestDocument result = searchService.get(documentId, TestDocument.class);
+			assertNull(result);
 			logger.info("Result: {}", result);
-			assertFalse(result.isPresent());
 
-			final Iterable<BaseModel> resultAll = entityServiceImpl.findAll(TestDocumentObject.class,
-					new SearchParameters());
+			final ResultList<TestDocument> resultAll = searchService.findAll(new SearchParameters(),
+					TestDocument.class);
 			assertNotNull(resultAll);
-			assertTrue(resultAll.iterator().hasNext());
-			assertEquals(3, getSize(resultAll));
+			assertTrue(resultAll.getItems().iterator().hasNext());
+			assertEquals(3, resultAll.getItems().size());
 
 		} catch (final Exception e) {
 			logger.error("Error finding all documents", e);
 			fail("Error finding all documents");
 		}
+
 	}
 
 	@Test
@@ -235,13 +234,12 @@ public class EntityServiceImplUnitTest extends BaseUnitTest {
 
 		try {
 
-			entityServiceImpl.update(TestDocumentObject.class, documentId, documentObj4);
+			searchService.update(TestDocument.class, documentId, documentObj4);
 
-			final Optional<BaseModel> result = entityServiceImpl.findById(TestDocumentObject.class, documentId);
+			final TestDocument result = searchService.get(documentId, TestDocument.class);
 			assertNotNull(result);
 			logger.info("Result: {}", result);
-			assertTrue(result.isPresent());
-			final TestDocumentObject documentObj = (TestDocumentObject) result.get();
+			final TestDocument documentObj = result;
 			assertEquals(documentObj4, documentObj);
 			assertEquals(documentId, documentObj.getId());
 
