@@ -45,7 +45,7 @@ public class TerminologySearchUnitTest {
 	public void testFindAll() throws Exception {
 
 		final ResultList<Terminology> all = searchService.findAll(SEARCH_PARAMETERS, Terminology.class);
-		LOG.info("Terminology2UnitTest all: {}", all.getItems().size());
+		LOG.info("Find all: {}", all.getItems().size());
 	}
 
 	/**

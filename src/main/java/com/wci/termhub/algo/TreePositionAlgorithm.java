@@ -56,11 +56,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 	/** The batch. */
 	private final List<HasId> batch = new ArrayList<>();
 
-//	/** The batch size. */
-//	private long batchSize = 0;
-
 	/** The prefix. */
 	private String prefix = "";
+
+	private final List<String> seen = new ArrayList<>();
 
 	/**
 	 * Instantiates an empty {@link TreePositionAlgorithm}.
@@ -69,6 +68,17 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 	 */
 	public TreePositionAlgorithm() throws Exception {
 		super();
+	}
+
+	/**
+	 * Instantiates a new tree position algorithm.
+	 *
+	 * @param searchService the search service
+	 * @throws Exception the exception
+	 */
+	public TreePositionAlgorithm(final EntityRepositoryService searchService) throws Exception {
+		super();
+		this.searchService = searchService;
 	}
 
 	/**
@@ -101,11 +111,8 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 		logInfo("  terminology = " + getTerminology());
 		logInfo("  publisher = " + getPublisher());
 		logInfo("  version = " + getVersion());
-		// fireProgressEvent(0, "Starting...");
 
 		// Get all relationships
-		// fireProgressEvent(1, "Initialize additional relationship types");
-
 		// Get prefix for index name
 		prefix = StringUtility.removeNonAlphanumeric(getTerminology().toLowerCase()) + "-"
 				+ StringUtility.removeNonAlphanumeric(getPublisher().toLowerCase()) + "-"
@@ -144,7 +151,6 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 				0, 10000, "id", null);
 		final ResultList<ConceptRelationship> list = new ResultList<>();
 		final Map<String, String> additionalTypeMap = new HashMap<>();
-		// final List<String> prefixes = ModelUtility.asList(term.getIndexName());
 		// String searchAfter = null;
 		while (true) {
 //			final ResultList<ConceptRelationship> innerList = searchService.findFields(params,
@@ -241,18 +247,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
 		term.getRoots().addAll(rootCodes);
 
-		// fireAdjustedProgressEvent(10, step, steps, "Compute tree
-		// positions for roots");
 		for (final String rootCode : rootCodes) {
 
 			// Check cancel flag
 			checkCancel();
-
-			// fireAdjustedProgressEvent((int) (10 + (i * 99.0 /
-			// rootCodes.size())),
-			// step, steps,
-			// "Compute tree positions and semantic types for root " +
-			// rootCode);
 
 			final ValidationResult result = new ValidationResult();
 
@@ -269,10 +267,9 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
 		// Process the final batch
 		logInfo("    BATCH index = " + batch.size());
-		// operationsService.bulkIndex(prefix, batch, ConceptTreePosition.class);
 
 		// Give indexes a chance to resolve before computing stats
-		Thread.sleep(5000);
+		Thread.sleep(1000);
 
 		// Mark the terminology as having computed tree positions and count tree
 		// positions
@@ -285,7 +282,6 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 				term.getPublisher(), term.getVersion(), prefix));
 
 		// Update index
-		// operationsService.indexAndWait(term, Terminology.class);
 		searchService.update(Terminology.class, term.getId(), term);
 
 		logInfo("  treepos count = " + objectCt);
@@ -332,6 +328,21 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 			return descConceptCodes;
 		}
 
+		if (!seen.contains(code)) {
+			final ConceptTreePosition tpEmpty = new ConceptTreePosition();
+			setCommonFields(tpEmpty);
+			final ConceptRef ref = new ConceptRef();
+			ref.setCode(code);
+			// ref.setName(cache.getConceptName(code));
+			ref.setTerminology(getTerminology());
+			ref.setPublisher(getPublisher());
+			// ref.setLeaf(cache.isLeaf(code));
+			tpEmpty.setConcept(ref);
+			tpEmpty.setAncestorPath("");
+			batch.add(tpEmpty);
+			seen.add(code);
+		}
+
 		// Instantiate the tree position
 		final ConceptTreePosition tp = new ConceptTreePosition();
 		setCommonFields(tp);
@@ -354,9 +365,8 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
 			descConceptCodes.addAll(parChd.get(code));
 
-			// iterate over the child terminology codes
-			// this iteration is entirely local and depends on no managed
-			// objects
+			// iterate over the child terminology codes this iteration is entirely local and
+			// depends on no managed objects
 			for (final String childConceptCode : parChd.get(code)) {
 
 				// call helper function on child concept
@@ -369,16 +379,12 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
 		// set the children count
 		tp.setChildCt(parChd.containsKey(code) ? parChd.get(code).size() : 0);
-
-		// batchSize = operationsService.batchIndex(prefix, tp, batch, batchSize,
-		// 9000000);
 		batch.add(tp);
 		if ((batch.size() % 100) == 0) {
 			searchService.addBulk(ConceptTreePosition.class, batch);
 			objectCt += batch.size();
 			batch.clear();
 		}
-		// searchService.addBulk(ConceptTreePosition.class, batch);
 		objectCt++;
 
 		// check for cancel request
@@ -394,13 +400,18 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 			descConceptCodes.remove(code);
 		}
 
-		// return the descendant concept set
-		// note that the local child and descendant set will be garbage
-		// collected
+		// return the descendant concept set note that the local child and descendant
+		// set will be garbage collected
 		return descConceptCodes;
 
 	}
 
+	/**
+	 * Check preconditions.
+	 *
+	 * @return the validation result
+	 * @throws Exception the exception
+	 */
 	/* see superclass */
 	@Override
 	public ValidationResult checkPreconditions() throws Exception {
@@ -408,12 +419,23 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 		return new ValidationResult();
 	}
 
+	/**
+	 * Sets the properties.
+	 *
+	 * @param p the new properties
+	 * @throws Exception the exception
+	 */
 	/* see superclass */
 	@Override
 	public void setProperties(final Properties p) throws Exception {
 		// n/a
 	}
 
+	/**
+	 * Gets the description.
+	 *
+	 * @return the description
+	 */
 	/* see superclass */
 	@Override
 	public String getDescription() {

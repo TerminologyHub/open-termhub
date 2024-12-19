@@ -5,7 +5,6 @@ package com.wci.termhub.rest;
 
 import java.util.List;
 
-import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 
 import com.wci.termhub.model.Concept;
@@ -337,24 +336,5 @@ public interface TerminologyServiceRest extends RootServiceRest {
 	public ResponseEntity<ResultListConceptTreePosition> findTreePositionChildren(String terminology, String code,
 			String query, Integer offset, Integer limit, Boolean ascending, String sort, String handler)
 			throws Exception;
-
-	/**
-	 * Gets the concept diagram.
-	 *
-	 * @param conceptId the concept id
-	 * @return the concept diagram
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<Resource> getConceptDiagram(String conceptId) throws Exception;
-
-	/**
-	 * Gets the concept diagram.
-	 *
-	 * @param terminology the terminology
-	 * @param code        the code
-	 * @return the concept diagram
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<Resource> getConceptDiagram(String terminology, String code) throws Exception;
 
 }

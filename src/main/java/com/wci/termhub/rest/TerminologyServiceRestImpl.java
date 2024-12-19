@@ -16,17 +16,10 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +28,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.wci.termhub.Application;
@@ -48,7 +40,6 @@ import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.HealthCheck;
 import com.wci.termhub.model.IncludeParam;
-import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.ResultListConcept;
@@ -99,8 +90,7 @@ import jakarta.ws.rs.core.MediaType;
 		+ "<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes\">"
 		+ "https://github.com/terminologyhub/termhub-in-5-minutes</a></p>", contact = @Contact(name = "API Support", url = "https://www.terminologyhub.com", email = "info@terminologyhub.com")), tags = {
 				@Tag(name = "terminology", description = "Terminology service endpoints"),
-				@Tag(name = "mapset", description = "Mapset service endpoints"),
-				@Tag(name = "metadata", description = "Terminology and project metadata endpoints"),
+				@Tag(name = "metadata", description = "Terminology and metadata endpoints"),
 				@Tag(name = "concept", description = "Concept endpoints"),
 				@Tag(name = "concept by id", description = "Concept service endpoints with \"by id\" parameters"),
 				@Tag(name = "concept by code", description = "Concept service endpoints with \"by code\" parameters"),
@@ -120,9 +110,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 	/** The terminologies cache. */
 	private static TimerCache<Map<String, Terminology>> terminologyCache = new TimerCache<>(1000, 10000);
-
-	/** The terminologies cache. */
-	private static TimerCache<Map<String, Mapset>> mapsetCache = new TimerCache<>(1000, 10000);
 
 	/** The request. */
 	@Autowired
@@ -1501,6 +1488,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 			final SearchParameters params = new SearchParameters(
 					StringUtility.composeQuery("AND", "concept.code:" + StringUtility.escapeQuery(concept.getCode()),
+							"terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
 							QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
 					offset, maxLimit, sort, ascending);
 
@@ -1509,8 +1497,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			final ResultList<ConceptTreePosition> treeList = new ResultList<>();
 			for (final ConceptTreePosition treepos : list.getItems()) {
 
-				final ConceptTreePosition tree = TerminologyUtility.computeTree(searchService, treepos,
-						terminology.getIndexName());
+				final ConceptTreePosition tree = TerminologyUtility.computeTree(searchService, treepos);
 				treeList.getItems().add(tree);
 			}
 			treeList.setParameters(params);
@@ -1563,7 +1550,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			@Parameter(name = "ascending", description = "<code>true</code> for ascending, <code>false</code> for descending,"
 					+ " <code>null</code> for unspecified", required = false) })
 	public ResponseEntity<ResultListConceptTreePosition> findTreePositions(
-
 			@PathVariable("terminology") final String terminology, @PathVariable("code") final String code,
 			@RequestParam(name = "query", required = false) final String query,
 			@RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
@@ -1576,7 +1562,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		final AuthContext context = authorize(request);
 		try {
 
-			final Terminology term = lookupTerminology(context, terminology);
+			// validate terminology - throw exception if not found
+			lookupTerminology(context, terminology);
 
 			// limit return objects to 1000 regardless of user request
 			final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -1593,8 +1580,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			for (final ConceptTreePosition treepos : list.getItems()) {
 				// checkTerminology(project, treepos);
 
-				final ConceptTreePosition tree = TerminologyUtility.computeTree(searchService, treepos,
-						term.getIndexName());
+				final ConceptTreePosition tree = TerminologyUtility.computeTree(searchService, treepos);
 				treeList.getItems().add(tree);
 			}
 			treeList.setParameters(params);
@@ -1668,10 +1654,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 			// Find this thing
 			final SearchParameters params = new SearchParameters(1, 0);
-			params.setQuery(
-					StringUtility.composeQuery("AND", QueryBuilder.findBuilder(builders, handler).buildQuery(query),
-							"terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
-							"concept.code:" + StringUtility.escapeQuery(concept.getCode())));
+			params.setQuery(StringUtility.composeQuery("AND",
+					"terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
+					"concept.code:" + StringUtility.escapeQuery(concept.getCode()),
+					QueryBuilder.findBuilder(builders, handler).buildQuery(query)));
 
 			// limit return objects to 1000 regardless of user request
 			final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -1686,7 +1672,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 			// Find its children
 			final SearchParameters paramsChd = new SearchParameters(null, offset, maxLimit, sort, ascending);
-			final String ancPath = (tp.getAncestorPath().isEmpty() ? "" : tp.getAncestorPath() + "~")
+			final String ancPath = (StringUtils.isEmpty(tp.getAncestorPath()) ? "" : tp.getAncestorPath() + "~")
 					+ concept.getCode();
 			paramsChd.setQuery(
 					StringUtility.composeQuery("AND", "terminology:" + StringUtility.escapeQuery(tp.getTerminology()),
@@ -1694,21 +1680,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 							QueryBuilder.findBuilder(builders, handler).buildQuery(query)));
 			final ResultList<ConceptTreePosition> listChd = searchService.find(paramsChd, ConceptTreePosition.class);
 			listChd.setParameters(paramsChd);
-
-			// NO LONGER NECESSARY
-			// // Tree position computation doesn't set names, so we have to look
-			// // them up here. When it does, stop doing this.
-			// for (final ConceptTreePosition chd : listChd.getItems()) {
-			// final ConceptRef ref = new ConceptRef();
-			// final Concept concept2 = TerminologyUtility.getConcept(searchService,
-			// chd.getTerminology(), chd.getPublisher(), chd.getVersion(),
-			// chd.getConcept().getCode(), terminology.getIndexName());
-			// ref.setId(concept2.getId());
-			// ref.setName(concept2.getName());
-			// ref.setCode(concept2.getCode());
-			// ref.setLeaf(concept2.getLeaf());
-			// chd.setConcept(ref);
-			// }
 
 			return new ResponseEntity<>(new ResultListConceptTreePosition(listChd), new HttpHeaders(), HttpStatus.OK);
 
@@ -1792,7 +1763,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 
 			// Find its children
 			final SearchParameters paramsChd = new SearchParameters(null, offset, maxLimit, sort, ascending);
-			final String ancPath = (tp.getAncestorPath().isEmpty() ? "" : tp.getAncestorPath() + "~") + code;
+			final String ancPath = (StringUtils.isEmpty(tp.getAncestorPath()) ? "" : tp.getAncestorPath() + "~") + code;
 			paramsChd.setQuery(
 					StringUtility.composeQuery("AND", "terminology:" + StringUtility.escapeQuery(tp.getTerminology()),
 							"ancestorPath:" + StringUtility.escapeQuery(ancPath),
@@ -1800,293 +1771,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 			final ResultList<ConceptTreePosition> listChd = searchService.find(paramsChd, ConceptTreePosition.class);
 			listChd.setParameters(paramsChd);
 
-			// NO LONGER NECESSARY
-			// // Tree position computation doesn't set names, so we have to look
-			// // them up here. When it does, stop doing this.
-			// for (final ConceptTreePosition chd : listChd.getItems()) {
-			// final ConceptRef ref = new ConceptRef();
-			// final Concept concept = TerminologyUtility.getConcept(searchService,
-			// chd.getTerminology(), chd.getPublisher(), chd.getVersion(),
-			// chd.getConcept().getCode(), term.getIndexName());
-			// ref.setId(concept.getId());
-			// ref.setName(concept.getName());
-			// ref.setCode(concept.getCode());
-			// ref.setLeaf(concept.getLeaf());
-			// chd.setConcept(ref);
-			// }
-
 			return new ResponseEntity<>(new ResultListConceptTreePosition(listChd), new HttpHeaders(), HttpStatus.OK);
 
 		} catch (final Exception e) {
 			handleException(e, "trying to find tree position children.");
 			return null;
 		}
-	}
-
-	/**
-	 * Gets the concept diagram.
-	 *
-	 * @param conceptId the concept id
-	 * @return the concept diagram
-	 * @throws Exception the exception
-	 */
-	/* see superclass */
-	@SuppressWarnings("resource")
-	@Override
-	@RequestMapping(value = "/concept/{conceptId}/diagram", method = RequestMethod.GET, produces = { "image/png",
-			MediaType.APPLICATION_JSON })
-	@Operation(summary = "Get concept diagram", description = "Gets concept diagram for the specified concept.", security = @SecurityRequirement(name = "bearerAuth"), tags = {
-			"concept by id" })
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Concept diagram", content = @Content(mediaType = "image/png")),
-			@ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-			@ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-			@ApiResponse(responseCode = "417", description = "Not found", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = MediaType.APPLICATION_JSON)) })
-	@Parameters({ @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true) })
-	public @ResponseBody ResponseEntity<Resource> getConceptDiagram(@PathVariable("conceptId") final String conceptId)
-			throws Exception {
-
-		@SuppressWarnings("unused")
-		final AuthContext context = authorize(request);
-		try {
-			final Map<String, Terminology> indexMap = lookupTerminologyMap();
-
-			// look up concept first and get code
-			// Get the concept
-			final Concept concept = searchService
-					.findSingle(new SearchParameters("id:" + conceptId, null, null, null, null), Concept.class);
-			if (concept == null) {
-				throw new RestException(false, 417, "Expectation failed", "Specified concept is null " + conceptId);
-
-			}
-			final Terminology terminology = indexMap
-					.get(concept.getTerminology() + concept.getPublisher() + concept.getVersion());
-			if (terminology == null) {
-				logger.error("    indexMap = " + indexMap);
-				logger.error("    key = " + concept.getTerminology() + concept.getPublisher() + concept.getVersion());
-				throw new RestException(false, 417, "Expectation failed",
-						"Specified concept is not valid for this project =  " + conceptId);
-			}
-
-			// look up concept's relationships
-			SearchParameters params = new SearchParameters("from.code:" + StringUtility.escapeQuery(concept.getCode()),
-					null, 100000, null, null);
-			final ResultList<ConceptRelationship> rels = searchService.find(params, ConceptRelationship.class);
-			concept.setRelationships(rels.getItems());
-
-			// lookup metadata
-			params = new SearchParameters("*:*", null, 100000, null, null);
-			final ResultList<Metadata> metadata = searchService.find(params, Metadata.class);
-
-			// call diagram application to generate image
-			final HttpClient httpClient = HttpClientBuilder.create().build();
-			final String diagramUrl = PropertyUtility.getProperties().getProperty("api.url.termhub-diagram-service");
-			final HttpPost request = new HttpPost(diagramUrl + "/generate/diagram");
-			final String diagramModel = TerminologyUtility.toDiagramModel(concept, metadata.getItems());
-			final StringEntity payload = new StringEntity(diagramModel);
-			request.addHeader("content-type", MediaType.APPLICATION_JSON);
-			request.addHeader("accept", "image/png");
-			request.setEntity(payload);
-			logger.info("    get diagram = " + diagramModel);
-			final HttpResponse response = httpClient.execute(request);
-			if (response.getStatusLine().getStatusCode() >= 400) {
-				throw new RestException(false, 417, "Diagram service error", response.getStatusLine().toString());
-			}
-			// Return the diagram
-			final HttpHeaders headers = new HttpHeaders();
-			headers.add(HttpHeaders.CONTENT_DISPOSITION,
-					"attachment; filename=" + concept.getTerminology() + "-" + concept.getCode() + "-"
-							+ StringUtility
-									.substr(concept.getName().replaceAll(" ", "-").replaceAll("[^A-Za-z0-9]", "-"), 80)
-							+ ".png");
-			headers.add(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS,
-					HttpHeaders.CONTENT_DISPOSITION + "," + HttpHeaders.ACCEPT + "," + HttpHeaders.AUTHORIZATION);
-
-			return new ResponseEntity<>(new InputStreamResource(response.getEntity().getContent()), headers,
-					HttpStatus.OK);
-
-		} catch (final Exception e) {
-			handleException(e, "trying to get concept diagram = " + conceptId);
-			return null;
-		}
-
-	}
-
-	/**
-	 * Gets the concept diagram png. This method is for
-	 * <img src="https://..../diagram.png">.
-	 *
-	 * @param conceptId the concept id
-	 * @return the concept diagram png
-	 * @throws Exception the exception
-	 */
-	/* see superclass */
-	@SuppressWarnings("resource")
-	@RequestMapping(value = "/concept/{conceptId}/diagram.png", method = RequestMethod.GET, produces = { "image/png" })
-	@Hidden
-	public @ResponseBody ResponseEntity<Resource> getConceptDiagramPng(
-			@PathVariable("conceptId") final String conceptId) throws Exception {
-
-		try {
-			// Fake context for this call since we want to embed it in an img tag
-			final AuthContext context = new AuthContext();
-			context.setUserId("admin");
-			context.setRole("ADMIN");
-			final Map<String, Terminology> indexMap = lookupTerminologyMap();
-
-			// look up concept first and get code
-			// Get the concept
-			final Concept concept = searchService
-					.findSingle(new SearchParameters("id:" + conceptId, null, null, null, null), Concept.class);
-			if (concept == null) {
-				throw new RestException(false, 417, "Expectation failed", "Specified concept is null " + conceptId);
-
-			}
-			final Terminology terminology = indexMap
-					.get(concept.getTerminology() + concept.getPublisher() + concept.getVersion());
-			if (terminology == null) {
-				logger.error("    indexMap = " + indexMap);
-				logger.error("    key = " + concept.getTerminology() + concept.getPublisher() + concept.getVersion());
-				throw new RestException(false, 417, "Expectation failed",
-						"Specified concept is not valid for this project =  " + conceptId);
-			}
-
-			// look up concept's relationships
-			SearchParameters params = new SearchParameters("from.code:" + StringUtility.escapeQuery(concept.getCode()),
-					null, 100000, null, null);
-			final ResultList<ConceptRelationship> rels = searchService.find(params, ConceptRelationship.class);
-			concept.setRelationships(rels.getItems());
-
-			// lookup metadata
-			params = new SearchParameters("", null, 100000, null, null);
-			final ResultList<Metadata> metadata = searchService.find(params, Metadata.class);
-
-			// call diagram application to generate image
-			final HttpClient httpClient = HttpClientBuilder.create().build();
-			final String diagramUrl = PropertyUtility.getProperties().getProperty("api.url.termhub-diagram-service");
-			final HttpPost request = new HttpPost(diagramUrl + "/generate/diagram");
-			final String diagramModel = TerminologyUtility.toDiagramModel(concept, metadata.getItems());
-			final StringEntity payload = new StringEntity(diagramModel);
-			request.addHeader("content-type", MediaType.APPLICATION_JSON);
-			request.addHeader("accept", "image/png");
-			request.setEntity(payload);
-			logger.info("    get diagram = " + diagramModel);
-			final HttpResponse response = httpClient.execute(request);
-			if (response.getStatusLine().getStatusCode() >= 400) {
-				throw new RestException(false, 417, "Diagram service error", response.getStatusLine().toString());
-			}
-			// Return the diagram
-			final HttpHeaders headers = new HttpHeaders();
-			headers.add(HttpHeaders.CONTENT_DISPOSITION,
-					"attachment; filename=" + concept.getTerminology() + "-" + concept.getCode() + "-"
-							+ StringUtility
-									.substr(concept.getName().replaceAll(" ", "-").replaceAll("[^A-Za-z0-9]", "-"), 80)
-							+ ".png");
-			headers.add(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS,
-					HttpHeaders.CONTENT_DISPOSITION + "," + HttpHeaders.ACCEPT + "," + HttpHeaders.AUTHORIZATION);
-
-			return new ResponseEntity<>(new InputStreamResource(response.getEntity().getContent()), headers,
-					HttpStatus.OK);
-
-		} catch (final Exception e) {
-			handleException(e, "trying to get concept diagram = " + conceptId);
-			return null;
-		}
-
-	}
-
-	/**
-	 * Gets the concept diagram.
-	 *
-	 * @param terminology the terminology
-	 * @param code        the code
-	 * @return the concept diagram
-	 * @throws Exception the exception
-	 */
-	/* see superclass */
-	@SuppressWarnings("resource")
-	@Override
-	@RequestMapping(value = "/concept/{terminology}/{code}/diagram", method = RequestMethod.GET, produces = {
-			"image/png", MediaType.APPLICATION_JSON })
-	@Operation(summary = "Get concept diagram by terminology and code", description = "Gets concept diagram for the specified terminology and code.", security = @SecurityRequirement(name = "bearerAuth"), tags = {
-			"concept by code" })
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Concept diagram", content = @Content(mediaType = "image/png")),
-			@ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-			@ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-			@ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-			@ApiResponse(responseCode = "417", description = "Not found", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-			@ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = MediaType.APPLICATION_JSON)) })
-	@Parameters({
-			@Parameter(name = "terminology", description = "Terminology id or abbreviation."
-					+ " e.g. \"uuid1\" or \"ICD10CM\".", required = true),
-			@Parameter(name = "code", description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"", required = true) })
-	public @ResponseBody ResponseEntity<Resource> getConceptDiagram(
-
-			@PathVariable("terminology") final String terminology, @PathVariable("code") final String code)
-			throws Exception {
-
-		final AuthContext context = authorize(request);
-		try {
-
-			final Terminology term = lookupTerminology(context, terminology);
-
-			// find with code, term, pub, version
-			final String query = StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
-					"terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-					"publisher:" + StringUtility.escapeQuery(term.getPublisher()),
-					"version:" + StringUtility.escapeQuery(term.getVersion()));
-
-			// then do a find on the query
-			final IncludeParam ip = new IncludeParam("summary");
-			SearchParameters params = new SearchParameters(query, null, 2, null, null);
-			final ResultList<Concept> results = searchService.findFields(params,
-					new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
-
-			if (results.getTotal() == 0) {
-				return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.OK);
-			}
-			if (results.getTotal() > 1) {
-				throw new RestException(false, 417, "Expecation failed",
-						"Too many matching concepts for terminology/code = " + terminology + ", " + code);
-			}
-			final Concept concept = results.getItems().get(0);
-
-			// look up concept's relationships
-			params = new SearchParameters("from.code:" + StringUtility.escapeQuery(concept.getCode()), null, 100000,
-					null, null);
-			final ResultList<ConceptRelationship> rels = searchService.find(params, ConceptRelationship.class);
-			concept.setRelationships(rels.getItems());
-
-			// lookup metadata
-			params = new SearchParameters("", null, 100000, null, null);
-			final ResultList<Metadata> metadata = searchService.find(params, Metadata.class);
-
-			// call diagram application to generate image
-			final HttpClient httpClient = HttpClientBuilder.create().build();
-			final String diagramUrl = PropertyUtility.getProperties().getProperty("api.url.termhub-diagram-service");
-			final HttpPost request = new HttpPost(diagramUrl + "/generate/diagram");
-			final String diagramModel = TerminologyUtility.toDiagramModel(concept, metadata.getItems());
-			final StringEntity payload = new StringEntity(diagramModel);
-			request.addHeader("content-type", MediaType.APPLICATION_JSON);
-			request.addHeader("accept", "image/png");
-			request.setEntity(payload);
-			logger.info("    get diagram = " + diagramModel);
-			final HttpResponse response = httpClient.execute(request);
-			if (response.getStatusLine().getStatusCode() >= 400) {
-				throw new RestException(false, 417, "Diagram service error", response.getStatusLine().toString());
-			}
-			// Return the diagram
-			return new ResponseEntity<>(new InputStreamResource(response.getEntity().getContent()), new HttpHeaders(),
-					HttpStatus.OK);
-
-		} catch (final Exception e) {
-			handleException(e, "trying to get concept diagram = " + terminology + ", " + code);
-			return null;
-		}
-
 	}
 
 	@RequestMapping(value = "/terminology/{terminology}/trees", method = RequestMethod.POST)

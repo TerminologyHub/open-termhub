@@ -315,7 +315,6 @@ public class LuceneDataAccess {
 			final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
 					? IndexUtility.getDefaultSortOrder(clazz)
 					: IndexUtility.getSortOrder(searchParameters, clazz);
-			LOG.info("Sort: {}", sort);
 
 			LOG.info("Search Parameters: {}", searchParameters);
 			final int start = searchParameters.getOffset();

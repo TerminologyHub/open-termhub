@@ -30,10 +30,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.Application;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.HealthCheck;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
+import com.wci.termhub.model.ResultListConceptTreePosition;
 import com.wci.termhub.model.ResultListMetadata;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -97,6 +99,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 	}
 
 	// @Test
+	/**
+	 * Test get terminology ICD 10 CM.
+	 *
+	 * @throws Exception the exception
+	 */
 	// TODO: oddly sometimes it fails with 404
 	public void testGetTerminologyICD10CM() throws Exception {
 		final String id = "04efd633-bcbc-41cd-959c-f5ed8d94adaa";
@@ -119,6 +126,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 	// TODO: NUNO
 	// expected: <Systematized Nomenclature of Medicine–Clinical Terminology, US
 	// Edition> but was: <Systematized Nomenclature of Medicineâ€“Clinical
+	/**
+	 * Test get terminology snomed ct us.
+	 *
+	 * @throws Exception the exception
+	 */
 	// Terminology, US Edition>
 	public void testGetTerminologySnomedCtUs() throws Exception {
 		final String id = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6";
@@ -136,6 +148,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		assertEquals("Systematized Nomenclature of Medicine–Clinical Terminology, US Edition", terminology.getName());
 	}
 
+	/**
+	 * Test get terminology meta data snomed ct us.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
 		final String id = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6";
@@ -161,6 +178,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 	}
 
 	// @Test
+	/**
+	 * Test get terminology meta data snomed ct us not found.
+	 *
+	 * @throws Exception the exception
+	 */
 	// Should be 404 but is 500
 	public void testGetTerminologyMetaDataSnomedCtUsNotFound() throws Exception {
 		final String id = "ef721e67-ebf5-4b50-a0b9-16d7aea7FAKE";
@@ -170,6 +192,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 				.andReturn();
 	}
 
+	/**
+	 * Test get terminologies.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testGetTerminologies() throws Exception {
 		final String url = baseUrl + "/terminology";
@@ -191,6 +218,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test get terminology with query.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testGetTerminologyWithQuery() throws Exception {
 		final String url = baseUrl + "/terminology?query=abbreviation:SNOMEDCT_US";
@@ -209,6 +241,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test get concept by id.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testGetConceptById() throws Exception {
 		final String id = "99d4899b-db6f-4bf8-ba51-b65e1cf8f7fb";
@@ -237,6 +274,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		assertThat(concept.getDescendants()).isNotNull();
 	}
 
+	/**
+	 * Test get concept by id not found.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testGetConceptByIdNotFound() throws Exception {
 		final String id = "ef721e67-ebf5-4b50-a0b9-16d7aea7FAKE";
@@ -251,6 +293,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
 	}
 
+	/**
+	 * Test get concept by terminology and code.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testGetConceptByTerminologyAndCode() throws Exception {
 		final String code = "E11";
@@ -280,6 +327,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		assertThat(concept.getDescendants()).isNotNull();
 	}
 
+	/**
+	 * Test get concept by terminology and code not found.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testGetConceptByTerminologyAndCodeNotFound() throws Exception {
 		final String code = "ZZZ";
@@ -294,6 +346,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		assertThat(content).isEmpty();
 	}
 
+	/**
+	 * Test get concept codes.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testGetConceptCodes() throws Exception {
 		final String terminology = "LNC";
@@ -317,6 +374,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test find concepts.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testFindConcepts() throws Exception {
 		final String terminology = "RXNORM";
@@ -341,6 +403,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test find terms.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testFindTerms() throws Exception {
 		final String terminology = "RXNORM";
@@ -365,6 +432,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test autocomplete.
+	 *
+	 * @throws Exception the exception
+	 */
 	// @Test query not working with Lucene
 	public void testAutocomplete() throws Exception {
 		final String terminology = "RXNORM";
@@ -388,6 +460,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test concept bulk.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testConceptBulk() throws Exception {
 		final String terminology = "LNC";
@@ -421,6 +498,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test find metadata.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testFindMetadata() throws Exception {
 		// GET /metadata
@@ -448,6 +530,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test find concept relationships.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testFindConceptRelationships() throws Exception {
 		// GET concept/{conceptId}/relationships
@@ -475,6 +562,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test find concept relationships 2.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testFindConceptRelationships2() throws Exception {
 		// GET concept/{terminology}/{code}/relationships
@@ -503,6 +595,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test find concept inverse relationships.
+	 *
+	 * @throws Exception the exception
+	 */
 	@Test
 	public void testFindConceptInverseRelationships() throws Exception {
 		// GET concept/{conceptId}/inverseRelationships
@@ -530,9 +627,15 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
+	/**
+	 * Test find concept inverse relationships 2.
+	 *
+	 * @throws Exception the exception
+	 */
+	// GET concept/{terminology}/{code}/inverseRelationships
 	@Test
 	public void testFindConceptInverseRelationships2() throws Exception {
-		// GET concept/{terminology}/{code}/inverseRelationships
+
 		final String terminology = "SNOMEDCT_US";
 		final String code = "404684003";
 		final String url = baseUrl + "/concept/" + terminology + "/" + code + "/inverseRelationships";
@@ -558,6 +661,136 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 		}
 	}
 
-	// skipping mapsets, tree position and diagram
+	// skipping mapsets and diagram
+
+	/**
+	 * Test find tree position children.
+	 *
+	 * @throws Exception the exception
+	 */
+	// GET /concept/{conceptId}/trees/children
+	@Test
+	public void testFindTreePositionChildren() throws Exception {
+		final String conceptId = "d255a4e5-b748-4176-a2e9-7000f8dd089f";
+		final String url = baseUrl + "/concept/" + conceptId + "/trees/children";
+		logger.info("Testing url - {}", url);
+		final MvcResult result = mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
+				.andExpect(status().isOk()).andReturn();
+		final String content = result.getResponse().getContentAsString();
+		logger.info(" content = {}", content);
+		assertThat(content).isNotNull();
+		final ResultListConceptTreePosition conceptTreePositonList = objectMapper.readValue(content,
+				ResultListConceptTreePosition.class);
+		assertThat(conceptTreePositonList).isNotNull();
+		assertThat(conceptTreePositonList.getItems().size()).isGreaterThan(0);
+		for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
+			assertThat(ctp).isNotNull();
+			assertThat(ctp.getId()).isNotNull();
+			assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
+			assertThat(ctp.getVersion()).isNotNull();
+			assertThat(ctp.getConcept()).isNotNull();
+			assertThat(ctp.getAncestorPath()).isNotNull();
+			assertThat(ctp.getChildCt()).isNotNull();
+		}
+	}
+
+	/**
+	 * Test find tree position children 2.
+	 *
+	 * @throws Exception the exception
+	 */
+	// GET /concept/{terminology}/{code}/trees/children
+	// @Test
+	// TODO: NUNO FIX
+	public void testFindTreePositionChildren2() throws Exception {
+
+		final String terminology = "SNOMEDCT_US";
+		final String code = "281159003";
+		final String url = baseUrl + "/concept/" + terminology + "/" + code + "/trees/children";
+		logger.info("Testing url - {}", url);
+		final MvcResult result = mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
+				.andExpect(status().isOk()).andReturn();
+		final String content = result.getResponse().getContentAsString();
+		logger.info(" content = {}", content);
+		assertThat(content).isNotNull();
+		final ResultListConceptTreePosition conceptTreePositonList = objectMapper.readValue(content,
+				ResultListConceptTreePosition.class);
+		assertThat(conceptTreePositonList).isNotNull();
+		// finds but terminology is SNOMEDCT and not SNOMEDCT_US
+		assertThat(conceptTreePositonList.getItems().size()).isGreaterThan(0);
+		for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
+			assertThat(ctp).isNotNull();
+			assertThat(ctp.getId()).isNotNull();
+			assertThat(ctp.getTerminology()).contains("SNOMEDCT");
+			assertThat(ctp.getVersion()).isNotNull();
+			assertThat(ctp.getConcept()).isNotNull();
+			// each has a tree position with an empty ancestor path
+			// assertThat(ctp.getAncestorPath()).isNotNull();
+		}
+	}
+
+	/**
+	 * Test find tree positions.
+	 *
+	 * @throws Exception the exception
+	 */
+	// GET /concept/{conceptId}/trees
+	@Test
+	public void testFindTreePositions() throws Exception {
+
+		final String conceptId = "7498b388-6a83-43c4-a2a5-479b2a39860e";
+		final String url = baseUrl + "/concept/" + conceptId + "/trees";
+		logger.info("Testing url - {}", url);
+		final MvcResult result = mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
+				.andExpect(status().isOk()).andReturn();
+		final String content = result.getResponse().getContentAsString();
+		logger.info(" content = {}", content);
+		assertThat(content).isNotNull();
+		final ResultListConceptTreePosition conceptTreePositonList = objectMapper.readValue(content,
+				ResultListConceptTreePosition.class);
+		assertThat(conceptTreePositonList).isNotNull();
+		assertEquals(8, conceptTreePositonList.getItems().size());
+		for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
+			assertThat(ctp).isNotNull();
+			assertThat(ctp.getId()).isNotNull();
+			assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
+			assertThat(ctp.getVersion()).isNotNull();
+			assertThat(ctp.getConcept()).isNotNull();
+			// each has a tree position with an empty ancestor path
+			// assertThat(ctp.getAncestorPath()).isNotNull();
+		}
+	}
+
+	/**
+	 * Test find tree positions 2.
+	 *
+	 * @throws Exception the exception
+	 */
+	// GET /concept/{terminology}/{code}/trees
+	@Test
+	public void testFindTreePositions2() throws Exception {
+		final String terminology = "SNOMEDCT_US";
+		final String code = "404684003";
+		final String url = baseUrl + "/concept/" + terminology + "/" + code + "/trees";
+		logger.info("Testing url - {}", url);
+		final MvcResult result = mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
+				.andExpect(status().isOk()).andReturn();
+		final String content = result.getResponse().getContentAsString();
+		logger.info(" content = {}", content);
+		assertThat(content).isNotNull();
+		final ResultListConceptTreePosition conceptTreePositonList = objectMapper.readValue(content,
+				ResultListConceptTreePosition.class);
+		assertThat(conceptTreePositonList).isNotNull();
+		assertThat(conceptTreePositonList.getItems().size()).isGreaterThan(0);
+		for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
+			assertThat(ctp).isNotNull();
+			assertThat(ctp.getId()).isNotNull();
+			assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
+			assertThat(ctp.getVersion()).isNotNull();
+			assertThat(ctp.getConcept()).isNotNull();
+			// each has a tree position with an empty ancestor path
+			// assertThat(ctp.getAncestorPath()).isNotNull();
+		}
+	}
 
 }
