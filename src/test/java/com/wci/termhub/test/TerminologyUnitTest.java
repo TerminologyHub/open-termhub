@@ -1,145 +1,278 @@
 /*
+ * Copyright 2024 West Coast Informatics - All Rights Reserved.
  *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.test;
+package com.wci.termhub.model.test;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.Application;
 import com.wci.termhub.model.Terminology;
-import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.test.AbstractTest;
+import com.wci.termhub.test.CopyConstructorTester;
+import com.wci.termhub.test.EqualsHashcodeTester;
+import com.wci.termhub.test.GetterSetterTester;
+import com.wci.termhub.test.SerializationTester;
+import com.wci.termhub.util.ModelUtility;
 
 /**
- * The Class TerminologyUnitTest.
+ * Unit test for {@link Terminology}.
  */
-@SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-test.properties")
-@TestMethodOrder(OrderAnnotation.class)
-public class TerminologyUnitTest extends BaseUnitTest {
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+public class TerminologyUnitTest extends AbstractTest {
 
 	/** The logger. */
+	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(TerminologyUnitTest.class);
 
-	private static final String TERMINOLOGY_JSON = """
-			{
-				"id": "04efd633-bcbc-41cd-959c-f5ed8d94adaa",
-				"confidence": 0.6931471228599548,
-				"modified": "2024-10-16T11:01:33.921-07:00",
-				"created": "2024-10-16T11:01:33.921-07:00",
-				"modifiedBy": "loader",
-				"local": false,
-				"active": true,
-				"abbreviation": "ICD10CM",
-				"name": "International Classification of Diseases, Tenth Revision, Clinical Modification",
-				"version": "2023",
-				"publisher": "NLM",
-				"releaseDate": "2023-05-01",
-				"family": "ICD10CM",
-				"indexName": "icd10cm-nlm-2023",
-				"attributes": {
-					"origin-version": "2023AA",
-					"autocomplete": "true",
-					"hierarchical": "true",
-					"fhirVersion": "2023",
-					"tree-positions": "true",
-					"origin-terminology": "UMLS",
-					"ecl": "true",
-					"fhirId": "icd10cm_2023",
-					"fhirCompositional": "false"
-				},
-				"roots": [
-					"ICD-10-CM"
-				],
-				"statistics": {
-					"termsInactive": 0,
-					"childrenInactive": 0,
-					"relationships": 18,
-					"concepts": 10,
-					"terms": 22,
-					"parentsInactive": 0,
-					"termsActive": 22,
-					"parentsActive": 9,
-					"definitions": 0,
-					"treePositions": 10,
-					"conceptsActive": 10,
-					"childrenActive": 9
-				}
-			}
-				""";
+	/** The model object to test. */
+	private Terminology object;
 
-	/** The search service. */
-	@Autowired
-	private EntityRepositoryService searchService;
+	/** The m 1. */
+	private Map<String, String> m1;
 
-	private static Terminology terminology;
+	/** The m 2. */
+	private Map<String, String> m2;
 
-	private static final String INDEX_NAME = Terminology.class.getCanonicalName();
+	/** The at 1. */
+	private Map<String, Integer> sm1;
+
+	/** The at 2. */
+	private Map<String, Integer> sm2;
+
+	/** The l 1. */
+	private List<String> l1;
+
+	/** The l 2. */
+	private List<String> l2;
 
 	/**
-	 * Creates the index.
+	 * Setup.
 	 *
 	 * @throws Exception the exception
 	 */
-	// @Test
-	// @Order(1)
-	public void createIndex() throws Exception {
+	@BeforeEach
+	public void setup() throws Exception {
+		object = new Terminology();
 
-		logger.info("Creating index for Terminology");
-		searchService.createIndex(Terminology.class);
+		// statistics maps
+		sm1 = new HashMap<>();
+		sm1.put("1", 1);
+		sm2 = new HashMap<>();
+		sm2.put("2", 2);
+		sm2.put("3", 3);
 
-		// test if directory exists
-		assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
+		// attributes maps
+		m1 = new HashMap<>();
+		m1.put("1", "1");
+		m2 = new HashMap<>();
+		m2.put("2", "2");
+		m2.put("3", "3");
+
+		// roots
+		l1 = new ArrayList<>();
+		l1.add("1");
+		l2 = new ArrayList<>();
+		l2.add("2");
+		l2.add("3");
 	}
 
 	/**
-	 * Test add terminology.
+	 * Test getter and setter methods of model object.
 	 *
 	 * @throws Exception the exception
 	 */
-	// @Test
-	// @Order(2)
-	public void testAddTerminology() throws Exception {
-
-		final ObjectMapper objectMapper = new ObjectMapper();
-		final JsonNode terminologyNode = objectMapper.readTree(TERMINOLOGY_JSON);
-
-		if (terminologyNode != null) {
-			terminology = objectMapper.treeToValue(terminologyNode, Terminology.class);
-			logger.info("Terminology: {}", terminology.toString());
-			assertDoesNotThrow(() -> searchService.add(Terminology.class, terminology));
-		} else {
-			logger.error("No '_source' node found in the provided JSON.");
-		}
+	@Test
+	public void testModelGetSet() throws Exception {
+		final GetterSetterTester tester = new GetterSetterTester(object);
+		tester.proxy("attributes", 1, m1);
+		tester.proxy("attributes", 2, m2);
+		tester.proxy("statistics", 1, sm1);
+		tester.proxy("statistics", 2, sm2);
+		tester.proxy(List.class, 1, l1);
+		tester.proxy(List.class, 2, l2);
+		tester.test();
 	}
 
-//	/**
-//	 * Delete index.
-//	 *
-//	 * @throws Exception the exception
-//	 */
-//	@Test
-//	@Order(3)
-//	public void deleteIndex() throws Exception {
+	/**
+	 * Test equals and hascode methods.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testModelEqualsHashcode() throws Exception {
+		final EqualsHashcodeTester tester = new EqualsHashcodeTester(object);
+		// same as TerminologyRef
+		tester.include("id");
+		tester.include("abbreviation");
+		tester.include("name");
+		tester.include("version");
+		tester.include("latest");
+		tester.include("loaded");
+		tester.include("publisher");
+
+		tester.proxy("attributes", 1, m1);
+		tester.proxy("attributes", 2, m2);
+		tester.proxy("statistics", 1, sm1);
+		tester.proxy("statistics", 2, sm2);
+		tester.proxy(List.class, 1, l1);
+		tester.proxy(List.class, 2, l2);
+
+		assertTrue(tester.testIdentityFieldEquals());
+		assertTrue(tester.testNonIdentityFieldEquals());
+		assertTrue(tester.testIdentityFieldNotEquals());
+		assertTrue(tester.testIdentityFieldHashcode());
+		assertTrue(tester.testNonIdentityFieldHashcode());
+		assertTrue(tester.testIdentityFieldDifferentHashcode());
+	}
+
+	/**
+	 * Test model copy.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testModelCopy() throws Exception {
+		final CopyConstructorTester tester = new CopyConstructorTester(object);
+		tester.proxy("attributes", 1, m1);
+		tester.proxy("statistics", 1, sm1);
+		tester.proxy(List.class, 1, l1);
+		assertTrue(tester.testCopyConstructor(Terminology.class));
+	}
+
+	/**
+	 * Test model serialization.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testModelSerialization() throws Exception {
+		final SerializationTester tester = new SerializationTester(object);
+		tester.proxy("attributes", 1, m1);
+		tester.proxy("statistics", 1, sm1);
+		tester.proxy(List.class, 1, l1);
+		assertTrue(tester.testJsonSerialization());
+	}
+
+//    /**
+//     * Test persistence.
+//     *
+//     * @throws Exception the exception
+//     */
+//    @Test
+//    public void testPersistence() throws Exception {
+//        final PersistenceTester tester = new PersistenceTester(object);
+//        tester.test();
+//    }
 //
-//		logger.info("Deleting index for Terminology from {}", Paths.get(INDEX_DIRECTORY, INDEX_NAME).toString());
-//		searchService.deleteIndex(Terminology.class);
+//    /**
+//     * Test persistence 2.
+//     *
+//     * @throws Exception the exception
+//     */
+//    @Test
+//    public void testPersistence2() throws Exception {
+//        try (final RootService service = new RootServiceImpl()) {
+//            service.setModifiedBy("test");
 //
-//		// assert directory does not exist
-//		assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-//	}
+//            // Add a terminology
+//            final Terminology t1 = new Terminology();
+//            t1.setAbbreviation("test");
+//            t1.setName("test");
+//            t1.setVersion("latest");
+//            t1.getAttributes().put(Attributes.EXPRESSION_ENABLED.property(), "true");
+//            t1.getAttributes().put(Attributes.MAX_ID.property(), "1001");
+//            service.add(t1);
+//
+//            final Terminology t2 = new Terminology();
+//            t2.setAbbreviation("test2");
+//            t2.setName("test2");
+//            t2.setVersion("latest2");
+//            t2.getAttributes().put("max", "1001");
+//            service.add(t2);
+//
+//            // Cleanup
+//            service.remove(t1);
+//            service.remove(t2);
+//
+//        }
+//
+//    }
+
+	/**
+	 * Test terminology sort.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testTerminologySort() throws Exception {
+		final Terminology t1 = new Terminology();
+		t1.setAbbreviation("A");
+		t1.setVersion("20230101");
+		final Terminology t2 = new Terminology();
+		t2.setAbbreviation("A");
+		t2.setVersion("20230201");
+		final Terminology t3 = new Terminology();
+		t3.setAbbreviation("RXNORM");
+		t3.setVersion("01012023");
+		final Terminology t4 = new Terminology();
+		t4.setAbbreviation("RXNORM");
+		t4.setVersion("02012023");
+		final Terminology t5 = new Terminology();
+		t5.setAbbreviation("Z");
+		t5.setVersion("20230101");
+
+		final List<Terminology> list = ModelUtility.asList(t2, t5, t4, t1, t3).stream().sorted()
+				.collect(Collectors.toList());
+		assertEquals(list.toString(), ModelUtility.asList(t1, t2, t3, t4, t5).toString());
+	}
+
+	/**
+	 * Test terminology sort with null versions.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testTerminologySortWithNullVersions() throws Exception {
+		final Terminology t1 = new Terminology();
+		t1.setAbbreviation("A");
+		t1.setVersion("20230101");
+		final Terminology t2 = new Terminology();
+		t2.setAbbreviation("A");
+		// t2.setVersion("20230201");
+		final Terminology t3 = new Terminology();
+		t3.setAbbreviation("RXNORM");
+		t3.setVersion("01012023");
+		final Terminology t4 = new Terminology();
+		t4.setAbbreviation("RXNORM");
+		// t4.setVersion("02012023");
+		final Terminology t5 = new Terminology();
+		t5.setAbbreviation("Z");
+		t5.setVersion("20230101");
+
+		final List<Terminology> list = ModelUtility.asList(t2, t5, t3, t1, t4).stream().sorted()
+				.collect(Collectors.toList());
+		assertEquals(list.toString(), ModelUtility.asList(t1, t2, t3, t4, t5).toString());
+	}
 
 }
