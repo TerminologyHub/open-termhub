@@ -14,23 +14,23 @@ package com.wci.termhub.algo;
  */
 public class CancelException extends Exception {
 
-    /**
-     * Instantiates a {@link CancelException} from the specified parameters.
-     *
-     * @param message the message
-     * @param t the t
-     */
-    public CancelException(final String message, final Exception t) {
-        super(message, t);
-    }
+	/**
+	 * Instantiates a {@link CancelException} from the specified parameters.
+	 *
+	 * @param message the message
+	 * @param t       the t
+	 */
+	public CancelException(final String message, final Exception t) {
+		super(message, t);
+	}
 
-    /**
-     * Instantiates a {@link CancelException} from the specified parameters.
-     *
-     * @param message the message
-     */
-    public CancelException(final String message) {
-        super(message);
+	/**
+	 * Instantiates a {@link CancelException} from the specified parameters.
+	 *
+	 * @param message the message
+	 */
+	public CancelException(final String message) {
+		super(message);
 
-    }
+	}
 }

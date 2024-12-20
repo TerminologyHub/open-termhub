@@ -14,11 +14,11 @@ package com.wci.termhub.algo;
  */
 public interface ProgressListener {
 
-    /**
-     * Update progress.
-     *
-     * @param event the event
-     */
-    public void updateProgress(ProgressEvent event);
+	/**
+	 * Update progress.
+	 *
+	 * @param event the event
+	 */
+	public void updateProgress(ProgressEvent event);
 
 }

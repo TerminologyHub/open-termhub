@@ -14,16 +14,18 @@ package com.wci.termhub.algo;
  */
 public interface ProgressReporter {
 
-    /**
-     * Adds a {@link ProgressListener}.
-     * @param l the {@link ProgressListener}
-     */
-    public void addProgressListener(ProgressListener l);
+	/**
+	 * Adds a {@link ProgressListener}.
+	 * 
+	 * @param l the {@link ProgressListener}
+	 */
+	public void addProgressListener(ProgressListener l);
 
-    /**
-     * Removes a {@link ProgressListener}.
-     * @param l the {@link ProgressListener}
-     */
-    public void removeProgressListener(ProgressListener l);
+	/**
+	 * Removes a {@link ProgressListener}.
+	 * 
+	 * @param l the {@link ProgressListener}
+	 */
+	public void removeProgressListener(ProgressListener l);
 
 }

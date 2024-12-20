@@ -14,25 +14,25 @@ package com.wci.termhub.algo;
  */
 public interface TerminologyAlgorithm extends NoServiceAlgorithm {
 
-    /**
-     * Sets the terminology.
-     *
-     * @param terminology the terminology
-     */
-    public void setTerminology(String terminology);
+	/**
+	 * Sets the terminology.
+	 *
+	 * @param terminology the terminology
+	 */
+	public void setTerminology(String terminology);
 
-    /**
-     * Sets the version.
-     *
-     * @param version the version
-     */
-    public void setVersion(String version);
+	/**
+	 * Sets the version.
+	 *
+	 * @param version the version
+	 */
+	public void setVersion(String version);
 
-    /**
-     * Sets the publisher.
-     *
-     * @param publisher the publisher
-     */
-    public void setPublisher(String publisher);
+	/**
+	 * Sets the publisher.
+	 *
+	 * @param publisher the publisher
+	 */
+	public void setPublisher(String publisher);
 
 }
