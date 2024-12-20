@@ -288,6 +288,62 @@ public class LuceneDataAccess {
 		return find(clazz, searchParameters, LuceneQueryBuilder.parse(searchParameters.getQuery()));
 	}
 
+//	/**
+//	 * Find.
+//	 *
+//	 * @param <T>              the generic type
+//	 * @param clazz            the clazz
+//	 * @param searchParameters the search parameters
+//	 * @param phraseQuery      the phrase query
+//	 * @return the result list
+//	 * @throws Exception the exception
+//	 */
+//	private <T extends HasId> ResultList<T> find(final Class<T> clazz, final SearchParameters searchParameters,
+//			final Query phraseQuery) throws Exception {
+//
+//		final LuceneIndexManager indexManager = LuceneIndexManager.getInstance(indexRootDirectory,
+//				clazz.getCanonicalName());
+//		indexManager.refresh(); // Refresh the reader if there are changes
+//
+//		final BooleanQuery queryBuilder = new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD)
+//				.build();
+//
+//		LOG.info("Query: {}", queryBuilder);
+//
+//		final IndexSearcher searcher = indexManager.getIndexSearcher();
+//
+//		final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
+//				? IndexUtility.getDefaultSortOrder(clazz)
+//				: IndexUtility.getSortOrder(searchParameters, clazz);
+//		LOG.info("Sort: {}", sort);
+//
+//		LOG.info("Search Parameters: {}", searchParameters);
+//		final int start = searchParameters.getOffset();
+//		final int end = searchParameters.getLimit() + (searchParameters.getOffset());
+//
+//		LOG.info("Search Parameters: start:{}, end:{}", start, end);
+//
+//		final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
+//				: searcher.search(queryBuilder, end);
+//		LOG.info("Query topDocs: {}", topDocs.totalHits.value);
+//
+//		final ResultList<T> results = new ResultList<>();
+//		final ObjectMapper mapper = new ObjectMapper();
+//		for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
+//
+//			final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
+//			LOG.info("Score: {}", scoreDoc.score);
+//			@SuppressWarnings("deprecation")
+//			final Document doc = searcher.doc(scoreDoc.doc);
+//			final String jsonEntityString = doc.get("entity");
+//			final T obj = mapper.readValue(jsonEntityString, clazz);
+//			LOG.info("search result: {}", obj);
+//			results.getItems().add(obj);
+//		}
+//		results.setTotal(results.getItems().size());
+//		return results;
+//	}
+
 	/**
 	 * Find stored entities by search parameters.
 	 *
@@ -315,7 +371,6 @@ public class LuceneDataAccess {
 			final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
 					? IndexUtility.getDefaultSortOrder(clazz)
 					: IndexUtility.getSortOrder(searchParameters, clazz);
-			LOG.info("Sort: {}", sort);
 
 			LOG.info("Search Parameters: {}", searchParameters);
 			final int start = searchParameters.getOffset();
@@ -332,12 +387,12 @@ public class LuceneDataAccess {
 			for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
 
 				final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
-				LOG.info("Score: {}", scoreDoc.score);
+				LOG.debug("Score: {}", scoreDoc.score);
 				@SuppressWarnings("deprecation")
 				final Document doc = searcher.doc(scoreDoc.doc);
 				final String jsonEntityString = doc.get("entity");
 				final T obj = mapper.readValue(jsonEntityString, clazz);
-				LOG.info("search result: {}", obj);
+				LOG.debug("search result: {}", obj);
 				results.getItems().add(obj);
 			}
 			results.setTotal(results.getItems().size());

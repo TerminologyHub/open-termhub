@@ -290,7 +290,7 @@ public final class TerminologyUtility {
 	 * @throws Exception the exception
 	 */
 	public static ConceptTreePosition computeTree(final EntityRepositoryService searchService,
-			final ConceptTreePosition treePosition, final String indexName) throws Exception {
+			final ConceptTreePosition treePosition) throws Exception {
 
 		ConceptTreePosition tree = null;
 		final SearchParameters params = new SearchParameters(2, 0);
@@ -301,21 +301,19 @@ public final class TerminologyUtility {
 		// initially the empty tree
 		ConceptTreePosition parentTree = tree;
 
+		final String ancestorPath = StringUtils.isEmpty(treePosition.getAncestorPath()) ? ""
+				: treePosition.getAncestorPath();
+
 		// Prepare lucene
-		final String fullAncPath = treePosition.getAncestorPath()
-				+ (treePosition.getAncestorPath().isEmpty() ? "" : "~") + treePosition.getConcept().getCode();
+		final String fullAncPath = ancestorPath + (StringUtils.isEmpty(ancestorPath) ? "" : "~")
+				+ treePosition.getConcept().getCode();
 		// Iterate over ancestor path
 		for (final String code : fullAncPath.split("~")) {
 			final StringBuilder finalQuery = new StringBuilder();
-			finalQuery.append("concept.code:" + QueryParserBase.escape(code) + " AND terminology:"
-					+ treePosition.getTerminology() + " AND publisher:" + treePosition.getPublisher() + " AND version:"
-					+ treePosition.getVersion() + " AND ");
-			if (partAncPath.isEmpty()) {
-				// query for empty value
-				finalQuery.append("ancestorPath:\"\"");
-			} else {
-				finalQuery.append("ancestorPath:" + StringUtility.escapeQuery(partAncPath) + "");
-			}
+			finalQuery.append("concept.code:" + QueryParserBase.escape(code)).append(" AND terminology:")
+					.append(treePosition.getTerminology()).append(" AND publisher:").append(treePosition.getPublisher())
+					.append(" AND version:").append(treePosition.getVersion()).append(" AND ancestorPath:")
+					.append((partAncPath.isEmpty() ? "\"\"" : QueryParserBase.escape(partAncPath)));
 
 			// No requirement for additional type to match in hierarchies
 			// if (!StringUtility.isEmpty(treePosition.getAdditionalType())) {
@@ -325,12 +323,10 @@ public final class TerminologyUtility {
 			params.setQuery(finalQuery.toString());
 			final ResultList<ConceptTreePosition> list = searchService.find(params, ConceptTreePosition.class);
 			if (list.getItems().size() == 0) {
-				throw new Exception("Unable to find matching tree position for ancestor = " + finalQuery + ", "
-						+ ModelUtility.asList(indexName));
+				throw new Exception("Unable to find matching tree position for ancestor = " + finalQuery);
 			}
 			if (list.getItems().size() > 1) {
-				throw new Exception("Too many matching tree positions for ancestor = " + finalQuery + ", "
-						+ ModelUtility.asList(indexName));
+				throw new Exception("Too many matching tree positions for ancestor = " + finalQuery);
 			}
 
 			final ConceptTreePosition partTree = new ConceptTreePosition(list.getItems().get(0));
@@ -884,28 +880,27 @@ public final class TerminologyUtility {
 //
 //	}
 
-//	/**
-//	 * Count tree positions.
-//	 *
-//	 * @param searchService the search service
-//	 * @param terminology   the terminology
-//	 * @param publisher     the publisher
-//	 * @param version       the version
-//	 * @param indexName     the index name
-//	 * @return the long
-//	 * @throws Exception the exception
-//	 */
-//	public static long countTreePositions(final ElasticSearchService searchService, final String terminology,
-//			final String publisher, final String version, final String indexName) throws Exception {
-//
-//		final SearchParameters params = new SearchParameters(2, 0);
-//		params.setQuery("terminology:" + StringUtility.escapeQuery(terminology) + " AND publisher:" + publisher
-//				+ " AND version:" + version);
-//
-//		return searchService.find(params, ConceptTreePosition.class, null, null, ModelUtility.asList(indexName))
-//				.getTotal();
-//
-//	}
+	/**
+	 * Count tree positions.
+	 *
+	 * @param searchService the search service
+	 * @param terminology   the terminology
+	 * @param publisher     the publisher
+	 * @param version       the version
+	 * @param indexName     the index name
+	 * @return the long
+	 * @throws Exception the exception
+	 */
+	public static long countTreePositions(final EntityRepositoryService searchService, final String terminology,
+			final String publisher, final String version, final String indexName) throws Exception {
+
+		final SearchParameters params = new SearchParameters(2, 0);
+		params.setQuery("terminology:" + StringUtility.escapeQuery(terminology) + " AND publisher:" + publisher
+				+ " AND version:" + version);
+
+		final ResultList<ConceptTreePosition> result = searchService.find(params, ConceptTreePosition.class);
+		return result.getTotal();
+	}
 
 	/**
 	 * To diagram model.

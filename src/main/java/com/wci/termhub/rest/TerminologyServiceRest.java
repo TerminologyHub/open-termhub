@@ -5,11 +5,9 @@ package com.wci.termhub.rest;
 
 import java.util.List;
 
-import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 
 import com.wci.termhub.model.Concept;
-import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
@@ -42,35 +40,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
 	 * @throws Exception the exception
 	 */
 	public ResponseEntity<List<Metadata>> getTerminologyMetadata(String id) throws Exception;
-
-	/**
-	 * Returns the concept names and codes for the terminology that are new relative
-	 * to the comparison version. GET
-	 * /terminology/{id:[a-f0-9].+}/history/{priorVersion}/concepts/new tag=history
-	 *
-	 * @param id           the id
-	 * @param priorVersion the prior version
-	 * @return the terminology
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<List<ConceptRef>> getTerminologyHistoryNewConcepts(String id, String priorVersion)
-			throws Exception;
-
-	/**
-	 * Returns the concept names and codes for the terminology that are new relative
-	 * to the comparison version. GET
-	 * /terminology/{id:[a-f0-9].+}/history/{priorVersion}/concepts/retired
-	 * tag=history
-	 *
-	 * @param id           the id
-	 * @param priorVersion the prior version
-	 * @return the terminology
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<List<ConceptRef>> getTerminologyHistoryRetiredConcepts(String id, String priorVersion)
-			throws Exception;
-
-	// Mapset history - later
 
 	/**
 	 * Adds the terminology. POST /terminology tag=terminology
@@ -367,24 +336,5 @@ public interface TerminologyServiceRest extends RootServiceRest {
 	public ResponseEntity<ResultListConceptTreePosition> findTreePositionChildren(String terminology, String code,
 			String query, Integer offset, Integer limit, Boolean ascending, String sort, String handler)
 			throws Exception;
-
-	/**
-	 * Gets the concept diagram.
-	 *
-	 * @param conceptId the concept id
-	 * @return the concept diagram
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<Resource> getConceptDiagram(String conceptId) throws Exception;
-
-	/**
-	 * Gets the concept diagram.
-	 *
-	 * @param terminology the terminology
-	 * @param code        the code
-	 * @return the concept diagram
-	 * @throws Exception the exception
-	 */
-	public ResponseEntity<Resource> getConceptDiagram(String terminology, String code) throws Exception;
 
 }

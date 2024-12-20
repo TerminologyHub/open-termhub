@@ -19,15 +19,15 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
- * The Class TerminologySearchUnitTest.
+ * The Class Terminology2UnitTest.
  */
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class TerminologySearchUnitTest {
+public class Terminology2UnitTest {
 
 	/** The logger. */
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(TerminologySearchUnitTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(Terminology2UnitTest.class);
 
 	/** The search service. */
 	@Autowired
@@ -45,7 +45,7 @@ public class TerminologySearchUnitTest {
 	public void testFindAll() throws Exception {
 
 		final ResultList<Terminology> all = searchService.findAll(SEARCH_PARAMETERS, Terminology.class);
-		LOG.info("Find all: {}", all.getItems().size());
+		LOG.info("Terminology2UnitTest all: {}", all.getItems().size());
 	}
 
 	/**

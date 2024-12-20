@@ -5,7 +5,8 @@ package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
+import java.nio.file.Paths;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,11 +21,12 @@ import org.springframework.test.context.TestPropertySource;
 import com.wci.termhub.Application;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.LoaderUtil;
+import com.wci.termhub.util.TerminologyLoaderUtility;
 
 /**
  * The Class LoadUnitTest.
@@ -50,10 +52,10 @@ public class LoadUnitTest {
 	@BeforeAll
 	public void setup() throws Exception {
 
-		final List<String> terminologies = List.of("icd10cm-nlm-2023", "lnc-nlm-277", "rxnorm-nlm-02052024",
-				"snomedct_us-sandbox-20240301", "snomedct-sandbox-20240101");
+		final Map<String, Boolean> terminologies = Map.of("icd10cm-nlm-2023", false, "lnc-nlm-277", false,
+				"rxnorm-nlm-02052024", false, "snomedct_us-sandbox-20240301", true, "snomedct-sandbox-20240101", true);
 
-		final String rootDir = "src/main/resources/data/";
+		final String rootDir = Paths.get(getClass().getClassLoader().getResource("data").toURI()).toString() + "/";
 
 		// delete all indexes for a fresh start
 		searchService.deleteIndex(Terminology.class);
@@ -61,12 +63,15 @@ public class LoadUnitTest {
 		searchService.deleteIndex(Concept.class);
 		searchService.deleteIndex(Term.class);
 		searchService.deleteIndex(ConceptRelationship.class);
+		searchService.deleteIndex(ConceptTreePosition.class);
 
-		for (final String terminology : terminologies) {
-			LoaderUtil.loadTerminology(searchService, rootDir + terminology + ".json");
-			LoaderUtil.loadMetadata(searchService, rootDir + terminology + "-metadata.json");
-			LoaderUtil.loadConcepts(searchService, rootDir + terminology + "-concepts.json");
-			LoaderUtil.loadConceptRelationships(searchService, rootDir + terminology + "-relationships.json");
+		for (final Map.Entry<String, Boolean> entry : terminologies.entrySet()) {
+			TerminologyLoaderUtility.loadTerminology(searchService, rootDir + entry.getKey() + ".json");
+			TerminologyLoaderUtility.loadMetadata(searchService, rootDir + entry.getKey() + "-metadata.json");
+			TerminologyLoaderUtility.loadConcepts(searchService, rootDir + entry.getKey() + "-concepts.json");
+			TerminologyLoaderUtility.loadConceptRelationships(searchService,
+					rootDir + entry.getKey() + "-relationships.json", entry.getValue());
+
 		}
 	}
 
