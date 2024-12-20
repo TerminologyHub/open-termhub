@@ -116,43 +116,6 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
   testImplementation 'org.junit.platform:junit-platform-suite-engine:1.9.3'
-
-// use "gradle licenseFormatMain/Test" to automatically generate headers
-//license {
-//  header rootProject.file("config/LICENSE")
-//  mapping("java", "SLASHSTAR_STYLE")
-//  includes(["**/*.java"])
-//  excludes(["**/*.txt", "**/*.conf", "**/*package-info.java", "**/*.properties"])
-//  strictCheck true
-//  ext.year = Calendar.getInstance().get(Calendar.YEAR)
-//  ext.company = "West Coast Informatics"
-//}
-
-//licenseTest.dependsOn licenseFormatTest
-//licenseMain.dependsOn licenseFormatMain
-
-// SpotBugs and CheckStyle
-spotbugs {
-    ignoreFailures = false
-    showStackTraces = true
-    showProgress = true
-    excludeFilter = file("config/spotbugs/exclude.xml")
-    // onlyAnalyze = [ "com.foobar.MyClass", "com.foobar.mypkg.*" ]
-    // jvmArgs = [ "-Duser.language=ja" ]
-}
-spotbugsMain {
-    enabled = true
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
-}
-spotbugsTest {
-    enabled = true
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
 }
 
 // use "gradle licenseFormatMain/Test" to automatically generate headers
