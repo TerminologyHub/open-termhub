@@ -1,3 +1,12 @@
+/*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
+ */
 package com.wci.termhub.model;
 
 import org.springframework.data.elasticsearch.annotations.Field;
@@ -10,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 
 /**
  * Represents a reference to a concept with minimal information.
@@ -162,7 +170,7 @@ public class ConceptRef extends AbstractHasModified
 	 */
 	/* see superclass */
 	@Override
-	@Schema(description = "Unique identifier", requiredMode = RequiredMode.NOT_REQUIRED, format = "uuid")
+	@Schema(description = "Unique identifier", required = false, format = "uuid")
 	public String getId() {
 		return super.getId();
 	}
@@ -174,7 +182,7 @@ public class ConceptRef extends AbstractHasModified
 	 */
 	/* see superclass */
 	@Override
-	@Schema(description = "Concept name", requiredMode = RequiredMode.NOT_REQUIRED)
+	@Schema(description = "Concept name", required = false)
 	public String getName() {
 		return name;
 	}
@@ -196,7 +204,7 @@ public class ConceptRef extends AbstractHasModified
 	 * @return the terminology
 	 */
 	@Override
-	@Schema(description = "Terminology abbreviation", requiredMode = RequiredMode.NOT_REQUIRED)
+	@Schema(description = "Terminology abbreviation", required = false)
 	public String getTerminology() {
 		return terminology;
 	}
@@ -217,7 +225,7 @@ public class ConceptRef extends AbstractHasModified
 	 * @return the version
 	 */
 	@Override
-	@Schema(description = "Terminology version", requiredMode = RequiredMode.NOT_REQUIRED)
+	@Schema(description = "Terminology version", required = false)
 	public String getVersion() {
 		return version;
 	}
@@ -238,7 +246,7 @@ public class ConceptRef extends AbstractHasModified
 	 * @return the publisher
 	 */
 	@Override
-	@Schema(description = "Terminology publisher", requiredMode = RequiredMode.NOT_REQUIRED)
+	@Schema(description = "Terminology publisher", required = false)
 	public String getPublisher() {
 		return publisher;
 	}
@@ -258,7 +266,7 @@ public class ConceptRef extends AbstractHasModified
 	 *
 	 * @return the historical
 	 */
-	@Schema(description = "Historical relationship type (only used for concept descendants)", requiredMode = RequiredMode.NOT_REQUIRED)
+	@Schema(description = "Historical relationship type (only used for concept descendants)", required = false)
 	public String getHistorical() {
 		return historical;
 	}

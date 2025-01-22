@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -17,7 +17,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 
 /**
  * Represents a mapset reference. This serves as a pointer from a project to an
@@ -72,6 +71,11 @@ public class MapsetRef extends TerminologyRef {
 		populateFrom(other);
 	}
 
+	/**
+	 * Populate from.
+	 *
+	 * @param other the other
+	 */
 	/* see superclass */
 	@Override
 	public void populateFrom(final TerminologyRef other) {
@@ -91,6 +95,11 @@ public class MapsetRef extends TerminologyRef {
 		}
 	}
 
+	/**
+	 * Patch from.
+	 *
+	 * @param other the other
+	 */
 	/* see superclass */
 	@Override
 	public void patchFrom(final TerminologyRef other) {
@@ -121,9 +130,14 @@ public class MapsetRef extends TerminologyRef {
 		}
 	}
 
+	/**
+	 * Gets the id.
+	 *
+	 * @return the id
+	 */
 	/* see superclass */
 	@Override
-	@Schema(description = "Unique identifier", requiredMode = RequiredMode.NOT_REQUIRED, format = "uuid")
+	@Schema(description = "Unique identifier", required = false, format = "uuid")
 	public String getId() {
 		return super.getId();
 	}

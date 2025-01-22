@@ -1,3 +1,12 @@
+/*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
+ */
 package com.wci.termhub.model;
 
 import java.util.Objects;
@@ -12,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.persistence.Transient;
 
 /**
@@ -132,15 +140,26 @@ public class TerminologyRef extends AbstractHasModified // extends AbstractHasJs
 		}
 	}
 
+	/**
+	 * Compare to.
+	 *
+	 * @param other the other
+	 * @return the int
+	 */
 	/* see superclass */
 	@Override
 	public int compareTo(final TerminologyRef other) {
 		return getAbbreviation().compareTo(other.getAbbreviation());
 	}
 
+	/**
+	 * Gets the id.
+	 *
+	 * @return the id
+	 */
 	/* see superclass */
 	@Override
-	@Schema(description = "Unique identifier", requiredMode = RequiredMode.NOT_REQUIRED, format = "uuid")
+	@Schema(description = "Unique identifier", required = false, format = "uuid")
 	public String getId() {
 		return super.getId();
 	}
@@ -155,12 +174,22 @@ public class TerminologyRef extends AbstractHasModified // extends AbstractHasJs
 		return abbreviation;
 	}
 
+	/**
+	 * Gets the name.
+	 *
+	 * @return the name
+	 */
 	/* see superclass */
 	@Override
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * Sets the name.
+	 *
+	 * @param name the new name
+	 */
 	/* see superclass */
 	@Override
 	public void setName(final String name) {
@@ -252,6 +281,11 @@ public class TerminologyRef extends AbstractHasModified // extends AbstractHasJs
 		this.publisher = publisher;
 	}
 
+	/**
+	 * Hash code.
+	 *
+	 * @return the int
+	 */
 	/* see superclass */
 	@Override
 	public int hashCode() {
@@ -261,6 +295,12 @@ public class TerminologyRef extends AbstractHasModified // extends AbstractHasJs
 		return result;
 	}
 
+	/**
+	 * Equals.
+	 *
+	 * @param obj the obj
+	 * @return true, if successful
+	 */
 	/* see superclass */
 	@Override
 	public boolean equals(final Object obj) {
@@ -276,6 +316,9 @@ public class TerminologyRef extends AbstractHasModified // extends AbstractHasJs
 				&& Objects.equals(publisher, other.publisher) && Objects.equals(version, other.version);
 	}
 
+	/**
+	 * Minimize.
+	 */
 	/* see superclass */
 	@Override
 	public void minimize() {
@@ -293,6 +336,9 @@ public class TerminologyRef extends AbstractHasModified // extends AbstractHasJs
 		}
 	}
 
+	/**
+	 * Clean for api.
+	 */
 	/* see superclass */
 	@Override
 	public void cleanForApi() {

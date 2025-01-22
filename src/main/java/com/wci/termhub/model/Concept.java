@@ -1,3 +1,12 @@
+/*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
+ */
 package com.wci.termhub.model;
 
 import java.util.ArrayList;
@@ -24,7 +33,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.wci.termhub.util.StringUtility;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.persistence.Transient;
 
 /**
@@ -143,6 +151,11 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
 		populateFrom(other);
 	}
 
+	/**
+	 * Populate from.
+	 *
+	 * @param other the other
+	 */
 	/* see superclass */
 	@Override
 	public void populateFrom(final ConceptRef other) {
@@ -175,6 +188,11 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
 		}
 	}
 
+	/**
+	 * Patch from.
+	 *
+	 * @param other the other
+	 */
 	/* see superclass */
 	@Override
 	public void patchFrom(final ConceptRef other) {
@@ -213,15 +231,26 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
 		}
 	}
 
+	/**
+	 * Compare to.
+	 *
+	 * @param other the other
+	 * @return the int
+	 */
 	/* see superclass */
 	@Override
 	public int compareTo(final ConceptRef other) {
 		return getCode().compareTo(other.getCode());
 	}
 
+	/**
+	 * Gets the id.
+	 *
+	 * @return the id
+	 */
 	/* see superclass */
 	@Override
-	@Schema(description = "Unique identifier", requiredMode = RequiredMode.REQUIRED, format = "uuid")
+	@Schema(description = "Unique identifier", required = true, format = "uuid")
 	public String getId() {
 		return super.getId();
 	}
@@ -315,6 +344,11 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
 		this.axioms = axioms;
 	}
 
+	/**
+	 * Gets the attributes.
+	 *
+	 * @return the attributes
+	 */
 	/* see superclass */
 	@Override
 	@Schema(description = "Attribute key/value pairs associated with the concept")
@@ -325,6 +359,11 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
 		return attributes;
 	}
 
+	/**
+	 * Sets the attributes.
+	 *
+	 * @param attributes the attributes
+	 */
 	/* see superclass */
 	@Override
 	public void setAttributes(final Map<String, String> attributes) {
@@ -428,6 +467,9 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
 		treePositions = new ArrayList<>(0);
 	}
 
+	/**
+	 * Clean for api.
+	 */
 	/* see superclass */
 	@Override
 	public void cleanForApi() {
@@ -653,6 +695,11 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
 		this.stemName = stemName;
 	}
 
+	/**
+	 * Gets the highlights.
+	 *
+	 * @return the highlights
+	 */
 	/* see superclass */
 	@Override
 	@Schema(hidden = true)
@@ -663,6 +710,11 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
 		return highlights;
 	}
 
+	/**
+	 * Sets the highlights.
+	 *
+	 * @param highlights the highlights
+	 */
 	/* see superclass */
 	@Override
 	public void setHighlights(final Map<String, String> highlights) {
