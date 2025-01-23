@@ -724,7 +724,11 @@ public final class FhirUtilityR4 {
 	 */
 	public static CodeSystem toR4(final Terminology terminology) throws Exception {
 		final org.hl7.fhir.r4.model.CodeSystem cs = new org.hl7.fhir.r4.model.CodeSystem();
-		cs.setUrl(terminology.getAttributes().get("fhirUri"));
+
+		// cs.setUrl(terminology.getAttributes().get("fhirUri"));
+		// fhirUri is not in the json data files. setting to id for now
+		cs.setUrl(terminology.getId());
+
 		cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
 		cs.setVersion(terminology.getAttributes().get("fhirVersion"));
 		// cs.setId(terminology.getAttributes().get("fhirId"));

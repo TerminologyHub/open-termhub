@@ -572,8 +572,8 @@ public class CodeSystemProviderR4 implements IResourceProvider {
 			final Set<CodeType> properties) throws Exception {
 
 		// Lookup concept (only code is needed because we have terminology index)
-		final SearchParameters params = new SearchParameters("code:" + StringUtility.escapeQuery(code), 0, 2, null,
-				null);
+		final SearchParameters params = new SearchParameters("code:" + StringUtility.escapeQuery(code)
+				+ " AND terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()), 0, 2, null, null);
 		final Concept concept = searchService.findSingle(params, Concept.class);
 		if (concept == null) {
 			throw FhirUtilityR4.exception("Unable to find code for system/version = " + code,
@@ -611,8 +611,9 @@ public class CodeSystemProviderR4 implements IResourceProvider {
 			final StringType display) throws Exception {
 
 		// Lookup concept
-		final SearchParameters params = new SearchParameters("code:" + StringUtility.escapeQuery(code), 0, 2, null,
-				null);
+		final SearchParameters params = new SearchParameters("code:" + StringUtility.escapeQuery(code)
+				+ " AND terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()), 0, 2, null, null);
+
 		final Concept concept = searchService.findSingle(params, Concept.class);
 
 		return FhirUtilityR4.toR4ValidateCode(FhirUtilityR4.toR4(terminology), concept,

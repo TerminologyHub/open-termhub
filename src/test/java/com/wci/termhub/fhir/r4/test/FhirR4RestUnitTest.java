@@ -18,14 +18,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.CapabilityStatement;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
-import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ResourceType;
@@ -274,36 +272,48 @@ public class FhirR4RestUnitTest {
 	 *
 	 * @throws Exception the exception
 	 */
-	// @Test returns not found, but code is valid
+	@Test
 	public void testCodeSystemValidateCode() throws Exception {
 		// Arrange
-		final String code = "385487005"; // "73211009";
-		final String system = "http://snomed.info/sct";
-		final String validateParams = "/$validate-code?code=" + code; // + "&system=" + system;
+		final String code = "385487005";
+		final String url = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6";
+		final String validateParams = "/$validate-code?url=" + url + "&code=" + code;
 		final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + validateParams;
 		LOG.info("endpoint = {}", endpoint);
 
 		// Act
 		final String content = this.restTemplate.getForObject(endpoint, String.class);
-		final IBaseResource baseResource = parser.parseResource(content);
-		final Resource resource = (Resource) baseResource;
+		final Parameters result = parser.parseResource(Parameters.class, content);
 
 		// Assert
-		assertNotNull(resource);
-		assertTrue(resource instanceof OperationOutcome,
-				"Expected OperationOutcome but got " + resource.getClass().getSimpleName());
+		assertNotNull(result, "Parameters response should not be null");
+		LOG.info("Parameters = {}", parser.encodeResourceToString(result));
 
-		final OperationOutcome outcome = (OperationOutcome) resource;
-		LOG.info("OperationOutcome received: {}", parser.encodeResourceToString(outcome));
+		// Verify result parameter
+		assertTrue(result.hasParameter("result"), "Should have result parameter");
+		assertEquals("true", result.getParameter("result").getValue().toString(), "Result should be true");
 
-		// Verify the operation outcome has issues
-		assertFalse(outcome.getIssue().isEmpty(), "OperationOutcome should contain issues");
+		// Verify code parameter
+		assertTrue(result.hasParameter("code"), "Should have code parameter");
+		assertEquals(code, result.getParameter("code").getValue().toString(), "Code should match input");
 
-		// Log all issues for debugging
-		outcome.getIssue().forEach(issue -> {
-			LOG.info("Issue severity: {}, code: {}, details: {}", issue.getSeverity(), issue.getCode(),
-					issue.getDetails() != null ? issue.getDetails().getText() : "no details");
-		});
+		// Verify display parameter
+		assertTrue(result.hasParameter("display"), "Should have display parameter");
+		assertEquals("Surgical procedure on thorax", result.getParameter("display").getValue().toString(),
+				"Display should match expected value");
+
+		// Verify active parameter
+		assertTrue(result.hasParameter("active"), "Should have active parameter");
+		assertTrue(result.getParameterBool("active"), "Active should be true");
+
+		// Verify system parameter
+		assertTrue(result.hasParameter("system"), "Should have system parameter");
+		assertEquals(url, result.getParameter("system").getValue().toString(), "System should match url");
+
+		// Verify version parameter
+		assertTrue(result.hasParameter("version"), "Should have version parameter");
+		assertEquals("version/20240301", result.getParameter("version").getValue().toString(),
+				"Version should match expected value");
 	}
 
 	/**
@@ -315,7 +325,7 @@ public class FhirR4RestUnitTest {
 	public void testCodeSystemValidateCodeById() throws Exception {
 		// Arrange
 		final String csId = "04efd633-bcbc-41cd-959c-f5ed8d94adaa";
-		final String code = "1796088";
+		final String code = "E10";
 		final String validateParams = "/$validate-code?code=" + code;
 		final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + validateParams;
 		LOG.info("endpoint = {}", endpoint);
@@ -339,12 +349,12 @@ public class FhirR4RestUnitTest {
 	 *
 	 * @throws Exception the exception
 	 */
-	// @Test Code system not found matching 'system' parameter
+	@Test
 	public void testCodeSystemSubsumes() throws Exception {
 		// Arrange
 		final String codeA = "73211009";
-		final String codeB = "39592008";
-		final String system = "http://snomed.info/sct";
+		final String codeB = "727499001";
+		final String system = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6";
 		final String subsumesParams = "/$subsumes?codeA=" + codeA + "&codeB=" + codeB + "&system=" + system;
 		final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + subsumesParams;
 		LOG.info("endpoint = {}", endpoint);
@@ -354,10 +364,14 @@ public class FhirR4RestUnitTest {
 		final Parameters result = parser.parseResource(Parameters.class, content);
 
 		// Assert
-		assertNotNull(result);
+		assertNotNull(result, "Parameters response should not be null");
+		LOG.info("Parameters = {}", parser.encodeResourceToString(result));
+
+		// Verify outcome parameter
 		assertNotNull(result.getParameter("outcome"));
 		assertTrue(result.getParameter("outcome").getValue().toString()
 				.matches("(subsumes|subsumed-by|equivalent|not-subsumed)"));
+		assertNotNull(result.getParameter("version"));
 	}
 
 	/**
@@ -392,11 +406,11 @@ public class FhirR4RestUnitTest {
 	 *
 	 * @throws Exception the exception
 	 */
-	// @Test Is system correct?
+	@Test
 	public void testCodeSystemLookup() throws Exception {
 		// Arrange
 		final String code = "73211009";
-		final String system = "http://snomed.info/sct";
+		final String system = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6";
 		final String lookupParams = "/$lookup?code=" + code + "&system=" + system;
 		final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + lookupParams;
 		LOG.info("endpoint = {}", endpoint);
@@ -406,11 +420,65 @@ public class FhirR4RestUnitTest {
 		final Parameters result = parser.parseResource(Parameters.class, content);
 
 		// Assert
-		assertNotNull(result);
-		assertEquals(code, result.getParameter("code").getValue().toString());
-		assertEquals(system, result.getParameter("system").getValue().toString());
-		assertNotNull(result.getParameter("display"));
+		assertNotNull(result, "Parameters response should not be null");
+		LOG.info("Parameters = {}", parser.encodeResourceToString(result));
+
+		// Verify code parameter
+		assertTrue(result.hasParameter("code"), "Should have code parameter");
+		assertEquals("73211009", result.getParameter("code").getValue().toString());
+
+		// Verify system parameter
+		assertTrue(result.hasParameter("system"), "Should have system parameter");
+		assertEquals("ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6", result.getParameter("system").getValue().toString());
+
+		// Verify name parameter
+		assertTrue(result.hasParameter("name"), "Should have name parameter");
+		assertEquals("SNOMEDCT_US", result.getParameter("name").getValue().toString());
+
+		// Verify version parameter
+		assertTrue(result.hasParameter("version"), "Should have version parameter");
+		assertEquals("version/20240301", result.getParameter("version").getValue().toString());
+
+		// Verify display parameter
+		assertTrue(result.hasParameter("display"), "Should have display parameter");
+		assertEquals("Diabetes mellitus", result.getParameter("display").getValue().toString());
+
+		// Verify active parameter
+		assertTrue(result.hasParameter("active"), "Should have active parameter");
 		assertTrue(result.getParameterBool("active"));
+
+		// Verify sufficientlyDefined parameter
+		assertTrue(result.hasParameter("sufficientlyDefined"), "Should have sufficientlyDefined parameter");
+		assertFalse(result.getParameterBool("sufficientlyDefined"));
+
+		// Verify property parameters
+		final List<Parameters.ParametersParameterComponent> properties = result.getParameter().stream()
+				.filter(p -> "property".equals(p.getName())).toList();
+		assertFalse(properties.isEmpty(), "Should have properties");
+
+		// Verify effectiveTime property
+		final boolean hasEffectiveTime = properties.stream()
+				.anyMatch(p -> p.getPart().stream().anyMatch(part -> "effectiveTime".equals(part.getValue().toString())
+						&& p.getPart().get(1).getValue().toString().equals("20020131")));
+		assertTrue(hasEffectiveTime, "Should have effectiveTime property with value 20020131");
+
+		// Verify normalForm parameter
+		assertTrue(result.hasParameter("normalForm"), "Should have normalForm parameter");
+		assertTrue(result.getParameter("normalForm").getValue().toString()
+				.contains("<<< 126877002|Disorder of glucose metabolism|"));
+
+		// Verify designation parameters
+		final List<Parameters.ParametersParameterComponent> designations = result.getParameter().stream()
+				.filter(p -> "designation".equals(p.getName())).toList();
+		assertFalse(designations.isEmpty(), "Should have designations");
+
+		// // Verify has fully specified name designation
+		// boolean hasFullySpecifiedName = designations.stream().anyMatch(d ->
+		// d.getPart().stream()
+		// .anyMatch(p -> p.getName().equals("use") &&
+		// p.getValue().toString().contains("900000000000003001")));
+		// assertTrue(hasFullySpecifiedName, "Should have fully specified name
+		// designation");
 	}
 
 	/**
@@ -418,7 +486,7 @@ public class FhirR4RestUnitTest {
 	 *
 	 * @throws Exception the exception
 	 */
-	// @Test "diagnostics": "Failed to lookup code"
+	@Test
 	public void testCodeSystemLookupById() throws Exception {
 		// Arrange
 		final String csId = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6";
@@ -432,10 +500,65 @@ public class FhirR4RestUnitTest {
 		final Parameters result = parser.parseResource(Parameters.class, content);
 
 		// Assert
-		assertNotNull(result);
-		assertEquals(code, result.getParameter("code").getValue().toString());
-		assertNotNull(result.getParameter("display"));
+		assertNotNull(result, "Parameters response should not be null");
+		LOG.info("Parameters = {}", parser.encodeResourceToString(result));
+
+		// Verify code parameter
+		assertTrue(result.hasParameter("code"), "Should have code parameter");
+		assertEquals("73211009", result.getParameter("code").getValue().toString());
+
+		// Verify system parameter
+		assertTrue(result.hasParameter("system"), "Should have system parameter");
+		assertEquals("ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6", result.getParameter("system").getValue().toString());
+
+		// Verify name parameter
+		assertTrue(result.hasParameter("name"), "Should have name parameter");
+		assertEquals("SNOMEDCT_US", result.getParameter("name").getValue().toString());
+
+		// Verify version parameter
+		assertTrue(result.hasParameter("version"), "Should have version parameter");
+		assertEquals("version/20240301", result.getParameter("version").getValue().toString());
+
+		// Verify display parameter
+		assertTrue(result.hasParameter("display"), "Should have display parameter");
+		assertEquals("Diabetes mellitus", result.getParameter("display").getValue().toString());
+
+		// Verify active parameter
+		assertTrue(result.hasParameter("active"), "Should have active parameter");
 		assertTrue(result.getParameterBool("active"));
+
+		// Verify sufficientlyDefined parameter
+		assertTrue(result.hasParameter("sufficientlyDefined"), "Should have sufficientlyDefined parameter");
+		assertFalse(result.getParameterBool("sufficientlyDefined"));
+
+		// Verify property parameters
+		final List<Parameters.ParametersParameterComponent> properties = result.getParameter().stream()
+				.filter(p -> "property".equals(p.getName())).toList();
+		assertFalse(properties.isEmpty(), "Should have properties");
+
+		// Verify effectiveTime property
+		final boolean hasEffectiveTime = properties.stream()
+				.anyMatch(p -> p.getPart().stream().anyMatch(part -> "effectiveTime".equals(part.getValue().toString())
+						&& p.getPart().get(1).getValue().toString().equals("20020131")));
+		assertTrue(hasEffectiveTime, "Should have effectiveTime property with value 20020131");
+
+		// Verify normalForm parameter
+		assertTrue(result.hasParameter("normalForm"), "Should have normalForm parameter");
+		assertTrue(result.getParameter("normalForm").getValue().toString()
+				.contains("<<< 126877002|Disorder of glucose metabolism|"));
+
+		// Verify designation parameters
+		final List<Parameters.ParametersParameterComponent> designations = result.getParameter().stream()
+				.filter(p -> "designation".equals(p.getName())).toList();
+		assertFalse(designations.isEmpty(), "Should have designations");
+
+		// // Verify has fully specified name designation
+		// boolean hasFullySpecifiedName = designations.stream().anyMatch(d ->
+		// d.getPart().stream()
+		// .anyMatch(p -> p.getName().equals("use") &&
+		// p.getValue().toString().contains("900000000000003001")));
+		// assertTrue(hasFullySpecifiedName, "Should have fully specified name
+		// designation");
 	}
 
 	/**
@@ -585,36 +708,31 @@ public class FhirR4RestUnitTest {
 	 *
 	 * @throws Exception the exception
 	 */
-	// @Test STUCK IN AN INFINITE LOOP
+	@Test
 	public void testValueSetValidateCode() throws Exception {
 		// Arrange
 		final String code = "73211009";
-		final String system = "http://snomed.info/sct"; // null?fhir_vs Value from output of testValueSetRead
-		final String validateParams = "/$validate-code?code=" + code + "&system=" + system;
+		final String url = "2023?fhir_vs";
+		final String validateParams = "/$validate-code?url=" + url + "&code=" + code;
 		final String endpoint = LOCALHOST + port + FHIR_VALUESET + validateParams;
 		LOG.info("endpoint = {}", endpoint);
 
 		// Act
 		final String content = this.restTemplate.getForObject(endpoint, String.class);
-		final IBaseResource baseResource = parser.parseResource(content);
-		final Resource resource = (Resource) baseResource;
+		final Parameters result = parser.parseResource(Parameters.class, content);
 
 		// Assert
-		assertNotNull(resource);
-		assertTrue(resource instanceof OperationOutcome,
-				"Expected OperationOutcome but got " + resource.getClass().getSimpleName());
+		assertNotNull(result, "Parameters response should not be null");
+		LOG.info("Parameters = {}", parser.encodeResourceToString(result));
 
-		final OperationOutcome outcome = (OperationOutcome) resource;
-		LOG.info("OperationOutcome received: {}", parser.encodeResourceToString(outcome));
+		// Verify result parameter
+		assertTrue(result.hasParameter("result"), "Should have result parameter");
+		assertTrue(result.getParameterBool("result"), "Result should be true");
 
-		// Verify the operation outcome has issues
-		assertFalse(outcome.getIssue().isEmpty(), "OperationOutcome should contain issues");
-
-		// Log all issues for debugging
-		outcome.getIssue().forEach(issue -> {
-			LOG.info("Issue severity: {}, code: {}, details: {}", issue.getSeverity(), issue.getCode(),
-					issue.getDetails() != null ? issue.getDetails().getText() : "no details");
-		});
+		// Verify display parameter
+		assertTrue(result.hasParameter("display"), "Should have display parameter");
+		assertEquals("Diabetes mellitus", result.getParameter("display").getValue().toString(),
+				"Display should match expected value");
 	}
 
 	/**
@@ -622,10 +740,10 @@ public class FhirR4RestUnitTest {
 	 *
 	 * @throws Exception the exception
 	 */
-	// @Test STUCK IN AN INFINITE LOOP
+	@Test
 	public void testValueSetValidateCodeById() throws Exception {
 		// Arrange
-		final String vsId = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6_entire"; // Example SNOMED CT ValueSet ID
+		final String vsId = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6_entire";
 		final String code = "73211009";
 		final String validateParams = "/$validate-code?code=" + code;
 		final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId + validateParams;
@@ -633,25 +751,20 @@ public class FhirR4RestUnitTest {
 
 		// Act
 		final String content = this.restTemplate.getForObject(endpoint, String.class);
-		final IBaseResource baseResource = parser.parseResource(content);
-		final Resource resource = (Resource) baseResource;
+		final Parameters result = parser.parseResource(Parameters.class, content);
 
 		// Assert
-		assertNotNull(resource);
-		assertTrue(resource instanceof OperationOutcome,
-				"Expected OperationOutcome but got " + resource.getClass().getSimpleName());
+		assertNotNull(result, "Parameters response should not be null");
+		LOG.info("Parameters = {}", parser.encodeResourceToString(result));
 
-		final OperationOutcome outcome = (OperationOutcome) resource;
-		LOG.info("OperationOutcome received: {}", parser.encodeResourceToString(outcome));
+		// Verify result parameter
+		assertTrue(result.hasParameter("result"), "Should have result parameter");
+		assertTrue(result.getParameterBool("result"), "Result should be true");
 
-		// Verify the operation outcome has issues
-		assertFalse(outcome.getIssue().isEmpty(), "OperationOutcome should contain issues");
-
-		// Log all issues for debugging
-		outcome.getIssue().forEach(issue -> {
-			LOG.info("Issue severity: {}, code: {}, details: {}", issue.getSeverity(), issue.getCode(),
-					issue.getDetails() != null ? issue.getDetails().getText() : "no details");
-		});
+		// Verify display parameter
+		assertTrue(result.hasParameter("display"), "Should have display parameter");
+		assertEquals("Diabetes mellitus", result.getParameter("display").getValue().toString(),
+				"Display should match expected value");
 	}
 
 	/**
@@ -662,31 +775,33 @@ public class FhirR4RestUnitTest {
 	@Test
 	public void testValueSetExpand() throws Exception {
 		// Arrange
-		final String expandParams = "/$expand?_count=50";
+		final String expandParams = "/$expand?url=2023&count=50";
 		final String endpoint = LOCALHOST + port + FHIR_VALUESET + expandParams;
 		LOG.info("endpoint = {}", endpoint);
 
 		// Act
 		final String content = this.restTemplate.getForObject(endpoint, String.class);
-		final IBaseResource baseResource = parser.parseResource(content);
-		final Resource resource = (Resource) baseResource;
+		final ValueSet valueSet = parser.parseResource(ValueSet.class, content);
 
 		// Assert
-		assertNotNull(resource);
-		assertTrue(resource instanceof OperationOutcome,
-				"Expected OperationOutcome but got " + resource.getClass().getSimpleName());
+		assertNotNull(valueSet, "ValueSet should not be null");
+		assertEquals(ResourceType.ValueSet, valueSet.getResourceType(), "Resource type should be ValueSet");
 
-		final OperationOutcome outcome = (OperationOutcome) resource;
-		LOG.info("OperationOutcome received: {}", parser.encodeResourceToString(outcome));
+		// Verify expansion
+		assertNotNull(valueSet.getExpansion(), "Expansion should not be null");
+		assertNotNull(valueSet.getExpansion().getId(), "Expansion ID should not be null");
+		assertNotNull(valueSet.getExpansion().getTimestamp(), "Expansion timestamp should not be null");
+		assertEquals(50, valueSet.getExpansion().getTotal());
+		assertEquals(0, valueSet.getExpansion().getOffset(), "Offset should be 0");
 
-		// Verify the operation outcome has issues
-		assertFalse(outcome.getIssue().isEmpty(), "OperationOutcome should contain issues");
+		// Verify expansion contains
+		assertNotNull(valueSet.getExpansion().getContains(), "Contains should not be null");
+		assertFalse(valueSet.getExpansion().getContains().isEmpty(), "Contains should not be empty");
 
-		// Log all issues for debugging
-		outcome.getIssue().forEach(issue -> {
-			LOG.info("Issue severity: {}, code: {}, details: {}", issue.getSeverity(), issue.getCode(),
-					issue.getDetails() != null ? issue.getDetails().getText() : "no details");
-		});
+		// Verify first entry has required fields
+		final ValueSet.ValueSetExpansionContainsComponent firstEntry = valueSet.getExpansion().getContains().get(0);
+		assertNotNull(firstEntry.getCode(), "First entry code should not be null");
+		assertNotNull(firstEntry.getDisplay(), "First entry display should not be null");
 	}
 
 	/**
@@ -697,7 +812,7 @@ public class FhirR4RestUnitTest {
 	@Test
 	public void testValueSetExpandById() throws Exception {
 		// Arrange
-		final String vsId = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6_entire"; // SNOMEDCT_US ValueSet ID
+		final String vsId = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6_entire";
 		final int count = 50;
 		final String expandParams = "/$expand?count=" + count;
 		final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId + expandParams;

@@ -36,7 +36,7 @@ public class FHIRConfig {
 
 		final ServletRegistrationBean<HapiR4RestfulServlet> servletRegistrationBean = new ServletRegistrationBean<>(
 				hapiServlet, "/fhir/r4/*");
-		hapiServlet.setServerName("Termhub R4 FHIR Terminology Server");
+		hapiServlet.setServerName("Open Termhub R4 FHIR Terminology Server");
 		hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
 		hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
 
@@ -57,7 +57,7 @@ public class FHIRConfig {
 
 		final ServletRegistrationBean<HapiR5RestfulServlet> servletRegistrationBean = new ServletRegistrationBean<>(
 				hapiServlet, "/fhir/r5/*");
-		hapiServlet.setServerName("Termhub R5 FHIR Terminology Server");
+		hapiServlet.setServerName("Opeb Termhub R5 FHIR Terminology Server");
 		hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
 		hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
 

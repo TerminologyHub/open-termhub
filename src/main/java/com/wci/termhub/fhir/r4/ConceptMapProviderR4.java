@@ -592,7 +592,6 @@ public class ConceptMapProviderR4 implements IResourceProvider {
 					match.addPart().setName("equivalence").setValue(new StringType("inexact"));
 					if (reverse) {
 						match.addPart().setName("concept")
-
 								.setValue(new Coding()
 										.setSystem(FhirUtility.getCodeSystemUri(searchService, mapping.getFrom()))
 										.setCode(mapping.getFrom().getCode()).setDisplay(mapping.getFrom().getName()));
