@@ -1,5 +1,11 @@
 /*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
  */
 package com.wci.termhub.rest;
 
@@ -65,7 +71,6 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -75,7 +80,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -84,7 +88,6 @@ import jakarta.ws.rs.core.MediaType;
 /**
  * Reference implementation of {@link TerminologyServiceRestOld}.
  */
-@SecurityScheme(name = "bearerAuth", description = "JWT authentication with bearer token", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "Bearer [token]")
 @OpenAPIDefinition(info = @Info(title = "Terminology Hub Terminology Terminology API", version = "1.0.0", description = "API documentation for the interacting with terminologies and concepts. "
 		+ "<p>For a guided tour of using this API, see our github project "
 		+ "<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes\">"
@@ -119,6 +122,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 	@Autowired
 	private EntityRepositoryService searchService;
 
+	/** The application context. */
 	@Autowired
 	private ApplicationContext applicationContext;
 
@@ -1779,6 +1783,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl implements T
 		}
 	}
 
+	/**
+	 * Compute tree positions.
+	 *
+	 * @param terminology the terminology
+	 * @param publisher   the publisher
+	 * @param version     the version
+	 * @return the response entity
+	 * @throws Exception the exception
+	 */
 	@RequestMapping(value = "/terminology/{terminology}/trees", method = RequestMethod.POST)
 	@Operation(summary = "Compute concept tree positions by terminology, publisher and version", description = "Computes concept tree positions for the specified terminology, publisher and version.", security = @SecurityRequirement(name = "bearerAuth"), tags = {
 			"concept by code" })

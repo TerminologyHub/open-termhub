@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.persistence.Transient;
 
 /**
@@ -54,7 +53,7 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		cardinality("cardinality");
 
 		/** The name. */
-		private String property;
+		private final String property;
 
 		/**
 		 * Instantiates a {@link Attributes} from the specified parameters.
@@ -138,6 +137,11 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		populateFrom(other);
 	}
 
+	/**
+	 * Populate from.
+	 *
+	 * @param other the other
+	 */
 	/* see superclass */
 	@Override
 	public void populateFrom(final TerminologyRef other) {
@@ -156,6 +160,11 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		}
 	}
 
+	/**
+	 * Patch from.
+	 *
+	 * @param other the other
+	 */
 	/* see superclass */
 	@Override
 	public void patchFrom(final TerminologyRef other) {
@@ -184,9 +193,14 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		}
 	}
 
+	/**
+	 * Gets the id.
+	 *
+	 * @return the id
+	 */
 	/* see superclass */
 	@Override
-	@Schema(description = "Unique identifier", requiredMode = RequiredMode.REQUIRED, format = "uuid")
+	@Schema(description = "Unique identifier", required = true, format = "uuid")
 	public String getId() {
 		return super.getId();
 	}
@@ -248,6 +262,11 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		this.releaseDate = releaseDate;
 	}
 
+	/**
+	 * Gets the attributes.
+	 *
+	 * @return the attributes
+	 */
 	/* see superclass */
 	@Override
 	public Map<String, String> getAttributes() {
@@ -257,6 +276,11 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		return attributes;
 	}
 
+	/**
+	 * Sets the attributes.
+	 *
+	 * @param attributes the attributes
+	 */
 	/* see superclass */
 	@Override
 	public void setAttributes(final Map<String, String> attributes) {
@@ -284,18 +308,31 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		this.statistics = statistics;
 	}
 
+	/**
+	 * Gets the terminology.
+	 *
+	 * @return the terminology
+	 */
 	/* see superclass */
 	@Override
 	public String getTerminology() {
 		return terminology;
 	}
 
+	/**
+	 * Sets the terminology.
+	 *
+	 * @param terminology the new terminology
+	 */
 	/* see superclass */
 	@Override
 	public void setTerminology(final String terminology) {
 		this.terminology = terminology;
 	}
 
+	/**
+	 * Minimize.
+	 */
 	/* see superclass */
 	@Override
 	public void minimize() {
@@ -303,12 +340,20 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		cleanForApi();
 	}
 
+	/**
+	 * Clean for api.
+	 */
 	/* see superclass */
 	@Override
 	public void cleanForApi() {
 		indexName = null;
 	}
 
+	/**
+	 * Hash code.
+	 *
+	 * @return the int
+	 */
 	/* see superclass */
 	@Override
 	public int hashCode() {
@@ -318,6 +363,12 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		return result;
 	}
 
+	/**
+	 * Equals.
+	 *
+	 * @param obj the obj
+	 * @return true, if successful
+	 */
 	/* see superclass */
 	@Override
 	public boolean equals(final Object obj) {
@@ -331,6 +382,12 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 		return Objects.equals(getId(), other.getId());
 	}
 
+	/**
+	 * Compare to.
+	 *
+	 * @param other the other
+	 * @return the int
+	 */
 	/* see superclass */
 	@Override
 	public int compareTo(final TerminologyRef other) {

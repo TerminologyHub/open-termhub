@@ -291,6 +291,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
 		final List<T> list = new ArrayList<>();
 		while (true) {
 			final List<T> innerList = findFields(params, fields, clazz).getItems();
+
 			if (innerList.isEmpty()) {
 				break;
 			}
@@ -300,6 +301,11 @@ public class EntityServiceImpl implements EntityRepositoryService {
 			} else {
 				list.addAll(innerList);
 			}
+
+			if (innerList.size() < params.getLimit()) {
+				break;
+			}
+			params.setOffset(params.getOffset() + params.getLimit());
 		}
 
 		return list;
@@ -318,8 +324,8 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
 		// Load blocks of 10k, need to specify sort=id for this to work
 		final SearchParameters params = new SearchParameters(query, 0, findAllPageSize, "id", null);
-
 		final List<T> list = new ArrayList<>();
+
 		while (true) {
 			final List<T> innerList = find(params, clazz).getItems();
 
@@ -332,6 +338,11 @@ public class EntityServiceImpl implements EntityRepositoryService {
 			} else {
 				list.addAll(innerList);
 			}
+
+			if (innerList.size() < params.getLimit()) {
+				break;
+			}
+			params.setOffset(params.getOffset() + params.getLimit());
 		}
 
 		return list;
@@ -340,22 +351,25 @@ public class EntityServiceImpl implements EntityRepositoryService {
 	/* see superclass */
 	@Override
 	public <T extends HasId> List<String> findAllIds(final String query, final Class<T> clazz) throws Exception {
+
 		// Load blocks of 10k, need to specify sort=id for this to work
 		final SearchParameters params = new SearchParameters(query, 0, findAllPageSize, "id", null);
-
 		final List<String> list = new ArrayList<>();
+
 		while (true) {
 			final List<String> innerList = findIds(params, clazz).getItems();
+
 			if (innerList.isEmpty()) {
 				break;
 			}
 
 			// Get the id of the last result
-			// searchAfter = innerList.get(innerList.size() - 1);
 			list.addAll(innerList);
 
-			// Because of searchAfter, not needed
-			// params.setOffset(params.getOffset() + 10000);
+			if (innerList.size() < params.getLimit()) {
+				break;
+			}
+			params.setOffset(params.getOffset() + params.getLimit());
 		}
 
 		return list;
