@@ -18,25 +18,25 @@ import com.wci.termhub.util.ModelUtility;
  */
 public abstract class AbstractConfigurable implements Configurable {
 
-	/**
-	 * Returns the name.
-	 *
-	 * @return the name
-	 */
-	@Override
-	public String getName() {
-		return ModelUtility.getNameFromClass(getClass());
-	}
+  /**
+   * Returns the name.
+   *
+   * @return the name
+   */
+  @Override
+  public String getName() {
+    return ModelUtility.getNameFromClass(getClass());
+  }
 
-	/**
-	 * Sets the properties.
-	 *
-	 * @param properties the properties
-	 * @throws Exception the exception
-	 */
-	@Override
-	public void setProperties(final Properties properties) throws Exception {
-		// n/a
-	}
+  /**
+   * Sets the properties.
+   *
+   * @param properties the properties
+   * @throws Exception the exception
+   */
+  @Override
+  public void setProperties(final Properties properties) throws Exception {
+    // n/a
+  }
 
 }

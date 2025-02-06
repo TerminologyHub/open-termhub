@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -26,20 +26,20 @@ import com.wci.termhub.model.Concept;
 @SpringBootTest
 public class LoggerUnitTest extends AbstractTest {
 
-	/** The logger. */
-	private static Logger logger = LoggerFactory.getLogger(LoggerUnitTest.class);
+  /** The logger. */
+  private static Logger logger = LoggerFactory.getLogger(LoggerUnitTest.class);
 
-	/**
-	 * Test.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void test() throws Exception {
-		// Change appender to "AppConsole" to see USERID interpolation and JSON
-		ThreadContext.put("user-id", "USERID");
-		logger.info("test message");
+  /**
+   * Test.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void test() throws Exception {
+    // Change appender to "AppConsole" to see USERID interpolation and JSON
+    ThreadContext.put("user-id", "USERID");
+    logger.info("test message");
 
-	}
+  }
 
 }

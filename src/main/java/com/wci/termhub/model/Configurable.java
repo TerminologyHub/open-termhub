@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -16,26 +16,26 @@ import java.util.Properties;
  */
 public interface Configurable {
 
-	/**
-	 * Returns the handler key.
-	 *
-	 * @return the handler key
-	 */
-	public String getHandlerKey();
+  /**
+   * Returns the handler key.
+   *
+   * @return the handler key
+   */
+  public String getHandlerKey();
 
-	/**
-	 * Returns the name.
-	 *
-	 * @return the name
-	 */
-	public String getName();
+  /**
+   * Returns the name.
+   *
+   * @return the name
+   */
+  public String getName();
 
-	/**
-	 * Sets the properties.
-	 *
-	 * @param p the properties
-	 * @throws Exception the exception
-	 */
-	public void setProperties(Properties p) throws Exception;
+  /**
+   * Sets the properties.
+   *
+   * @param p the properties
+   * @throws Exception the exception
+   */
+  public void setProperties(Properties p) throws Exception;
 
 }

@@ -1,5 +1,11 @@
 /*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
  */
 package com.wci.termhub.util;
 
@@ -22,267 +28,276 @@ import com.wci.termhub.service.EntityRepositoryService;
 /**
  * The Class LoaderUtil.
  */
-public class LoaderUtil {
+public final class LoaderUtil {
 
-	/** The logger. */
-	private static final Logger LOG = LoggerFactory.getLogger(LoaderUtil.class);
+  /** The logger. */
+  private static final Logger LOG = LoggerFactory.getLogger(LoaderUtil.class);
 
-	/**
-	 * Load terminology.
-	 *
-	 * @param service     the service
-	 * @param terminology the terminology
-	 * @throws Exception the exception
-	 */
-	public static void loadTerminology(final EntityRepositoryService service, final String terminology)
-			throws Exception {
-		indexTerminology(service, terminology, 1000, -1);
-	}
+  /**
+   * Instantiates a new loader util.
+   */
+  private LoaderUtil() {
+    // private constructor
+  }
 
-	/**
-	 * Load metadata.
-	 *
-	 * @param service     the service
-	 * @param terminology the terminology
-	 * @throws Exception the exception
-	 */
-	public static void loadMetadata(final EntityRepositoryService service, final String terminology) throws Exception {
-		indexMetadata(service, terminology, 1000, -1);
-	}
+  /**
+   * Load terminology.
+   *
+   * @param service the service
+   * @param terminology the terminology
+   * @throws Exception the exception
+   */
+  public static void loadTerminology(final EntityRepositoryService service,
+    final String terminology) throws Exception {
+    indexTerminology(service, terminology, 1000, -1);
+  }
 
-	/**
-	 * Load concepts.
-	 *
-	 * @param conceptService the concept service
-	 * @param termService    the term service
-	 * @param terminology    the terminology
-	 * @throws Exception the exception
-	 */
-	public static void loadConcepts(final EntityRepositoryService service, final String terminology) throws Exception {
-		indexConcepts(service, terminology, 1000, -1);
-	}
+  /**
+   * Load metadata.
+   *
+   * @param service the service
+   * @param terminology the terminology
+   * @throws Exception the exception
+   */
+  public static void loadMetadata(final EntityRepositoryService service, final String terminology)
+    throws Exception {
+    indexMetadata(service, terminology, 1000, -1);
+  }
 
-	/**
-	 * Load concept relationships.
-	 *
-	 * @param service     the service
-	 * @param terminology the terminology
-	 * @throws Exception the exception
-	 */
-	public static void loadConceptRelationships(final EntityRepositoryService service, final String terminology)
-			throws Exception {
-		indexConceptRelationships(service, terminology, 1000, -1);
-	}
+  /**
+   * Load concepts.
+   *
+   * @param service the service
+   * @param terminology the terminology
+   * @throws Exception the exception
+   */
+  public static void loadConcepts(final EntityRepositoryService service, final String terminology)
+    throws Exception {
+    indexConcepts(service, terminology, 1000, -1);
+  }
 
-	/**
-	 * Index terminology.
-	 *
-	 * @param service      the service
-	 * @param fullFileName the full file name
-	 * @param batchSize    the batch size
-	 * @param limit        the limit
-	 * @throws Exception the exception
-	 */
-	public static void indexTerminology(final EntityRepositoryService service, final String fullFileName,
-			final int batchSize, final int limit) throws Exception {
+  /**
+   * Load concept relationships.
+   *
+   * @param service the service
+   * @param terminology the terminology
+   * @throws Exception the exception
+   */
+  public static void loadConceptRelationships(final EntityRepositoryService service,
+    final String terminology) throws Exception {
+    indexConceptRelationships(service, terminology, 1000, -1);
+  }
 
-		LOG.debug("indexTerminology: batch size: " + batchSize + " limit: " + limit);
-		final long startTime = System.currentTimeMillis();
-		final List<HasId> terminologyBatch = new ArrayList<>(batchSize);
+  /**
+   * Index terminology.
+   *
+   * @param service the service
+   * @param fullFileName the full file name
+   * @param batchSize the batch size
+   * @param limit the limit
+   * @throws Exception the exception
+   */
+  public static void indexTerminology(final EntityRepositoryService service,
+    final String fullFileName, final int batchSize, final int limit) throws Exception {
 
-		try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
+    LOG.debug("indexTerminology: batch size: " + batchSize + " limit: " + limit);
+    final long startTime = System.currentTimeMillis();
+    final List<HasId> terminologyBatch = new ArrayList<>(batchSize);
 
-			service.createIndex(Terminology.class);
+    try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
 
-			String line;
-			int count = 0;
-			while ((line = br.readLine()) != null) {
+      service.createIndex(Terminology.class);
 
-				final Terminology terminology = ModelUtility.fromJson(line, Terminology.class);
-				LOG.info("indexTerminology: terminology: {}", terminology);
-				terminologyBatch.add(terminology);
+      String line;
+      int count = 0;
+      while ((line = br.readLine()) != null) {
 
-				if (terminologyBatch.size() == batchSize) {
-					service.addBulk(Terminology.class, terminologyBatch);
-					terminologyBatch.clear();
-					LOG.info("indexTerminology: count: " + count);
-				}
-				count++;
-			}
+        final Terminology terminology = ModelUtility.fromJson(line, Terminology.class);
+        LOG.info("indexTerminology: terminology: {}", terminology);
+        terminologyBatch.add(terminology);
 
-			if (!terminologyBatch.isEmpty()) {
-				service.addBulk(Terminology.class, terminologyBatch);
-			}
+        if (terminologyBatch.size() == batchSize) {
+          service.addBulk(Terminology.class, terminologyBatch);
+          terminologyBatch.clear();
+          LOG.info("indexTerminology: count: " + count);
+        }
+        count++;
+      }
 
-			LOG.info("indexTerminology: final count: " + count);
-			LOG.info("indexTerminology: duration: " + (System.currentTimeMillis() - startTime) + " ms");
+      if (!terminologyBatch.isEmpty()) {
+        service.addBulk(Terminology.class, terminologyBatch);
+      }
 
-		} catch (final Exception e) {
-			LOG.error("indexTerminology: An error occurred while processing the file.");
-			throw e;
-		}
-	}
+      LOG.info("indexTerminology: final count: " + count);
+      LOG.info("indexTerminology: duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
-	/**
-	 * Index metadata.
-	 *
-	 * @param service      the service
-	 * @param fullFileName the full file name
-	 * @param batchSize    the batch size
-	 * @param limit        the limit
-	 * @throws Exception the exception
-	 */
-	public static void indexMetadata(final EntityRepositoryService service, final String fullFileName,
-			final int batchSize, final int limit) throws Exception {
+    } catch (final Exception e) {
+      LOG.error("indexTerminology: An error occurred while processing the file.");
+      throw e;
+    }
+  }
 
-		LOG.debug("indexMetadata: batch size: " + batchSize + " limit: " + limit);
-		final long startTime = System.currentTimeMillis();
-		final List<HasId> metadataBatch = new ArrayList<>(batchSize);
+  /**
+   * Index metadata.
+   *
+   * @param service the service
+   * @param fullFileName the full file name
+   * @param batchSize the batch size
+   * @param limit the limit
+   * @throws Exception the exception
+   */
+  public static void indexMetadata(final EntityRepositoryService service, final String fullFileName,
+    final int batchSize, final int limit) throws Exception {
 
-		try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
+    LOG.debug("indexMetadata: batch size: " + batchSize + " limit: " + limit);
+    final long startTime = System.currentTimeMillis();
+    final List<HasId> metadataBatch = new ArrayList<>(batchSize);
 
-			service.createIndex(Metadata.class);
+    try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
 
-			String line;
-			int conceptCount = 0;
-			while ((line = br.readLine()) != null && (limit == -1 || conceptCount < limit)) {
+      service.createIndex(Metadata.class);
 
-				final Metadata metadata = ModelUtility.fromJson(line, Metadata.class);
-				metadataBatch.add(metadata);
+      String line;
+      int conceptCount = 0;
+      while ((line = br.readLine()) != null && (limit == -1 || conceptCount < limit)) {
 
-				if (metadataBatch.size() == batchSize) {
-					service.addBulk(Metadata.class, metadataBatch);
-					metadataBatch.clear();
-					LOG.info("indexMetadata: count: " + conceptCount);
-				}
-				conceptCount++;
-			}
+        final Metadata metadata = ModelUtility.fromJson(line, Metadata.class);
+        metadataBatch.add(metadata);
 
-			if (!metadataBatch.isEmpty()) {
-				service.addBulk(Metadata.class, metadataBatch);
-			}
+        if (metadataBatch.size() == batchSize) {
+          service.addBulk(Metadata.class, metadataBatch);
+          metadataBatch.clear();
+          LOG.info("indexMetadata: count: " + conceptCount);
+        }
+        conceptCount++;
+      }
 
-			LOG.info("indexMetadata: final metadataBatch added count: " + conceptCount);
-			LOG.info("indexMetadata: duration: " + (System.currentTimeMillis() - startTime) + " ms");
+      if (!metadataBatch.isEmpty()) {
+        service.addBulk(Metadata.class, metadataBatch);
+      }
 
-		} catch (final Exception e) {
-			LOG.error("indexMetadata: An error occurred while processing the file.");
-			throw e;
-		}
+      LOG.info("indexMetadata: final metadataBatch added count: " + conceptCount);
+      LOG.info("indexMetadata: duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
-	}
+    } catch (final Exception e) {
+      LOG.error("indexMetadata: An error occurred while processing the file.");
+      throw e;
+    }
 
-	/**
-	 * Index concept.
-	 *
-	 * @param conceptService the concept service
-	 * @param termService    the term service
-	 * @param fullFileName   the full file name
-	 * @param batchSize      the batch size
-	 * @param limit          the limit
-	 * @throws Exception the exception
-	 */
-	public static void indexConcepts(final EntityRepositoryService service, final String fullFileName,
-			final int batchSize, final int limit) throws Exception {
+  }
 
-		LOG.debug("indexConcept: batch size: " + batchSize + " limit: " + limit);
-		final long startTime = System.currentTimeMillis();
-		final List<HasId> conceptBatch = new ArrayList<>(batchSize);
-		final List<HasId> termBatch = new ArrayList<>(batchSize);
+  /**
+   * Index concept.
+   *
+   * @param service the service
+   * @param fullFileName the full file name
+   * @param batchSize the batch size
+   * @param limit the limit
+   * @throws Exception the exception
+   */
+  public static void indexConcepts(final EntityRepositoryService service, final String fullFileName,
+    final int batchSize, final int limit) throws Exception {
 
-		try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
+    LOG.debug("indexConcept: batch size: " + batchSize + " limit: " + limit);
+    final long startTime = System.currentTimeMillis();
+    final List<HasId> conceptBatch = new ArrayList<>(batchSize);
+    final List<HasId> termBatch = new ArrayList<>(batchSize);
 
-			service.createIndex(Concept.class);
-			service.createIndex(Term.class);
+    try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
 
-			String line;
-			int conceptCount = 0;
-			int termCount = 0;
-			while ((line = br.readLine()) != null && (limit == -1 || conceptCount < limit)) {
+      service.createIndex(Concept.class);
+      service.createIndex(Term.class);
 
-				final Concept concept = ModelUtility.fromJson(line, Concept.class);
-				if (concept.getTerms() != null) {
-					for (final Term term : concept.getTerms()) {
-						termBatch.add(term);
-						if (termBatch.size() == batchSize) {
-							service.addBulk(Term.class, termBatch);
-							termBatch.clear();
-						}
-						termCount++;
-					}
-				}
-				conceptBatch.add(concept);
+      String line;
+      int conceptCount = 0;
+      int termCount = 0;
+      while ((line = br.readLine()) != null && (limit == -1 || conceptCount < limit)) {
 
-				if (conceptBatch.size() == batchSize) {
-					service.addBulk(Concept.class, conceptBatch);
-					conceptBatch.clear();
-					LOG.info("indexConcept: count: " + conceptCount);
-				}
-				conceptCount++;
-			}
+        final Concept concept = ModelUtility.fromJson(line, Concept.class);
+        if (concept.getTerms() != null) {
+          for (final Term term : concept.getTerms()) {
+            termBatch.add(term);
+            if (termBatch.size() == batchSize) {
+              service.addBulk(Term.class, termBatch);
+              termBatch.clear();
+            }
+            termCount++;
+          }
+        }
+        conceptBatch.add(concept);
 
-			if (!conceptBatch.isEmpty()) {
-				service.addBulk(Concept.class, conceptBatch);
-			}
-			if (!termBatch.isEmpty()) {
-				service.addBulk(Term.class, termBatch);
-			}
+        if (conceptBatch.size() == batchSize) {
+          service.addBulk(Concept.class, conceptBatch);
+          conceptBatch.clear();
+          LOG.info("indexConcept: count: " + conceptCount);
+        }
+        conceptCount++;
+      }
 
-			LOG.info("indexConcept: final concepts added count: " + conceptCount);
-			LOG.info("indexConcept: final terms added count: " + termCount);
-			LOG.info("indexConcept: duration: " + (System.currentTimeMillis() - startTime) + " ms");
+      if (!conceptBatch.isEmpty()) {
+        service.addBulk(Concept.class, conceptBatch);
+      }
+      if (!termBatch.isEmpty()) {
+        service.addBulk(Term.class, termBatch);
+      }
 
-		} catch (final Exception e) {
-			LOG.error("indexConcept: An error occurred while processing the file.");
-			throw e;
-		}
-	}
+      LOG.info("indexConcept: final concepts added count: " + conceptCount);
+      LOG.info("indexConcept: final terms added count: " + termCount);
+      LOG.info("indexConcept: duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
-	/**
-	 * Index concept relationships.
-	 *
-	 * @param service      the service
-	 * @param fullFileName the full file name
-	 * @param batchSize    the batch size
-	 * @param limit        the limit
-	 * @throws Exception the exception
-	 */
-	public static void indexConceptRelationships(final EntityRepositoryService service, final String fullFileName,
-			final int batchSize, final int limit) throws Exception {
+    } catch (final Exception e) {
+      LOG.error("indexConcept: An error occurred while processing the file.");
+      throw e;
+    }
+  }
 
-		LOG.debug("indexConceptRelationships: batch size: " + batchSize + " limit: " + limit);
-		final long startTime = System.currentTimeMillis();
-		final List<HasId> conceptRelBatch = new ArrayList<>(batchSize);
+  /**
+   * Index concept relationships.
+   *
+   * @param service the service
+   * @param fullFileName the full file name
+   * @param batchSize the batch size
+   * @param limit the limit
+   * @throws Exception the exception
+   */
+  public static void indexConceptRelationships(final EntityRepositoryService service,
+    final String fullFileName, final int batchSize, final int limit) throws Exception {
 
-		try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
+    LOG.debug("indexConceptRelationships: batch size: " + batchSize + " limit: " + limit);
+    final long startTime = System.currentTimeMillis();
+    final List<HasId> conceptRelBatch = new ArrayList<>(batchSize);
 
-			service.createIndex(ConceptRelationship.class);
+    try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
 
-			String line;
-			int count = 0;
-			while ((line = br.readLine()) != null && (limit == -1 || count < limit)) {
+      service.createIndex(ConceptRelationship.class);
 
-				final ConceptRelationship conceptRel = ModelUtility.fromJson(line, ConceptRelationship.class);
-				conceptRelBatch.add(conceptRel);
+      String line;
+      int count = 0;
+      while ((line = br.readLine()) != null && (limit == -1 || count < limit)) {
 
-				if (conceptRelBatch.size() == batchSize) {
-					service.addBulk(ConceptRelationship.class, conceptRelBatch);
-					conceptRelBatch.clear();
-					LOG.info("indexConceptRelationships: count: " + count);
-				}
-				count++;
-			}
+        final ConceptRelationship conceptRel =
+            ModelUtility.fromJson(line, ConceptRelationship.class);
+        conceptRelBatch.add(conceptRel);
 
-			if (!conceptRelBatch.isEmpty()) {
-				service.addBulk(ConceptRelationship.class, conceptRelBatch);
-			}
+        if (conceptRelBatch.size() == batchSize) {
+          service.addBulk(ConceptRelationship.class, conceptRelBatch);
+          conceptRelBatch.clear();
+          LOG.info("indexConceptRelationships: count: " + count);
+        }
+        count++;
+      }
 
-			LOG.info("indexConceptRelationships: final count: " + count);
-			LOG.info("indexConceptRelationships: duration: " + (System.currentTimeMillis() - startTime) + " ms");
+      if (!conceptRelBatch.isEmpty()) {
+        service.addBulk(ConceptRelationship.class, conceptRelBatch);
+      }
 
-		} catch (final Exception e) {
-			LOG.error("An error occurred while processing the file.");
-			throw e;
-		}
-	}
+      LOG.info("indexConceptRelationships: final count: " + count);
+      LOG.info("indexConceptRelationships: duration: " + (System.currentTimeMillis() - startTime)
+          + " ms");
+
+    } catch (final Exception e) {
+      LOG.error("An error occurred while processing the file.");
+      throw e;
+    }
+  }
 }

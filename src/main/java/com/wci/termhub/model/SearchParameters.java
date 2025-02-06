@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -28,412 +28,412 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 public class SearchParameters extends BaseModel {
 
-	/** The terminology. */
-	private String terminology;
+  /** The terminology. */
+  private String terminology;
 
-	/** The query. */
-	private String query;
+  /** The query. */
+  private String query;
 
-	/** The expression. */
-	private String expression;
+  /** The expression. */
+  private String expression;
 
-	/** The filters. */
-	private Map<String, String> filters;
+  /** The filters. */
+  private Map<String, String> filters;
 
-	/** The limit. */
-	private Integer limit = 10;
+  /** The limit. */
+  private Integer limit = 10;
 
-	/** The offset. */
-	private Integer offset = 0;
+  /** The offset. */
+  private Integer offset = 0;
 
-	/** The active. */
-	private Boolean active;
+  /** The active. */
+  private Boolean active;
 
-	/** The sort. */
-	private List<String> sort;
+  /** The sort. */
+  private List<String> sort;
 
-	/** The sort ascending. */
-	private Boolean ascending;
+  /** The sort ascending. */
+  private Boolean ascending;
 
-	/** The index. */
-	private String index;
+  /** The index. */
+  private String index;
 
-	/** The field. */
-	private String field;
+  /** The field. */
+  private String field;
 
-	/** The leaf. */
-	private Boolean leaf;
+  /** The leaf. */
+  private Boolean leaf;
 
-	/**
-	 * Instantiates an empty {@link SearchParameters}.
-	 */
-	public SearchParameters() {
-		// n/a
-	}
+  /**
+   * Instantiates an empty {@link SearchParameters}.
+   */
+  public SearchParameters() {
+    // n/a
+  }
 
-	/**
-	 * Instantiates a {@link SearchParameters} from the specified parameters.
-	 *
-	 * @param limit  the limit
-	 * @param offset the offset
-	 */
-	public SearchParameters(final int limit, final int offset) {
+  /**
+   * Instantiates a {@link SearchParameters} from the specified parameters.
+   *
+   * @param limit the limit
+   * @param offset the offset
+   */
+  public SearchParameters(final int limit, final int offset) {
 
-		this.limit = limit;
-		this.offset = offset;
-	}
+    this.limit = limit;
+    this.offset = offset;
+  }
 
-	/**
-	 * Instantiates a {@link SearchParameters} from the specified parameters.
-	 *
-	 * @param query  the query
-	 * @param limit  the limit
-	 * @param offset the offset
-	 */
-	public SearchParameters(final String query, final int limit, final int offset) {
+  /**
+   * Instantiates a {@link SearchParameters} from the specified parameters.
+   *
+   * @param query the query
+   * @param limit the limit
+   * @param offset the offset
+   */
+  public SearchParameters(final String query, final int limit, final int offset) {
 
-		this.query = query;
-		this.limit = limit;
-		this.offset = offset;
-	}
+    this.query = query;
+    this.limit = limit;
+    this.offset = offset;
+  }
 
-	/**
-	 * Instantiates a {@link SearchParameters} from the specified parameters. This
-	 * is a helper constructor so it can be easily constructed for "find" methods.
-	 *
-	 * @param query     the query
-	 * @param offset    the offset
-	 * @param limit     the limit
-	 * @param sort      the sort
-	 * @param ascending the ascending
-	 */
-	public SearchParameters(final String query, final Integer offset, final Integer limit, final String sort,
-			final Boolean ascending) {
+  /**
+   * Instantiates a {@link SearchParameters} from the specified parameters. This
+   * is a helper constructor so it can be easily constructed for "find" methods.
+   *
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   */
+  public SearchParameters(final String query, final Integer offset, final Integer limit,
+      final String sort, final Boolean ascending) {
 
-		if (query != null) {
-			setQuery(query);
-		} else {
-			setQuery("");
-		}
-		if (offset != null) {
-			setOffset(offset);
-		}
-		if (limit != null) {
-			setLimit(limit);
-		}
-		if (ascending != null) {
-			setAscending(ascending);
-		}
-		if (!StringUtility.isEmpty(sort)) {
-			if (sort.equals("name")) {
-				getSort().add("name.keyword");
-			} else if (sort.equals("normName")) {
-				getSort().add("normName.keyword");
-			} else if (sort.equals("to.name")) {
-				getSort().add("to.name.keyword");
-			} else if (sort.equals("from.name")) {
-				getSort().add("from.name.keyword");
-			} else if (sort.equals("stemName")) {
-				getSort().add("stemName.keyword");
-			} else if (sort.equals("concept.name")) {
-				getSort().add("concept.name.keyword");
-			} else if (sort.equals("title")) {
-				getSort().add("title.keyword");
-			} else {
-				getSort().add(sort);
-			}
-		}
-	}
+    if (query != null) {
+      setQuery(query);
+    } else {
+      setQuery("");
+    }
+    if (offset != null) {
+      setOffset(offset);
+    }
+    if (limit != null) {
+      setLimit(limit);
+    }
+    if (ascending != null) {
+      setAscending(ascending);
+    }
+    if (!StringUtility.isEmpty(sort)) {
+      if (sort.equals("name")) {
+        getSort().add("name.keyword");
+      } else if (sort.equals("normName")) {
+        getSort().add("normName.keyword");
+      } else if (sort.equals("to.name")) {
+        getSort().add("to.name.keyword");
+      } else if (sort.equals("from.name")) {
+        getSort().add("from.name.keyword");
+      } else if (sort.equals("stemName")) {
+        getSort().add("stemName.keyword");
+      } else if (sort.equals("concept.name")) {
+        getSort().add("concept.name.keyword");
+      } else if (sort.equals("title")) {
+        getSort().add("title.keyword");
+      } else {
+        getSort().add(sort);
+      }
+    }
+  }
 
-	/**
-	 * Instantiates a {@link SearchParameters} from the specified parameters.
-	 *
-	 * @param other the other
-	 */
-	public SearchParameters(final SearchParameters other) {
-		populateFrom(other);
-	}
+  /**
+   * Instantiates a {@link SearchParameters} from the specified parameters.
+   *
+   * @param other the other
+   */
+  public SearchParameters(final SearchParameters other) {
+    populateFrom(other);
+  }
 
-	/**
-	 * Populate from.
-	 *
-	 * @param other the other
-	 */
-	public void populateFrom(final SearchParameters other) {
-		terminology = other.getTerminology();
-		query = other.getQuery();
-		expression = other.getExpression();
-		limit = other.getLimit();
-		offset = other.getOffset();
-		active = other.getActive();
-		sort = new ArrayList<>(other.getSort());
-		ascending = other.getAscending();
-		filters = new HashMap<>(other.getFilters());
-		index = other.getIndex();
-		field = other.getField();
-		leaf = other.getLeaf();
-	}
+  /**
+   * Populate from.
+   *
+   * @param other the other
+   */
+  public void populateFrom(final SearchParameters other) {
+    terminology = other.getTerminology();
+    query = other.getQuery();
+    expression = other.getExpression();
+    limit = other.getLimit();
+    offset = other.getOffset();
+    active = other.getActive();
+    sort = new ArrayList<>(other.getSort());
+    ascending = other.getAscending();
+    filters = new HashMap<>(other.getFilters());
+    index = other.getIndex();
+    field = other.getField();
+    leaf = other.getLeaf();
+  }
 
-	/**
-	 * 
-	 * 
-	 * /** Returns the terminology.
-	 *
-	 * @return the terminology
-	 */
-	@Schema(description = "Terminology filter, e.g. 'SNOMEDCT'")
-	public String getTerminology() {
-		return terminology;
-	}
+  /**
+   * 
+   * 
+   * /** Returns the terminology.
+   *
+   * @return the terminology
+   */
+  @Schema(description = "Terminology filter, e.g. 'SNOMEDCT'")
+  public String getTerminology() {
+    return terminology;
+  }
 
-	/**
-	 * Sets the terminology.
-	 *
-	 * @param terminology the terminology
-	 */
-	public void setTerminology(final String terminology) {
-		this.terminology = terminology;
-	}
+  /**
+   * Sets the terminology.
+   *
+   * @param terminology the terminology
+   */
+  public void setTerminology(final String terminology) {
+    this.terminology = terminology;
+  }
 
-	/**
-	 * Returns the query.
-	 *
-	 * @return the query
-	 */
-	@Schema(description = "Search query, e.g. 'aspirin'")
-	public String getQuery() {
-		return query;
-	}
+  /**
+   * Returns the query.
+   *
+   * @return the query
+   */
+  @Schema(description = "Search query, e.g. 'aspirin'")
+  public String getQuery() {
+    return query;
+  }
 
-	/**
-	 * Sets the query.
-	 *
-	 * @param query the query
-	 */
-	public void setQuery(final String query) {
-		this.query = query;
-	}
+  /**
+   * Sets the query.
+   *
+   * @param query the query
+   */
+  public void setQuery(final String query) {
+    this.query = query;
+  }
 
-	/**
-	 * Gets the expression.
-	 *
-	 * @return the expression
-	 */
-	@Schema(description = "Search expression, e.g. '<< 404684003'")
-	public String getExpression() {
-		return expression;
-	}
+  /**
+   * Gets the expression.
+   *
+   * @return the expression
+   */
+  @Schema(description = "Search expression, e.g. '<< 404684003'")
+  public String getExpression() {
+    return expression;
+  }
 
-	/**
-	 * Sets the expression.
-	 *
-	 * @param expression the new expression
-	 */
-	public void setExpression(final String expression) {
-		this.expression = expression;
-	}
+  /**
+   * Sets the expression.
+   *
+   * @param expression the new expression
+   */
+  public void setExpression(final String expression) {
+    this.expression = expression;
+  }
 
-	/**
-	 * Returns the limit.
-	 *
-	 * @return the limit
-	 */
-	@Schema(description = "Limit on number of results, e.g. 10")
-	public Integer getLimit() {
-		return limit;
-	}
+  /**
+   * Returns the limit.
+   *
+   * @return the limit
+   */
+  @Schema(description = "Limit on number of results, e.g. 10")
+  public Integer getLimit() {
+    return limit;
+  }
 
-	/**
-	 * Sets the limit.
-	 *
-	 * @param limit the limit
-	 */
-	public void setLimit(final Integer limit) {
-		this.limit = limit;
-	}
+  /**
+   * Sets the limit.
+   *
+   * @param limit the limit
+   */
+  public void setLimit(final Integer limit) {
+    this.limit = limit;
+  }
 
-	/**
-	 * Returns the offset.
-	 *
-	 * @return the offset
-	 */
-	@Schema(description = "Starting index for results, e.g. 0")
-	public Integer getOffset() {
-		return offset;
-	}
+  /**
+   * Returns the offset.
+   *
+   * @return the offset
+   */
+  @Schema(description = "Starting index for results, e.g. 0")
+  public Integer getOffset() {
+    return offset;
+  }
 
-	/**
-	 * Sets the offset.
-	 *
-	 * @param offset the offset
-	 */
-	public void setOffset(final Integer offset) {
-		this.offset = offset;
-	}
+  /**
+   * Sets the offset.
+   *
+   * @param offset the offset
+   */
+  public void setOffset(final Integer offset) {
+    this.offset = offset;
+  }
 
-	/**
-	 * Returns the active .
-	 *
-	 * @return the active
-	 */
-	@Schema(description = "Specifically search for 'active only' or 'inactive only'")
-	public Boolean getActive() {
-		return active;
-	}
+  /**
+   * Returns the active .
+   *
+   * @return the active
+   */
+  @Schema(description = "Specifically search for 'active only' or 'inactive only'")
+  public Boolean getActive() {
+    return active;
+  }
 
-	/**
-	 * Sets the leaf .
-	 *
-	 * @param leaf the leaf
-	 */
-	public void setLeaf(final Boolean leaf) {
-		this.leaf = leaf;
-	}
+  /**
+   * Sets the leaf .
+   *
+   * @param leaf the leaf
+   */
+  public void setLeaf(final Boolean leaf) {
+    this.leaf = leaf;
+  }
 
-	/**
-	 * Gets the leaf.
-	 *
-	 * @return the leaf
-	 */
-	@Schema(description = "Specifically search for 'leaf only' or 'leaf only'")
-	public Boolean getLeaf() {
-		return leaf;
-	}
+  /**
+   * Gets the leaf.
+   *
+   * @return the leaf
+   */
+  @Schema(description = "Specifically search for 'leaf only' or 'leaf only'")
+  public Boolean getLeaf() {
+    return leaf;
+  }
 
-	/**
-	 * Sets the active .
-	 *
-	 * @param active the active
-	 */
-	public void setActive(final Boolean active) {
-		this.active = active;
-	}
+  /**
+   * Sets the active .
+   *
+   * @param active the active
+   */
+  public void setActive(final Boolean active) {
+    this.active = active;
+  }
 
-	/**
-	 * Returns the sort.
-	 *
-	 * @return the sort
-	 */
-	@Schema(description = "Field of the data model being searched to sort by")
-	public List<String> getSort() {
-		if (sort == null) {
-			sort = new ArrayList<>(4);
-		}
-		return sort;
-	}
+  /**
+   * Returns the sort.
+   *
+   * @return the sort
+   */
+  @Schema(description = "Field of the data model being searched to sort by")
+  public List<String> getSort() {
+    if (sort == null) {
+      sort = new ArrayList<>(4);
+    }
+    return sort;
+  }
 
-	/**
-	 * Sets the sort.
-	 *
-	 * @param sort the sort
-	 */
-	public void setSort(final List<String> sort) {
-		this.sort = sort;
-	}
+  /**
+   * Sets the sort.
+   *
+   * @param sort the sort
+   */
+  public void setSort(final List<String> sort) {
+    this.sort = sort;
+  }
 
-	/**
-	 * Returns the sort ascending.
-	 *
-	 * @return the sort ascending
-	 */
-	@Schema(description = "Used with 'sort' to indicate ascending or descending")
-	public Boolean getAscending() {
-		return ascending;
-	}
+  /**
+   * Returns the sort ascending.
+   *
+   * @return the sort ascending
+   */
+  @Schema(description = "Used with 'sort' to indicate ascending or descending")
+  public Boolean getAscending() {
+    return ascending;
+  }
 
-	/**
-	 * Sets the sort ascending.
-	 *
-	 * @param ascending the sort ascending
-	 */
-	public void setAscending(final Boolean ascending) {
-		this.ascending = ascending;
-	}
+  /**
+   * Sets the sort ascending.
+   *
+   * @param ascending the sort ascending
+   */
+  public void setAscending(final Boolean ascending) {
+    this.ascending = ascending;
+  }
 
-	/**
-	 * Returns the filters.
-	 *
-	 * @return the filters
-	 */
-	@Schema(description = "Additional field level filters "
-			+ "(to specify that certain fields must have certain values)")
-	public Map<String, String> getFilters() {
-		if (filters == null) {
-			filters = new HashMap<>(4);
-		}
-		return filters;
-	}
+  /**
+   * Returns the filters.
+   *
+   * @return the filters
+   */
+  @Schema(description = "Additional field level filters "
+      + "(to specify that certain fields must have certain values)")
+  public Map<String, String> getFilters() {
+    if (filters == null) {
+      filters = new HashMap<>(4);
+    }
+    return filters;
+  }
 
-	/**
-	 * Sets the filters.
-	 *
-	 * @param filters the filters
-	 */
-	public void setFilters(final Map<String, String> filters) {
-		this.filters = filters;
-	}
+  /**
+   * Sets the filters.
+   *
+   * @param filters the filters
+   */
+  public void setFilters(final Map<String, String> filters) {
+    this.filters = filters;
+  }
 
-	/**
-	 * Returns the index.
-	 *
-	 * @return the index
-	 */
-	@Schema(hidden = true, description = "Index name to search (typically not used directly)")
-	public String getIndex() {
-		return index;
-	}
+  /**
+   * Returns the index.
+   *
+   * @return the index
+   */
+  @Schema(hidden = true, description = "Index name to search (typically not used directly)")
+  public String getIndex() {
+    return index;
+  }
 
-	/**
-	 * Sets the index.
-	 *
-	 * @param index the index
-	 */
-	public void setIndex(final String index) {
-		this.index = index;
-	}
+  /**
+   * Sets the index.
+   *
+   * @param index the index
+   */
+  public void setIndex(final String index) {
+    this.index = index;
+  }
 
-	/**
-	 * Returns the field.
-	 *
-	 * @return the field
-	 */
-	@Schema(hidden = true, description = "Field to search (typically not used directly)")
-	public String getField() {
-		return field;
-	}
+  /**
+   * Returns the field.
+   *
+   * @return the field
+   */
+  @Schema(hidden = true, description = "Field to search (typically not used directly)")
+  public String getField() {
+    return field;
+  }
 
-	/**
-	 * Sets the field.
-	 *
-	 * @param field the field
-	 */
-	public void setField(final String field) {
-		this.field = field;
-	}
+  /**
+   * Sets the field.
+   *
+   * @param field the field
+   */
+  public void setField(final String field) {
+    this.field = field;
+  }
 
-	/* see superclass */
-	@Override
-	public int hashCode() {
-		return Objects.hash(active, ascending, expression, field, filters, index, leaf, limit, offset, query, sort,
-				terminology);
-	}
+  /* see superclass */
+  @Override
+  public int hashCode() {
+    return Objects.hash(active, ascending, expression, field, filters, index, leaf, limit, offset,
+        query, sort, terminology);
+  }
 
-	/* see superclass */
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if ((obj == null) || (getClass() != obj.getClass())) {
-			return false;
-		}
-		final SearchParameters other = (SearchParameters) obj;
-		return Objects.equals(active, other.active) && Objects.equals(ascending, other.ascending)
-				&& Objects.equals(expression, other.expression) && Objects.equals(field, other.field)
-				&& Objects.equals(filters, other.filters) && Objects.equals(index, other.index)
-				&& Objects.equals(leaf, other.leaf) && Objects.equals(limit, other.limit)
-				&& Objects.equals(offset, other.offset) && Objects.equals(query, other.query)
-				&& Objects.equals(sort, other.sort) && Objects.equals(terminology, other.terminology);
-	}
+  /* see superclass */
+  @Override
+  public boolean equals(final Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if ((obj == null) || (getClass() != obj.getClass())) {
+      return false;
+    }
+    final SearchParameters other = (SearchParameters) obj;
+    return Objects.equals(active, other.active) && Objects.equals(ascending, other.ascending)
+        && Objects.equals(expression, other.expression) && Objects.equals(field, other.field)
+        && Objects.equals(filters, other.filters) && Objects.equals(index, other.index)
+        && Objects.equals(leaf, other.leaf) && Objects.equals(limit, other.limit)
+        && Objects.equals(offset, other.offset) && Objects.equals(query, other.query)
+        && Objects.equals(sort, other.sort) && Objects.equals(terminology, other.terminology);
+  }
 
 }

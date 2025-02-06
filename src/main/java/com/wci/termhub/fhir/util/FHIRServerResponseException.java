@@ -18,31 +18,31 @@ import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
  */
 public class FHIRServerResponseException extends BaseServerResponseException {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 205783615885628228L;
+  /** The Constant serialVersionUID. */
+  private static final long serialVersionUID = 205783615885628228L;
 
-	/**
-	 * Instantiates a new FHIR server response exception.
-	 *
-	 * @param theStatusCode           the the status code
-	 * @param theMessage              the the message
-	 * @param theBaseOperationOutcome the the base operation outcome
-	 */
-	public FHIRServerResponseException(final int theStatusCode, final String theMessage,
-			final IBaseOperationOutcome theBaseOperationOutcome) {
-		super(theStatusCode, theMessage, theBaseOperationOutcome);
-	}
+  /**
+   * Instantiates a new FHIR server response exception.
+   *
+   * @param theStatusCode the the status code
+   * @param theMessage the the message
+   * @param theBaseOperationOutcome the the base operation outcome
+   */
+  public FHIRServerResponseException(final int theStatusCode, final String theMessage,
+      final IBaseOperationOutcome theBaseOperationOutcome) {
+    super(theStatusCode, theMessage, theBaseOperationOutcome);
+  }
 
-	/**
-	 * Instantiates a new FHIR server response exception.
-	 *
-	 * @param theStatusCode           the the status code
-	 * @param theMessage              the the message
-	 * @param theBaseOperationOutcome the the base operation outcome
-	 * @param e                       the e
-	 */
-	public FHIRServerResponseException(final int theStatusCode, final String theMessage,
-			final IBaseOperationOutcome theBaseOperationOutcome, final Throwable e) {
-		super(theStatusCode, theMessage, e, theBaseOperationOutcome);
-	}
+  /**
+   * Instantiates a new FHIR server response exception.
+   *
+   * @param theStatusCode the the status code
+   * @param theMessage the the message
+   * @param theBaseOperationOutcome the the base operation outcome
+   * @param e the e
+   */
+  public FHIRServerResponseException(final int theStatusCode, final String theMessage,
+      final IBaseOperationOutcome theBaseOperationOutcome, final Throwable e) {
+    super(theStatusCode, theMessage, e, theBaseOperationOutcome);
+  }
 }

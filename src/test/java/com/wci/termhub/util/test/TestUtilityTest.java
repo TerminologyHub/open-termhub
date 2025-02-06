@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -24,42 +24,43 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 public class TestUtilityTest {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private final Logger logger = LoggerFactory.getLogger(TestUtilityTest.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private final Logger logger = LoggerFactory.getLogger(TestUtilityTest.class);
 
-//    /**
-//     * Test getter and setter methods of model object.
-//     *
-//     * @throws Exception the exception
-//     */
-//    @Test
-//    public void testMockUser() throws Exception {
-//        final User test = TestUtility.getMockUser("test");
-//        assertEquals("eaa7f268-9b9f-45f4-8698-5e5e61627e2a", test.getId());
-//    }
-//
-//    /**
-//     * Test mock org.
-//     *
-//     * @throws Exception the exception
-//     */
-//    @Test
-//    public void testMockOrg() throws Exception {
-//        final Organization wci =
-//                TestUtility.getMockOrganization("bc6dac4d-18c3-480b-941d-8d07f26986e5");
-//        assertEquals("West Coast Informatics", wci.getName());
-//    }
-//
-//    /**
-//     * Test mock team.
-//     *
-//     * @throws Exception the exception
-//     */
-//    @Test
-//    public void testMockTeam() throws Exception {
-//        final Team devs = TestUtility.getMockTeam("0fc68cfb-4c84-4392-b7f2-00b02ca4c44a");
-//        assertEquals("wci-developers", devs.getName());
-//    }
+  // /**
+  // * Test getter and setter methods of model object.
+  // *
+  // * @throws Exception the exception
+  // */
+  // @Test
+  // public void testMockUser() throws Exception {
+  // final User test = TestUtility.getMockUser("test");
+  // assertEquals("eaa7f268-9b9f-45f4-8698-5e5e61627e2a", test.getId());
+  // }
+  //
+  // /**
+  // * Test mock org.
+  // *
+  // * @throws Exception the exception
+  // */
+  // @Test
+  // public void testMockOrg() throws Exception {
+  // final Organization wci =
+  // TestUtility.getMockOrganization("bc6dac4d-18c3-480b-941d-8d07f26986e5");
+  // assertEquals("West Coast Informatics", wci.getName());
+  // }
+  //
+  // /**
+  // * Test mock team.
+  // *
+  // * @throws Exception the exception
+  // */
+  // @Test
+  // public void testMockTeam() throws Exception {
+  // final Team devs =
+  // TestUtility.getMockTeam("0fc68cfb-4c84-4392-b7f2-00b02ca4c44a");
+  // assertEquals("wci-developers", devs.getName());
+  // }
 
 }

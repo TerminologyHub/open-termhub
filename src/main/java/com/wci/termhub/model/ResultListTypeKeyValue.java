@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -17,21 +17,22 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Represents a list of TypeKeyValues returned from a find call")
 public class ResultListTypeKeyValue extends ResultList<TypeKeyValue> {
 
-	/**
-	 * Instantiates an empty {@link ResultListTypeKeyValue}.
-	 */
-	public ResultListTypeKeyValue() {
-		// n/a
-	}
+  /**
+   * Instantiates an empty {@link ResultListTypeKeyValue}.
+   */
+  public ResultListTypeKeyValue() {
+    // n/a
+  }
 
-	/**
-	 * Instantiates a {@link ResultListTypeKeyValue} from the specified parameters.
-	 *
-	 * @param list the list
-	 */
-	public ResultListTypeKeyValue(final ResultList<TypeKeyValue> list) {
-		this.setItems(list.getItems());
-		this.setParameters(list.getParameters());
-		this.setTotal(list.getTotal());
-	}
+  /**
+   * Instantiates a {@link ResultListTypeKeyValue} from the specified
+   * parameters.
+   *
+   * @param list the list
+   */
+  public ResultListTypeKeyValue(final ResultList<TypeKeyValue> list) {
+    this.setItems(list.getItems());
+    this.setParameters(list.getParameters());
+    this.setTotal(list.getTotal());
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -17,42 +17,42 @@ import com.wci.termhub.model.Configurable;
  */
 public interface NoServiceAlgorithm extends ProgressReporter, Configurable {
 
-	/**
-	 * Check preconditions for action. This will make use of data structures
-	 * configured in the action.
-	 *
-	 * @return true, if successful
-	 * @throws Exception the exception
-	 */
-	public ValidationResult checkPreconditions() throws Exception;
+  /**
+   * Check preconditions for action. This will make use of data structures
+   * configured in the action.
+   *
+   * @return true, if successful
+   * @throws Exception the exception
+   */
+  public ValidationResult checkPreconditions() throws Exception;
 
-	/**
-	 * Compute.
-	 *
-	 * @throws Exception the exception
-	 */
-	public void compute() throws Exception;
+  /**
+   * Compute.
+   *
+   * @throws Exception the exception
+   */
+  public void compute() throws Exception;
 
-	/**
-	 * Rests to initial conditions.
-	 *
-	 * @throws Exception the exception
-	 */
-	public void reset() throws Exception;
+  /**
+   * Rests to initial conditions.
+   *
+   * @throws Exception the exception
+   */
+  public void reset() throws Exception;
 
-	/**
-	 * Cancel.
-	 *
-	 * @throws Exception the exception
-	 */
-	public void cancel() throws Exception;
+  /**
+   * Cancel.
+   *
+   * @throws Exception the exception
+   */
+  public void cancel() throws Exception;
 
-	/**
-	 * Returns the default description, especially for algorithms that are
-	 * configured via algorighm configs.
-	 *
-	 * @return the description
-	 */
-	public String getDescription();
+  /**
+   * Returns the default description, especially for algorithms that are
+   * configured via algorighm configs.
+   *
+   * @return the description
+   */
+  public String getDescription();
 
 }

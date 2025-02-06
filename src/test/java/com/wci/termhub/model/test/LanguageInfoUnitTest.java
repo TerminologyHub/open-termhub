@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -33,85 +33,85 @@ import com.wci.termhub.test.SerializationTester;
 @SpringBootTest
 public class LanguageInfoUnitTest extends AbstractTest {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private final Logger logger = LoggerFactory.getLogger(LanguageInfoUnitTest.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private final Logger logger = LoggerFactory.getLogger(LanguageInfoUnitTest.class);
 
-	/** The model object to test. */
-	private LanguageInfo object;
+  /** The model object to test. */
+  private LanguageInfo object;
 
-	/**
-	 * Setup.
-	 *
-	 * @throws Exception the exception
-	 */
-	@BeforeEach
-	public void setup() throws Exception {
-		object = new LanguageInfo();
-	}
+  /**
+   * Setup.
+   *
+   * @throws Exception the exception
+   */
+  @BeforeEach
+  public void setup() throws Exception {
+    object = new LanguageInfo();
+  }
 
-	/**
-	 * Test getter and setter methods of model object.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelGetSet() throws Exception {
-		final GetterSetterTester tester = new GetterSetterTester(object);
-		tester.test();
-	}
+  /**
+   * Test getter and setter methods of model object.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelGetSet() throws Exception {
+    final GetterSetterTester tester = new GetterSetterTester(object);
+    tester.test();
+  }
 
-	/**
-	 * Test equals and hascode methods.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelEqualsHashcode() throws Exception {
-		final EqualsHashcodeTester tester = new EqualsHashcodeTester(object);
-		tester.include("id");
+  /**
+   * Test equals and hascode methods.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelEqualsHashcode() throws Exception {
+    final EqualsHashcodeTester tester = new EqualsHashcodeTester(object);
+    tester.include("id");
 
-		assertTrue(tester.testIdentityFieldEquals());
-		assertTrue(tester.testNonIdentityFieldEquals());
-		assertTrue(tester.testIdentityFieldNotEquals());
-		assertTrue(tester.testIdentityFieldHashcode());
-		assertTrue(tester.testNonIdentityFieldHashcode());
-		assertTrue(tester.testIdentityFieldDifferentHashcode());
-	}
+    assertTrue(tester.testIdentityFieldEquals());
+    assertTrue(tester.testNonIdentityFieldEquals());
+    assertTrue(tester.testIdentityFieldNotEquals());
+    assertTrue(tester.testIdentityFieldHashcode());
+    assertTrue(tester.testNonIdentityFieldHashcode());
+    assertTrue(tester.testIdentityFieldDifferentHashcode());
+  }
 
-	/**
-	 * Test copy constructor.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelCopy() throws Exception {
-		final CopyConstructorTester tester = new CopyConstructorTester(object);
-		assertTrue(tester.testCopyConstructor(LanguageInfo.class));
-	}
+  /**
+   * Test copy constructor.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelCopy() throws Exception {
+    final CopyConstructorTester tester = new CopyConstructorTester(object);
+    assertTrue(tester.testCopyConstructor(LanguageInfo.class));
+  }
 
-	/**
-	 * Test json serialization.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelSerialization() throws Exception {
-		final SerializationTester tester = new SerializationTester(object);
-		assertTrue(tester.testJsonSerialization());
-	}
+  /**
+   * Test json serialization.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelSerialization() throws Exception {
+    final SerializationTester tester = new SerializationTester(object);
+    assertTrue(tester.testJsonSerialization());
+  }
 
-//    /**
-//     * Test persistence.
-//     *
-//     * @throws Exception the exception
-//     */
-//    @Test
-//    public void testPersistence() throws Exception {
-//        final PersistenceTester tester = new PersistenceTester(object);
-//        tester.include("type");
-//        tester.include("iso2Code");
-//        tester.test();
-//    }
+  // /**
+  // * Test persistence.
+  // *
+  // * @throws Exception the exception
+  // */
+  // @Test
+  // public void testPersistence() throws Exception {
+  // final PersistenceTester tester = new PersistenceTester(object);
+  // tester.include("type");
+  // tester.include("iso2Code");
+  // tester.test();
+  // }
 
 }

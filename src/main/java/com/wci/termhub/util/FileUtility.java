@@ -1,3 +1,12 @@
+/*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
+ */
 package com.wci.termhub.util;
 
 import java.io.File;
@@ -18,114 +27,117 @@ import org.slf4j.LoggerFactory;
 
 public final class FileUtility {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private static Logger logger = LoggerFactory.getLogger(FileUtility.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private static Logger logger = LoggerFactory.getLogger(FileUtility.class);
 
-	/**
-	 * Instantiates a new file utility.
-	 */
-	private FileUtility() {
-		// private constructor
-	}
+  /**
+   * Instantiates a new file utility.
+   */
+  private FileUtility() {
+    // private constructor
+  }
 
-	/**
-	 * Delete directory and all files.
-	 *
-	 * @param path the path
-	 * @throws IOException Signals that an I/O exception has occurred.
-	 */
-	public static void deleteDirectoryAndAllFiles(final Path path) throws IOException {
+  /**
+   * Delete directory and all files.
+   *
+   * @param path the path
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  public static void deleteDirectoryAndAllFiles(final Path path) throws IOException {
 
-		if (!Files.exists(path)) {
-			return;
-		}
+    if (!Files.exists(path)) {
+      return;
+    }
 
-		FileUtility.deleteDirectoryRecursively(path);
-		Files.deleteIfExists(path);
-	}
+    FileUtility.deleteDirectoryRecursively(path);
+    Files.deleteIfExists(path);
+  }
 
-	/**
-	 * Delete directory recursively.
-	 *
-	 * @param path the path
-	 * @throws IOException Signals that an I/O exception has occurred.
-	 */
-	public static void deleteDirectoryRecursively(final Path path) throws IOException {
-		Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-			@Override
-			public FileVisitResult visitFile(final Path file, BasicFileAttributes attrs) throws IOException {
-				Files.delete(file);
-				return FileVisitResult.CONTINUE;
-			}
+  /**
+   * Delete directory recursively.
+   *
+   * @param path the path
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  public static void deleteDirectoryRecursively(final Path path) throws IOException {
+    Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+        throws IOException {
+        Files.delete(file);
+        return FileVisitResult.CONTINUE;
+      }
 
-			@Override
-			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-				Files.delete(dir);
-				return FileVisitResult.CONTINUE;
-			}
-		});
-	}
+      @Override
+      public FileVisitResult postVisitDirectory(final Path dir, final IOException exc)
+        throws IOException {
+        Files.delete(dir);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
 
-	/**
-	 * Extract zip file.
-	 *
-	 * @param zipFilePath the zip file path
-	 * @param destDir     the dest dir
-	 */
-	public static void extractZipFile(final String zipFilePath, final String destDir) {
+  /**
+   * Extract zip file.
+   *
+   * @param zipFilePath the zip file path
+   * @param destDir the dest dir
+   */
+  public static void extractZipFile(final String zipFilePath, final String destDir) {
 
-		final File destinationDir = new File(destDir);
-		// create output directory if it doesn't exist
-		if (!destinationDir.exists()) {
-			destinationDir.mkdirs();
-		}
-		logger.info("Starting extracting files to " + destinationDir.getAbsolutePath());
+    final File destinationDir = new File(destDir);
+    // create output directory if it doesn't exist
+    if (!destinationDir.exists()) {
+      destinationDir.mkdirs();
+    }
+    logger.info("Starting extracting files to " + destinationDir.getAbsolutePath());
 
-		try (final InputStream fis = Files.newInputStream(Paths.get(zipFilePath));
-				final ZipInputStream zis = new ZipInputStream(fis)) {
+    try (final InputStream fis = Files.newInputStream(Paths.get(zipFilePath));
+        final ZipInputStream zis = new ZipInputStream(fis)) {
 
-			ZipEntry zipEntry = zis.getNextEntry();
+      ZipEntry zipEntry = zis.getNextEntry();
 
-			while (zipEntry != null) {
+      while (zipEntry != null) {
 
-				final File newFile = getZippedFile(destinationDir, zipEntry);
+        final File newFile = getZippedFile(destinationDir, zipEntry);
 
-				logger.info("Extracting file to " + newFile.getAbsolutePath());
+        logger.info("Extracting file to " + newFile.getAbsolutePath());
 
-				try (final FileOutputStream fos = new FileOutputStream(newFile)) {
-					byte[] buffer = new byte[1024];
-					int len;
-					while ((len = zis.read(buffer)) > 0) {
-						fos.write(buffer, 0, len);
-					}
-				}
-				zipEntry = zis.getNextEntry();
-			}
-			zis.closeEntry();
+        try (final FileOutputStream fos = new FileOutputStream(newFile)) {
+          final byte[] buffer = new byte[1024];
+          int len;
+          while ((len = zis.read(buffer)) > 0) {
+            fos.write(buffer, 0, len);
+          }
+        }
+        zipEntry = zis.getNextEntry();
+      }
+      zis.closeEntry();
 
-		} catch (IOException e) {
-			logger.error("Error occurred while extracting zip file", e);
-		}
-	}
+    } catch (final IOException e) {
+      logger.error("Error occurred while extracting zip file", e);
+    }
+  }
 
-	/**
-	 * Get zipped file.
-	 *
-	 * @param destinationDir the destination dir
-	 * @param zipEntry       the zip entry
-	 * @return the file
-	 * @throws IOException Signals that an I/O exception has occurred.
-	 */
-	public static File getZippedFile(final File destinationDir, final ZipEntry zipEntry) throws IOException {
+  /**
+   * Get zipped file.
+   *
+   * @param destinationDir the destination dir
+   * @param zipEntry the zip entry
+   * @return the file
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  public static File getZippedFile(final File destinationDir, final ZipEntry zipEntry)
+    throws IOException {
 
-		final File destFile = new File(destinationDir, zipEntry.getName());
-		final String destDirPath = destinationDir.getCanonicalPath();
-		final String destFilePath = destFile.getCanonicalPath();
-		if (!destFilePath.startsWith(destDirPath + File.separator)) {
-			throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
-		}
-		return destFile;
-	}
+    final File destFile = new File(destinationDir, zipEntry.getName());
+    final String destDirPath = destinationDir.getCanonicalPath();
+    final String destFilePath = destFile.getCanonicalPath();
+    if (!destFilePath.startsWith(destDirPath + File.separator)) {
+      throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
+    }
+    return destFile;
+  }
 
 }

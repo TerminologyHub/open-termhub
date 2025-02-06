@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -24,27 +24,33 @@ import com.wci.termhub.test.AbstractTest;
 @SpringBootTest
 public class ModelUtilityTest extends AbstractTest {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private final Logger logger = LoggerFactory.getLogger(ModelUtilityTest.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private final Logger logger = LoggerFactory.getLogger(ModelUtilityTest.class);
 
-//    /**
-//     * Test get sort field.
-//     */
-//    @Test
-//    public void testGetSortField() {
-//        assertEquals(ModelUtility.getSortField(Concept.class, "name"), "name.keyword");
-//        assertEquals(ModelUtility.getSortField(Concept.class, "terms.name"), "terms.name.keyword");
-//        assertEquals(ModelUtility.getSortField(Template.class, "code"), "code");
-//        assertEquals(ModelUtility.getSortField(Template.class, "labels"), "labels");
-//        assertEquals(ModelUtility.getSortField(Template.class, "stringField"),
-//                "stringField.keyword");
-//        // call again to check cache works
-//        assertEquals(ModelUtility.getSortField(Concept.class, "terms.name"), "terms.name.keyword");
-//        assertEquals(ModelUtility.getSortField(Concept.class, "name"), "name.keyword");
-//        assertEquals(ModelUtility.getSortField(Template.class, "code"), "code");
-//        assertEquals(ModelUtility.getSortField(Template.class, "labels"), "labels");
-//        assertEquals(ModelUtility.getSortField(Template.class, "stringField"),
-//                "stringField.keyword");
-//    }
+  // /**
+  // * Test get sort field.
+  // */
+  // @Test
+  // public void testGetSortField() {
+  // assertEquals(ModelUtility.getSortField(Concept.class, "name"),
+  // "name.keyword");
+  // assertEquals(ModelUtility.getSortField(Concept.class, "terms.name"),
+  // "terms.name.keyword");
+  // assertEquals(ModelUtility.getSortField(Template.class, "code"), "code");
+  // assertEquals(ModelUtility.getSortField(Template.class, "labels"),
+  // "labels");
+  // assertEquals(ModelUtility.getSortField(Template.class, "stringField"),
+  // "stringField.keyword");
+  // // call again to check cache works
+  // assertEquals(ModelUtility.getSortField(Concept.class, "terms.name"),
+  // "terms.name.keyword");
+  // assertEquals(ModelUtility.getSortField(Concept.class, "name"),
+  // "name.keyword");
+  // assertEquals(ModelUtility.getSortField(Template.class, "code"), "code");
+  // assertEquals(ModelUtility.getSortField(Template.class, "labels"),
+  // "labels");
+  // assertEquals(ModelUtility.getSortField(Template.class, "stringField"),
+  // "stringField.keyword");
+  // }
 }

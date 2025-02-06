@@ -1,5 +1,11 @@
 /*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
  */
 package com.wci.termhub.loader;
 
@@ -26,136 +32,144 @@ import com.wci.termhub.util.ModelUtility;
  */
 public final class ConceptLoader {
 
-	/** The logger. */
-	private static Logger logger = LoggerFactory.getLogger(ConceptLoader.class);
+  /** The logger. */
+  private static Logger logger = LoggerFactory.getLogger(ConceptLoader.class);
 
-	/**
-	 * The main method.
-	 *
-	 * @param args the arguments
-	 */
-	public static void main(final String[] args) {
+  /**
+   * Instantiates a new concept loader.
+   */
+  private ConceptLoader() {
+    // private constructor
+  }
 
-		try {
+  /**
+   * The main method.
+   *
+   * @param args the arguments
+   */
+  public static void main(final String[] args) {
 
-			if (args == null || args.length == 0 || StringUtils.isBlank(args[0])) {
-				logger.error("File name is required.");
-				System.exit(1);
-			}
+    try {
 
-			// get file name from command line
-			final String fullFileName = args[0];
-			if (!Files.exists(Paths.get(fullFileName))) {
-				logger.error("File does not exist at " + fullFileName);
-				System.exit(1);
-			}
+      if (args == null || args.length == 0 || StringUtils.isBlank(args[0])) {
+        logger.error("File name is required.");
+        System.exit(1);
+      }
 
-			int batchSize = 1000;
-			if (args.length > 1 && StringUtils.isNotBlank(args[1])) {
-				batchSize = Integer.parseInt(args[1]);
-			}
+      // get file name from command line
+      final String fullFileName = args[0];
+      if (!Files.exists(Paths.get(fullFileName))) {
+        logger.error("File does not exist at " + fullFileName);
+        System.exit(1);
+      }
 
-			int limit = -1;
-			if (args.length > 2 && StringUtils.isNotBlank(args[2])) {
-				limit = Integer.parseInt(args[2]);
-			}
+      int batchSize = 1000;
+      if (args.length > 1 && StringUtils.isNotBlank(args[1])) {
+        batchSize = Integer.parseInt(args[1]);
+      }
 
-			index(fullFileName, batchSize, limit);
+      int limit = -1;
+      if (args.length > 2 && StringUtils.isNotBlank(args[2])) {
+        limit = Integer.parseInt(args[2]);
+      }
 
-		} catch (final Exception e) {
-			logger.error("An error occurred while loading the file.");
-			e.printStackTrace();
-			System.exit(1);
-		}
+      index(fullFileName, batchSize, limit);
 
-		System.exit(0);
+    } catch (final Exception e) {
+      logger.error("An error occurred while loading the file.");
+      e.printStackTrace();
+      System.exit(1);
+    }
 
-	}
+    System.exit(0);
 
-	/**
-	 * Index all.
-	 *
-	 * @param fullFileName the full file name
-	 * @param batchSize    the batch size
-	 * @throws Exception the exception
-	 */
-	public static void indexAll(final String fullFileName, final int batchSize) throws Exception {
-		index(fullFileName, batchSize, -1);
-	}
+  }
 
-	/**
-	 * Index.
-	 *
-	 * @param fullFileName the full file name
-	 * @param batchSize    the batch size
-	 * @param limit        the limit
-	 * @throws Exception the exception
-	 */
-	public static void index(final String fullFileName, final int batchSize, final int limit) throws Exception {
+  /**
+   * Index all.
+   *
+   * @param fullFileName the full file name
+   * @param batchSize the batch size
+   * @throws Exception the exception
+   */
+  public static void indexAll(final String fullFileName, final int batchSize) throws Exception {
+    index(fullFileName, batchSize, -1);
+  }
 
-		System.out.println("batch size: " + batchSize + " limit: " + limit);
-		final long startTime = System.currentTimeMillis();
+  /**
+   * Index.
+   *
+   * @param fullFileName the full file name
+   * @param batchSize the batch size
+   * @param limit the limit
+   * @throws Exception the exception
+   */
+  public static void index(final String fullFileName, final int batchSize, final int limit)
+    throws Exception {
 
-		final List<Concept> conceptBatch = new ArrayList<>(batchSize);
-		final List<Term> termBatch = new ArrayList<>(batchSize);
+    System.out.println("batch size: " + batchSize + " limit: " + limit);
+    final long startTime = System.currentTimeMillis();
 
-		// read the file
-		// for each line in the file, convert to Concept object.
-		try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
+    final List<Concept> conceptBatch = new ArrayList<>(batchSize);
+    final List<Term> termBatch = new ArrayList<>(batchSize);
 
-			final ObjectMapper objectMapper = new ObjectMapper();
-			final LuceneDataAccess luceneDataAccess = new LuceneDataAccess();
-			luceneDataAccess.createIndex(Concept.class);
-			luceneDataAccess.createIndex(Term.class);
+    // read the file
+    // for each line in the file, convert to Concept object.
+    try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
 
-			String line;
-			int conceptCount = 1;
-			int termCount = 0;
-			while ((line = br.readLine()) != null && (limit == -1 || conceptCount < limit)) {
+      final ObjectMapper objectMapper = new ObjectMapper();
+      final LuceneDataAccess luceneDataAccess = new LuceneDataAccess();
+      luceneDataAccess.createIndex(Concept.class);
+      luceneDataAccess.createIndex(Term.class);
 
-				final JsonNode rootNode = objectMapper.readTree(line);
-				final JsonNode conceptNode = (rootNode.has("_source")) ? rootNode.get("_source") : rootNode;
-				final Concept concept = ModelUtility.fromJson(conceptNode.toString(), Concept.class);
+      String line;
+      int conceptCount = 1;
+      int termCount = 0;
+      while ((line = br.readLine()) != null && (limit == -1 || conceptCount < limit)) {
 
-				if (concept.getTerms() != null) {
-					for (final Term term : concept.getTerms()) {
-						termBatch.add(term);
-						if (termBatch.size() == batchSize) {
-							luceneDataAccess.add(termBatch);
-							termBatch.clear();
-						}
-						termCount++;
-					}
-				}
+        final JsonNode rootNode = objectMapper.readTree(line);
+        final JsonNode conceptNode = (rootNode.has("_source")) ? rootNode.get("_source") : rootNode;
+        final Concept concept = ModelUtility.fromJson(conceptNode.toString(), Concept.class);
 
-				conceptBatch.add(concept);
+        if (concept.getTerms() != null) {
+          for (final Term term : concept.getTerms()) {
+            termBatch.add(term);
+            if (termBatch.size() == batchSize) {
+              luceneDataAccess.add(termBatch);
+              termBatch.clear();
+            }
+            termCount++;
+          }
+        }
 
-				if (conceptBatch.size() == batchSize) {
-					luceneDataAccess.add(conceptBatch);
-					conceptBatch.clear();
-					System.out.println("count: " + conceptCount);
-				}
+        conceptBatch.add(concept);
 
-				conceptCount++;
-			}
+        if (conceptBatch.size() == batchSize) {
+          luceneDataAccess.add(conceptBatch);
+          conceptBatch.clear();
+          System.out.println("count: " + conceptCount);
+        }
 
-			if (!conceptBatch.isEmpty()) {
-				luceneDataAccess.add(conceptBatch);
-			}
-			if (!termBatch.isEmpty()) {
-				luceneDataAccess.add(termBatch);
-			}
+        conceptCount++;
+      }
 
-			System.out.println("final concepts added count: " + conceptCount);
-			System.out.println("final terms added count: " + termCount);
-			System.out.println("duration: " + (System.currentTimeMillis() - startTime) + " ms");
+      if (!conceptBatch.isEmpty()) {
+        luceneDataAccess.add(conceptBatch);
+      }
+      if (!termBatch.isEmpty()) {
+        luceneDataAccess.add(termBatch);
+      }
 
-		} catch (final Exception e) {
-			logger.error("An error occurred while processing the file.");
-			e.printStackTrace();
-			System.exit(1);
-		}
+      System.out.println("final concepts added count: " + conceptCount);
+      System.out.println("final terms added count: " + termCount);
+      System.out.println("duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
-	}
+    } catch (final Exception e) {
+      logger.error("An error occurred while processing the file.");
+      e.printStackTrace();
+      System.exit(1);
+    }
+
+  }
 
 }

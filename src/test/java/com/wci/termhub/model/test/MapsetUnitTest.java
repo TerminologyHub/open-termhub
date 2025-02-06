@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -38,123 +38,123 @@ import com.wci.termhub.test.SerializationTester;
 @SpringBootTest
 public class MapsetUnitTest extends AbstractTest {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private static Logger logger = LoggerFactory.getLogger(MapsetUnitTest.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private static Logger logger = LoggerFactory.getLogger(MapsetUnitTest.class);
 
-	/** The model object to test. */
-	private Mapset object;
+  /** The model object to test. */
+  private Mapset object;
 
-	/** The lm 1. */
-	private Set<String> s1;
+  /** The lm 1. */
+  private Set<String> s1;
 
-	/** The lm 2. */
-	private Set<String> s2;
+  /** The lm 2. */
+  private Set<String> s2;
 
-	/** The at 1. */
-	private Map<String, String> at1;
+  /** The at 1. */
+  private Map<String, String> at1;
 
-	/** The at 2. */
-	private Map<String, String> at2;
+  /** The at 2. */
+  private Map<String, String> at2;
 
-	/** The stat 1. */
-	private Map<String, Integer> stat1;
+  /** The stat 1. */
+  private Map<String, Integer> stat1;
 
-	/** The stat 2. */
-	private Map<String, Integer> stat2;
+  /** The stat 2. */
+  private Map<String, Integer> stat2;
 
-	/**
-	 * Setup.
-	 *
-	 * @throws Exception the exception
-	 */
-	@BeforeEach
-	public void setup() throws Exception {
-		object = new Mapset();
+  /**
+   * Setup.
+   *
+   * @throws Exception the exception
+   */
+  @BeforeEach
+  public void setup() throws Exception {
+    object = new Mapset();
 
-		// locale maps
-		s1 = new HashSet<>();
-		s1.add("1");
-		s2 = new HashSet<>();
-		s2.add("2");
-		s2.add("3");
+    // locale maps
+    s1 = new HashSet<>();
+    s1.add("1");
+    s2 = new HashSet<>();
+    s2.add("2");
+    s2.add("3");
 
-		// attribute maps
-		at1 = new HashMap<>();
-		at1.put("1", "1");
-		at2 = new HashMap<>();
-		at2.put("2", "2");
-		at2.put("3", "3");
+    // attribute maps
+    at1 = new HashMap<>();
+    at1.put("1", "1");
+    at2 = new HashMap<>();
+    at2.put("2", "2");
+    at2.put("3", "3");
 
-		// Stats maps
-		stat1 = new HashMap<>();
-		stat1.put("1", 1);
-		stat2 = new HashMap<>();
-		stat2.put("2", 2);
-		stat2.put("3", 3);
+    // Stats maps
+    stat1 = new HashMap<>();
+    stat1.put("1", 1);
+    stat2 = new HashMap<>();
+    stat2.put("2", 2);
+    stat2.put("3", 3);
 
-	}
+  }
 
-	/**
-	 * Test getter and setter methods of model object.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelGetSet() throws Exception {
-		final GetterSetterTester tester = new GetterSetterTester(object);
-		tester.proxy("attributes", 1, at1);
-		tester.proxy("attributes", 2, at2);
-		tester.proxy("statistics", 1, stat1);
-		tester.proxy("statistics", 2, stat2);
-		tester.test();
-	}
+  /**
+   * Test getter and setter methods of model object.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelGetSet() throws Exception {
+    final GetterSetterTester tester = new GetterSetterTester(object);
+    tester.proxy("attributes", 1, at1);
+    tester.proxy("attributes", 2, at2);
+    tester.proxy("statistics", 1, stat1);
+    tester.proxy("statistics", 2, stat2);
+    tester.test();
+  }
 
-	/**
-	 * Test equals and hascode methods.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelEqualsHashcode() throws Exception {
-		final EqualsHashcodeTester tester = new EqualsHashcodeTester(object);
-		tester.include("id");
-		tester.proxy("attributes", 1, at1);
-		tester.proxy("attributes", 2, at2);
-		tester.proxy("statistics", 1, stat1);
-		tester.proxy("statistics", 2, stat2);
-		assertTrue(tester.testIdentityFieldEquals());
-		assertTrue(tester.testNonIdentityFieldEquals());
-		assertTrue(tester.testIdentityFieldNotEquals());
-		assertTrue(tester.testIdentityFieldHashcode());
-		assertTrue(tester.testNonIdentityFieldHashcode());
-		assertTrue(tester.testIdentityFieldDifferentHashcode());
-	}
+  /**
+   * Test equals and hascode methods.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelEqualsHashcode() throws Exception {
+    final EqualsHashcodeTester tester = new EqualsHashcodeTester(object);
+    tester.include("id");
+    tester.proxy("attributes", 1, at1);
+    tester.proxy("attributes", 2, at2);
+    tester.proxy("statistics", 1, stat1);
+    tester.proxy("statistics", 2, stat2);
+    assertTrue(tester.testIdentityFieldEquals());
+    assertTrue(tester.testNonIdentityFieldEquals());
+    assertTrue(tester.testIdentityFieldNotEquals());
+    assertTrue(tester.testIdentityFieldHashcode());
+    assertTrue(tester.testNonIdentityFieldHashcode());
+    assertTrue(tester.testIdentityFieldDifferentHashcode());
+  }
 
-	/**
-	 * Test copy constructor.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelCopy() throws Exception {
-		final CopyConstructorTester tester = new CopyConstructorTester(object);
-		tester.proxy("attributes", 1, at1);
-		tester.proxy("statistics", 1, stat1);
-		assertTrue(tester.testCopyConstructor(Mapset.class));
-	}
+  /**
+   * Test copy constructor.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelCopy() throws Exception {
+    final CopyConstructorTester tester = new CopyConstructorTester(object);
+    tester.proxy("attributes", 1, at1);
+    tester.proxy("statistics", 1, stat1);
+    assertTrue(tester.testCopyConstructor(Mapset.class));
+  }
 
-	/**
-	 * Test XML serialization.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelJsonSerialization() throws Exception {
-		final SerializationTester tester = new SerializationTester(object);
-		tester.proxy("attributes", 1, at1);
-		tester.proxy("statistics", 1, stat1);
-		assertTrue(tester.testJsonSerialization());
-	}
+  /**
+   * Test XML serialization.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelJsonSerialization() throws Exception {
+    final SerializationTester tester = new SerializationTester(object);
+    tester.proxy("attributes", 1, at1);
+    tester.proxy("statistics", 1, stat1);
+    assertTrue(tester.testJsonSerialization());
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -14,23 +14,23 @@ package com.wci.termhub.algo;
  */
 public class CancelException extends Exception {
 
-	/**
-	 * Instantiates a {@link CancelException} from the specified parameters.
-	 *
-	 * @param message the message
-	 * @param t       the t
-	 */
-	public CancelException(final String message, final Exception t) {
-		super(message, t);
-	}
+  /**
+   * Instantiates a {@link CancelException} from the specified parameters.
+   *
+   * @param message the message
+   * @param t the t
+   */
+  public CancelException(final String message, final Exception t) {
+    super(message, t);
+  }
 
-	/**
-	 * Instantiates a {@link CancelException} from the specified parameters.
-	 *
-	 * @param message the message
-	 */
-	public CancelException(final String message) {
-		super(message);
+  /**
+   * Instantiates a {@link CancelException} from the specified parameters.
+   *
+   * @param message the message
+   */
+  public CancelException(final String message) {
+    super(message);
 
-	}
+  }
 }

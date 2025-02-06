@@ -29,37 +29,33 @@ import jakarta.ws.rs.core.MediaType;
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON)
 public class FhirServiceRestImpl extends RootServiceRestImpl {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private static Logger logger = LoggerFactory.getLogger(FhirServiceRestImpl.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private static Logger logger = LoggerFactory.getLogger(FhirServiceRestImpl.class);
 
-	/** The request. */
-	@Autowired
-	HttpServletRequest request;
+  /** The request. */
+  @Autowired
+  private HttpServletRequest request;
 
-	/** The search service. */
-	// @Autowired
-	// EntityRepositoryService searchService;
+  /**
+   * Instantiates an empty {@link FhirServiceRestImpl}.
+   *
+   * @throws Exception the exception
+   */
+  public FhirServiceRestImpl() throws Exception {
+    // n/a
+  }
 
-	/**
-	 * Instantiates an empty {@link FhirServiceRestImpl}.
-	 *
-	 * @throws Exception the exception
-	 */
-	public FhirServiceRestImpl() throws Exception {
-		// n/a
-	}
-
-	/**
-	 * Instantiates a {@link FhirServiceRestImpl} from the specified parameters. For
-	 * testing.
-	 *
-	 * @param request the request
-	 * @throws Exception the exception
-	 */
-	public FhirServiceRestImpl(final HttpServletRequest request) throws Exception {
-		logger.info("FhirServiceRestImpl constructor {}", request);
-		this.request = request;
-	}
+  /**
+   * Instantiates a {@link FhirServiceRestImpl} from the specified parameters.
+   * For testing.
+   *
+   * @param request the request
+   * @throws Exception the exception
+   */
+  public FhirServiceRestImpl(final HttpServletRequest request) throws Exception {
+    logger.info("FhirServiceRestImpl constructor {}", request);
+    this.request = request;
+  }
 
 }

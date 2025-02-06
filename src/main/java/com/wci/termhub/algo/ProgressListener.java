@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -14,11 +14,11 @@ package com.wci.termhub.algo;
  */
 public interface ProgressListener {
 
-	/**
-	 * Update progress.
-	 *
-	 * @param event the event
-	 */
-	public void updateProgress(ProgressEvent event);
+  /**
+   * Update progress.
+   *
+   * @param event the event
+   */
+  public void updateProgress(ProgressEvent event);
 
 }
