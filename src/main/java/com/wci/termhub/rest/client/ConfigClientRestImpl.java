@@ -10,6 +10,7 @@
 package com.wci.termhub.rest.client;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.logging.log4j.ThreadContext;
@@ -34,6 +35,7 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TimerCache;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
@@ -80,7 +82,7 @@ public class ConfigClientRestImpl extends RootClientRestImpl implements ConfigCl
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
         // Handle "gone" 410
         if ((response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode())
-            || (response.getStatusInfo().getStatusCode() == 410)) {
+            || (response.getStatusInfo().getStatusCode() == HttpServletResponse.SC_GONE)) {
           return null;
         }
         logger.error("  ERROR JSON = " + result);
@@ -233,7 +235,7 @@ public class ConfigClientRestImpl extends RootClientRestImpl implements ConfigCl
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
         // Handle "gone" 410
         if ((response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode())
-            || (response.getStatusInfo().getStatusCode() == 410)) {
+            || (response.getStatusInfo().getStatusCode() == HttpServletResponse.SC_GONE)) {
           return null;
         }
         logger.error("  ERROR JSON = " + result);
@@ -384,7 +386,7 @@ public class ConfigClientRestImpl extends RootClientRestImpl implements ConfigCl
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
         // Handle "gone" 410
         if ((response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode())
-            || (response.getStatusInfo().getStatusCode() == 410)) {
+            || (response.getStatusInfo().getStatusCode() == HttpServletResponse.SC_GONE)) {
           return null;
         }
         logger.error("  ERROR JSON = " + result);
@@ -537,7 +539,7 @@ public class ConfigClientRestImpl extends RootClientRestImpl implements ConfigCl
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
         // Handle "gone" 410
         if ((response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode())
-            || (response.getStatusInfo().getStatusCode() == 410)) {
+            || (response.getStatusInfo().getStatusCode() == HttpServletResponse.SC_GONE)) {
           return null;
         }
         logger.error("  ERROR JSON = " + result);
@@ -686,7 +688,7 @@ public class ConfigClientRestImpl extends RootClientRestImpl implements ConfigCl
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
         // Handle "gone" 410
         if ((response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode())
-            || (response.getStatusInfo().getStatusCode() == 410)) {
+            || (response.getStatusInfo().getStatusCode() == HttpServletResponse.SC_GONE)) {
           return null;
         }
         logger.error("  ERROR JSON = " + result);
@@ -839,7 +841,7 @@ public class ConfigClientRestImpl extends RootClientRestImpl implements ConfigCl
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
         // Handle "gone" 410
         if ((response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode())
-            || (response.getStatusInfo().getStatusCode() == 410)) {
+            || (response.getStatusInfo().getStatusCode() == HttpServletResponse.SC_GONE)) {
           return null;
         }
         logger.error("  ERROR JSON = " + result);
@@ -993,7 +995,7 @@ public class ConfigClientRestImpl extends RootClientRestImpl implements ConfigCl
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
         // Handle "gone" 410
         if ((response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode())
-            || (response.getStatusInfo().getStatusCode() == 410)) {
+            || (response.getStatusInfo().getStatusCode() == HttpServletResponse.SC_GONE)) {
           return null;
         }
         logger.error("  ERROR JSON = " + result);
@@ -1238,9 +1240,10 @@ public class ConfigClientRestImpl extends RootClientRestImpl implements ConfigCl
     // Build query params
     final WebTarget target = client.target(getUrl() + "/config/typeKeyValue?query="
         + ((StringUtility.isEmpty(query)) ? ""
-            : URLEncoder.encode(query, "UTF-8").replaceAll("\\+", "%20"))
+            : URLEncoder.encode(query, StandardCharsets.UTF_8).replaceAll("\\+", "%20"))
         + (offset == null ? "" : "&offset=" + offset) + (limit == null ? "" : "&limit=" + limit)
-        + (sort == null ? "" : "&sort=" + URLEncoder.encode(sort, "UTF-8").replaceAll("\\+", "%20"))
+        + (sort == null ? ""
+            : "&sort=" + URLEncoder.encode(sort, StandardCharsets.UTF_8).replaceAll("\\+", "%20"))
         + (ascending == null ? "" : "&ascending=" + ascending));
 
     try (final Response response = request(target).get()) {
@@ -1397,7 +1400,7 @@ public class ConfigClientRestImpl extends RootClientRestImpl implements ConfigCl
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
         // Handle "gone" 410
         if ((response.getStatusInfo().getStatusCode() == Response.Status.NOT_FOUND.getStatusCode())
-            || (response.getStatusInfo().getStatusCode() == 410)) {
+            || (response.getStatusInfo().getStatusCode() == HttpServletResponse.SC_GONE)) {
           return null;
         }
         logger.error("  ERROR JSON = " + result);

@@ -46,7 +46,6 @@ import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.handler.BrowserQueryBuilder;
-import com.wci.termhub.model.AuthContext;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -72,6 +71,7 @@ import ca.uhn.fhir.rest.param.UriParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * The ValueSet provider.
@@ -109,14 +109,14 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       throw FhirUtilityR4.exception(
           "Value set not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
-          404);
+          HttpServletResponse.SC_NOT_FOUND);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to get value set", OperationOutcome.IssueType.EXCEPTION,
-          500);
+          HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -193,36 +193,36 @@ public class ValueSetProviderR4 implements IResourceProvider {
         }
 
         if (date != null && !FhirUtility.compareDate(date, set.getDate())) {
-          logger.info("  SKIP date mismatch = " + set.getDate());
+          logger.info("  SKIP date mismatch = {}", set.getDate());
           continue;
         }
         if (description != null && !FhirUtility.compareString(description, set.getDescription())) {
-          logger.info("  SKIP description mismatch = " + set.getDescription());
+          logger.info("  SKIP description mismatch = {}", set.getDescription());
           continue;
         }
         // TODO: identifier (e.g. for refests that have URIs but also concept
         // ids)
         if (name != null && !FhirUtility.compareString(name, set.getName())) {
-          logger.info("  SKIP name mismatch = " + set.getName());
+          logger.info("  SKIP name mismatch = {}", set.getName());
           continue;
         }
         if (publisher != null && !FhirUtility.compareString(publisher, set.getPublisher())) {
-          logger.info("  SKIP publisher mismatch = " + set.getPublisher());
+          logger.info("  SKIP publisher mismatch = {}", set.getPublisher());
           continue;
         }
         if (title != null && !FhirUtility.compareString(title, set.getTitle())) {
-          logger.info("  SKIP title mismatch = " + set.getTitle());
+          logger.info("  SKIP title mismatch = {}", set.getTitle());
           continue;
         }
         if (version != null && !FhirUtility.compareString(version, set.getVersion())) {
-          logger.info("  SKIP version mismatch = " + set.getVersion());
+          logger.info("  SKIP version mismatch = {}", set.getVersion());
           continue;
         }
 
         if (code != null
             && TerminologyUtility.getConcept(searchService, terminology, code.getValue()) == null) {
-          logger.info(
-              "  SKIP code mismatch = " + terminology.getAbbreviation() + " " + code.getValue());
+          logger.info("  SKIP code mismatch = {}",
+              terminology.getAbbreviation() + " " + code.getValue());
           continue;
         }
 
@@ -236,7 +236,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to find value sets",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -273,28 +273,27 @@ public class ValueSetProviderR4 implements IResourceProvider {
         typeName = "code") final List<CodeType> displayLanguage)
     throws Exception {
 
-    final AuthContext context = FhirUtility.authorize(request);
-
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR4.exception("POST method not supported for $expand", IssueType.NOTSUPPORTED,
-          405);
+          HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
       if (url == null || url.isEmpty()) {
         throw FhirUtilityR4.exception("Use the 'url' parameter.",
-            OperationOutcome.IssueType.INVARIANT, 400);
+            OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
       }
       FhirUtilityR4.notSupported("valueSet", valueSet);
 
-      final ValueSet vs = getExpandedValueSet(context, null, url, version, filter,
-          offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100, false,
-          displayLanguage == null ? null
-              : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()));
+      final ValueSet vs =
+          getExpandedValueSet(null, url, version, filter, offset != null ? offset.getValue() : 0,
+              count != null ? count.getValue() : 100, false, displayLanguage == null ? null
+                  : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()));
 
       if (vs == null) {
-        throw FhirUtilityR4.exception("Value set not found = " + url, IssueType.NOTFOUND, 404);
+        throw FhirUtilityR4.exception("Value set not found = " + url, IssueType.NOTFOUND,
+            HttpServletResponse.SC_NOT_FOUND);
       }
       return vs;
 
@@ -303,7 +302,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to expand value set",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -346,24 +345,22 @@ public class ValueSetProviderR4 implements IResourceProvider {
         typeName = "code") final Set<CodeType> displayLanguage)
     throws Exception {
 
-    final AuthContext context = FhirUtility.authorize(request);
-
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR4.exception("POST method not supported for $expand", IssueType.NOTSUPPORTED,
-          405);
+          HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
 
-      final ValueSet vs = getExpandedValueSet(context, id, null, version, filter,
-          offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100, false,
-          displayLanguage == null ? null
-              : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()));
+      final ValueSet vs =
+          getExpandedValueSet(id, null, version, filter, offset != null ? offset.getValue() : 0,
+              count != null ? count.getValue() : 100, false, displayLanguage == null ? null
+                  : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()));
 
       if (vs == null) {
         throw FhirUtilityR4.exception("Value set not found = " + id.getIdPart(), IssueType.NOTFOUND,
-            404);
+            HttpServletResponse.SC_NOT_FOUND);
       }
       return vs;
 
@@ -372,7 +369,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to expand value set",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -412,31 +409,30 @@ public class ValueSetProviderR4 implements IResourceProvider {
     @OperationParam(name = "codeableConcept", min = 0, max = 1,
         typeName = "CodeableConcept") final CodeableConcept codeableConcept)
     throws Exception {
-    final AuthContext context = FhirUtility.authorize(request);
 
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR4.exception("POST method not supported for $validate-code",
-          IssueType.NOTSUPPORTED, 405);
+          IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
 
       if (url == null || url.isEmpty()) {
         throw FhirUtilityR4.exception("Use the 'url' parameter.",
-            OperationOutcome.IssueType.INVARIANT, 400);
+            OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
       }
       FhirUtilityR4.requireExactlyOneOf("code", code, "coding", coding);
       FhirUtilityR4.notSupported("codeableConcept", codeableConcept);
       final String lcode = FhirUtilityR4.getCode(code, coding);
-      return validateCodeHelper(context, null, url, version, lcode, display);
+      return validateCodeHelper(null, url, version, lcode, display);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to validate value set code",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
 
   }
@@ -480,25 +476,24 @@ public class ValueSetProviderR4 implements IResourceProvider {
     // @OperationParam(name = "displayLanguage") String displayLanguage)
     throws Exception {
 
-    final AuthContext context = FhirUtility.authorize(request);
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR4.exception("POST method not supported for $validate-code",
-          IssueType.NOTSUPPORTED, 405);
+          IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
 
       FhirUtilityR4.requireExactlyOneOf("code", code, "coding", coding);
       final String lcode = FhirUtilityR4.getCode(code, coding);
-      return validateCodeHelper(context, id, null, version, lcode, display);
+      return validateCodeHelper(id, null, version, lcode, display);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to validate value set code",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -536,7 +531,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
   /**
    * Gets the implicit code system value set.
    *
-   * @param context the context
    * @param id the id
    * @param url the url
    * @param version the version
@@ -548,9 +542,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @return the implicit code system value set
    * @throws Exception the exception
    */
-  private ValueSet getExpandedValueSet(final AuthContext context, final IdType id,
-    final UriType url, final StringType version, final StringType filter, final int offset,
-    final int count, final boolean activeOnly, final Set<String> languages) throws Exception {
+  private ValueSet getExpandedValueSet(final IdType id, final UriType url, final StringType version,
+    final StringType filter, final int offset, final int count, final boolean activeOnly,
+    final Set<String> languages) throws Exception {
     // Look up implicit value sets for code systems
     for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
       final ValueSet vs = getImplicitCodeSystemValueSet(terminology);
@@ -573,7 +567,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       }
 
       if (version != null && !version.getValue().equals(vs.getVersion())) {
-        logger.info("  SKIP version mismatch = " + vs.getVersion());
+        logger.info("  SKIP version mismatch = {}", vs.getVersion());
         continue;
       }
 
@@ -660,7 +654,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
   /**
    * Validate code helper.
    *
-   * @param context the context
    * @param id the id
    * @param url the url
    * @param version the version
@@ -669,9 +662,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  private Parameters validateCodeHelper(final AuthContext context, final IdType id,
-    final UriType url, final StringType version, final String code, final StringType display)
-    throws Exception {
+  private Parameters validateCodeHelper(final IdType id, final UriType url,
+    final StringType version, final String code, final StringType display) throws Exception {
     // Look up implicit value sets for code systems
     for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
       final ValueSet vs = getImplicitCodeSystemValueSet(terminology);
@@ -693,7 +685,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       }
 
       if (version != null && !version.getValue().equals(vs.getVersion())) {
-        logger.info("  SKIP version mismatch = " + vs.getVersion());
+        logger.info("  SKIP version mismatch = {}", vs.getVersion());
         continue;
       }
 
@@ -769,7 +761,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
     } catch (final Exception e) {
       logger.error("Unexpected error", e);
       throw FhirUtilityR4.exception("Unable to parse expression = " + expression,
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
 
   }

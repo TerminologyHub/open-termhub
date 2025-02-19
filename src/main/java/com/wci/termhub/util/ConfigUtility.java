@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -259,7 +260,6 @@ public final class ConfigUtility {
    * @throws Exception the exception
    */
   public static void putConfigProperties(final Properties properties) throws Exception {
-
     // Clear the config properties cache
     configPropertiesMap = new HashMap<>();
     getConfigProperties().putAll(properties);
@@ -267,11 +267,11 @@ public final class ConfigUtility {
 
   /**
    * Returns the config properties.
-   * 
-   * @return the config properties
    *
+   * @return the config properties
    * @throws Exception the exception
    */
+  @SuppressWarnings("unchecked")
   public static Properties getConfigProperties() throws Exception {
     if (isNull(config)) {
 
@@ -353,7 +353,7 @@ public final class ConfigUtility {
     // Check if config has "config.import"
     if (config.containsKey("config.import")) {
 
-      int size = config.size();
+      final int size = config.size();
 
       // Assume config-import.properties if not specified
       final String name = config.getProperty("config.import").isEmpty() ? "config-import.properties"
@@ -400,7 +400,7 @@ public final class ConfigUtility {
 
   /**
    * Returns the config properties.
-   * 
+   *
    * @param prefix the prefix to look for when selecting DB properties
    * @return the config properties
    *
@@ -413,7 +413,7 @@ public final class ConfigUtility {
       return configPropertiesMap.get(prefix);
     }
 
-    Properties dbConfig = new Properties();
+    final Properties dbConfig = new Properties();
     dbConfig.putAll(getConfigProperties());
 
     final Iterator<Object> properties = dbConfig.keySet().iterator();
@@ -423,7 +423,7 @@ public final class ConfigUtility {
     // rename those that do
     while (properties.hasNext()) {
 
-      String property = properties.next().toString();
+      final String property = properties.next().toString();
 
       if (property.startsWith("persistence.")) {
 
@@ -608,7 +608,7 @@ public final class ConfigUtility {
 
   /**
    * Merge-sort two files.
-   * 
+   *
    * @param files1 the first set of files
    * @param files2 the second set of files
    * @param comp the comparator
@@ -660,29 +660,26 @@ public final class ConfigUtility {
   /**
    * Reflection sort.
    *
-   * @param <T> the
+   * @param <T> the generic type
    * @param classes the classes
    * @param clazz the clazz
    * @param sortField the sort field
    * @throws Exception the exception
    */
+  @SuppressWarnings("unchecked")
   public static <T> void reflectionSort(final List<T> classes, final Class<T> clazz,
     final String sortField) throws Exception {
-
     final Method getMethod =
         clazz.getMethod("get" + sortField.substring(0, 1).toUpperCase() + sortField.substring(1));
     if (getMethod.getReturnType().isAssignableFrom(Comparable.class)) {
       throw new Exception("Referenced sort field is not comparable");
     }
     Collections.sort(classes, new Comparator<T>() {
-      @SuppressWarnings({
-          "rawtypes", "unchecked"
-      })
       @Override
       public int compare(final T o1, final T o2) {
         try {
-          final Comparable f1 = (Comparable) getMethod.invoke(o1, new Object[] {});
-          final Comparable f2 = (Comparable) getMethod.invoke(o2, new Object[] {});
+          final Comparable<Object> f1 = (Comparable<Object>) getMethod.invoke(o1, new Object[] {});
+          final Comparable<Object> f2 = (Comparable<Object>) getMethod.invoke(o2, new Object[] {});
           return f1.compareTo(f2);
         } catch (final Exception e) {
           // do nothing
@@ -737,7 +734,7 @@ public final class ConfigUtility {
    * @return the profile
    */
   public static Map<String, Integer> getProfile(final String string, final int k) {
-    final HashMap<String, Integer> shingles = new HashMap<String, Integer>();
+    final Map<String, Integer> shingles = new HashMap<>();
     for (int i = 0; i < (string.length() - k + 1); i++) {
       final String shingle = string.substring(i, i + k);
       final Integer old = shingles.get(shingle);
@@ -802,8 +799,8 @@ public final class ConfigUtility {
       @Override
       public int compare(final String o1, final String o2) {
         try {
-          return UnsignedBytes.lexicographicalComparator().compare(o1.getBytes("UTF-8"),
-              o2.getBytes("UTF-8"));
+          return UnsignedBytes.lexicographicalComparator()
+              .compare(o1.getBytes(StandardCharsets.UTF_8), o2.getBytes(StandardCharsets.UTF_8));
         } catch (final Exception e) {
           throw new RuntimeException(e);
         }
@@ -983,7 +980,7 @@ public final class ConfigUtility {
     final Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     cipher.init(Cipher.DECRYPT_MODE, key);
     final byte[] decryptedData = cipher.doFinal(data);
-    final String decryptedHash = new String(decryptedData, "UTF-8");
+    final String decryptedHash = new String(decryptedData, StandardCharsets.UTF_8);
     return hash.equals(decryptedHash);
   }
 
@@ -1001,7 +998,7 @@ public final class ConfigUtility {
     final Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     cipher.init(Cipher.DECRYPT_MODE, key);
     final byte[] decryptedData = cipher.doFinal(data);
-    final String decryptedHash = new String(decryptedData, "UTF-8");
+    final String decryptedHash = new String(decryptedData, StandardCharsets.UTF_8);
     return hash.equals(decryptedHash);
   }
 
@@ -1153,11 +1150,13 @@ public final class ConfigUtility {
   /**
    * First not null.
    *
-   * @param <T> the
+   * @param <T> the generic type parameter
    * @param values the values
-   * @return the t
+   * @return the first non-null value
    */
-  public static <T> T firstNotNull(@SuppressWarnings("unchecked") final T... values) {
+  @SafeVarargs
+  @SuppressWarnings("unchecked")
+  public static <T> T firstNotNull(final T... values) {
     for (final T t : values) {
       if (t != null) {
         return t;
@@ -1169,10 +1168,10 @@ public final class ConfigUtility {
   /**
    * Merge.
    *
-   * @param <T> the
-   * @param a the a
-   * @param b the b
-   * @return the t
+   * @param <T> the generic type parameter
+   * @param a the first object
+   * @param b the second object
+   * @return the merged object
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
@@ -1245,24 +1244,27 @@ public final class ConfigUtility {
   }
 
   /**
-   * As list.
+   * Convert array to List.
    *
-   * @param values the values
-   * @return the list
-   * @throws Exception the exception
+   * @param values the string array
+   * @return the list of strings
+   * @throws Exception if error occurs
    */
+  @SuppressWarnings("unchecked")
   public static List<String> asList(final String[] values) throws Exception {
-    return new ArrayList<String>(Arrays.asList(values));
+    return new ArrayList<>(Arrays.asList(values));
   }
 
   /**
-   * As list.
+   * Convert varargs to List.
    *
-   * @param <T> the
+   * @param <T> the generic type parameter
    * @param values the values
    * @return the list
    */
-  public static <T> List<T> asList(@SuppressWarnings("unchecked") final T... values) {
+  @SafeVarargs
+  @SuppressWarnings("unchecked")
+  public static <T> List<T> asList(final T... values) {
     final List<T> list = new ArrayList<>(values.length);
     for (final T value : values) {
       if (value != null) {
@@ -1273,13 +1275,15 @@ public final class ConfigUtility {
   }
 
   /**
-   * As set.
+   * Convert varargs to Set.
    *
-   * @param <T> the
+   * @param <T> the generic type parameter
    * @param values the values
-   * @return the sets the
+   * @return the set
    */
-  public static <T> Set<T> asSet(@SuppressWarnings("unchecked") final T... values) {
+  @SafeVarargs
+  @SuppressWarnings("unchecked")
+  public static <T> Set<T> asSet(final T... values) {
     final Set<T> set = new HashSet<>(values.length);
     for (final T value : values) {
       if (value != null) {
@@ -1290,13 +1294,13 @@ public final class ConfigUtility {
   }
 
   /**
-   * As set.
+   * Convert string array to Set.
    *
-   * @param values the values
-   * @return the list
+   * @param values the string array
+   * @return the set of strings
    */
   public static Set<String> asSet(final String[] values) {
-    return new HashSet<String>(Arrays.asList(values));
+    return new HashSet<>(Arrays.asList(values));
   }
 
   /**
@@ -1537,11 +1541,11 @@ public final class ConfigUtility {
         if (in == null) {
           throw new Exception("UNABLE to find classpath uri = " + fixuri);
         }
-        return IOUtils.toString(in, "UTF-8");
+        return IOUtils.toString(in, StandardCharsets.UTF_8);
       }
     } else {
       try (final InputStream is = new BufferedInputStream(new URL(uri).openStream());) {
-        return IOUtils.toString(is, "UTF-8");
+        return IOUtils.toString(is, StandardCharsets.UTF_8);
       }
     }
   }
@@ -1661,7 +1665,7 @@ public final class ConfigUtility {
     if (getLocalResourceFile(path) != null) {
 
       try (final InputStream in = ConfigUtility.class.getClassLoader().getResourceAsStream(path)) {
-        for (final String line : IOUtils.readLines(in, "UTF-8")) {
+        for (final String line : IOUtils.readLines(in, StandardCharsets.UTF_8)) {
           if (line.isEmpty() || line.startsWith("#")) {
             continue;
           }
@@ -1693,7 +1697,7 @@ public final class ConfigUtility {
     if (getLocalResourceFile(path) != null) {
 
       try (final InputStream in = ConfigUtility.class.getClassLoader().getResourceAsStream(path)) {
-        for (final String line : IOUtils.readLines(in, "UTF-8")) {
+        for (final String line : IOUtils.readLines(in, StandardCharsets.UTF_8)) {
           if (line.isEmpty() || line.startsWith("#")) {
             continue;
           }

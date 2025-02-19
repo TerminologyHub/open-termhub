@@ -10,6 +10,7 @@
 package com.wci.termhub.rest.client;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SignatureException;
 
 import org.apache.logging.log4j.ThreadContext;
@@ -234,7 +235,7 @@ public class RootClientRestImpl extends AbstractConfigurable implements RootClie
             || target.getUri().toString().contains("dev."))) {
       try {
         final String userId = JwtUtility.getUserId(JWT.decode(jwt).getClaims());
-        logger.debug("  rewrite jwt = " + userId);
+        logger.debug("  rewrite jwt = {}", userId);
         jwt = JwtUtility.rewriteJwt(jwt, System.getenv().get("JWT_KEY"), false);
 
         // Internal vs external token style
@@ -313,15 +314,15 @@ public class RootClientRestImpl extends AbstractConfigurable implements RootClie
     this.validateNotEmpty(task, "task");
     final Client client = getClients().get();
     final WebTarget target = client.target(getUrl() + "/" + service + "/admin?adminKey="
-        + URLEncoder.encode(adminKey, "UTF-8").replaceAll("\\+", "%20") + "&task="
-        + URLEncoder.encode(task, "UTF-8").replaceAll("\\+", "%20"));
+        + URLEncoder.encode(adminKey, StandardCharsets.UTF_8).replace("\\+", "%20") + "&task="
+        + URLEncoder.encode(task, StandardCharsets.UTF_8).replace("\\+", "%20"));
     try (final Response response = request(target).post(Entity.json(payload))) {
       if (response == null) {
         throw new Exception("Unexpected null response");
       }
       final String result = response.readEntity(String.class);
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
-        logger.error("  ERROR JSON = " + result);
+        logger.error("  ERROR JSON = {}", result);
         throw new RestException(false, response.getStatus(), "Unexpected client error",
             "Unexpected error calling " + service + " admin");
       }
@@ -347,7 +348,7 @@ public class RootClientRestImpl extends AbstractConfigurable implements RootClie
       }
       final String result = response.readEntity(String.class);
       if (response.getStatusInfo().getFamily() != Family.SUCCESSFUL) {
-        logger.error("  ERROR JSON = " + result);
+        logger.error("  ERROR JSON = {}", result);
         throw new RestException(false, response.getStatus(), "Unexpected client error",
             "Unexpected error calling " + service + " health check");
       }
@@ -375,7 +376,7 @@ public class RootClientRestImpl extends AbstractConfigurable implements RootClie
    */
   public String getEncodedParameter(final String value) throws Exception {
     return StringUtility.isEmpty(value) ? ""
-        : URLEncoder.encode(value, "UTF-8").replaceAll("\\+", "%20");
+        : URLEncoder.encode(value, StandardCharsets.UTF_8).replace("\\+", "%20");
   }
 
   /**
@@ -386,7 +387,8 @@ public class RootClientRestImpl extends AbstractConfigurable implements RootClie
    * @throws Exception the exception
    */
   public String getEncodedParameter(final Integer value) throws Exception {
-    return (value == null) ? "" : URLEncoder.encode("" + value, "UTF-8").replaceAll("\\+", "%20");
+    return (value == null) ? ""
+        : URLEncoder.encode("" + value, StandardCharsets.UTF_8).replace("\\+", "%20");
   }
 
   /**
@@ -397,6 +399,7 @@ public class RootClientRestImpl extends AbstractConfigurable implements RootClie
    * @throws Exception the exception
    */
   public String getEncodedParameter(final Boolean value) throws Exception {
-    return (value == null) ? "" : URLEncoder.encode("" + value, "UTF-8").replaceAll("\\+", "%20");
+    return (value == null) ? ""
+        : URLEncoder.encode("" + value, StandardCharsets.UTF_8).replace("\\+", "%20");
   }
 }

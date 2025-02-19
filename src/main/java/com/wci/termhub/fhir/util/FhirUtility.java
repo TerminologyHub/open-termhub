@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.ThreadContext;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.OperationOutcome;
@@ -43,7 +42,6 @@ import com.wci.termhub.rest.client.ConfigClient;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.service.RootServiceRestImpl;
 import com.wci.termhub.util.ClientFactory;
-import com.wci.termhub.util.JwtUtility;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.TimerCache;
 
@@ -51,6 +49,7 @@ import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.StringParam;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Utility for fhir data building.
@@ -87,14 +86,8 @@ public final class FhirUtility {
    */
   public static void cachePublisherInfo() throws Exception {
     if (publisherInfoMap.isEmpty()) {
-      final String jwt = ThreadContext.get("jwt");
-      ThreadContext.put("jwt", JwtUtility.mockAdminJwt());
-      try {
-        for (final PublisherInfo pi : ClientFactory.get(ConfigClient.class).getAllPublisherInfo()) {
-          publisherInfoMap.put(pi.getType(), pi);
-        }
-      } finally {
-        ThreadContext.put("jwt", jwt);
+      for (final PublisherInfo pi : ClientFactory.get(ConfigClient.class).getAllPublisherInfo()) {
+        publisherInfoMap.put(pi.getType(), pi);
       }
     }
   }
@@ -110,7 +103,8 @@ public final class FhirUtility {
     try {
       return new RootServiceRestImpl().authorizeProject(request);
     } catch (final Exception e) {
-      throw exception("Authentication failed", OperationOutcome.IssueType.LOGIN, 401);
+      throw exception("Authentication failed", OperationOutcome.IssueType.LOGIN,
+          HttpServletResponse.SC_UNAUTHORIZED);
     }
   }
 
@@ -211,7 +205,7 @@ public final class FhirUtility {
         "abbreviation:" + terminology + " AND publisher:" + publisher + " AND version:" + version,
         2, 0), Terminology.class);
 
-    if (tlist.getItems().size() == 0) {
+    if (tlist.getItems().isEmpty()) {
       return null;
     }
     if (tlist.getItems().size() > 1) {
@@ -266,7 +260,7 @@ public final class FhirUtility {
     final String param2Name, final Object param2) {
     if (param1 != null && param2 != null) {
       throw exception(format("Use one of '%s' or '%s' parameters.", param1Name, param2Name),
-          OperationOutcome.IssueType.INVARIANT, 400);
+          OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
@@ -292,7 +286,8 @@ public final class FhirUtility {
     if (obj != null) {
       final String message = format("Input parameter '%s' is not supported%s", paramName,
           (additionalDetail == null ? "." : format(" %s", additionalDetail)));
-      throw exception(message, OperationOutcome.IssueType.NOTSUPPORTED, 400);
+      throw exception(message, OperationOutcome.IssueType.NOTSUPPORTED,
+          HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
@@ -309,7 +304,7 @@ public final class FhirUtility {
     if (param1 == null && param2 == null) {
       throw exception(
           format("One of '%s' or '%s' parameters must be supplied.", param1Name, param2Name),
-          IssueType.INVARIANT, 400);
+          IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     } else {
       mutuallyExclusive(param1Name, param1, param2Name, param2);
     }
@@ -328,8 +323,10 @@ public final class FhirUtility {
   public static void requireExactlyOneOf(final String param1Name, final Object param1,
     final String param2Name, final Object param2, final String param3Name, final Object param3) {
     if (param1 == null && param2 == null && param3 == null) {
-      throw exception(format("One of '%s' or '%s' or '%s' parameters must be supplied.", param1Name,
-          param2Name, param3Name), OperationOutcome.IssueType.INVARIANT, 400);
+      throw exception(
+          format("One of '%s' or '%s' or '%s' parameters must be supplied.", param1Name, param2Name,
+              param3Name),
+          OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     } else {
       mutuallyExclusive(param1Name, param1, param2Name, param2);
       mutuallyExclusive(param1Name, param1, param3Name, param3);
@@ -351,7 +348,7 @@ public final class FhirUtility {
       throw exception(
           format("Input parameter '%s' can only be used in conjunction with parameter '%s'.",
               param1Name, param2Name),
-          IssueType.INVARIANT, 400);
+          IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
@@ -371,7 +368,7 @@ public final class FhirUtility {
       throw exception(
           format("Use of input parameter '%s' only allowed if '%s' or '%s' is also present.",
               param1Name, param2Name, param3Name),
-          IssueType.INVARIANT, 400);
+          IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
@@ -385,13 +382,13 @@ public final class FhirUtility {
   public static String recoverCode(final CodeType code, final Coding coding) {
     if (code == null && coding == null) {
       throw exception("Use either 'code' or 'coding' parameters, not both.",
-          OperationOutcome.IssueType.INVARIANT, 400);
+          OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     } else if (code != null) {
       if (code.getCode().contains("|")) {
         throw exception(
             "The 'code' parameter cannot supply a codeSystem. "
                 + "Use 'coding' or provide CodeSystem in 'system' parameter.",
-            OperationOutcome.IssueType.NOTSUPPORTED, 400);
+            OperationOutcome.IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
       }
       return code.getCode();
     }
@@ -405,7 +402,8 @@ public final class FhirUtility {
    * @return the FHIR server response exception
    */
   public static FHIRServerResponseException exceptionNotSupported(final String message) {
-    return exception(message, OperationOutcome.IssueType.NOTSUPPORTED, 501);
+    return exception(message, OperationOutcome.IssueType.NOTSUPPORTED,
+        HttpServletResponse.SC_NOT_IMPLEMENTED);
   }
 
   /**

@@ -9,6 +9,8 @@
  */
 package com.wci.termhub.fhir.r5;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,23 +36,27 @@ import org.springframework.stereotype.Component;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
-import com.wci.termhub.model.AuthContext;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
+import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
+import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
@@ -87,8 +93,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   public CodeSystem getCodeSystem(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
-    FhirUtility.authorize(request);
-
     try {
 
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
@@ -100,14 +104,14 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       }
       throw FhirUtilityR5.exception(
           "Code system not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
-          404);
+          HttpServletResponse.SC_NOT_FOUND);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR5.exception("Failed to load value set",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -122,7 +126,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * https://hl7.org/fhir/R5/codesystem.html (see Search Parameters)
    * The following parameters in the registry are not used
    * &#64;OptionalParam(name="code") String code,
-   * &#64;OptionalParam(name="context") TokenParam context,
+   * &#64;OptionalParam(name="context") TokenParam
    * &#64;OptionalParam(name="context-quantity") QuantityParam contextQuantity,
    * &#64;OptionalParam(name="context-type") String contextType,
    * &#64;OptionalParam(name="context-type-quantity") QuantityParam contextTypeQuantity,
@@ -164,8 +168,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
         name = "_offset") final NumberParam offset)
     throws Exception {
-
-    FhirUtility.authorize(request);
 
     try {
 
@@ -227,7 +229,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR5.exception("Failed to find code systems",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -264,12 +266,11 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     @OperationParam(name = "property", min = 0, max = OperationParam.MAX_UNLIMITED,
         typeName = "code") final Set<CodeType> properties)
     throws Exception {
-    final AuthContext context = FhirUtility.authorize(request);
 
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR5.exception("POST method not supported for $lookup", IssueType.NOTSUPPORTED,
-          405);
+          HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
@@ -280,14 +281,14 @@ public class CodeSystemProviderR5 implements IResourceProvider {
           "system", system, version, coding);
 
       final String codeStr = FhirUtilityR5.getCode(code, coding);
-      return lookupHelper(context, terminology, codeStr, properties);
+      return lookupHelper(terminology, codeStr, properties);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR5.exception("Failed to lookup code", OperationOutcome.IssueType.EXCEPTION,
-          500);
+          HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -326,12 +327,11 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     @OperationParam(name = "property", min = 0, max = OperationParam.MAX_UNLIMITED,
         typeName = "code") final Set<CodeType> properties)
     throws Exception {
-    final AuthContext context = FhirUtility.authorize(request);
 
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR5.exception("POST method not supported for $lookup", IssueType.NOTSUPPORTED,
-          405);
+          HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
@@ -342,14 +342,14 @@ public class CodeSystemProviderR5 implements IResourceProvider {
           FhirUtilityR5.getTerminology(searchService, id, null, null, null, null, null);
 
       final String codeStr = FhirUtilityR5.getCode(code, coding);
-      return lookupHelper(context, terminology, codeStr, properties);
+      return lookupHelper(terminology, codeStr, properties);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR5.exception("Failed to lookup code", OperationOutcome.IssueType.EXCEPTION,
-          500);
+          HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -389,12 +389,10 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     @OperationParam(name = "coding", min = 0, max = 1, typeName = "Coding") final Coding coding)
     throws Exception {
 
-    final AuthContext context = FhirUtility.authorize(request);
-
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR5.exception("POST method not supported for $validate-code",
-          IssueType.NOTSUPPORTED, 405);
+          IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
@@ -406,14 +404,14 @@ public class CodeSystemProviderR5 implements IResourceProvider {
           FhirUtilityR5.getTerminology(searchService, null, code, "url", url, version, coding);
 
       final String codeStr = FhirUtilityR5.getCode(code, coding);
-      return validateHelper(context, terminology, codeStr, display);
+      return validateHelper(terminology, codeStr, display);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR5.exception("Failed to validate code", OperationOutcome.IssueType.EXCEPTION,
-          500);
+          HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -455,12 +453,10 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     @OperationParam(name = "coding", min = 0, max = 1, typeName = "Coding") final Coding coding)
     throws Exception {
 
-    final AuthContext context = FhirUtility.authorize(request);
-
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR5.exception("POST method not supported for $validate-code",
-          IssueType.NOTSUPPORTED, 405);
+          IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
@@ -472,14 +468,14 @@ public class CodeSystemProviderR5 implements IResourceProvider {
           FhirUtilityR5.getTerminology(searchService, id, code, "url", url, version, coding);
 
       final String codeStr = FhirUtilityR5.getCode(code, coding);
-      return validateHelper(context, terminology, codeStr, display);
+      return validateHelper(terminology, codeStr, display);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR5.exception("Failed to validate code", OperationOutcome.IssueType.EXCEPTION,
-          500);
+          HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
 
   }
@@ -516,24 +512,22 @@ public class CodeSystemProviderR5 implements IResourceProvider {
         typeName = "string") final StringType version)
     throws Exception {
 
-    final AuthContext context = FhirUtility.authorize(request);
-
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR5.exception("POST method not supported for $subsumes",
-          IssueType.NOTSUPPORTED, 405);
+          IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
 
-      return subsumesHelper(context, null, system, version, codeA, codeB, codingA, codingB);
+      return subsumesHelper(null, system, version, codeA, codeB, codingA, codingB);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR5.exception("Failed to check if A subsumes B",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -571,24 +565,22 @@ public class CodeSystemProviderR5 implements IResourceProvider {
         typeName = "string") final StringType version)
     throws Exception {
 
-    final AuthContext context = FhirUtility.authorize(request);
-
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR5.exception("POST method not supported for $subsumes",
-          IssueType.NOTSUPPORTED, 405);
+          IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     try {
 
-      return subsumesHelper(context, id, system, version, codeA, codeB, codingA, codingB);
+      return subsumesHelper(id, system, version, codeA, codeB, codingA, codingB);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR5.exception("Failed to validate code", OperationOutcome.IssueType.EXCEPTION,
-          500);
+          HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
 
   }
@@ -596,15 +588,14 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   /**
    * Lookup helper.
    *
-   * @param context the context
    * @param terminology the terminology
    * @param code the code
    * @param properties the properties
    * @return the parameters
    * @throws Exception the exception
    */
-  private Parameters lookupHelper(final AuthContext context, final Terminology terminology,
-    final String code, final Set<CodeType> properties) throws Exception {
+  private Parameters lookupHelper(final Terminology terminology, final String code,
+    final Set<CodeType> properties) throws Exception {
 
     // Lookup concept (only code is needed because we have terminology index)
     final SearchParameters params =
@@ -613,7 +604,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final Concept concept = searchService.findSingle(params, Concept.class);
     if (concept == null) {
       throw FhirUtilityR5.exception("Unable to find code for system/version = " + code,
-          OperationOutcome.IssueType.NOTFOUND, 404);
+          OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
     }
 
     // Lookup parents/children
@@ -637,15 +628,14 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   /**
    * Validate helper.
    *
-   * @param context the context
    * @param terminology the terminology
    * @param code the code
    * @param display the display
    * @return the parameters
    * @throws Exception the exception
    */
-  private Parameters validateHelper(final AuthContext context, final Terminology terminology,
-    final String code, final StringType display) throws Exception {
+  private Parameters validateHelper(final Terminology terminology, final String code,
+    final StringType display) throws Exception {
 
     // Lookup concept
     final SearchParameters params =
@@ -661,7 +651,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   /**
    * Subsumes helper.
    *
-   * @param context the context
    * @param id the id
    * @param system the system
    * @param version the version
@@ -672,9 +661,9 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  private Parameters subsumesHelper(final AuthContext context, final IdType id,
-    final UriType system, final StringType version, final CodeType codeAParam,
-    final CodeType codeBParam, final Coding codingA, final Coding codingB) throws Exception {
+  private Parameters subsumesHelper(final IdType id, final UriType system, final StringType version,
+    final CodeType codeAParam, final CodeType codeBParam, final Coding codingA,
+    final Coding codingB) throws Exception {
     // "The system parameter is required unless the operation is invoked on an
     // instance of a
     // code system resource."
@@ -682,7 +671,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     if (id == null && system == null) {
       throw FhirUtilityR5.exception(
           "One of id or system parameters must be supplied for the $subsumes operation.",
-          IssueType.INVALID, 400);
+          IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
 
     FhirUtilityR5.requireExactlyOneOf("codeA", codeAParam, "codingA", codingA);
@@ -695,7 +684,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
     if (terminologyA == null && terminologyB == null) {
       throw FhirUtilityR5.exception("Unable to determine code system for $subsumes operation.",
-          IssueType.INVALID, 400);
+          IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
 
     Terminology terminology = terminologyB;
@@ -705,7 +694,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       terminology = terminologyA;
     } else if (!terminologyA.getId().equals(terminologyB.getId())) {
       throw FhirUtilityR5.exception("Incompatable code system A/B for $subsumes operation.",
-          IssueType.INVALID, 400);
+          IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
 
     final String codeA = FhirUtilityR5.getCode(codeAParam, codingA);
@@ -716,14 +705,14 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       throw FhirUtilityR5.exception(
           String.format("Code does not exist for code system =" + codeA + ","
               + terminology.getAttributes().get("fhirUri")),
-          OperationOutcome.IssueType.INVALID, 400);
+          OperationOutcome.IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
     final Concept conceptB = TerminologyUtility.getConcept(searchService, terminology, codeB);
     if (conceptB == null) {
       throw FhirUtilityR5.exception(
           String.format("Code does not exist for code system =" + codeB + ","
               + terminology.getAttributes().get("fhirUri")),
-          OperationOutcome.IssueType.INVALID, 400);
+          OperationOutcome.IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
 
     // equivalent http://hl7.org/fhir/concept-subsumption-outcome Equivalent
@@ -742,6 +731,50 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       return FhirUtilityR5.toR5Subsumes("subsumed-by", terminology);
     }
     return FhirUtilityR5.toR5Subsumes("not-subsumed", terminology);
+  }
+
+  /**
+   * Create a new CodeSystem resource.
+   *
+   * @param request the request
+   * @param details the details
+   * @param codeSystem the code system resource
+   * @return the created code system
+   * @throws Exception the exception
+   */
+  @Create
+  public MethodOutcome createCodeSystem(final HttpServletRequest request,
+    final ServletRequestDetails details, @ResourceParam final CodeSystem codeSystem)
+    throws Exception {
+
+    try {
+      logger.info("Creating code system with {} concepts",
+          codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
+
+      // Convert CodeSystem to JSON
+      final String content = FhirContext.forR5().newJsonParser().encodeResourceToString(codeSystem);
+
+      // Write content to temporary file
+      final Path tempFile = Files.createTempFile("codesystem-", ".json");
+      Files.write(tempFile, content.getBytes());
+
+      // Use existing loader utility
+      CodeSystemLoaderUtil.loadCodeSystem(searchService, tempFile.toString());
+
+      // Clean up temp file
+      Files.delete(tempFile);
+
+      // Return success
+      final MethodOutcome outcome = new MethodOutcome();
+      outcome.setResource(codeSystem);
+      outcome.setCreated(true);
+      return outcome;
+
+    } catch (final Exception e) {
+      logger.error("Unexpected error creating code system", e);
+      throw FhirUtilityR5.exception("Failed to create code system: " + e.getMessage(),
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**

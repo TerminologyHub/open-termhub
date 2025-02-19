@@ -70,17 +70,23 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Creates the index based on the class name.
+   * Creates the index.
    *
    * @param clazz the clazz
    * @throws Exception the exception
    */
   public void createIndex(final Class<? extends HasId> clazz) throws Exception {
-
     final String indexDirectory = clazz.getCanonicalName();
     final Path indexPath = Paths.get(indexRootDirectory, indexDirectory);
-    LOG.info("Index path: {}, directory: {}", indexRootDirectory, indexDirectory);
-    FSDirectory.open(indexPath);
+    LOG.info("Create Index: {}, directory: {}", indexRootDirectory, indexDirectory);
+
+    // Create a new IndexWriter with default config to initialize the index
+    try (final FSDirectory directory = FSDirectory.open(indexPath);
+        final IndexWriter writer =
+            new IndexWriter(directory, new IndexWriterConfig(new StandardAnalyzer()))) {
+      // Commit to create the initial index structure
+      writer.commit();
+    }
   }
 
   /**
@@ -101,7 +107,7 @@ public class LuceneDataAccess {
    * Adds the batch.
    *
    * @param entities the entities
-   * @throws IOException Signals that an I/O exception has occurred.
+   * @throws IOException            Signals that an I/O exception has occurred.
    * @throws IllegalAccessException the illegal access exception
    */
   public void add(final List<? extends HasId> entities) throws IOException, IllegalAccessException {
@@ -110,8 +116,7 @@ public class LuceneDataAccess {
 
     final String indexDirectory = entities.get(0).getClass().getCanonicalName();
     try (
-        final FSDirectory fsDirectory =
-            FSDirectory.open(Paths.get(indexRootDirectory, indexDirectory));
+        final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, indexDirectory));
         final IndexWriter writer = new IndexWriter(fsDirectory, config);) {
 
       for (final HasId entity : entities) {
@@ -127,7 +132,7 @@ public class LuceneDataAccess {
    * Adds the entity to the index specified by the entity class name.
    *
    * @param entity the entity
-   * @throws IOException Signals that an I/O exception has occurred.
+   * @throws IOException            Signals that an I/O exception has occurred.
    * @throws IllegalAccessException the illegal access exception
    */
   public void add(final HasId entity) throws IOException, IllegalAccessException {
@@ -170,8 +175,7 @@ public class LuceneDataAccess {
           if (fieldType != FieldType.Object) {
 
             LOG.debug("Add: field instance of NOT Object OR Collection");
-            final List<IndexableField> indexableFieldsList =
-                IndexUtility.getIndexableFields(entity, field, null);
+            final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field, null);
             for (final IndexableField indexableField : indexableFieldsList) {
               document.add(indexableField);
             }
@@ -180,8 +184,7 @@ public class LuceneDataAccess {
 
             LOG.debug("Add: object field instance of Collection");
             final Collection<?> collection = (Collection<?>) fieldValue;
-            final List<IndexableField> indexableFieldsList =
-                IndexUtility.getIndexableFields(collection, field);
+            final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(collection, field);
             for (final IndexableField indexableField : indexableFieldsList) {
               document.add(indexableField);
             }
@@ -194,8 +197,8 @@ public class LuceneDataAccess {
                 .getDeclaredFields()) {
 
               subClassField.setAccessible(true);
-              final List<IndexableField> indexableFieldsList =
-                  IndexUtility.getIndexableFields(refEntity, subClassField, field.getName());
+              final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(refEntity, subClassField,
+                  field.getName());
               for (final IndexableField indexableField : indexableFieldsList) {
                 document.add(indexableField);
               }
@@ -206,8 +209,7 @@ public class LuceneDataAccess {
         } else {
 
           LOG.debug("Add: object field instance of MultiField");
-          final List<IndexableField> indexableFieldsList =
-              IndexUtility.getIndexableFields(entity, field, null);
+          final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field, null);
           for (final IndexableField indexableField : indexableFieldsList) {
             document.add(indexableField);
           }
@@ -225,12 +227,12 @@ public class LuceneDataAccess {
    * Removes the entity from the index specified by the Class name.
    *
    * @param clazz the clazz
-   * @param id the id
-   * @throws IOException Signals that an I/O exception has occurred.
+   * @param id    the id
+   * @throws IOException            Signals that an I/O exception has occurred.
    * @throws IllegalAccessException the illegal access exception
    */
   public void remove(final Class<? extends HasId> clazz, final String id)
-    throws IOException, IllegalAccessException {
+      throws IOException, IllegalAccessException {
 
     if (id == null) {
       throw new IllegalArgumentException("id cannot be null");
@@ -242,13 +244,11 @@ public class LuceneDataAccess {
     LOG.info("Removing id: {} for index:{}", id, indexDirectory);
 
     try (
-        final FSDirectory fsDirectory =
-            FSDirectory.open(Paths.get(indexRootDirectory, indexDirectory));
+        final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, indexDirectory));
         final IndexWriter writer = new IndexWriter(fsDirectory, config)) {
 
       final Query query = new TermQuery(new Term("id", id));
-      final BooleanQuery booleanQuery =
-          new BooleanQuery.Builder().add(query, BooleanClause.Occur.MUST).build();
+      final BooleanQuery booleanQuery = new BooleanQuery.Builder().add(query, BooleanClause.Occur.MUST).build();
 
       writer.deleteDocuments(booleanQuery);
       writer.commit();
@@ -263,18 +263,17 @@ public class LuceneDataAccess {
   /**
    * Find stored entities by search parameters.
    *
-   * @param <T> the generic type
-   * @param clazz the clazz
+   * @param <T>              the generic type
+   * @param clazz            the clazz
    * @param searchParameters the search parameters
    * @return the list
    * @throws Exception the exception
    */
   public <T extends HasId> ResultList<T> find(final Class<T> clazz,
-    final SearchParameters searchParameters) throws Exception {
+      final SearchParameters searchParameters) throws Exception {
 
     // default search parameters if not provided
-    final SearchParameters sp =
-        (searchParameters != null) ? searchParameters : new SearchParameters();
+    final SearchParameters sp = (searchParameters != null) ? searchParameters : new SearchParameters();
 
     if (sp.getQuery() == null) {
       sp.setQuery("*:*");
@@ -302,25 +301,23 @@ public class LuceneDataAccess {
   /**
    * Find stored entities by search parameters.
    *
-   * @param <T> the generic type
-   * @param clazz the clazz
+   * @param <T>              the generic type
+   * @param clazz            the clazz
    * @param searchParameters the search parameters
-   * @param phraseQuery the phrase query
+   * @param phraseQuery      the phrase query
    * @return the list
    * @throws Exception the exception
    */
   public <T extends HasId> ResultList<T> find(final Class<T> clazz,
-    final SearchParameters searchParameters, final Query phraseQuery) throws Exception {
+      final SearchParameters searchParameters, final Query phraseQuery) throws Exception {
 
     IndexSearcher searcher = null;
 
     try (
-        final FSDirectory fsDirectory =
-            FSDirectory.open(Paths.get(indexRootDirectory, clazz.getCanonicalName()));
+        final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, clazz.getCanonicalName()));
         final IndexReader reader = DirectoryReader.open(fsDirectory)) {
 
-      final BooleanQuery queryBuilder =
-          new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
+      final BooleanQuery queryBuilder = new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
 
       LOG.info("Query: {}", queryBuilder);
 

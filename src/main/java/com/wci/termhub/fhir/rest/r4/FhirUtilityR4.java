@@ -60,6 +60,7 @@ import com.wci.termhub.util.ModelUtility;
 
 import ca.uhn.fhir.rest.param.NumberParam;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Utility for fhir data building.
@@ -132,13 +133,14 @@ public final class FhirUtilityR4 {
       throw exception(
           "Conflicting system values = "
               + ModelUtility.asSet(codeSystem, systemSystem, codingSystem),
-          OperationOutcome.IssueType.INVARIANT, 400);
+          OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     }
     if (id == null && codeSystem == null && systemSystem == null && codingSystem == null) {
       if (nullAllowed) {
         return null;
       }
-      throw FhirUtilityR4.exception("Code system not found", IssueType.NOTFOUND, 404);
+      throw FhirUtilityR4.exception("Code system not found", IssueType.NOTFOUND,
+          HttpServletResponse.SC_NOT_FOUND);
     }
 
     final List<Terminology> list = new ArrayList<>();
@@ -171,19 +173,20 @@ public final class FhirUtilityR4 {
       throw FhirUtilityR4.exception(
           "Too many code systems found matching '" + systemField + "' "
               + "parameter, please specify version as well to differentiate",
-          IssueType.NOTFOUND, 400);
+          IssueType.NOTFOUND, HttpServletResponse.SC_BAD_REQUEST);
 
     }
     // If we get here and "system" was specified, we have a bad system
     if (system != null) {
       throw FhirUtilityR4.exception(
           "Code system not found matching '" + systemField + "' parameter", IssueType.NOTFOUND,
-          404);
+          HttpServletResponse.SC_NOT_FOUND);
     }
     if (nullAllowed) {
       return null;
     }
-    throw FhirUtilityR4.exception("Code system not found", IssueType.NOTFOUND, 404);
+    throw FhirUtilityR4.exception("Code system not found", IssueType.NOTFOUND,
+        HttpServletResponse.SC_NOT_FOUND);
   }
 
   /**
@@ -218,7 +221,7 @@ public final class FhirUtilityR4 {
     final String param2Name, final Object param2) {
     if (param1 != null && param2 != null) {
       throw exception(format("Use one of '%s' or '%s' parameters.", param1Name, param2Name),
-          OperationOutcome.IssueType.INVARIANT, 400);
+          OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
@@ -244,7 +247,8 @@ public final class FhirUtilityR4 {
     if (obj != null) {
       final String message = format("Input parameter '%s' is not supported%s", paramName,
           (additionalDetail == null ? "." : format(" %s", additionalDetail)));
-      throw exception(message, OperationOutcome.IssueType.NOTSUPPORTED, 400);
+      throw exception(message, OperationOutcome.IssueType.NOTSUPPORTED,
+          HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
@@ -257,7 +261,8 @@ public final class FhirUtilityR4 {
   public static void notSupported(final HttpServletRequest request, final String paramName) {
     if (request.getParameterMap().containsKey(paramName)) {
       final String message = format("Input parameter '%s' is not supported", paramName);
-      throw exception(message, OperationOutcome.IssueType.NOTSUPPORTED, 400);
+      throw exception(message, OperationOutcome.IssueType.NOTSUPPORTED,
+          HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
@@ -293,7 +298,7 @@ public final class FhirUtilityR4 {
     if (param1 == null && param2 == null) {
       throw exception(
           format("One of '%s' or '%s' parameters must be supplied.", param1Name, param2Name),
-          IssueType.INVARIANT, 400);
+          IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     } else {
       mutuallyExclusive(param1Name, param1, param2Name, param2);
     }
@@ -312,8 +317,10 @@ public final class FhirUtilityR4 {
   public static void requireExactlyOneOf(final String param1Name, final Object param1,
     final String param2Name, final Object param2, final String param3Name, final Object param3) {
     if (param1 == null && param2 == null && param3 == null) {
-      throw exception(format("One of '%s' or '%s' or '%s' parameters must be supplied.", param1Name,
-          param2Name, param3Name), OperationOutcome.IssueType.INVARIANT, 400);
+      throw exception(
+          format("One of '%s' or '%s' or '%s' parameters must be supplied.", param1Name, param2Name,
+              param3Name),
+          OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     } else {
       mutuallyExclusive(param1Name, param1, param2Name, param2);
       mutuallyExclusive(param1Name, param1, param3Name, param3);
@@ -335,7 +342,7 @@ public final class FhirUtilityR4 {
       throw exception(
           format("Input parameter '%s' can only be used in conjunction with parameter '%s'.",
               param1Name, param2Name),
-          IssueType.INVARIANT, 400);
+          IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
@@ -355,7 +362,7 @@ public final class FhirUtilityR4 {
       throw exception(
           format("Use of input parameter '%s' only allowed if '%s' or '%s' is also present.",
               param1Name, param2Name, param3Name),
-          IssueType.INVARIANT, 400);
+          IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
@@ -369,13 +376,13 @@ public final class FhirUtilityR4 {
   public static String recoverCode(final CodeType code, final Coding coding) {
     if (code == null && coding == null) {
       throw exception("Use either 'code' or 'coding' parameters, not both.",
-          OperationOutcome.IssueType.INVARIANT, 400);
+          OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
     } else if (code != null) {
       if (code.getCode().contains("|")) {
         throw exception(
             "The 'code' parameter cannot supply a codeSystem. "
                 + "Use 'coding' or provide CodeSystem in 'system' parameter.",
-            OperationOutcome.IssueType.NOTSUPPORTED, 400);
+            OperationOutcome.IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
       }
       return code.getCode();
     }
@@ -389,7 +396,8 @@ public final class FhirUtilityR4 {
    * @return the FHIR server response exception
    */
   public static FHIRServerResponseException exceptionNotSupported(final String message) {
-    return exception(message, OperationOutcome.IssueType.NOTSUPPORTED, 501);
+    return exception(message, OperationOutcome.IssueType.NOTSUPPORTED,
+        HttpServletResponse.SC_NOT_IMPLEMENTED);
   }
 
   /**
@@ -520,24 +528,28 @@ public final class FhirUtilityR4 {
       parameters.addParameter(new Parameters.ParametersParameterComponent()
           .setName("sufficientlyDefined").setValue(new BooleanType(concept.getDefined())));
     }
-    if (codeSystem.getTitle().startsWith("SNOMED")) {
-      if (properties == null || properties.contains("effectiveTime")) {
-        parameters.addParameter(createProperty("effectiveTime",
-            DateUtility.DATE_YYYYMMDD.format(concept.getModified()), false));
-      }
-    } else {
-      if (properties == null || properties.contains("modified")) {
-        parameters.addParameter(createProperty("modified", concept.getModified(), false));
-      }
-    }
+    // TODO: review where the value comes from
+    // if (codeSystem.getTitle().startsWith("SNOMED")) {
+    // if (properties == null || properties.contains("effectiveTime")) {
+    // parameters.addParameter(createProperty("effectiveTime",
+    // DateUtility.DATE_YYYYMMDD.format(concept.getModified()), false));
+    // }
+    // } else {
+    // if (properties == null || properties.contains("modified")) {
+    // parameters.addParameter(createProperty("modified", concept.getModified(),
+    // false));
+    // }
+    // }
 
-    if (properties == null || properties.contains("normalForm")) {
-      if (codeSystem.getTitle().startsWith("SNOMED")) {
-        parameters.addParameter(new Parameters.ParametersParameterComponent().setName("normalForm")
-            .setValue(new StringType(
-                FhirUtility.getNormalForm(concept, relationships, displayMap, false))));
-      }
-    }
+    // TODO: review missing "defined"
+    // if (properties == null || properties.contains("normalForm")) {
+    // if (codeSystem.getTitle().startsWith("SNOMED")) {
+    // parameters.addParameter(new
+    // Parameters.ParametersParameterComponent().setName("normalForm")
+    // .setValue(new StringType(
+    // FhirUtility.getNormalForm(concept, relationships, displayMap, false))));
+    // }
+    // }
 
     // Definitions
     if (properties == null || properties.contains("definition")) {
@@ -746,7 +758,7 @@ public final class FhirUtilityR4 {
    * @throws Exception the exception
    */
   public static CodeSystem toR4(final Terminology terminology) throws Exception {
-    final org.hl7.fhir.r4.model.CodeSystem cs = new org.hl7.fhir.r4.model.CodeSystem();
+    final CodeSystem cs = new CodeSystem();
 
     // cs.setUrl(terminology.getAttributes().get("fhirUri"));
     // fhirUri is not in the json data files. setting to id for now
@@ -758,14 +770,18 @@ public final class FhirUtilityR4 {
     cs.setId(terminology.getId());
     cs.setName(terminology.getName());
     cs.setTitle(terminology.getAbbreviation());
-    cs.setPublisher(FhirUtility.getPublisherInfo(terminology.getPublisher()).getName());
+
+    // OLD
+    // cs.setPublisher(FhirUtility.getPublisherInfo(terminology.getPublisher()).getName());
+    cs.setPublisher(terminology.getPublisher());
+
     cs.setStatus(Enumerations.PublicationStatus.ACTIVE);
-    cs.setHierarchyMeaning(org.hl7.fhir.r4.model.CodeSystem.CodeSystemHierarchyMeaning.ISA);
+    cs.setHierarchyMeaning(CodeSystem.CodeSystemHierarchyMeaning.ISA);
     cs.setCompositional("true".equals(terminology.getAttributes().get("fhirCompositional")));
-    if (terminology.getPublisher().equals("SANDBOX")) {
-      cs.setContent(org.hl7.fhir.r4.model.CodeSystem.CodeSystemContentMode.FRAGMENT);
+    if ("SANDBOX".equals(terminology.getPublisher())) {
+      cs.setContent(CodeSystem.CodeSystemContentMode.FRAGMENT);
     } else {
-      cs.setContent(org.hl7.fhir.r4.model.CodeSystem.CodeSystemContentMode.COMPLETE);
+      cs.setContent(CodeSystem.CodeSystemContentMode.COMPLETE);
     }
     cs.setExperimental(false);
     if (terminology.getStatistics().containsKey("concepts")) {
@@ -775,8 +791,6 @@ public final class FhirUtilityR4 {
     }
     cs.setCopyright(terminology.getAttributes().get("copyright"));
 
-    // TODO:
-    // cs.setContact()
     return cs;
   }
 
@@ -788,7 +802,7 @@ public final class FhirUtilityR4 {
    * @throws Exception the exception
    */
   public static ConceptMap toR4(final Mapset mapset) throws Exception {
-    final org.hl7.fhir.r4.model.ConceptMap cm = new org.hl7.fhir.r4.model.ConceptMap();
+    final ConceptMap cm = new ConceptMap();
     cm.setUrl(mapset.getAttributes().get("fhirUri"));
     cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(mapset.getReleaseDate()));
     cm.setVersion(mapset.getAttributes().get("fhirVersion"));

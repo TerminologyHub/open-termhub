@@ -287,7 +287,7 @@ public class TermhubOpenApiInterceptorR4 {
       final String response = Yaml.pretty(openApi);
 
       theResponse.setContentType("text/yaml");
-      theResponse.setStatus(200);
+      theResponse.setStatus(HttpServletResponse.SC_OK);
       try (final PrintWriter writer = theResponse.getWriter();) {
         // Spotbugs
         if (writer == null) {
@@ -320,7 +320,7 @@ public class TermhubOpenApiInterceptorR4 {
 
     final String resourceClasspath = myResourcePathToClasspath.get(requestPath);
     if (resourceClasspath != null) {
-      theResponse.setStatus(200);
+      theResponse.setStatus(HttpServletResponse.SC_OK);
 
       final String extension = requestPath.substring(requestPath.lastIndexOf('.'));
       final String contentType = myExtensionToContentType.get(extension);
@@ -338,7 +338,7 @@ public class TermhubOpenApiInterceptorR4 {
 
     if (resourcePath.equals("swagger-ui-custom.css") && isNotBlank(myCssText)) {
       theResponse.setContentType("text/css");
-      theResponse.setStatus(200);
+      theResponse.setStatus(HttpServletResponse.SC_OK);
       try (final PrintWriter writer = theResponse.getWriter();) {
         // Spotbugs
         if (writer == null) {
@@ -356,7 +356,7 @@ public class TermhubOpenApiInterceptorR4 {
 
       if (resourcePath.endsWith(".js") || resourcePath.endsWith(".map")) {
         theResponse.setContentType("application/javascript");
-        theResponse.setStatus(200);
+        theResponse.setStatus(HttpServletResponse.SC_OK);
         IOUtils.copy(resource, os);
         theResponse.getOutputStream().close();
         return true;
@@ -364,7 +364,7 @@ public class TermhubOpenApiInterceptorR4 {
 
       if (resourcePath.endsWith(".css")) {
         theResponse.setContentType("text/css");
-        theResponse.setStatus(200);
+        theResponse.setStatus(HttpServletResponse.SC_OK);
         IOUtils.copy(resource, os);
         theResponse.getOutputStream().close();
         return true;
@@ -372,7 +372,7 @@ public class TermhubOpenApiInterceptorR4 {
 
       if (resourcePath.endsWith(".html")) {
         theResponse.setContentType(Constants.CT_HTML);
-        theResponse.setStatus(200);
+        theResponse.setStatus(HttpServletResponse.SC_OK);
         IOUtils.copy(resource, os);
         theResponse.getOutputStream().close();
         return true;
@@ -440,7 +440,7 @@ public class TermhubOpenApiInterceptorR4 {
     final CapabilityStatement cs = getCapabilityStatement(theRequestDetails);
 
     final String baseUrl = removeTrailingSlash(cs.getImplementation().getUrl());
-    theResponse.setStatus(200);
+    theResponse.setStatus(HttpServletResponse.SC_OK);
     theResponse.setContentType(Constants.CT_HTML);
 
     final HttpServletRequest servletRequest = theRequestDetails.getServletRequest();
@@ -1173,7 +1173,8 @@ public class TermhubOpenApiInterceptorR4 {
     response200.setDescription("Success");
     response200.setContent(provideContentFhirResource(theOpenApi, theFhirContext,
         genericExampleSupplier(theFhirContext, theResourceType)));
-    theOperation.getResponses().addApiResponse("200", response200);
+    theOperation.getResponses().addApiResponse(String.valueOf(HttpServletResponse.SC_OK),
+        response200);
   }
 
   /**

@@ -36,7 +36,6 @@ import org.springframework.stereotype.Component;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
-import com.wci.termhub.model.AuthContext;
 import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
@@ -87,7 +86,6 @@ public class ConceptMapProviderR4 implements IResourceProvider {
   public ConceptMap getConceptMap(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
-    FhirUtility.authorize(request);
     try {
 
       final List<ConceptMap> candidates = new ArrayList<>(); // findCandidates();
@@ -98,14 +96,14 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       }
       throw FhirUtilityR4.exception(
           "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
-          404);
+          HttpServletResponse.SC_NOT_FOUND);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to load concept map",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -180,8 +178,6 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
         name = "_offset") final NumberParam offset)
     throws Exception {
-
-    FhirUtility.authorize(request);
 
     try {
 
@@ -296,7 +292,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to find concept maps",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -351,11 +347,10 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     @OperationParam(name = "targetsystem") final UriType targetSystem,
     @OperationParam(name = "reverse") final BooleanType reverse) throws Exception {
 
-    final AuthContext context = FhirUtility.authorize(request);
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR4.exception("POST method not supported for $translate",
-          IssueType.NOTSUPPORTED, 405);
+          IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     FhirUtilityR4.requireExactlyOneOf("code", code, "coding", coding, "codeableConcept",
@@ -403,14 +398,15 @@ public class ConceptMapProviderR4 implements IResourceProvider {
             reverse != null && reverse.getValue());
       }
 
-      throw FhirUtilityR4.exception("Concept map not found = " + url, IssueType.NOTFOUND, 404);
+      throw FhirUtilityR4.exception("Concept map not found = " + url, IssueType.NOTFOUND,
+          HttpServletResponse.SC_NOT_FOUND);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to translate concept map",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -464,12 +460,10 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     @OperationParam(name = "targetSystem") final UriType targetSystem,
     @OperationParam(name = "reverse") final BooleanType reverse) throws Exception {
 
-    final AuthContext context = FhirUtility.authorize(request);
-
     // Reject post
     if (request.getMethod().equals("POST")) {
       throw FhirUtilityR4.exception("POST method not supported for $translate",
-          IssueType.NOTSUPPORTED, 405);
+          IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     FhirUtilityR4.requireExactlyOneOf("code", code, "coding", coding, "codeableConcept",
@@ -528,14 +522,15 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       // critiera");
       // return parameters;
 
-      throw FhirUtilityR4.exception("Concept map not found = " + url, IssueType.NOTFOUND, 404);
+      throw FhirUtilityR4.exception("Concept map not found = " + url, IssueType.NOTFOUND,
+          HttpServletResponse.SC_NOT_FOUND);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR4.exception("Failed to translate concept map",
-          OperationOutcome.IssueType.EXCEPTION, 500);
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 

@@ -10,6 +10,7 @@
 package com.wci.termhub.rest.client;
 
 import java.lang.reflect.Constructor;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -84,7 +85,8 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
 
     // Read statements from resources
     List<String> lines = IOUtils.readLines(
-        getClass().getClassLoader().getResourceAsStream("mock/config/typeKeyValue.txt"), "UTF-8");
+        getClass().getClassLoader().getResourceAsStream("mock/config/typeKeyValue.txt"),
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -95,7 +97,8 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
 
     // Read statements from resources
     lines = IOUtils.readLines(
-        getClass().getClassLoader().getResourceAsStream("mock/config/licenseInfo.txt"), "UTF-8");
+        getClass().getClassLoader().getResourceAsStream("mock/config/licenseInfo.txt"),
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -106,7 +109,8 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
 
     // Read statements from resources
     lines = IOUtils.readLines(
-        getClass().getClassLoader().getResourceAsStream("mock/config/languageInfo.txt"), "UTF-8");
+        getClass().getClassLoader().getResourceAsStream("mock/config/languageInfo.txt"),
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -117,7 +121,8 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
 
     // Read statements from resources
     lines = IOUtils.readLines(
-        getClass().getClassLoader().getResourceAsStream("mock/config/publisherInfo.txt"), "UTF-8");
+        getClass().getClassLoader().getResourceAsStream("mock/config/publisherInfo.txt"),
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -128,7 +133,8 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
 
     // Read statements from resources
     lines = IOUtils.readLines(
-        getClass().getClassLoader().getResourceAsStream("mock/config/planInfo.txt"), "UTF-8");
+        getClass().getClassLoader().getResourceAsStream("mock/config/planInfo.txt"),
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -139,7 +145,8 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
 
     // Read statements from resources
     lines = IOUtils.readLines(
-        getClass().getClassLoader().getResourceAsStream("mock/config/resourceInfo.txt"), "UTF-8");
+        getClass().getClassLoader().getResourceAsStream("mock/config/resourceInfo.txt"),
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -151,7 +158,7 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
     // Read statements from resources
     lines = IOUtils.readLines(
         getClass().getClassLoader().getResourceAsStream("mock/config/terminologyInfo.txt"),
-        "UTF-8");
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;

@@ -36,6 +36,7 @@ import com.wci.termhub.model.AuthContext;
 import com.wci.termhub.model.AuthResponse;
 import com.wci.termhub.model.enums.UserRole;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.WebApplicationException;
 
 /**
@@ -163,7 +164,7 @@ public final class JwtUtility {
         // Log the error because authorize is called before "try"
         // block
         logger.error("Non-admin JWT unexpectedly missing ID claim = " + ModelUtility.toJson(claims),
-            401);
+            HttpServletResponse.SC_UNAUTHORIZED);
         throw new WebApplicationException("Non-admin JWT unexpectedly missing ID claim");
       }
     } else {
@@ -171,14 +172,16 @@ public final class JwtUtility {
           && !userId.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
         logger.error("JWT ID claim is unexpectedly not a valid UUID/admin= " + userId);
         throw new WebApplicationException(
-            "JWT ID claim is unexpectedly not a valid UUID/admin = " + userId, 401);
+            "JWT ID claim is unexpectedly not a valid UUID/admin = " + userId,
+            HttpServletResponse.SC_UNAUTHORIZED);
       }
     }
 
     // final String aud = djwt.getAudience().get(0);
     // if (!aud.contains(getAudience())) {
     // logger.error("JWT bad audience = " + aud + ", " + getAudience());
-    // throw new WebApplicationException("JWT bad audience = " + aud, 401);
+    // throw new WebApplicationException("JWT bad audience = " + aud,
+    // HttpServletResponse.);
     // }
 
     final Algorithm algorithm = Algorithm.HMAC256(secret);
@@ -212,7 +215,7 @@ public final class JwtUtility {
     final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
     try {
       algorithm.verify(djwt);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       // NOTE; if they've switched keys at the URL, this key may no longer
       // be
       // valid in that case, clear the map for this url and try again
@@ -735,7 +738,8 @@ public final class JwtUtility {
     // Check claims not allowed to be overridden
     for (final String claim : getImmutableClaims()) {
       if (lclaims.containsKey(claim)) {
-        throw new WebApplicationException("Proxy auth unable to overwrite claim = " + claim, 417);
+        throw new WebApplicationException("Proxy auth unable to overwrite claim = " + claim,
+            HttpServletResponse.SC_EXPECTATION_FAILED);
       }
     }
 
@@ -745,7 +749,8 @@ public final class JwtUtility {
           Claims.PLAN.getValue(), Claims.ID.getValue()
       }) {
         if (lclaims.containsKey(claim)) {
-          throw new WebApplicationException("Proxy auth unable to overwrite claim = " + claim, 417);
+          throw new WebApplicationException("Proxy auth unable to overwrite claim = " + claim,
+              HttpServletResponse.SC_EXPECTATION_FAILED);
         }
       }
 
@@ -753,7 +758,8 @@ public final class JwtUtility {
       final String claim = Claims.ROLE.getValue();
       if (lclaims.containsKey(claim)) {
         if (!"ADMIN".equals(context.getRole())) {
-          throw new WebApplicationException("Proxy auth unable to overwrite claim = " + claim, 417);
+          throw new WebApplicationException("Proxy auth unable to overwrite claim = " + claim,
+              HttpServletResponse.SC_EXPECTATION_FAILED);
         }
       }
     }
@@ -764,7 +770,8 @@ public final class JwtUtility {
       role = lclaims.get(Claims.ROLE.getValue());
       if (!EnumUtils.isValidEnum(UserRole.class, role)) {
         throw new WebApplicationException(
-            "Proxy auth able to overwrite role with illegal value = " + role, 417);
+            "Proxy auth able to overwrite role with illegal value = " + role,
+            HttpServletResponse.SC_EXPECTATION_FAILED);
       }
     }
 

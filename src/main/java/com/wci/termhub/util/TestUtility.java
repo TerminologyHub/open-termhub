@@ -10,6 +10,7 @@
 package com.wci.termhub.util;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -59,7 +60,8 @@ public final class TestUtility {
   @SuppressWarnings("resource")
   public static User getMockUser(final String value) throws Exception {
     final List<String> lines = IOUtils.readLines(
-        TestUtility.class.getClassLoader().getResourceAsStream("mock/user/users.txt"), "UTF-8");
+        TestUtility.class.getClassLoader().getResourceAsStream("mock/user/users.txt"),
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -102,8 +104,8 @@ public final class TestUtility {
   public static Concept getMockConcept(final String conceptName) throws Exception {
     final InputStream is =
         Application.class.getClassLoader().getResourceAsStream("mock/terminology/concepts.txt");
-    final List<Concept> concepts =
-        ModelUtility.fromJson(IOUtils.toString(is, "UTF-8"), new TypeReference<List<Concept>>() {
+    final List<Concept> concepts = ModelUtility
+        .fromJson(IOUtils.toString(is, StandardCharsets.UTF_8), new TypeReference<List<Concept>>() {
           // n/a
         });
     for (final Concept cpt : concepts) {
@@ -128,7 +130,7 @@ public final class TestUtility {
   public static LicenseInfo getMockLicense(final String license) throws Exception {
     final List<String> lines = IOUtils.readLines(
         TestUtility.class.getClassLoader().getResourceAsStream("mock/config/licenseInfo.txt"),
-        "UTF-8");
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -155,7 +157,7 @@ public final class TestUtility {
   public static FamilyInfo getMockFamily(final String family) throws Exception {
     final List<String> lines = IOUtils.readLines(
         TestUtility.class.getClassLoader().getResourceAsStream("mock/config/familyInfo.txt"),
-        "UTF-8");
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -182,7 +184,7 @@ public final class TestUtility {
   public static PublisherInfo getMockPublisher(final String publisher) throws Exception {
     final List<String> lines = IOUtils.readLines(
         TestUtility.class.getClassLoader().getResourceAsStream("mock/config/publisherInfo.txt"),
-        "UTF-8");
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -209,7 +211,7 @@ public final class TestUtility {
   public static PlanInfo getMockPlan(final String plan) throws Exception {
     final List<String> lines = IOUtils.readLines(
         TestUtility.class.getClassLoader().getResourceAsStream("mock/config/planInfo.txt"),
-        "UTF-8");
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -233,7 +235,7 @@ public final class TestUtility {
   public static ResourceInfo getMockResource(final String resource) throws Exception {
     final List<String> lines = IOUtils.readLines(
         TestUtility.class.getClassLoader().getResourceAsStream("mock/config/resourceInfo.txt"),
-        "UTF-8");
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -257,7 +259,7 @@ public final class TestUtility {
   public static TerminologyInfo getMockTerminology(final String terminology) throws Exception {
     final List<String> lines = IOUtils.readLines(
         TestUtility.class.getClassLoader().getResourceAsStream("mock/config/terminologyInfo.txt"),
-        "UTF-8");
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -284,7 +286,7 @@ public final class TestUtility {
   public static TypeKeyValue getMockTypeKeyValue(final String typeKeyValue) throws Exception {
     final List<String> lines = IOUtils.readLines(
         TestUtility.class.getClassLoader().getResourceAsStream("mock/config/typeKeyValue.txt"),
-        "UTF-8");
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;
@@ -308,7 +310,7 @@ public final class TestUtility {
   public static LanguageInfo getMockLanguage(final String language) throws Exception {
     final List<String> lines = IOUtils.readLines(
         TestUtility.class.getClassLoader().getResourceAsStream("mock/config/languageInfo.txt"),
-        "UTF-8");
+        StandardCharsets.UTF_8);
     for (final String line : lines) {
       if (line.isEmpty() || line.startsWith("#")) {
         continue;

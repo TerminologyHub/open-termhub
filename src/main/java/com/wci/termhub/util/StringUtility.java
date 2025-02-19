@@ -12,6 +12,7 @@ package com.wci.termhub.util;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,7 +88,7 @@ public final class StringUtility {
   // try {
   // return new HashSet<>(IOUtils
   // .readLines(StringUtility.class.getClassLoader().getResourceAsStream("stopwords.txt"),
-  // "UTF-8"));
+  // StandardCharsets.UTF_8));
   // } catch (final Exception e) {
   // throw new RuntimeException(e);
   // }
@@ -102,7 +103,7 @@ public final class StringUtility {
   // try {
   // return IOUtils
   // .readLines(StringUtility.class.getClassLoader().getResourceAsStream("unicodeAsciiMap.txt"),
-  // "UTF-8")
+  // StandardCharsets.UTF_8)
   // .stream().filter(s -> s.startsWith("U"))
   // .filter(s -> Character.isValidCodePoint(
   // Integer.parseInt(s.replaceFirst("U\\+", "").replaceFirst("\\|.*", ""),
@@ -503,7 +504,7 @@ public final class StringUtility {
       if (value.matches("^[0-9a-zA-Z\\-\\.]*$")) {
         sb.append(value);
       } else {
-        sb.append(URLEncoder.encode(value, "UTF-8").replaceAll("\\+", "%20"));
+        sb.append(URLEncoder.encode(value, StandardCharsets.UTF_8).replaceAll("\\+", "%20"));
       }
     }
     return (sb.length() > 0 ? "?" + sb.toString() : "");
