@@ -9,6 +9,8 @@
  */
 package com.wci.termhub.rest;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,8 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +39,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.wci.termhub.Application;
 import com.wci.termhub.algo.TreePositionAlgorithm;
@@ -60,6 +66,7 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.service.RootServiceRestImpl;
 import com.wci.termhub.util.AdhocUtility;
+import com.wci.termhub.util.FileUtility;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
 import com.wci.termhub.util.StringUtility;
@@ -79,11 +86,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.core.MediaType;
 
 /**
  * Reference implementation of {@link TerminologyServiceRestOld}.
@@ -112,7 +117,7 @@ import jakarta.ws.rs.core.MediaType;
     })
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON)
+@RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 public class TerminologyServiceRestImpl extends RootServiceRestImpl
     implements TerminologyServiceRest {
 
@@ -142,6 +147,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /** The builders. */
   @Autowired
   private List<QueryBuilder> builders;
+
+  /** The rest template. */
+  @Autowired
+  private RestTemplate restTemplate;
 
   /**
    * Instantiates an empty {@link TerminologyServiceRestImpl}.
@@ -268,8 +277,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.GET)
   @Operation(summary = "Get terminology by id",
-      description = "Gets terminology for the specified id",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Gets terminology for the specified id", tags = {
           "terminology"
       })
   @ApiResponses({
@@ -315,8 +323,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}/metadata", method = RequestMethod.GET)
   @Operation(summary = "Get terminology metadata",
-      description = "Gets terminology metadata for the specified terminology id",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Gets terminology metadata for the specified terminology id", tags = {
           "metadata"
       })
   @ApiResponses({
@@ -368,7 +375,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.POST,
-      consumes = MediaType.APPLICATION_JSON)
+      consumes = MediaType.APPLICATION_JSON_VALUE)
   @Hidden
   public ResponseEntity<Terminology> addTerminology(
     @org.springframework.web.bind.annotation.RequestBody final String terminologyStr)
@@ -404,6 +411,72 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   }
 
   /**
+   * Adds the terminology.
+   *
+   * @param file the terminology code system zip file
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  @RequestMapping(value = "/terminology/fhir/codeSystem", method = RequestMethod.POST,
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(summary = "FHIR CodeSystem operation",
+      description = "Performs a FHIR CodeSystem operation", tags = {
+          "terminology"
+      })
+  @Parameters({
+      @Parameter(name = "file", description = "ZIP file containing FHIR CodeSystem resources",
+          required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+  })
+  public ResponseEntity<String> addTerminologyFhirCodeSystem(
+    @RequestParam("file") final MultipartFile file) throws Exception {
+
+    if (file == null || file.isEmpty()) {
+      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+
+      final File tempDir = FileUtility.extractFiles(file, "fhirCodeSystem");
+
+      final long processStartTime = System.currentTimeMillis();
+      long fileStartTime;
+      // read json files in loop
+      final File[] jsonFiles =
+          tempDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".json"));
+      if (jsonFiles == null) {
+        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      for (final File jsonFile : jsonFiles) {
+        fileStartTime = System.currentTimeMillis();
+        // for each json file - send to /fhir/r5/CodeSystem
+        final String jsonContent = new String(Files.readAllBytes(jsonFile.toPath()));
+        final HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", "application/fhir+json");
+        final HttpEntity<String> entity = new HttpEntity<>(jsonContent, headers);
+        final ResponseEntity<String> response = restTemplate
+            .postForEntity("http://localhost:8080/fhir/r5/CodeSystem", entity, String.class);
+        if (!response.getStatusCode().is2xxSuccessful()) {
+          return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        logger.info("Processed file: {} in {} seconds", jsonFile.getName(),
+            Precision.round((System.currentTimeMillis() - fileStartTime) / 1000.0, 2));
+      }
+
+      logger.info("Processed all files in {} seconds",
+          Precision.round((System.currentTimeMillis() - processStartTime) / 1000.0, 2));
+
+      // return 200 OK
+      return new ResponseEntity<>("Loaded the FHIR CodeSystem resources", HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to add terminology");
+      return null;
+    }
+
+  }
+
+  /**
    * Update terminology.
    *
    * @param id the id
@@ -414,7 +487,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.PATCH,
-      consumes = MediaType.APPLICATION_JSON)
+      consumes = MediaType.APPLICATION_JSON_VALUE)
   @Hidden
   public ResponseEntity<Terminology> updateTerminology(@PathVariable("id") final String id,
     @org.springframework.web.bind.annotation.RequestBody final String terminologyStr)
@@ -499,8 +572,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.GET)
   @Operation(summary = "Find terminologies",
-      description = "Finds terminologies matching specified criteria.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Finds terminologies matching specified criteria.", tags = {
           "terminology"
       })
   @ApiResponses({
@@ -568,7 +640,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}", method = RequestMethod.GET)
   @Operation(summary = "Get concept by id", description = "Gets concept for the specified id",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      tags = {
           "concept by id"
       })
   @ApiResponses({
@@ -648,8 +720,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}", method = RequestMethod.GET)
   @Operation(summary = "Get concept by terminology and code",
-      description = "Gets concept for the specified terminology and code.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Gets concept for the specified terminology and code.", tags = {
           "concept by code"
       })
   @ApiResponses({
@@ -735,8 +806,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept/{terminology:[A-Z].*}", method = RequestMethod.GET)
   @Operation(summary = "Get concepts by terminology and list of codes",
-      description = "Gets concepts for the specified terminology and list of codes.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Gets concepts for the specified terminology and list of codes.", tags = {
           "concept by code"
       })
   @ApiResponses({
@@ -839,8 +909,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept", method = RequestMethod.GET)
   @Operation(summary = "Find concepts across terminologies",
-      description = "Finds concepts matching specified search criteria.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Finds concepts matching specified search criteria.", tags = {
           "concept"
       })
   @ApiResponses({
@@ -950,8 +1019,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/term", method = RequestMethod.GET)
   @Operation(summary = "Find terms across terminologies",
-      description = "Finds terms matching specified search criteria.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Finds terms matching specified search criteria.", tags = {
           "term"
       })
   @ApiResponses({
@@ -1048,8 +1116,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept/bulk", method = RequestMethod.POST)
   @Operation(summary = "Bulk find of concepts across specified terminologies",
-      description = "Bulk find of concepts matching specified search criteria.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Bulk find of concepts matching specified search criteria.", tags = {
           "concept"
       })
   @ApiResponses({
@@ -1091,7 +1158,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   })
   @RequestBody(description = "Newline-separated lines of text, one line for each query",
       required = true, content = @Content(schema = @Schema(implementation = String.class),
-          mediaType = MediaType.TEXT_PLAIN, examples = {
+          mediaType = MediaType.TEXT_PLAIN_VALUE, examples = {
               @ExampleObject(value = "heart\nkidney\n12738006")
           }))
   public ResponseEntity<List<ResultListConcept>> lookup(
@@ -1225,8 +1292,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/metadata", method = RequestMethod.GET)
   @Operation(summary = "Find terminology metadata",
-      description = "Find metadata for the terminologies",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Find metadata for the terminologies", tags = {
           "metadata"
       })
   @ApiResponses({
@@ -1303,8 +1369,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept/{conceptId}/relationships", method = RequestMethod.GET)
   @Operation(summary = "Find concept relationships",
-      description = "Finds concept relationships for the specified concept id.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Finds concept relationships for the specified concept id.", tags = {
           "concept by id"
       })
   @ApiResponses({
@@ -1394,8 +1459,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/relationships", method = RequestMethod.GET)
   @Operation(summary = "Find concept relationships by terminology and code",
-      description = "Finds concept relationships for the specified terminology and code.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Finds concept relationships for the specified terminology and code.", tags = {
           "concept by code"
       })
   @ApiResponses({
@@ -1483,8 +1547,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept/{conceptId}/inverseRelationships", method = RequestMethod.GET)
   @Operation(summary = "Find concept inverse relationships",
-      description = "Finds concept inverse relationships for the specified concept id.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Finds concept inverse relationships for the specified concept id.", tags = {
           "concept by id"
       })
   @ApiResponses({
@@ -1577,7 +1640,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       method = RequestMethod.GET)
   @Operation(summary = "Find concept inverse relationships by terminology and code",
       description = "Finds concept inverse relationships for the specified terminology and code.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      tags = {
           "concept by code"
       })
   @ApiResponses({
@@ -1665,8 +1728,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept/{conceptId}/trees", method = RequestMethod.GET)
   @Operation(summary = "Find concept tree positions",
-      description = "Finds concept tree positions for the specified concept id.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Finds concept tree positions for the specified concept id.", tags = {
           "concept by id"
       })
   @ApiResponses({
@@ -1771,8 +1833,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/trees", method = RequestMethod.GET)
   @Operation(summary = "Find concept tree positions by terminology and code",
-      description = "Finds concept tree positions for the specified terminology and code.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Finds concept tree positions for the specified terminology and code.", tags = {
           "concept by code"
       })
   @ApiResponses({
@@ -1870,8 +1931,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @RequestMapping(value = "/concept/{conceptId}/trees/children", method = RequestMethod.GET)
 
   @Operation(summary = "Find concept tree position children",
-      description = "Finds concept tree position children for the specified concept id.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      description = "Finds concept tree position children for the specified concept id.", tags = {
           "concept by id"
       })
   @ApiResponses({
@@ -1987,7 +2047,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       method = RequestMethod.GET)
   @Operation(summary = "Find concept tree position children by terminology and code",
       description = "Finds concept tree position children for the specified terminology and code.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      tags = {
           "concept by code"
       })
   @ApiResponses({
@@ -2091,7 +2151,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @RequestMapping(value = "/terminology/{terminology}/trees", method = RequestMethod.POST)
   @Operation(summary = "Compute concept tree positions by terminology, publisher and version",
       description = "Computes concept tree positions for the specified terminology, publisher and version.",
-      security = @SecurityRequirement(name = "bearerAuth"), tags = {
+      tags = {
           "concept by code"
       })
   @ApiResponses({

@@ -88,6 +88,7 @@ public class HapiR4RestfulServlet extends RestfulServer {
     setResourceProviders(applicationContext.getBean(CodeSystemProviderR4.class),
         applicationContext.getBean(ValueSetProviderR4.class),
         applicationContext.getBean(ConceptMapProviderR4.class));
+    // , applicationContext.getBean(TerminologyUploadProviderR4.class)
 
     setServerConformanceProvider(new FHIRTerminologyCapabilitiesProviderR4(this));
 

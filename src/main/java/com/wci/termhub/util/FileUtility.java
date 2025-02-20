@@ -24,7 +24,11 @@ import java.util.zip.ZipInputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * The Class FileUtility.
+ */
 public final class FileUtility {
 
   /** The logger. */
@@ -91,7 +95,7 @@ public final class FileUtility {
     if (!destinationDir.exists()) {
       destinationDir.mkdirs();
     }
-    logger.info("Starting extracting files to " + destinationDir.getAbsolutePath());
+    logger.info("Starting extracting files to {}", destinationDir.getAbsolutePath());
 
     try (final InputStream fis = Files.newInputStream(Paths.get(zipFilePath));
         final ZipInputStream zis = new ZipInputStream(fis)) {
@@ -102,7 +106,7 @@ public final class FileUtility {
 
         final File newFile = getZippedFile(destinationDir, zipEntry);
 
-        logger.info("Extracting file to " + newFile.getAbsolutePath());
+        logger.info("Extracting file to {}", newFile.getAbsolutePath());
 
         try (final FileOutputStream fos = new FileOutputStream(newFile)) {
           final byte[] buffer = new byte[1024];
@@ -138,6 +142,40 @@ public final class FileUtility {
       throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
     }
     return destFile;
+  }
+
+  /**
+   * Extract files.
+   *
+   * @param sourceFile the source file
+   * @param tempDirName the temp dir name
+   * @return the file
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  public static File extractFiles(final MultipartFile sourceFile, final String tempDirName)
+    throws IOException {
+
+    final File tempDir = Files.createTempDirectory(tempDirName).toFile();
+    try (final ZipInputStream zis = new ZipInputStream(sourceFile.getInputStream())) {
+      ZipEntry zipEntry;
+      while ((zipEntry = zis.getNextEntry()) != null) {
+        final File newFile = new File(tempDir, zipEntry.getName());
+        if (zipEntry.isDirectory()) {
+          newFile.mkdirs();
+        } else {
+          new File(newFile.getParent()).mkdirs();
+          try (final FileOutputStream fos = new FileOutputStream(newFile)) {
+            final byte[] buffer = new byte[1024];
+            int len;
+            while ((len = zis.read(buffer)) > 0) {
+              fos.write(buffer, 0, len);
+            }
+          }
+        }
+        zis.closeEntry();
+      }
+    }
+    return tempDir;
   }
 
 }

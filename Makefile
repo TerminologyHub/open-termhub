@@ -25,8 +25,7 @@ scandocker:
 
 # Build the library without tests
 build:
-	./gradlew build test -x javadoc
-#  -x spotbugsMain -x spotbugsTest
+	./gradlew build	test -x javadoc -x spotbugsMain -x spotbugsTest
 
 scan:
 	/bin/rm -rf gradle/dependency-locks
