@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -38,129 +38,129 @@ import com.wci.termhub.util.ModelUtility;
 @SpringBootTest
 public class TermUnitTest extends AbstractTest {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private static Logger logger = LoggerFactory.getLogger(TermUnitTest.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private static Logger logger = LoggerFactory.getLogger(TermUnitTest.class);
 
-	/** The model object to test. */
-	private Term object;
+  /** The model object to test. */
+  private Term object;
 
-	/** The lm 1. */
-	private Map<String, Boolean> lm1;
+  /** The lm 1. */
+  private Map<String, Boolean> lm1;
 
-	/** The lm 2. */
-	private Map<String, Boolean> lm2;
+  /** The lm 2. */
+  private Map<String, Boolean> lm2;
 
-	/** The at 1. */
-	private Map<String, String> at1;
+  /** The at 1. */
+  private Map<String, String> at1;
 
-	/** The at 2. */
-	private Map<String, String> at2;
+  /** The at 2. */
+  private Map<String, String> at2;
 
-	/**
-	 * Setup.
-	 *
-	 * @throws Exception the exception
-	 */
-	@BeforeEach
-	public void setup() throws Exception {
-		object = new Term();
+  /**
+   * Setup.
+   *
+   * @throws Exception the exception
+   */
+  @BeforeEach
+  public void setup() throws Exception {
+    object = new Term();
 
-		// locale maps
-		lm1 = new HashMap<>();
-		lm1.put("1", true);
-		lm2 = new HashMap<>();
-		lm2.put("2", true);
-		lm2.put("3", true);
+    // locale maps
+    lm1 = new HashMap<>();
+    lm1.put("1", true);
+    lm2 = new HashMap<>();
+    lm2.put("2", true);
+    lm2.put("3", true);
 
-		// attribute maps
-		at1 = new HashMap<>();
-		at1.put("1", "1");
-		at2 = new HashMap<>();
-		at2.put("2", "2");
-		at2.put("3", "3");
+    // attribute maps
+    at1 = new HashMap<>();
+    at1.put("1", "1");
+    at2 = new HashMap<>();
+    at2.put("2", "2");
+    at2.put("3", "3");
 
-	}
+  }
 
-	/**
-	 * Test getter and setter methods of model object.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelGetSet() throws Exception {
-		final GetterSetterTester tester = new GetterSetterTester(object);
-		tester.proxy("localeMap", 1, lm1);
-		tester.proxy("localeMap", 2, lm2);
-		tester.proxy("attributes", 1, at1);
-		tester.proxy("attributes", 2, at2);
-		tester.test();
-	}
+  /**
+   * Test getter and setter methods of model object.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelGetSet() throws Exception {
+    final GetterSetterTester tester = new GetterSetterTester(object);
+    tester.proxy("localeMap", 1, lm1);
+    tester.proxy("localeMap", 2, lm2);
+    tester.proxy("attributes", 1, at1);
+    tester.proxy("attributes", 2, at2);
+    tester.test();
+  }
 
-	/**
-	 * Test equals and hascode methods.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelEqualsHashcode() throws Exception {
-		final EqualsHashcodeTester tester = new EqualsHashcodeTester(object);
-		tester.include("id");
-		tester.proxy("localeMap", 1, lm1);
-		tester.proxy("localeMap", 2, lm2);
-		tester.proxy("attributes", 1, at1);
-		tester.proxy("attributes", 2, at2);
-		assertTrue(tester.testIdentityFieldEquals());
-		assertTrue(tester.testNonIdentityFieldEquals());
-		assertTrue(tester.testIdentityFieldNotEquals());
-		assertTrue(tester.testIdentityFieldHashcode());
-		assertTrue(tester.testNonIdentityFieldHashcode());
-		assertTrue(tester.testIdentityFieldDifferentHashcode());
-	}
+  /**
+   * Test equals and hascode methods.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelEqualsHashcode() throws Exception {
+    final EqualsHashcodeTester tester = new EqualsHashcodeTester(object);
+    tester.include("id");
+    tester.proxy("localeMap", 1, lm1);
+    tester.proxy("localeMap", 2, lm2);
+    tester.proxy("attributes", 1, at1);
+    tester.proxy("attributes", 2, at2);
+    assertTrue(tester.testIdentityFieldEquals());
+    assertTrue(tester.testNonIdentityFieldEquals());
+    assertTrue(tester.testIdentityFieldNotEquals());
+    assertTrue(tester.testIdentityFieldHashcode());
+    assertTrue(tester.testNonIdentityFieldHashcode());
+    assertTrue(tester.testIdentityFieldDifferentHashcode());
+  }
 
-	/**
-	 * Test copy constructor.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelCopy() throws Exception {
-		final CopyConstructorTester tester = new CopyConstructorTester(object);
-		tester.proxy("localeMap", 1, lm1);
-		tester.proxy("attributes", 1, at1);
-		assertTrue(tester.testCopyConstructor(Term.class));
-	}
+  /**
+   * Test copy constructor.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelCopy() throws Exception {
+    final CopyConstructorTester tester = new CopyConstructorTester(object);
+    tester.proxy("localeMap", 1, lm1);
+    tester.proxy("attributes", 1, at1);
+    assertTrue(tester.testCopyConstructor(Term.class));
+  }
 
-	/**
-	 * Test XML serialization.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelJsonSerialization() throws Exception {
-		final SerializationTester tester = new SerializationTester(object);
-		tester.proxy("localeMap", 1, lm1);
-		tester.proxy("attributes", 1, at1);
-		assertTrue(tester.testJsonSerialization());
-	}
+  /**
+   * Test XML serialization.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelJsonSerialization() throws Exception {
+    final SerializationTester tester = new SerializationTester(object);
+    tester.proxy("localeMap", 1, lm1);
+    tester.proxy("attributes", 1, at1);
+    assertTrue(tester.testJsonSerialization());
+  }
 
-	/**
-	 * Test model json serialization 2.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelJsonSerialization2() throws Exception {
-		// Verify that "normName" and "wordCt" are working properly
-		final Term term = new Term();
-		term.setName("This IS a test.");
-		assertTrue(term.toString().contains("\"normName\" : \"this is a test\""));
-		// wordCt is no longer exposed
-		assertFalse(term.toString().contains("\"wordCt\" : 4"));
-		final Term term2 = ModelUtility.fromJson(term.toString(), Term.class);
-		assertTrue(term2.toString().contains("\"normName\" : \"this is a test\""));
-		// wordCt is no longer exposed
-		assertFalse(term2.toString().contains("\"wordCt\" : 4"));
-	}
+  /**
+   * Test model json serialization 2.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelJsonSerialization2() throws Exception {
+    // Verify that "normName" and "wordCt" are working properly
+    final Term term = new Term();
+    term.setName("This IS a test.");
+    assertTrue(term.toString().contains("\"normName\" : \"this is a test\""));
+    // wordCt is no longer exposed
+    assertFalse(term.toString().contains("\"wordCt\" : 4"));
+    final Term term2 = ModelUtility.fromJson(term.toString(), Term.class);
+    assertTrue(term2.toString().contains("\"normName\" : \"this is a test\""));
+    // wordCt is no longer exposed
+    assertFalse(term2.toString().contains("\"wordCt\" : 4"));
+  }
 
 }

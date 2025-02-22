@@ -21,37 +21,38 @@ import com.wci.termhub.model.HealthCheck;
  */
 public class RootClientRestMock extends RootClientRestImpl {
 
-	/** The logger. */
-	private static Logger logger = LoggerFactory.getLogger(RootClientRestMock.class);
+  /** The logger. */
+  private static Logger logger = LoggerFactory.getLogger(RootClientRestMock.class);
 
-	/** The service. */
-	private final String service;
+  /** The service. */
+  private final String service;
 
-	/**
-	 * Instantiates a {@link RootClientRestMock} from the specified parameters.
-	 *
-	 * @param service the service
-	 * @throws Exception the exception
-	 */
-	public RootClientRestMock(final String service) throws Exception {
-		super(service);
-		this.service = service;
-	}
+  /**
+   * Instantiates a {@link RootClientRestMock} from the specified parameters.
+   *
+   * @param service the service
+   * @throws Exception the exception
+   */
+  public RootClientRestMock(final String service) throws Exception {
+    super(service);
+    this.service = service;
+  }
 
-	/* see superclass */
-	@Override
-	public void admin(final String task, final String adminKey, final String payload) throws Exception {
-		logger.info("  MOCK admin");
-	}
+  /* see superclass */
+  @Override
+  public void admin(final String task, final String adminKey, final String payload)
+    throws Exception {
+    logger.info("  MOCK admin");
+  }
 
-	/* see superclass */
-	@Override
-	public HealthCheck health(final Boolean dependencies) throws Exception {
-		final HealthCheck check = new HealthCheck();
-		check.setStatus(true);
-		check.setTimestamp(new Date());
-		check.setName("termhub-" + service + "-service");
-		return check;
-	}
+  /* see superclass */
+  @Override
+  public HealthCheck health(final Boolean dependencies) throws Exception {
+    final HealthCheck check = new HealthCheck();
+    check.setStatus(true);
+    check.setTimestamp(new Date());
+    check.setName("termhub-" + service + "-service");
+    return check;
+  }
 
 }

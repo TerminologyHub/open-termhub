@@ -25,46 +25,46 @@ import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
 @Configuration
 public class FHIRConfig {
 
-	/**
-	 * Hapi R4.
-	 *
-	 * @return the servlet registration bean
-	 */
-	@Bean
-	public ServletRegistrationBean<HapiR4RestfulServlet> hapiR4() {
-		final HapiR4RestfulServlet hapiServlet = new HapiR4RestfulServlet();
+  /**
+   * Hapi R4.
+   *
+   * @return the servlet registration bean
+   */
+  @Bean
+  public ServletRegistrationBean<HapiR4RestfulServlet> hapiR4() {
+    final HapiR4RestfulServlet hapiServlet = new HapiR4RestfulServlet();
 
-		final ServletRegistrationBean<HapiR4RestfulServlet> servletRegistrationBean = new ServletRegistrationBean<>(
-				hapiServlet, "/fhir/r4/*");
-		hapiServlet.setServerName("Open Termhub R4 FHIR Terminology Server");
-		hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
-		hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
+    final ServletRegistrationBean<HapiR4RestfulServlet> servletRegistrationBean =
+        new ServletRegistrationBean<>(hapiServlet, "/fhir/r4/*");
+    hapiServlet.setServerName("Open Termhub R4 FHIR Terminology Server");
+    hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
+    hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
 
-		final ResponseHighlighterInterceptor interceptor = new ResponseHighlighterInterceptor();
-		hapiServlet.registerInterceptor(interceptor);
+    final ResponseHighlighterInterceptor interceptor = new ResponseHighlighterInterceptor();
+    hapiServlet.registerInterceptor(interceptor);
 
-		return servletRegistrationBean;
-	}
+    return servletRegistrationBean;
+  }
 
-	/**
-	 * Hapi R5.
-	 *
-	 * @return the servlet registration bean
-	 */
-	@Bean
-	public ServletRegistrationBean<HapiR5RestfulServlet> hapiR5() {
-		final HapiR5RestfulServlet hapiServlet = new HapiR5RestfulServlet();
+  /**
+   * Hapi R5.
+   *
+   * @return the servlet registration bean
+   */
+  @Bean
+  public ServletRegistrationBean<HapiR5RestfulServlet> hapiR5() {
+    final HapiR5RestfulServlet hapiServlet = new HapiR5RestfulServlet();
 
-		final ServletRegistrationBean<HapiR5RestfulServlet> servletRegistrationBean = new ServletRegistrationBean<>(
-				hapiServlet, "/fhir/r5/*");
-		hapiServlet.setServerName("Opeb Termhub R5 FHIR Terminology Server");
-		hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
-		hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
+    final ServletRegistrationBean<HapiR5RestfulServlet> servletRegistrationBean =
+        new ServletRegistrationBean<>(hapiServlet, "/fhir/r5/*");
+    hapiServlet.setServerName("Opeb Termhub R5 FHIR Terminology Server");
+    hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
+    hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
 
-		final ResponseHighlighterInterceptor interceptor = new ResponseHighlighterInterceptor();
-		hapiServlet.registerInterceptor(interceptor);
+    final ResponseHighlighterInterceptor interceptor = new ResponseHighlighterInterceptor();
+    hapiServlet.registerInterceptor(interceptor);
 
-		return servletRegistrationBean;
-	}
+    return servletRegistrationBean;
+  }
 
 }

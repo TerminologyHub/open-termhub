@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -20,12 +20,12 @@ import com.wci.termhub.model.HasId;
  */
 public interface FindCallbackHandler<T extends HasId> {
 
-	/**
-	 * Callback to handle a block of results.
-	 *
-	 * @param list the list
-	 * @throws Exception the exception
-	 */
-	public void callback(List<T> list) throws Exception;
+  /**
+   * Callback to handle a block of results.
+   *
+   * @param list the list
+   * @throws Exception the exception
+   */
+  public void callback(List<T> list) throws Exception;
 
 }

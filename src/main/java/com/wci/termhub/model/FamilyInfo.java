@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -36,136 +36,137 @@ import jakarta.persistence.Transient;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FamilyInfo extends AbstractHasModified implements HasLazyInit, Copyable<FamilyInfo> {
 
-	/** The type. This is the terminology abbreviation */
-	@Column(nullable = false, length = 256)
-	@Field(type = FieldType.Keyword)
-	private String type;
+  /** The type. This is the terminology abbreviation */
+  @Column(nullable = false, length = 256)
+  @Field(type = FieldType.Keyword)
+  private String type;
 
-	/** The name. */
-	@Transient
-	@MultiField(mainField = @Field(type = FieldType.Text), otherFields = {
-			@InnerField(suffix = "keyword", type = FieldType.Keyword) })
-	private String name;
+  /** The name. */
+  @Transient
+  @MultiField(mainField = @Field(type = FieldType.Text), otherFields = {
+      @InnerField(suffix = "keyword", type = FieldType.Keyword)
+  })
+  private String name;
 
-	/** The (html-enabled) description. */
-	@Transient
-	@Field(type = FieldType.Text)
-	private String description;
+  /** The (html-enabled) description. */
+  @Transient
+  @Field(type = FieldType.Text)
+  private String description;
 
-	/**
-	 * Instantiates an empty {@link FamilyInfo}.
-	 */
-	public FamilyInfo() {
-		// n/a
-	}
+  /**
+   * Instantiates an empty {@link FamilyInfo}.
+   */
+  public FamilyInfo() {
+    // n/a
+  }
 
-	/**
-	 * Instantiates a {@link FamilyInfo} from the specified parameters.
-	 *
-	 * @param other the other
-	 */
-	public FamilyInfo(final FamilyInfo other) {
-		populateFrom(other);
-	}
+  /**
+   * Instantiates a {@link FamilyInfo} from the specified parameters.
+   *
+   * @param other the other
+   */
+  public FamilyInfo(final FamilyInfo other) {
+    populateFrom(other);
+  }
 
-	/**
-	 * Populate from.
-	 *
-	 * @param other the other
-	 */
-	@Override
-	public void populateFrom(final FamilyInfo other) {
-		super.populateFrom(other);
-		type = other.getType();
-		name = other.getName();
-		description = other.getDescription();
-	}
+  /**
+   * Populate from.
+   *
+   * @param other the other
+   */
+  @Override
+  public void populateFrom(final FamilyInfo other) {
+    super.populateFrom(other);
+    type = other.getType();
+    name = other.getName();
+    description = other.getDescription();
+  }
 
-	/**
-	 * Patch from.
-	 *
-	 * @param other the other
-	 */
-	@Override
-	public void patchFrom(final FamilyInfo other) {
-		super.patchFrom(other);
-		if (other.getType() != null) {
-			type = other.getType();
-		}
-		if (other.getName() != null) {
-			name = other.getName();
-		}
-		if (other.getDescription() != null) {
-			description = other.getDescription();
-		}
+  /**
+   * Patch from.
+   *
+   * @param other the other
+   */
+  @Override
+  public void patchFrom(final FamilyInfo other) {
+    super.patchFrom(other);
+    if (other.getType() != null) {
+      type = other.getType();
+    }
+    if (other.getName() != null) {
+      name = other.getName();
+    }
+    if (other.getDescription() != null) {
+      description = other.getDescription();
+    }
 
-	}
+  }
 
-	/**
-	 * Returns the type.
-	 *
-	 * @return the type
-	 */
-	public String getType() {
-		return type;
-	}
+  /**
+   * Returns the type.
+   *
+   * @return the type
+   */
+  public String getType() {
+    return type;
+  }
 
-	/**
-	 * Sets the type.
-	 *
-	 * @param type the type
-	 */
-	public void setType(final String type) {
-		this.type = type;
-	}
+  /**
+   * Sets the type.
+   *
+   * @param type the type
+   */
+  public void setType(final String type) {
+    this.type = type;
+  }
 
-	/**
-	 * Returns the name.
-	 *
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
+  /**
+   * Returns the name.
+   *
+   * @return the name
+   */
+  public String getName() {
+    return name;
+  }
 
-	/**
-	 * Sets the name.
-	 *
-	 * @param name the name
-	 */
-	public void setName(final String name) {
-		this.name = name;
-	}
+  /**
+   * Sets the name.
+   *
+   * @param name the name
+   */
+  public void setName(final String name) {
+    this.name = name;
+  }
 
-	/**
-	 * Returns the description.
-	 *
-	 * @return the description
-	 */
-	public String getDescription() {
-		return description;
-	}
+  /**
+   * Returns the description.
+   *
+   * @return the description
+   */
+  public String getDescription() {
+    return description;
+  }
 
-	/**
-	 * Sets the description.
-	 *
-	 * @param description the description
-	 */
-	public void setDescription(final String description) {
-		this.description = description;
-	}
+  /**
+   * Sets the description.
+   *
+   * @param description the description
+   */
+  public void setDescription(final String description) {
+    this.description = description;
+  }
 
-//	/* see superclass */
-//	@Override
-//	public void unmarshall() throws Exception {
-//		final FamilyInfo ti = ModelUtility.fromJson(getData(), this.getClass());
-//		populateFrom(ti);
-//	}
+  // /* see superclass */
+  // @Override
+  // public void unmarshall() throws Exception {
+  // final FamilyInfo ti = ModelUtility.fromJson(getData(), this.getClass());
+  // populateFrom(ti);
+  // }
 
-	/* see superclass */
-	@Override
-	public void lazyInit() {
-		// n/a
-	}
+  /* see superclass */
+  @Override
+  public void lazyInit() {
+    // n/a
+  }
 
 }

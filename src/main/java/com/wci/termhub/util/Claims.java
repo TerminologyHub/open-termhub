@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -14,37 +14,37 @@ package com.wci.termhub.util;
  */
 public enum Claims {
 
-	/** The id. */
-	ID("termhub:id"),
-	/** The role. */
-	ROLE("termhub:role"),
-	/** The plan. */
-	PLAN("termhub:plan"),
-	/** The project id. */
-	PROJECT_ID("termhub:projectId"),
-	/** The org id. */
-	ORG_ID("termhub:orgId"),
-	/** The salt. */
-	SALT("termhub:salt");
+  /** The id. */
+  ID("termhub:id"),
+  /** The role. */
+  ROLE("termhub:role"),
+  /** The plan. */
+  PLAN("termhub:plan"),
+  /** The project id. */
+  PROJECT_ID("termhub:projectId"),
+  /** The org id. */
+  ORG_ID("termhub:orgId"),
+  /** The salt. */
+  SALT("termhub:salt");
 
-	/** The value. */
-	private String value;
+  /** The value. */
+  private String value;
 
-	/**
-	 * Instantiates a {@link Claims} from the specified parameters.
-	 *
-	 * @param value the value
-	 */
-	Claims(final String value) {
-		this.value = value;
-	}
+  /**
+   * Instantiates a {@link Claims} from the specified parameters.
+   *
+   * @param value the value
+   */
+  Claims(final String value) {
+    this.value = value;
+  }
 
-	/**
-	 * Returns the value.
-	 *
-	 * @return the value
-	 */
-	public String getValue() {
-		return value;
-	}
+  /**
+   * Returns the value.
+   *
+   * @return the value
+   */
+  public String getValue() {
+    return value;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -24,82 +24,82 @@ import com.wci.termhub.util.TestUtility;
  */
 public class AbstractTest {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private static Logger logger = LoggerFactory.getLogger(AbstractTest.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private static Logger logger = LoggerFactory.getLogger(AbstractTest.class);
 
-	/** The setup. */
-	private static boolean setup = false;
+  /** The setup. */
+  private static boolean setup = false;
 
-	/** The test id. */
-	private static String testId = null;
+  /** The test id. */
+  private static String testId = null;
 
-	/** The test jwt. */
-	private static String testJwt = null;
+  /** The test jwt. */
+  private static String testJwt = null;
 
-	/** The admin id. */
-	private static String adminId = null;
+  /** The admin id. */
+  private static String adminId = null;
 
-	/** The admin jwt. */
-	private static String adminJwt = null;
+  /** The admin jwt. */
+  private static String adminJwt = null;
 
-	/**
-	 * Setup once. NOTE: Using @BeforeAll means the PropertyUtility is not yet
-	 * configured.
-	 *
-	 * @throws Exception the exception
-	 */
-	@BeforeEach
-	public void setupOnce() throws Exception {
-		if (!setup) {
-			setup = true;
-			PropertyUtility.getProperties();
-			// Prepare JWTs for testing
-			final User testUser = TestUtility.getMockUser("test");
-			testId = testUser.getId();
-			testJwt = JwtUtility.mockJwt(testId, "UNLIMITED", "USER");
+  /**
+   * Setup once. NOTE: Using @BeforeAll means the PropertyUtility is not yet
+   * configured.
+   *
+   * @throws Exception the exception
+   */
+  @BeforeEach
+  public void setupOnce() throws Exception {
+    if (!setup) {
+      setup = true;
+      PropertyUtility.getProperties();
+      // Prepare JWTs for testing
+      final User testUser = TestUtility.getMockUser("test");
+      testId = testUser.getId();
+      testJwt = JwtUtility.mockJwt(testId, "UNLIMITED", "USER");
 
-			final User adminUser = TestUtility.getMockUser("admin");
-			adminId = adminUser.getId();
-			adminJwt = JwtUtility.mockJwt(adminId, "UNLIMITED", "ADMIN");
+      final User adminUser = TestUtility.getMockUser("admin");
+      adminId = adminUser.getId();
+      adminJwt = JwtUtility.mockJwt(adminId, "UNLIMITED", "ADMIN");
 
-			// Start with testuser
-			setTestUser();
-		}
-	}
+      // Start with testuser
+      setTestUser();
+    }
+  }
 
-	/**
-	 * Sets the test user.
-	 */
-	public static void setTestUser() {
-		ThreadContext.put("jwt", testJwt);
-		ThreadContext.put("user-id", testId);
-	}
+  /**
+   * Sets the test user.
+   */
+  public static void setTestUser() {
+    ThreadContext.put("jwt", testJwt);
+    ThreadContext.put("user-id", testId);
+  }
 
-	/**
-	 * Sets the admin user.
-	 */
-	public static void setAdminUser() {
-		ThreadContext.put("jwt", adminJwt);
-		ThreadContext.put("user-id", adminId);
-	}
+  /**
+   * Sets the admin user.
+   */
+  public static void setAdminUser() {
+    ThreadContext.put("jwt", adminJwt);
+    ThreadContext.put("user-id", adminId);
+  }
 
-	/**
-	 * Returns the test jwt.
-	 *
-	 * @return the test jwt
-	 */
-	public static String getTestJwt() {
-		return testJwt;
-	}
+  /**
+   * Returns the test jwt.
+   *
+   * @return the test jwt
+   */
+  public static String getTestJwt() {
+    return testJwt;
+  }
 
-	/**
-	 * Returns the admin jwt.
-	 *
-	 * @return the admin jwt
-	 */
-	public static String getAdminJwt() {
-		return adminJwt;
-	}
+  /**
+   * Returns the admin jwt.
+   *
+   * @return the admin jwt
+   */
+  public static String getAdminJwt() {
+    return adminJwt;
+  }
 
 }

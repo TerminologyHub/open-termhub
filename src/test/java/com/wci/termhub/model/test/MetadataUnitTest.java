@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -33,71 +33,71 @@ import com.wci.termhub.test.SerializationTester;
 @SpringBootTest
 public class MetadataUnitTest extends AbstractTest {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private static Logger logger = LoggerFactory.getLogger(MetadataUnitTest.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private static Logger logger = LoggerFactory.getLogger(MetadataUnitTest.class);
 
-	/** The model object to test. */
-	private Metadata object;
+  /** The model object to test. */
+  private Metadata object;
 
-	/**
-	 * Setup.
-	 *
-	 * @throws Exception the exception
-	 */
-	@BeforeEach
-	public void setup() throws Exception {
-		object = new Metadata();
-	}
+  /**
+   * Setup.
+   *
+   * @throws Exception the exception
+   */
+  @BeforeEach
+  public void setup() throws Exception {
+    object = new Metadata();
+  }
 
-	/**
-	 * Test getter and setter methods of model object.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelGetSet() throws Exception {
-		final GetterSetterTester tester = new GetterSetterTester(object);
-		tester.test();
-	}
+  /**
+   * Test getter and setter methods of model object.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelGetSet() throws Exception {
+    final GetterSetterTester tester = new GetterSetterTester(object);
+    tester.test();
+  }
 
-	/**
-	 * Test equals and hascode methods.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelEqualsHashcode() throws Exception {
-		final EqualsHashcodeTester tester = new EqualsHashcodeTester(object);
-		tester.include("id");
-		assertTrue(tester.testIdentityFieldEquals());
-		assertTrue(tester.testNonIdentityFieldEquals());
-		assertTrue(tester.testIdentityFieldNotEquals());
-		assertTrue(tester.testIdentityFieldHashcode());
-		assertTrue(tester.testNonIdentityFieldHashcode());
-		assertTrue(tester.testIdentityFieldDifferentHashcode());
-	}
+  /**
+   * Test equals and hascode methods.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelEqualsHashcode() throws Exception {
+    final EqualsHashcodeTester tester = new EqualsHashcodeTester(object);
+    tester.include("id");
+    assertTrue(tester.testIdentityFieldEquals());
+    assertTrue(tester.testNonIdentityFieldEquals());
+    assertTrue(tester.testIdentityFieldNotEquals());
+    assertTrue(tester.testIdentityFieldHashcode());
+    assertTrue(tester.testNonIdentityFieldHashcode());
+    assertTrue(tester.testIdentityFieldDifferentHashcode());
+  }
 
-	/**
-	 * Test copy constructor.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelCopy() throws Exception {
-		final CopyConstructorTester tester = new CopyConstructorTester(object);
-		assertTrue(tester.testCopyConstructor(Metadata.class));
-	}
+  /**
+   * Test copy constructor.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelCopy() throws Exception {
+    final CopyConstructorTester tester = new CopyConstructorTester(object);
+    assertTrue(tester.testCopyConstructor(Metadata.class));
+  }
 
-	/**
-	 * Test XML serialization.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testModelJsonSerialization() throws Exception {
-		final SerializationTester tester = new SerializationTester(object);
-		assertTrue(tester.testJsonSerialization());
-	}
+  /**
+   * Test XML serialization.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testModelJsonSerialization() throws Exception {
+    final SerializationTester tester = new SerializationTester(object);
+    assertTrue(tester.testJsonSerialization());
+  }
 
 }

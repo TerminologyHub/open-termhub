@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -15,23 +15,23 @@ package com.wci.termhub.util;
  */
 public class LocalException extends Exception {
 
-	/**
-	 * Instantiates a {@link LocalException} from the specified parameters.
-	 *
-	 * @param message the message
-	 * @param t       the t
-	 */
-	public LocalException(final String message, final Exception t) {
-		super(message, t);
-	}
+  /**
+   * Instantiates a {@link LocalException} from the specified parameters.
+   *
+   * @param message the message
+   * @param t the t
+   */
+  public LocalException(final String message, final Exception t) {
+    super(message, t);
+  }
 
-	/**
-	 * Instantiates a {@link LocalException} from the specified parameters.
-	 *
-	 * @param message the message
-	 */
-	public LocalException(final String message) {
-		super(message);
+  /**
+   * Instantiates a {@link LocalException} from the specified parameters.
+   *
+   * @param message the message
+   */
+  public LocalException(final String message) {
+    super(message);
 
-	}
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -17,47 +17,45 @@ import org.slf4j.LoggerFactory;
  */
 public final class AdhocUtility {
 
-	/** The logger. */
-	private static Logger logger = LoggerFactory.getLogger(AdhocUtility.class);
+  /** The logger. */
+  private static Logger logger = LoggerFactory.getLogger(AdhocUtility.class);
 
-	/**
-	 * Instantiates an empty {@link AdhocUtility}.
-	 */
-	private AdhocUtility() {
-		// n/a
-	}
+  /**
+   * Instantiates an empty {@link AdhocUtility}.
+   */
+  private AdhocUtility() {
+    // n/a
+  }
 
-	/**
-	 * Execute.
-	 *
-	 * @param mode    the mode
-	 * @param service the service
-	 * @throws Exception the exception
-	 */
-	public static void execute(final String mode) throws Exception {
+  /**
+   * Execute.
+   *
+   * @param mode the mode
+   * @throws Exception the exception
+   */
+  public static void execute(final String mode) throws Exception {
 
-		switch (mode) {
-		case "test":
-			test();
-			break;
-		default:
-			logger.info("  NO adhoc handler for mode = " + (mode.isEmpty() ? "<blank>" : mode));
-			break;
-		}
+    switch (mode) {
+      case "test":
+        test();
+        break;
+      default:
+        logger.info("  NO adhoc handler for mode = " + (mode.isEmpty() ? "<blank>" : mode));
+        break;
+    }
 
-	}
+  }
 
-	/**
-	 * Adds the organization.
-	 *
-	 * @param service the service
-	 * @throws Exception the exception
-	 */
-	private static void test() throws Exception {
+  /**
+   * Adds the organization.
+   *
+   * @throws Exception the exception
+   */
+  private static void test() throws Exception {
 
-		logger.info("START test");
-		logger.info("  do something...");
-		logger.info("FINISH test");
-	}
+    logger.info("START test");
+    logger.info("  do something...");
+    logger.info("FINISH test");
+  }
 
 }

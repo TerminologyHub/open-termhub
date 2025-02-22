@@ -1,5 +1,11 @@
 /*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
  */
 package com.wci.termhub.test;
 
@@ -28,31 +34,31 @@ import com.wci.termhub.service.EntityRepositoryService;
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class CleanupUnitTest {
 
-	/** The Constant LOG. */
-	private static final Logger LOG = LoggerFactory.getLogger(CleanupUnitTest.class);
+  /** The Constant LOG. */
+  private static final Logger LOG = LoggerFactory.getLogger(CleanupUnitTest.class);
 
-	/** The search service. */
-	@Autowired
-	private EntityRepositoryService searchService;
+  /** The search service. */
+  @Autowired
+  private EntityRepositoryService searchService;
 
-	/**
-	 * Tear down.
-	 *
-	 * @throws Exception the exception
-	 */
-	/**
-	 * Tear down.
-	 *
-	 * @throws Exception the exception
-	 */
-	@AfterAll
-	public void tearDown() throws Exception {
+  /**
+   * Tear down.
+   *
+   * @throws Exception the exception
+   */
+  /**
+   * Tear down.
+   *
+   * @throws Exception the exception
+   */
+  @AfterAll
+  public void tearDown() throws Exception {
 
-		LOG.info("Cleaning up indexes");
-		searchService.deleteIndex(Terminology.class);
-		searchService.deleteIndex(Metadata.class);
-		searchService.deleteIndex(Concept.class);
-		searchService.deleteIndex(Term.class);
-		searchService.deleteIndex(ConceptRelationship.class);
-	}
+    LOG.info("Cleaning up indexes");
+    searchService.deleteIndex(Terminology.class);
+    searchService.deleteIndex(Metadata.class);
+    searchService.deleteIndex(Concept.class);
+    searchService.deleteIndex(Term.class);
+    searchService.deleteIndex(ConceptRelationship.class);
+  }
 }

@@ -1,9 +1,12 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suppressions PUBLIC
-    "-//Puppy Crawl//DTD Suppressions 1.1//EN"
-    "http://checkstyle.sourceforge.net/dtds/suppressions_1_1.dtd">
+        "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+        "http://www.puppycrawl.com/dtd/suppressions_1_1.dtd">
 
 <suppressions>
-  <suppress checks="."
-    files="com[\\/]wci[\\/]services[\\/]jpa[\\/]expr[\\/]" />    
+	<suppress checks="."
+		files="com[\\/]wci[\\/]termhub[\\/]ecl[\\/]" />
+	<suppress checks="ParameterNumber" files="(ProviderR4|ProviderR5).java" />
+	<suppress checks="AvoidNestedBlocks" 
+		files="(FhirUtility|TermhubOpenApiInterceptorR4|TermhubOpenApiInterceptorR5).java" />
 </suppressions>

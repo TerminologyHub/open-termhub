@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -19,44 +19,46 @@ import com.wci.termhub.rest.client.RootClient;
  */
 public final class ClientFactory {
 
-	/**
-	 * Instantiates an empty {@link ClientFactory}.
-	 */
-	private ClientFactory() {
-		// n/a
-	}
+  /**
+   * Instantiates an empty {@link ClientFactory}.
+   */
+  private ClientFactory() {
+    // n/a
+  }
 
-	/** The cache. */
-	private static Map<String, RootClient> cache = new HashMap<>();
+  /** The cache. */
+  private static Map<String, RootClient> cache = new HashMap<>();
 
-	/**
-	 * Returns the.
-	 *
-	 * @param <T>     the
-	 * @param service the service
-	 * @param clazz   the clazz
-	 * @return the t
-	 * @throws Exception the exception
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T extends RootClient> T get(final String service, final Class<T> clazz) throws Exception {
-		if (cache.containsKey(service)) {
-			return (T) cache.get(service);
-		}
-		T client = HandlerUtility.newStandardHandlerInstanceWithConfiguration("client." + service, "DEFAULT", clazz);
-		cache.put(service, client);
-		return client;
-	}
+  /**
+   * Returns the.
+   *
+   * @param <T> the
+   * @param service the service
+   * @param clazz the clazz
+   * @return the t
+   * @throws Exception the exception
+   */
+  @SuppressWarnings("unchecked")
+  public static <T extends RootClient> T get(final String service, final Class<T> clazz)
+    throws Exception {
+    if (cache.containsKey(service)) {
+      return (T) cache.get(service);
+    }
+    T client = HandlerUtility.newStandardHandlerInstanceWithConfiguration("client." + service,
+        "DEFAULT", clazz);
+    cache.put(service, client);
+    return client;
+  }
 
-	/**
-	 * Returns the.
-	 *
-	 * @param <T>   the
-	 * @param clazz the clazz
-	 * @return the t
-	 * @throws Exception the exception
-	 */
-	public static <T extends RootClient> T get(final Class<T> clazz) throws Exception {
-		return get(clazz.getSimpleName().replace("Client", "").toLowerCase(), clazz);
-	}
+  /**
+   * Returns the.
+   *
+   * @param <T> the
+   * @param clazz the clazz
+   * @return the t
+   * @throws Exception the exception
+   */
+  public static <T extends RootClient> T get(final Class<T> clazz) throws Exception {
+    return get(clazz.getSimpleName().replace("Client", "").toLowerCase(), clazz);
+  }
 }

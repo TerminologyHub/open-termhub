@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -29,228 +29,228 @@ import com.wci.termhub.test.AbstractTest;
 @SpringBootTest
 public class IncludeParamUnitTest extends AbstractTest {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private final Logger logger = LoggerFactory.getLogger(IncludeParamUnitTest.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private final Logger logger = LoggerFactory.getLogger(IncludeParamUnitTest.class);
 
-	/**
-	 * Test constructor.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testMinimal() throws Exception {
+  /**
+   * Test constructor.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testMinimal() throws Exception {
 
-		IncludeParam ip = null;
+    IncludeParam ip = null;
 
-		// Test empty
-		ip = new IncludeParam();
-		for (final String field : IncludeParam.getConceptBaseFields()) {
-			assertThat(ip.getIncludedFields()).contains(field);
-		}
-		assertThat(ip.isAttributes()).isFalse();
-		assertThat(ip.isAxioms()).isFalse();
-		assertThat(ip.isChildren()).isFalse();
-		assertThat(ip.isDefinitions()).isFalse();
-		assertThat(ip.isDescendants()).isFalse();
-		assertThat(ip.isHighlights()).isFalse();
-		assertThat(ip.isInverseRelationships()).isFalse();
-		assertThat(ip.isMapsets()).isFalse();
-		assertThat(ip.isParents()).isFalse();
-		assertThat(ip.isRelationships()).isFalse();
-		assertThat(ip.isSemanticTypes()).isFalse();
-		assertThat(ip.isSubsets()).isFalse();
-		assertThat(ip.isTerms()).isFalse();
-		assertThat(ip.isTreePositions()).isFalse();
+    // Test empty
+    ip = new IncludeParam();
+    for (final String field : IncludeParam.getConceptBaseFields()) {
+      assertThat(ip.getIncludedFields()).contains(field);
+    }
+    assertThat(ip.isAttributes()).isFalse();
+    assertThat(ip.isAxioms()).isFalse();
+    assertThat(ip.isChildren()).isFalse();
+    assertThat(ip.isDefinitions()).isFalse();
+    assertThat(ip.isDescendants()).isFalse();
+    assertThat(ip.isHighlights()).isFalse();
+    assertThat(ip.isInverseRelationships()).isFalse();
+    assertThat(ip.isMapsets()).isFalse();
+    assertThat(ip.isParents()).isFalse();
+    assertThat(ip.isRelationships()).isFalse();
+    assertThat(ip.isSemanticTypes()).isFalse();
+    assertThat(ip.isSubsets()).isFalse();
+    assertThat(ip.isTerms()).isFalse();
+    assertThat(ip.isTreePositions()).isFalse();
 
-		// Test null
-		ip = new IncludeParam((String) null);
-		for (final String field : IncludeParam.getConceptBaseFields()) {
-			assertThat(ip.getIncludedFields()).contains(field);
-		}
-		assertThat(ip.isAttributes()).isFalse();
-		assertThat(ip.isAxioms()).isFalse();
-		assertThat(ip.isChildren()).isFalse();
-		assertThat(ip.isDefinitions()).isFalse();
-		assertThat(ip.isDescendants()).isFalse();
-		assertThat(ip.isHighlights()).isFalse();
-		assertThat(ip.isInverseRelationships()).isFalse();
-		assertThat(ip.isMapsets()).isFalse();
-		assertThat(ip.isParents()).isFalse();
-		assertThat(ip.isRelationships()).isFalse();
-		assertThat(ip.isSemanticTypes()).isFalse();
-		assertThat(ip.isSubsets()).isFalse();
-		assertThat(ip.isTerms()).isFalse();
-		assertThat(ip.isTreePositions()).isFalse();
+    // Test null
+    ip = new IncludeParam((String) null);
+    for (final String field : IncludeParam.getConceptBaseFields()) {
+      assertThat(ip.getIncludedFields()).contains(field);
+    }
+    assertThat(ip.isAttributes()).isFalse();
+    assertThat(ip.isAxioms()).isFalse();
+    assertThat(ip.isChildren()).isFalse();
+    assertThat(ip.isDefinitions()).isFalse();
+    assertThat(ip.isDescendants()).isFalse();
+    assertThat(ip.isHighlights()).isFalse();
+    assertThat(ip.isInverseRelationships()).isFalse();
+    assertThat(ip.isMapsets()).isFalse();
+    assertThat(ip.isParents()).isFalse();
+    assertThat(ip.isRelationships()).isFalse();
+    assertThat(ip.isSemanticTypes()).isFalse();
+    assertThat(ip.isSubsets()).isFalse();
+    assertThat(ip.isTerms()).isFalse();
+    assertThat(ip.isTreePositions()).isFalse();
 
-		// Test "minimal"
-		ip = new IncludeParam("minimal");
-		for (final String field : IncludeParam.getConceptBaseFields()) {
-			assertThat(ip.getIncludedFields()).contains(field);
-		}
-		assertThat(ip.isAttributes()).isFalse();
-		assertThat(ip.isAxioms()).isFalse();
-		assertThat(ip.isChildren()).isFalse();
-		assertThat(ip.isDefinitions()).isFalse();
-		assertThat(ip.isDescendants()).isFalse();
-		assertThat(ip.isHighlights()).isFalse();
-		assertThat(ip.isInverseRelationships()).isFalse();
-		assertThat(ip.isMapsets()).isFalse();
-		assertThat(ip.isParents()).isFalse();
-		assertThat(ip.isRelationships()).isFalse();
-		assertThat(ip.isSemanticTypes()).isFalse();
-		assertThat(ip.isSubsets()).isFalse();
-		assertThat(ip.isTerms()).isFalse();
-		assertThat(ip.isTreePositions()).isFalse();
-	}
+    // Test "minimal"
+    ip = new IncludeParam("minimal");
+    for (final String field : IncludeParam.getConceptBaseFields()) {
+      assertThat(ip.getIncludedFields()).contains(field);
+    }
+    assertThat(ip.isAttributes()).isFalse();
+    assertThat(ip.isAxioms()).isFalse();
+    assertThat(ip.isChildren()).isFalse();
+    assertThat(ip.isDefinitions()).isFalse();
+    assertThat(ip.isDescendants()).isFalse();
+    assertThat(ip.isHighlights()).isFalse();
+    assertThat(ip.isInverseRelationships()).isFalse();
+    assertThat(ip.isMapsets()).isFalse();
+    assertThat(ip.isParents()).isFalse();
+    assertThat(ip.isRelationships()).isFalse();
+    assertThat(ip.isSemanticTypes()).isFalse();
+    assertThat(ip.isSubsets()).isFalse();
+    assertThat(ip.isTerms()).isFalse();
+    assertThat(ip.isTreePositions()).isFalse();
+  }
 
-	/**
-	 * Test summary.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testSummary() throws Exception {
+  /**
+   * Test summary.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testSummary() throws Exception {
 
-		IncludeParam ip = null;
+    IncludeParam ip = null;
 
-		// Test "summary"
-		ip = new IncludeParam("summary");
-		for (final String field : IncludeParam.getConceptBaseFields()) {
-			assertThat(ip.getIncludedFields()).contains(field);
-		}
-		assertThat(ip.isAttributes()).isTrue();
-		assertThat(ip.isAxioms()).isFalse();
-		assertThat(ip.isChildren()).isFalse();
-		assertThat(ip.isDefinitions()).isTrue();
-		assertThat(ip.isDescendants()).isFalse();
-		assertThat(ip.isHighlights()).isFalse();
-		assertThat(ip.isInverseRelationships()).isFalse();
-		assertThat(ip.isMapsets()).isFalse();
-		assertThat(ip.isParents()).isFalse();
-		assertThat(ip.isRelationships()).isFalse();
-		assertThat(ip.isSemanticTypes()).isTrue();
-		assertThat(ip.isSubsets()).isFalse();
-		assertThat(ip.isTerms()).isTrue();
-		assertThat(ip.isTreePositions()).isFalse();
+    // Test "summary"
+    ip = new IncludeParam("summary");
+    for (final String field : IncludeParam.getConceptBaseFields()) {
+      assertThat(ip.getIncludedFields()).contains(field);
+    }
+    assertThat(ip.isAttributes()).isTrue();
+    assertThat(ip.isAxioms()).isFalse();
+    assertThat(ip.isChildren()).isFalse();
+    assertThat(ip.isDefinitions()).isTrue();
+    assertThat(ip.isDescendants()).isFalse();
+    assertThat(ip.isHighlights()).isFalse();
+    assertThat(ip.isInverseRelationships()).isFalse();
+    assertThat(ip.isMapsets()).isFalse();
+    assertThat(ip.isParents()).isFalse();
+    assertThat(ip.isRelationships()).isFalse();
+    assertThat(ip.isSemanticTypes()).isTrue();
+    assertThat(ip.isSubsets()).isFalse();
+    assertThat(ip.isTerms()).isTrue();
+    assertThat(ip.isTreePositions()).isFalse();
 
-		// Test "summary" plus
-		ip = new IncludeParam("summary,descendants");
-		for (final String field : IncludeParam.getConceptBaseFields()) {
-			assertThat(ip.getIncludedFields()).contains(field);
-		}
-		assertThat(ip.isAttributes()).isTrue();
-		assertThat(ip.isAxioms()).isFalse();
-		assertThat(ip.isChildren()).isFalse();
-		assertThat(ip.isDefinitions()).isTrue();
-		assertThat(ip.isDescendants()).isTrue();
-		assertThat(ip.isHighlights()).isFalse();
-		assertThat(ip.isInverseRelationships()).isFalse();
-		assertThat(ip.isMapsets()).isFalse();
-		assertThat(ip.isParents()).isFalse();
-		assertThat(ip.isRelationships()).isFalse();
-		assertThat(ip.isSemanticTypes()).isTrue();
-		assertThat(ip.isSubsets()).isFalse();
-		assertThat(ip.isTerms()).isTrue();
-		assertThat(ip.isTreePositions()).isFalse();
+    // Test "summary" plus
+    ip = new IncludeParam("summary,descendants");
+    for (final String field : IncludeParam.getConceptBaseFields()) {
+      assertThat(ip.getIncludedFields()).contains(field);
+    }
+    assertThat(ip.isAttributes()).isTrue();
+    assertThat(ip.isAxioms()).isFalse();
+    assertThat(ip.isChildren()).isFalse();
+    assertThat(ip.isDefinitions()).isTrue();
+    assertThat(ip.isDescendants()).isTrue();
+    assertThat(ip.isHighlights()).isFalse();
+    assertThat(ip.isInverseRelationships()).isFalse();
+    assertThat(ip.isMapsets()).isFalse();
+    assertThat(ip.isParents()).isFalse();
+    assertThat(ip.isRelationships()).isFalse();
+    assertThat(ip.isSemanticTypes()).isTrue();
+    assertThat(ip.isSubsets()).isFalse();
+    assertThat(ip.isTerms()).isTrue();
+    assertThat(ip.isTreePositions()).isFalse();
 
-		// Test "summary" plus
-		ip = new IncludeParam("summary,descendants,subsets");
-		for (final String field : IncludeParam.getConceptBaseFields()) {
-			assertThat(ip.getIncludedFields()).contains(field);
-		}
-		assertThat(ip.isAttributes()).isTrue();
-		assertThat(ip.isAxioms()).isFalse();
-		assertThat(ip.isChildren()).isFalse();
-		assertThat(ip.isDefinitions()).isTrue();
-		assertThat(ip.isDescendants()).isTrue();
-		assertThat(ip.isHighlights()).isFalse();
-		assertThat(ip.isInverseRelationships()).isFalse();
-		assertThat(ip.isMapsets()).isFalse();
-		assertThat(ip.isParents()).isFalse();
-		assertThat(ip.isRelationships()).isFalse();
-		assertThat(ip.isSemanticTypes()).isTrue();
-		assertThat(ip.isSubsets()).isTrue();
-		assertThat(ip.isTerms()).isTrue();
-		assertThat(ip.isTreePositions()).isFalse();
-	}
+    // Test "summary" plus
+    ip = new IncludeParam("summary,descendants,subsets");
+    for (final String field : IncludeParam.getConceptBaseFields()) {
+      assertThat(ip.getIncludedFields()).contains(field);
+    }
+    assertThat(ip.isAttributes()).isTrue();
+    assertThat(ip.isAxioms()).isFalse();
+    assertThat(ip.isChildren()).isFalse();
+    assertThat(ip.isDefinitions()).isTrue();
+    assertThat(ip.isDescendants()).isTrue();
+    assertThat(ip.isHighlights()).isFalse();
+    assertThat(ip.isInverseRelationships()).isFalse();
+    assertThat(ip.isMapsets()).isFalse();
+    assertThat(ip.isParents()).isFalse();
+    assertThat(ip.isRelationships()).isFalse();
+    assertThat(ip.isSemanticTypes()).isTrue();
+    assertThat(ip.isSubsets()).isTrue();
+    assertThat(ip.isTerms()).isTrue();
+    assertThat(ip.isTreePositions()).isFalse();
+  }
 
-	/**
-	 * Test full.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testFull() throws Exception {
+  /**
+   * Test full.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFull() throws Exception {
 
-		IncludeParam ip = null;
+    IncludeParam ip = null;
 
-		// Test "full"
-		ip = new IncludeParam("full");
-		for (final String field : IncludeParam.getConceptBaseFields()) {
-			assertThat(ip.getIncludedFields()).contains(field);
-		}
-		assertThat(ip.isAttributes()).isTrue();
-		assertThat(ip.isAxioms()).isTrue();
-		assertThat(ip.isChildren()).isTrue();
-		assertThat(ip.isDefinitions()).isTrue();
-		assertThat(ip.isDescendants()).isFalse();
-		assertThat(ip.isHighlights()).isFalse();
-		assertThat(ip.isInverseRelationships()).isTrue();
-		assertThat(ip.isMapsets()).isTrue();
-		assertThat(ip.isParents()).isTrue();
-		assertThat(ip.isRelationships()).isTrue();
-		assertThat(ip.isSemanticTypes()).isTrue();
-		assertThat(ip.isSubsets()).isTrue();
-		assertThat(ip.isTerms()).isTrue();
-		assertThat(ip.isTreePositions()).isFalse();
-	}
+    // Test "full"
+    ip = new IncludeParam("full");
+    for (final String field : IncludeParam.getConceptBaseFields()) {
+      assertThat(ip.getIncludedFields()).contains(field);
+    }
+    assertThat(ip.isAttributes()).isTrue();
+    assertThat(ip.isAxioms()).isTrue();
+    assertThat(ip.isChildren()).isTrue();
+    assertThat(ip.isDefinitions()).isTrue();
+    assertThat(ip.isDescendants()).isFalse();
+    assertThat(ip.isHighlights()).isFalse();
+    assertThat(ip.isInverseRelationships()).isTrue();
+    assertThat(ip.isMapsets()).isTrue();
+    assertThat(ip.isParents()).isTrue();
+    assertThat(ip.isRelationships()).isTrue();
+    assertThat(ip.isSemanticTypes()).isTrue();
+    assertThat(ip.isSubsets()).isTrue();
+    assertThat(ip.isTerms()).isTrue();
+    assertThat(ip.isTreePositions()).isFalse();
+  }
 
-	/**
-	 * Test bad.
-	 *
-	 * @throws Exception the exception
-	 */
-	@SuppressWarnings("unused")
-	@Test
-	public void testBad() throws Exception {
+  /**
+   * Test bad.
+   *
+   * @throws Exception the exception
+   */
+  @SuppressWarnings("unused")
+  @Test
+  public void testBad() throws Exception {
 
-		// Test "bad"
-		try {
-			new IncludeParam("bad");
-			fail("Expected an exception");
-		} catch (Exception e) {
-			// n/a
-		}
+    // Test "bad"
+    try {
+      new IncludeParam("bad");
+      fail("Expected an exception");
+    } catch (Exception e) {
+      // n/a
+    }
 
-		// Test "summary,bad"
-		try {
-			new IncludeParam("summary,bad");
-			fail("Expected an exception");
-		} catch (Exception e) {
-			// n/a
-		}
-	}
+    // Test "summary,bad"
+    try {
+      new IncludeParam("summary,bad");
+      fail("Expected an exception");
+    } catch (Exception e) {
+      // n/a
+    }
+  }
 
-	/**
-	 * Test highlights.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testHighlights() throws Exception {
+  /**
+   * Test highlights.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testHighlights() throws Exception {
 
-		IncludeParam ip = null;
-		String[] fields = null;
+    IncludeParam ip = null;
+    String[] fields = null;
 
-		// Test "highlights"
-		ip = new IncludeParam("highlights");
-		fields = ip.getIncludedFields();
-		assertThat(fields[fields.length - 1].equals("highlights")).isTrue();
+    // Test "highlights"
+    ip = new IncludeParam("highlights");
+    fields = ip.getIncludedFields();
+    assertThat(fields[fields.length - 1].equals("highlights")).isTrue();
 
-		ip = new IncludeParam("highlights,full");
-		fields = ip.getIncludedFields();
-		assertThat(fields[fields.length - 1].equals("highlights")).isTrue();
+    ip = new IncludeParam("highlights,full");
+    fields = ip.getIncludedFields();
+    assertThat(fields[fields.length - 1].equals("highlights")).isTrue();
 
-	}
+  }
 }

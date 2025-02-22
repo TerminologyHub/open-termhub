@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -14,18 +14,18 @@ package com.wci.termhub.model;
  */
 public interface HasName {
 
-	/**
-	 * Returns the name.
-	 *
-	 * @return the name
-	 */
-	public String getName();
+  /**
+   * Returns the name.
+   *
+   * @return the name
+   */
+  public String getName();
 
-	/**
-	 * Sets the name.
-	 *
-	 * @param name the name
-	 */
-	public void setName(String name);
+  /**
+   * Sets the name.
+   *
+   * @param name the name
+   */
+  public void setName(String name);
 
 }

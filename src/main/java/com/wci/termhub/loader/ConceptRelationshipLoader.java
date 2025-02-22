@@ -1,5 +1,11 @@
 /*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
  */
 package com.wci.termhub.loader;
 
@@ -23,119 +29,127 @@ import com.wci.termhub.util.ModelUtility;
 /**
  * The Class ConceptLoader.
  */
-public class ConceptRelationshipLoader {
+public final class ConceptRelationshipLoader {
 
-	/** The logger. */
-	private static Logger logger = LoggerFactory.getLogger(ConceptRelationshipLoader.class);
+  /** The logger. */
+  private static Logger logger = LoggerFactory.getLogger(ConceptRelationshipLoader.class);
 
-	/**
-	 * The main method.
-	 *
-	 * @param args the arguments
-	 */
-	public static void main(final String[] args) {
+  /**
+   * Instantiates a new concept relationship loader.
+   */
+  private ConceptRelationshipLoader() {
+    // private constructor
+  }
 
-		try {
+  /**
+   * The main method.
+   *
+   * @param args the arguments
+   */
+  public static void main(final String[] args) {
 
-			if (args == null || args.length == 0 || StringUtils.isBlank(args[0])) {
-				logger.error("File name is required.");
-				System.exit(1);
-			}
+    try {
 
-			// get file name from command line
-			final String fullFileName = args[0];
-			if (!Files.exists(Paths.get(fullFileName))) {
-				logger.error("File does not exist at " + fullFileName);
-				System.exit(1);
-			}
+      if (args == null || args.length == 0 || StringUtils.isBlank(args[0])) {
+        logger.error("File name is required.");
+        System.exit(1);
+      }
 
-			int batchSize = 1000;
-			if (args.length > 1 && StringUtils.isNotBlank(args[1])) {
-				batchSize = Integer.parseInt(args[1]);
-			}
+      // get file name from command line
+      final String fullFileName = args[0];
+      if (!Files.exists(Paths.get(fullFileName))) {
+        logger.error("File does not exist at " + fullFileName);
+        System.exit(1);
+      }
 
-			int limit = -1;
-			if (args.length > 2 && StringUtils.isNotBlank(args[2])) {
-				limit = Integer.parseInt(args[2]);
-			}
+      int batchSize = 1000;
+      if (args.length > 1 && StringUtils.isNotBlank(args[1])) {
+        batchSize = Integer.parseInt(args[1]);
+      }
 
-			index(fullFileName, batchSize, limit);
+      int limit = -1;
+      if (args.length > 2 && StringUtils.isNotBlank(args[2])) {
+        limit = Integer.parseInt(args[2]);
+      }
 
-		} catch (final Exception e) {
-			logger.error("An error occurred while loading the file.");
-			e.printStackTrace();
-			System.exit(1);
-		}
+      index(fullFileName, batchSize, limit);
 
-		System.exit(0);
+    } catch (final Exception e) {
+      logger.error("An error occurred while loading the file.");
+      e.printStackTrace();
+      System.exit(1);
+    }
 
-	}
+    System.exit(0);
 
-	/**
-	 * Index all.
-	 *
-	 * @param fullFileName the full file name
-	 * @param batchSize    the batch size
-	 * @throws Exception the exception
-	 */
-	public static void indexAll(final String fullFileName, final int batchSize) throws Exception {
-		index(fullFileName, batchSize, -1);
-	}
+  }
 
-	/**
-	 * Index.
-	 *
-	 * @param fullFileName the full file name
-	 * @param batchSize    the batch size
-	 * @param limit        the limit
-	 * @throws Exception the exception
-	 */
-	public static void index(final String fullFileName, final int batchSize, final int limit) throws Exception {
+  /**
+   * Index all.
+   *
+   * @param fullFileName the full file name
+   * @param batchSize the batch size
+   * @throws Exception the exception
+   */
+  public static void indexAll(final String fullFileName, final int batchSize) throws Exception {
+    index(fullFileName, batchSize, -1);
+  }
 
-		System.out.println("batch size: " + batchSize + " limit: " + limit);
-		final long startTime = System.currentTimeMillis();
+  /**
+   * Index.
+   *
+   * @param fullFileName the full file name
+   * @param batchSize the batch size
+   * @param limit the limit
+   * @throws Exception the exception
+   */
+  public static void index(final String fullFileName, final int batchSize, final int limit)
+    throws Exception {
 
-		final List<ConceptRelationship> conceptRelBatch = new ArrayList<>(batchSize);
+    System.out.println("batch size: " + batchSize + " limit: " + limit);
+    final long startTime = System.currentTimeMillis();
 
-		// read the file
-		// for each line in the file, convert to Concept object.
-		try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
+    final List<ConceptRelationship> conceptRelBatch = new ArrayList<>(batchSize);
 
-			final ObjectMapper objectMapper = new ObjectMapper();
-			final LuceneDataAccess luceneDataAccess = new LuceneDataAccess();
-			luceneDataAccess.createIndex(ConceptRelationship.class);
+    // read the file
+    // for each line in the file, convert to Concept object.
+    try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
 
-			String line;
-			int count = 1;
-			while ((line = br.readLine()) != null && (limit == -1 || count < limit)) {
+      final ObjectMapper objectMapper = new ObjectMapper();
+      final LuceneDataAccess luceneDataAccess = new LuceneDataAccess();
+      luceneDataAccess.createIndex(ConceptRelationship.class);
 
-				final JsonNode rootNode = objectMapper.readTree(line);
-				final JsonNode conceptRelNode = rootNode.get("_source");
-				final ConceptRelationship conceptRel = ModelUtility.fromJson(conceptRelNode.toString(),
-						ConceptRelationship.class);
-				conceptRelBatch.add(conceptRel);
+      String line;
+      int count = 1;
+      while ((line = br.readLine()) != null && (limit == -1 || count < limit)) {
 
-				if (conceptRelBatch.size() == batchSize) {
-					luceneDataAccess.add(conceptRelBatch);
-					conceptRelBatch.clear();
-					System.out.println("count: " + count);
-				}
+        final JsonNode rootNode = objectMapper.readTree(line);
+        final JsonNode conceptRelNode = rootNode.get("_source");
+        final ConceptRelationship conceptRel =
+            ModelUtility.fromJson(conceptRelNode.toString(), ConceptRelationship.class);
+        conceptRelBatch.add(conceptRel);
 
-				count++;
-			}
+        if (conceptRelBatch.size() == batchSize) {
+          luceneDataAccess.add(conceptRelBatch);
+          conceptRelBatch.clear();
+          System.out.println("count: " + count);
+        }
 
-			if (!conceptRelBatch.isEmpty()) {
-				luceneDataAccess.add(conceptRelBatch);
-			}
+        count++;
+      }
 
-			System.out.println("final count: " + count);
-			System.out.println("duration: " + (System.currentTimeMillis() - startTime) + " ms");
+      if (!conceptRelBatch.isEmpty()) {
+        luceneDataAccess.add(conceptRelBatch);
+      }
 
-		} catch (final Exception e) {
-			logger.error("An error occurred while processing the file.");
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
+      System.out.println("final count: " + count);
+      System.out.println("duration: " + (System.currentTimeMillis() - startTime) + " ms");
+
+    } catch (final Exception e) {
+      logger.error("An error occurred while processing the file.");
+      e.printStackTrace();
+      System.exit(1);
+    }
+  }
 
 }

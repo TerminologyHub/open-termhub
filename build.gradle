@@ -14,26 +14,14 @@ buildscript {
   dependencies {
     classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
     classpath "gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.5"
-    classpath "com.bmuschko:gradle-nexus-plugin:2.3.1"
   }
 }
 
 // This must be at the top of the file (only can be below buildscript)
 plugins {
+  id "com.github.hierynomus.license" version "0.16.1"
   id 'org.springframework.boot' version '3.3.5'
-  id 'io.spring.dependency-management' version '1.1.6'
-  id 'java'
-  // id "com.github.hierynomus.license" version "0.15.0"
-}
-
-group = 'com.wci.open-termhub'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
+  id "com.github.spotbugs" version "6.0.26"
 }
 
 repositories {
@@ -54,14 +42,24 @@ repositories {
 
 // Plugins
 // The dependency management plugin remains a transitive dependency of spring-boot-gradle-plugin
-// so there’s no need for it to be listed as a classpath dependency in the buildscript configuration.
+// so there's no need for it to be listed as a classpath dependency in the buildscript configuration.
 apply plugin: "io.spring.dependency-management"
 apply plugin: "org.springframework.boot"
 apply plugin: "java"
 apply plugin: "eclipse"
-apply plugin: "com.github.spotbugs"
-// apply plugin: "checkstyle"
-// apply plugin: "com.bmuschko.nexus" // error
+apply plugin: "checkstyle"
+
+group = 'com.wci.open-termhub'
+version = '0.0.1-SNAPSHOT'
+
+sourceCompatibility = 17
+targetCompatibility = 17
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 
 //configurations.all {
 //   exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
@@ -111,11 +109,6 @@ dependencies {
   implementation 'org.thymeleaf:thymeleaf:3.1.2.RELEASE'
   implementation 'org.thymeleaf:thymeleaf-spring6:3.1.2.RELEASE'
 
-  // Remove conflicting SpringDoc dependencies
-  // implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
-  // implementation 'org.springdoc:springdoc-openapi-starter-common:2.2.0'
-  // implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.2.0'
-
   implementation 'org.apache.commons:commons-text:1.12.0'
   implementation 'org.apache.commons:commons-lang3:3.17.0'
   implementation 'org.apache.commons:commons-math3:3.6.1'
@@ -147,7 +140,6 @@ dependencies {
   // FHIR libraries
   // The guava exclusion is to avoid things like
   // - ...Could not resolve com.google.guava:guava:32.0.1-jre
-  // NUNO all hapi.fhir where 6.8.3
   implementation ("ca.uhn.hapi.fhir:hapi-fhir-base:7.0.3") {
      exclude group: "com.google.guava", module: "guava"
      exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
@@ -190,107 +182,69 @@ dependencies {
   testImplementation 'org.junit.platform:junit-platform-suite-engine:1.9.3'
 }
 
-// use "gradle licenseFormatMain/Test" to automatically generate headers
-//license {
-//  header rootProject.file("config/LICENSE")
-//  mapping("java", "SLASHSTAR_STYLE")
-//  includes(["**/*.java"])
-//  excludes(["**/*.txt", "**/*.conf", "**/*package-info.java", "**/*.properties"])
-//  strictCheck true
-//  ext.year = Calendar.getInstance().get(Calendar.YEAR)
-//  ext.company = "West Coast Informatics"
-//}
-
-//licenseTest.dependsOn licenseFormatTest
-//licenseMain.dependsOn licenseFormatMain
-
-// SpotBugs and CheckStyle
-spotbugs {
-    ignoreFailures = false
-    showStackTraces = true
-    showProgress = true
-    excludeFilter = file("config/spotbugs/exclude.xml")
-    // onlyAnalyze = [ "com.foobar.MyClass", "com.foobar.mypkg.*" ]
-    // jvmArgs = [ "-Duser.language=ja" ]
-}
-spotbugsMain {
-    enabled = true
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
-}
-spotbugsTest {
-    enabled = true
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
-}
-
-// use "gradle licenseFormatMain/Test" to automatically generate headers
-//license {
-//  header rootProject.file("config/LICENSE")
-//  mapping("java", "SLASHSTAR_STYLE")
-//  includes(["**/*.java"])
-//  excludes(["**/*.txt", "**/*.conf", "**/*package-info.java", "**/*.properties"])
-//  strictCheck true
-//  ext.year = Calendar.getInstance().get(Calendar.YEAR)
-//  ext.company = "West Coast Informatics"
-//}
-
-//licenseTest.dependsOn licenseFormatTest
-//licenseMain.dependsOn licenseFormatMain
-
-// SpotBugs and CheckStyle
-spotbugs {
-    ignoreFailures = false
-    showStackTraces = true
-    showProgress = true
-    excludeFilter = file("config/spotbugs/exclude.xml")
-    // onlyAnalyze = [ "com.foobar.MyClass", "com.foobar.mypkg.*" ]
-    // jvmArgs = [ "-Duser.language=ja" ]
-}
-spotbugsMain {
-    enabled = true
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
-}
-spotbugsTest {
-    enabled = true
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
-}
-
-
 test {
   useJUnitPlatform()
   exclude '**/*IntegrationTest.*'
 }
 
-//checkstyle {
-//  // config = resources.text.fromFile(file("${project.rootDir}/config/checkstyle/checkstyle.xml"))
-//  //toolVersion = "8.29"
-//  toolVersion = "7.6.1"
-//  ignoreFailures = true
-//  checkstyleMain.exclude "**/package-info.java"
-//  checkstyleTest.exclude "**/package-info.java"
-//  // checkstyleIntegrationTest.exclude "**/package-info.java"
-//  configProperties = [
-//    "checkstyle.cache.file"         : rootProject.file(".out/checkstyle/checkstyle.cache"),
-//    "checkstyle.suppressions.file"  : rootProject.file("config/checkstyle/suppressions.xml"),
-//    "checkstyle.header.file"        : "",
-//    "checkstyle.regexp.header.file" : "",
-//    "checkstyle.importcontrol.file" : ""
-//  ]
-//}
-//tasks.withType(Checkstyle) {
-//  ignoreFailures = true
-//}
+// use "gradle licenseFormatMain/Test" to automatically generate headers
+license {
+  header = rootProject.file("config/LICENSE")
+  strictCheck true
+  encoding = "UTF-8"
+  mapping("java", "SLASHSTAR_STYLE")
+  includes(["**/*.java"])
+  excludes(["**/*.txt", "**/*.conf", "**/*package-info.java", "**/*.properties"])
+  ext.year = Calendar.getInstance().get(Calendar.YEAR)
+  ext.company = "West Coast Informatics"
+}
+licenseTest.dependsOn licenseFormatTest
+licenseMain.dependsOn licenseFormatMain
+
+// SpotBugs https://spotbugs.readthedocs.io/en/latest/gradle.html
+// https://github.com/spotbugs/spotbugs-gradle-plugin
+spotbugs {
+  ignoreFailures = false
+  showStackTraces = true
+  showProgress = true
+  excludeFilter = file("${rootDir}/config/spotbugs/excludeFilter.xml")
+}
+spotbugsMain {
+    reports {
+        html {
+            enabled = true
+            outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
+    }
+}
+spotbugsTest {
+    reports {
+        html {
+            enabled = true
+            outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
+    }
+}
+
+// Checkstyle
+checkstyle {
+  toolVersion '10.12.0'
+  ignoreFailures = true
+  // Path to your Checkstyle configuration file
+  configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+}
+checkstyleMain {
+  reports {
+    html.destination = file("$buildDir/reports/checkstyle.html")
+  }
+}
+checkstyleTest {
+  reports {
+    html.destination = file("$buildDir/reports/checkstyle.html")
+  }
+}
 
 
 // usage ./gradlew runLoadConcepts -PinputFile=location of concepts JSON file -PbatchSize=1000 -Plimit=1000

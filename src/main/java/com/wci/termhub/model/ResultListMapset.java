@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -17,21 +17,21 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Represents a list of mapsets returned from a find call")
 public class ResultListMapset extends ResultList<Mapset> {
 
-	/**
-	 * Instantiates an empty {@link ResultListMapset}.
-	 */
-	public ResultListMapset() {
-		// n/a
-	}
+  /**
+   * Instantiates an empty {@link ResultListMapset}.
+   */
+  public ResultListMapset() {
+    // n/a
+  }
 
-	/**
-	 * Instantiates a {@link ResultListMapset} from the specified parameters.
-	 *
-	 * @param list the list
-	 */
-	public ResultListMapset(final ResultList<Mapset> list) {
-		this.setItems(list.getItems());
-		this.setParameters(list.getParameters());
-		this.setTotal(list.getTotal());
-	}
+  /**
+   * Instantiates a {@link ResultListMapset} from the specified parameters.
+   *
+   * @param list the list
+   */
+  public ResultListMapset(final ResultList<Mapset> list) {
+    this.setItems(list.getItems());
+    this.setParameters(list.getParameters());
+    this.setTotal(list.getTotal());
+  }
 }

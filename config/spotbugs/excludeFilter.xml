@@ -14,15 +14,10 @@
 		<Bug code="DE,UrF,SIC" />
 	</Match>
 
+	<!-- Match all RCN (RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE) violations. -->
 	<Match>
-		<Class name="com.wci.termhub.Application" />
-		<Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
-	</Match>
-
-	<!-- Match all XYZ violations. -->
-	<Match>
-		<!-- Bug descriptions: http://findbugs.sourceforge.net/bugDescriptions.html -->
-		<Bug code="XYZ" />
+		<!-- Bug descriptions: https://spotbugs.readthedocs.io/en/stable/bugDescriptions.html -->
+		<Bug code="RCN" />
 	</Match>
 
 	<!-- Match all doublecheck violations in these methods of "AnotherClass". -->

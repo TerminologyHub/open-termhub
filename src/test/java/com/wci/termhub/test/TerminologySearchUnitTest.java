@@ -1,5 +1,11 @@
 /*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
  */
 package com.wci.termhub.test;
 
@@ -25,131 +31,139 @@ import com.wci.termhub.service.EntityRepositoryService;
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class TerminologySearchUnitTest {
 
-	/** The logger. */
-	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(TerminologySearchUnitTest.class);
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private static final Logger LOG = LoggerFactory.getLogger(TerminologySearchUnitTest.class);
 
-	/** The search service. */
-	@Autowired
-	private EntityRepositoryService searchService;
+  /** The search service. */
+  @Autowired
+  private EntityRepositoryService searchService;
 
-	/** The Constant SEARCH_PARAMETERS. */
-	private static final SearchParameters SEARCH_PARAMETERS = new SearchParameters(1000, 0);
+  /** The Constant SEARCH_PARAMETERS. */
+  private static final SearchParameters SEARCH_PARAMETERS = new SearchParameters(1000, 0);
 
-	/**
-	 * Test find all.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testFindAll() throws Exception {
+  /**
+   * Test find all.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindAll() throws Exception {
 
-		final ResultList<Terminology> all = searchService.findAll(SEARCH_PARAMETERS, Terminology.class);
-		LOG.info("Find all: {}", all.getItems().size());
-	}
+    final ResultList<Terminology> all = searchService.findAll(SEARCH_PARAMETERS, Terminology.class);
+    LOG.info("Find all: {}", all.getItems().size());
+  }
 
-	/**
-	 * Test find terminology icd 10 cm.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testFindTerminologyIcd10cm() throws Exception {
+  /**
+   * Test find terminology icd 10 cm.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindTerminologyIcd10cm() throws Exception {
 
-		SEARCH_PARAMETERS.setQuery("abbreviation: ICD10CM");
-		final ResultList<Terminology> terminologies = searchService.find(SEARCH_PARAMETERS, Terminology.class);
-		assertEquals(1, terminologies.getItems().size());
-		final Terminology terminology = terminologies.getItems().get(0);
-		assertEquals("ICD10CM", terminology.getAbbreviation());
-		assertEquals("International Classification of Diseases, Tenth Revision, Clinical Modification",
-				terminology.getName());
-		assertEquals("2023", terminology.getVersion());
-		assertEquals("NLM", terminology.getPublisher());
-	}
+    SEARCH_PARAMETERS.setQuery("abbreviation: ICD10CM");
+    final ResultList<Terminology> terminologies =
+        searchService.find(SEARCH_PARAMETERS, Terminology.class);
+    assertEquals(1, terminologies.getItems().size());
+    final Terminology terminology = terminologies.getItems().get(0);
+    assertEquals("ICD10CM", terminology.getAbbreviation());
+    assertEquals("International Classification of Diseases, Tenth Revision, Clinical Modification",
+        terminology.getName());
+    assertEquals("2023", terminology.getVersion());
+    assertEquals("NLM", terminology.getPublisher());
+  }
 
-	/**
-	 * Test find terminology lnc.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testFindTerminologyLnc() throws Exception {
+  /**
+   * Test find terminology lnc.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindTerminologyLnc() throws Exception {
 
-		SEARCH_PARAMETERS.setQuery("abbreviation: LNC");
-		final ResultList<Terminology> terminologies = searchService.find(SEARCH_PARAMETERS, Terminology.class);
-		assertEquals(1, terminologies.getItems().size());
-		final Terminology terminology = terminologies.getItems().get(0);
-		assertEquals("LNC", terminology.getAbbreviation());
-		assertEquals("Logical Observation Identifiers Names and Codes", terminology.getName());
-		assertEquals("277", terminology.getVersion());
-		assertEquals("NLM", terminology.getPublisher());
-	}
+    SEARCH_PARAMETERS.setQuery("abbreviation: LNC");
+    final ResultList<Terminology> terminologies =
+        searchService.find(SEARCH_PARAMETERS, Terminology.class);
+    assertEquals(1, terminologies.getItems().size());
+    final Terminology terminology = terminologies.getItems().get(0);
+    assertEquals("LNC", terminology.getAbbreviation());
+    assertEquals("Logical Observation Identifiers Names and Codes", terminology.getName());
+    assertEquals("277", terminology.getVersion());
+    assertEquals("NLM", terminology.getPublisher());
+  }
 
-	/**
-	 * Test find terminology rxnorm.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testFindTerminologyRxnorm() throws Exception {
+  /**
+   * Test find terminology rxnorm.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindTerminologyRxnorm() throws Exception {
 
-		SEARCH_PARAMETERS.setQuery("abbreviation: RXNORM");
-		final ResultList<Terminology> terminologies = searchService.find(SEARCH_PARAMETERS, Terminology.class);
-		assertEquals(1, terminologies.getItems().size());
-		final Terminology terminology = terminologies.getItems().get(0);
-		assertEquals("RXNORM", terminology.getAbbreviation());
-		assertEquals("RxNorm", terminology.getName());
-		assertEquals("02052024", terminology.getVersion());
-		assertEquals("NLM", terminology.getPublisher());
-	}
+    SEARCH_PARAMETERS.setQuery("abbreviation: RXNORM");
+    final ResultList<Terminology> terminologies =
+        searchService.find(SEARCH_PARAMETERS, Terminology.class);
+    assertEquals(1, terminologies.getItems().size());
+    final Terminology terminology = terminologies.getItems().get(0);
+    assertEquals("RXNORM", terminology.getAbbreviation());
+    assertEquals("RxNorm", terminology.getName());
+    assertEquals("02052024", terminology.getVersion());
+    assertEquals("NLM", terminology.getPublisher());
+  }
 
-	/**
-	 * Test find terminology snomed us.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testFindTerminologySnomedUs() throws Exception {
+  /**
+   * Test find terminology snomed us.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindTerminologySnomedUs() throws Exception {
 
-		SEARCH_PARAMETERS.setQuery("abbreviation: SNOMEDCT_US");
-		final ResultList<Terminology> terminologies = searchService.find(SEARCH_PARAMETERS, Terminology.class);
-		assertEquals(1, terminologies.getItems().size());
-		final Terminology terminology = terminologies.getItems().get(0);
-		assertEquals("SNOMEDCT_US", terminology.getAbbreviation());
-		assertEquals("Systematized Nomenclature of Medicine–Clinical Terminology, US Edition", terminology.getName());
-		assertEquals("20240301", terminology.getVersion());
-		assertEquals("SANDBOX", terminology.getPublisher());
-	}
+    SEARCH_PARAMETERS.setQuery("abbreviation: SNOMEDCT_US");
+    final ResultList<Terminology> terminologies =
+        searchService.find(SEARCH_PARAMETERS, Terminology.class);
+    assertEquals(1, terminologies.getItems().size());
+    final Terminology terminology = terminologies.getItems().get(0);
+    assertEquals("SNOMEDCT_US", terminology.getAbbreviation());
+    assertEquals("Systematized Nomenclature of Medicine–Clinical Terminology, US Edition",
+        terminology.getName());
+    assertEquals("20240301", terminology.getVersion());
+    assertEquals("SANDBOX", terminology.getPublisher());
+  }
 
-	/**
-	 * Test find terminology snomed sandbox.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testFindTerminologySnomedSandbox() throws Exception {
+  /**
+   * Test find terminology snomed sandbox.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindTerminologySnomedSandbox() throws Exception {
 
-		SEARCH_PARAMETERS.setQuery("abbreviation: SNOMEDCT");
-		final ResultList<Terminology> terminologies = searchService.find(SEARCH_PARAMETERS, Terminology.class);
-		assertEquals(1, terminologies.getItems().size());
-		final Terminology terminology = terminologies.getItems().get(0);
-		assertEquals("SNOMEDCT", terminology.getAbbreviation());
-		assertEquals("Systematized Nomenclature of Medicine–Clinical Terminology", terminology.getName());
-		assertEquals("20240101", terminology.getVersion());
-		assertEquals("SANDBOX", terminology.getPublisher());
-	}
+    SEARCH_PARAMETERS.setQuery("abbreviation: SNOMEDCT");
+    final ResultList<Terminology> terminologies =
+        searchService.find(SEARCH_PARAMETERS, Terminology.class);
+    assertEquals(1, terminologies.getItems().size());
+    final Terminology terminology = terminologies.getItems().get(0);
+    assertEquals("SNOMEDCT", terminology.getAbbreviation());
+    assertEquals("Systematized Nomenclature of Medicine–Clinical Terminology",
+        terminology.getName());
+    assertEquals("20240101", terminology.getVersion());
+    assertEquals("SANDBOX", terminology.getPublisher());
+  }
 
-	/**
-	 * Test find terminology fake sandbox.
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	public void testFindTerminologyFake() throws Exception {
+  /**
+   * Test find terminology fake sandbox.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindTerminologyFake() throws Exception {
 
-		SEARCH_PARAMETERS.setQuery("abbreviation: FAKE");
-		final ResultList<Terminology> terminologies = searchService.find(SEARCH_PARAMETERS, Terminology.class);
-		assertEquals(0, terminologies.getItems().size());
-	}
+    SEARCH_PARAMETERS.setQuery("abbreviation: FAKE");
+    final ResultList<Terminology> terminologies =
+        searchService.find(SEARCH_PARAMETERS, Terminology.class);
+    assertEquals(0, terminologies.getItems().size());
+  }
 
 }

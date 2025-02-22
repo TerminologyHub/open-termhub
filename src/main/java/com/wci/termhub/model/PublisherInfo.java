@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -34,195 +34,198 @@ import jakarta.persistence.Transient;
 @Document(indexName = "publisher-info-v1")
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PublisherInfo extends AbstractHasModified implements HasLazyInit, Copyable<PublisherInfo> {
+public class PublisherInfo extends AbstractHasModified
+    implements HasLazyInit, Copyable<PublisherInfo> {
 
-	/** The type. e.g. NLM, SNOMED, etc. */
-	@Column(nullable = false, length = 256)
-	@Field(type = FieldType.Keyword)
-	private String type;
+  /** The type. e.g. NLM, SNOMED, etc. */
+  @Column(nullable = false, length = 256)
+  @Field(type = FieldType.Keyword)
+  private String type;
 
-	/** The human readable name of the publisher type. */
-	@Transient
-	@MultiField(mainField = @Field(type = FieldType.Text), otherFields = {
-			@InnerField(suffix = "keyword", type = FieldType.Keyword) })
-	private String name;
+  /** The human readable name of the publisher type. */
+  @Transient
+  @MultiField(mainField = @Field(type = FieldType.Text), otherFields = {
+      @InnerField(suffix = "keyword", type = FieldType.Keyword)
+  })
+  private String name;
 
-	/** The email. */
-	@Transient
-	@Field(type = FieldType.Keyword)
-	private String email;
+  /** The email. */
+  @Transient
+  @Field(type = FieldType.Keyword)
+  private String email;
 
-	/** The uri. e.g. main website */
-	@Transient
-	@Field(type = FieldType.Keyword)
-	private String uri;
+  /** The uri. e.g. main website */
+  @Transient
+  @Field(type = FieldType.Keyword)
+  private String uri;
 
-	/** The uri. e.g. main website */
-	@Transient
-	@Field(type = FieldType.Text)
-	private String description;
+  /** The uri. e.g. main website */
+  @Transient
+  @Field(type = FieldType.Text)
+  private String description;
 
-	/**
-	 * Instantiates an empty {@link PublisherInfo}.
-	 */
-	public PublisherInfo() {
-		// n/a
-	}
+  /**
+   * Instantiates an empty {@link PublisherInfo}.
+   */
+  public PublisherInfo() {
+    // n/a
+  }
 
-	/**
-	 * Instantiates a {@link PublisherInfo} from the specified parameters.
-	 *
-	 * @param other the other
-	 */
-	public PublisherInfo(final PublisherInfo other) {
-		populateFrom(other);
-	}
+  /**
+   * Instantiates a {@link PublisherInfo} from the specified parameters.
+   *
+   * @param other the other
+   */
+  public PublisherInfo(final PublisherInfo other) {
+    populateFrom(other);
+  }
 
-	/**
-	 * Populate from.
-	 *
-	 * @param other the other
-	 */
-	@Override
-	public void populateFrom(final PublisherInfo other) {
-		super.populateFrom(other);
-		type = other.getType();
-		name = other.getName();
-		email = other.getEmail();
-		uri = other.getUri();
-		description = other.getDescription();
-	}
+  /**
+   * Populate from.
+   *
+   * @param other the other
+   */
+  @Override
+  public void populateFrom(final PublisherInfo other) {
+    super.populateFrom(other);
+    type = other.getType();
+    name = other.getName();
+    email = other.getEmail();
+    uri = other.getUri();
+    description = other.getDescription();
+  }
 
-	/**
-	 * Patch from.
-	 *
-	 * @param other the other
-	 */
-	@Override
-	public void patchFrom(final PublisherInfo other) {
-		super.patchFrom(other);
-		if (other.getType() != null) {
-			type = other.getType();
-		}
-		if (other.getName() != null) {
-			name = other.getName();
-		}
-		if (other.getEmail() != null) {
-			email = other.getEmail();
-		}
-		if (other.getUri() != null) {
-			uri = other.getUri();
-		}
-		if (other.getDescription() != null) {
-			description = other.getDescription();
-		}
+  /**
+   * Patch from.
+   *
+   * @param other the other
+   */
+  @Override
+  public void patchFrom(final PublisherInfo other) {
+    super.patchFrom(other);
+    if (other.getType() != null) {
+      type = other.getType();
+    }
+    if (other.getName() != null) {
+      name = other.getName();
+    }
+    if (other.getEmail() != null) {
+      email = other.getEmail();
+    }
+    if (other.getUri() != null) {
+      uri = other.getUri();
+    }
+    if (other.getDescription() != null) {
+      description = other.getDescription();
+    }
 
-	}
+  }
 
-//	/* see superclass */
-//	@Override
-//	@PostLoad
-//	public void unmarshall() throws Exception {
-//		final PublisherInfo resource = ModelUtility.fromJson(getData(), this.getClass());
-//		if (resource != null) {
-//			populateFrom(resource);
-//		}
-//	}
+  // /* see superclass */
+  // @Override
+  // @PostLoad
+  // public void unmarshall() throws Exception {
+  // final PublisherInfo resource = ModelUtility.fromJson(getData(),
+  // this.getClass());
+  // if (resource != null) {
+  // populateFrom(resource);
+  // }
+  // }
 
-	/* see superclass */
-	@Override
-	public void lazyInit() {
-		// n/a
-	}
+  /* see superclass */
+  @Override
+  public void lazyInit() {
+    // n/a
+  }
 
-	/**
-	 * Returns the type.
-	 *
-	 * @return the type
-	 */
-	public String getType() {
-		return type;
-	}
+  /**
+   * Returns the type.
+   *
+   * @return the type
+   */
+  public String getType() {
+    return type;
+  }
 
-	/**
-	 * Sets the type.
-	 *
-	 * @param type the type
-	 */
-	public void setType(final String type) {
-		this.type = type;
-	}
+  /**
+   * Sets the type.
+   *
+   * @param type the type
+   */
+  public void setType(final String type) {
+    this.type = type;
+  }
 
-	/**
-	 * Returns the name.
-	 *
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
+  /**
+   * Returns the name.
+   *
+   * @return the name
+   */
+  public String getName() {
+    return name;
+  }
 
-	/**
-	 * Sets the name.
-	 *
-	 * @param name the name
-	 */
-	public void setName(final String name) {
-		this.name = name;
-	}
+  /**
+   * Sets the name.
+   *
+   * @param name the name
+   */
+  public void setName(final String name) {
+    this.name = name;
+  }
 
-	/**
-	 * Returns the email.
-	 *
-	 * @return the email
-	 */
-	public String getEmail() {
-		return email;
-	}
+  /**
+   * Returns the email.
+   *
+   * @return the email
+   */
+  public String getEmail() {
+    return email;
+  }
 
-	/**
-	 * Sets the email.
-	 *
-	 * @param email the email
-	 */
-	public void setEmail(final String email) {
-		this.email = email;
-	}
+  /**
+   * Sets the email.
+   *
+   * @param email the email
+   */
+  public void setEmail(final String email) {
+    this.email = email;
+  }
 
-	/**
-	 * Returns the uri.
-	 *
-	 * @return the uri
-	 */
-	public String getUri() {
-		return uri;
-	}
+  /**
+   * Returns the uri.
+   *
+   * @return the uri
+   */
+  public String getUri() {
+    return uri;
+  }
 
-	/**
-	 * Sets the uri.
-	 *
-	 * @param uri the uri
-	 */
-	public void setUri(final String uri) {
-		this.uri = uri;
-	}
+  /**
+   * Sets the uri.
+   *
+   * @param uri the uri
+   */
+  public void setUri(final String uri) {
+    this.uri = uri;
+  }
 
-	/**
-	 * Returns the description.
-	 *
-	 * @return the description
-	 */
-	public String getDescription() {
-		return description;
-	}
+  /**
+   * Returns the description.
+   *
+   * @return the description
+   */
+  public String getDescription() {
+    return description;
+  }
 
-	/**
-	 * Sets the description.
-	 *
-	 * @param description the description
-	 */
-	public void setDescription(final String description) {
-		this.description = description;
-	}
+  /**
+   * Sets the description.
+   *
+   * @param description the description
+   */
+  public void setDescription(final String description) {
+    this.description = description;
+  }
 
 }
