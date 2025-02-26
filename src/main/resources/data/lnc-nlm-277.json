@@ -1,1 +1,46 @@
-{"id":"f8e5be17-dff0-48c4-b069-169be13950a2","confidence":0.980829119682312,"modified":"2024-10-16T11:01:50.443-07:00","created":"2024-10-16T11:01:50.443-07:00","modifiedBy":"loader","local":false,"active":true,"abbreviation":"LNC","name":"Logical Observation Identifiers Names and Codes","version":"277","publisher":"NLM","releaseDate":"2024-05-06","family":"LOINC","indexName":"lnc-nlm-277","attributes":{"origin-version":"2024AA","polyhierarchy":"true","autocomplete":"true","hierarchical":"true","fhirVersion":"277","tree-positions":"true","origin-terminology":"UMLS","ecl":"true","fhirId":"lnc_277","fhirCompositional":"false"},"roots":["MTHU000998","MTHU000999"],"statistics":{"termsInactive":0,"childrenInactive":0,"relationships":348,"concepts":119,"terms":232,"parentsInactive":0,"termsActive":232,"parentsActive":90,"definitions":0,"treePositions":93,"conceptsActive":119,"childrenActive":90}}
+{
+	"id": "f8e5be17-dff0-48c4-b069-169be13950a2",
+	"confidence": 0.980829119682312,
+	"modified": "2024-10-16T11:01:50.443-07:00",
+	"created": "2024-10-16T11:01:50.443-07:00",
+	"modifiedBy": "loader",
+	"local": false,
+	"active": true,
+	"abbreviation": "LNC",
+	"name": "Logical Observation Identifiers Names and Codes",
+	"version": "277",
+	"publisher": "NLM",
+	"releaseDate": "2024-05-06",
+	"family": "LOINC",
+	"indexName": "lnc-nlm-277",
+	"attributes": {
+		"origin-version": "2024AA",
+		"polyhierarchy": "true",
+		"autocomplete": "true",
+		"hierarchical": "true",
+		"fhirVersion": "277",
+		"tree-positions": "true",
+		"origin-terminology": "UMLS",
+		"ecl": "true",
+		"fhirId": "lnc_277",
+		"fhirCompositional": "false"
+	},
+	"roots": [
+		"MTHU000998",
+		"MTHU000999"
+	],
+	"statistics": {
+		"termsInactive": 0,
+		"childrenInactive": 0,
+		"relationships": 348,
+		"concepts": 119,
+		"terms": 232,
+		"parentsInactive": 0,
+		"termsActive": 232,
+		"parentsActive": 90,
+		"definitions": 0,
+		"treePositions": 93,
+		"conceptsActive": 119,
+		"childrenActive": 90
+	}
+}

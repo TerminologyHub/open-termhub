@@ -43,6 +43,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.service.RootService;
 
@@ -224,7 +225,7 @@ public final class ModelUtility<T> {
 
   /**
    * Returns the graph for json. sample usage:
-   * 
+   *
    * @param <T> the
    * @param json the json
    * @param typeRef the type ref
@@ -246,8 +247,22 @@ public final class ModelUtility<T> {
    * @return the json for graph
    */
   public static String toJson(final Object object) {
+    return toJson(object, true);
+  }
+
+  /**
+   * To json.
+   *
+   * @param object the object
+   * @param formatted the formatted
+   * @return the string
+   */
+  public static String toJson(final Object object, final boolean formatted) {
     try {
-      return mapper.writeValueAsString(object);
+      if (formatted) {
+        return mapper.writeValueAsString(object);
+      }
+      return mapper.writer().without(SerializationFeature.INDENT_OUTPUT).writeValueAsString(object);
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
@@ -736,7 +751,7 @@ public final class ModelUtility<T> {
    */
   @SuppressWarnings("unchecked")
   public static <T> T getAnnotation(final Class<?> clazz, final Class<T> type) {
-    for (Annotation annotation : clazz.getAnnotations()) {
+    for (final Annotation annotation : clazz.getAnnotations()) {
       if (type.isAssignableFrom(annotation.getClass())) {
         return (T) annotation;
       }

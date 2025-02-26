@@ -1,1 +1,37 @@
-{"id":"ee824fe2-8c4d-4ad0-a060-8167914f65fd","confidence":0.28768208622932434,"modified":"2024-10-16T11:01:13.634-07:00","created":"2024-10-16T11:01:13.634-07:00","modifiedBy":"loader","local":false,"active":true,"abbreviation":"RXNORM","name":"RxNorm","version":"02052024","publisher":"NLM","releaseDate":"2024-02-05","family":"RXNORM","indexName":"rxnorm-nlm-02052024","attributes":{"autocomplete":"true","fhirVersion":"02052024","ecl":"true","fhirId":"rxnorm_02052024","fhirCompositional":"false"},"statistics":{"termsInactive":403,"childrenInactive":0,"relationships":7352,"concepts":807,"terms":1956,"conceptsInactive":198,"parentsInactive":0,"termsActive":1553,"parentsActive":0,"definitions":0,"conceptsActive":609,"childrenActive":0}}
+{
+	"id": "ee824fe2-8c4d-4ad0-a060-8167914f65fd",
+	"confidence": 0.28768208622932436,
+	"modified": "2024-10-16T11:01:13.634-07:00",
+	"created": "2024-10-16T11:01:13.634-07:00",
+	"modifiedBy": "loader",
+	"local": false,
+	"active": true,
+	"abbreviation": "RXNORM",
+	"name": "RxNorm",
+	"version": "02052024",
+	"publisher": "NLM",
+	"releaseDate": "2024-02-05",
+	"family": "RXNORM",
+	"indexName": "rxnorm-nlm-02052024",
+	"attributes": {
+		"autocomplete": "true",
+		"fhirVersion": "02052024",
+		"ecl": "true",
+		"fhirId": "rxnorm_02052024",
+		"fhirCompositional": "false"
+	},
+	"statistics": {
+		"termsInactive": 403,
+		"childrenInactive": 0,
+		"relationships": 7352,
+		"concepts": 807,
+		"terms": 1956,
+		"conceptsInactive": 198,
+		"parentsInactive": 0,
+		"termsActive": 1553,
+		"parentsActive": 0,
+		"definitions": 0,
+		"conceptsActive": 609,
+		"childrenActive": 0
+	}
+}

@@ -102,7 +102,7 @@ public final class MetaModel {
     other("otherwise related");
 
     /** The description. */
-    private String description;
+    private final String description;
 
     /**
      * Instantiates a new relationship type.
@@ -122,5 +122,30 @@ public final class MetaModel {
       return description;
     }
   }
+
+  // public static Model getModelFromString(final String modelName) {
+  // try {
+  // return Model.valueOf(modelName);
+  // } catch (final IllegalArgumentException e) {
+  // return null; // or throw an exception if preferred
+  // }
+  // }
+  //
+  // public static Field getFieldFromString(final String fieldName) {
+  // try {
+  // return Field.valueOf(fieldName);
+  // } catch (final IllegalArgumentException e) {
+  // return null; // or throw an exception if preferred
+  // }
+  // }
+  //
+  // public static RelationshipType getRelationshipTypeFromString(final String
+  // relationshipTypeName) {
+  // try {
+  // return RelationshipType.valueOf(relationshipTypeName);
+  // } catch (final IllegalArgumentException e) {
+  // return null; // or throw an exception if preferred
+  // }
+  // }
 
 }
