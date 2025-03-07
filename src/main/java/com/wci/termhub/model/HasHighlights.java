@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -16,18 +16,18 @@ import java.util.Map;
  */
 public interface HasHighlights {
 
-	/**
-	 * Gets the highlight.
-	 *
-	 * @return the highlight
-	 */
-	public Map<String, String> getHighlights();
+  /**
+   * Gets the highlight.
+   *
+   * @return the highlight
+   */
+  public Map<String, String> getHighlights();
 
-	/**
-	 * Sets the highlight.
-	 *
-	 * @param highlights the highlights
-	 */
-	public void setHighlights(Map<String, String> highlights);
+  /**
+   * Sets the highlight.
+   *
+   * @param highlights the highlights
+   */
+  public void setHighlights(Map<String, String> highlights);
 
 }

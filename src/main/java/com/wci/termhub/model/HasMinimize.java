@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -15,14 +15,14 @@ package com.wci.termhub.model;
  */
 public interface HasMinimize {
 
-	/**
-	 * Minimize contents for retrieval through REST API.
-	 */
-	public void minimize();
+  /**
+   * Minimize contents for retrieval through REST API.
+   */
+  public void minimize();
 
-	/**
-	 * Clean for api.
-	 */
-	public void cleanForApi();
+  /**
+   * Clean for api.
+   */
+  public void cleanForApi();
 
 }

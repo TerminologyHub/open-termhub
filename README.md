@@ -44,13 +44,9 @@ Use ConceptLoader to load concepts in JSON format.
 `./gradlew runLoadConcepts -PinputFile="YOUR_CONCEPTS_JSON_FILE"`
 
 
-### Building, testing
+### Building, testing, running
 * To clean use `make clean`
 * To build use `make build`
 * To test use `make test`
-
-
-Developer TODOs:
-- [ ] Solve duplicate index name for concept term name and other field in repeating Objects for concept.
-- [ ] Search by name, id.
-- [ ] Verify paging results.
+* To run use `make run`
+* To run with debug `make debugrun`

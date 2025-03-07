@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -16,25 +16,25 @@ package com.wci.termhub.model;
  */
 public interface Copyable<T> {
 
-	/**
-	 * Populate from (used by copy constructor).
-	 *
-	 * @param other the other
-	 */
-	public void populateFrom(T other);
+  /**
+   * Populate from (used by copy constructor).
+   *
+   * @param other the other
+   */
+  public void populateFrom(T other);
 
-	/**
-	 * Patch from.
-	 *
-	 * @param other the other
-	 */
-	public void patchFrom(T other);
+  /**
+   * Patch from.
+   *
+   * @param other the other
+   */
+  public void patchFrom(T other);
 
-	/**
-	 * Patch from to support deletes.
-	 *
-	 * @param node the node
-	 */
-	// TODO
-	// public void patchFrom(JsonNode node);
+  /**
+   * Patch from to support deletes.
+   *
+   * @param node the node
+   */
+  // TODO
+  // public void patchFrom(JsonNode node);
 }

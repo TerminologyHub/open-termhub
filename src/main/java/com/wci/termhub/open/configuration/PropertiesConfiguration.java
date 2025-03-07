@@ -1,3 +1,12 @@
+/*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
+ */
 package com.wci.termhub.open.configuration;
 
 import java.util.Iterator;
@@ -22,43 +31,46 @@ import org.springframework.core.env.PropertySource;
 @EnableAutoConfiguration
 public class PropertiesConfiguration {
 
-	/** The logger. */
-	private static Logger logger = LoggerFactory.getLogger(PropertiesConfiguration.class);
+  /** The logger. */
+  private static Logger logger = LoggerFactory.getLogger(PropertiesConfiguration.class);
 
-	/** The env. */
-	@Autowired
-	private Environment env;
+  /** The env. */
+  @Autowired
+  private Environment env;
 
-	/**
-	 * Instantiates an empty {@link PropertiesConfiguration}.
-	 */
-	public PropertiesConfiguration() {
-		logger.info("CREATE PropertiesConfiguration");
-	}
+  /**
+   * Instantiates an empty {@link PropertiesConfiguration}.
+   */
+  public PropertiesConfiguration() {
+    logger.info("CREATE PropertiesConfiguration");
+  }
 
-	/**
-	 * Returns the properties.
-	 *
-	 * @return the properties
-	 */
-	@SuppressWarnings({ "rawtypes" })
-	@ConfigurationProperties
-	@Bean
-	public ApplicationProperties applicationProperties() {
-		logger.info("CREATE ApplicationProperties");
-		final ApplicationProperties prop = new ApplicationProperties();
-		for (final Iterator it = ((AbstractEnvironment) env).getPropertySources().iterator(); it.hasNext();) {
-			final PropertySource propertySource = (PropertySource) it.next();
-			if (propertySource instanceof MapPropertySource) {
-				for (final Map.Entry<String, Object> entry : ((MapPropertySource) propertySource).getSource()
-						.entrySet()) {
-					prop.setProperty(entry.getKey(), entry.getValue().toString());
-				}
-			}
-		}
+  /**
+   * Returns the properties.
+   *
+   * @return the properties
+   */
+  @SuppressWarnings({
+      "rawtypes"
+  })
+  @ConfigurationProperties
+  @Bean
+  public ApplicationProperties applicationProperties() {
+    logger.info("CREATE ApplicationProperties");
+    final ApplicationProperties prop = new ApplicationProperties();
+    for (final Iterator it = ((AbstractEnvironment) env).getPropertySources().iterator(); it
+        .hasNext();) {
+      final PropertySource propertySource = (PropertySource) it.next();
+      if (propertySource instanceof MapPropertySource) {
+        for (final Map.Entry<String, Object> entry : ((MapPropertySource) propertySource)
+            .getSource().entrySet()) {
+          prop.setProperty(entry.getKey(), entry.getValue().toString());
+        }
+      }
+    }
 
-		logger.info("Loaded properties: {}", prop);
-		return prop;
-	}
+    logger.info("Loaded properties: {}", prop);
+    return prop;
+  }
 
 }

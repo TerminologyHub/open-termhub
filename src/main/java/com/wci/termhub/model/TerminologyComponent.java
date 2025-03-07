@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -16,49 +16,49 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 public interface TerminologyComponent extends HasModified {
 
-	/**
-	 * Returns the terminology.
-	 *
-	 * @return the terminology
-	 */
-	@Schema(description = "Terminology abbreviation, e.g. \"SNOMEDCT\"")
-	public String getTerminology();
+  /**
+   * Returns the terminology.
+   *
+   * @return the terminology
+   */
+  @Schema(description = "Terminology abbreviation, e.g. \"SNOMEDCT\"")
+  public String getTerminology();
 
-	/**
-	 * Sets the terminology.
-	 *
-	 * @param terminology the terminology
-	 */
-	public void setTerminology(String terminology);
+  /**
+   * Sets the terminology.
+   *
+   * @param terminology the terminology
+   */
+  public void setTerminology(String terminology);
 
-	/**
-	 * Returns the version.
-	 *
-	 * @return the version
-	 */
-	@Schema(description = "Terminology version, e.g. \"20230901\"")
-	public String getVersion();
+  /**
+   * Returns the version.
+   *
+   * @return the version
+   */
+  @Schema(description = "Terminology version, e.g. \"20230901\"")
+  public String getVersion();
 
-	/**
-	 * Sets the version.
-	 *
-	 * @param version the version
-	 */
-	public void setVersion(String version);
+  /**
+   * Sets the version.
+   *
+   * @param version the version
+   */
+  public void setVersion(String version);
 
-	/**
-	 * Returns the publisher.
-	 *
-	 * @return the publisher
-	 */
-	@Schema(description = "Terminology publisher, e.g. \"SNOMEDCT\"")
-	public String getPublisher();
+  /**
+   * Returns the publisher.
+   *
+   * @return the publisher
+   */
+  @Schema(description = "Terminology publisher, e.g. \"SNOMEDCT\"")
+  public String getPublisher();
 
-	/**
-	 * Sets the publisher.
-	 *
-	 * @param publisher the publisher
-	 */
-	public void setPublisher(String publisher);
+  /**
+   * Sets the publisher.
+   *
+   * @param publisher the publisher
+   */
+  public void setPublisher(String publisher);
 
 }
