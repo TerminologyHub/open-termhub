@@ -49,7 +49,7 @@ public final class CodeSystemLoaderUtil {
   private static TimerCache<Concept> conceptCache = new TimerCache<>(1000, 10000);
 
   /** The key delimiter. */
-  private static String KEY_DELIMITER = "|";
+  private static final String KEY_DELIMITER = "|";
 
   /** The object mapper. */
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -516,13 +516,12 @@ public final class CodeSystemLoaderUtil {
         value = property.path("valueBoolean").asText();
       }
 
-      if ("active".equals(code)) {
-        // Skip active property as it's handled by model
-      } else if ("semanticType".equals(code)) {
+      if ("semanticType".equals(code)) {
         concept.getSemanticTypes().add(value);
       } else if (!"parent".equals(code)) {
         concept.getAttributes().put(code, value);
       }
+
     }
 
     return concept;
