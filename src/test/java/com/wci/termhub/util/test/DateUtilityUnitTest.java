@@ -15,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -43,13 +45,19 @@ public class DateUtilityUnitTest {
   public void testTimeZoneOffsetLabel() throws Exception {
     // Test with known time zones
     assertEquals("-04:00", DateUtility.getTimeZoneOffsetLabel("EDT", new Date()));
-    assertEquals("-07:00", DateUtility.getTimeZoneOffsetLabel("PDT", new Date()));
+
+    // Determine the expected offset for PDT dynamically
+    final ZonedDateTime now = ZonedDateTime.now(ZoneId.of("America/Los_Angeles"));
+    final String expectedOffset = now.getOffset().getId();
+    assertEquals(expectedOffset, DateUtility.getTimeZoneOffsetLabel("PDT", new Date()));
+
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel("UTC", new Date()));
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel(null, new Date()));
 
     // Test with ZoneId format
     assertEquals("+01:00", DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
-    assertEquals("-08:00", DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
+    assertEquals(now.getOffset().getId(),
+        DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
   }
 
   /**
