@@ -20,6 +20,8 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
+import org.apache.lucene.document.SortedNumericDocValuesField;
+import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
@@ -101,37 +103,14 @@ public final class IndexUtility {
                 subField.getType());
 
             final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(item,
-                subField, item.getClass().getSimpleName().toLowerCase());
-
-            for (final IndexableField indexableField : indexableFieldsList) {
-              if (fieldsMap.get(indexableField.name()) == null) {
-                fieldsMap.put(indexableField.name(), new HashSet<>());
-              }
-              if (StringUtils.isNotBlank(indexableField.stringValue())) {
-                fieldsMap.get(indexableField.name()).add(indexableField.stringValue());
-              }
-            }
-
+                subField, field.getName(), true);
+            indexableFields.addAll(indexableFieldsList);
           }
 
           innerClass = innerClass.getSuperclass();
         }
       }
     }
-
-    if (!fieldsMap.isEmpty()) {
-      // loop through the fieldsMap and add to the document
-      for (final Map.Entry<String, Set<String>> entry : fieldsMap.entrySet()) {
-        final String fieldName = entry.getKey();
-        final Set<String> fieldValues = entry.getValue();
-        logger.debug("Add: fieldName: {}, fieldValues: {}", fieldName, fieldValues);
-        for (final String fieldValueString : fieldValues) {
-          indexableFields.add(new TextField(fieldName, fieldValueString,
-              org.apache.lucene.document.Field.Store.NO));
-        }
-      }
-    }
-
     return indexableFields;
   }
 
@@ -145,7 +124,7 @@ public final class IndexUtility {
    * @throws IllegalAccessException the illegal access exception
    */
   public static List<IndexableField> getIndexableFields(final Object obj,
-    final java.lang.reflect.Field field, final String indexNamePrefix)
+    final java.lang.reflect.Field field, final String indexNamePrefix, boolean isCollection)
     throws IllegalAccessException {
 
     logger.debug("indexableFields: field: {}, indexNamePrefix: {}", field.getName(),
@@ -171,35 +150,66 @@ public final class IndexUtility {
           case Text:
             indexableFields.add(
                 new TextField(indexName, stringValue, org.apache.lucene.document.Field.Store.NO));
-            indexableFields.add(new SortedDocValuesField(indexName, new BytesRef(stringValue)));
+            if(isCollection){
+              indexableFields.add(new SortedSetDocValuesField(indexName, new BytesRef(stringValue)));
+            } else {
+              indexableFields.add(new SortedDocValuesField(indexName, new BytesRef(stringValue)));
+            }
             break;
           case Keyword:
             indexableFields.add(
                 new StringField(indexName, stringValue, org.apache.lucene.document.Field.Store.NO));
-            indexableFields.add(new SortedDocValuesField(indexName, new BytesRef(stringValue)));
+            if(isCollection){
+              indexableFields.add(new SortedSetDocValuesField(indexName, new BytesRef(stringValue)));
+            } else {
+              indexableFields.add(new SortedDocValuesField(indexName, new BytesRef(stringValue)));
+            }
             break;
           case Date:
             final long dateValue = ((java.util.Date) fieldValue).getTime();
+            if(isCollection){
+             indexableFields.add(new SortedNumericDocValuesField(indexName, dateValue));
+            } else {
             indexableFields.add(new NumericDocValuesField(indexName, dateValue));
+            }
             indexableFields.add(new StoredField(indexName, dateValue));
             break;
           case Long:
-            indexableFields.add(new NumericDocValuesField(indexName, Long.parseLong(stringValue)));
+            if(isCollection){
+              indexableFields.add(new SortedNumericDocValuesField(indexName, Long.parseLong(stringValue)));
+            } else {
+              indexableFields.add(new NumericDocValuesField(indexName, Long.parseLong(stringValue)));
+            }
+
             indexableFields.add(new StoredField(indexName, Long.parseLong(stringValue)));
             break;
           case Integer:
-            indexableFields
-                .add(new NumericDocValuesField(indexName, Integer.parseInt(stringValue)));
+            if(isCollection){
+             indexableFields.add(new SortedNumericDocValuesField(indexName, Integer.parseInt(stringValue)));
+            } else {
+              indexableFields
+                      .add(new NumericDocValuesField(indexName, Integer.parseInt(stringValue)));
+            }
             indexableFields.add(new StoredField(indexName, Integer.parseInt(stringValue)));
             break;
           case Float:
-            indexableFields.add(new NumericDocValuesField(indexName,
-                Float.floatToRawIntBits(Float.parseFloat(stringValue))));
+            if (isCollection) {
+              indexableFields.add(new SortedNumericDocValuesField(indexName,
+                  Float.floatToRawIntBits(Float.parseFloat(stringValue))));
+            } else {
+              indexableFields.add(new NumericDocValuesField(indexName,
+                  Float.floatToRawIntBits(Float.parseFloat(stringValue))));
+            }
             indexableFields.add(new StoredField(indexName, Float.parseFloat(stringValue)));
             break;
           case Double:
+            if (isCollection) {
+              indexableFields.add(new SortedNumericDocValuesField(indexName,
+                  Double.doubleToRawLongBits(Double.parseDouble(stringValue))));
+            } else {
             indexableFields.add(new NumericDocValuesField(indexName,
                 Double.doubleToRawLongBits(Double.parseDouble(stringValue))));
+            }
             indexableFields.add(new StoredField(indexName, Double.parseDouble(stringValue)));
             break;
           case Boolean:
@@ -241,8 +251,13 @@ public final class IndexUtility {
             case Keyword:
               indexableFields.add(new TextField(indexName, fieldValue.toString(),
                   org.apache.lucene.document.Field.Store.NO));
-              indexableFields
-                  .add(new SortedDocValuesField(indexName, new BytesRef(fieldValue.toString())));
+              if(isCollection){
+                indexableFields
+                        .add(new SortedSetDocValuesField(indexName, new BytesRef(fieldValue.toString())));
+              } else{
+                indexableFields
+                        .add(new SortedDocValuesField(indexName, new BytesRef(fieldValue.toString())));
+              }
               break;
             default:
               logger.debug("MultiField field not found Adding default field: {}", fieldType);

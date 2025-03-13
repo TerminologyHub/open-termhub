@@ -103,7 +103,7 @@ public class IndexUtilityUnitTest {
     final TestModel model = new TestModel();
     final java.lang.reflect.Field field = TestModel.class.getDeclaredField("textField");
 
-    final List<IndexableField> fields = IndexUtility.getIndexableFields(model, field, "test");
+    final List<IndexableField> fields = IndexUtility.getIndexableFields(model, field, "test", false);
 
     assertNotNull(fields);
     assertTrue(fields.size() >= 1);
