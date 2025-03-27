@@ -73,8 +73,6 @@ public final class IndexUtility {
 
     logger.debug("Add: object field instance of Collection");
 
-    final Map<String, Set<String>> fieldsMap = new HashMap<>();
-
     for (final Object item : collection) {
       if (item instanceof String) {
         indexableFields.add(new StringField(field.getName(), (String) item,

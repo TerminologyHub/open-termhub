@@ -15,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -49,7 +51,10 @@ public class DateUtilityUnitTest {
 
     // Test with ZoneId format
     assertEquals("+01:00", DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
-    assertEquals("-08:00", DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
+    ZoneId zoneId = ZoneId.of("America/Los_Angeles");
+    ZonedDateTime now = ZonedDateTime.now(zoneId);
+    boolean isDST = now.getZone().getRules().isDaylightSavings(now.toInstant());
+    assertEquals(isDST?"-07:00":"-08:00", DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
   }
 
   /**
@@ -73,6 +78,7 @@ public class DateUtilityUnitTest {
     // Positive offset
     assertTrue(DateUtility.getTimeZoneOffset("Europe/Paris", new Date()) > 0);
     // Negative offset
+
     assertTrue(DateUtility.getTimeZoneOffset("America/Los_Angeles", new Date()) < 0);
   }
 
