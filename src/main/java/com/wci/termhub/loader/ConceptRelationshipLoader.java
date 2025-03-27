@@ -125,8 +125,8 @@ public final class ConceptRelationshipLoader {
 
         final JsonNode rootNode = objectMapper.readTree(line);
         final JsonNode conceptRelNode = rootNode.get("_source");
-				final ConceptRelationship conceptRel = ModelUtility.fromJson(conceptRelNode != null ? conceptRelNode.toString() : rootNode.toString(),
-						ConceptRelationship.class);
+        final ConceptRelationship conceptRel = ModelUtility.fromJson(conceptRelNode != null ? conceptRelNode.toString() : rootNode.toString(),
+                ConceptRelationship.class);
         conceptRelBatch.add(conceptRel);
 
         if (conceptRelBatch.size() == batchSize) {
