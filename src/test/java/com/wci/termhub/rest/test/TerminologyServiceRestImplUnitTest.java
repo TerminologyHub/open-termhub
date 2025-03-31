@@ -428,6 +428,32 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
   }
 
+  @Test
+  public void testFindConceptsByAncestorCode() throws Exception {
+    final String terminology = "LNC";
+    final String query = "MTHU000003";
+    final int limit = 15;
+    final String url = baseUrl + "/concept?terminology=" + terminology + "&query=ancestors.code:" + query
+            + "&limit=" + limit;
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result =
+            mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
+                    .andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
+    assertThat(conceptList).isNotNull();
+    assertThat(conceptList.getItems().size()).isGreaterThan(0);
+    assertThat(conceptList.getItems().size()).isLessThanOrEqualTo(limit);
+    for (final Concept concept : conceptList.getItems()) {
+      assertThat(concept).isNotNull();
+      assertThat(concept.getId()).isNotNull();
+      assertThat(concept.getTerminology()).isEqualTo(terminology);
+      assertThat(concept.getAncestors()).anyMatch(ancestor -> ancestor.getCode().equals(query));
+    }
+  }
+
   /**
    * Test find terms.
    *

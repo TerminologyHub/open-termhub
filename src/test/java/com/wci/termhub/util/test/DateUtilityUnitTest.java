@@ -44,20 +44,30 @@ public class DateUtilityUnitTest {
   @Test
   public void testTimeZoneOffsetLabel() throws Exception {
     // Test with known time zones
-    assertEquals("-04:00", DateUtility.getTimeZoneOffsetLabel("EDT", new Date()));
+    ZoneId edtZone = ZoneId.of("America/New_York");
+    ZoneId pdtZone = ZoneId.of("America/Los_Angeles");
+    ZoneId parisZone = ZoneId.of("Europe/Paris");
 
-    // Determine the expected offset for PDT dynamically
-    final ZonedDateTime now = ZonedDateTime.now(ZoneId.of("America/Los_Angeles"));
-    final String expectedOffset = now.getOffset().getId();
-    assertEquals(expectedOffset, DateUtility.getTimeZoneOffsetLabel("PDT", new Date()));
+    ZonedDateTime now = ZonedDateTime.now();
 
+    // Calculate expected offsets dynamically
+    String expectedEDTOffset = now.withZoneSameInstant(edtZone).getOffset().getId();
+    String expectedPDTOffset = now.withZoneSameInstant(pdtZone).getOffset().getId();
+    String expectedParisOffset = now.withZoneSameInstant(parisZone).getOffset().getId();
+
+    // Test with known time zones
+    assertEquals(expectedEDTOffset, DateUtility.getTimeZoneOffsetLabel("EDT", new Date()));
+    assertEquals(expectedPDTOffset, DateUtility.getTimeZoneOffsetLabel("PDT", new Date()));
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel("UTC", new Date()));
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel(null, new Date()));
 
     // Test with ZoneId format
-    assertEquals("+01:00", DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
-    assertEquals(now.getOffset().getId(),
-        DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
+    assertEquals(expectedParisOffset, DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
+
+    // Test with America/Los_Angeles
+    ZoneId laZone = ZoneId.of("America/Los_Angeles");
+    String expectedLAOffset = now.withZoneSameInstant(laZone).getOffset().getId();
+    assertEquals(expectedLAOffset, DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
   }
 
   /**
@@ -81,6 +91,7 @@ public class DateUtilityUnitTest {
     // Positive offset
     assertTrue(DateUtility.getTimeZoneOffset("Europe/Paris", new Date()) > 0);
     // Negative offset
+
     assertTrue(DateUtility.getTimeZoneOffset("America/Los_Angeles", new Date()) < 0);
   }
 
