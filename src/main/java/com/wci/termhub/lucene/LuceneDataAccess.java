@@ -175,7 +175,7 @@ public class LuceneDataAccess {
           if (fieldType != FieldType.Object) {
 
             LOG.debug("Add: field instance of NOT Object OR Collection");
-            final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field, null);
+            final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field, null, false);
             for (final IndexableField indexableField : indexableFieldsList) {
               document.add(indexableField);
             }
@@ -198,7 +198,7 @@ public class LuceneDataAccess {
 
               subClassField.setAccessible(true);
               final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(refEntity, subClassField,
-                  field.getName());
+                  field.getName(), false);
               for (final IndexableField indexableField : indexableFieldsList) {
                 document.add(indexableField);
               }
@@ -209,7 +209,7 @@ public class LuceneDataAccess {
         } else {
 
           LOG.debug("Add: object field instance of MultiField");
-          final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field, null);
+          final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field, null, false);
           for (final IndexableField indexableField : indexableFieldsList) {
             document.add(indexableField);
           }
