@@ -295,7 +295,7 @@ public class LuceneDataAccess {
       sp.setAscending(true);
     }
 
-    return find(clazz, sp, LuceneQueryBuilder.parse(sp.getQuery()));
+    return find(clazz, sp, sp.getLuceneQuery() != null ? sp.getLuceneQuery() : LuceneQueryBuilder.parse(sp.getQuery()));
   }
 
   /**

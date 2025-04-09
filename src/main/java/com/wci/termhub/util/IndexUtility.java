@@ -26,6 +26,9 @@ import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.BytesRef;
@@ -374,5 +377,21 @@ public final class IndexUtility {
     }
 
     return new Sort(sortFieldArray);
+  }
+
+  public static Query getAndQuery(Query query1, Query query2) {
+    if (query1 == null && query2 == null) {
+      return null;
+    }
+    if (query1 == null) {
+      return query2;
+    }
+    if (query2 == null) {
+      return query1;
+    }
+    BooleanQuery.Builder builder = new BooleanQuery.Builder();
+    builder.add(query1, BooleanClause.Occur.MUST);
+    builder.add(query2, BooleanClause.Occur.MUST);
+    return builder.build();
   }
 }
