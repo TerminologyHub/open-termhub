@@ -51,12 +51,17 @@ public class FilteredQuery extends Query {
 
     @Override
     public boolean equals(Object obj) {
-        return false;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        FilteredQuery that = (FilteredQuery) obj;
+        return innerQuery.equals(that.innerQuery) && filterQuery.equals(that.filterQuery);
     }
 
     @Override
     public int hashCode() {
-        return 0;
+        int result = innerQuery.hashCode();
+        result = 31 * result + filterQuery.hashCode();
+        return result;
     }
 
     private static class FilteredWeight extends Weight {

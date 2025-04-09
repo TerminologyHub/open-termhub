@@ -217,12 +217,15 @@ public class LuceneEclDataAccess {
 
         @Override
         public int hashCode() {
-            return 0;
+            return query != null ? query.hashCode() : 0;
         }
 
         @Override
         public boolean equals(Object obj) {
-            return false;
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            MultiQueryDoubleValuesSource that = (MultiQueryDoubleValuesSource) obj;
+            return query != null ? query.equals(that.query) : that.query == null;
         }
 
         @Override
