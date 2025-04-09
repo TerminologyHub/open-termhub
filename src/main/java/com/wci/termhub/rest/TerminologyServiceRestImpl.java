@@ -9,42 +9,10 @@
  */
 package com.wci.termhub.rest;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Precision;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.wci.termhub.Application;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.handler.QueryBuilder;
+import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.AuthContext;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
@@ -72,7 +40,6 @@ import com.wci.termhub.util.PropertyUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.TimerCache;
-
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -89,10 +56,42 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Precision;
+import org.apache.lucene.search.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
-/**
- * Reference implementation of {@link TerminologyServiceRestOld}.
- */
+import java.io.File;
+import java.nio.file.Files;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.wci.termhub.util.IndexUtility.getAndQuery;
+
 @OpenAPIDefinition(info = @Info(title = "Terminology Hub Terminology Terminology API",
     version = "1.0.0",
     description = "API documentation for the interacting with terminologies and concepts. "
@@ -1248,12 +1247,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       throw new RestException(false, 417, "Expecation failed",
           "Expression parameter can only be used in " + "conjunction with a single terminology");
     }
-
-    final SearchParameters params = new SearchParameters(
-        StringUtility.composeQuery("AND", query,
-            single == null ? null
-                : TerminologyUtility.getExpressionQuery(searchService, single.getAbbreviation(),
-                    single.getPublisher(), single.getVersion(), expression, single.getIndexName())),
+    Query keywordQuery = LuceneQueryBuilder.parse(query);
+    Query expressionQuery  = TerminologyUtility.getExpressionQuery(expression);
+    Query booleanQuery = getAndQuery(keywordQuery, expressionQuery);
+    final SearchParameters params = new SearchParameters(booleanQuery,
         offset, limit, sort, ascending);
     if (active != null && active) {
       params.setActive(true);
@@ -1997,7 +1994,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final ResultList<ConceptTreePosition> list =
           searchService.find(params, ConceptTreePosition.class);
       if (list.getItems().isEmpty()) {
-        list.setParameters(new SearchParameters(null, offset, maxLimit, sort, ascending));
+        list.setParameters(new SearchParameters((String) null, offset, maxLimit, sort, ascending));
         return new ResponseEntity<>(new ResultListConceptTreePosition(list), new HttpHeaders(),
             HttpStatus.OK);
       }
@@ -2006,7 +2003,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Find its children
       final SearchParameters paramsChd =
-          new SearchParameters(null, offset, maxLimit, sort, ascending);
+          new SearchParameters((String)null, offset, maxLimit, sort, ascending);
       final String ancPath =
           (StringUtils.isEmpty(tp.getAncestorPath()) ? "" : tp.getAncestorPath() + "~")
               + concept.getCode();
@@ -2110,7 +2107,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final ResultList<ConceptTreePosition> list =
           searchService.find(params, ConceptTreePosition.class);
       if (list.getItems().isEmpty()) {
-        list.setParameters(new SearchParameters(null, offset, maxLimit, sort, ascending));
+        list.setParameters(new SearchParameters((String) null, offset, maxLimit, sort, ascending));
         return new ResponseEntity<>(new ResultListConceptTreePosition(list), new HttpHeaders(),
             HttpStatus.OK);
       }
@@ -2119,7 +2116,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Find its children
       final SearchParameters paramsChd =
-          new SearchParameters(null, offset, maxLimit, sort, ascending);
+          new SearchParameters((String)null, offset, maxLimit, sort, ascending);
       final String ancPath =
           (StringUtils.isEmpty(tp.getAncestorPath()) ? "" : tp.getAncestorPath() + "~") + code;
       paramsChd.setQuery(StringUtility.composeQuery("AND",

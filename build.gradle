@@ -83,6 +83,8 @@ dependencies {
   implementation 'org.apache.lucene:lucene-core:9.11.1'
   implementation 'org.apache.lucene:lucene-analysis-common:9.11.1'
   implementation 'org.apache.lucene:lucene-queryparser:9.11.1'
+  implementation 'org.apache.lucene:lucene-join:9.11.1'
+  implementation 'org.apache.lucene:lucene-queries:9.11.1'
 
   // Security
   implementation 'com.auth0:java-jwt:4.4.0' //3.8.3'

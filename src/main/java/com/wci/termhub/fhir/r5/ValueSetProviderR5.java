@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.wci.termhub.lucene.LuceneQueryBuilder;
+import org.apache.lucene.search.Query;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -72,6 +74,8 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import static com.wci.termhub.util.IndexUtility.getAndQuery;
 
 /**
  * The ValueSet provider.
@@ -596,12 +600,12 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // "designations": [...]
       // } ]
       // }
-      final String expression = getExpressionQuery(terminology, vs.getUrl());
+      final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
+      final Query browserQuery = LuceneQueryBuilder.parse(new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()));
       final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
       final SearchParameters params = new SearchParameters(
-          StringUtility.composeQuery("AND", expression,
-              new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue())),
-          offset, ct, null, null);
+              getAndQuery(expressionQuery, browserQuery),
+              offset, ct, null, null);
       if (activeOnly) {
         params.setActive(activeOnly);
       }
@@ -701,9 +705,10 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // however the
       // display 'abc' did not match any designations."
 
-      final String expression = getExpressionQuery(terminology, vs.getUrl());
-      final List<Concept> list = searchService.findAll(StringUtility.composeQuery("AND", expression,
-          "code:\"" + StringUtility.escapeQuery(code) + "\""), Concept.class);
+      final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
+      Query codeQuery = LuceneQueryBuilder.parse("code:\"" + StringUtility.escapeQuery(code) + "\"");
+
+      final List<Concept> list = searchService.findAll(null, getAndQuery(codeQuery, expressionQuery), Concept.class);
       final Parameters parameters = new Parameters();
       // If no match
       if (list.size() == 0) {
@@ -741,7 +746,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the expression
    * @throws Exception the exception
    */
-  private String getExpressionQuery(final Terminology terminology, final String url)
+  private Query getExpressionQuery(final Terminology terminology, final String url)
     throws Exception {
     final String part = url.replaceFirst(".*fhir_vs", "");
     String expression = null;
@@ -759,9 +764,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       return null;
     }
     try {
-      return TerminologyUtility.getExpressionQuery(searchService, terminology.getAbbreviation(),
-          terminology.getPublisher(), terminology.getVersion(), expression,
-          terminology.getIndexName());
+      return TerminologyUtility.getExpressionQuery(expression);
     } catch (final Exception e) {
       throw FhirUtilityR5.exception("Unable to parse expression = " + expression,
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

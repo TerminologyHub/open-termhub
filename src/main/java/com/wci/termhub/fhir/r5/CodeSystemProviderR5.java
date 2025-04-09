@@ -610,10 +610,10 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     // Lookup parents/children
     final List<ConceptRelationship> relationships =
         searchService.findAll(StringUtility.composeQuery("AND", "active:true",
-            "from.code:" + StringUtility.escapeQuery(code)), ConceptRelationship.class);
+            "from.code:" + StringUtility.escapeQuery(code)), null, ConceptRelationship.class);
     final List<ConceptRelationship> children =
         searchService.findAll(StringUtility.composeQuery("AND", "active:true", "hierarchical:true",
-            "to.code:" + StringUtility.escapeQuery(code)), ConceptRelationship.class);
+            "to.code:" + StringUtility.escapeQuery(code)), null, ConceptRelationship.class);
 
     // Look up metadata
     final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService, terminology);

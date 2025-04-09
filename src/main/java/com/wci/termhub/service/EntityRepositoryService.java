@@ -14,6 +14,7 @@ import java.util.List;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import org.apache.lucene.search.Query;
 
 /**
  * The Interface TService.
@@ -158,8 +159,8 @@ public interface EntityRepositoryService {
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAllWithFields(final String query, final List<String> fields,
-    final Class<T> clazz) throws Exception;
+  public <T extends HasId> List<T> findAllWithFields(final Query query, final List<String> fields,
+                                                     final Class<T> clazz) throws Exception;
 
   /**
    * Find all with fields. For each batch of results, send to the callback
@@ -173,7 +174,7 @@ public interface EntityRepositoryService {
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAllWithFields(String query, List<String> fields,
+  public <T extends HasId> List<T> findAllWithFields(Query query, List<String> fields,
     Class<T> clazz, FindCallbackHandler<T> handler) throws Exception;
 
   /**
@@ -185,7 +186,7 @@ public interface EntityRepositoryService {
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAll(final String query, final Class<T> clazz)
+  public <T extends HasId> List<T> findAll(final String query, Query luceneQuery, final Class<T> clazz)
     throws Exception;
 
   /**
@@ -198,7 +199,7 @@ public interface EntityRepositoryService {
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAll(final String query, final Class<T> clazz,
+  public <T extends HasId> List<T> findAll(final String query,Query luceneQuery, final Class<T> clazz,
     final FindCallbackHandler<T> handler) throws Exception;
 
   /**
@@ -210,7 +211,7 @@ public interface EntityRepositoryService {
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<String> findAllIds(String query, Class<T> clazz) throws Exception;
+  public <T extends HasId> List<String> findAllIds(Query query, Class<T> clazz) throws Exception;
 
   /**
    * Find single.
