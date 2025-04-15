@@ -9,20 +9,17 @@
  */
 package com.wci.termhub.util;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.wci.termhub.ecl.v1.EclConceptFieldNames;
+import com.wci.termhub.ecl.EclConceptFieldNames;
 import com.wci.termhub.lucene.LuceneQueryBuilder;
 import org.antlr.v4.runtime.RecognitionException;
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +32,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.wci.termhub.ecl.v2.EclToLuceneConverter;
+import com.wci.termhub.ecl.EclToLuceneConverter;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;

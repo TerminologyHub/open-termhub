@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.ecl.v2;// Generated from ECL.antlr by ANTLR 4.13.2
+package com.wci.termhub.ecl;// Generated from ECL.antlr by ANTLR 4.13.2
 
 import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;

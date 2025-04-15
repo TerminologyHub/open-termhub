@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -860,4 +861,38 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
   }
 
+  @Test
+  public void testSemanticType() throws Exception {
+    final String terminology = "SNOMEDCT_US";
+    String query = "code:37884009";
+    String expression = "procedure";
+    String url = String.format("%s/concept?terminology=%s&query=%s&expression=%s", baseUrl, terminology, query, expression);
+    LOGGER.info("Testing url - {}", url);
+    MvcResult result = mockMvc
+            .perform(get(url).header("Authorization", "Bearer " + getTestJwt())
+                    .contentType(MediaType.TEXT_PLAIN))
+            .andExpect(status().isOk()).andReturn();
+    String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    ResultListConcept resultConcept =
+            objectMapper.readValue(content, ResultListConcept.class);
+    assertThat(resultConcept).isNotNull();
+    List<Concept> usConcepts = resultConcept.getItems().stream().filter(c -> c.getTerminology().equals("SNOMEDCT_US")).collect(Collectors.toList());
+    assertThat(usConcepts).hasSize(1);
+    assertThat(usConcepts.get(0).getCode()).isEqualTo("37884009");
+
+    url = String.format("%s/concept?terminology=%s&expression=%s&limit=%s", baseUrl, terminology, expression, 1000);
+    LOGGER.info("Testing url - {}", url);
+    result = mockMvc
+            .perform(get(url).header("Authorization", "Bearer " + getTestJwt())
+                    .contentType(MediaType.TEXT_PLAIN))
+            .andExpect(status().isOk()).andReturn();
+    content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    resultConcept =
+            objectMapper.readValue(content, ResultListConcept.class);
+    usConcepts = resultConcept.getItems().stream().filter(c -> c.getTerminology().equals("SNOMEDCT_US")).collect(Collectors.toList());
+    assertThat(usConcepts).hasSize(77);
+  }
 }
