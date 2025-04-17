@@ -9,22 +9,22 @@
  */
 package com.wci.termhub.util;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.wci.termhub.ecl.EclConceptFieldNames;
+import com.wci.termhub.lucene.LuceneQueryBuilder;
 import org.antlr.v4.runtime.RecognitionException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
+import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.wci.termhub.ecl.EclConceptFieldNames;
 import com.wci.termhub.ecl.EclToLuceneConverter;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
@@ -57,28 +56,6 @@ public final class TerminologyUtility {
 
   /** The converter. */
   private static EclToLuceneConverter converter = new EclToLuceneConverter();
-
-  /** The internal function pattern map. */
-  private static final Map<EclToLuceneConverter.InternalFunction, Pattern> CONVERTER_MAP =
-      getConverterMap();
-
-  /**
-   * Gets the converter map.
-   *
-   * @return the converter map
-   */
-  private static Map<EclToLuceneConverter.InternalFunction, Pattern> getConverterMap() {
-    final Map<EclToLuceneConverter.InternalFunction, Pattern> map = new TreeMap<>();
-
-    // compute the internal functions from the modified SQS lucene converter
-    // NOTE: Kept out of Converter to minimize SQS code modification
-    final EclToLuceneConverter.InternalFunction[] x =
-        EclToLuceneConverter.InternalFunction.values();
-    for (final EclToLuceneConverter.InternalFunction internalFunction : x) {
-      map.put(internalFunction, Pattern.compile(".*(" + internalFunction + "\\(([^\\)]+)\\)).*"));
-    }
-    return map;
-  }
 
   /**
    * Instantiates an empty {@link TerminologyUtility}.
@@ -383,9 +360,8 @@ public final class TerminologyUtility {
    */
   public static List<String> resolveExpression(final EntityRepositoryService searchService,
     final Terminology terminology, final String expression) throws Exception {
-    final String query =
-        getExpressionQuery(searchService, terminology.getAbbreviation(), terminology.getPublisher(),
-            terminology.getVersion(), expression, terminology.getIndexName());
+    final Query query =
+        getExpressionQuery(expression);
     return searchService.findAllWithFields(query, ModelUtility.asList("code"), Concept.class)
         .stream().map(c -> c.getCode()).collect(Collectors.toList());
   }
@@ -401,9 +377,8 @@ public final class TerminologyUtility {
    */
   public static List<String> resolveExpressionIds(final EntityRepositoryService searchService,
     final Terminology terminology, final String expression) throws Exception {
-    final String query =
-        getExpressionQuery(searchService, terminology.getAbbreviation(), terminology.getPublisher(),
-            terminology.getVersion(), expression, terminology.getIndexName());
+    final Query query =
+        getExpressionQuery(expression);
     return searchService.findAllIds(query, Concept.class);
   }
 
@@ -453,7 +428,7 @@ public final class TerminologyUtility {
 
     final List<ConceptRelationship> list = searchService.findAll(StringUtility.composeQuery("AND",
         "from.code:" + StringUtility.escapeQuery(concept.getCode()),
-        "hierarchical:true AND active:true"), ConceptRelationship.class);
+        "hierarchical:true AND active:true"),null, ConceptRelationship.class);
     return list.stream().map(r -> r.getTo()).collect(Collectors.toList());
   }
 
@@ -507,7 +482,7 @@ public final class TerminologyUtility {
 
     final List<ConceptRelationship> list = searchService.findAll(
         StringUtility.composeQuery("AND", "to.code:" + StringUtility.escapeQuery(concept.getCode()),
-            "hierarchical:true", "active:true"),
+            "hierarchical:true", "active:true"),null,
         ConceptRelationship.class);
     return list.stream().map(r -> r.getFrom()).collect(Collectors.toList());
   }
@@ -592,9 +567,8 @@ public final class TerminologyUtility {
     final Terminology terminology, final Concept concept) throws Exception {
 
     final List<ConceptRef> list = new ArrayList<>();
-    final String expression =
-        getExpressionQuery(searchService, terminology.getAbbreviation(), terminology.getPublisher(),
-            terminology.getVersion(), "<" + concept.getCode(), terminology.getIndexName());
+    final Query expression =
+        getExpressionQuery("<" + concept.getCode());
 
     final SearchParameters params = new SearchParameters(expression, 0, 1000, "code", null);
     String searchAfter = null;
@@ -624,40 +598,31 @@ public final class TerminologyUtility {
    * @return the expression query
    * @throws Exception the exception
    */
-  public static String getExpressionQuery(final EntityRepositoryService searchService,
+  public static Query getExpressionQuery(final EntityRepositoryService searchService,
     final Terminology terminology, final String expression) throws Exception {
-    return getExpressionQuery(searchService, terminology.getAbbreviation(),
-        terminology.getPublisher(), terminology.getVersion(), expression,
-        terminology.getIndexName());
+    return getExpressionQuery(expression);
   }
 
   /**
    * Gets the ecl query.
    *
-   * @param searchService the search service
-   * @param terminology the terminology
-   * @param publisher the publisher
-   * @param version the version
    * @param expression the expression
-   * @param indexName the index name
    * @return the ecl query
    * @throws Exception the exception
    */
-  public static String getExpressionQuery(final EntityRepositoryService searchService,
-    final String terminology, final String publisher, final String version, final String expression,
-    final String indexName) throws Exception {
+  public static Query getExpressionQuery(final String expression) throws Exception {
 
-    if ((expression == null) || expression.isEmpty() || (terminology == null)) {
+    if ((expression == null) || expression.isEmpty()) {
       return null;
     }
 
-    // Handle an STY expression
     if (isStyExpression(expression)) {
       final String clause = getStyClause(expression);
-      return clause;
+      return LuceneQueryBuilder.parse(clause);
     }
-    final String clause =
-        getExpressionClause(searchService, terminology, publisher, version, expression, indexName);
+
+    final Query clause =
+        getExpressionClause(expression);
     return clause;
   }
 
@@ -710,23 +675,16 @@ public final class TerminologyUtility {
   /**
    * Gets the expression query.
    *
-   * @param searchService the search service
-   * @param terminology the terminology
-   * @param publisher the publisher
-   * @param version the version
    * @param expr the expr
-   * @param indexName the index name
    * @return the expression query
    * @throws Exception the exception
    */
-  private static String getExpressionClause(final EntityRepositoryService searchService,
-    final String terminology, final String publisher, final String version, final String expr,
-    final String indexName) throws Exception {
+  private static Query getExpressionClause(final String expr) throws Exception {
     if (expr == null || expr.isEmpty()) {
-      return "";
+      return null;
     }
 
-    String luceneQuery;
+    Query luceneQuery;
     try {
       luceneQuery = converter.parse(expr);
 
@@ -738,130 +696,7 @@ public final class TerminologyUtility {
     } catch (final Exception e) {
       throw new LocalException(e.getMessage(), e);
     }
-    try {
-      final Set<EclToLuceneConverter.InternalFunction> x = CONVERTER_MAP.keySet();
-      for (final EclToLuceneConverter.InternalFunction internalFunction : x) {
-        while (luceneQuery.contains(internalFunction.name())) {
-          luceneQuery = processInternalFunction(searchService, terminology, publisher, version,
-              luceneQuery, internalFunction, indexName);
-        }
-      }
-
-      luceneQuery = fixExpressionQuery(luceneQuery);
-
-    } catch (final IOException e) {
-      throw new InternalError("Error preparing internal search query.", e);
-    }
-
-    // Handle an obvious empty sub-query case
-    if (luceneQuery.endsWith("AND ")) {
-      return "";
-    }
     return luceneQuery;
-
-  }
-
-  /**
-   * Process internal function.
-   *
-   * @param searchService the search service
-   * @param terminology the terminology
-   * @param publisher the publisher
-   * @param version the version
-   * @param luceneQuery the lucene query
-   * @param internalFunction the internal function
-   * @param indexName the index name
-   * @return the string
-   * @throws Exception the exception
-   */
-  private static String processInternalFunction(final EntityRepositoryService searchService,
-    final String terminology, final String publisher, final String version,
-    final String luceneQuery, final EclToLuceneConverter.InternalFunction internalFunction,
-    final String indexName) throws Exception {
-
-    // apply the pattern matcher
-    final Matcher matcher = CONVERTER_MAP.get(internalFunction).matcher(luceneQuery);
-
-    // if no match, log and throw error
-    if (!matcher.matches() || matcher.groupCount() != 2) {
-      final String message = "Failed to extract the id from the function " + internalFunction
-          + " in internal query '" + luceneQuery + "'";
-      logger.error(message);
-      throw new IllegalStateException(message);
-    }
-
-    // extract the terminology id
-    final String code = matcher.group(2);
-    List<String> relatedConcepts = new ArrayList<>(0);
-
-    // if ancestor function
-    final boolean inlineFlag =
-        internalFunction.name().contains("PARENT") || internalFunction.name().contains("ANCESTOR");
-    if (inlineFlag) {
-      // Get all ancestors of THIS concept
-      final List<String> eclClauses =
-          getConceptEcl(searchService, terminology, publisher, version, code, indexName);
-      if (eclClauses == null) {
-        throw new LocalException("Expression contains missing code = " + terminology + " " + code);
-      } else {
-        relatedConcepts =
-            eclClauses.stream().filter(e -> e.startsWith(internalFunction.getSearchField() + "="))
-                .map(e -> e.substring(e.indexOf("=") + 1)).collect(Collectors.toList());
-      }
-    }
-
-    // if not ancestor function
-    else {
-
-      // get ecl clauses matching the internal function field
-      relatedConcepts =
-          searchService.findAllWithFields(
-              StringUtility.composeQuery("AND", "terminology:" + terminology,
-                  "publisher:" + publisher, "version:" + version,
-                  "ecl:" + internalFunction.getSearchField() + "="
-                      + StringUtility.escapeQuery(code)),
-              ModelUtility.asList("code"), Concept.class).stream().map(c -> c.getCode())
-              .collect(Collectors.toList());
-    }
-
-    if (internalFunction.isIncludeSelf()) {
-      relatedConcepts.add(code);
-    }
-
-    final String newLuceneQuery = luceneQuery.replace(matcher.group(1),
-        buildOptionsList(relatedConcepts, !internalFunction.name().contains("ATTRIBUTE")));
-    return newLuceneQuery;
-  }
-
-  /**
-   * Composes a clause of an OR separated list of codes for an inline query.
-   *
-   * @param relatedCodes the related concepts
-   * @param includeIdFieldName the include id field name
-   * @return the string
-   */
-  private static String buildOptionsList(final List<String> relatedCodes,
-    final boolean includeIdFieldName) {
-    final StringBuilder relativesIdBuilder = new StringBuilder();
-    if (!relatedCodes.isEmpty()) {
-      relativesIdBuilder.append("(");
-      boolean first = true;
-      for (final String code : relatedCodes) {
-        if (first) {
-          first = false;
-        } else {
-          relativesIdBuilder.append(" OR ");
-        }
-        if (includeIdFieldName) {
-          relativesIdBuilder.append(EclConceptFieldNames.ID).append(":");
-        }
-        relativesIdBuilder.append(code);
-      }
-      relativesIdBuilder.append(")");
-    } else {
-      relativesIdBuilder.append("null");
-    }
-    return relativesIdBuilder.toString();
   }
 
   // /**

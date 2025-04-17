@@ -710,7 +710,7 @@ public final class FhirUtility {
     final Map<String, String> map = new HashMap<>();
     for (final Metadata metadata : searchService.findAll(
         "active:true AND ((model:concept AND field:attribute) OR "
-            + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))",
+            + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))", null,
         Metadata.class).stream().collect(Collectors.toList())) {
       map.put(metadata.getCode(), metadata.getName());
     }

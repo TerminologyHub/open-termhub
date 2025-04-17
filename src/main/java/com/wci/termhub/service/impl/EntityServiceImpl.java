@@ -332,7 +332,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
    */
   /* see superclass */
   @Override
-  public <T extends HasId> List<T> findAllWithFields(final String query, final List<String> fields,
+  public <T extends HasId> List<T> findAllWithFields(final Query query, final List<String> fields,
     final Class<T> clazz) throws Exception {
     return findAllWithFields(query, fields, clazz, null);
   }
@@ -350,7 +350,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
    */
   /* see superclass */
   @Override
-  public <T extends HasId> List<T> findAllWithFields(final String query, final List<String> fields,
+  public <T extends HasId> List<T> findAllWithFields(final Query query, final List<String> fields,
     final Class<T> clazz, final FindCallbackHandler<T> handler) throws Exception {
 
     // Load blocks of 10k, need to specify sort=id for this to work
@@ -390,9 +390,9 @@ public class EntityServiceImpl implements EntityRepositoryService {
    */
   /* see superclass */
   @Override
-  public <T extends HasId> List<T> findAll(final String query, final Class<T> clazz)
+  public <T extends HasId> List<T> findAll(final String query,final Query luceneQuery, final Class<T> clazz)
     throws Exception {
-    return findAll(query, clazz, null);
+    return findAll(query, luceneQuery, clazz, null);
   }
 
   /**
@@ -407,11 +407,16 @@ public class EntityServiceImpl implements EntityRepositoryService {
    */
   /* see superclass */
   @Override
-  public <T extends HasId> List<T> findAll(final String query, final Class<T> clazz,
+  public <T extends HasId> List<T> findAll(final String query, Query luceneQuery, final Class<T> clazz,
     final FindCallbackHandler<T> handler) throws Exception {
 
     // Load blocks of 10k, need to specify sort=id for this to work
-    final SearchParameters params = new SearchParameters(query, 0, findAllPageSize, "id", null);
+    SearchParameters params = null;
+    if(luceneQuery != null){
+      params = new SearchParameters(luceneQuery, 0, findAllPageSize, "id", null);
+    } else {
+      params = new SearchParameters(query, 0, findAllPageSize, "id", null);
+    }
     final List<T> list = new ArrayList<>();
 
     while (true) {
@@ -447,7 +452,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
    */
   /* see superclass */
   @Override
-  public <T extends HasId> List<String> findAllIds(final String query, final Class<T> clazz)
+  public <T extends HasId> List<String> findAllIds(final Query query, final Class<T> clazz)
     throws Exception {
 
     // Load blocks of 10k, need to specify sort=id for this to work

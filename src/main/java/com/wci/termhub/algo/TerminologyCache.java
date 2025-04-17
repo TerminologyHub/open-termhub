@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.wci.termhub.lucene.LuceneQueryBuilder;
+import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -642,12 +644,11 @@ public class TerminologyCache {
       }
     };
     final List<String> fields = ModelUtility.asList("code", "terminology", "publisher", "version",
-        "name", "leaf", "defined", "parents", "parents.code");
-
-    searchService.findAllWithFields(
-        StringUtility.composeQuery("AND", "publisher:" + terminology.getPublisher(),
-            "terminology:" + terminology.getAbbreviation(), "version:" + terminology.getVersion()),
-        fields, Concept.class, handler);
+            "name", "leaf", "defined", "parents", "parents.code");
+    String strQuery = StringUtility.composeQuery("AND", "publisher:" + terminology.getPublisher(),
+            "terminology:" + terminology.getAbbreviation(), "version:" + terminology.getVersion());
+    Query query = LuceneQueryBuilder.parse(strQuery);
+    searchService.findAllWithFields(query, fields, Concept.class, handler);
 
     logger.info("    cache size = " + cache.size());
     return cache;

@@ -174,11 +174,18 @@ public class LuceneDataAccess {
 
           // if not collection of objects, add the field to the document
           if (fieldType != FieldType.Object) {
-
-            LOG.debug("Add: field instance of NOT Object OR Collection");
-            final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field, null, false);
-            for (final IndexableField indexableField : indexableFieldsList) {
-              document.add(indexableField);
+            if(fieldValue instanceof Collection){
+              final Collection<?> collection = (Collection<?>) fieldValue;
+              final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(collection, field);
+              for (final IndexableField indexableField : indexableFieldsList) {
+                document.add(indexableField);
+              }
+            } else {
+              LOG.debug("Add: field instance of NOT Object OR Collection");
+              final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(entity, field, null, fieldValue instanceof Collection);
+              for (final IndexableField indexableField : indexableFieldsList) {
+                document.add(indexableField);
+              }
             }
 
           } else if (fieldType == FieldType.Object && fieldValue instanceof Collection) {
@@ -300,7 +307,7 @@ public class LuceneDataAccess {
       sp.setAscending(true);
     }
 
-    return find(clazz, sp, LuceneQueryBuilder.parse(sp.getQuery()));
+    return find(clazz, sp, sp.getLuceneQuery() != null ? sp.getLuceneQuery() : LuceneQueryBuilder.parse(sp.getQuery()));
   }
 
   /**
