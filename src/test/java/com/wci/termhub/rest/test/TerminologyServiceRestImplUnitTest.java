@@ -733,7 +733,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListConceptTreePosition conceptTreePositonList =
         objectMapper.readValue(content, ResultListConceptTreePosition.class);
     assertThat(conceptTreePositonList).isNotNull();
-    // TODO: NUNO FAILING
     assertFalse(conceptTreePositonList.getItems().isEmpty());
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
@@ -766,7 +765,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListConceptTreePosition conceptTreePositonList =
         objectMapper.readValue(content, ResultListConceptTreePosition.class);
     assertThat(conceptTreePositonList).isNotNull();
-    // TODO: NUNO FAILING
     assertFalse(conceptTreePositonList.getItems().isEmpty());
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
@@ -774,8 +772,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
-      // each has a tree position with an empty ancestor path
-      // assertThat(ctp.getAncestorPath()).isNotNull();
+      assertThat(ctp.getAncestorPath()).isNotNull();
     }
   }
 
@@ -807,7 +804,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(ctp.getTerminology()).contains("SNOMEDCT");
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
-      // IS NULL WHY?? assertThat(ctp.getAncestorPath()).isNotNull();
     }
   }
 
@@ -837,8 +833,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
-      // each has a tree position with an empty ancestor path
-      // assertThat(ctp.getAncestorPath()).isNotNull();
     }
   }
 
