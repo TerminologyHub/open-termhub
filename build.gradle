@@ -72,7 +72,7 @@ dependencies {
   implementation('org.springframework.boot:spring-boot-starter-web')
 
   // Add ANTLR runtime dependency to match code generation version
-  implementation 'org.antlr:antlr4-runtime:4.7.1'
+  implementation 'org.antlr:antlr4-runtime:4.13.2'
 
   // Add JAXB dependencies
   implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.1'
