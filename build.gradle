@@ -189,9 +189,10 @@ dependencies {
   testImplementation 'org.junit.platform:junit-platform-suite-engine:1.9.3'
 }
 
+// ./gradlew clean test
 test {
     useJUnitPlatform()
-    systemProperty 'spring.profiles.active', 'test-r4,test-r5'
+    systemProperty 'spring.profiles.active', 'test'
     maxParallelForks = 1
     exclude '**/r4/**'
     exclude '**/r5/**'
@@ -201,6 +202,7 @@ test {
     }
 }
 
+// ./gradlew clean testR4
 task testR4(type: Test) {
     useJUnitPlatform()
     systemProperty 'spring.profiles.active', 'test-r4'
@@ -213,6 +215,7 @@ task testR4(type: Test) {
     }
 }
 
+// ./gradlew clean testR5
 task testR5(type: Test) {
     useJUnitPlatform()
     systemProperty 'spring.profiles.active', 'test-r5'
