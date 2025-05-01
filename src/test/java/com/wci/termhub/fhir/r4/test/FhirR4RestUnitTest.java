@@ -648,52 +648,50 @@ public class FhirR4RestUnitTest {
         result.getParameter().stream().filter(p -> "designation".equals(p.getName())).toList();
     assertFalse(designations.isEmpty(), "Should have designations");
 
-    // // Verify has fully specified name designation
-    // boolean hasFullySpecifiedName = designations.stream().anyMatch(d ->
-    // d.getPart().stream()
-    // .anyMatch(p -> p.getName().equals("use") &&
-    // p.getValue().toString().contains("900000000000003001")));
+    // Verify has fully specified name designation
+    // final boolean hasFullySpecifiedName = designations.stream()
+    // .anyMatch(d -> d.getPart().stream().anyMatch(p ->
+    // p.getName().equals("use")
+    // && p.getValue().toString().contains("900000000000003001")));
     // assertTrue(hasFullySpecifiedName, "Should have fully specified name
     // designation");
   }
 
-  // /**
-  // * Test ValueSet search.
-  // *
-  // * @throws Exception the exception
-  // */
-  // @Test
-  // public void testValueSetSearch() throws Exception {
-  // // Arrange
-  // final String endpoint = LOCALHOST + port + FHIR_VALUESET;
-  // LOGGER.info("endpoint = {}", endpoint);
-  //
-  // // Act
-  // final String content = this.restTemplate.getForObject(endpoint,
-  // String.class);
-  // final Bundle bundle = parser.parseResource(Bundle.class, content);
-  //
-  // // Assert bundle properties
-  // assertNotNull(bundle);
-  // assertEquals(ResourceType.Bundle, bundle.getResourceType());
-  // assertEquals(org.hl7.fhir.r4.model.Bundle.BundleType.SEARCHSET,
-  // bundle.getType());
-  // assertNotNull(bundle.getMeta().getLastUpdated());
-  // assertFalse(bundle.getEntry().isEmpty());
-  //
-  // // Verify each ValueSet
-  // for (final BundleEntryComponent entry : bundle.getEntry()) {
-  // final ValueSet valueSet = (ValueSet) entry.getResource();
-  // assertNotNull(valueSet);
-  // assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
-  // assertNotNull(valueSet.getId());
-  // assertNotNull(valueSet.getVersion());
-  // assertNotNull(valueSet.getName());
-  // assertNotNull(valueSet.getTitle());
-  // assertEquals(PublicationStatus.ACTIVE, valueSet.getStatus());
-  // assertNotNull(valueSet.getPublisher());
-  // }
-  // }
+  /**
+   * Test ValueSet search.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testValueSetSearch() throws Exception {
+    // Arrange
+    final String endpoint = LOCALHOST + port + FHIR_VALUESET;
+    LOGGER.info("endpoint = {}", endpoint);
+
+    // Act
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final Bundle bundle = parser.parseResource(Bundle.class, content);
+
+    // Assert bundle properties
+    assertNotNull(bundle);
+    assertEquals(ResourceType.Bundle, bundle.getResourceType());
+    assertEquals(org.hl7.fhir.r4.model.Bundle.BundleType.SEARCHSET, bundle.getType());
+    assertNotNull(bundle.getMeta().getLastUpdated());
+    assertFalse(bundle.getEntry().isEmpty());
+
+    // Verify each ValueSet
+    for (final BundleEntryComponent entry : bundle.getEntry()) {
+      final ValueSet valueSet = (ValueSet) entry.getResource();
+      assertNotNull(valueSet);
+      assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
+      assertNotNull(valueSet.getId());
+      assertNotNull(valueSet.getVersion());
+      assertNotNull(valueSet.getName());
+      assertNotNull(valueSet.getTitle());
+      assertEquals(PublicationStatus.ACTIVE, valueSet.getStatus());
+      assertNotNull(valueSet.getPublisher());
+    }
+  }
 
   /**
    * Test retrieving a specific ValueSet by ID.
