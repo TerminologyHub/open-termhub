@@ -1,0 +1,166 @@
+/*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
+ */
+package com.wci.termhub.test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
+
+import com.wci.termhub.Application;
+import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.ResultList;
+import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.service.EntityRepositoryService;
+
+/**
+ * Unit tests for concept relationship functionality with FHIR Code System
+ * files.
+ */
+@TestInstance(Lifecycle.PER_CLASS)
+@SpringBootTest(classes = Application.class)
+@TestPropertySource(locations = "classpath:application-test.properties")
+public class ConceptRelationshipCodeSystemUnitTest {
+
+  /** The logger. */
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(ConceptRelationshipCodeSystemUnitTest.class);
+
+  /** The search service. */
+  @Autowired
+  private EntityRepositoryService searchService;
+
+  /**
+   * Test finding concept relationships by terminology.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindRelationshipsByTerminology() throws Exception {
+    final SearchParameters params = new SearchParameters();
+    params.setQuery("terminology: SNOMEDCT_US");
+    params.setLimit(10);
+
+    final ResultList<ConceptRelationship> results =
+        searchService.find(params, ConceptRelationship.class);
+
+    assertFalse(results.getItems().isEmpty(), "Should find concept relationships");
+    LOGGER.info("Found {} relationships (limited to 10)", results.getItems().size());
+    LOGGER.info("Total relationships: {}", results.getTotal());
+
+    for (final ConceptRelationship rel : results.getItems()) {
+      assertEquals("SNOMEDCT_US", rel.getTerminology());
+      LOGGER.info("Relationship: type={}, from={}, to={}", rel.getType(), rel.getFrom().getCode(),
+          rel.getTo().getCode());
+    }
+  }
+
+  /**
+   * Test finding IS-A relationships.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindIsaRelationships() throws Exception {
+    final SearchParameters params = new SearchParameters();
+    params.setQuery("terminology:SNOMEDCT_US AND additionalType:ISA");
+    params.setLimit(10);
+
+    final ResultList<ConceptRelationship> results =
+        searchService.find(params, ConceptRelationship.class);
+
+    assertFalse(results.getItems().isEmpty(), "Should find ISA relationships");
+    LOGGER.info("Found {} ISA relationships (limited to 10)", results.getItems().size());
+
+    for (final ConceptRelationship rel : results.getItems()) {
+      assertEquals("ISA", rel.getAdditionalType());
+      assertEquals("SNOMEDCT_US", rel.getTerminology());
+
+    }
+
+  }
+
+  /**
+   * Test finding relationships for a specific concept.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindRelationshipsForConcept() throws Exception {
+    // Use a known SNOMED CT concept code (Diabetes mellitus)
+    final String conceptCode = "73211009";
+
+    final SearchParameters params = new SearchParameters();
+    params.setQuery("terminology:SNOMEDCT_US AND fromCode:" + conceptCode);
+
+    final ResultList<ConceptRelationship> results =
+        searchService.find(params, ConceptRelationship.class);
+
+    LOGGER.info("Found {} relationships for concept {}", results.getItems().size(), conceptCode);
+
+    for (final ConceptRelationship rel : results.getItems()) {
+      assertEquals(conceptCode, rel.getFrom().getCode());
+      LOGGER.info("Relationship: type={}, to={}", rel.getType(), rel.getTo().getCode());
+    }
+  }
+
+  /**
+   * Test finding parent-child relationships for a concept.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindParentChildRelationships() throws Exception {
+    // Use a known SNOMED CT concept code
+    final String conceptCode = "73211009"; // Diabetes mellitus
+
+    // Find parent concepts (concepts that this concept is a child of)
+    final SearchParameters parentsParams = new SearchParameters();
+    parentsParams.setQuery(
+        "terminology:SNOMEDCT_US AND fromCode:" + conceptCode + " AND additionalType:ISA");
+
+    final ResultList<ConceptRelationship> parentRels =
+        searchService.find(parentsParams, ConceptRelationship.class);
+
+    LOGGER.info("Found {} parent relationships for concept {}", parentRels.getItems().size(),
+        conceptCode);
+
+    for (final ConceptRelationship rel : parentRels.getItems()) {
+      assertEquals(conceptCode, rel.getFrom().getCode());
+      assertEquals("ISA", rel.getType());
+      LOGGER.info("Parent concept: {}", rel.getTo().getCode());
+    }
+
+    // Find child concepts (concepts that are children of this concept)
+    final SearchParameters childrenParams = new SearchParameters();
+    childrenParams
+        .setQuery("terminology:SNOMEDCT_US AND toCode:" + conceptCode + " AND additionalType:ISA");
+    childrenParams.setLimit(10);
+
+    final ResultList<ConceptRelationship> childRels =
+        searchService.find(childrenParams, ConceptRelationship.class);
+
+    LOGGER.info("Found {} child relationships for concept {} (limited to 10)",
+        childRels.getItems().size(), conceptCode);
+
+    for (final ConceptRelationship rel : childRels.getItems()) {
+      assertEquals(conceptCode, rel.getTo().getCode());
+      assertEquals("ISA", rel.getType());
+      LOGGER.info("Child concept: {}", rel.getFrom().getCode());
+    }
+  }
+}

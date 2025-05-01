@@ -17,17 +17,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.wci.termhub.lucene.LuceneQueryBuilder;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Terminology;
-// import com.wci.termhub.service.ElasticSearchService;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.service.FindCallbackHandler;
 import com.wci.termhub.util.FieldedStringTokenizer;
@@ -644,13 +643,15 @@ public class TerminologyCache {
       }
     };
     final List<String> fields = ModelUtility.asList("code", "terminology", "publisher", "version",
-            "name", "leaf", "defined", "parents", "parents.code");
-    String strQuery = StringUtility.composeQuery("AND", "publisher:" + terminology.getPublisher(),
-            "terminology:" + terminology.getAbbreviation(), "version:" + terminology.getVersion());
-    Query query = LuceneQueryBuilder.parse(strQuery);
+        "name", "leaf", "defined", "parents", "parents.code");
+    final String strQuery = StringUtility.composeQuery("AND",
+        "publisher:" + StringUtility.escapeQuery(terminology.getPublisher()),
+        "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
+        "version:" + StringUtility.escapeQuery(terminology.getVersion()));
+    final Query query = LuceneQueryBuilder.parse(strQuery);
     searchService.findAllWithFields(query, fields, Concept.class, handler);
 
-    logger.info("    cache size = " + cache.size());
+    logger.info("    cache size = {}", cache.size());
     return cache;
   }
 

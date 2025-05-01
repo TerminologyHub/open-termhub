@@ -13,8 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -166,7 +165,8 @@ public class TermUnitTest extends BaseUnitTest {
     searchService.createIndex(Term.class);
 
     // assert directory exists
-    assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
+    final File indexFile = new File(INDEX_DIRECTORY, INDEX_NAME);
+    assertTrue(indexFile.exists());
   }
 
   /**

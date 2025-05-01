@@ -9,6 +9,8 @@
  */
 package com.wci.termhub.fhir.r4;
 
+import static com.wci.termhub.util.IndexUtility.getAndQuery;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,7 +19,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.wci.termhub.lucene.LuceneQueryBuilder;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -50,6 +51,7 @@ import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.handler.BrowserQueryBuilder;
+import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -76,8 +78,6 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import static com.wci.termhub.util.IndexUtility.getAndQuery;
 
 /**
  * The ValueSet provider.
@@ -598,16 +598,17 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // "designations": [...]
       // } ]
       // }
-      Query browserQuery = LuceneQueryBuilder.parse(new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()));
+      final Query browserQuery = LuceneQueryBuilder
+          .parse(new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()));
       final Query expression = getExpressionQuery(terminology, vs.getUrl());
 
-      Query valueSetQuery = expression != null ? new BooleanQuery.Builder().add(browserQuery, BooleanClause.Occur.MUST)
-          .add(expression, BooleanClause.Occur.MUST).build() : browserQuery;
+      final Query valueSetQuery = expression != null
+          ? new BooleanQuery.Builder().add(browserQuery, BooleanClause.Occur.MUST)
+              .add(expression, BooleanClause.Occur.MUST).build()
+          : browserQuery;
 
       final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
-      final SearchParameters params = new SearchParameters(
-              valueSetQuery,
-              offset, ct, null, null);
+      final SearchParameters params = new SearchParameters(valueSetQuery, offset, ct, null, null);
       if (activeOnly) {
         params.setActive(activeOnly);
       }
@@ -706,9 +707,10 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // "valueString": "The code '16224591000119103' was found in the ValueSet,
       // however the
       // display 'abc' did not match any designations."
-      Query codeQuery = LuceneQueryBuilder.parse("code:\"" + StringUtility.escapeQuery(code) + "\"");
+      final Query codeQuery =
+          LuceneQueryBuilder.parse("code:\"" + StringUtility.escapeQuery(code) + "\"");
       final Query expression = getExpressionQuery(terminology, vs.getUrl());
-      Query booleanQuery = getAndQuery(codeQuery, expression);
+      final Query booleanQuery = getAndQuery(codeQuery, expression);
       final List<Concept> list = searchService.findAll(null, booleanQuery, Concept.class);
       final Parameters parameters = new Parameters();
       // If no match

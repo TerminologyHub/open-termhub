@@ -12,6 +12,7 @@ package com.wci.termhub.util;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,9 +26,11 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.Definition;
 import com.wci.termhub.model.MetaModel;
 import com.wci.termhub.model.Metadata;
@@ -43,7 +46,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 public final class CodeSystemLoaderUtil {
 
   /** The logger. */
-  private static final Logger LOG = LoggerFactory.getLogger(CodeSystemLoaderUtil.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CodeSystemLoaderUtil.class);
 
   /** The terminologies cache. */
   private static TimerCache<Concept> conceptCache = new TimerCache<>(1000, 10000);
@@ -70,6 +73,19 @@ public final class CodeSystemLoaderUtil {
    */
   public static void loadCodeSystem(final EntityRepositoryService service,
     final String fullFileName) throws Exception {
+
+    // Ensure index directory exists
+    final String indexDirPath =
+        PropertyUtility.getProperties().getProperty("lucene.index.directory");
+    // Fix the path if it's a Windows absolute path to ensure it's treated
+    // correctly
+    final File indexDir = new File(indexDirPath.replace('/', File.separatorChar));
+    if (!indexDir.exists()) {
+      // Create the directory if it doesn't exist
+      indexDir.mkdirs();
+      LOGGER.info("Created directory for indexes: {}", indexDir.getAbsolutePath());
+    }
+
     indexCodeSystem(service, fullFileName, 1000, -1);
   }
 
@@ -82,10 +98,10 @@ public final class CodeSystemLoaderUtil {
    * @param limit the limit
    * @throws Exception the exception
    */
-  public static void indexCodeSystem(final EntityRepositoryService service,
+  private static void indexCodeSystem(final EntityRepositoryService service,
     final String fullFileName, final int batchSize, final int limit) throws Exception {
 
-    LOG.debug("indexCodeSystem: batch size: {} limit: {}", batchSize, limit);
+    LOGGER.debug("indexCodeSystem: batch size: {} limit: {}", batchSize, limit);
     final long startTime = System.currentTimeMillis();
     final List<Concept> conceptBatch = new ArrayList<>(batchSize);
     final List<ConceptRelationship> relationshipBatch = new ArrayList<>(batchSize);
@@ -98,6 +114,7 @@ public final class CodeSystemLoaderUtil {
       service.createIndex(Concept.class);
       service.createIndex(Term.class);
       service.createIndex(ConceptRelationship.class);
+      service.createIndex(ConceptTreePosition.class);
 
       // Read the entire file as a JSON object
       final JsonNode root = OBJECT_MAPPER.readTree(br);
@@ -124,10 +141,6 @@ public final class CodeSystemLoaderUtil {
 
         final Concept concept = createConcept(conceptNode, terminology);
 
-        if ("118946009".equals(concept.getCode())) {
-          LOG.info("concept: {}", concept);
-        }
-
         // Process relationships
         final JsonNode relationships = conceptNode.path("property");
         for (final JsonNode propertyNode : relationships) {
@@ -148,25 +161,43 @@ public final class CodeSystemLoaderUtil {
             if (relationshipBatch.size() == batchSize) {
               service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
               relationshipBatch.clear();
-              LOG.info("indexCodeSystem: processed relationships count: {}", relationshipCount);
+              LOGGER.info("indexCodeSystem: processed relationships count: {}", relationshipCount);
             }
-            concept.getEclClauses().add(propertyNode.path("code").asText() + "="
-                + propertyNode.path("valueCoding").get("code").asText());
+
+            // Safely get the valueCoding and its code
+            final JsonNode valueCoding = propertyNode.path("valueCoding");
+            if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
+              concept.getEclClauses().add(
+                  propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
+            } else {
+              LOGGER.warn("Missing valueCoding or code for parent relationship in concept: {}",
+                  concept.getCode());
+            }
+
             relationshipCount++;
           }
 
           if ("relationship".equals(propertyType)) {
             final JsonNode extensionNode = propertyNode.path("extension");
             for (final JsonNode extension : extensionNode) {
-              concept.getEclClauses().add(extension.path("valueCoding").get("code").asText() + "="
-                  + propertyNode.path("valueCoding").get("code").asText());
+              // Add null checks for valueCoding nodes
+              final JsonNode extensionValueCoding = extension.path("valueCoding");
+              final JsonNode propertyValueCoding = propertyNode.path("valueCoding");
+
+              // Only proceed if both valueCoding nodes are present and have
+              // code fields
+              if (!extensionValueCoding.isMissingNode() && !propertyValueCoding.isMissingNode()
+                  && extensionValueCoding.has("code") && propertyValueCoding.has("code")) {
+                concept.getEclClauses().add(extensionValueCoding.path("code").asText() + "="
+                    + propertyValueCoding.path("code").asText());
+              } else {
+                LOGGER.warn(
+                    "Skipping relationship due to missing valueCoding or code for concept: {}",
+                    concept.getCode());
+              }
             }
           }
 
-        }
-
-        if ("118946009".equals(concept.getCode())) {
-          LOG.info("concept after relationships: {}", concept);
         }
 
         // Process terms
@@ -175,12 +206,12 @@ public final class CodeSystemLoaderUtil {
           if (termBatch.size() == batchSize) {
             service.addBulk(Term.class, new ArrayList<>(termBatch));
             termBatch.clear();
-            LOG.info("indexCodeSystem: processed terms count: {}", termCount);
+            LOGGER.info("indexCodeSystem: processed terms count: {}", termCount);
           }
           termCount++;
         }
 
-        LOG.info("indexCodeSystem: concept: {}", concept);
+        LOGGER.info("indexCodeSystem: concept: {}", concept);
 
         // Add concept to batch
         conceptBatch.add(concept);
@@ -190,7 +221,7 @@ public final class CodeSystemLoaderUtil {
           service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
           SystemReportUtility.logMemory();
           conceptBatch.clear();
-          LOG.info("indexCodeSystem: processed concepts count: {}", conceptCount);
+          LOGGER.info("indexCodeSystem: processed concepts count: {}", conceptCount);
         }
         conceptCount++;
       }
@@ -206,14 +237,16 @@ public final class CodeSystemLoaderUtil {
         service.addBulk(Term.class, new ArrayList<>(termBatch));
       }
 
-      LOG.info("indexCodeSystem: final counts - concepts: {}, relationships: {}, terms: {}",
+      // compute tree positions
+      computeConceptTreePositions(service, metadataList.get(0).getTerminology(),
+          metadataList.get(0).getPublisher(), metadataList.get(0).getVersion());
+
+      LOGGER.info("indexCodeSystem: final counts - concepts: {}, relationships: {}, terms: {}",
           conceptCount, relationshipCount, termCount);
-      LOG.info("indexCodeSystem: duration: {} ms", (System.currentTimeMillis() - startTime));
+      LOGGER.info("indexCodeSystem: duration: {} ms", (System.currentTimeMillis() - startTime));
 
-    } catch (
-
-    final Exception e) {
-      LOG.error("indexCodeSystem: Error processing file", e);
+    } catch (final Exception e) {
+      LOGGER.error("indexCodeSystem: Error processing file {}", fullFileName, e);
       throw e;
     }
   }
@@ -231,15 +264,18 @@ public final class CodeSystemLoaderUtil {
 
     final String abbreviation = root.path("title").asText();
     final String publisher = root.path("publisher").asText();
-    final String version = root.path("version").asText().replaceFirst("^.*?version/", "");
+    // Extract simple version number to avoid Lucene parsing issues
+    final String fullVersion = root.path("version").asText();
+    final String simpleVersion = fullVersion.replaceFirst("^.*?version/", "");
+
     final SearchParameters searchParams = new SearchParameters();
-    searchParams.setQuery("abbreviation: " + abbreviation + " publisher: '" + publisher
-        + "' and version: '" + version + "'");
+    searchParams.setQuery("abbreviation: " + StringUtility.escapeQuery(abbreviation)
+        + " publisher: '" + StringUtility.escapeQuery(publisher) + "' and version: '"
+        + StringUtility.escapeQuery(simpleVersion) + "'");
     final ResultList<Terminology> terminology = service.find(searchParams, Terminology.class);
 
     return (terminology.getItems().isEmpty()) ? createTerminology(service, root)
         : terminology.getItems().get(0);
-
   }
 
   /**
@@ -253,51 +289,46 @@ public final class CodeSystemLoaderUtil {
   private static Terminology createTerminology(final EntityRepositoryService service,
     final JsonNode root) throws Exception {
 
-    // Extract terminology from root
+    // Validate that this is a CodeSystem resource
+    if (!root.has("resourceType") || !"CodeSystem".equals(root.get("resourceType").asText())) {
+      throw new IllegalArgumentException("Invalid resource type - expected CodeSystem");
+    }
+
     final Terminology terminology = new Terminology();
-    terminology.setId(UUID.randomUUID().toString());
+    final String id = root.path("id").asText();
+    if (isNotBlank(id)) {
+      terminology.setId(id);
+    } else {
+      final String uuid = UUID.randomUUID().toString();
+      terminology.setId(uuid);
+      LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
+    }
     terminology.setName(root.path("name").asText());
     terminology.setAbbreviation(root.path("title").asText());
     terminology.setPublisher(root.path("publisher").asText());
-
-    // example: "http://snomed.info/sct/731000124108/version/20240301"
-    // remove version part from URL
-    final String version = root.path("version").asText().replaceFirst("^.*?version/", "");
-    terminology.setVersion(version);
-    // Extract YYYY-MM-DD
+    terminology.setVersion(root.path("version").asText());
     terminology.setReleaseDate(root.path("date").asText().substring(0, 10));
     terminology.setUri(root.path("url").asText());
-    // NOT IN JSON
-    terminology.setFamily(root.path("family").asText());
-    terminology.setConceptCt(root.path("count").asLong());
+    terminology.setFamily("SNOMED");
+    terminology.setConceptCt(root.path("count").asLong(0));
 
     // Set terminology attributes
     final Map<String, String> attributes = new HashMap<>();
-    // attributes.put(Terminology.Attributes.hierarchical.property(), "true");
-    // attributes.put(Terminology.Attributes.descriptionLogicBased.property(),
-    // Boolean.toString(root.path("compositional").asBoolean()));
-
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
       final String uri = property.path("uri").asText();
       final String[] uriParts = FieldedStringTokenizer.split(uri, "/");
-      final String modelType = uriParts[uriParts.length - 2];
-      final String attributeName = uriParts[uriParts.length - 1];
-      if (uriParts.length < 3
-          || !("terminology".equals(modelType) && "attributes".equals(attributeName))) {
+      if (uriParts.length < 3 || !"terminology".equals(uriParts[uriParts.length - 2])
+          || !"attributes".equals(uriParts[uriParts.length - 1])) {
         continue;
       }
-
       attributes.put(property.path("code").asText(), property.path("description").asText());
-
     }
-
+    attributes.put("fhirVersion", root.path("version").asText());
     terminology.setAttributes(attributes);
 
-    LOG.info("CodeSystemLoaderUtil: terminology: {}", terminology);
-
+    LOGGER.info("CodeSystemLoaderUtil: terminology: {}", terminology);
     service.add(Terminology.class, terminology);
-
     return terminology;
   }
 
@@ -313,7 +344,7 @@ public final class CodeSystemLoaderUtil {
 
     final String publisher = root.path("publisher").asText();
     final String terminology = root.path("title").asText();
-    final String version = root.path("version").asText().replaceFirst("^.*?version/", "");
+    final String version = root.path("version").asText();
 
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
@@ -339,16 +370,25 @@ public final class CodeSystemLoaderUtil {
       metadata.setTerminology(terminology);
       metadata.setVersion(version);
       final String fieldType = uriParts[uriParts.length - 1];
-      metadata.setModel(MetaModel.Model.valueOf(modelType));
-      metadata.setField(MetaModel.Field.valueOf(fieldType));
 
-      metadataList.add(metadata);
+      // Map 'attributes' model type to 'concept' as a fallback
+      String mappedModelType = modelType;
+      if ("attributes".equals(modelType)) {
+        mappedModelType = "concept";
+        LOGGER.info("Mapped 'attributes' model type to 'concept' for metadata: code={}, name={}",
+            code, description);
+      }
+
+      try {
+        metadata.setModel(MetaModel.Model.valueOf(mappedModelType));
+        metadata.setField(MetaModel.Field.valueOf(fieldType));
+        metadataList.add(metadata);
+      } catch (final IllegalArgumentException e) {
+        LOGGER.warn(
+            "Skipping metadata due to invalid model or field type: model={}, field={}, code={}, name={}",
+            mappedModelType, fieldType, code, description);
+      }
     }
-
-    // LOG.info("CodeSystemLoaderUtil: metadata:");
-    // for (final Metadata metadata : metadataList) {
-    // System.out.println(ModelUtility.toJson(metadata, false));
-    // }
 
     return metadataList;
   }
@@ -378,7 +418,7 @@ public final class CodeSystemLoaderUtil {
     concept.setName(conceptNode.path("display").asText());
 
     // Handle terminology-specific concept attributes
-    if (List.of("SNOMEDCT", "SNOMEDCT_US").contains(terminology.getAbbreviation())) {
+    if (terminology.getAbbreviation().contains("SNOMEDCT")) {
 
       if (conceptNode.has("definition")) {
         final List<Definition> definitions =
@@ -400,21 +440,25 @@ public final class CodeSystemLoaderUtil {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
         term.setName(designation.path("value").asText());
-        term.setType(designation.path("use").path("code").asText());
+
+        // Safely set term type with null checks
+        if (designation.has("use") && designation.path("use").has("code")) {
+          term.setType(designation.path("use").path("code").asText());
+        } else {
+          // Default to PT (Preferred Term) if no type is specified
+          term.setType("PT");
+          LOGGER.warn("Missing term type for designation, defaulting to PT for concept: {}",
+              concept.getCode());
+        }
+
         term.setTerminology(terminology.getAbbreviation());
         term.setVersion(terminology.getVersion());
         term.setPublisher(terminology.getPublisher());
         term.setCode(concept.getCode());
         term.setConceptId(concept.getCode());
-        term.setType(designation.get("use").get("code").asText()); // designation.use.code
-        // missing caseSignificanceId and moduleId for designations
-        // term.getAttributes().put("caseSignificanceId",
-        // designation.get("caseSignificanceId").asText());
-        // term.getAttributes().put("moduleId",
-        // designation.get("moduleId").asText());
 
         // Set language/locale
-        final String language = designation.path("language").asText("en");
+        final String language = designation.path("language").asText();
         term.getLocaleMap().put(language, "HT".equals(term.getType()));
 
         // Set component ID if available
@@ -438,7 +482,17 @@ public final class CodeSystemLoaderUtil {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
         term.setName(designation.path("value").asText());
-        term.setType(designation.path("use").path("code").asText());
+
+        // Safely set term type with null checks
+        if (designation.has("use") && designation.path("use").has("code")) {
+          term.setType(designation.path("use").path("code").asText());
+        } else {
+          // Default to PT (Preferred Term) if no type is specified
+          term.setType("PT");
+          LOGGER.warn("Missing term type for LOINC designation, defaulting to PT for concept: {}",
+              concept.getCode());
+        }
+
         term.setTerminology(terminology.getAbbreviation());
         term.setVersion(terminology.getVersion());
         term.setPublisher(terminology.getPublisher());
@@ -446,7 +500,7 @@ public final class CodeSystemLoaderUtil {
         term.setConceptId(concept.getCode());
 
         // Set language/locale
-        final String language = designation.path("language").asText("en");
+        final String language = designation.path("language").asText();
         term.getLocaleMap().put(language, "LPDN".equals(term.getType()));
 
         concept.getTerms().add(term);
@@ -464,7 +518,18 @@ public final class CodeSystemLoaderUtil {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
         term.setName(designation.path("value").asText());
-        term.setType(designation.path("use").path("code").asText());
+
+        // Safely set term type with null checks
+        if (designation.has("use") && designation.path("use").has("code")) {
+          term.setType(designation.path("use").path("code").asText());
+        } else {
+          // Default to PT (Preferred Term) if no type is specified
+          term.setType("PT");
+          LOGGER.warn(
+              "Missing term type for ICD-10-CM designation, defaulting to PT for concept: {}",
+              concept.getCode());
+        }
+
         term.setTerminology(terminology.getAbbreviation());
         term.setVersion(terminology.getVersion());
         term.setPublisher(terminology.getPublisher());
@@ -472,7 +537,7 @@ public final class CodeSystemLoaderUtil {
         term.setConceptId(concept.getCode());
 
         // Set language/locale
-        final String language = designation.path("language").asText("en");
+        final String language = designation.path("language").asText();
         term.getLocaleMap().put(language, "HT".equals(term.getType()));
 
         concept.getTerms().add(term);
@@ -500,6 +565,41 @@ public final class CodeSystemLoaderUtil {
           concept.getAttributes().put(code, value);
         } else if ("semanticType".equals(code)) {
           concept.getSemanticTypes().add(value);
+        }
+      }
+    } else if ("RXNORM".equals(terminology.getAbbreviation())) {
+      // Handle RXNORM specific concept attributes
+      final JsonNode designations = conceptNode.path("designation");
+      for (final JsonNode designation : designations) {
+        final Term term = new Term();
+        term.setId(UUID.randomUUID().toString());
+        term.setName(designation.path("value").asText());
+
+        // Safely set term type with null checks
+        if (designation.has("use") && designation.path("use").has("code")) {
+          term.setType(designation.path("use").path("code").asText());
+        } else {
+          // Default to PT (Preferred Term) if no type is specified
+          term.setType("PT");
+          LOGGER.warn("Missing term type for RXNORM designation, defaulting to PT for concept: {}",
+              concept.getCode());
+        }
+
+        term.setTerminology(terminology.getAbbreviation());
+        term.setVersion(terminology.getVersion());
+        term.setPublisher(terminology.getPublisher());
+        term.setCode(concept.getCode());
+        term.setConceptId(concept.getCode());
+
+        // Set language/locale
+        final String language = designation.path("language").asText();
+        term.getLocaleMap().put(language, "PT".equals(term.getType()));
+
+        concept.getTerms().add(term);
+
+        // Use first PT designation as concept name
+        if (concept.getName() == null && "PT".equals(term.getType())) {
+          concept.setName(term.getName());
         }
       }
     }
@@ -550,7 +650,7 @@ public final class CodeSystemLoaderUtil {
     String group = null;
 
     // Handle different terminology formats
-    if ("SNOMEDCT".equals(terminology.getAbbreviation())) {
+    if (terminology.getAbbreviation().contains("SNOMEDCT")) {
       // Process SNOMED CT style extensions
       final JsonNode extensions = relationshipNode.path("extension");
       if (!extensions.isMissingNode()) {
@@ -559,6 +659,7 @@ public final class CodeSystemLoaderUtil {
           if (url.endsWith("/additionalType")) {
             final JsonNode valueCoding = extension.path("valueCoding");
             additionalType = valueCoding.path("code").asText();
+            LOGGER.info("Found additionalType: {}", additionalType);
           } else if (url.endsWith("/group")) {
             group = extension.path("valueString").asText();
           }
@@ -567,21 +668,22 @@ public final class CodeSystemLoaderUtil {
 
       // Set relationship type based on code
       final String code = relationshipNode.path("code").asText();
+      LOGGER.info("Processing SNOMED CT relationship with code: {}", code);
+
       if ("parent".equals(code)) {
         type = "parent";
-        // If no additionalType found in extensions, default to "is-a"
-        if (additionalType == null) {
-          additionalType = "116680003"; // SNOMED CT "Is a" relationship type
-        }
+        additionalType = "ISA";
+        LOGGER.info("Set type to ISA for parent relationship");
       } else {
         type = "relationship";
       }
-    } else if ("LNC".equals(terminology.getAbbreviation())) {
+
+    } else if (terminology.getAbbreviation().contains("LNC")) {
       // Handle LOINC relationships
       final String code = relationshipNode.path("code").asText();
       if ("parent".equals(code)) {
         type = "parent";
-        additionalType = "is-a";
+        additionalType = "ISA";
       } else if ("relationship".equals(code)) {
         type = "relationship";
         // Get additionalType from extension
@@ -596,12 +698,12 @@ public final class CodeSystemLoaderUtil {
           }
         }
       }
-    } else if ("ICD10CM".equals(terminology.getAbbreviation())) {
+    } else if (terminology.getAbbreviation().contains("ICD10CM")) {
       // Handle ICD-10-CM relationships
       final String code = relationshipNode.path("code").asText();
       if ("parent".equals(code)) {
         type = "parent";
-        additionalType = "is-a";
+        additionalType = "ISA";
       }
     }
 
@@ -631,7 +733,7 @@ public final class CodeSystemLoaderUtil {
     }
 
     // Set additional attributes
-    relationship.setHierarchical("parent".equals(type) || "is-a".equals(additionalType));
+    relationship.setHierarchical("parent".equals(type) || "ISA".equals(additionalType));
     relationship.setHistorical(false);
     relationship.setAsserted(true);
     relationship.setDefining(relationshipNode.path("defining").asBoolean(false));
@@ -687,4 +789,26 @@ public final class CodeSystemLoaderUtil {
     return concept.getPublisher() + KEY_DELIMITER + concept.getTerminology() + KEY_DELIMITER
         + concept.getVersion() + KEY_DELIMITER + concept.getCode();
   }
+
+  /**
+   * Compute concept tree positions.
+   *
+   * @param service the service
+   * @param terminologyName the terminology name
+   * @param publisher the publisher
+   * @param version the version
+   * @throws Exception the exception
+   */
+  private static void computeConceptTreePositions(final EntityRepositoryService service,
+    final String terminologyName, final String publisher, final String version) throws Exception {
+
+    final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
+    treepos.setTerminology(terminologyName);
+    treepos.setPublisher(publisher);
+    treepos.setVersion(version);
+    treepos.checkPreconditions();
+    treepos.compute();
+
+  }
+
 }

@@ -9,61 +9,93 @@
  */
 package com.wci.termhub.lucene;
 
+import java.io.IOException;
+
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
 
-import java.io.IOException;
-
+/**
+ * The Class FilterScorer.
+ */
 public abstract class FilterScorer extends Scorer {
-    protected final Scorer in;
-    protected final DocIdSetIterator iterator;
 
-    /**
-     * Create a new FilterScorer
-     * @param in the {@link Scorer} to wrap
-     */
-    public FilterScorer(Scorer in, DocIdSetIterator iterator) {
-        super(in.getWeight());
-        this.in = in;
-        this.iterator = iterator;
+  /** The in. */
+  protected final Scorer in;
+
+  /** The iterator. */
+  protected final DocIdSetIterator iterator;
+
+  /**
+   * Create a new FilterScorer.
+   *
+   * @param in the {@link Scorer} to wrap
+   * @param iterator the iterator
+   */
+  public FilterScorer(final Scorer in, final DocIdSetIterator iterator) {
+    super(in.getWeight());
+    this.in = in;
+    this.iterator = iterator;
+  }
+
+  /**
+   * Create a new FilterScorer with a specific weight.
+   *
+   * @param in the {@link Scorer} to wrap
+   * @param weight a {@link Weight}
+   * @param iterator the iterator
+   */
+  public FilterScorer(final Scorer in, final Weight weight, final DocIdSetIterator iterator) {
+    super(weight);
+    if (in == null) {
+      throw new NullPointerException("wrapped Scorer must not be null");
     }
+    this.in = in;
+    this.iterator = iterator;
+  }
 
-    /**
-     * Create a new FilterScorer with a specific weight
-     * @param in the {@link Scorer} to wrap
-     * @param weight a {@link Weight}
-     */
-    public FilterScorer(Scorer in, Weight weight, DocIdSetIterator iterator) {
-        super(weight);
-        if (in == null) {
-            throw new NullPointerException("wrapped Scorer must not be null");
-        }
-        this.in = in;
-        this.iterator = iterator;
-    }
+  /**
+   * Score.
+   *
+   * @return the float
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  @Override
+  public float score() throws IOException {
+    return in.score();
+  }
 
-    @Override
-    public float score() throws IOException {
-        return in.score();
-    }
+  // Leave maxScore abstract on purpose since the goal of this Filter class is
+  // to change the way the score is computed.
 
-    // Leave maxScore abstract on purpose since the goal of this Filter class is
-    // to change the way the score is computed.
+  /**
+   * Doc ID.
+   *
+   * @return the int
+   */
+  @Override
+  public final int docID() {
+    return in.docID();
+  }
 
-    @Override
-    public final int docID() {
-        return in.docID();
-    }
+  /**
+   * Iterator.
+   *
+   * @return the doc id set iterator
+   */
+  @Override
+  public final DocIdSetIterator iterator() {
+    return iterator;
+  }
 
-    @Override
-    public final DocIdSetIterator iterator() {
-        return iterator;
-    }
-
-    @Override
-    public final TwoPhaseIterator twoPhaseIterator() {
-        return in.twoPhaseIterator();
-    }
+  /**
+   * Two phase iterator.
+   *
+   * @return the two phase iterator
+   */
+  @Override
+  public final TwoPhaseIterator twoPhaseIterator() {
+    return in.twoPhaseIterator();
+  }
 }

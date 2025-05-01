@@ -29,11 +29,11 @@ import com.wci.termhub.service.EntityRepositoryService;
  */
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class MetadataSearchUnitTest {
+public class MetadataSearchUnitTest extends BaseUnitTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(MetadataSearchUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MetadataSearchUnitTest.class);
 
   /** The search service. */
   @Autowired
@@ -51,7 +51,7 @@ public class MetadataSearchUnitTest {
   public void testFindAll() throws Exception {
 
     final ResultList<Metadata> all = searchService.findAll(SEARCH_PARAMETERS, Metadata.class);
-    LOG.info("all size: {}", all.getItems().size());
+    LOGGER.info("all size: {}", all.getItems().size());
 
   }
 
@@ -63,12 +63,15 @@ public class MetadataSearchUnitTest {
   @Test
   public void testFindMetadataByTerminologyIcd10cm() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:ICD10CM AND version:2023");
+    final String terminology = "ICD10CM";
+    final String version = "2023";
+    final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(15, metadata.getItems().size());
+    assertEquals(2, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
-      assertEquals("ICD10CM", m.getTerminology());
-      assertEquals("2023", m.getVersion());
+      assertEquals(terminology, m.getTerminology());
+      assertEquals(version, m.getVersion());
     });
   }
 
@@ -80,12 +83,15 @@ public class MetadataSearchUnitTest {
   @Test
   public void testFindMetadataByTerminologyLoinc() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:LNC AND version:277");
+    final String terminology = "LNC";
+    final String version = "277";
+    final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(87, metadata.getItems().size());
+    assertEquals(2, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
-      assertEquals("LNC", m.getTerminology());
-      assertEquals("277", m.getVersion());
+      assertEquals(terminology, m.getTerminology());
+      assertEquals(version, m.getVersion());
     });
   }
 
@@ -97,12 +103,15 @@ public class MetadataSearchUnitTest {
   @Test
   public void testFindMetadataByTerminologyRxNorm() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:RXNORM AND version:02052024");
+    final String terminology = "RXNORM";
+    final String version = "04012024";
+    final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(80, metadata.getItems().size());
+    assertEquals(1, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
-      assertEquals("RXNORM", m.getTerminology());
-      assertEquals("02052024", m.getVersion());
+      assertEquals(terminology, m.getTerminology());
+      assertEquals(version, m.getVersion());
     });
   }
 
@@ -114,12 +123,15 @@ public class MetadataSearchUnitTest {
   @Test
   public void testFindMetadataByTerminologySnomedCtUs() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:SNOMEDCT_US AND version:20240301");
+    final String terminology = "SNOMEDCT_US";
+    final String version = "http://snomed.info/sct/731000124108/version/20240301";
+    final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(62, metadata.getItems().size());
+    assertEquals(1, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
-      assertEquals("SNOMEDCT_US", m.getTerminology());
-      assertEquals("20240301", m.getVersion());
+      assertEquals(terminology, m.getTerminology());
+      assertEquals(version, m.getVersion());
     });
   }
 
@@ -131,12 +143,15 @@ public class MetadataSearchUnitTest {
   @Test
   public void testFindMetadataByTerminologySnomedCt() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:SNOMEDCT AND version:20240101");
+    final String terminology = "SNOMEDCT";
+    final String version = "http://snomed.info/sct/900000000000207008/version/20240101";
+    final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(59, metadata.getItems().size());
+    assertEquals(1, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
-      assertEquals("SNOMEDCT", m.getTerminology());
-      assertEquals("20240101", m.getVersion());
+      assertEquals(terminology, m.getTerminology());
+      assertEquals(version, m.getVersion());
     });
   }
 

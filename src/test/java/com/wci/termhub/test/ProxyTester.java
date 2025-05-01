@@ -52,7 +52,7 @@ public class ProxyTester {
 
   /**
    * Constructs a new tester for the specified class.
-   * 
+   *
    * @param obj Object to test.
    */
   public ProxyTester(final Object obj) {
@@ -64,7 +64,7 @@ public class ProxyTester {
    * tester will not attempt to list all the getters and setters on the object
    * under test, and will instead simply test all the fields in the include
    * list.
-   * 
+   *
    * @param field Field name whose getter/setter should be tested.
    */
   public void include(final String field) {
@@ -73,7 +73,7 @@ public class ProxyTester {
 
   /**
    * Adds a field to the list of excluded fields.
-   * 
+   *
    * @param field Field name to exclude from testing.
    */
   public void exclude(final String field) {
@@ -208,7 +208,7 @@ public class ProxyTester {
           notSeen.add(field);
         }
       }
-      if (notSeen.size() > 0) {
+      if (!notSeen.isEmpty()) {
         throw new Exception("Some included fields were not found: " + notSeen);
       }
     }
@@ -220,7 +220,7 @@ public class ProxyTester {
           notSeen.add(field);
         }
       }
-      if (notSeen.size() > 0) {
+      if (!notSeen.isEmpty()) {
         throw new Exception("Some excluded fields were not found: " + notSeen);
       }
     }
@@ -392,7 +392,7 @@ public class ProxyTester {
 
   /**
    * Returns an instance of an enum.
-   * 
+   *
    * JAVA5 - Comment out or remove this method on older Java versions.
    *
    * @param clazz1 the class

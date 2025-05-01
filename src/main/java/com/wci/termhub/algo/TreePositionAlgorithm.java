@@ -47,7 +47,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(TreePositionAlgorithm.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TreePositionAlgorithm.class);
 
   /** The search service. */
   @Autowired
@@ -63,7 +63,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
   private final List<HasId> batch = new ArrayList<>();
 
   /** The prefix. */
-  private String prefix = "";
+  // private String prefix = "";
 
   /** The seen. */
   private final List<String> seen = new ArrayList<>();
@@ -121,9 +121,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
     // Get all relationships
     // Get prefix for index name
-    prefix = StringUtility.removeNonAlphanumeric(getTerminology().toLowerCase()) + "-"
-        + StringUtility.removeNonAlphanumeric(getPublisher().toLowerCase()) + "-"
-        + StringUtility.removeNonAlphanumeric(getVersion().toLowerCase());
+    // prefix =
+    // StringUtility.removeNonAlphanumeric(getTerminology().toLowerCase()) + "-"
+    // + StringUtility.removeNonAlphanumeric(getPublisher().toLowerCase()) + "-"
+    // + StringUtility.removeNonAlphanumeric(getVersion().toLowerCase());
 
     // Create index if it doesn't exist
     // searchService.createIndex(prefix, ConceptTreePosition.class, false);
@@ -140,10 +141,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       throw new Exception("Unable to find terminology = " + getTerminology() + ", " + getPublisher()
           + ", " + getVersion());
     }
-    if (!term.getIndexName().equals(prefix)) {
-      throw new Exception("Tree Position algorithm expects " + prefix
-          + " terminology index to have indexName set to prefix.");
-    }
+    // if (!term.getIndexName().equals(prefix)) {
+    // throw new Exception("Tree Position algorithm expects " + prefix
+    // + " terminology index to have indexName set to prefix.");
+    // }
 
     final Date startDate = new Date();
 
@@ -165,8 +166,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       // ModelUtility.asList("id", "from.code", "to.code", "additionalType"),
       // ConceptRelationship.class,
       // searchAfter, prefixes);
-      final ResultList<ConceptRelationship> innerList =
-          searchService.find(params, ConceptRelationship.class);
+      final ResultList<ConceptRelationship> innerList = searchService.find(params, ConceptRelationship.class);
       if (innerList.getItems().isEmpty()) {
         break;
       }
@@ -294,7 +294,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       term.getAttributes().put(Terminology.Attributes.polyhierarchy.property(), "true");
     }
     term.setTreePositionCt(TerminologyUtility.countTreePositions(searchService,
-        term.getAbbreviation(), term.getPublisher(), term.getVersion(), prefix));
+        term.getAbbreviation(), term.getPublisher(), term.getVersion()));
 
     // Update index
     searchService.update(Terminology.class, term.getId(), term);
@@ -307,20 +307,20 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
   /**
    * Compute tree positions.
    *
-   * @param code the code
-   * @param ancestorPath the ancestor path
-   * @param parChd the par chd
-   * @param validationResult the validation result
-   * @param startDate the start date
-   * @param multipleRoots the multiple roots
+   * @param code              the code
+   * @param ancestorPath      the ancestor path
+   * @param parChd            the par chd
+   * @param validationResult  the validation result
+   * @param startDate         the start date
+   * @param multipleRoots     the multiple roots
    * @param additionalTypeMap the additional type map
    * @return the sets the
    * @throws Exception the exception
    */
   public Set<String> computeTreePositions(final String code, final String ancestorPath,
-    final Map<String, Set<String>> parChd, final ValidationResult validationResult,
-    final Date startDate, final boolean multipleRoots, final Map<String, String> additionalTypeMap)
-    throws Exception {
+      final Map<String, Set<String>> parChd, final ValidationResult validationResult,
+      final Date startDate, final boolean multipleRoots, final Map<String, String> additionalTypeMap)
+      throws Exception {
 
     final Set<String> descConceptCodes = new HashSet<>();
 

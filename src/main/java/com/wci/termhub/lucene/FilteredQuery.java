@@ -9,6 +9,8 @@
  */
 package com.wci.termhub.lucene;
 
+import java.io.IOException;
+
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
@@ -21,111 +23,194 @@ import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.BitSetIterator;
 import org.apache.lucene.util.FixedBitSet;
 
-import java.io.IOException;
-
+/**
+ * The Class FilteredQuery.
+ */
 public class FilteredQuery extends Query {
-    private final Query innerQuery;
-    private final Query filterQuery;
 
-    public FilteredQuery(Query innerQuery, Query filterQuery) {
-        this.innerQuery = innerQuery;
-        this.filterQuery = filterQuery;
+  /** The inner query. */
+  private final Query innerQuery;
+
+  /** The filter query. */
+  private final Query filterQuery;
+
+  /**
+   * Instantiates a new filtered query.
+   *
+   * @param innerQuery the inner query
+   * @param filterQuery the filter query
+   */
+  public FilteredQuery(final Query innerQuery, final Query filterQuery) {
+    this.innerQuery = innerQuery;
+    this.filterQuery = filterQuery;
+  }
+
+  /**
+   * Creates the weight.
+   *
+   * @param searcher the searcher
+   * @param scoreMode the score mode
+   * @param boost the boost
+   * @return the weight
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  @Override
+  public Weight createWeight(final IndexSearcher searcher, final ScoreMode scoreMode,
+    final float boost) throws IOException {
+    final Weight innerWeight = innerQuery.createWeight(searcher, scoreMode, boost);
+    final Weight filterWeight = filterQuery.createWeight(searcher, scoreMode, boost);
+    return new FilteredWeight(innerWeight, filterWeight);
+  }
+
+  /**
+   * Visit.
+   *
+   * @param queryVisitor the query visitor
+   */
+  @Override
+  public void visit(final QueryVisitor queryVisitor) {
+
+  }
+
+  /**
+   * To string.
+   *
+   * @param field the field
+   * @return the string
+   */
+  @Override
+  public String toString(final String field) {
+    return String.format("Inner Query:%s FilterQuery: %s", innerQuery.toString(),
+        filterQuery.toString());
+  }
+
+  /**
+   * Equals.
+   *
+   * @param obj the obj
+   * @return true, if successful
+   */
+  @Override
+  public boolean equals(final Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    final FilteredQuery that = (FilteredQuery) obj;
+    return innerQuery.equals(that.innerQuery) && filterQuery.equals(that.filterQuery);
+  }
+
+  /**
+   * Hash code.
+   *
+   * @return the int
+   */
+  @Override
+  public int hashCode() {
+    int result = innerQuery.hashCode();
+    result = 31 * result + filterQuery.hashCode();
+    return result;
+  }
+
+  /**
+   * The Class FilteredWeight.
+   */
+  private static class FilteredWeight extends Weight {
+
+    /** The inner weight. */
+    private final Weight innerWeight;
+
+    /** The filter weight. */
+    private final Weight filterWeight;
+
+    /**
+     * Instantiates a new filtered weight.
+     *
+     * @param innerWeight the inner weight
+     * @param filterWeight the filter weight
+     */
+    public FilteredWeight(final Weight innerWeight, final Weight filterWeight) {
+      super(innerWeight.getQuery());
+      this.innerWeight = innerWeight;
+      this.filterWeight = filterWeight;
     }
 
+    /**
+     * Explain.
+     *
+     * @param context the context
+     * @param docId the doc id
+     * @return the explanation
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
     @Override
-    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
-        Weight innerWeight = innerQuery.createWeight(searcher, scoreMode, boost);
-        Weight filterWeight = filterQuery.createWeight(searcher, scoreMode,boost);
-        return new FilteredWeight(innerWeight, filterWeight);
+    public Explanation explain(final LeafReaderContext context, final int docId)
+      throws IOException {
+      // ... (Implement explanation logic)
+      return null;
     }
 
+    /**
+     * Scorer.
+     *
+     * @param context the context
+     * @return the scorer
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
     @Override
-    public void visit(QueryVisitor queryVisitor) {
+    public Scorer scorer(final LeafReaderContext context) throws IOException {
+      final Scorer innerScorer = innerWeight.scorer(context);
+      final Scorer filterScorer = filterWeight.scorer(context);
+      if (innerScorer == null || filterScorer == null) {
+        return null;
+      }
+      final FixedBitSet matchingDocIds = new FixedBitSet(context.reader().maxDoc());
+      final DocIdSetIterator innerIterator = innerScorer.iterator();
+      final DocIdSetIterator filterIterator = filterScorer.iterator();
+      int docId1 = innerIterator.docID();
+      int docId2 = filterIterator.nextDoc();
 
-    }
+      while (docId1 != DocIdSetIterator.NO_MORE_DOCS && docId2 != DocIdSetIterator.NO_MORE_DOCS) {
+        if (docId1 == docId2) {
+          // Process the document with docId1 (or docId2)
+          matchingDocIds.set(docId1);
+          // Advance both iterators
+          docId1 = innerIterator.nextDoc();
+          docId2 = filterIterator.nextDoc();
+        } else if (docId1 < docId2) {
+          // Advance the first iterator
+          docId1 = innerIterator.nextDoc();
+        } else {
+          // Advance the second iterator
+          docId2 = filterIterator.nextDoc();
+        }
+      }
+      final DocIdSetIterator iterator = new BitSetIterator(matchingDocIds, 1);
 
-    @Override
-    public String toString(String field) {
-        return String.format("Inner Query:%s FilterQuery: %s",innerQuery.toString(), filterQuery.toString());
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        FilteredQuery that = (FilteredQuery) obj;
-        return innerQuery.equals(that.innerQuery) && filterQuery.equals(that.filterQuery);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = innerQuery.hashCode();
-        result = 31 * result + filterQuery.hashCode();
-        return result;
-    }
-
-    private static class FilteredWeight extends Weight {
-        private final Weight innerWeight;
-        private final Weight filterWeight;
-
-        public FilteredWeight(Weight innerWeight, Weight filterWeight) {
-            super(innerWeight.getQuery());
-            this.innerWeight = innerWeight;
-            this.filterWeight = filterWeight;
+      return new FilterScorer(innerScorer, iterator) {
+        @Override
+        public float getMaxScore(final int upTo) throws IOException {
+          return 0;
         }
 
         @Override
-        public Explanation explain(LeafReaderContext context, int docId) throws IOException {
-            // ... (Implement explanation logic)
-            return null;
+        public float score() throws IOException {
+          return super.score();
         }
-
-        @Override
-        public Scorer scorer(LeafReaderContext context) throws IOException {
-            Scorer innerScorer = innerWeight.scorer(context);
-            Scorer filterScorer = filterWeight.scorer(context);
-            if(innerScorer == null || filterScorer == null){
-                return null;
-            }
-            FixedBitSet matchingDocIds = new FixedBitSet(context.reader().maxDoc());
-            DocIdSetIterator innerIterator = innerScorer.iterator();
-            DocIdSetIterator filterIterator = filterScorer.iterator();
-            int docId1 = innerIterator.docID();
-            int docId2 = filterIterator.nextDoc();
-
-            while (docId1 != DocIdSetIterator.NO_MORE_DOCS && docId2 != DocIdSetIterator.NO_MORE_DOCS) {
-                if (docId1 == docId2) {
-                    // Process the document with docId1 (or docId2)
-                    matchingDocIds.set(docId1);
-                    // Advance both iterators
-                    docId1 = innerIterator.nextDoc();
-                    docId2 = filterIterator.nextDoc();
-                } else if (docId1 < docId2) {
-                    // Advance the first iterator
-                    docId1 = innerIterator.nextDoc();
-                } else {
-                    // Advance the second iterator
-                    docId2 = filterIterator.nextDoc();
-                }
-            }
-            DocIdSetIterator iterator = new BitSetIterator(matchingDocIds, 1);
-
-            return new FilterScorer(innerScorer, iterator) {
-                @Override
-                public float getMaxScore(int upTo) throws IOException {
-                    return 0;
-                }
-
-                @Override
-                public float score() throws IOException {
-                    return super.score();
-                }
-            };
-        }
-
-        @Override
-        public boolean isCacheable(LeafReaderContext ctx) {
-            return innerWeight.isCacheable(ctx) && filterWeight.isCacheable(ctx);
-        }
+      };
     }
+
+    /**
+     * Checks if is cacheable.
+     *
+     * @param ctx the ctx
+     * @return true, if is cacheable
+     */
+    @Override
+    public boolean isCacheable(final LeafReaderContext ctx) {
+      return innerWeight.isCacheable(ctx) && filterWeight.isCacheable(ctx);
+    }
+  }
 }

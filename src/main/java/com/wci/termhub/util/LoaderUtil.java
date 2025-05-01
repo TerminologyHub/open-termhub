@@ -31,7 +31,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 public final class LoaderUtil {
 
   /** The logger. */
-  private static final Logger LOG = LoggerFactory.getLogger(LoaderUtil.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LoaderUtil.class);
 
   /**
    * Instantiates a new loader util.
@@ -100,7 +100,7 @@ public final class LoaderUtil {
   public static void indexTerminology(final EntityRepositoryService service,
     final String fullFileName, final int batchSize, final int limit) throws Exception {
 
-    LOG.debug("indexTerminology: batch size: " + batchSize + " limit: " + limit);
+    LOGGER.debug("indexTerminology: batch size: " + batchSize + " limit: " + limit);
     final long startTime = System.currentTimeMillis();
     final List<HasId> terminologyBatch = new ArrayList<>(batchSize);
 
@@ -113,13 +113,13 @@ public final class LoaderUtil {
       while ((line = br.readLine()) != null) {
 
         final Terminology terminology = ModelUtility.fromJson(line, Terminology.class);
-        LOG.info("indexTerminology: terminology: {}", terminology);
+        LOGGER.info("indexTerminology: terminology: {}", terminology);
         terminologyBatch.add(terminology);
 
         if (terminologyBatch.size() == batchSize) {
           service.addBulk(Terminology.class, terminologyBatch);
           terminologyBatch.clear();
-          LOG.info("indexTerminology: count: " + count);
+          LOGGER.info("indexTerminology: count: " + count);
         }
         count++;
       }
@@ -128,11 +128,12 @@ public final class LoaderUtil {
         service.addBulk(Terminology.class, terminologyBatch);
       }
 
-      LOG.info("indexTerminology: final count: " + count);
-      LOG.info("indexTerminology: duration: " + (System.currentTimeMillis() - startTime) + " ms");
+      LOGGER.info("indexTerminology: final count: " + count);
+      LOGGER
+          .info("indexTerminology: duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
     } catch (final Exception e) {
-      LOG.error("indexTerminology: An error occurred while processing the file.");
+      LOGGER.error("indexTerminology: An error occurred while processing the file.");
       throw e;
     }
   }
@@ -149,7 +150,7 @@ public final class LoaderUtil {
   public static void indexMetadata(final EntityRepositoryService service, final String fullFileName,
     final int batchSize, final int limit) throws Exception {
 
-    LOG.debug("indexMetadata: batch size: " + batchSize + " limit: " + limit);
+    LOGGER.debug("indexMetadata: batch size: " + batchSize + " limit: " + limit);
     final long startTime = System.currentTimeMillis();
     final List<HasId> metadataBatch = new ArrayList<>(batchSize);
 
@@ -167,7 +168,7 @@ public final class LoaderUtil {
         if (metadataBatch.size() == batchSize) {
           service.addBulk(Metadata.class, metadataBatch);
           metadataBatch.clear();
-          LOG.info("indexMetadata: count: " + conceptCount);
+          LOGGER.info("indexMetadata: count: " + conceptCount);
         }
         conceptCount++;
       }
@@ -176,11 +177,11 @@ public final class LoaderUtil {
         service.addBulk(Metadata.class, metadataBatch);
       }
 
-      LOG.info("indexMetadata: final metadataBatch added count: " + conceptCount);
-      LOG.info("indexMetadata: duration: " + (System.currentTimeMillis() - startTime) + " ms");
+      LOGGER.info("indexMetadata: final metadataBatch added count: " + conceptCount);
+      LOGGER.info("indexMetadata: duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
     } catch (final Exception e) {
-      LOG.error("indexMetadata: An error occurred while processing the file.");
+      LOGGER.error("indexMetadata: An error occurred while processing the file.");
       throw e;
     }
 
@@ -198,7 +199,7 @@ public final class LoaderUtil {
   public static void indexConcepts(final EntityRepositoryService service, final String fullFileName,
     final int batchSize, final int limit) throws Exception {
 
-    LOG.debug("indexConcept: batch size: " + batchSize + " limit: " + limit);
+    LOGGER.debug("indexConcept: batch size: " + batchSize + " limit: " + limit);
     final long startTime = System.currentTimeMillis();
     final List<HasId> conceptBatch = new ArrayList<>(batchSize);
     final List<HasId> termBatch = new ArrayList<>(batchSize);
@@ -229,7 +230,7 @@ public final class LoaderUtil {
         if (conceptBatch.size() == batchSize) {
           service.addBulk(Concept.class, conceptBatch);
           conceptBatch.clear();
-          LOG.info("indexConcept: count: " + conceptCount);
+          LOGGER.info("indexConcept: count: " + conceptCount);
         }
         conceptCount++;
       }
@@ -241,12 +242,12 @@ public final class LoaderUtil {
         service.addBulk(Term.class, termBatch);
       }
 
-      LOG.info("indexConcept: final concepts added count: " + conceptCount);
-      LOG.info("indexConcept: final terms added count: " + termCount);
-      LOG.info("indexConcept: duration: " + (System.currentTimeMillis() - startTime) + " ms");
+      LOGGER.info("indexConcept: final concepts added count: " + conceptCount);
+      LOGGER.info("indexConcept: final terms added count: " + termCount);
+      LOGGER.info("indexConcept: duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
     } catch (final Exception e) {
-      LOG.error("indexConcept: An error occurred while processing the file.");
+      LOGGER.error("indexConcept: An error occurred while processing the file.");
       throw e;
     }
   }
@@ -263,7 +264,7 @@ public final class LoaderUtil {
   public static void indexConceptRelationships(final EntityRepositoryService service,
     final String fullFileName, final int batchSize, final int limit) throws Exception {
 
-    LOG.debug("indexConceptRelationships: batch size: " + batchSize + " limit: " + limit);
+    LOGGER.debug("indexConceptRelationships: batch size: " + batchSize + " limit: " + limit);
     final long startTime = System.currentTimeMillis();
     final List<HasId> conceptRelBatch = new ArrayList<>(batchSize);
 
@@ -282,7 +283,7 @@ public final class LoaderUtil {
         if (conceptRelBatch.size() == batchSize) {
           service.addBulk(ConceptRelationship.class, conceptRelBatch);
           conceptRelBatch.clear();
-          LOG.info("indexConceptRelationships: count: " + count);
+          LOGGER.info("indexConceptRelationships: count: " + count);
         }
         count++;
       }
@@ -291,12 +292,12 @@ public final class LoaderUtil {
         service.addBulk(ConceptRelationship.class, conceptRelBatch);
       }
 
-      LOG.info("indexConceptRelationships: final count: " + count);
-      LOG.info("indexConceptRelationships: duration: " + (System.currentTimeMillis() - startTime)
+      LOGGER.info("indexConceptRelationships: final count: " + count);
+      LOGGER.info("indexConceptRelationships: duration: " + (System.currentTimeMillis() - startTime)
           + " ms");
 
     } catch (final Exception e) {
-      LOG.error("An error occurred while processing the file.");
+      LOGGER.error("An error occurred while processing the file.");
       throw e;
     }
   }

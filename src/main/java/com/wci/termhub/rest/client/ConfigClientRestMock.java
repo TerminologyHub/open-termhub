@@ -295,11 +295,6 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
   /* see superclass */
   @Override
   public List<LicenseInfo> getAllLicenseInfo() throws Exception {
-    final String jwt = JwtUtility.getLocalJwt();
-    if (jwt == null) {
-      throw new Exception("Unexpected missing jwt, specify via ThreadLocal.put(\"jwt\",...);");
-    }
-
     final List<LicenseInfo> al = new ArrayList<LicenseInfo>(licenseMap.values());
     return al;
   }
@@ -412,10 +407,6 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
   /* see superclass */
   @Override
   public List<FamilyInfo> getAllFamilyInfo() throws Exception {
-    final String jwt = JwtUtility.getLocalJwt();
-    if (jwt == null) {
-      throw new Exception("Unexpected missing jwt, specify via ThreadLocal.put(\"jwt\",...);");
-    }
     final List<FamilyInfo> al = new ArrayList<FamilyInfo>(familyMap.values());
     return al;
   }
@@ -529,11 +520,6 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
   /* see superclass */
   @Override
   public List<PublisherInfo> getAllPublisherInfo() throws Exception {
-    final String jwt = JwtUtility.getLocalJwt();
-    if (jwt == null) {
-      throw new Exception("Unexpected missing jwt, specify via ThreadLocal.put(\"jwt\",...);");
-    }
-
     final List<PublisherInfo> al = new ArrayList<PublisherInfo>(publisherMap.values());
     return al;
   }
@@ -646,11 +632,6 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
   /* see superclass */
   @Override
   public List<PlanInfo> getAllPlanInfo() throws Exception {
-    final String jwt = JwtUtility.getLocalJwt();
-    if (jwt == null) {
-      throw new Exception("Unexpected missing jwt, specify via ThreadLocal.put(\"jwt\",...);");
-    }
-
     final List<PlanInfo> al = new ArrayList<PlanInfo>(planMap.values());
     return al;
   }
@@ -764,11 +745,6 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
   /* see superclass */
   @Override
   public List<ResourceInfo> getAllResourceInfo() throws Exception {
-    final String jwt = JwtUtility.getLocalJwt();
-    if (jwt == null) {
-      throw new Exception("Unexpected missing jwt, specify via ThreadLocal.put(\"jwt\",...);");
-    }
-
     final List<ResourceInfo> al = new ArrayList<ResourceInfo>(resourceMap.values());
     return al;
   }
@@ -883,11 +859,6 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
   /* see superclass */
   @Override
   public List<TerminologyInfo> getAllTerminologyInfo() throws Exception {
-    final String jwt = JwtUtility.getLocalJwt();
-    if (jwt == null) {
-      throw new Exception("Unexpected missing jwt, specify via ThreadLocal.put(\"jwt\",...);");
-    }
-
     final List<TerminologyInfo> al = new ArrayList<TerminologyInfo>(terminologyMap.values());
     return al;
   }
@@ -1087,11 +1058,6 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
   /* see superclass */
   @Override
   public List<TypeKeyValue> getAllTypeKeyValue() throws Exception {
-    final String jwt = JwtUtility.getLocalJwt();
-    if (jwt == null) {
-      throw new Exception("Unexpected missing jwt, specify via ThreadLocal.put(\"jwt\",...);");
-    }
-
     final List<TypeKeyValue> al = new ArrayList<TypeKeyValue>(tkvMap.values());
     return al;
   }
@@ -1241,10 +1207,11 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
   @Override
   public ResultListTypeKeyValue findTypeKeyValue(final String query, final Integer offset,
     final Integer limit, final String sort, final Boolean ascending) throws Exception {
-    final String jwt = JwtUtility.getLocalJwt();
-    if (jwt == null) {
-      throw new Exception("Unexpected missing jwt, specify via ThreadLocal.put(\"jwt\",...);");
-    }
+    // final String jwt = JwtUtility.getLocalJwt();
+    // if (jwt == null) {
+    // throw new Exception("Unexpected missing jwt, specify via
+    // ThreadLocal.put(\"jwt\",...);");
+    // }
 
     final ResultListTypeKeyValue list = new ResultListTypeKeyValue();
     final String type = query.substring(query.indexOf(":") + 1, query.indexOf(" AND"));
@@ -1272,10 +1239,11 @@ public class ConfigClientRestMock extends RootClientRestMock implements ConfigCl
   @Override
   public ResultListTypeKeyValue findTypeKeyValue(final String type, final String key)
     throws Exception {
-    final String jwt = JwtUtility.getLocalJwt();
-    if (jwt == null) {
-      throw new Exception("Unexpected missing jwt, specify via ThreadLocal.put(\"jwt\",...);");
-    }
+    // final String jwt = JwtUtility.getLocalJwt();
+    // if (jwt == null) {
+    // throw new Exception("Unexpected missing jwt, specify via
+    // ThreadLocal.put(\"jwt\",...);");
+    // }
 
     final ResultListTypeKeyValue list = new ResultListTypeKeyValue();
     for (final TypeKeyValue tkv : tkvMap.values()) {

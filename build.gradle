@@ -9,6 +9,7 @@ buildscript {
     maven { url "https://repo.spring.io/milestone" }
     maven { url "https://repo.spring.io/snapshot" }
     maven { url "https://plugins.gradle.org/m2/" }
+    gradlePluginPortal()
   }
 
   dependencies {
@@ -22,6 +23,7 @@ plugins {
   id "com.github.hierynomus.license" version "0.16.1"
   id 'org.springframework.boot' version '3.3.5'
   id "com.github.spotbugs" version "6.0.26"
+  id 'jacoco'
 }
 
 repositories {
@@ -68,6 +70,9 @@ java {
 dependencies {
   // NOTE: "spring-boot-starter-web" must be the first dependency
   implementation('org.springframework.boot:spring-boot-starter-web')
+
+  // Add ANTLR runtime dependency to match code generation version
+  implementation 'org.antlr:antlr4-runtime:4.7.1'
 
   // Add JAXB dependencies
   implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.1'
@@ -185,8 +190,40 @@ dependencies {
 }
 
 test {
-  useJUnitPlatform()
-  exclude '**/*IntegrationTest.*'
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test-r4,test-r5'
+    maxParallelForks = 1
+    exclude '**/r4/**'
+    exclude '**/r5/**'
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
+task testR4(type: Test) {
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test-r4'
+    include '**/r4/**'
+    exclude '**/r5/**'
+    maxParallelForks = 1
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
+task testR5(type: Test) {
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test-r5'
+    include '**/r5/**'
+    exclude '**/r4/**'
+    maxParallelForks = 1
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+
 }
 
 // use "gradle licenseFormatMain/Test" to automatically generate headers
@@ -301,4 +338,42 @@ bootRun {
 
 bootJar {
   mainClass = 'com.wci.termhub.Application'
+}
+
+jacoco {
+  toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+  dependsOn test
+
+  reports {
+    html {
+      required = true
+      destination file("${buildDir}/reports/jacoco")
+    }
+    xml {
+      required = true
+      destination file("${buildDir}/reports/jacoco/report.xml")
+    }
+    csv.required = false
+  }
+}
+
+jacocoTestCoverageVerification {
+  violationRules {
+    rule {
+      element = 'CLASS'
+      limit {
+        counter = 'LINE'
+        value = 'COVEREDRATIO'
+        minimum = 0.60
+      }
+      excludes = [
+        'com.wci.termhub.Application',
+        'com.wci.termhub.config.*',
+        'com.wci.termhub.model.*'
+      ]
+    }
+  }
 }

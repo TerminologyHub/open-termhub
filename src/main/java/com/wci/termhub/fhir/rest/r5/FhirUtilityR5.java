@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -94,18 +93,18 @@ public final class FhirUtilityR5 {
    * Gets the terminologies.
    *
    * @param searchService the search service
-   * @param id the id
-   * @param code the code
-   * @param systemField the system field
-   * @param system the system
-   * @param version the version
-   * @param coding the coding
+   * @param id            the id
+   * @param code          the code
+   * @param systemField   the system field
+   * @param system        the system
+   * @param version       the version
+   * @param coding        the coding
    * @return the terminologies
    * @throws Exception the exception
    */
   public static Terminology getTerminology(final EntityRepositoryService searchService,
-    final IdType id, final CodeType code, final String systemField, final UriType system,
-    final StringType version, final Coding coding) throws Exception {
+      final IdType id, final CodeType code, final String systemField, final UriType system,
+      final StringType version, final Coding coding) throws Exception {
     return getTerminology(searchService, id, code, systemField, system, version, coding, false);
   }
 
@@ -113,19 +112,19 @@ public final class FhirUtilityR5 {
    * Gets the terminology.
    *
    * @param searchService the search service
-   * @param id the id
-   * @param code the code
-   * @param systemField the system field
-   * @param system the system
-   * @param version the version
-   * @param coding the coding
-   * @param nullAllowed the null allowed
+   * @param id            the id
+   * @param code          the code
+   * @param systemField   the system field
+   * @param system        the system
+   * @param version       the version
+   * @param coding        the coding
+   * @param nullAllowed   the null allowed
    * @return the terminology
    * @throws Exception the exception
    */
   public static Terminology getTerminology(final EntityRepositoryService searchService,
-    final IdType id, final CodeType code, final String systemField, final UriType system,
-    final StringType version, final Coding coding, final boolean nullAllowed) throws Exception {
+      final IdType id, final CodeType code, final String systemField, final UriType system,
+      final StringType version, final Coding coding, final boolean nullAllowed) throws Exception {
 
     final String codeSystem = code == null ? null : code.getSystem();
     final String systemSystem = system == null ? null : system.getValue();
@@ -194,7 +193,7 @@ public final class FhirUtilityR5 {
   /**
    * Gets the code.
    *
-   * @param code the code
+   * @param code   the code
    * @param coding the coding
    * @return the code
    * @throws Exception the exception
@@ -215,12 +214,12 @@ public final class FhirUtilityR5 {
    * Mutually exclusive.
    *
    * @param param1Name the param 1 name
-   * @param param1 the param 1
+   * @param param1     the param 1
    * @param param2Name the param 2 name
-   * @param param2 the param 2
+   * @param param2     the param 2
    */
   public static void mutuallyExclusive(final String param1Name, final Object param1,
-    final String param2Name, final Object param2) {
+      final String param2Name, final Object param2) {
     if (param1 != null && param2 != null) {
       throw exception(format("Use one of '%s' or '%s' parameters.", param1Name, param2Name),
           OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
@@ -231,7 +230,7 @@ public final class FhirUtilityR5 {
    * Not supported.
    *
    * @param paramName the param name
-   * @param obj the obj
+   * @param obj       the obj
    */
   public static void notSupported(final String paramName, final Object obj) {
     notSupported(paramName, obj, null);
@@ -240,12 +239,12 @@ public final class FhirUtilityR5 {
   /**
    * Not supported.
    *
-   * @param paramName the param name
-   * @param obj the obj
+   * @param paramName        the param name
+   * @param obj              the obj
    * @param additionalDetail the additional detail
    */
   public static void notSupported(final String paramName, final Object obj,
-    final String additionalDetail) {
+      final String additionalDetail) {
     if (obj != null) {
       final String message = format("Input parameter '%s' is not supported%s", paramName,
           (additionalDetail == null ? "." : format(" %s", additionalDetail)));
@@ -257,13 +256,12 @@ public final class FhirUtilityR5 {
   /**
    * Not supported.
    *
-   * @param request the request
+   * @param request   the request
    * @param paramName the param name
    */
   public static void notSupported(final HttpServletRequest request, final String paramName) {
     if (request.getParameterMap().containsKey(paramName)) {
-      final String message =
-          format("HttpServletResponse.SC_BAD_REQUEST)t parameter '%s' is not supported", paramName);
+      final String message = format("HttpServletResponse.SC_BAD_REQUEST)t parameter '%s' is not supported", paramName);
       throw exception(message, OperationOutcome.IssueType.NOTSUPPORTED,
           HttpServletResponse.SC_BAD_REQUEST);
     }
@@ -292,12 +290,12 @@ public final class FhirUtilityR5 {
    * Require exactly one of.
    *
    * @param param1Name the param 1 name
-   * @param param1 the param 1
+   * @param param1     the param 1
    * @param param2Name the param 2 name
-   * @param param2 the param 2
+   * @param param2     the param 2
    */
   public static void requireExactlyOneOf(final String param1Name, final Object param1,
-    final String param2Name, final Object param2) {
+      final String param2Name, final Object param2) {
     if (param1 == null && param2 == null) {
       throw exception(
           format("One of '%s' or '%s' parameters must be supplied.", param1Name, param2Name),
@@ -311,14 +309,14 @@ public final class FhirUtilityR5 {
    * Require exactly one of.
    *
    * @param param1Name the param 1 name
-   * @param param1 the param 1
+   * @param param1     the param 1
    * @param param2Name the param 2 name
-   * @param param2 the param 2
+   * @param param2     the param 2
    * @param param3Name the param 3 name
-   * @param param3 the param 3
+   * @param param3     the param 3
    */
   public static void requireExactlyOneOf(final String param1Name, final Object param1,
-    final String param2Name, final Object param2, final String param3Name, final Object param3) {
+      final String param2Name, final Object param2, final String param3Name, final Object param3) {
     if (param1 == null && param2 == null && param3 == null) {
       throw exception(
           format("One of '%s' or '%s' or '%s' parameters must be supplied.", param1Name, param2Name,
@@ -335,17 +333,17 @@ public final class FhirUtilityR5 {
    * Require exactly one of.
    *
    * @param param1Name the param 1 name
-   * @param param1 the param 1
+   * @param param1     the param 1
    * @param param2Name the param 2 name
-   * @param param2 the param 2
+   * @param param2     the param 2
    * @param param3Name the param 3 name
-   * @param param3 the param 3
+   * @param param3     the param 3
    * @param param4Name the param 4 name
-   * @param param4 the param 4
+   * @param param4     the param 4
    */
   public static void requireExactlyOneOf(final String param1Name, final Object param1,
-    final String param2Name, final Object param2, final String param3Name, final Object param3,
-    final String param4Name, final Object param4) {
+      final String param2Name, final Object param2, final String param3Name, final Object param3,
+      final String param4Name, final Object param4) {
     if (param1 == null && param2 == null && param3 == null && param4 == null) {
       throw exception(
           format("One of '%s' or '%s' or '%s' or '%s' parameters must be supplied.", param1Name,
@@ -365,12 +363,12 @@ public final class FhirUtilityR5 {
    * Mutually required.
    *
    * @param param1Name the param 1 name
-   * @param param1 the param 1
+   * @param param1     the param 1
    * @param param2Name the param 2 name
-   * @param param2 the param 2
+   * @param param2     the param 2
    */
   public static void mutuallyRequired(final String param1Name, final Object param1,
-    final String param2Name, final Object param2) {
+      final String param2Name, final Object param2) {
     if (param1 != null && param2 == null) {
       throw exception(
           format("Input parameter '%s' can only be used in conjunction with parameter '%s'.",
@@ -383,14 +381,14 @@ public final class FhirUtilityR5 {
    * Mutually required.
    *
    * @param param1Name the param 1 name
-   * @param param1 the param 1
+   * @param param1     the param 1
    * @param param2Name the param 2 name
-   * @param param2 the param 2
+   * @param param2     the param 2
    * @param param3Name the param 3 name
-   * @param param3 the param 3
+   * @param param3     the param 3
    */
   public static void mutuallyRequired(final String param1Name, final Object param1,
-    final String param2Name, final Object param2, final String param3Name, final Object param3) {
+      final String param2Name, final Object param2, final String param3Name, final Object param3) {
     if (param1 != null && param2 == null && param3 == null) {
       throw exception(
           format("Use of input parameter '%s' only allowed if '%s' or '%s' is also present.",
@@ -402,9 +400,9 @@ public final class FhirUtilityR5 {
   /**
    * Recover code.
    *
-   * @param code the code
+   * @param code   the code
    * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the
-   *          string
+   *               string
    * @return the string
    */
   public static String recoverCode(final CodeType code, final Coding coding) {
@@ -437,30 +435,29 @@ public final class FhirUtilityR5 {
   /**
    * Exception.
    *
-   * @param message the message
-   * @param issueType the issue type
+   * @param message       the message
+   * @param issueType     the issue type
    * @param theStatusCode the the status code
    * @return the FHIR server response exception
    */
   public static FHIRServerResponseException exception(final String message,
-    final OperationOutcome.IssueType issueType, final int theStatusCode) {
+      final OperationOutcome.IssueType issueType, final int theStatusCode) {
     return exception(message, issueType, theStatusCode, null);
   }
 
   /**
    * Exception.
    *
-   * @param message the message
-   * @param issueType the issue type
+   * @param message       the message
+   * @param issueType     the issue type
    * @param theStatusCode the the status code
-   * @param e the e
+   * @param e             the e
    * @return the FHIR server response exception
    */
   public static FHIRServerResponseException exception(final String message,
-    final OperationOutcome.IssueType issueType, final int theStatusCode, final Throwable e) {
+      final OperationOutcome.IssueType issueType, final int theStatusCode, final Throwable e) {
     final OperationOutcome outcome = new OperationOutcome();
-    final OperationOutcome.OperationOutcomeIssueComponent component =
-        new OperationOutcome.OperationOutcomeIssueComponent();
+    final OperationOutcome.OperationOutcomeIssueComponent component = new OperationOutcome.OperationOutcomeIssueComponent();
     component.setSeverity(OperationOutcome.IssueSeverity.ERROR);
     component.setCode(issueType);
     component.setDiagnostics(message);
@@ -471,16 +468,16 @@ public final class FhirUtilityR5 {
   /**
    * Creates the property.
    *
-   * @param propertyName the property name
+   * @param propertyName  the property name
    * @param propertyValue the property value
-   * @param isCode the is code
+   * @param isCode        the is code
    * @return the parameters. parameters parameter component
    */
   public static Parameters.ParametersParameterComponent createProperty(final String propertyName,
-    final Object propertyValue, final boolean isCode) {
+      final Object propertyValue, final boolean isCode) {
     // Make a property with code as "valueCode"
-    final Parameters.ParametersParameterComponent property =
-        new Parameters.ParametersParameterComponent().setName("property");
+    final Parameters.ParametersParameterComponent property = new Parameters.ParametersParameterComponent()
+        .setName("property");
     property.addPart().setName("code").setValue(new CodeType(propertyName));
 
     // Determine the value
@@ -529,19 +526,19 @@ public final class FhirUtilityR5 {
   /**
    * To R 4.
    *
-   * @param codeSystem the code system
-   * @param concept the concept
-   * @param properties the properties
-   * @param displayMap the display map
+   * @param codeSystem    the code system
+   * @param concept       the concept
+   * @param properties    the properties
+   * @param displayMap    the display map
    * @param relationships the relationships
-   * @param children the children
+   * @param children      the children
    * @return the code system
    * @throws Exception the exception
    */
   public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
-    final Set<String> properties, final Map<String, String> displayMap,
-    final List<ConceptRelationship> relationships, final List<ConceptRef> children)
-    throws Exception {
+      final Set<String> properties, final Map<String, String> displayMap,
+      final List<ConceptRelationship> relationships, final List<ConceptRef> children)
+      throws Exception {
     final Parameters parameters = new Parameters();
 
     // Properties to include by default from
@@ -599,8 +596,8 @@ public final class FhirUtilityR5 {
       if (properties != null && !properties.contains("lang." + lang)) {
         continue;
       }
-      final Parameters.ParametersParameterComponent designation =
-          new Parameters.ParametersParameterComponent().setName("designation");
+      final Parameters.ParametersParameterComponent designation = new Parameters.ParametersParameterComponent()
+          .setName("designation");
       // Language
       designation.addPart().setName("language")
           .setValue(new CodeType(term.computeSingleLanguage()));
@@ -641,7 +638,7 @@ public final class FhirUtilityR5 {
       }
       final String value = concept.getAttributes().get(key);
       // Check for boolean value
-      if (value.equals("true") || value.equals("false")) {
+      if ("true".equals(value) || "false".equals(value)) {
         parameters.addParameter(createProperty(key, Boolean.valueOf(value), false));
       }
       // Check for coding
@@ -663,7 +660,7 @@ public final class FhirUtilityR5 {
     if (properties == null || properties.contains("parent")) {
       for (final ConceptRef parent : relationships.stream()
           .filter(r -> r.getHierarchical() != null && r.getHierarchical()).map(r -> r.getTo())
-          .collect(Collectors.toList())) {
+          .toList()) {
         final Coding coding = new Coding();
         coding.setCode(parent.getCode());
         coding.setSystem(codeSystem.getUrl());
@@ -688,13 +685,13 @@ public final class FhirUtilityR5 {
    * To R 4.
    *
    * @param codeSystem the code system
-   * @param concept the concept
-   * @param display the display
+   * @param concept    the concept
+   * @param display    the display
    * @return the parameters
    * @throws Exception the exception
    */
   public static Parameters toR5ValidateCode(final CodeSystem codeSystem, final Concept concept,
-    final String display) throws Exception {
+      final String display) throws Exception {
 
     // result 1..1 boolean
     // message 0..1 string
@@ -703,8 +700,7 @@ public final class FhirUtilityR5 {
     // system 0..1 uri
     // version 0..1 string
     final Parameters parameters = new Parameters();
-    final boolean result =
-        concept != null && (display == null || display.equals(concept.getName()));
+    final boolean result = concept != null && (display == null || display.equals(concept.getName()));
     parameters.addParameter("result", "" + result);
     if (!result) {
       if (concept == null) {
@@ -755,13 +751,13 @@ public final class FhirUtilityR5 {
   /**
    * To R 4 subsumes.
    *
-   * @param outcome the outcome
+   * @param outcome     the outcome
    * @param terminology the terminology
    * @return the parameters
    * @throws Exception the exception
    */
   public static Parameters toR5Subsumes(final String outcome, final Terminology terminology)
-    throws Exception {
+      throws Exception {
 
     // {
     // "resourceType": "Parameters",
@@ -799,7 +795,11 @@ public final class FhirUtilityR5 {
     cs.setUrl(terminology.getId());
 
     cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
-    cs.setVersion(terminology.getAttributes().get("fhirVersion"));
+    String version = terminology.getAttributes().get("fhirVersion");
+    if (version == null) {
+      version = terminology.getVersion();
+    }
+    cs.setVersion(version);
     // cs.setId(terminology.getAttributes().get("fhirId"));
     cs.setId(terminology.getId());
     cs.setName(terminology.getName());
@@ -835,26 +835,57 @@ public final class FhirUtilityR5 {
    * @throws Exception the exception
    */
   public static ConceptMap toR5(final Mapset mapset) throws Exception {
+    if (mapset == null) {
+      throw new FHIRServerResponseException(HttpServletResponse.SC_BAD_REQUEST,
+          "Mapset cannot be null", null);
+    }
+
     final ConceptMap cm = new ConceptMap();
+    final Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
+
+    // Debug logging for Mapset data
+    logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
+        mapset.getFromTerminology(), mapset.getToTerminology());
+
+    // Set other fields
     cm.setUrl(mapset.getAttributes().get("fhirUri"));
-    cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(mapset.getReleaseDate()));
-    cm.setVersion(mapset.getAttributes().get("fhirVersion"));
-    // cs.setId(terminology.getAttributes().get("fhirId"));
+    // Use the stored FHIR version if available, otherwise use the regular
+    // version
+    cm.setVersion(mapset.getAttributes().containsKey("fhirVersion")
+        ? mapset.getAttributes().get("fhirVersion")
+        : mapset.getVersion());
     cm.setId(mapset.getId());
     cm.setName(mapset.getName());
     cm.setTitle(mapset.getAbbreviation());
-    cm.setPublisher(FhirUtility.getPublisherInfo(mapset.getPublisher()).getName());
+    cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
-    cm.setCopyright(mapset.getAttributes().get("copyright"));
-    cm.addIdentifier(new Identifier().setValue(mapset.getCode()));
-    if (mapset.getAttributes().containsKey("fhirFromTerminologyUri")) {
-      cm.setSourceScope(
-          new UriType(mapset.getAttributes().get("fhirFromTerminologyUri") + "?fhir_vs"));
+    if (mapset.getCode() != null) {
+      cm.addIdentifier(new Identifier().setValue(mapset.getCode()));
     }
-    if (mapset.getAttributes().containsKey("fhirToTerminologyUri")) {
-      cm.setTargetScope(
-          new UriType(mapset.getAttributes().get("fhirToTerminologyUri") + "?fhir_vs"));
+
+    // Set source and target scopes from fromTerminology and toTerminology
+    if (mapset.getFromTerminology() != null) {
+      cm.setSourceScope(new UriType(mapset.getFromTerminology()));
+      logger.info("Set sourceScope from fromTerminology: {}", mapset.getFromTerminology());
+    } else if (mapset.getAttributes().containsKey("sourceScopeUri")) {
+      cm.setSourceScope(new UriType(mapset.getAttributes().get("sourceScopeUri")));
+      logger.info("Set sourceScope from attributes: {}",
+          mapset.getAttributes().get("sourceScopeUri"));
     }
+
+    if (mapset.getToTerminology() != null) {
+      cm.setTargetScope(new UriType(mapset.getToTerminology()));
+      logger.info("Set targetScope from toTerminology: {}", mapset.getToTerminology());
+    } else if (mapset.getAttributes().containsKey("targetScopeUri")) {
+      cm.setTargetScope(new UriType(mapset.getAttributes().get("targetScopeUri")));
+      logger.info("Set targetScope from attributes: {}",
+          mapset.getAttributes().get("targetScopeUri"));
+    }
+
+    // Debug final state
+    logger.info("Converted ConceptMap: id={}, sourceScope={}, targetScope={}", cm.getId(),
+        cm.getSourceScope() != null ? ((UriType) cm.getSourceScope()).getValue() : "null",
+        cm.getTargetScope() != null ? ((UriType) cm.getTargetScope()).getValue() : "null");
 
     return cm;
   }
@@ -862,15 +893,15 @@ public final class FhirUtilityR5 {
   /**
    * Returns the next link.
    *
-   * @param uri the uri
-   * @param offset the offset
+   * @param uri       the uri
+   * @param offset    the offset
    * @param offsetInt the offset int
-   * @param count the count
-   * @param countInt the count int
+   * @param count     the count
+   * @param countInt  the count int
    * @return the next link
    */
   public static BundleLinkComponent getNextLink(final String uri, final NumberParam offset,
-    final int offsetInt, final NumberParam count, final int countInt) {
+      final int offsetInt, final NumberParam count, final int countInt) {
     final int nextOffset = offsetInt + countInt;
     String nextUri = uri;
     if (!uri.contains("?")) {
@@ -894,13 +925,13 @@ public final class FhirUtilityR5 {
    * Make bundle.
    *
    * @param request the request
-   * @param list the list
-   * @param count the count
-   * @param offset the offset
+   * @param list    the list
+   * @param count   the count
+   * @param offset  the offset
    * @return the bundle
    */
   public static Bundle makeBundle(final HttpServletRequest request,
-    final List<? extends Resource> list, final NumberParam count, final NumberParam offset) {
+      final List<? extends Resource> list, final NumberParam count, final NumberParam offset) {
 
     final int countInt = count == null ? 100 : count.getValue().intValue();
     final int offsetInt = offset == null ? 0 : offset.getValue().intValue();

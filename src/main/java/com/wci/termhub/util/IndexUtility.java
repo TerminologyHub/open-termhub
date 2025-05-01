@@ -12,10 +12,8 @@ package com.wci.termhub.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.NumericDocValuesField;
@@ -103,8 +101,8 @@ public final class IndexUtility {
             logger.debug("Add: Inner class sub field: {}, type: {}", subField.getName(),
                 subField.getType());
 
-            final List<IndexableField> indexableFieldsList = IndexUtility.getIndexableFields(item,
-                subField, field.getName(), true);
+            final List<IndexableField> indexableFieldsList =
+                IndexUtility.getIndexableFields(item, subField, field.getName(), true);
             indexableFields.addAll(indexableFieldsList);
           }
 
@@ -121,11 +119,12 @@ public final class IndexUtility {
    * @param obj the obj
    * @param field the field
    * @param indexNamePrefix the index name prefix
+   * @param isCollection the is collection
    * @return the indexable fields
    * @throws IllegalAccessException the illegal access exception
    */
   public static List<IndexableField> getIndexableFields(final Object obj,
-    final java.lang.reflect.Field field, final String indexNamePrefix, boolean isCollection)
+    final java.lang.reflect.Field field, final String indexNamePrefix, final boolean isCollection)
     throws IllegalAccessException {
 
     logger.debug("indexableFields: field: {}, indexNamePrefix: {}", field.getName(),
@@ -137,7 +136,7 @@ public final class IndexUtility {
 
     if (fieldValue != null) {
 
-      org.springframework.data.elasticsearch.annotations.Field annotation =
+      final org.springframework.data.elasticsearch.annotations.Field annotation =
           field.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
 
       if (annotation != null) {
@@ -151,8 +150,9 @@ public final class IndexUtility {
           case Text:
             indexableFields.add(
                 new TextField(indexName, stringValue, org.apache.lucene.document.Field.Store.NO));
-            if(isCollection){
-              indexableFields.add(new SortedSetDocValuesField(indexName, new BytesRef(stringValue)));
+            if (isCollection) {
+              indexableFields
+                  .add(new SortedSetDocValuesField(indexName, new BytesRef(stringValue)));
             } else {
               indexableFields.add(new SortedDocValuesField(indexName, new BytesRef(stringValue)));
             }
@@ -160,36 +160,40 @@ public final class IndexUtility {
           case Keyword:
             indexableFields.add(
                 new StringField(indexName, stringValue, org.apache.lucene.document.Field.Store.NO));
-            if(isCollection){
-              indexableFields.add(new SortedSetDocValuesField(indexName, new BytesRef(stringValue)));
+            if (isCollection) {
+              indexableFields
+                  .add(new SortedSetDocValuesField(indexName, new BytesRef(stringValue)));
             } else {
               indexableFields.add(new SortedDocValuesField(indexName, new BytesRef(stringValue)));
             }
             break;
           case Date:
             final long dateValue = ((java.util.Date) fieldValue).getTime();
-            if(isCollection){
-             indexableFields.add(new SortedNumericDocValuesField(indexName, dateValue));
+            if (isCollection) {
+              indexableFields.add(new SortedNumericDocValuesField(indexName, dateValue));
             } else {
-            indexableFields.add(new NumericDocValuesField(indexName, dateValue));
+              indexableFields.add(new NumericDocValuesField(indexName, dateValue));
             }
             indexableFields.add(new StoredField(indexName, dateValue));
             break;
           case Long:
-            if(isCollection){
-              indexableFields.add(new SortedNumericDocValuesField(indexName, Long.parseLong(stringValue)));
+            if (isCollection) {
+              indexableFields
+                  .add(new SortedNumericDocValuesField(indexName, Long.parseLong(stringValue)));
             } else {
-              indexableFields.add(new NumericDocValuesField(indexName, Long.parseLong(stringValue)));
+              indexableFields
+                  .add(new NumericDocValuesField(indexName, Long.parseLong(stringValue)));
             }
 
             indexableFields.add(new StoredField(indexName, Long.parseLong(stringValue)));
             break;
           case Integer:
-            if(isCollection){
-             indexableFields.add(new SortedNumericDocValuesField(indexName, Integer.parseInt(stringValue)));
+            if (isCollection) {
+              indexableFields
+                  .add(new SortedNumericDocValuesField(indexName, Integer.parseInt(stringValue)));
             } else {
               indexableFields
-                      .add(new NumericDocValuesField(indexName, Integer.parseInt(stringValue)));
+                  .add(new NumericDocValuesField(indexName, Integer.parseInt(stringValue)));
             }
             indexableFields.add(new StoredField(indexName, Integer.parseInt(stringValue)));
             break;
@@ -208,8 +212,8 @@ public final class IndexUtility {
               indexableFields.add(new SortedNumericDocValuesField(indexName,
                   Double.doubleToRawLongBits(Double.parseDouble(stringValue))));
             } else {
-            indexableFields.add(new NumericDocValuesField(indexName,
-                Double.doubleToRawLongBits(Double.parseDouble(stringValue))));
+              indexableFields.add(new NumericDocValuesField(indexName,
+                  Double.doubleToRawLongBits(Double.parseDouble(stringValue))));
             }
             indexableFields.add(new StoredField(indexName, Double.parseDouble(stringValue)));
             break;
@@ -252,12 +256,12 @@ public final class IndexUtility {
             case Keyword:
               indexableFields.add(new TextField(indexName, fieldValue.toString(),
                   org.apache.lucene.document.Field.Store.NO));
-              if(isCollection){
+              if (isCollection) {
+                indexableFields.add(
+                    new SortedSetDocValuesField(indexName, new BytesRef(fieldValue.toString())));
+              } else {
                 indexableFields
-                        .add(new SortedSetDocValuesField(indexName, new BytesRef(fieldValue.toString())));
-              } else{
-                indexableFields
-                        .add(new SortedDocValuesField(indexName, new BytesRef(fieldValue.toString())));
+                    .add(new SortedDocValuesField(indexName, new BytesRef(fieldValue.toString())));
               }
               break;
             default:
@@ -291,7 +295,7 @@ public final class IndexUtility {
     while (currentClass != null) {
 
       final java.lang.reflect.Field[] fields = currentClass.getDeclaredFields();
-      for (java.lang.reflect.Field field : fields) {
+      for (final java.lang.reflect.Field field : fields) {
 
         if (field.isAnnotationPresent(com.wci.termhub.app.Sort.class)) {
 
@@ -338,7 +342,7 @@ public final class IndexUtility {
       while (currentClass != null && field == null) {
         try {
           field = currentClass.getDeclaredField(sortField);
-        } catch (NoSuchFieldException e) {
+        } catch (final NoSuchFieldException e) {
           currentClass = currentClass.getSuperclass();
         }
       }
@@ -379,7 +383,14 @@ public final class IndexUtility {
     return new Sort(sortFieldArray);
   }
 
-  public static Query getAndQuery(Query query1, Query query2) {
+  /**
+   * Gets the and query.
+   *
+   * @param query1 the query 1
+   * @param query2 the query 2
+   * @return the and query
+   */
+  public static Query getAndQuery(final Query query1, final Query query2) {
     if (query1 == null && query2 == null) {
       return null;
     }
@@ -389,7 +400,7 @@ public final class IndexUtility {
     if (query2 == null) {
       return query1;
     }
-    BooleanQuery.Builder builder = new BooleanQuery.Builder();
+    final BooleanQuery.Builder builder = new BooleanQuery.Builder();
     builder.add(query1, BooleanClause.Occur.MUST);
     builder.add(query2, BooleanClause.Occur.MUST);
     return builder.build();

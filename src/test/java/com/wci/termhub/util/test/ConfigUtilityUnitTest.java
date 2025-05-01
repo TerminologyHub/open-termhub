@@ -42,7 +42,7 @@ public class ConfigUtilityUnitTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(ConfigUtilityUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigUtilityUnitTest.class);
 
   /** The temp directory. */
   @TempDir

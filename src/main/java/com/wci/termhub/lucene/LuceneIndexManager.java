@@ -9,8 +9,8 @@
  */
 package com.wci.termhub.lucene;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -40,7 +40,16 @@ public final class LuceneIndexManager {
    */
   private LuceneIndexManager(final String indexRootDirectory, final String indexDirectory)
       throws IOException {
-    final FSDirectory fsDirectory = FSDirectory.open(Paths.get(indexRootDirectory, indexDirectory));
+    // Fix Windows path handling
+    final String fixedRootDir = indexRootDirectory.contains("/")
+        ? indexRootDirectory.replace('/', File.separatorChar) : indexRootDirectory;
+
+    final File indexDir = new File(fixedRootDir, indexDirectory);
+    if (!indexDir.exists()) {
+      indexDir.mkdirs();
+    }
+
+    final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
     this.indexReader = DirectoryReader.open(fsDirectory);
     this.indexSearcher = new IndexSearcher(indexReader);
   }

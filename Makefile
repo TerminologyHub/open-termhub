@@ -25,7 +25,8 @@ scandocker:
 
 # Build the library without tests
 build:
-	./gradlew build	test -x javadoc -x spotbugsMain -x spotbugsTest
+	./gradlew build	test -x javadoc
+# -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest
 
 scan:
 	/bin/rm -rf gradle/dependency-locks
@@ -35,8 +36,15 @@ scan:
 	grep CRITICAL report.html
 	/bin/rm -rf gradle/dependency-locks
 
-test:
+# Test commands
+test: ## Run all tests
 	./gradlew test
+
+test-r4: ## Run R4 tests only
+	./gradlew testR4
+
+test-r5: ## Run R5 tests only
+	./gradlew testR5
 
 install:
 	./gradlew install -x test -x javadoc
@@ -47,7 +55,7 @@ release:
 
 rundebug:
 	./gradlew bootRun --debug-jvm
-	
+
 run:
 	./gradlew bootRun
 

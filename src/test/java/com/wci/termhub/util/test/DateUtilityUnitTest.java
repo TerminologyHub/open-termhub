@@ -34,7 +34,7 @@ public class DateUtilityUnitTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(DateUtilityUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DateUtilityUnitTest.class);
 
   /**
    * Test time zone offset label.
@@ -62,12 +62,14 @@ public class DateUtilityUnitTest {
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel(null, new Date()));
 
     // Test with ZoneId format
-    assertEquals(expectedParisOffset, DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
+    assertEquals(expectedParisOffset,
+        DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
 
     // Test with America/Los_Angeles
     ZoneId laZone = ZoneId.of("America/Los_Angeles");
     String expectedLAOffset = now.withZoneSameInstant(laZone).getOffset().getId();
-    assertEquals(expectedLAOffset, DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
+    assertEquals(expectedLAOffset,
+        DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
   }
 
   /**
@@ -105,7 +107,7 @@ public class DateUtilityUnitTest {
     final long currentTime = System.currentTimeMillis();
 
     // Test UTC
-    LOG.info("TimeZone {}", DateUtility.getTimeZone(currentTime, 0));
+    LOGGER.info("TimeZone {}", DateUtility.getTimeZone(currentTime, 0));
     assertEquals("UTC", DateUtility.getTimeZone(currentTime, 0));
 
     // Test EDT (-4 hours = -14400 seconds)

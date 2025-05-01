@@ -37,7 +37,7 @@ public class IndexUtilityUnitTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(IndexUtilityUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(IndexUtilityUnitTest.class);
 
   /**
    * Test class with annotated fields for testing.
@@ -103,7 +103,8 @@ public class IndexUtilityUnitTest {
     final TestModel model = new TestModel();
     final java.lang.reflect.Field field = TestModel.class.getDeclaredField("textField");
 
-    final List<IndexableField> fields = IndexUtility.getIndexableFields(model, field, "test", false);
+    final List<IndexableField> fields =
+        IndexUtility.getIndexableFields(model, field, "test", false);
 
     assertNotNull(fields);
     assertTrue(fields.size() >= 1);

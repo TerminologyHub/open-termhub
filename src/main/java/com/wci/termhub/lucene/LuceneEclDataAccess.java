@@ -9,12 +9,12 @@
  */
 package com.wci.termhub.lucene;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.model.Concept;
-import com.wci.termhub.model.ConceptRef;
-import com.wci.termhub.model.ConceptRelationship;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -33,236 +33,388 @@ import org.apache.lucene.search.join.JoinUtil;
 import org.apache.lucene.search.join.ScoreMode;
 import org.apache.lucene.store.FSDirectory;
 
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptRef;
+import com.wci.termhub.model.ConceptRelationship;
 
+/**
+ * The Class LuceneEclDataAccess.
+ */
 public class LuceneEclDataAccess {
 
-    private String indexDirectory;
-    private String relationshipIndexDirectory;
+  /** The index directory. */
+  private final String indexDirectory;
 
-    public LuceneEclDataAccess(String indexDirectory) {
-        this.indexDirectory = indexDirectory;
+  /** The relationship index directory. */
+  private String relationshipIndexDirectory;
+
+  /**
+   * Instantiates a new lucene ecl data access.
+   *
+   * @param indexDirectory the index directory
+   */
+  public LuceneEclDataAccess(final String indexDirectory) {
+    this.indexDirectory = indexDirectory;
+  }
+
+  /**
+   * Instantiates a new lucene ecl data access.
+   *
+   * @param indexDirectory the index directory
+   * @param relationshipIndexDirectory the relationship index directory
+   */
+  public LuceneEclDataAccess(final String indexDirectory, final String relationshipIndexDirectory) {
+    this.indexDirectory = indexDirectory;
+    this.relationshipIndexDirectory = relationshipIndexDirectory;
+  }
+
+  /**
+   * Gets the refinement query.
+   *
+   * @param fromQuery the from query
+   * @param toQuery the to query
+   * @param additionalTypeQuery the additional type query
+   * @return the refinement query
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  public Query getRefinementQuery(final Query fromQuery, final Query toQuery,
+    Query additionalTypeQuery) throws IOException {
+    try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
+        DirectoryReader relationshipReader =
+            DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))) {
+      final IndexSearcher searcher = new IndexSearcher(new MultiReader(reader, relationshipReader));
+      Query conceptJoinFromQuery = null;
+      if (fromQuery != null) {
+        conceptJoinFromQuery = JoinUtil.createJoinQuery("code", false, "from.code", fromQuery,
+            searcher, ScoreMode.None);
+      } else {
+        conceptJoinFromQuery = new TermQuery(new Term("from.code", "*"));
+      }
+      Query conceptJoinToQuery = null;
+      if (toQuery != null) {
+        if (toQuery.toString().contains("toValue")) {
+          conceptJoinToQuery = toQuery;
+        } else {
+          conceptJoinToQuery =
+              JoinUtil.createJoinQuery("code", false, "to.code", toQuery, searcher, ScoreMode.None);
+        }
+      } else {
+        conceptJoinToQuery = new TermQuery(new Term("code", "*"));
+      }
+      // additionalType queries are different.
+      // The reason being that not all terminologies have the
+      // additionalType/relationType as a code in the Concept index.
+      // So there is nothing to join on.
+      // However, we still need to support this for Snomed where the
+      // additionalType can be a complex expression.
+      if (additionalTypeQuery == null) {
+        additionalTypeQuery = new TermQuery(new Term("additionalType", "*"));
+      } else if (!(additionalTypeQuery instanceof TermQuery)) {
+        // Anything more than a TermQuery needs to join with the Concept index
+        additionalTypeQuery = JoinUtil.createJoinQuery("code", false, "additionalType",
+            additionalTypeQuery, searcher, ScoreMode.None);
+      }
+      final FilteredQuery filteredQuery = new FilteredQuery(searcher.rewrite(additionalTypeQuery),
+          searcher.rewrite(conceptJoinToQuery));
+      final FilteredQuery filteredQuery2 = fromQuery != null
+          ? new FilteredQuery(searcher.rewrite(conceptJoinFromQuery), filteredQuery) : null;
+      return JoinUtil.createJoinQuery("from.code", false, "code",
+          filteredQuery2 != null ? filteredQuery2 : filteredQuery, searcher, ScoreMode.None);
+    }
+  }
+
+  /**
+   * Gets the concepts.
+   *
+   * @param query the query
+   * @return the concepts
+   */
+  public List<Concept> getConcepts(final Query query) {
+    final List<Concept> concepts = new ArrayList<>();
+    try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
+        DirectoryReader relationshipReader =
+            DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))) {
+      final MultiReader multiReader = new MultiReader(reader, relationshipReader);
+      final IndexSearcher fromSearcher = new IndexSearcher(multiReader);
+      final TopDocs docs = fromSearcher.search(query, 300000);
+      for (final ScoreDoc scoreDoc : docs.scoreDocs) {
+        final Document doc = fromSearcher.doc(scoreDoc.doc);
+        String code = getCodeFromEntity(doc.get("entity"));
+        Concept concept = null;
+        if (code != null) {
+          final List<ConceptRef> children = getConceptRefs(doc.getValues("children"));
+          final List<ConceptRef> parents = getConceptRefs(doc.getValues("parents"));
+          final List<ConceptRef> ancestors = getConceptRefs(doc.getValues("ancestors"));
+          final List<ConceptRef> descendants = getConceptRefs(doc.getValues("descendants"));
+          concept = createConceptWithRefs(code, parents, ancestors, children, descendants, null);
+        } else {
+          code = doc.get("fromCode");
+          concept = new Concept();
+          concept.setCode(code);
+        }
+        if (!concepts.contains(concept)) {
+          concepts.add(concept);
+        }
+      }
+      return concepts;
+    } catch (final IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Gets the code from entity.
+   *
+   * @param entity the entity
+   * @return the code from entity
+   * @throws JsonProcessingException the json processing exception
+   */
+  private String getCodeFromEntity(final String entity) throws JsonProcessingException {
+    final ObjectMapper mapper = new ObjectMapper();
+    final JsonNode node = mapper.readTree(entity);
+    return node.get("code").textValue();
+  }
+
+  /**
+   * Search.
+   *
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  public void search() throws IOException {
+    final TermQuery termQuery = new TermQuery(new Term("ancestors", "72431002"));
+    final TermQuery termQuery2 = new TermQuery(new Term("additionalType", "has_component"));
+    final BooleanQuery booleanQuery =
+        new BooleanQuery.Builder().add(termQuery, BooleanClause.Occur.SHOULD)
+            .add(termQuery2, BooleanClause.Occur.SHOULD).build();
+
+    final TermQuery termQuery3 = new TermQuery(new Term("code", "LP73603-0"));
+    final TermQuery termQuery4 = new TermQuery(new Term("ancestors", "410942007"));
+    final TermQuery termQuery5 = new TermQuery(new Term("code", "410942007"));
+    final BooleanQuery booleanQuery3 =
+        new BooleanQuery.Builder().add(termQuery4, BooleanClause.Occur.SHOULD)
+            .add(termQuery5, BooleanClause.Occur.SHOULD).build();
+
+    try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
+        DirectoryReader relationshipReader =
+            DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))) {
+      final MultiReader multiReader = new MultiReader(reader, relationshipReader);
+      final IndexSearcher relationshipSearcher = new IndexSearcher(multiReader);
+      final Query joinQuery = JoinUtil.createJoinQuery("codeJoin", false, "fromCode", booleanQuery,
+          relationshipSearcher, ScoreMode.None);
+      final Query joinQuery2 = JoinUtil.createJoinQuery("code", false, "to.code", termQuery3,
+          relationshipSearcher, ScoreMode.None);
+      final Query joinQuery3 = JoinUtil.createJoinQuery("code", false, "additionalType", termQuery2,
+          relationshipSearcher, ScoreMode.None);
+      final FilteredQuery filteredQuery = new FilteredQuery(
+          relationshipSearcher.rewrite(joinQuery2), relationshipSearcher.rewrite(joinQuery3));
+      final FilteredQuery filteredQuery2 =
+          new FilteredQuery(relationshipSearcher.rewrite(joinQuery), filteredQuery);
+      final Query joinQuery4 = JoinUtil.createJoinQuery("fromCodeJoin", false, "code",
+          filteredQuery2, relationshipSearcher, ScoreMode.None);
+      // Query joinQuery6 = JoinUtil.createJoinQuery("toCodeJoin", false,
+      // "code", joinQuery3, relationshipSearcher, ScoreMode.None);
+      // Query booleanQuery4 = new BooleanQuery.Builder().add(joinQuery6,
+      // BooleanClause.Occur.MUST).add(booleanQuery3,
+      // BooleanClause.Occur.MUST).build();
+      // FunctionScoreQuery functionScoreQuery = new
+      // FunctionScoreQuery(joinQuery3, new
+      // MultiQueryDoubleValuesSource(joinQuery2));
+      // FunctionScoreQuery functionScoreQuery2 = new
+      // FunctionScoreQuery(functionScoreQuery, new
+      // MultiQueryDoubleValuesSource(joinQuery));
+
+      // Query joinQuery7 = JoinUtil.createJoinQuery("codeJoin", false,
+      // "toCode", joinQuery6, relationshipSearcher, ScoreMode.None);
+      // Query joinQuery4 = JoinUtil.createJoinQuery("toCodeJoin", false,
+      // "code", joinQuery7, relationshipSearcher, ScoreMode.None);
+      // Query booleanQuery4 = new BooleanQuery.Builder().add(joinQuery4,
+      // BooleanClause.Occur.MUST).add(booleanQuery3,
+      // BooleanClause.Occur.MUST).build();
+      // Query joinQuery5 = JoinUtil.createJoinQuery("fromCodeJoin", false,
+      // "code", joinQuery2, relationshipSearcher, ScoreMode.None);
+
+      // BooleanQuery booleanQuery2 = new BooleanQuery.Builder().add(joinQuery,
+      // BooleanClause.Occur.MUST).add(functionScoreQuery,
+      // BooleanClause.Occur.MUST).build();
+      if (relationshipIndexDirectory == null) {
+        // TopDocs docs = fromSearcher.search(booleanQuery2, 1000000);
+        // System.out.println(docs.totalHits.value);
+      } else {
+        final List<Concept> concepts = getConcepts(termQuery2);
+        concepts.stream().map(Concept::getCode).forEach(System.out::println);
+        System.out.println("Results:" + concepts.size());
+      }
+      // List<Concept> concepts = getConcepts(booleanQuery2);
+      // concepts.stream().map(Concept::getCode).forEach(System.out::println);
+
+    }
+  }
+
+  /**
+   * The Class MultiQueryDoubleValuesSource.
+   */
+  public class MultiQueryDoubleValuesSource extends DoubleValuesSource {
+
+    /** The query. */
+    private final Query query;
+
+    /**
+     * Instantiates a new multi query double values source.
+     *
+     * @param query the query
+     */
+    public MultiQueryDoubleValuesSource(final Query query) {
+      this.query = query;
     }
 
-    public LuceneEclDataAccess(String indexDirectory, String relationshipIndexDirectory) {
-        this.indexDirectory = indexDirectory;
-        this.relationshipIndexDirectory = relationshipIndexDirectory;
+    /**
+     * Gets the values.
+     *
+     * @param ctx the ctx
+     * @param scores the scores
+     * @return the values
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    @Override
+    public DoubleValues getValues(final LeafReaderContext ctx, final DoubleValues scores)
+      throws IOException {
+      final DoubleValuesSource queryDoubleValuesSource = DoubleValuesSource.fromQuery(this.query);
+      return null;
     }
 
-    public Query getRefinementQuery(Query fromQuery, Query toQuery, Query additionalTypeQuery) throws IOException {
-        try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory))); DirectoryReader relationshipReader = DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))
-        ) {
-            IndexSearcher searcher = new IndexSearcher(new MultiReader(reader, relationshipReader));
-            Query conceptJoinFromQuery = null;
-            if (fromQuery != null) {
-                conceptJoinFromQuery = JoinUtil.createJoinQuery(
-                        "code",
-                        false,
-                        "from.code",
-                        fromQuery,
-                        searcher,
-                        ScoreMode.None);
-            } else {
-                conceptJoinFromQuery = new TermQuery(new Term("from.code", "*"));
-            }
-            Query conceptJoinToQuery = null;
-            if (toQuery != null) {
-                if (toQuery.toString().contains("toValue")) {
-                    conceptJoinToQuery = toQuery;
-                } else {
-                    conceptJoinToQuery = JoinUtil.createJoinQuery(
-                            "code",
-                            false,
-                            "to.code",
-                            toQuery,
-                            searcher,
-                            ScoreMode.None);
-                }
-            } else {
-                conceptJoinToQuery = new TermQuery(new Term("code", "*"));
-            }
-            // additionalType queries are different.
-            // The reason being that not all terminologies have the additionalType/relationType as a code in the Concept index.
-            // So there is nothing to join on.
-            // However, we still need to support this for Snomed where the additionalType can be a complex expression.
-            if (additionalTypeQuery == null) {
-                additionalTypeQuery = new TermQuery(new Term("additionalType", "*"));
-            } else if (!(additionalTypeQuery instanceof TermQuery)){
-                // Anything more than a TermQuery needs to join with the Concept index
-                additionalTypeQuery = JoinUtil.createJoinQuery(
-                        "code",
-                        false,
-                        "additionalType",
-                        additionalTypeQuery,
-                        searcher,
-                        ScoreMode.None);
-            }
-            FilteredQuery filteredQuery = new FilteredQuery(searcher.rewrite(additionalTypeQuery), searcher.rewrite(conceptJoinToQuery));
-            FilteredQuery filteredQuery2 = fromQuery != null ? new FilteredQuery(searcher.rewrite(conceptJoinFromQuery), filteredQuery) : null;
-            return JoinUtil.createJoinQuery("from.code", false, "code", filteredQuery2 != null ? filteredQuery2 : filteredQuery, searcher, ScoreMode.None);
-        }
+    /**
+     * Needs scores.
+     *
+     * @return true, if successful
+     */
+    @Override
+    public boolean needsScores() {
+      return false;
     }
 
-    public List<Concept> getConcepts(Query query) {
-        List<Concept> concepts = new ArrayList<>();
-        try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
-             DirectoryReader relationshipReader = DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))) {
-            MultiReader multiReader = new MultiReader(reader, relationshipReader);
-            IndexSearcher fromSearcher = new IndexSearcher(multiReader);
-            TopDocs docs = fromSearcher.search(query, 300000);
-            for (ScoreDoc scoreDoc : docs.scoreDocs) {
-                Document doc = fromSearcher.doc(scoreDoc.doc);
-                String code = getCodeFromEntity(doc.get("entity"));
-                Concept concept = null;
-                if (code != null) {
-                    List<ConceptRef> children = getConceptRefs(doc.getValues("children"));
-                    List<ConceptRef> parents = getConceptRefs(doc.getValues("parents"));
-                    List<ConceptRef> ancestors = getConceptRefs(doc.getValues("ancestors"));
-                    List<ConceptRef> descendants = getConceptRefs(doc.getValues("descendants"));
-                    concept = createConceptWithRefs(code, parents, ancestors, children, descendants, null);
-                } else {
-                    code = doc.get("fromCode");
-                    concept = new Concept();
-                    concept.setCode(code);
-                }
-                if (!concepts.contains(concept)) {
-                    concepts.add(concept);
-                }
-            }
-            return concepts;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    /**
+     * Rewrite.
+     *
+     * @param reader the reader
+     * @return the double values source
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    @Override
+    public DoubleValuesSource rewrite(final IndexSearcher reader) throws IOException {
+      final DoubleValuesSource queryDoubleValuesSource = DoubleValuesSource.fromQuery(this.query);
+      return queryDoubleValuesSource.rewrite(reader);
     }
 
-    private String getCodeFromEntity(String entity) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(entity);
-        return node.get("code").textValue();
+    /**
+     * Hash code.
+     *
+     * @return the int
+     */
+    @Override
+    public int hashCode() {
+      return query != null ? query.hashCode() : 0;
     }
 
-    public void search() throws IOException {
-        TermQuery termQuery = new TermQuery(new Term("ancestors", "72431002"));
-        TermQuery termQuery2 = new TermQuery(new Term("additionalType", "has_component"));
-        BooleanQuery booleanQuery = new BooleanQuery.Builder().add(termQuery, BooleanClause.Occur.SHOULD).add(termQuery2, BooleanClause.Occur.SHOULD).build();
-
-        TermQuery termQuery3 = new TermQuery(new Term("code", "LP73603-0"));
-        TermQuery termQuery4 = new TermQuery(new Term("ancestors", "410942007"));
-        TermQuery termQuery5 = new TermQuery(new Term("code", "410942007"));
-        BooleanQuery booleanQuery3 = new BooleanQuery.Builder().add(termQuery4, BooleanClause.Occur.SHOULD).add(termQuery5, BooleanClause.Occur.SHOULD).build();
-
-        try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
-             DirectoryReader relationshipReader = DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))) {
-            MultiReader multiReader = new MultiReader(reader, relationshipReader);
-            IndexSearcher relationshipSearcher = new IndexSearcher(multiReader);
-            Query joinQuery = JoinUtil.createJoinQuery("codeJoin", false, "fromCode", booleanQuery, relationshipSearcher, ScoreMode.None);
-            Query joinQuery2 = JoinUtil.createJoinQuery("code", false, "to.code", termQuery3, relationshipSearcher, ScoreMode.None);
-            Query joinQuery3 = JoinUtil.createJoinQuery("code", false, "additionalType", termQuery2, relationshipSearcher, ScoreMode.None);
-            FilteredQuery filteredQuery = new FilteredQuery(relationshipSearcher.rewrite(joinQuery2), relationshipSearcher.rewrite(joinQuery3));
-            FilteredQuery filteredQuery2 = new FilteredQuery(relationshipSearcher.rewrite(joinQuery), filteredQuery);
-            Query joinQuery4 = JoinUtil.createJoinQuery("fromCodeJoin", false, "code", filteredQuery2, relationshipSearcher, ScoreMode.None);
-//        Query joinQuery6 = JoinUtil.createJoinQuery("toCodeJoin", false, "code", joinQuery3, relationshipSearcher, ScoreMode.None);
-//        Query booleanQuery4 = new BooleanQuery.Builder().add(joinQuery6, BooleanClause.Occur.MUST).add(booleanQuery3, BooleanClause.Occur.MUST).build();
-//        FunctionScoreQuery functionScoreQuery = new FunctionScoreQuery(joinQuery3, new MultiQueryDoubleValuesSource(joinQuery2));
-//        FunctionScoreQuery functionScoreQuery2 = new FunctionScoreQuery(functionScoreQuery, new MultiQueryDoubleValuesSource(joinQuery));
-
-            //Query joinQuery7 = JoinUtil.createJoinQuery("codeJoin", false, "toCode", joinQuery6, relationshipSearcher, ScoreMode.None);
-//        Query joinQuery4 = JoinUtil.createJoinQuery("toCodeJoin", false, "code", joinQuery7, relationshipSearcher, ScoreMode.None);
-//        Query booleanQuery4 = new BooleanQuery.Builder().add(joinQuery4, BooleanClause.Occur.MUST).add(booleanQuery3, BooleanClause.Occur.MUST).build();
-            //Query joinQuery5 = JoinUtil.createJoinQuery("fromCodeJoin", false, "code", joinQuery2, relationshipSearcher, ScoreMode.None);
-
-//        BooleanQuery booleanQuery2 = new BooleanQuery.Builder().add(joinQuery, BooleanClause.Occur.MUST).add(functionScoreQuery, BooleanClause.Occur.MUST).build();
-            if (relationshipIndexDirectory == null) {
-//            TopDocs docs = fromSearcher.search(booleanQuery2, 1000000);
-//            System.out.println(docs.totalHits.value);
-            } else {
-                List<Concept> concepts = getConcepts(termQuery2);
-                concepts.stream().map(Concept::getCode).forEach(System.out::println);
-                System.out.println("Results:" + concepts.size());
-            }
-            //List<Concept> concepts = getConcepts(booleanQuery2);
-            //concepts.stream().map(Concept::getCode).forEach(System.out::println);
-
-        }
+    /**
+     * Equals.
+     *
+     * @param obj the obj
+     * @return true, if successful
+     */
+    @Override
+    public boolean equals(final Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      final MultiQueryDoubleValuesSource that = (MultiQueryDoubleValuesSource) obj;
+      return query != null ? query.equals(that.query) : that.query == null;
     }
 
-    public class MultiQueryDoubleValuesSource extends DoubleValuesSource {
-
-        private Query query;
-
-        public MultiQueryDoubleValuesSource(Query query) {
-            this.query = query;
-        }
-
-        @Override
-        public DoubleValues getValues(LeafReaderContext ctx, DoubleValues scores) throws IOException {
-            DoubleValuesSource queryDoubleValuesSource = DoubleValuesSource.fromQuery(this.query);
-            return null;
-        }
-
-        @Override
-        public boolean needsScores() {
-            return false;
-        }
-
-        @Override
-        public DoubleValuesSource rewrite(IndexSearcher reader) throws IOException {
-            DoubleValuesSource queryDoubleValuesSource = DoubleValuesSource.fromQuery(this.query);
-            return queryDoubleValuesSource.rewrite(reader);
-        }
-
-        @Override
-        public int hashCode() {
-            return query != null ? query.hashCode() : 0;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            MultiQueryDoubleValuesSource that = (MultiQueryDoubleValuesSource) obj;
-            return query != null ? query.equals(that.query) : that.query == null;
-        }
-
-        @Override
-        public String toString() {
-            return "";
-        }
-
-        @Override
-        public boolean isCacheable(LeafReaderContext ctx) {
-            return false;
-        }
+    /**
+     * To string.
+     *
+     * @return the string
+     */
+    @Override
+    public String toString() {
+      return "";
     }
 
-    private ConceptRef getConceptRef(String code) {
-        return new ConceptRef(code, null);
+    /**
+     * Checks if is cacheable.
+     *
+     * @param ctx the ctx
+     * @return true, if is cacheable
+     */
+    @Override
+    public boolean isCacheable(final LeafReaderContext ctx) {
+      return false;
     }
+  }
 
-    private List<ConceptRef> getConceptRefs(String[] codes) {
-        return Arrays.stream(codes).map(this::getConceptRef).toList();
-    }
+  /**
+   * Gets the concept ref.
+   *
+   * @param code the code
+   * @return the concept ref
+   */
+  private ConceptRef getConceptRef(final String code) {
+    return new ConceptRef(code, null);
+  }
 
-    private static Concept createConceptWithRefs(String code, List<ConceptRef> parents, List<ConceptRef> ancestors, List<ConceptRef> children, List<ConceptRef> descendants, List<ConceptRelationship> relationships) {
-        Concept concept = new Concept();
-        concept.setCode(code);
-        concept.setId(code);
-        concept.setChildren(children);
-        concept.setParents(parents);
-        concept.setAncestors(ancestors);
-        concept.setDescendants(descendants);
-        concept.setRelationships(relationships);
-        return concept;
-    }
+  /**
+   * Gets the concept refs.
+   *
+   * @param codes the codes
+   * @return the concept refs
+   */
+  private List<ConceptRef> getConceptRefs(final String[] codes) {
+    return Arrays.stream(codes).map(this::getConceptRef).toList();
+  }
 
+  /**
+   * Creates the concept with refs.
+   *
+   * @param code the code
+   * @param parents the parents
+   * @param ancestors the ancestors
+   * @param children the children
+   * @param descendants the descendants
+   * @param relationships the relationships
+   * @return the concept
+   */
+  private static Concept createConceptWithRefs(final String code, final List<ConceptRef> parents,
+    final List<ConceptRef> ancestors, final List<ConceptRef> children,
+    final List<ConceptRef> descendants, final List<ConceptRelationship> relationships) {
+    final Concept concept = new Concept();
+    concept.setCode(code);
+    concept.setId(code);
+    concept.setChildren(children);
+    concept.setParents(parents);
+    concept.setAncestors(ancestors);
+    concept.setDescendants(descendants);
+    concept.setRelationships(relationships);
+    return concept;
+  }
 
-    public static void main(String[] args) throws IOException {
-//        LuceneDao luceneDao = new LuceneDao("/Users/squareroot/wci/snomed/index/snomed");
-        LuceneEclDataAccess luceneEclDataAccess = new LuceneEclDataAccess("/Users/squareroot/wci/snomed/open-termhub/index/com.wci.termhub.model.Concept", "/Users/squareroot/wci/snomed/open-termhub/index/com.wci.termhub.model.ConceptRelationship");
-        luceneEclDataAccess.search();
-    }
+  /**
+   * The main method.
+   *
+   * @param args the arguments
+   * @throws IOException Signals that an I/O exception has occurred.
+   */
+  public static void main(final String[] args) throws IOException {
+    // LuceneDao luceneDao = new
+    // LuceneDao("/Users/squareroot/wci/snomed/index/snomed");
+    final LuceneEclDataAccess luceneEclDataAccess = new LuceneEclDataAccess(
+        "/Users/squareroot/wci/snomed/open-termhub/index/com.wci.termhub.model.Concept",
+        "/Users/squareroot/wci/snomed/open-termhub/index/com.wci.termhub.model.ConceptRelationship");
+    luceneEclDataAccess.search();
+  }
 }

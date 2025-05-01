@@ -9,6 +9,8 @@
  */
 package com.wci.termhub.fhir.r5;
 
+import static com.wci.termhub.util.IndexUtility.getAndQuery;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,7 +19,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.wci.termhub.lucene.LuceneQueryBuilder;
 import org.apache.lucene.search.Query;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -48,6 +49,7 @@ import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.handler.BrowserQueryBuilder;
+import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -74,8 +76,6 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import static com.wci.termhub.util.IndexUtility.getAndQuery;
 
 /**
  * The ValueSet provider.
@@ -601,11 +601,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // } ]
       // }
       final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
-      final Query browserQuery = LuceneQueryBuilder.parse(new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()));
+      final Query browserQuery = LuceneQueryBuilder
+          .parse(new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()));
       final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
-      final SearchParameters params = new SearchParameters(
-              getAndQuery(expressionQuery, browserQuery),
-              offset, ct, null, null);
+      final SearchParameters params =
+          new SearchParameters(getAndQuery(expressionQuery, browserQuery), offset, ct, null, null);
       if (activeOnly) {
         params.setActive(activeOnly);
       }
@@ -706,9 +706,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // display 'abc' did not match any designations."
 
       final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
-      Query codeQuery = LuceneQueryBuilder.parse("code:\"" + StringUtility.escapeQuery(code) + "\"");
+      final Query codeQuery =
+          LuceneQueryBuilder.parse("code:\"" + StringUtility.escapeQuery(code) + "\"");
 
-      final List<Concept> list = searchService.findAll(null, getAndQuery(codeQuery, expressionQuery), Concept.class);
+      final List<Concept> list =
+          searchService.findAll(null, getAndQuery(codeQuery, expressionQuery), Concept.class);
       final Parameters parameters = new Parameters();
       // If no match
       if (list.size() == 0) {

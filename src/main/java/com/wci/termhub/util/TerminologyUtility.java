@@ -19,8 +19,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.wci.termhub.ecl.EclConceptFieldNames;
-import com.wci.termhub.lucene.LuceneQueryBuilder;
 import org.antlr.v4.runtime.RecognitionException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
@@ -32,7 +30,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.wci.termhub.ecl.EclConceptFieldNames;
 import com.wci.termhub.ecl.EclToLuceneConverter;
+import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
@@ -106,9 +106,10 @@ public final class TerminologyUtility {
   public static Mapset getMapset(final EntityRepositoryService searchService,
     final String abbreviation, final String publisher, final String version) throws Exception {
 
-    final ResultList<Mapset> tlist = searchService.find(new SearchParameters(
-        "abbreviation:" + abbreviation + " AND publisher:" + publisher + " AND version:" + version,
-        2, 0), Mapset.class);
+    final ResultList<Mapset> tlist = searchService
+        .find(new SearchParameters("abbreviation:" + StringUtility.escapeQuery(abbreviation)
+            + " AND publisher:" + StringUtility.escapeQuery(publisher) + " AND version:"
+            + StringUtility.escapeQuery(version), 2, 0), Mapset.class);
 
     if (tlist.getItems().size() == 0) {
       return null;
@@ -153,8 +154,9 @@ public final class TerminologyUtility {
     final String indexName) throws Exception {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
-    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:" + t
-        + " AND publisher:" + publisher + " AND version:" + version);
+    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
+        + StringUtility.escapeQuery(t) + " AND publisher:" + StringUtility.escapeQuery(publisher)
+        + " AND version:" + StringUtility.escapeQuery(version));
 
     final ResultList<Concept> list = searchService.find(nameParams, Concept.class);
     if (list.getItems().size() == 0) {
@@ -196,8 +198,9 @@ public final class TerminologyUtility {
     final String indexName) throws Exception {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
-    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:" + t
-        + " AND publisher:" + publisher + " AND version:" + version);
+    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
+        + StringUtility.escapeQuery(t) + " AND publisher:" + StringUtility.escapeQuery(publisher)
+        + " AND version:" + StringUtility.escapeQuery(version));
     final ResultList<Concept> list = searchService.findFields(nameParams,
         ModelUtility.asList("id", "name", "code", "terminology", "version", "publisher", "leaf"),
         Concept.class);
@@ -225,8 +228,9 @@ public final class TerminologyUtility {
     final String indexName) throws Exception {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
-    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:" + t
-        + " AND publisher:" + publisher + " AND version:" + version);
+    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
+        + StringUtility.escapeQuery(t) + " AND publisher:" + StringUtility.escapeQuery(publisher)
+        + " AND version:" + StringUtility.escapeQuery(version));
     final ResultList<Concept> list =
         searchService.findFields(nameParams, ModelUtility.asList("ecl"), Concept.class);
     if (list.getItems().size() == 0) {
@@ -253,8 +257,9 @@ public final class TerminologyUtility {
     final String indexName) throws Exception {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
-    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:" + t
-        + " AND publisher:" + publisher + " AND version:" + version);
+    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
+        + StringUtility.escapeQuery(t) + " AND publisher:" + StringUtility.escapeQuery(publisher)
+        + " AND version:" + StringUtility.escapeQuery(version));
 
     final ResultList<Concept> list =
         searchService.findFields(nameParams, ModelUtility.asList("name"), Concept.class);
@@ -295,9 +300,10 @@ public final class TerminologyUtility {
     for (final String code : fullAncPath.split("~")) {
       final StringBuilder finalQuery = new StringBuilder();
       finalQuery.append("concept.code:" + QueryParserBase.escape(code)).append(" AND terminology:")
-          .append(treePosition.getTerminology()).append(" AND publisher:")
-          .append(treePosition.getPublisher()).append(" AND version:")
-          .append(treePosition.getVersion()).append(" AND ancestorPath:")
+          .append(StringUtility.escapeQuery(treePosition.getTerminology()))
+          .append(" AND publisher:").append(StringUtility.escapeQuery(treePosition.getPublisher()))
+          .append(" AND version:").append(StringUtility.escapeQuery(treePosition.getVersion()))
+          .append(" AND ancestorPath:")
           .append((partAncPath.isEmpty() ? "\"\"" : QueryParserBase.escape(partAncPath)));
 
       // No requirement for additional type to match in hierarchies
@@ -360,8 +366,7 @@ public final class TerminologyUtility {
    */
   public static List<String> resolveExpression(final EntityRepositoryService searchService,
     final Terminology terminology, final String expression) throws Exception {
-    final Query query =
-        getExpressionQuery(expression);
+    final Query query = getExpressionQuery(expression);
     return searchService.findAllWithFields(query, ModelUtility.asList("code"), Concept.class)
         .stream().map(c -> c.getCode()).collect(Collectors.toList());
   }
@@ -377,8 +382,7 @@ public final class TerminologyUtility {
    */
   public static List<String> resolveExpressionIds(final EntityRepositoryService searchService,
     final Terminology terminology, final String expression) throws Exception {
-    final Query query =
-        getExpressionQuery(expression);
+    final Query query = getExpressionQuery(expression);
     return searchService.findAllIds(query, Concept.class);
   }
 
@@ -428,7 +432,7 @@ public final class TerminologyUtility {
 
     final List<ConceptRelationship> list = searchService.findAll(StringUtility.composeQuery("AND",
         "from.code:" + StringUtility.escapeQuery(concept.getCode()),
-        "hierarchical:true AND active:true"),null, ConceptRelationship.class);
+        "hierarchical:true AND active:true"), null, ConceptRelationship.class);
     return list.stream().map(r -> r.getTo()).collect(Collectors.toList());
   }
 
@@ -482,8 +486,8 @@ public final class TerminologyUtility {
 
     final List<ConceptRelationship> list = searchService.findAll(
         StringUtility.composeQuery("AND", "to.code:" + StringUtility.escapeQuery(concept.getCode()),
-            "hierarchical:true", "active:true"),null,
-        ConceptRelationship.class);
+            "hierarchical:true", "active:true"),
+        null, ConceptRelationship.class);
     return list.stream().map(r -> r.getFrom()).collect(Collectors.toList());
   }
 
@@ -567,8 +571,7 @@ public final class TerminologyUtility {
     final Terminology terminology, final Concept concept) throws Exception {
 
     final List<ConceptRef> list = new ArrayList<>();
-    final Query expression =
-        getExpressionQuery("<" + concept.getCode());
+    final Query expression = getExpressionQuery("<" + concept.getCode());
 
     final SearchParameters params = new SearchParameters(expression, 0, 1000, "code", null);
     String searchAfter = null;
@@ -621,8 +624,7 @@ public final class TerminologyUtility {
       return LuceneQueryBuilder.parse(clause);
     }
 
-    final Query clause =
-        getExpressionClause(expression);
+    final Query clause = getExpressionClause(expression);
     return clause;
   }
 
@@ -760,17 +762,16 @@ public final class TerminologyUtility {
    * @param terminology the terminology
    * @param publisher the publisher
    * @param version the version
-   * @param indexName the index name
    * @return the long
    * @throws Exception the exception
    */
   public static long countTreePositions(final EntityRepositoryService searchService,
-    final String terminology, final String publisher, final String version, final String indexName)
-    throws Exception {
+    final String terminology, final String publisher, final String version) throws Exception {
 
     final SearchParameters params = new SearchParameters(2, 0);
     params.setQuery("terminology:" + StringUtility.escapeQuery(terminology) + " AND publisher:"
-        + publisher + " AND version:" + version);
+        + StringUtility.escapeQuery(publisher) + " AND version:"
+        + StringUtility.escapeQuery(version));
 
     final ResultList<ConceptTreePosition> result =
         searchService.find(params, ConceptTreePosition.class);

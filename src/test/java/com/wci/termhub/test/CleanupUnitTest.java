@@ -35,7 +35,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 public class CleanupUnitTest {
 
   /** The Constant LOG. */
-  private static final Logger LOG = LoggerFactory.getLogger(CleanupUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CleanupUnitTest.class);
 
   /** The search service. */
   @Autowired
@@ -54,7 +54,7 @@ public class CleanupUnitTest {
   @AfterAll
   public void tearDown() throws Exception {
 
-    LOG.info("Cleaning up indexes");
+    LOGGER.info("Cleaning up indexes");
     searchService.deleteIndex(Terminology.class);
     searchService.deleteIndex(Metadata.class);
     searchService.deleteIndex(Concept.class);

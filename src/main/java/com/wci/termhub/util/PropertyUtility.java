@@ -48,8 +48,15 @@ public class PropertyUtility {
 
   static {
     try {
+      // Load main application properties
       properties.load(
           PropertyUtility.class.getClassLoader().getResourceAsStream("application.properties"));
+
+      // If in test mode, load test properties
+      if ("true".equals(properties.getProperty("test.mode"))) {
+        properties.load(
+            PropertyUtility.class.getClassLoader().getResourceAsStream("application-test.properties"));
+      }
     } catch (final IOException e) {
       e.printStackTrace();
     }
@@ -87,7 +94,7 @@ public class PropertyUtility {
   /**
    * update active status.
    *
-   * @param key the property key
+   * @param key   the property key
    * @param value The property value
    */
   public static void setProperty(final String key, final String value) {
@@ -113,14 +120,14 @@ public class PropertyUtility {
   /**
    * Return properties with the specified prefix.
    *
-   * @param prefix the prefix of the properties to return
+   * @param prefix       the prefix of the properties to return
    * @param removePrefix Should the prefix be removed from the keys of the
-   *          returned properties
+   *                     returned properties
    * @return the properties with the specified prefix
    * @throws Exception the exception
    */
   public static Properties getPrefixedProperties(final String prefix, final boolean removePrefix)
-    throws Exception {
+      throws Exception {
 
     final Properties propertiesSubset = new Properties();
     final Iterator<Object> keys = properties.keySet().iterator();
@@ -179,7 +186,7 @@ public class PropertyUtility {
    * Builds the api url.
    *
    * @param service the service
-   * @param path the path
+   * @param path    the path
    * @return the string
    * @throws Exception the exception
    */
