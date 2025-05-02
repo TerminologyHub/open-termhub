@@ -130,7 +130,7 @@ public class Metadata extends AbstractTerminologyComponent
     if (other.getField() != null) {
       field = other.getField();
     }
-    if (other.getAttributes().size() > 0) {
+    if (!other.getAttributes().isEmpty()) {
       attributes.putAll(other.getAttributes());
     }
   }

@@ -37,7 +37,7 @@ import com.wci.termhub.util.ModelUtility;
 public class EntityServiceImpl implements EntityRepositoryService {
 
   /** The LOG. */
-  private static final Logger LOG = LoggerFactory.getLogger(EntityServiceImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EntityServiceImpl.class);
 
   /** The find all page size. */
   private int findAllPageSize = 10000;
@@ -95,7 +95,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOG.info("Adding {} entities to index {}", entity, clazz.getSimpleName());
+    LOGGER.info("Adding {} entities to index {}", entity, clazz.getSimpleName());
     luceneData.add(entity);
   }
 
@@ -112,7 +112,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOG.info("Adding {} entities to index {}", entity, clazz.getSimpleName());
+    LOGGER.info("Adding {} entities to index {}", entity, clazz.getSimpleName());
     luceneData.add(entity);
   }
 
@@ -130,7 +130,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOG.info("Update {} entities to index {}", entity, clazz.getSimpleName());
+    LOGGER.info("Update {} entities to index {}", entity, clazz.getSimpleName());
     luceneData.remove(clazz, id);
     luceneData.add(entity);
   }
@@ -281,7 +281,8 @@ public class EntityServiceImpl implements EntityRepositoryService {
       final LuceneDataAccess luceneData = new LuceneDataAccess();
       final ResultList<T> result = luceneData.find(clazz, searchParameters, searchQuery);
 
-      LOG.debug("      result count = {} (total={})", result.getItems().size(), result.getTotal());
+      LOGGER.debug("      result count = {} (total={})", result.getItems().size(),
+          result.getTotal());
       if (fromIndex != 0) {
         // Handle non-aligned paging (e.g fromRecord=6, pageSize=10)
         // if fromIndex is beyond the end of results, bail
@@ -384,14 +385,15 @@ public class EntityServiceImpl implements EntityRepositoryService {
    *
    * @param <T> the generic type
    * @param query the query
+   * @param luceneQuery the lucene query
    * @param clazz the clazz
    * @return the list
    * @throws Exception the exception
    */
   /* see superclass */
   @Override
-  public <T extends HasId> List<T> findAll(final String query,final Query luceneQuery, final Class<T> clazz)
-    throws Exception {
+  public <T extends HasId> List<T> findAll(final String query, final Query luceneQuery,
+    final Class<T> clazz) throws Exception {
     return findAll(query, luceneQuery, clazz, null);
   }
 
@@ -400,6 +402,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
    *
    * @param <T> the generic type
    * @param query the query
+   * @param luceneQuery the lucene query
    * @param clazz the clazz
    * @param handler the handler
    * @return the list
@@ -407,16 +410,14 @@ public class EntityServiceImpl implements EntityRepositoryService {
    */
   /* see superclass */
   @Override
-  public <T extends HasId> List<T> findAll(final String query, Query luceneQuery, final Class<T> clazz,
-    final FindCallbackHandler<T> handler) throws Exception {
+  public <T extends HasId> List<T> findAll(final String query, final Query luceneQuery,
+    final Class<T> clazz, final FindCallbackHandler<T> handler) throws Exception {
 
     // Load blocks of 10k, need to specify sort=id for this to work
-    SearchParameters params = null;
-    if(luceneQuery != null){
-      params = new SearchParameters(luceneQuery, 0, findAllPageSize, "id", null);
-    } else {
-      params = new SearchParameters(query, 0, findAllPageSize, "id", null);
-    }
+    final SearchParameters params =
+        (luceneQuery != null) ? new SearchParameters(luceneQuery, 0, findAllPageSize, "id", null)
+            : new SearchParameters(query, 0, findAllPageSize, "id", null);
+
     final List<T> list = new ArrayList<>();
 
     while (true) {
@@ -521,7 +522,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
     final String queryString =
         escapeFlag ? QueryBuilder.findBuilder(builders, handler).buildEscapedQuery(params)
             : QueryBuilder.findBuilder(builders, handler).buildQuery(params);
-    LOG.debug("    query [{}] offset={}, limit={}, {} {}", queryString, params.getOffset(),
+    LOGGER.debug("    query [{}] offset={}, limit={}, {} {}", queryString, params.getOffset(),
         params.getLimit(), clazz.getSimpleName(), handler);
     final Query query = LuceneQueryBuilder.parse(queryString);
     return query;

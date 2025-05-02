@@ -67,11 +67,8 @@ public final class TestUtility {
         continue;
       }
       final User candidate = ModelUtility.fromJson(line, User.class);
-      if (candidate.getId().equals(value)) {
-        return candidate;
-      } else if (candidate.getUsername().equals(value)) {
-        return candidate;
-      } else if (candidate.getUriLabel().equals(value)) {
+      if (candidate.getId().equals(value) || candidate.getUsername().equals(value)
+          || candidate.getUriLabel().equals(value)) {
         return candidate;
       }
     }

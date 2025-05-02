@@ -14,8 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -137,7 +136,8 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
     searchService.createIndex(ConceptRelationship.class);
 
     // test if directory exists
-    assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
+    final File indexFile = new File(INDEX_DIRECTORY, INDEX_NAME);
+    assertTrue(indexFile.exists());
   }
 
   /**
@@ -155,7 +155,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 
     if (conceptRelNode != null) {
       conceptRelationship = objectMapper.treeToValue(conceptRelNode, ConceptRelationship.class);
-      logger.info("Concept Relationship: {}", conceptRelationship.toString());
+      logger.info("Concept Relationship: {}", conceptRelationship);
       assertDoesNotThrow(() -> searchService.add(ConceptRelationship.class, conceptRelationship));
     } else {
       logger.error("No '_source' node found in the provided JSON.");
@@ -198,7 +198,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 
     for (final Object foundConceptObject : foundConceptRelObjects.getItems()) {
       final ConceptRelationship foundConceptRel = (ConceptRelationship) foundConceptObject;
-      logger.info("Concept Relationship found: {}", foundConceptRel.toString());
+      logger.info("Concept Relationship found: {}", foundConceptRel);
       assertEquals(conceptRelationship.toString(), foundConceptRel.toString());
     }
   }

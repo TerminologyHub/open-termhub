@@ -94,11 +94,15 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
+      logger.info("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
 
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
         final CodeSystem cs = FhirUtilityR5.toR5(terminology);
-        // Skip non-matching
+        logger.info("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
+
+        // Skip non-matching - comparing just the ID parts
         if (id != null && id.getIdPart().equals(cs.getId())) {
+          logger.info("Found matching code system: {}", cs.getTitle());
           return cs;
         }
       }
@@ -110,7 +114,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
-      throw FhirUtilityR5.exception("Failed to load value set",
+      throw FhirUtilityR5.exception("Failed to load code system",
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
@@ -274,7 +278,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     }
 
     try {
-
       FhirUtilityR5.mutuallyExclusive("code", code, "coding", coding);
 
       final Terminology terminology = FhirUtilityR5.getTerminology(searchService, null, code,
@@ -598,9 +601,23 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final Set<CodeType> properties) throws Exception {
 
     // Lookup concept (only code is needed because we have terminology index)
-    final SearchParameters params =
-        new SearchParameters("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
-            + StringUtility.escapeQuery(terminology.getAbbreviation()), 0, 2, null, null);
+    // final SearchParameters params = new SearchParameters("code:" +
+    // StringUtility.escapeQuery(code) + " AND terminology:"
+    // + StringUtility.escapeQuery(terminology.getAbbreviation()), 0, 2, null,
+    // null);
+
+    String query = null;
+    if (StringUtility.isEmpty(code)) {
+
+      query = "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation());
+
+    } else {
+      query = "code:" + StringUtility.escapeQuery(code) + " AND terminology:"
+          + StringUtility.escapeQuery(terminology.getAbbreviation());
+
+    }
+
+    final SearchParameters params = new SearchParameters(query, 0, 2, null, null);
     final Concept concept = searchService.findSingle(params, Concept.class);
     if (concept == null) {
       throw FhirUtilityR5.exception("Unable to find code for system/version = " + code,
@@ -621,8 +638,8 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     return FhirUtilityR5.toR5(FhirUtilityR5.toR5(terminology), concept,
         properties == null ? null
             : properties.stream().map(c -> c.getValue()).collect(Collectors.toSet()),
-        displayMap, relationships, children == null ? null
-            : children.stream().map(r -> r.getFrom()).collect(Collectors.toList()));
+        displayMap, relationships,
+        children == null ? null : children.stream().map(r -> r.getFrom()).toList());
   }
 
   /**

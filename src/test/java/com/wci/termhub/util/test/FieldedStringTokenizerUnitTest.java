@@ -31,7 +31,8 @@ import com.wci.termhub.util.FieldedStringTokenizer;
 public class FieldedStringTokenizerUnitTest {
 
   /** The logger. */
-  private static final Logger LOG = LoggerFactory.getLogger(FieldedStringTokenizerUnitTest.class);
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(FieldedStringTokenizerUnitTest.class);
 
   /**
    * Test basic split functionality.

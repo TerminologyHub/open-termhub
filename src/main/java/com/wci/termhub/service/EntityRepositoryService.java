@@ -11,10 +11,11 @@ package com.wci.termhub.service;
 
 import java.util.List;
 
+import org.apache.lucene.search.Query;
+
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
-import org.apache.lucene.search.Query;
 
 /**
  * The Interface TService.
@@ -160,7 +161,7 @@ public interface EntityRepositoryService {
    * @throws Exception the exception
    */
   public <T extends HasId> List<T> findAllWithFields(final Query query, final List<String> fields,
-                                                     final Class<T> clazz) throws Exception;
+    final Class<T> clazz) throws Exception;
 
   /**
    * Find all with fields. For each batch of results, send to the callback
@@ -182,25 +183,27 @@ public interface EntityRepositoryService {
    *
    * @param <T> the generic type
    * @param query the query
+   * @param luceneQuery the lucene query
    * @param clazz the clazz
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAll(final String query, Query luceneQuery, final Class<T> clazz)
-    throws Exception;
+  public <T extends HasId> List<T> findAll(final String query, Query luceneQuery,
+    final Class<T> clazz) throws Exception;
 
   /**
    * Find all.
    *
    * @param <T> the generic type
    * @param query the query
+   * @param luceneQuery the lucene query
    * @param clazz the clazz
    * @param handler the handler
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAll(final String query,Query luceneQuery, final Class<T> clazz,
-    final FindCallbackHandler<T> handler) throws Exception;
+  public <T extends HasId> List<T> findAll(final String query, Query luceneQuery,
+    final Class<T> clazz, final FindCallbackHandler<T> handler) throws Exception;
 
   /**
    * Find all ids.

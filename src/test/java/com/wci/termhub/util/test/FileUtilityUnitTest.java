@@ -36,7 +36,7 @@ public class FileUtilityUnitTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(FileUtilityUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(FileUtilityUnitTest.class);
 
   /** The temp directory. */
   @TempDir

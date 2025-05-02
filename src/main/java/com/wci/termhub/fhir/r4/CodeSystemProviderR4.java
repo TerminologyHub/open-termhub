@@ -92,11 +92,15 @@ public class CodeSystemProviderR4 implements IResourceProvider {
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
+      logger.info("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
 
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
         final CodeSystem cs = FhirUtilityR4.toR4(terminology);
+        logger.info("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
+
         // Skip non-matching
         if (id != null && id.getIdPart().equals(cs.getId())) {
+          logger.info("Found matching code system: {}", cs.getTitle());
           return cs;
         }
       }
@@ -336,7 +340,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
       // FhirUtility.notSupported("date", date);
 
       final Terminology terminology =
-          FhirUtilityR4.getTerminology(searchService, id, null, "system", null, null, null);
+          FhirUtilityR4.getTerminology(searchService, id, null, null, null, null, null);
 
       final String codeStr = FhirUtilityR4.getCode(code, coding);
       return lookupHelper(terminology, codeStr, properties);

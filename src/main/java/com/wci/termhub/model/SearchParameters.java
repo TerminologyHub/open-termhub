@@ -15,13 +15,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.lucene.search.Query;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.wci.termhub.util.StringUtility;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.apache.lucene.search.Query;
 
 /**
  * Represents search parameters for a "find" call.
@@ -36,6 +37,7 @@ public class SearchParameters extends BaseModel {
   /** The query. */
   private String query;
 
+  /** The lucene query. */
   // Not serializable to json. So ignoring
   @JsonIgnore()
   private Query luceneQuery;
@@ -103,6 +105,13 @@ public class SearchParameters extends BaseModel {
     this.offset = offset;
   }
 
+  /**
+   * Instantiates a new search parameters.
+   *
+   * @param query the query
+   * @param limit the limit
+   * @param offset the offset
+   */
   public SearchParameters(final Query query, final int limit, final int offset) {
 
     this.luceneQuery = query;
@@ -110,8 +119,16 @@ public class SearchParameters extends BaseModel {
     this.offset = offset;
   }
 
-  public SearchParameters(final Integer offset, final Integer limit,
-                          final String sort, final Boolean ascending) {
+  /**
+   * Instantiates a new search parameters.
+   *
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   */
+  public SearchParameters(final Integer offset, final Integer limit, final String sort,
+      final Boolean ascending) {
 
     if (offset != null) {
       setOffset(offset);
@@ -163,8 +180,17 @@ public class SearchParameters extends BaseModel {
     }
   }
 
+  /**
+   * Instantiates a new search parameters.
+   *
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   */
   public SearchParameters(final Query query, final Integer offset, final Integer limit,
-                          final String sort, final Boolean ascending) {
+      final String sort, final Boolean ascending) {
     this(offset, limit, sort, ascending);
     this.luceneQuery = query;
   }
@@ -199,8 +225,8 @@ public class SearchParameters extends BaseModel {
   }
 
   /**
-   * 
-   * 
+   *
+   *
    * /** Returns the terminology.
    *
    * @return the terminology
@@ -435,25 +461,30 @@ public class SearchParameters extends BaseModel {
     this.field = field;
   }
 
-    /**
-     * Returns the lucene query.
-     *
-     * @return the lucene query
-     */
-    @Schema(hidden = true, description = "Lucene query (typically not used directly)")
-    public Query getLuceneQuery() {
-        return luceneQuery;
-    }
+  /**
+   * Returns the lucene query.
+   *
+   * @return the lucene query
+   */
+  @Schema(hidden = true, description = "Lucene query (typically not used directly)")
+  public Query getLuceneQuery() {
+    return luceneQuery;
+  }
 
-    /**
-     * Sets the lucene query.
-     *
-     * @param luceneQuery the lucene query
-     */
-    public void setLuceneQuery(final Query luceneQuery) {
-      this.luceneQuery = luceneQuery;
-    }
+  /**
+   * Sets the lucene query.
+   *
+   * @param luceneQuery the lucene query
+   */
+  public void setLuceneQuery(final Query luceneQuery) {
+    this.luceneQuery = luceneQuery;
+  }
 
+  /**
+   * Hash code.
+   *
+   * @return the int
+   */
   /* see superclass */
   @Override
   public int hashCode() {
@@ -461,6 +492,12 @@ public class SearchParameters extends BaseModel {
         query, sort, terminology, luceneQuery);
   }
 
+  /**
+   * Equals.
+   *
+   * @param obj the obj
+   * @return true, if successful
+   */
   /* see superclass */
   @Override
   public boolean equals(final Object obj) {
@@ -472,12 +509,12 @@ public class SearchParameters extends BaseModel {
     }
     final SearchParameters other = (SearchParameters) obj;
     return Objects.equals(active, other.active) && Objects.equals(ascending, other.ascending)
-            && Objects.equals(expression, other.expression) && Objects.equals(field, other.field)
-            && Objects.equals(filters, other.filters) && Objects.equals(index, other.index)
-            && Objects.equals(leaf, other.leaf) && Objects.equals(limit, other.limit)
-            && Objects.equals(offset, other.offset) && Objects.equals(query, other.query)
-            && Objects.equals(sort, other.sort) && Objects.equals(terminology, other.terminology)
-            && Objects.equals(luceneQuery, other.luceneQuery);
+        && Objects.equals(expression, other.expression) && Objects.equals(field, other.field)
+        && Objects.equals(filters, other.filters) && Objects.equals(index, other.index)
+        && Objects.equals(leaf, other.leaf) && Objects.equals(limit, other.limit)
+        && Objects.equals(offset, other.offset) && Objects.equals(query, other.query)
+        && Objects.equals(sort, other.sort) && Objects.equals(terminology, other.terminology)
+        && Objects.equals(luceneQuery, other.luceneQuery);
   }
 
 }

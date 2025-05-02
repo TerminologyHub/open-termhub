@@ -627,7 +627,7 @@ public final class JwtUtility {
     if (expires && djwt.getExpiresAt() != null) {
       builder.withExpiresAt(djwt.getExpiresAt());
     }
-    if (djwt.getAudience() != null && djwt.getAudience().size() > 0) {
+    if (djwt.getAudience() != null && !djwt.getAudience().isEmpty()) {
       for (final String aud : djwt.getAudience()) {
         builder.withAudience(aud);
       }

@@ -45,7 +45,7 @@ public final class LuceneQueryBuilder {
     final QueryParser queryParser = new QueryParser("", analyzer);
 
     final Query query = queryParser.parse(queryText);
-    logger.debug("Parsed Query: {}", query.toString());
+    logger.debug("Parsed Query: {}", query);
 
     return query;
   }

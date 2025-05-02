@@ -1,0 +1,535 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "177f2263-fe04-4f1f-b0e6-9b351ab8baa9",
+  "url": "http://hl7.org/fhir/sid/icd-10-cm",
+  "version": "2023",
+  "name": "Mini version of ICD10CM for testing purposes",
+  "title": "ICD10CM",
+  "status": "active",
+  "experimental": false,
+  "date": "2023-05-01T00:00:00+00:00",
+  "publisher": "SANDBOX",
+  "hierarchyMeaning": "is-a",
+  "compositional": false,
+  "content": "complete",
+  "count": 10,
+  "property": [ {
+    "code": "origin-version",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/origin-version",
+    "description": "2023AA",
+    "type": "string"
+  }, {
+    "code": "autocomplete",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/autocomplete",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "hierarchical",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/hierarchical",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "tree-positions",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/tree-positions",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "origin-terminology",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/origin-terminology",
+    "description": "UMLS",
+    "type": "string"
+  }, {
+    "code": "ecl",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/ecl",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "PT",
+    "uri": "https://terminologyhub.com/model/term/type/Pt",
+    "description": "Designated preferred name",
+    "type": "string"
+  }, {
+    "code": "CUI",
+    "uri": "https://terminologyhub.com/model/term/attribute/Cui",
+    "description": "Concept unique identifier",
+    "type": "string"
+  }, {
+    "code": "ET",
+    "uri": "https://terminologyhub.com/model/term/type/Et",
+    "description": "Entry term",
+    "type": "string"
+  }, {
+    "code": "HT",
+    "uri": "https://terminologyhub.com/model/term/type/Ht",
+    "description": "Hierarchical term",
+    "type": "string"
+  }, {
+    "code": "ENG",
+    "uri": "https://terminologyhub.com/model/term/language/Eng",
+    "type": "string"
+  }, {
+    "code": "NOTE",
+    "uri": "https://terminologyhub.com/model/concept/attribute/Note",
+    "description": "Note",
+    "type": "string"
+  }, {
+    "code": "T191",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/T191",
+    "description": "Neoplastic Process",
+    "type": "string"
+  }, {
+    "code": "ORDER_NO",
+    "uri": "https://terminologyhub.com/model/concept/attribute/OrderNo",
+    "description": "Order number",
+    "type": "string"
+  }, {
+    "code": "T170",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/T170",
+    "description": "Intellectual Product",
+    "type": "string"
+  }, {
+    "code": "EXCLUDES1",
+    "uri": "https://terminologyhub.com/model/concept/attribute/Excludes1",
+    "description": "A pure excludes. It means \"NOT CODED HERE!\" Indicates that the code excluded should never be used at the same time as the code above the Excludes1 note. Used for when two conditions cannot occur together, such as a congenital form versus an acquired form of the same condition.",
+    "type": "string"
+  }, {
+    "code": "T047",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/T047",
+    "description": "Disease or Syndrome",
+    "type": "string"
+  }, {
+    "code": "USE_ADDITIONAL",
+    "uri": "https://terminologyhub.com/model/concept/attribute/UseAdditional",
+    "description": "Certain conditions have both an underlying etiology and multiple body system manifestations due to the underlying etiology. ICD-10-CM has a coding convention that requires the underlying condition be sequenced first followed by the manifestation. Wherever such a combination exists there is a \"use additional code\" note at the etiology code. These instructional notes indicate the proper sequencing order of the codes, etiology followed by manifestation. In most cases the manifestation codes will have in the code title, \"in diseases classified elsewhere.\" Codes with this title are a component of the etiology/ manifestation convention. The code title indicates that it is a manifestation code. \"In diseases classified elsewhere\" codes are never permitted to be used as first listed or principle diagnosis codes. They must be used in conjunction with an underlying condition code and they must be listed following the underlying condition.",
+    "type": "string"
+  }, {
+    "code": "PAR",
+    "uri": "https://terminologyhub.com/model/relationship/type/Par",
+    "description": "has parent relationship in a Metathesaurus source vocabulary ",
+    "type": "string"
+  }, {
+    "code": "CHD",
+    "uri": "https://terminologyhub.com/model/relationship/type/Chd",
+    "description": "has child relationship in a Metathesaurus source vocabulary ",
+    "type": "string"
+  }, {
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/",
+    "description": "No type, used for XR mappings.",
+    "type": "string"
+  }, {
+    "code": "parent",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/parent",
+    "description": "Parent",
+    "type": "Coding"
+  }, {
+    "code": "active",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/active",
+    "description": "Active",
+    "type": "string"
+  }, {
+    "code": "relationship",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/relationship",
+    "description": "Relationship",
+    "type": "Coding"
+  }, {
+    "code": "semanticType",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/semanticType",
+    "description": "Indicates the concept's semantic category",
+    "type": "string"
+  } ],
+  "concept": [ {
+    "code": "C00-D49",
+    "display": "Neoplasms (C00-D49)",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Neoplasms (C00-D49)"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Neoplastic Process"
+    }, {
+      "code": "NOTE",
+      "valueString": "Functional activity; All neoplasms are classified in this chapter, whether they are functionally active or not. An additional code from Chapter 4 may be used, to identify functional activity associated with any neoplasm. Morphology [Histology]; Chapter 2 classifies neoplasms primarily by site (topography), with broad groupings for behavior, malignant, in situ, benign, etc. The Table of Neoplasms should be used to identify the correct topography code. In a few cases, such as for malignant melanoma and certain neuroendocrine tumors, the morphology (histologic type) is included in the category and codes. Primary malignant neoplasms overlapping site boundaries; A primary malignant neoplasm that overlaps two or more contiguous (next to each other) sites should be classified to the subcategory/code .8 ('overlapping lesion'), unless the combination is specifically indexed elsewhere. For multiple neoplasms of the same site that are not contiguous, such as tumors in different quadrants of the same breast, codes for each site should be assigned. Malignant neoplasm of ectopic tissue; Malignant neoplasms of ectopic tissue are to be coded to the site mentioned, e.g., ectopic pancreatic malignant neoplasms are coded to pancreas, unspecified (C25.9)."
+    }, {
+      "code": "parent",
+      "valueCoding": {
+        "code": "ICD-10-CM",
+        "display": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES"
+      }
+    } ]
+  }, {
+    "code": "ICD-10-CM",
+    "display": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Intellectual Product"
+    } ]
+  }, {
+    "code": "E11",
+    "display": "Type 2 diabetes mellitus",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "diabetes NOS"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Type 2 diabetes mellitus"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "insulin resistant diabetes (mellitus)"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "diabetes (mellitus) due to insulin secretory defect"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "semanticType",
+      "valueString": "Intellectual Product"
+    }, {
+      "code": "semanticType",
+      "valueString": "Neoplastic Process"
+    }, {
+      "code": "EXCLUDES1",
+      "valueString": "diabetes mellitus due to underlying condition (E08.-); drug or chemical induced diabetes mellitus (E09.-); gestational diabetes (O24.4-); neonatal diabetes mellitus (P70.2); postpancreatectomy diabetes mellitus (E13.-); postprocedural diabetes mellitus (E13.-); secondary diabetes mellitus NEC (E13.-); type 1 diabetes mellitus (E10.-)"
+    }, {
+      "code": "USE_ADDITIONAL",
+      "valueString": "code to identify control using: insulin (Z79.4); oral antidiabetic drugs (Z79.84); oral hypoglycemic drugs (Z79.84)"
+    }, {
+      "code": "ORDER_NO",
+      "valueString": "04200"
+    }, {
+      "code": "parent",
+      "valueCoding": {
+        "code": "E08-E13",
+        "display": "Diabetes mellitus (E08-E13)"
+      }
+    } ]
+  }, {
+    "code": "E11.9",
+    "display": "Type 2 diabetes mellitus without complications",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "PT",
+        "display": "Designated preferred name"
+      },
+      "value": "Type 2 diabetes mellitus without complications"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "ORDER_NO",
+      "valueString": "04315"
+    }, {
+      "code": "parent",
+      "valueCoding": {
+        "code": "E11",
+        "display": "Type 2 diabetes mellitus"
+      }
+    } ]
+  }, {
+    "code": "C50",
+    "display": "Malignant neoplasm of breast",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Malignant neoplasm of breast"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "Paget's disease of breast"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "Paget's disease of nipple"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "connective tissue of breast"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "semanticType",
+      "valueString": "Intellectual Product"
+    }, {
+      "code": "semanticType",
+      "valueString": "Neoplastic Process"
+    }, {
+      "code": "EXCLUDES1",
+      "valueString": "skin of breast (C44.501, C44.511, C44.521, C44.591)"
+    }, {
+      "code": "USE_ADDITIONAL",
+      "valueString": "code to identify estrogen receptor status (Z17.0, Z17.1)"
+    }, {
+      "code": "ORDER_NO",
+      "valueString": "01812"
+    }, {
+      "code": "parent",
+      "valueCoding": {
+        "code": "C50-C50",
+        "display": "Malignant neoplasms of breast (C50)"
+      }
+    } ]
+  }, {
+    "code": "C50-C50",
+    "display": "Malignant neoplasms of breast (C50)",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Malignant neoplasms of breast (C50)"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Neoplastic Process"
+    }, {
+      "code": "parent",
+      "valueCoding": {
+        "code": "C00-D49",
+        "display": "Neoplasms (C00-D49)"
+      }
+    } ]
+  }, {
+    "code": "E10",
+    "display": "Type 1 diabetes mellitus",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "brittle diabetes (mellitus)"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "juvenile onset diabetes (mellitus)"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Type 1 diabetes mellitus"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "ketosis-prone diabetes (mellitus)"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "diabetes (mellitus) due to autoimmune process"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "diabetes (mellitus) due to immune mediated pancreatic islet beta-cell destruction"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "idiopathic diabetes (mellitus)"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "semanticType",
+      "valueString": "Neoplastic Process"
+    }, {
+      "code": "EXCLUDES1",
+      "valueString": "diabetes mellitus due to underlying condition (E08.-); drug or chemical induced diabetes mellitus (E09.-); gestational diabetes (O24.4-); hyperglycemia NOS (R73.9); neonatal diabetes mellitus (P70.2); postpancreatectomy diabetes mellitus (E13.-); postprocedural diabetes mellitus (E13.-); secondary diabetes mellitus NEC (E13.-); type 2 diabetes mellitus (E11.-)"
+    }, {
+      "code": "ORDER_NO",
+      "valueString": "04087"
+    }, {
+      "code": "parent",
+      "valueCoding": {
+        "code": "E08-E13",
+        "display": "Diabetes mellitus (E08-E13)"
+      }
+    } ]
+  }, {
+    "code": "E08-E13",
+    "display": "Diabetes mellitus (E08-E13)",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Diabetes mellitus (E08-E13)"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "parent",
+      "valueCoding": {
+        "code": "E00-E89",
+        "display": "Endocrine, nutritional and metabolic diseases (E00-E89)"
+      }
+    } ]
+  }, {
+    "code": "E10.9",
+    "display": "Type 1 diabetes mellitus without complications",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "PT",
+        "display": "Designated preferred name"
+      },
+      "value": "Type 1 diabetes mellitus without complications"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "ORDER_NO",
+      "valueString": "04199"
+    }, {
+      "code": "parent",
+      "valueCoding": {
+        "code": "E10",
+        "display": "Type 1 diabetes mellitus"
+      }
+    } ]
+  }, {
+    "code": "E00-E89",
+    "display": "Endocrine, nutritional and metabolic diseases (E00-E89)",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Endocrine, nutritional and metabolic diseases (E00-E89)"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueString": "true"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "EXCLUDES1",
+      "valueString": "transitory endocrine and metabolic disorders specific to newborn (P70-P74)"
+    }, {
+      "code": "NOTE",
+      "valueString": "All neoplasms, whether functionally active or not, are classified in Chapter 2. Appropriate codes in this chapter (i.e. E05.8, E07.0, E16-E31, E34.-) may be used as additional codes to indicate either functional activity by neoplasms and ectopic endocrine tissue or hyperfunction and hypofunction of endocrine glands associated with neoplasms and other conditions classified elsewhere."
+    }, {
+      "code": "parent",
+      "valueCoding": {
+        "code": "ICD-10-CM",
+        "display": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES"
+      }
+    } ]
+  }]
+}

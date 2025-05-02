@@ -33,7 +33,7 @@ public class TerminologySearchUnitTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(TerminologySearchUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TerminologySearchUnitTest.class);
 
   /** The search service. */
   @Autowired
@@ -51,7 +51,7 @@ public class TerminologySearchUnitTest {
   public void testFindAll() throws Exception {
 
     final ResultList<Terminology> all = searchService.findAll(SEARCH_PARAMETERS, Terminology.class);
-    LOG.info("Find all: {}", all.getItems().size());
+    LOGGER.info("Find all: {}", all.getItems().size());
   }
 
   /**
@@ -68,10 +68,9 @@ public class TerminologySearchUnitTest {
     assertEquals(1, terminologies.getItems().size());
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("ICD10CM", terminology.getAbbreviation());
-    assertEquals("International Classification of Diseases, Tenth Revision, Clinical Modification",
-        terminology.getName());
+    assertEquals("Mini version of ICD10CM for testing purposes", terminology.getName());
     assertEquals("2023", terminology.getVersion());
-    assertEquals("NLM", terminology.getPublisher());
+    assertEquals("SANDBOX", terminology.getPublisher());
   }
 
   /**
@@ -88,9 +87,9 @@ public class TerminologySearchUnitTest {
     assertEquals(1, terminologies.getItems().size());
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("LNC", terminology.getAbbreviation());
-    assertEquals("Logical Observation Identifiers Names and Codes", terminology.getName());
+    assertEquals("Mini version of LOINC for testing purposes", terminology.getName());
     assertEquals("277", terminology.getVersion());
-    assertEquals("NLM", terminology.getPublisher());
+    assertEquals("SANDBOX", terminology.getPublisher());
   }
 
   /**
@@ -107,9 +106,9 @@ public class TerminologySearchUnitTest {
     assertEquals(1, terminologies.getItems().size());
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("RXNORM", terminology.getAbbreviation());
-    assertEquals("RxNorm", terminology.getName());
-    assertEquals("02052024", terminology.getVersion());
-    assertEquals("NLM", terminology.getPublisher());
+    assertEquals("Mini version of RXNORM for testing purposes", terminology.getName());
+    assertEquals("04012024", terminology.getVersion());
+    assertEquals("SANDBOX", terminology.getPublisher());
   }
 
   /**
@@ -126,9 +125,8 @@ public class TerminologySearchUnitTest {
     assertEquals(1, terminologies.getItems().size());
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("SNOMEDCT_US", terminology.getAbbreviation());
-    assertEquals("Systematized Nomenclature of Medicine–Clinical Terminology, US Edition",
-        terminology.getName());
-    assertEquals("20240301", terminology.getVersion());
+    assertEquals("Mini version of SNOMEDCT_US For testing purposes", terminology.getName());
+    assertEquals("http://snomed.info/sct/731000124108/version/20240301", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 
@@ -146,9 +144,9 @@ public class TerminologySearchUnitTest {
     assertEquals(1, terminologies.getItems().size());
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("SNOMEDCT", terminology.getAbbreviation());
-    assertEquals("Systematized Nomenclature of Medicine–Clinical Terminology",
-        terminology.getName());
-    assertEquals("20240101", terminology.getVersion());
+    assertEquals("Mini version of SNOMEDCT For testing purposes", terminology.getName());
+    assertEquals("http://snomed.info/sct/900000000000207008/version/20240101",
+        terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 

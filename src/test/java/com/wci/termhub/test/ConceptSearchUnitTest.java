@@ -29,11 +29,11 @@ import com.wci.termhub.service.EntityRepositoryService;
  */
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class ConceptSearchUnitTest {
+public class ConceptSearchUnitTest extends BaseUnitTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(ConceptSearchUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConceptSearchUnitTest.class);
 
   /** The Constant SEARCH_PARAMETERS. */
   private static final SearchParameters SEARCH_PARAMETERS = new SearchParameters(1000, 0);
@@ -50,12 +50,13 @@ public class ConceptSearchUnitTest {
   @Test
   public void testFindConceptIcd10cm() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:ICD10CM AND version:2023 AND code:E10");
+    final TermQueryComposer termQuery = new TermQueryComposer("ICD10CM", "2023", "E10", null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Concept> concept = searchService.find(SEARCH_PARAMETERS, Concept.class);
     assertEquals(1, concept.getItems().size());
-    assertEquals("E10", concept.getItems().get(0).getCode());
-    assertEquals("ICD10CM", concept.getItems().get(0).getTerminology());
-    assertEquals("2023", concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getTerminology(), concept.getItems().get(0).getTerminology());
+    assertEquals(termQuery.getVersion(), concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getCode(), concept.getItems().get(0).getCode());
   }
 
   /**
@@ -66,12 +67,13 @@ public class ConceptSearchUnitTest {
   @Test
   public void testFindConceptLoinc() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:LNC AND version:277 AND code:LA14283-8");
+    final TermQueryComposer termQuery = new TermQueryComposer("LNC", "277", "LA14283-8", null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Concept> concept = searchService.find(SEARCH_PARAMETERS, Concept.class);
     assertEquals(1, concept.getItems().size());
-    assertEquals("LA14283-8", concept.getItems().get(0).getCode());
-    assertEquals("LNC", concept.getItems().get(0).getTerminology());
-    assertEquals("277", concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getTerminology(), concept.getItems().get(0).getTerminology());
+    assertEquals(termQuery.getVersion(), concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getCode(), concept.getItems().get(0).getCode());
   }
 
   /**
@@ -82,12 +84,13 @@ public class ConceptSearchUnitTest {
   @Test
   public void testFindConceptRxNorm() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:RXNORM AND version:02052024 AND code:899989");
+    final TermQueryComposer termQuery = new TermQueryComposer("RXNORM", "04012024", "899989", null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Concept> concept = searchService.find(SEARCH_PARAMETERS, Concept.class);
     assertEquals(1, concept.getItems().size());
-    assertEquals("899989", concept.getItems().get(0).getCode());
-    assertEquals("RXNORM", concept.getItems().get(0).getTerminology());
-    assertEquals("02052024", concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getTerminology(), concept.getItems().get(0).getTerminology());
+    assertEquals(termQuery.getVersion(), concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getCode(), concept.getItems().get(0).getCode());
   }
 
   /**
@@ -98,12 +101,14 @@ public class ConceptSearchUnitTest {
   @Test
   public void testFindConceptSnomedCtUs() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:SNOMEDCT_US AND version:20240301 AND code:384719006");
+    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
+        "http://snomed.info/sct/731000124108/version/20240301", "384719006", null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Concept> concept = searchService.find(SEARCH_PARAMETERS, Concept.class);
     assertEquals(1, concept.getItems().size());
-    assertEquals("384719006", concept.getItems().get(0).getCode());
-    assertEquals("SNOMEDCT_US", concept.getItems().get(0).getTerminology());
-    assertEquals("20240301", concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getTerminology(), concept.getItems().get(0).getTerminology());
+    assertEquals(termQuery.getVersion(), concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getCode(), concept.getItems().get(0).getCode());
   }
 
   /**
@@ -114,12 +119,14 @@ public class ConceptSearchUnitTest {
   @Test
   public void testFindConceptSnomedCt() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("terminology:SNOMEDCT AND version:20240101 AND code:277302009");
+    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT",
+        "http://snomed.info/sct/900000000000207008/version/20240101", "277302009", null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Concept> concept = searchService.find(SEARCH_PARAMETERS, Concept.class);
     assertEquals(1, concept.getItems().size());
-    assertEquals("277302009", concept.getItems().get(0).getCode());
-    assertEquals("SNOMEDCT", concept.getItems().get(0).getTerminology());
-    assertEquals("20240101", concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getTerminology(), concept.getItems().get(0).getTerminology());
+    assertEquals(termQuery.getVersion(), concept.getItems().get(0).getVersion());
+    assertEquals(termQuery.getCode(), concept.getItems().get(0).getCode());
   }
 
 }

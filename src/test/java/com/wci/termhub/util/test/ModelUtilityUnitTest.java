@@ -37,7 +37,7 @@ import com.wci.termhub.util.ModelUtility;
 public class ModelUtilityUnitTest {
 
   /** The logger. */
-  private static final Logger LOG = LoggerFactory.getLogger(ModelUtilityUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ModelUtilityUnitTest.class);
 
   /**
    * Test class for JSON conversion.
@@ -111,7 +111,7 @@ public class ModelUtilityUnitTest {
    */
   @Test
   public void testNullComparisons() throws Exception {
-    LOG.info("TEST testNullComparisons");
+    LOGGER.info("TEST testNullComparisons");
 
     // Test bothOrNeitherNull
     assertTrue(ModelUtility.bothOrNeitherNull(null, null));
@@ -141,7 +141,7 @@ public class ModelUtilityUnitTest {
    */
   @Test
   public void testDateUtilities() throws Exception {
-    LOG.info("TEST testDateUtilities");
+    LOGGER.info("TEST testDateUtilities");
 
     final Calendar cal = Calendar.getInstance();
     final Date date1 = cal.getTime();
@@ -172,7 +172,7 @@ public class ModelUtilityUnitTest {
    */
   @Test
   public void testStringAndCollectionUtilities() throws Exception {
-    LOG.info("TEST testStringAndCollectionUtilities");
+    LOGGER.info("TEST testStringAndCollectionUtilities");
 
     // Test getNameFromClass
     assertEquals("Model Utility Unit Test", ModelUtility.getNameFromClass(this.getClass()));
@@ -202,7 +202,7 @@ public class ModelUtilityUnitTest {
    */
   @Test
   public void testCollectionConversions() throws Exception {
-    LOG.info("TEST testCollectionConversions");
+    LOGGER.info("TEST testCollectionConversions");
 
     // Test asMap
     final Map<String, String> map = ModelUtility.asMap("key1", "value1", "key2", "value2");
@@ -249,7 +249,7 @@ public class ModelUtilityUnitTest {
    */
   @Test
   public void testJsonUtilities() throws Exception {
-    LOG.info("TEST testJsonUtilities");
+    LOGGER.info("TEST testJsonUtilities");
 
     // Test object to JSON
     final TestClass testObj = new TestClass("Test Name", 25);
@@ -301,7 +301,7 @@ public class ModelUtilityUnitTest {
    */
   @Test
   public void testStackTraceUtilities() throws Exception {
-    LOG.info("TEST testStackTraceUtilities");
+    LOGGER.info("TEST testStackTraceUtilities");
 
     final Exception testException = new Exception("Test Exception");
 

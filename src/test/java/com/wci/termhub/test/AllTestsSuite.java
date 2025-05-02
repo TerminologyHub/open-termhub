@@ -15,12 +15,15 @@ import org.junit.platform.suite.api.Suite;
 import com.wci.termhub.rest.test.TerminologyServiceRestImplUnitTest;
 
 /**
- * The Class AllTestsSuite. Tests that are dependent on LoadUnitTest.
+ * The Class AllTestsSuite. Tests that are dependent on CodeSystemLoadUnitTest.
  */
 @Suite
 @SelectClasses({
-    LoadUnitTest.class, MetadataSearchUnitTest.class, TerminologySearchUnitTest.class,
-    ConceptSearchUnitTest.class, TermSearchUnitTest.class, MultithreadedReadUnitTest.class,
+    CodeSystemLoadUnitTest.class, TerminologyCodeSystemUnitTest.class,
+    ConceptCodeSystemUnitTest.class, ConceptRelationshipCodeSystemUnitTest.class,
+
+    MetadataSearchUnitTest.class, TerminologySearchUnitTest.class, ConceptSearchUnitTest.class,
+    TermSearchUnitTest.class, MultithreadedReadUnitTest.class,
     TerminologyServiceRestImplUnitTest.class, CleanupUnitTest.class
 })
 public class AllTestsSuite {
