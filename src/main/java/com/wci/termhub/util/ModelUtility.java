@@ -70,7 +70,7 @@ public final class ModelUtility<T> {
   private static Map<Class<?>, Map<String, String>> sortFieldCache = new HashMap<>();
 
   /**
-   * Instantiates an empty {@link ConfigUtility}.
+   * Instantiates an empty {@link JwtUtility}.
    *
    * @param mapper the mapper
    */

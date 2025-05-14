@@ -60,7 +60,7 @@ public final class JwtUtility {
   public static final String ADMIN_USER_ID = new UUID(1, 2).toString();
 
   /**
-   * Instantiates an empty {@link ConfigUtility}.
+   * Instantiates an empty {@link JwtUtility}.
    */
   private JwtUtility() {
     // n/a
