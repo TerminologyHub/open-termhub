@@ -280,7 +280,7 @@ public final class DateUtility {
       final LocalDateTime ldt = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(pattern));
       final ZonedDateTime zdt = ZonedDateTime.of(ldt, ZoneId.of(timeZone));
       return Date.from(zdt.toInstant());
-    } catch (DateTimeException e) {
+    } catch (final DateTimeException e) {
       // If that fails, try parsing as LocalDate
       final LocalDate ld = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern(pattern));
       final ZonedDateTime zdt = ld.atStartOfDay(ZoneId.of(timeZone));

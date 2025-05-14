@@ -69,9 +69,8 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
 /**
- * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4
- * endpoints, CodeSystem, ValueSet, and ConceptMap. All passed ids MUST be
- * lowercase, so they match our internally set id's
+ * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4 endpoints, CodeSystem,
+ * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set id's
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -119,7 +118,11 @@ public class FhirR4RestUnitTest {
           "CodeSystem-snomedct-sandbox-20240101-r4.json", "CodeSystem-lnc-sandbox-277-r4.json",
           "CodeSystem-icd10cm-sandbox-2023-r4.json", "CodeSystem-rxnorm-sandbox-04012024-r4.json");
 
-  /** Sets the up once. */
+  /**
+   * Sets the up once.
+   *
+   * @throws Exception the exception
+   */
   @BeforeAll
   public void setUpOnce() throws Exception {
     // Instantiate parser

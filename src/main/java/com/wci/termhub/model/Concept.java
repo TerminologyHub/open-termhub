@@ -65,8 +65,8 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
   // private boolean anonymous = false;
 
   /**
-   * The terms. (aka atoms, descriptions, names, synonyms, etc). Ignore the
-   * ngram indexed field here.
+   * The terms. (aka atoms, descriptions, names, synonyms, etc). Ignore the ngram indexed field
+   * here.
    */
   @Field(type = FieldType.Object, ignoreFields = {
       "name.ngram"

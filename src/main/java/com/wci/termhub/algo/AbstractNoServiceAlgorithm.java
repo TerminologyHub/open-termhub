@@ -112,12 +112,12 @@ public abstract class AbstractNoServiceAlgorithm implements NoServiceAlgorithm {
    * @return the total elapsed time str
    */
   public static String getTotalElapsedTimeStr(final long time) {
-    Long resultnum = (System.nanoTime() - time) / 1000000000;
-    String result = resultnum.toString() + "s";
+    long resultnum = (System.nanoTime() - time) / 1000000000;
+    String result = Long.toString(resultnum) + "s";
     resultnum = resultnum / 60;
-    result = result + " / " + resultnum.toString() + "m";
+    result = result + " / " + Long.toString(resultnum) + "m";
     resultnum = resultnum / 60;
-    result = result + " / " + resultnum.toString() + "h";
+    result = result + " / " + Long.toString(resultnum) + "h";
     return result;
   }
 

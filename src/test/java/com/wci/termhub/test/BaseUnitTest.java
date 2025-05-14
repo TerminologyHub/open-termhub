@@ -14,6 +14,9 @@ import java.util.Collection;
 import com.wci.termhub.util.PropertyUtility;
 import com.wci.termhub.util.StringUtility;
 
+/**
+ * Base unit test.
+ */
 public abstract class BaseUnitTest {
 
   /** The Constant INDEX_DIRECTORY. */

@@ -106,6 +106,7 @@ public class ConceptMapLoadR4UnitTest {
 
         LOGGER.info("Loading concept map from classpath resource: data/{}", conceptMapFile);
         // Verify the file is a ConceptMap
+        @SuppressWarnings("resource")
         final JsonNode root = OBJECT_MAPPER.readTree(resource.getInputStream());
         if (!"ConceptMap".equals(root.path("resourceType").asText())) {
           throw new IllegalArgumentException("Invalid resource type - expected ConceptMap");

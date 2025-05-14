@@ -54,8 +54,8 @@ public interface QueryBuilder {
   public String buildQuery(String query);
 
   /**
-   * Builds an "escaped" version of the query from the search params, in case
-   * the original search returns nothing.
+   * Builds an "escaped" version of the query from the search params, in case the original search
+   * returns nothing.
    *
    * @param params the params
    * @return the string

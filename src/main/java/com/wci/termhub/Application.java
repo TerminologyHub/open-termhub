@@ -30,7 +30,7 @@ import com.wci.termhub.util.JwtUtility;
 import com.wci.termhub.util.ModelUtility;
 
 /**
- * The Class Application.
+ * The Application entry point.
  */
 @SpringBootApplication(exclude = {
     DataSourceAutoConfiguration.class
@@ -49,6 +49,7 @@ public class Application extends SpringBootServletInitializer {
    * @param args the arguments
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public static void main(final String[] args) throws Exception {
 
     // https://stackoverflow.com/questions/13482020/

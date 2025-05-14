@@ -28,14 +28,13 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.StringUtility;
 
 /**
- * The Class ConceptTreePositionSearchUnitTest.
+ * Tests for ConceptTreePosition search.
  */
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class ConceptTreePositionSearchUnitTest extends BaseUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER =
       LoggerFactory.getLogger(ConceptTreePositionSearchUnitTest.class);
 
@@ -47,6 +46,11 @@ public class ConceptTreePositionSearchUnitTest extends BaseUnitTest {
   private EntityRepositoryService searchService;
 
   // Just logs the concept tree positions
+  /**
+   * Test log all concept tree positions.
+   *
+   * @throws Exception the exception
+   */
   // @Test // for debugging
   public void testLogAllConceptTreePositions() throws Exception {
 

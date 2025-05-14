@@ -120,8 +120,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Termhub Api interceptor to fix header, inject header auth token. Borrowed
- * from OpenApiInterceptor and modified.
+ * Termhub Api interceptor to fix header, inject header auth token. Borrowed from OpenApiInterceptor
+ * and modified.
  */
 public class TermhubOpenApiInterceptorR5 {
 
@@ -178,7 +178,7 @@ public class TermhubOpenApiInterceptorR5 {
   private boolean myUseResourcePages;
 
   /** The ignore parameters. */
-  private final Set<Triple> ignoreParameter = new HashSet<>();
+  private final Set<Triple<String, String, String>> ignoreParameter = new HashSet<>();
 
   /**
    * Constructor.
@@ -413,9 +413,8 @@ public class TermhubOpenApiInterceptorR5 {
   }
 
   /**
-   * If supplied, this field can be used to provide additional CSS text that
-   * should be loaded by the swagger-ui page. The contents should be raw CSS
-   * text, e.g. <code>
+   * If supplied, this field can be used to provide additional CSS text that should be loaded by the
+   * swagger-ui page. The contents should be raw CSS text, e.g. <code>
    * BODY { font-size: 1.1em; }
    * </code>
    *
@@ -426,9 +425,8 @@ public class TermhubOpenApiInterceptorR5 {
   }
 
   /**
-   * If supplied, this field can be used to provide additional CSS text that
-   * should be loaded by the swagger-ui page. The contents should be raw CSS
-   * text, e.g. <code>
+   * If supplied, this field can be used to provide additional CSS text that should be loaded by the
+   * swagger-ui page. The contents should be raw CSS text, e.g. <code>
    * BODY { font-size: 1.1em; }
    * </code>
    *

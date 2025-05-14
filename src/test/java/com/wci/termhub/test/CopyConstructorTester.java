@@ -26,8 +26,7 @@ public class CopyConstructorTester extends ProxyTester {
   private final Logger logger = LoggerFactory.getLogger(CopyConstructorTester.class);
 
   /**
-   * Constructs a new getter/setter tester to test objects of a particular
-   * class.
+   * Constructs a new getter/setter tester to test objects of a particular class.
    * 
    * @param obj Object to test.
    */
@@ -93,15 +92,11 @@ public class CopyConstructorTester extends ProxyTester {
       }
       final String fieldName = setter.getName().substring(3);
       final Class<?>[] args = setter.getParameterTypes();
-      if (args.length != 1) {
-        continue;
-      }
 
       /* Check the field name against our include/exclude list. */
-      if (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase())) {
-        continue;
-      }
-      if (getExcludes().contains(fieldName.toLowerCase())) {
+      if ((args.length != 1)
+          || (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase()))
+          || getExcludes().contains(fieldName.toLowerCase())) {
         continue;
       }
 

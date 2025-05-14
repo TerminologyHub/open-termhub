@@ -58,7 +58,6 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class FhirUtility {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtility.class);
 
   /** The publisher info map. */
@@ -724,8 +723,8 @@ public final class FhirUtility {
     final Map<String, String> map = new HashMap<>();
     for (final Metadata metadata : searchService.findAll(
         "active:true AND ((model:concept AND field:attribute) OR "
-            + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))", null,
-        Metadata.class).stream().collect(Collectors.toList())) {
+            + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))",
+        null, Metadata.class).stream().collect(Collectors.toList())) {
       map.put(metadata.getCode(), metadata.getName());
     }
     displayMap.put(key, map);

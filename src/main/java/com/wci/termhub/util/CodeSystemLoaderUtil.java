@@ -237,6 +237,9 @@ public final class CodeSystemLoaderUtil {
         service.addBulk(Term.class, new ArrayList<>(termBatch));
       }
 
+      if (metadataList == null) {
+        throw new Exception("Unexpected null metadata list");
+      }
       // compute tree positions
       computeConceptTreePositions(service, metadataList.get(0).getTerminology(),
           metadataList.get(0).getPublisher(), metadataList.get(0).getVersion());

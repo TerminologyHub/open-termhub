@@ -161,8 +161,7 @@ public class RootServiceRestImpl {
   }
 
   /**
-   * Authorize refresh. Decode the JWT (check expiration). Verify the role or
-   * throw 401.
+   * Authorize refresh. Decode the JWT (check expiration). Verify the role or throw 401.
    *
    * @param refreshToken the refresh token
    * @return the string

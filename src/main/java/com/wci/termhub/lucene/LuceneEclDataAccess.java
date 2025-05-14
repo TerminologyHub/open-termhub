@@ -41,7 +41,7 @@ import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 
 /**
- * The Class LuceneEclDataAccess.
+ * Lucene ECL data access.
  */
 public class LuceneEclDataAccess {
 
@@ -76,23 +76,22 @@ public class LuceneEclDataAccess {
    *
    * @param fromQuery the from query
    * @param toQuery the to query
-   * @param additionalTypeQuery the additional type query
+   * @param additionalTypeQuery2 the additional type query 2
    * @return the refinement query
    * @throws IOException Signals that an I/O exception has occurred.
    */
-  public Query getRefinementQuery(Query fromQuery, Query toQuery, Query additionalTypeQuery) throws IOException {
-    try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory))); DirectoryReader relationshipReader = DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))
-    ) {
-      IndexSearcher searcher = new IndexSearcher(new MultiReader(reader, relationshipReader));
+  public Query getRefinementQuery(final Query fromQuery, final Query toQuery,
+    final Query additionalTypeQuery2) throws IOException {
+    Query additionalTypeQuery = additionalTypeQuery2;
+    try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
+        DirectoryReader relationshipReader =
+            DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)));
+        final MultiReader multiReader = new MultiReader(reader, relationshipReader);) {
+      final IndexSearcher searcher = new IndexSearcher(multiReader);
       Query conceptJoinFromQuery = null;
       if (fromQuery != null) {
-        conceptJoinFromQuery = JoinUtil.createJoinQuery(
-                "code",
-                false,
-                "from.code",
-                fromQuery,
-                searcher,
-                ScoreMode.None);
+        conceptJoinFromQuery = JoinUtil.createJoinQuery("code", false, "from.code", fromQuery,
+            searcher, ScoreMode.None);
       } else {
         conceptJoinFromQuery = new TermQuery(new Term("from.code", "*"));
       }
@@ -101,37 +100,33 @@ public class LuceneEclDataAccess {
         if (toQuery.toString().contains("toValue")) {
           conceptJoinToQuery = toQuery;
         } else {
-          conceptJoinToQuery = JoinUtil.createJoinQuery(
-                  "code",
-                  false,
-                  "to.code",
-                  toQuery,
-                  searcher,
-                  ScoreMode.None);
+          conceptJoinToQuery =
+              JoinUtil.createJoinQuery("code", false, "to.code", toQuery, searcher, ScoreMode.None);
         }
       } else {
         conceptJoinToQuery = new TermQuery(new Term("code", "*"));
       }
       // additionalType queries are different.
-      // The reason being that not all terminologies have the additionalType/relationType as a code in the Concept index.
+      // The reason being that not all terminologies have the additionalType/relationType as a
+      // code in the Concept index.
       // So there is nothing to join on.
-      // However, we still need to support this for Snomed where the additionalType can be a complex expression.
+      // However, we still need to support this for Snomed where the additionalType can be a
+      // complex expression.
       // Any additionalType that is not a TermQuery needs to join with the Concept index.
       if (additionalTypeQuery == null) {
         additionalTypeQuery = new TermQuery(new Term("additionalType", "*"));
-      } else if (!(additionalTypeQuery instanceof TermQuery) || !((TermQuery) additionalTypeQuery).getTerm().field().equals("additionalType")) {
+      } else if (!(additionalTypeQuery instanceof TermQuery)
+          || !((TermQuery) additionalTypeQuery).getTerm().field().equals("additionalType")) {
         // Anything more than a TermQuery needs to join with the Concept index
-        additionalTypeQuery = JoinUtil.createJoinQuery(
-                "code",
-                false,
-                "additionalType",
-                additionalTypeQuery,
-                searcher,
-                ScoreMode.None);
+        additionalTypeQuery = JoinUtil.createJoinQuery("code", false, "additionalType",
+            additionalTypeQuery, searcher, ScoreMode.None);
       }
-      FilteredQuery filteredQuery = new FilteredQuery(searcher.rewrite(additionalTypeQuery), searcher.rewrite(conceptJoinToQuery));
-      FilteredQuery filteredQuery2 = fromQuery != null ? new FilteredQuery(searcher.rewrite(conceptJoinFromQuery), filteredQuery) : null;
-      return JoinUtil.createJoinQuery("from.code", false, "code", filteredQuery2 != null ? filteredQuery2 : filteredQuery, searcher, ScoreMode.None);
+      final FilteredQuery filteredQuery = new FilteredQuery(searcher.rewrite(additionalTypeQuery),
+          searcher.rewrite(conceptJoinToQuery));
+      final FilteredQuery filteredQuery2 = fromQuery != null
+          ? new FilteredQuery(searcher.rewrite(conceptJoinFromQuery), filteredQuery) : null;
+      return JoinUtil.createJoinQuery("from.code", false, "code",
+          filteredQuery2 != null ? filteredQuery2 : filteredQuery, searcher, ScoreMode.None);
     }
   }
 
@@ -143,14 +138,16 @@ public class LuceneEclDataAccess {
    */
   public List<Concept> getConcepts(final Query query) {
     final List<Concept> concepts = new ArrayList<>();
-    try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
-        DirectoryReader relationshipReader =
-            DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))) {
-      final MultiReader multiReader = new MultiReader(reader, relationshipReader);
+    try (final FSDirectory indexDir = FSDirectory.open(Paths.get(indexDirectory));
+        final FSDirectory relDir = FSDirectory.open(Paths.get(relationshipIndexDirectory));
+        DirectoryReader reader = DirectoryReader.open(indexDir);
+        DirectoryReader relationshipReader = DirectoryReader.open(relDir);
+        final MultiReader multiReader = new MultiReader(reader, relationshipReader);) {
       final IndexSearcher fromSearcher = new IndexSearcher(multiReader);
       final TopDocs docs = fromSearcher.search(query, 300000);
       for (final ScoreDoc scoreDoc : docs.scoreDocs) {
-        final Document doc = fromSearcher.doc(scoreDoc.doc);
+        // final Document doc = fromSearcher.doc(scoreDoc.doc);
+        final Document doc = fromSearcher.storedFields().document(scoreDoc.doc);
         String code = getCodeFromEntity(doc.get("entity"));
         Concept concept = null;
         if (code != null) {
@@ -187,10 +184,16 @@ public class LuceneEclDataAccess {
     return node.get("code").textValue();
   }
 
-  public static Query getOrQuery(List<String> conceptCodes) {
-    BooleanQuery.Builder builder = new BooleanQuery.Builder();
-    for (String conceptCode : conceptCodes) {
-      TermQuery query = new TermQuery(new Term("code", conceptCode));
+  /**
+   * Gets the or query.
+   *
+   * @param conceptCodes the concept codes
+   * @return the or query
+   */
+  public static Query getOrQuery(final List<String> conceptCodes) {
+    final BooleanQuery.Builder builder = new BooleanQuery.Builder();
+    for (final String conceptCode : conceptCodes) {
+      final TermQuery query = new TermQuery(new Term("code", conceptCode));
       builder.add(query, BooleanClause.Occur.SHOULD);
     }
     return builder.build();
@@ -224,7 +227,8 @@ public class LuceneEclDataAccess {
     @Override
     public DoubleValues getValues(final LeafReaderContext ctx, final DoubleValues scores)
       throws IOException {
-      final DoubleValuesSource queryDoubleValuesSource = DoubleValuesSource.fromQuery(this.query);
+      // final DoubleValuesSource queryDoubleValuesSource =
+      // DoubleValuesSource.fromQuery(this.query);
       return null;
     }
 

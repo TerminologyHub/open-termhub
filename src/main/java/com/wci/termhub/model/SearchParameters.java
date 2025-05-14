@@ -161,8 +161,8 @@ public class SearchParameters extends BaseModel {
   }
 
   /**
-   * Instantiates a {@link SearchParameters} from the specified parameters. This
-   * is a helper constructor so it can be easily constructed for "find" methods.
+   * Instantiates a {@link SearchParameters} from the specified parameters. This is a helper
+   * constructor so it can be easily constructed for "find" methods.
    *
    * @param query the query
    * @param offset the offset

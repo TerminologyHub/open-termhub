@@ -357,8 +357,7 @@ public interface ConfigClient extends RootClient {
   public void deleteApiKey(String apiKey) throws Exception;
 
   /**
-   * Check api key (whether it is valid or not), use a cache with a timer - 5
-   * min.
+   * Check api key (whether it is valid or not), use a cache with a timer - 5 min.
    *
    * @param apiKey the api key
    * @return true, if successful

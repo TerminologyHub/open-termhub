@@ -22,18 +22,17 @@ import jakarta.ws.rs.core.MediaType;
 
 /**
  * Reference implementation of {@link FhirServiceRest}.
- * https://hl7.org/fhir/R4/terminology-service.html
- * https://hl7.org/fhir/R4/search.html
+ * https://hl7.org/fhir/R4/terminology-service.html https://hl7.org/fhir/R4/search.html
  */
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON)
 public class FhirServiceRestImpl extends RootServiceRestImpl {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirServiceRestImpl.class);
 
   /** The request. */
+  @SuppressWarnings("unused")
   @Autowired
   private HttpServletRequest request;
 
@@ -47,8 +46,7 @@ public class FhirServiceRestImpl extends RootServiceRestImpl {
   }
 
   /**
-   * Instantiates a {@link FhirServiceRestImpl} from the specified parameters.
-   * For testing.
+   * Instantiates a {@link FhirServiceRestImpl} from the specified parameters. For testing.
    *
    * @param request the request
    * @throws Exception the exception

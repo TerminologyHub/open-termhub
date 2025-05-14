@@ -27,7 +27,7 @@ import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.util.ModelUtility;
 
 /**
- * The Class ConceptLoader.
+ * Concept relationship loader.
  */
 public final class ConceptRelationshipLoader {
 
@@ -56,6 +56,7 @@ public final class ConceptRelationshipLoader {
       }
 
       // get file name from command line
+      @SuppressWarnings("null")
       final String fullFileName = args[0];
       if (!Files.exists(Paths.get(fullFileName))) {
         logger.error("File does not exist at " + fullFileName);

@@ -70,7 +70,7 @@ public final class ModelUtility<T> {
   private static Map<Class<?>, Map<String, String>> sortFieldCache = new HashMap<>();
 
   /**
-   * Instantiates an empty {@link ConfigUtility}.
+   * Instantiates an empty {@link JwtUtility}.
    *
    * @param mapper the mapper
    */
@@ -91,8 +91,7 @@ public final class ModelUtility<T> {
   }
 
   /**
-   * Returns the name from class by stripping package and putting spaces where
-   * CamelCase is used.
+   * Returns the name from class by stripping package and putting spaces where CamelCase is used.
    *
    * @param clazz the clazz
    * @return the name from class
@@ -571,8 +570,8 @@ public final class ModelUtility<T> {
   }
 
   /**
-   * Gets the declared field. This method is necessary to ensure superclasses
-   * are searched for the field in addition to the clazz parameter.
+   * Gets the declared field. This method is necessary to ensure superclasses are searched for the
+   * field in addition to the clazz parameter.
    *
    * @param clazz the clazz
    * @param field the field
@@ -595,8 +594,7 @@ public final class ModelUtility<T> {
    * Returns the managed objects.
    *
    * @param service the service
-   * @param objects the comma separated list of simple object names (null for
-   *          all managed objects)
+   * @param objects the comma separated list of simple object names (null for all managed objects)
    * @return the managed objects
    * @throws Exception the exception
    */
@@ -616,6 +614,7 @@ public final class ModelUtility<T> {
     logger.info("  indexedSet = " + indexedSet);
 
     // Find managed classes
+    @SuppressWarnings("resource")
     final Set<EntityType<?>> entities = service.getEntityManager().getMetamodel().getEntities();
     final List<Class<?>> classes = entities.stream().map(EntityType::getJavaType)
         .filter(o -> o != null).collect(Collectors.toList());

@@ -25,8 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Represents a mapping between a code in one terminology and code in another
- * terminology.
+ * Represents a mapping between a code in one terminology and code in another terminology.
  */
 @Schema(
     description = "Represents a mapping between a code in one terminology and code in another terminology")
@@ -69,8 +68,7 @@ public class Mapping extends AbstractTerminologyComponent
   private List<String> advice;
 
   /**
-   * The type (or "category" or "relationship" - e.g. "equivalent", "broader",
-   * etc).
+   * The type (or "category" or "relationship" - e.g. "equivalent", "broader", etc).
    */
   @Field(type = FieldType.Keyword)
   private String type;

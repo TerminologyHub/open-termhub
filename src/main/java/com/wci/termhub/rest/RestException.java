@@ -12,8 +12,7 @@ package com.wci.termhub.rest;
 import com.wci.termhub.model.Error;
 
 /**
- * Wrapper REST exception so we can properly format all exception responses to
- * REST calls.
+ * Wrapper REST exception so we can properly format all exception responses to REST calls.
  */
 public class RestException extends RuntimeException {
 
@@ -82,10 +81,7 @@ public class RestException extends RuntimeException {
     if (this == obj) {
       return true;
     }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
+    if ((obj == null) || (getClass() != obj.getClass())) {
       return false;
     }
     final RestException other = (RestException) obj;

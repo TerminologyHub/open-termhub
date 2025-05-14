@@ -52,7 +52,7 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
- * The Class TerminologyServiceRestImplUnitTest.
+ * Unit tests foor TerminologyServiceRestImpl.
  */
 @SpringBootTest(classes = Application.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -176,6 +176,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     LOGGER.info(" content = {}", content);
     final List<Metadata> metadataList =
         objectMapper.readValue(content, new TypeReference<List<Metadata>>() {
+          // n/a
         });
     assertThat(metadataList).isNotNull();
     assertFalse(metadataList.isEmpty());
@@ -374,6 +375,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertThat(content).isNotNull();
     final List<Concept> concepts =
         objectMapper.readValue(content, new TypeReference<List<Concept>>() {
+          // n/a
         });
     assertThat(concepts).isNotNull();
     assertThat(concepts.size()).isEqualTo(4);
@@ -497,6 +499,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final List<String> names = objectMapper.readValue(content, new TypeReference<List<String>>() {
+      // n/a
     });
     assertThat(names).isNotNull();
     assertFalse(names.isEmpty());
@@ -529,6 +532,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertThat(content).isNotNull();
     final List<ResultListConcept> resultConceptList =
         objectMapper.readValue(content, new TypeReference<List<ResultListConcept>>() {
+          // n/a
         });
     assertThat(resultConceptList).isNotNull();
     assertThat(resultConceptList.size()).isEqualTo(5);

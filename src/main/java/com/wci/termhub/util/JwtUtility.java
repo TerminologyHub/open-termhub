@@ -60,7 +60,7 @@ public final class JwtUtility {
   public static final String ADMIN_USER_ID = new UUID(1, 2).toString();
 
   /**
-   * Instantiates an empty {@link ConfigUtility}.
+   * Instantiates an empty {@link JwtUtility}.
    */
   private JwtUtility() {
     // n/a
@@ -392,8 +392,8 @@ public final class JwtUtility {
   }
 
   /**
-   * Mock account jwt. Used for short-window timeout tokens used in automated
-   * emails (like password reset).
+   * Mock account jwt. Used for short-window timeout tokens used in automated emails (like password
+   * reset).
    *
    * @param userId the user id
    * @return the string

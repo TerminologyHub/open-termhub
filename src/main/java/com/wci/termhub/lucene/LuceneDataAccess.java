@@ -49,7 +49,7 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
 
 /**
- * The Class LuceneDataAccess.
+ * Lucene data access manager.
  */
 @Component
 public class LuceneDataAccess {
@@ -87,8 +87,8 @@ public class LuceneDataAccess {
 
     // Create a new IndexWriter with default config to initialize the index
     try (final FSDirectory directory = FSDirectory.open(indexDir.toPath());
-        final IndexWriter writer =
-            new IndexWriter(directory, new IndexWriterConfig(new StandardAnalyzer()))) {
+        final StandardAnalyzer analyzer = new StandardAnalyzer();
+        final IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(analyzer))) {
       // Commit to create the initial index structure
       writer.commit();
     }
@@ -120,23 +120,25 @@ public class LuceneDataAccess {
    */
   public void add(final List<? extends HasId> entities) throws IOException, IllegalAccessException {
 
-    final IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+    try (final StandardAnalyzer analyzer = new StandardAnalyzer()) {
+      final IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
-    final String indexDirectory = entities.get(0).getClass().getCanonicalName();
-    final File indexDir = new File(indexRootDirectory, indexDirectory);
-    if (!indexDir.exists()) {
-      indexDir.mkdirs();
-    }
-
-    try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
-        final IndexWriter writer = new IndexWriter(fsDirectory, config);) {
-
-      for (final HasId entity : entities) {
-        final Document document = getDocument(entity);
-        writer.addDocument(document);
+      final String indexDirectory = entities.get(0).getClass().getCanonicalName();
+      final File indexDir = new File(indexRootDirectory, indexDirectory);
+      if (!indexDir.exists()) {
+        indexDir.mkdirs();
       }
 
-      writer.commit();
+      try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
+          final IndexWriter writer = new IndexWriter(fsDirectory, config);) {
+
+        for (final HasId entity : entities) {
+          final Document document = getDocument(entity);
+          writer.addDocument(document);
+        }
+
+        writer.commit();
+      }
     }
   }
 
@@ -263,28 +265,30 @@ public class LuceneDataAccess {
     }
 
     final String indexDirectory = clazz.getCanonicalName();
-    final IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+    try (final StandardAnalyzer analyzer = new StandardAnalyzer()) {
+      final IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
-    LOGGER.info("Removing id: {} for index:{}", id, indexDirectory);
+      LOGGER.info("Removing id: {} for index:{}", id, indexDirectory);
 
-    final File indexDir = new File(indexRootDirectory, indexDirectory);
-    if (!indexDir.exists()) {
-      indexDir.mkdirs();
-    }
+      final File indexDir = new File(indexRootDirectory, indexDirectory);
+      if (!indexDir.exists()) {
+        indexDir.mkdirs();
+      }
 
-    try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
-        final IndexWriter writer = new IndexWriter(fsDirectory, config)) {
+      try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
+          final IndexWriter writer = new IndexWriter(fsDirectory, config)) {
 
-      final Query query = new TermQuery(new Term("id", id));
-      final BooleanQuery booleanQuery =
-          new BooleanQuery.Builder().add(query, BooleanClause.Occur.MUST).build();
+        final Query query = new TermQuery(new Term("id", id));
+        final BooleanQuery booleanQuery =
+            new BooleanQuery.Builder().add(query, BooleanClause.Occur.MUST).build();
 
-      writer.deleteDocuments(booleanQuery);
-      writer.commit();
+        writer.deleteDocuments(booleanQuery);
+        writer.commit();
 
-    } catch (final Exception e) {
-      LOGGER.error("Error: {}", e.getMessage(), e);
-      throw e;
+      } catch (final Exception e) {
+        LOGGER.error("Error: {}", e.getMessage(), e);
+        throw e;
+      }
     }
 
   }
@@ -339,6 +343,7 @@ public class LuceneDataAccess {
    * @return the list
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public <T extends HasId> ResultList<T> find(final Class<T> clazz,
     final SearchParameters searchParameters, final Query phraseQuery) throws Exception {
 
@@ -378,8 +383,9 @@ public class LuceneDataAccess {
 
         final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
         LOGGER.debug("Score: {}", scoreDoc.score);
-        @SuppressWarnings("deprecation")
-        final Document doc = searcher.doc(scoreDoc.doc);
+        // fix deprecated:
+        // final Document doc = searcher.doc(scoreDoc.doc);
+        final Document doc = searcher.storedFields().document(scoreDoc.doc);
         final String jsonEntityString = doc.get("entity");
         final T obj = mapper.readValue(jsonEntityString, clazz);
         LOGGER.debug("search result: {}", obj);

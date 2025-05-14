@@ -27,7 +27,7 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.util.ModelUtility;
 
 /**
- * The Class TerminologyLoader.
+ * Terminology loader.
  */
 public final class TerminologyLoader {
 
@@ -56,6 +56,7 @@ public final class TerminologyLoader {
       }
 
       // get file name from command line
+      @SuppressWarnings("null")
       final String fullFileName = args[0];
       if (!Files.exists(Paths.get(fullFileName))) {
         logger.error("File does not exist at " + fullFileName);

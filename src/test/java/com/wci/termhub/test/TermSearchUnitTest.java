@@ -37,7 +37,6 @@ import com.wci.termhub.service.EntityRepositoryService;
 public class TermSearchUnitTest extends BaseUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER = LoggerFactory.getLogger(TermSearchUnitTest.class);
 
   /** The Constant SEARCH_PARAMETERS. */

@@ -24,6 +24,9 @@ import com.wci.termhub.service.EntityRepositoryService;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
+/**
+ * FHIR R4 ConceptMap loader.
+ */
 public final class ConceptMapR4Loader {
 
   /** The logger. */
@@ -42,29 +45,29 @@ public final class ConceptMapR4Loader {
   /**
    * Load concept map from a JSON file and save it using the repository service.
    *
-   * @param service      the repository service to use for saving
-   * @param provider     the provider to use for saving
+   * @param service the repository service to use for saving
+   * @param provider the provider to use for saving
    * @param fullFileName the path to the JSON file
    * @throws Exception if there is an error reading or processing the file
    */
   public static void loadConceptMap(final EntityRepositoryService service,
-      final ConceptMapProviderR4 provider, final String fullFileName) throws Exception {
+    final ConceptMapProviderR4 provider, final String fullFileName) throws Exception {
     indexConceptMap(service, provider, fullFileName, 1000, -1);
   }
 
   /**
    * Index concept map.
    *
-   * @param service      the service
-   * @param provider     the provider
+   * @param service the service
+   * @param provider the provider
    * @param fullFileName the full file name
-   * @param batchSize    the batch size
-   * @param limit        the limit
+   * @param batchSize the batch size
+   * @param limit the limit
    * @throws Exception the exception
    */
   private static void indexConceptMap(final EntityRepositoryService service,
-      final ConceptMapProviderR4 provider, final String fullFileName, final int batchSize,
-      final int limit) throws Exception {
+    final ConceptMapProviderR4 provider, final String fullFileName, final int batchSize,
+    final int limit) throws Exception {
 
     LOGGER.debug("indexConceptMap: batch size: {} limit: {}", batchSize, limit);
     final long startTime = System.currentTimeMillis();
@@ -80,9 +83,9 @@ public final class ConceptMapR4Loader {
 
       // Set source and target URIs from first group
       if (conceptMap.hasGroup() && !conceptMap.getGroup().isEmpty()) {
-        ConceptMap.ConceptMapGroupComponent firstGroup = conceptMap.getGroup().get(0);
-        String sourceSystem = firstGroup.getSource();
-        String targetSystem = firstGroup.getTarget();
+        final ConceptMap.ConceptMapGroupComponent firstGroup = conceptMap.getGroup().get(0);
+        final String sourceSystem = firstGroup.getSource();
+        final String targetSystem = firstGroup.getTarget();
 
         LOGGER.info("Setting source URI: {}", sourceSystem + "?fhir_vs");
         LOGGER.info("Setting target URI: {}", targetSystem + "?fhir_vs");

@@ -36,6 +36,9 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
 
+/**
+ * Tests for ConceptRelationship.
+ */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")

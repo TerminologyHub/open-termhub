@@ -25,8 +25,7 @@ public class ResultListConceptRelationship extends ResultList<ConceptRelationshi
   }
 
   /**
-   * Instantiates a {@link ResultListConceptRelationship} from the specified
-   * parameters.
+   * Instantiates a {@link ResultListConceptRelationship} from the specified parameters.
    *
    * @param list the list
    */

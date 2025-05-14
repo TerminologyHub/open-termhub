@@ -26,8 +26,7 @@ public final class HandlerUtility {
   }
 
   /**
-   * Instantiates a handler using standard setup and configures it with
-   * properties.
+   * Instantiates a handler using standard setup and configures it with properties.
    *
    * @param <T> the
    * @param property the property

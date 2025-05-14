@@ -25,8 +25,7 @@ public class SerializationTester extends ProxyTester {
   private final Logger logger = LoggerFactory.getLogger(SerializationTester.class);
 
   /**
-   * Constructs a new getter/setter tester to test objects of a particular
-   * class.
+   * Constructs a new getter/setter tester to test objects of a particular class.
    * 
    * @param obj Object to test.
    */

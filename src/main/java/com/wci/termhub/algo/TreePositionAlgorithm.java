@@ -37,9 +37,8 @@ import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * Algorithm to compute tree positions. Should not be autowired as it is not
- * stateless or thread safe. Use ApplicationContext with getBean to get an
- * instance.
+ * Algorithm to compute tree positions. Should not be autowired as it is not stateless or thread
+ * safe. Use ApplicationContext with getBean to get an instance.
  */
 @Scope("prototype")
 @Component
@@ -166,7 +165,8 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       // ModelUtility.asList("id", "from.code", "to.code", "additionalType"),
       // ConceptRelationship.class,
       // searchAfter, prefixes);
-      final ResultList<ConceptRelationship> innerList = searchService.find(params, ConceptRelationship.class);
+      final ResultList<ConceptRelationship> innerList =
+          searchService.find(params, ConceptRelationship.class);
       if (innerList.getItems().isEmpty()) {
         break;
       }
@@ -307,20 +307,20 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
   /**
    * Compute tree positions.
    *
-   * @param code              the code
-   * @param ancestorPath      the ancestor path
-   * @param parChd            the par chd
-   * @param validationResult  the validation result
-   * @param startDate         the start date
-   * @param multipleRoots     the multiple roots
+   * @param code the code
+   * @param ancestorPath the ancestor path
+   * @param parChd the par chd
+   * @param validationResult the validation result
+   * @param startDate the start date
+   * @param multipleRoots the multiple roots
    * @param additionalTypeMap the additional type map
    * @return the sets the
    * @throws Exception the exception
    */
   public Set<String> computeTreePositions(final String code, final String ancestorPath,
-      final Map<String, Set<String>> parChd, final ValidationResult validationResult,
-      final Date startDate, final boolean multipleRoots, final Map<String, String> additionalTypeMap)
-      throws Exception {
+    final Map<String, Set<String>> parChd, final ValidationResult validationResult,
+    final Date startDate, final boolean multipleRoots, final Map<String, String> additionalTypeMap)
+    throws Exception {
 
     final Set<String> descConceptCodes = new HashSet<>();
 

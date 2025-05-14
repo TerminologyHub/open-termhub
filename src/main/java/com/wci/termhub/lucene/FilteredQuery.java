@@ -24,7 +24,7 @@ import org.apache.lucene.util.BitSetIterator;
 import org.apache.lucene.util.FixedBitSet;
 
 /**
- * The Class FilteredQuery.
+ * Represents a filtered query.
  */
 public class FilteredQuery extends Query {
 
@@ -69,7 +69,7 @@ public class FilteredQuery extends Query {
    */
   @Override
   public void visit(final QueryVisitor queryVisitor) {
-
+    // n/a
   }
 
   /**
@@ -166,6 +166,7 @@ public class FilteredQuery extends Query {
       if (innerScorer == null || filterScorer == null) {
         return null;
       }
+      @SuppressWarnings("resource")
       final FixedBitSet matchingDocIds = new FixedBitSet(context.reader().maxDoc());
       final DocIdSetIterator innerIterator = innerScorer.iterator();
       final DocIdSetIterator filterIterator = filterScorer.iterator();

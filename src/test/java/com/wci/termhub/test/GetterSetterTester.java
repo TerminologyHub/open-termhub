@@ -20,9 +20,9 @@ import org.slf4j.LoggerFactory;
  * Automates JUnit testing of simple getter/setter methods.
  *
  * <p>
- * It may be used in exclusive or inclusive mode. In exclusive mode, which is
- * the default, all JavaBeans properties (getter/setter method pairs with
- * matching names) are tested unless they are excluded beforehand. For example:
+ * It may be used in exclusive or inclusive mode. In exclusive mode, which is the default, all
+ * JavaBeans properties (getter/setter method pairs with matching names) are tested unless they are
+ * excluded beforehand. For example:
  *
  * <pre>
  * MyClass objectToTest = new MyClass();
@@ -37,24 +37,21 @@ import org.slf4j.LoggerFactory;
  * <ul>
  * <li>All Java primitive types.
  * <li>Interfaces.
- * <li>All non-final classes if <a href="http://cglib.sourceforge.net">cglib</a>
- * is on your classpath -- this uses cglib even when a no-argument constructor
- * is available because a constructor might have side effects that you wouldn.t
- * want to trigger in a unit test.
+ * <li>All non-final classes if <a href="http://cglib.sourceforge.net">cglib</a> is on your
+ * classpath -- this uses cglib even when a no-argument constructor is available because a
+ * constructor might have side effects that you wouldn.t want to trigger in a unit test.
  * <li>Java 5 enums.
  * </ul>
  *
  * <p>
- * Properties whose types are classes declared <code>final</code> are not
- * supported; neither are non-primitive, non-interface properties if you don't
- * have cglib.
+ * Properties whose types are classes declared <code>final</code> are not supported; neither are
+ * non-primitive, non-interface properties if you don't have cglib.
  *
  * <p>
  * Copyright (c) 2005, Steven Grimm.<br>
- * This software may be used for any purpose, commercial or noncommercial, so
- * long as this copyright notice is retained. If you make improvements to the
- * code, you're encouraged (but not required) to send them to me so I can make
- * them available to others. For updates, please check
+ * This software may be used for any purpose, commercial or noncommercial, so long as this copyright
+ * notice is retained. If you make improvements to the code, you're encouraged (but not required) to
+ * send them to me so I can make them available to others. For updates, please check
  * <a href="http://www.plaintivemewling.com/?p=34">here</a>.
  *
  * @author Steven Grimm, koreth@midwinter.com
@@ -71,8 +68,7 @@ public class GetterSetterTester extends ProxyTester {
   private boolean verbose = false;
 
   /**
-   * Constructs a new getter/setter tester to test objects of a particular
-   * class.
+   * Constructs a new getter/setter tester to test objects of a particular class.
    * 
    * @param obj Object to test.
    */
@@ -93,8 +89,8 @@ public class GetterSetterTester extends ProxyTester {
   }
 
   /**
-   * Walks through the methods in the class looking for getters and setters that
-   * are on our include list (if any) and are not on our exclude list.
+   * Walks through the methods in the class looking for getters and setters that are on our include
+   * list (if any) and are not on our exclude list.
    *
    * @throws Exception the exception
    */
@@ -110,15 +106,11 @@ public class GetterSetterTester extends ProxyTester {
       }
       final String fieldName = m.getName().substring(3);
       final Class<?>[] args = m.getParameterTypes();
-      if (args.length != 1) {
-        continue;
-      }
 
       /* Check the field name against our include/exclude list. */
-      if (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase())) {
-        continue;
-      }
-      if (getExcludes().contains(fieldName.toLowerCase())) {
+      if ((args.length != 1)
+          || (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase()))
+          || getExcludes().contains(fieldName.toLowerCase())) {
         continue;
       }
 

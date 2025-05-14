@@ -80,8 +80,7 @@ public interface RootService extends AutoCloseable {
   public boolean isObjectLocked(Object object) throws Exception;
 
   /**
-   * New instance of the object type - this binds a service implementation to an
-   * object impl.
+   * New instance of the object type - this binds a service implementation to an object impl.
    *
    * @param <T> the
    * @param clazz the clazz

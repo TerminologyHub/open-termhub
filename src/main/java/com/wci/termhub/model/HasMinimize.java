@@ -10,8 +10,8 @@
 package com.wci.termhub.model;
 
 /**
- * Generically represents something that can have its model minimized for return
- * of search results or cleaned of admin features for sending over the wire.
+ * Generically represents something that can have its model minimized for return of search results
+ * or cleaned of admin features for sending over the wire.
  */
 public interface HasMinimize {
 

@@ -23,8 +23,7 @@ public class EqualsHashcodeTester extends ProxyTester {
   private final Logger logger = LoggerFactory.getLogger(EqualsHashcodeTester.class);
 
   /**
-   * Constructs a new getter/setter tester to test objects of a particular
-   * class.
+   * Constructs a new getter/setter tester to test objects of a particular class.
    * 
    * @param obj Object to test.
    */
@@ -52,8 +51,8 @@ public class EqualsHashcodeTester extends ProxyTester {
   }
 
   /**
-   * Creates two objects and verifies for each that changing the non-included or
-   * excluded fields makes no difference to equality testing.
+   * Creates two objects and verifies for each that changing the non-included or excluded fields
+   * makes no difference to equality testing.
    *
    * @return true, if successful
    * @throws Exception the exception
@@ -73,8 +72,7 @@ public class EqualsHashcodeTester extends ProxyTester {
   }
 
   /**
-   * Creates two objects and verifies that any difference in identity fields
-   * produces inequality.
+   * Creates two objects and verifies that any difference in identity fields produces inequality.
    *
    * @return true, if successful
    * @throws Exception the exception
@@ -96,15 +94,11 @@ public class EqualsHashcodeTester extends ProxyTester {
 
       final String fieldName = m.getName().substring(3);
       final Class<?>[] args = m.getParameterTypes();
-      if (args.length != 1) {
-        continue;
-      }
 
       /* Check the field name against our include/exclude list. */
-      if (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase())) {
-        continue;
-      }
-      if (getExcludes().contains(fieldName.toLowerCase())) {
+      if ((args.length != 1)
+          || (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase()))
+          || getExcludes().contains(fieldName.toLowerCase())) {
         continue;
       }
 
@@ -145,8 +139,7 @@ public class EqualsHashcodeTester extends ProxyTester {
   }
 
   /**
-   * Creates two objects with the same field values and verifies they have equal
-   * hashcodes.
+   * Creates two objects with the same field values and verifies they have equal hashcodes.
    *
    * @return true, if successful
    * @throws Exception the exception
@@ -159,8 +152,8 @@ public class EqualsHashcodeTester extends ProxyTester {
   }
 
   /**
-   * Creates two objects and verifies for each that changing the non-included or
-   * excluded fields does not affect the hashcode.
+   * Creates two objects and verifies for each that changing the non-included or excluded fields
+   * does not affect the hashcode.
    *
    * @return true, if successful
    * @throws Exception the exception
@@ -178,8 +171,8 @@ public class EqualsHashcodeTester extends ProxyTester {
   }
 
   /**
-   * Creates two objects and verifies that any difference in identity fields
-   * produces different hashcodes.
+   * Creates two objects and verifies that any difference in identity fields produces different
+   * hashcodes.
    *
    * @return true, if successful
    * @throws Exception the exception
@@ -201,15 +194,11 @@ public class EqualsHashcodeTester extends ProxyTester {
 
       final String fieldName = m.getName().substring(3);
       final Class<?>[] args = m.getParameterTypes();
-      if (args.length != 1) {
-        continue;
-      }
 
       /* Check the field name against our include/exclude list. */
-      if (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase())) {
-        continue;
-      }
-      if (getExcludes().contains(fieldName.toLowerCase())) {
+      if ((args.length != 1)
+          || (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase()))
+          || getExcludes().contains(fieldName.toLowerCase())) {
         continue;
       }
 

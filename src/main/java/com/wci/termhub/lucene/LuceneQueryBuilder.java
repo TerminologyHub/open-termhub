@@ -17,12 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The Class LuceneQueryBuilder.
+ * Lucene query builder.
  */
 public final class LuceneQueryBuilder {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(LuceneQueryBuilder.class);
 
   /**
@@ -39,6 +38,7 @@ public final class LuceneQueryBuilder {
    * @return the query
    * @throws ParseException the parse exception
    */
+  @SuppressWarnings("resource")
   public static Query parse(final String queryText) throws ParseException {
 
     final KeywordAnalyzer analyzer = new KeywordAnalyzer();

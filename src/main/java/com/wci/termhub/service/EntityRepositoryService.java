@@ -164,8 +164,7 @@ public interface EntityRepositoryService {
     final Class<T> clazz) throws Exception;
 
   /**
-   * Find all with fields. For each batch of results, send to the callback
-   * handler.
+   * Find all with fields. For each batch of results, send to the callback handler.
    *
    * @param <T> the generic type
    * @param query the query

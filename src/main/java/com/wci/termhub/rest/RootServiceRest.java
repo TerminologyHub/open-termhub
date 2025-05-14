@@ -28,8 +28,7 @@ public interface RootServiceRest {
   public ResponseEntity<HealthCheck> health(final Boolean dependencies) throws Exception;
 
   /**
-   * Hook for admin tasks. STandard tasks include: reindexing, clearing caches,
-   * etc.
+   * Hook for admin tasks. STandard tasks include: reindexing, clearing caches, etc.
    *
    * @param task the task
    * @param adminKey the admin key

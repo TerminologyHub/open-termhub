@@ -27,9 +27,8 @@ import com.wci.termhub.util.StringUtility;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Represents a name of a concept with associated information. Also called
- * "atoms", "descriptions", "names", "synonyms", "labels" and a variety of other
- * words depending on the input terminology.
+ * Represents a name of a concept with associated information. Also called "atoms", "descriptions",
+ * "names", "synonyms", "labels" and a variety of other words depending on the input terminology.
  */
 @Schema(description = "Represents a name of a concept in a terminology with associated information")
 @Document(indexName = "term-v1")

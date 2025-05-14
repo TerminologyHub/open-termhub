@@ -39,8 +39,8 @@ import jakarta.persistence.Transient;
 public class Terminology extends TerminologyRef implements HasAttributes {
 
   /**
-   * Attribute keys that can be associated with a terminology (and their
-   * descriptions) rendered as terminology attributes when building a data set.
+   * Attribute keys that can be associated with a terminology (and their descriptions) rendered as
+   * terminology attributes when building a data set.
    */
   public enum Attributes {
 
@@ -58,8 +58,8 @@ public class Terminology extends TerminologyRef implements HasAttributes {
     /** The show sty. */
     showSty("show-sty"),
     /**
-     * The hierarchy sort style. TODO: rather than this ConceptTreePosition
-     * shoudl have a sort field.
+     * The hierarchy sort style. TODO: rather than this ConceptTreePosition shoudl have a sort
+     * field.
      */
     hierarchySortStyle("hierarchy-sort-style"),
     /** The polyhierarchy. */
@@ -308,9 +308,8 @@ public class Terminology extends TerminologyRef implements HasAttributes {
   }
 
   /**
-   * Here, we want to search a variety of different ways. Including: 1. Search
-   * by whether an attribute exists. 2. Search by whether an attribute has a
-   * particular value.
+   * Here, we want to search a variety of different ways. Including: 1. Search by whether an
+   * attribute exists. 2. Search by whether an attribute has a particular value.
    *
    * @return the attributes
    */
