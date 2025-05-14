@@ -106,10 +106,11 @@ public class GetterSetterTester extends ProxyTester {
       }
       final String fieldName = m.getName().substring(3);
       final Class<?>[] args = m.getParameterTypes();
-      
 
       /* Check the field name against our include/exclude list. */
-      if ((args.length != 1) || (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase())) || getExcludes().contains(fieldName.toLowerCase())) {
+      if ((args.length != 1)
+          || (!getIncludes().isEmpty() && !getIncludes().contains(fieldName.toLowerCase()))
+          || getExcludes().contains(fieldName.toLowerCase())) {
         continue;
       }
 

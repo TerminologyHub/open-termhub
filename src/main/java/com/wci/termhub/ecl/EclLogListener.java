@@ -60,7 +60,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterRefinedexpressionconstraint(final ECLParser.RefinedexpressionconstraintContext ctx) {
+  public void enterRefinedexpressionconstraint(
+    final ECLParser.RefinedexpressionconstraintContext ctx) {
     log.trace("enterRefinedexpressionconstraint");
     log.trace(ctx.getText());
   }
@@ -73,7 +74,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitRefinedexpressionconstraint(final ECLParser.RefinedexpressionconstraintContext ctx) {
+  public void exitRefinedexpressionconstraint(
+    final ECLParser.RefinedexpressionconstraintContext ctx) {
     log.trace("exitRefinedexpressionconstraint");
   }
 
@@ -85,7 +87,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterCompoundexpressionconstraint(final ECLParser.CompoundexpressionconstraintContext ctx) {
+  public void enterCompoundexpressionconstraint(
+    final ECLParser.CompoundexpressionconstraintContext ctx) {
     log.trace("enterCompoundexpressionconstraint");
     log.trace(ctx.getText());
   }
@@ -98,7 +101,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitCompoundexpressionconstraint(final ECLParser.CompoundexpressionconstraintContext ctx) {
+  public void exitCompoundexpressionconstraint(
+    final ECLParser.CompoundexpressionconstraintContext ctx) {
     log.trace("exitCompoundexpressionconstraint");
     log.trace(ctx.getText());
   }
@@ -195,7 +199,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterDottedexpressionconstraint(final ECLParser.DottedexpressionconstraintContext ctx) {
+  public void enterDottedexpressionconstraint(
+    final ECLParser.DottedexpressionconstraintContext ctx) {
     log.trace("enterDottedexpressionconstraint");
     log.trace(ctx.getText());
   }
@@ -208,7 +213,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitDottedexpressionconstraint(final ECLParser.DottedexpressionconstraintContext ctx) {
+  public void exitDottedexpressionconstraint(
+    final ECLParser.DottedexpressionconstraintContext ctx) {
     log.trace("exitDottedexpressionconstraint");
     log.trace(ctx.getText());
   }
@@ -1339,7 +1345,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterExpressioncomparisonoperator(final ECLParser.ExpressioncomparisonoperatorContext ctx) {
+  public void enterExpressioncomparisonoperator(
+    final ECLParser.ExpressioncomparisonoperatorContext ctx) {
     log.trace("enterExpressioncomparisonoperator");
     log.trace(ctx.getText());
   }
@@ -1352,7 +1359,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitExpressioncomparisonoperator(final ECLParser.ExpressioncomparisonoperatorContext ctx) {
+  public void exitExpressioncomparisonoperator(
+    final ECLParser.ExpressioncomparisonoperatorContext ctx) {
     log.trace("exitExpressioncomparisonoperator");
     log.trace(ctx.getText());
   }
@@ -1469,7 +1477,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterDescriptionfilterconstraint(final ECLParser.DescriptionfilterconstraintContext ctx) {
+  public void enterDescriptionfilterconstraint(
+    final ECLParser.DescriptionfilterconstraintContext ctx) {
     log.trace("enterDescriptionfilterconstraint");
     log.trace(ctx.getText());
   }
@@ -1482,7 +1491,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitDescriptionfilterconstraint(final ECLParser.DescriptionfilterconstraintContext ctx) {
+  public void exitDescriptionfilterconstraint(
+    final ECLParser.DescriptionfilterconstraintContext ctx) {
     log.trace("exitDescriptionfilterconstraint");
     log.trace(ctx.getText());
   }
@@ -2641,7 +2651,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterDefinitionstatustokenfilter(final ECLParser.DefinitionstatustokenfilterContext ctx) {
+  public void enterDefinitionstatustokenfilter(
+    final ECLParser.DefinitionstatustokenfilterContext ctx) {
     log.trace("enterDefinitionstatustokenfilter");
     log.trace(ctx.getText());
   }
@@ -2654,7 +2665,8 @@ public class EclLogListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitDefinitionstatustokenfilter(final ECLParser.DefinitionstatustokenfilterContext ctx) {
+  public void exitDefinitionstatustokenfilter(
+    final ECLParser.DefinitionstatustokenfilterContext ctx) {
     log.trace("exitDefinitionstatustokenfilter");
     log.trace(ctx.getText());
   }

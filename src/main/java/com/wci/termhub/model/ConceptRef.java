@@ -28,8 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConceptRef extends AbstractHasModified
-    implements HasName, TerminologyComponent, Copyable<ConceptRef>, Comparable<ConceptRef>
-{
+    implements HasName, TerminologyComponent, Copyable<ConceptRef>, Comparable<ConceptRef> {
 
   /** The name. */
   @MultiField(mainField = @Field(type = FieldType.Text), otherFields = {

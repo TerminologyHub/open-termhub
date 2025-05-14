@@ -129,8 +129,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 public class TerminologyServiceRestImpl extends RootServiceRestImpl
-    implements TerminologyServiceRest
-{
+    implements TerminologyServiceRest {
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(TerminologyServiceRestImpl.class);

@@ -36,8 +36,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Term extends AbstractHasModified
-    implements TerminologyComponent, HasName, HasAttributes, Copyable<Term>, Comparable<Term>
-{
+    implements TerminologyComponent, HasName, HasAttributes, Copyable<Term>, Comparable<Term> {
 
   /** The name. */
   @MultiField(mainField = @Field(type = FieldType.Text), otherFields = {

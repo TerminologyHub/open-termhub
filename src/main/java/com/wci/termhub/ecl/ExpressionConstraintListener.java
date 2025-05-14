@@ -111,10 +111,12 @@ public class ExpressionConstraintListener extends EclLogListener {
                 .add(selfTermQuery, BooleanClause.Occur.SHOULD).build();
         queries.put(text, selfAncestorsQuery);
       } else if (constraintoperator.ancestorof() != null) {
-        final TermQuery descendantsTermQuery = new TermQuery(new Term("descendants.code", conceptId));
+        final TermQuery descendantsTermQuery =
+            new TermQuery(new Term("descendants.code", conceptId));
         queries.put(text, descendantsTermQuery);
       } else if (constraintoperator.ancestororselfof() != null) {
-        final TermQuery descendantsTermQuery = new TermQuery(new Term("descendants.code", conceptId));
+        final TermQuery descendantsTermQuery =
+            new TermQuery(new Term("descendants.code", conceptId));
         final TermQuery selfTermQuery = new TermQuery(new Term("code", conceptId));
         final BooleanQuery selfDescendantsQuery =
             new BooleanQuery.Builder().add(descendantsTermQuery, BooleanClause.Occur.SHOULD)
@@ -285,14 +287,16 @@ public class ExpressionConstraintListener extends EclLogListener {
 
   /* see superclass */
   @Override
-  public void enterRefinedexpressionconstraint(final ECLParser.RefinedexpressionconstraintContext ctx) {
+  public void enterRefinedexpressionconstraint(
+    final ECLParser.RefinedexpressionconstraintContext ctx) {
     super.enterRefinedexpressionconstraint(ctx);
     isRefinment = true;
   }
 
   /* see superclass */
   @Override
-  public void exitRefinedexpressionconstraint(final ECLParser.RefinedexpressionconstraintContext ctx) {
+  public void exitRefinedexpressionconstraint(
+    final ECLParser.RefinedexpressionconstraintContext ctx) {
     final EclExpression eclExpression = getExpression(ctx);
     currentSubExpression = eclExpression.expressionText;
     assertOperands(eclExpression);
@@ -327,7 +331,8 @@ public class ExpressionConstraintListener extends EclLogListener {
               ? new MatchAllDocsQuery() : lhsConcepts;
           final Query additionalQuery = ALL_CONCEPTS.equals(expression.rhsOperand.expression)
               ? new MatchAllDocsQuery() : rhsConcepts;
-          final Query query = luceneEclDataAccess.getRefinementQuery(fromQuery, toQuery, additionalQuery);
+          final Query query =
+              luceneEclDataAccess.getRefinementQuery(fromQuery, toQuery, additionalQuery);
           final BooleanQuery booleanQuery =
               new BooleanQuery.Builder().add(query, BooleanClause.Occur.SHOULD)
                   .add(toQuery, BooleanClause.Occur.SHOULD).build();
@@ -527,7 +532,8 @@ public class ExpressionConstraintListener extends EclLogListener {
    * @param lastSymbol the last symbol
    * @return the string
    */
-  public static String removeFirstAndLast(final String str, final String firstSymbol, final String lastSymbol) {
+  public static String removeFirstAndLast(final String str, final String firstSymbol,
+    final String lastSymbol) {
     return str.startsWith(firstSymbol) && str.endsWith(lastSymbol)
         ? str.substring(1, str.length() - 1) : str;
   }
@@ -607,8 +613,9 @@ public class ExpressionConstraintListener extends EclLogListener {
    */
   private BiConsumer<Query, Query> getDisjuctionConsumer(final EclExpression expression) {
     return (lhsQuery, rhsQuery) -> {
-      final BooleanQuery query = new BooleanQuery.Builder().add(lhsQuery, BooleanClause.Occur.SHOULD)
-          .add(rhsQuery, BooleanClause.Occur.SHOULD).build();
+      final BooleanQuery query =
+          new BooleanQuery.Builder().add(lhsQuery, BooleanClause.Occur.SHOULD)
+              .add(rhsQuery, BooleanClause.Occur.SHOULD).build();
       queries.put(expression.expressionText, query);
     };
   }

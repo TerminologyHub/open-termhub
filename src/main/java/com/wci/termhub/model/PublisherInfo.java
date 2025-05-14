@@ -35,8 +35,7 @@ import jakarta.persistence.Transient;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PublisherInfo extends AbstractHasModified
-    implements HasLazyInit, Copyable<PublisherInfo>
-{
+    implements HasLazyInit, Copyable<PublisherInfo> {
 
   /** The type. e.g. NLM, SNOMED, etc. */
   @Column(nullable = false, length = 256)

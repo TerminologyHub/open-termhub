@@ -33,8 +33,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Mapping extends AbstractTerminologyComponent
-    implements HasAttributes, Comparable<Mapping>, Copyable<Mapping>
-{
+    implements HasAttributes, Comparable<Mapping>, Copyable<Mapping> {
 
   /** The component id for this term. */
   @Field(type = FieldType.Keyword)

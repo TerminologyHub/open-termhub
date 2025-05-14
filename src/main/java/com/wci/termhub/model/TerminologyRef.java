@@ -31,8 +31,7 @@ import jakarta.persistence.Transient;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TerminologyRef extends AbstractHasModified // extends
     // AbstractHasJsonData
-    implements HasName, HasMinimize, Copyable<TerminologyRef>, Comparable<TerminologyRef>
-{
+    implements HasName, HasMinimize, Copyable<TerminologyRef>, Comparable<TerminologyRef> {
 
   /** The abbreviation. */
   @Transient

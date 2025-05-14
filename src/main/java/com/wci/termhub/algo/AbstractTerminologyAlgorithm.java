@@ -23,8 +23,7 @@ import com.wci.termhub.util.ModelUtility;
  * Abstract algorithm for loading a terminology.
  */
 public abstract class AbstractTerminologyAlgorithm extends AbstractNoServiceAlgorithm
-    implements TerminologyAlgorithm
-{
+    implements TerminologyAlgorithm {
 
   /** The logger. */
   @SuppressWarnings("unused")

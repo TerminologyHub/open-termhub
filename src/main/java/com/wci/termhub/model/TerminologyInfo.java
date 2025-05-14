@@ -41,8 +41,7 @@ import jakarta.persistence.Transient;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TerminologyInfo extends AbstractHasModified
-    implements HasLazyInit, Copyable<TerminologyInfo>
-{
+    implements HasLazyInit, Copyable<TerminologyInfo> {
 
   /** The type. This is the terminology abbreviation */
   @Column(nullable = false, length = 256)

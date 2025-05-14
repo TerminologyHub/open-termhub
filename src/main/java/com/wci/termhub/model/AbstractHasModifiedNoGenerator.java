@@ -27,8 +27,7 @@ import jakarta.persistence.TemporalType;
  */
 @MappedSuperclass
 public abstract class AbstractHasModifiedNoGenerator extends AbstractHasIdNoGenerator
-    implements HasModified
-{
+    implements HasModified {
 
   /** The logger. */
   @SuppressWarnings("unused")

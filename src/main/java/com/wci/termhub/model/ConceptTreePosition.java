@@ -45,8 +45,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConceptTreePosition extends AbstractTerminologyComponent
-    implements Copyable<ConceptTreePosition>
-{
+    implements Copyable<ConceptTreePosition> {
 
   /** The concept. */
   @Field(type = FieldType.Object)

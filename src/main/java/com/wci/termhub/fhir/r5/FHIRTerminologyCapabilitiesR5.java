@@ -33,8 +33,7 @@ import ca.uhn.fhir.model.api.annotation.ResourceDef;
     "translation", "closure"
 })
 public class FHIRTerminologyCapabilitiesR5 extends TerminologyCapabilities
-    implements IBaseConformance
-{
+    implements IBaseConformance {
 
   /** The Constant serialVersionUID. */
   private static final long serialVersionUID = 1L;

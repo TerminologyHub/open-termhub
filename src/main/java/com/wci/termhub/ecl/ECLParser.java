@@ -357,7 +357,8 @@ public class ECLParser extends Parser {
       return getRuleContext(EclrefinementContext.class, 0);
     }
 
-    public RefinedexpressionconstraintContext(final ParserRuleContext parent, final int invokingState) {
+    public RefinedexpressionconstraintContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -424,7 +425,8 @@ public class ECLParser extends Parser {
       return getRuleContext(ExclusionexpressionconstraintContext.class, 0);
     }
 
-    public CompoundexpressionconstraintContext(final ParserRuleContext parent, final int invokingState) {
+    public CompoundexpressionconstraintContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -512,7 +514,8 @@ public class ECLParser extends Parser {
       return getRuleContext(ConjunctionContext.class, i);
     }
 
-    public ConjunctionexpressionconstraintContext(final ParserRuleContext parent, final int invokingState) {
+    public ConjunctionexpressionconstraintContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -609,7 +612,8 @@ public class ECLParser extends Parser {
       return getRuleContext(DisjunctionContext.class, i);
     }
 
-    public DisjunctionexpressionconstraintContext(final ParserRuleContext parent, final int invokingState) {
+    public DisjunctionexpressionconstraintContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -702,7 +706,8 @@ public class ECLParser extends Parser {
       return getRuleContext(ExclusionContext.class, 0);
     }
 
-    public ExclusionexpressionconstraintContext(final ParserRuleContext parent, final int invokingState) {
+    public ExclusionexpressionconstraintContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -777,7 +782,8 @@ public class ECLParser extends Parser {
       return getRuleContext(DottedexpressionattributeContext.class, i);
     }
 
-    public DottedexpressionconstraintContext(final ParserRuleContext parent, final int invokingState) {
+    public DottedexpressionconstraintContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -858,7 +864,8 @@ public class ECLParser extends Parser {
       return getRuleContext(EclattributenameContext.class, 0);
     }
 
-    public DottedexpressionattributeContext(final ParserRuleContext parent, final int invokingState) {
+    public DottedexpressionattributeContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -995,7 +1002,8 @@ public class ECLParser extends Parser {
 
   public final SubexpressionconstraintContext subexpressionconstraint()
     throws RecognitionException {
-    final SubexpressionconstraintContext _localctx = new SubexpressionconstraintContext(_ctx, getState());
+    final SubexpressionconstraintContext _localctx =
+        new SubexpressionconstraintContext(_ctx, getState());
     enterRule(_localctx, 16, RULE_subexpressionconstraint);
     int _la;
     try {
@@ -1932,7 +1940,8 @@ public class ECLParser extends Parser {
   }
 
   public final EclconceptreferencesetContext eclconceptreferenceset() throws RecognitionException {
-    final EclconceptreferencesetContext _localctx = new EclconceptreferencesetContext(_ctx, getState());
+    final EclconceptreferencesetContext _localctx =
+        new EclconceptreferencesetContext(_ctx, getState());
     enterRule(_localctx, 34, RULE_eclconceptreferenceset);
     try {
       int _alt;
@@ -3454,7 +3463,8 @@ public class ECLParser extends Parser {
       return getRuleContext(SubrefinementContext.class, i);
     }
 
-    public ConjunctionrefinementsetContext(final ParserRuleContext parent, final int invokingState) {
+    public ConjunctionrefinementsetContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -3549,7 +3559,8 @@ public class ECLParser extends Parser {
       return getRuleContext(SubrefinementContext.class, i);
     }
 
-    public DisjunctionrefinementsetContext(final ParserRuleContext parent, final int invokingState) {
+    public DisjunctionrefinementsetContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -3847,7 +3858,8 @@ public class ECLParser extends Parser {
 
   public final ConjunctionattributesetContext conjunctionattributeset()
     throws RecognitionException {
-    final ConjunctionattributesetContext _localctx = new ConjunctionattributesetContext(_ctx, getState());
+    final ConjunctionattributesetContext _localctx =
+        new ConjunctionattributesetContext(_ctx, getState());
     enterRule(_localctx, 76, RULE_conjunctionattributeset);
     try {
       int _alt;
@@ -3941,7 +3953,8 @@ public class ECLParser extends Parser {
 
   public final DisjunctionattributesetContext disjunctionattributeset()
     throws RecognitionException {
-    final DisjunctionattributesetContext _localctx = new DisjunctionattributesetContext(_ctx, getState());
+    final DisjunctionattributesetContext _localctx =
+        new DisjunctionattributesetContext(_ctx, getState());
     enterRule(_localctx, 78, RULE_disjunctionattributeset);
     try {
       int _alt;
@@ -4799,7 +4812,8 @@ public class ECLParser extends Parser {
       return getToken(ECLParser.EXCLAMATION, 0);
     }
 
-    public ExpressioncomparisonoperatorContext(final ParserRuleContext parent, final int invokingState) {
+    public ExpressioncomparisonoperatorContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -4879,7 +4893,8 @@ public class ECLParser extends Parser {
       return getToken(ECLParser.GREATER_THAN, 0);
     }
 
-    public NumericcomparisonoperatorContext(final ParserRuleContext parent, final int invokingState) {
+    public NumericcomparisonoperatorContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -5014,7 +5029,8 @@ public class ECLParser extends Parser {
   }
 
   public final TimecomparisonoperatorContext timecomparisonoperator() throws RecognitionException {
-    final TimecomparisonoperatorContext _localctx = new TimecomparisonoperatorContext(_ctx, getState());
+    final TimecomparisonoperatorContext _localctx =
+        new TimecomparisonoperatorContext(_ctx, getState());
     enterRule(_localctx, 104, RULE_timecomparisonoperator);
     try {
       setState(766);
@@ -5089,7 +5105,8 @@ public class ECLParser extends Parser {
       return getToken(ECLParser.EXCLAMATION, 0);
     }
 
-    public StringcomparisonoperatorContext(final ParserRuleContext parent, final int invokingState) {
+    public StringcomparisonoperatorContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -5161,7 +5178,8 @@ public class ECLParser extends Parser {
       return getToken(ECLParser.EXCLAMATION, 0);
     }
 
-    public BooleancomparisonoperatorContext(final ParserRuleContext parent, final int invokingState) {
+    public BooleancomparisonoperatorContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -5273,7 +5291,8 @@ public class ECLParser extends Parser {
       return getToken(ECLParser.D, 0);
     }
 
-    public DescriptionfilterconstraintContext(final ParserRuleContext parent, final int invokingState) {
+    public DescriptionfilterconstraintContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -10656,7 +10675,8 @@ public class ECLParser extends Parser {
       return getRuleContext(MwsContext.class, i);
     }
 
-    public AcceptabilityconceptreferencesetContext(final ParserRuleContext parent, final int invokingState) {
+    public AcceptabilityconceptreferencesetContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -10787,7 +10807,8 @@ public class ECLParser extends Parser {
   }
 
   public final AcceptabilitytokensetContext acceptabilitytokenset() throws RecognitionException {
-    final AcceptabilitytokensetContext _localctx = new AcceptabilitytokensetContext(_ctx, getState());
+    final AcceptabilitytokensetContext _localctx =
+        new AcceptabilitytokensetContext(_ctx, getState());
     enterRule(_localctx, 182, RULE_acceptabilitytokenset);
     try {
       int _alt;
@@ -11544,7 +11565,8 @@ public class ECLParser extends Parser {
 
   public final ConceptfilterconstraintContext conceptfilterconstraint()
     throws RecognitionException {
-    final ConceptfilterconstraintContext _localctx = new ConceptfilterconstraintContext(_ctx, getState());
+    final ConceptfilterconstraintContext _localctx =
+        new ConceptfilterconstraintContext(_ctx, getState());
     enterRule(_localctx, 190, RULE_conceptfilterconstraint);
     int _la;
     try {
@@ -11761,7 +11783,8 @@ public class ECLParser extends Parser {
   }
 
   public final DefinitionstatusfilterContext definitionstatusfilter() throws RecognitionException {
-    final DefinitionstatusfilterContext _localctx = new DefinitionstatusfilterContext(_ctx, getState());
+    final DefinitionstatusfilterContext _localctx =
+        new DefinitionstatusfilterContext(_ctx, getState());
     enterRule(_localctx, 194, RULE_definitionstatusfilter);
     try {
       setState(1363);
@@ -11816,7 +11839,8 @@ public class ECLParser extends Parser {
       return getRuleContext(EclconceptreferencesetContext.class, 0);
     }
 
-    public DefinitionstatusidfilterContext(final ParserRuleContext parent, final int invokingState) {
+    public DefinitionstatusidfilterContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -12003,7 +12027,8 @@ public class ECLParser extends Parser {
       return getToken(ECLParser.U, 0);
     }
 
-    public DefinitionstatusidkeywordContext(final ParserRuleContext parent, final int invokingState) {
+    public DefinitionstatusidkeywordContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -12649,7 +12674,8 @@ public class ECLParser extends Parser {
       return getRuleContext(DefinitionstatustokensetContext.class, 0);
     }
 
-    public DefinitionstatustokenfilterContext(final ParserRuleContext parent, final int invokingState) {
+    public DefinitionstatustokenfilterContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -12859,7 +12885,8 @@ public class ECLParser extends Parser {
 
   public final DefinitionstatuskeywordContext definitionstatuskeyword()
     throws RecognitionException {
-    final DefinitionstatuskeywordContext _localctx = new DefinitionstatuskeywordContext(_ctx, getState());
+    final DefinitionstatuskeywordContext _localctx =
+        new DefinitionstatuskeywordContext(_ctx, getState());
     enterRule(_localctx, 202, RULE_definitionstatuskeyword);
     int _la;
     try {
@@ -13423,7 +13450,8 @@ public class ECLParser extends Parser {
   }
 
   public final DefinitionstatustokenContext definitionstatustoken() throws RecognitionException {
-    final DefinitionstatustokenContext _localctx = new DefinitionstatustokenContext(_ctx, getState());
+    final DefinitionstatustokenContext _localctx =
+        new DefinitionstatustokenContext(_ctx, getState());
     enterRule(_localctx, 204, RULE_definitionstatustoken);
     try {
       setState(1519);
@@ -13490,7 +13518,8 @@ public class ECLParser extends Parser {
       return getRuleContext(MwsContext.class, i);
     }
 
-    public DefinitionstatustokensetContext(final ParserRuleContext parent, final int invokingState) {
+    public DefinitionstatustokensetContext(final ParserRuleContext parent,
+        final int invokingState) {
       super(parent, invokingState);
     }
 
@@ -17034,7 +17063,8 @@ public class ECLParser extends Parser {
   }
 
   public final MemberfilterconstraintContext memberfilterconstraint() throws RecognitionException {
-    final MemberfilterconstraintContext _localctx = new MemberfilterconstraintContext(_ctx, getState());
+    final MemberfilterconstraintContext _localctx =
+        new MemberfilterconstraintContext(_ctx, getState());
     enterRule(_localctx, 240, RULE_memberfilterconstraint);
     int _la;
     try {
@@ -18179,7 +18209,8 @@ public class ECLParser extends Parser {
   }
 
   public final HistorymoderatesuffixContext historymoderatesuffix() throws RecognitionException {
-    final HistorymoderatesuffixContext _localctx = new HistorymoderatesuffixContext(_ctx, getState());
+    final HistorymoderatesuffixContext _localctx =
+        new HistorymoderatesuffixContext(_ctx, getState());
     enterRule(_localctx, 254, RULE_historymoderatesuffix);
     int _la;
     try {
@@ -19574,7 +19605,8 @@ public class ECLParser extends Parser {
 
   public final NonnegativeintegervalueContext nonnegativeintegervalue()
     throws RecognitionException {
-    final NonnegativeintegervalueContext _localctx = new NonnegativeintegervalueContext(_ctx, getState());
+    final NonnegativeintegervalueContext _localctx =
+        new NonnegativeintegervalueContext(_ctx, getState());
     enterRule(_localctx, 274, RULE_nonnegativeintegervalue);
     int _la;
     try {

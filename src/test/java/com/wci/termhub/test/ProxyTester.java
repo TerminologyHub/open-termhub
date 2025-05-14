@@ -166,7 +166,8 @@ public class ProxyTester {
         continue;
       }
 
-      if ((!includes.isEmpty() && includes.contains(fieldName.toLowerCase()) && reverseIncludes) || excludes.contains(fieldName.toLowerCase())) {
+      if ((!includes.isEmpty() && includes.contains(fieldName.toLowerCase()) && reverseIncludes)
+          || excludes.contains(fieldName.toLowerCase())) {
         // skip excludes always
         continue;
       }

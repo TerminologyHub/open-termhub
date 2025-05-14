@@ -50,7 +50,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterRefinedexpressionconstraint(final ECLParser.RefinedexpressionconstraintContext ctx) { // n/a
+  public void enterRefinedexpressionconstraint(
+    final ECLParser.RefinedexpressionconstraintContext ctx) { // n/a
   }
 
   /**
@@ -61,7 +62,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitRefinedexpressionconstraint(final ECLParser.RefinedexpressionconstraintContext ctx) { // n/a
+  public void exitRefinedexpressionconstraint(
+    final ECLParser.RefinedexpressionconstraintContext ctx) { // n/a
   }
 
   /**
@@ -72,7 +74,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterCompoundexpressionconstraint(final ECLParser.CompoundexpressionconstraintContext ctx) { // n/a
+  public void enterCompoundexpressionconstraint(
+    final ECLParser.CompoundexpressionconstraintContext ctx) { // n/a
   }
 
   /**
@@ -83,7 +86,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitCompoundexpressionconstraint(final ECLParser.CompoundexpressionconstraintContext ctx) { // n/a
+  public void exitCompoundexpressionconstraint(
+    final ECLParser.CompoundexpressionconstraintContext ctx) { // n/a
   }
 
   /**
@@ -166,7 +170,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterDottedexpressionconstraint(final ECLParser.DottedexpressionconstraintContext ctx) { // n/a
+  public void enterDottedexpressionconstraint(
+    final ECLParser.DottedexpressionconstraintContext ctx) { // n/a
   }
 
   /**
@@ -177,7 +182,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitDottedexpressionconstraint(final ECLParser.DottedexpressionconstraintContext ctx) { // n/a
+  public void exitDottedexpressionconstraint(
+    final ECLParser.DottedexpressionconstraintContext ctx) { // n/a
   }
 
   /**
@@ -1134,7 +1140,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterExpressioncomparisonoperator(final ECLParser.ExpressioncomparisonoperatorContext ctx) { // n/a
+  public void enterExpressioncomparisonoperator(
+    final ECLParser.ExpressioncomparisonoperatorContext ctx) { // n/a
   }
 
   /**
@@ -1145,7 +1152,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitExpressioncomparisonoperator(final ECLParser.ExpressioncomparisonoperatorContext ctx) { // n/a
+  public void exitExpressioncomparisonoperator(
+    final ECLParser.ExpressioncomparisonoperatorContext ctx) { // n/a
   }
 
   /**
@@ -1244,7 +1252,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterDescriptionfilterconstraint(final ECLParser.DescriptionfilterconstraintContext ctx) { // n/a
+  public void enterDescriptionfilterconstraint(
+    final ECLParser.DescriptionfilterconstraintContext ctx) { // n/a
   }
 
   /**
@@ -1255,7 +1264,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitDescriptionfilterconstraint(final ECLParser.DescriptionfilterconstraintContext ctx) { // n/a
+  public void exitDescriptionfilterconstraint(
+    final ECLParser.DescriptionfilterconstraintContext ctx) { // n/a
   }
 
   /**
@@ -2236,7 +2246,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void enterDefinitionstatustokenfilter(final ECLParser.DefinitionstatustokenfilterContext ctx) { // n/a
+  public void enterDefinitionstatustokenfilter(
+    final ECLParser.DefinitionstatustokenfilterContext ctx) { // n/a
   }
 
   /**
@@ -2247,7 +2258,8 @@ public class ECLBaseListener implements ECLListener {
    * </p>
    */
   @Override
-  public void exitDefinitionstatustokenfilter(final ECLParser.DefinitionstatustokenfilterContext ctx) { // n/a
+  public void exitDefinitionstatustokenfilter(
+    final ECLParser.DefinitionstatustokenfilterContext ctx) { // n/a
   }
 
   /**

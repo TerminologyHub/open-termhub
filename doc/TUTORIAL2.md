@@ -41,11 +41,15 @@ mkdir -p $INDEX_DIR
 docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 termhub/open-termhub:1.1.0.202505
 ```
 
+**[Back to top](#step-by-step-instructions-with-termhub-data)**
+
 ## View API Documentation
 
 All three of the above options will yield a running server and you should now you should be able to access the Swagger UI pages:
 * [Swagger](https://localhost:8080/swagger-ui/index.html)
 * [FHIR R4 Swagger](https://localhost:8080/fhir/r4/swagger-ui/index.html)
+
+**[Back to top](#step-by-step-instructions-with-termhub-data)**
 
 ## Create TermHub account/login
 
@@ -56,6 +60,8 @@ Start by going to the [Termhub Signup Page](https://app.terminologyhub.com/signu
 ### Logging in (once you have created an account)
 
 Go to the [Termhub Login Page](https://app.terminologyhub.com/login) and log in using the account created in the previous step.
+
+**[Back to top](#step-by-step-instructions-with-termhub-data)**
 
 ## Creating a TermHub Project
 
@@ -75,14 +81,20 @@ Steps
 * Click the icon to download all terminologies in your project
 <need image>
 
+**[Back to top](#step-by-step-instructions-with-termhub-data)**
+
 ## Loading data
 
 After the previous step, you will have CodeSystem .json files downloaded from TermHub and these can now be loaded through the API into a running container.
 
 ... curl commands ... info about runtime
 
+**[Back to top](#step-by-step-instructions-with-termhub-data)**
+
 
 ## Demonstrating the UI
 
 try these curl commands
 OR try the postman collecition (postman-tutorial.json)
+
+**[Back to top](#step-by-step-instructions-with-termhub-data)**

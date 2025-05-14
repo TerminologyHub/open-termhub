@@ -66,8 +66,9 @@ public class EclToLuceneConverter {
     final List<RecognitionException> exceptions = new ArrayList<>();
     parser.addErrorListener(new BaseErrorListener() {
       @Override
-      public void syntaxError(final Recognizer<?, ?> recognizer, final Object offendingSymbol, final int line,
-        final int charPositionInLine, final String msg, final RecognitionException e) {
+      public void syntaxError(final Recognizer<?, ?> recognizer, final Object offendingSymbol,
+        final int line, final int charPositionInLine, final String msg,
+        final RecognitionException e) {
         if (ECLParser.RULE_dottedexpressionconstraint != e.getCtx().getRuleIndex()) {
           throw new RuntimeException(String.format("Syntax error at line %s, character %s: %s",
               line, charPositionInLine, msg.replace("extraneous input", "unexpected character")));
@@ -77,7 +78,8 @@ public class EclToLuceneConverter {
     final ECLParser.ExpressionconstraintContext tree = parser.expressionconstraint();
 
     final ParseTreeWalker walker = new ParseTreeWalker();
-    final ExpressionConstraintListener listener = new ExpressionConstraintListener(luceneEclDataAccess);
+    final ExpressionConstraintListener listener =
+        new ExpressionConstraintListener(luceneEclDataAccess);
     walker.walk(listener, tree);
     if (exceptions.isEmpty()) {
       final Map<String, Query> queries = listener.getQueries();

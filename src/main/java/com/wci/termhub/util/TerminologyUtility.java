@@ -1075,7 +1075,8 @@ public final class TerminologyUtility {
         while (m2.find()) {
           // skip boolean operators that "look like codes"
           // skip if next char is =
-          if (m2.group(0).matches("(OR|AND|NOT)") || (right.length() < m2.end() && right.charAt(m2.end()) == '=')) {
+          if (m2.group(0).matches("(OR|AND|NOT)")
+              || (right.length() < m2.end() && right.charAt(m2.end()) == '=')) {
             continue;
           }
           // logger.info(" CODE = " + m2.group(0));

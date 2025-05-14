@@ -30,8 +30,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConceptRelationship extends AbstractHasModified implements TerminologyComponent,
-    HasAttributes, Copyable<ConceptRelationship>, Comparable<ConceptRelationship>
-{
+    HasAttributes, Copyable<ConceptRelationship>, Comparable<ConceptRelationship> {
 
   /** The terminology. */
   @Field(type = FieldType.Keyword)

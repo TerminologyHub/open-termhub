@@ -1,4 +1,4 @@
-# Step-by-step instructions with sandbox data
+# Step-by-step instructions with Sandbox data
 Instructions on using data local to this project to get Open Termhub up and running within 5 minutes.
 
 [Tutorial Training Video](https://youtu.be/Vto42DIMw2U)
@@ -41,6 +41,8 @@ mkdir -p $INDEX_DIR
 docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 termhub/open-termhub:1.1.0.202505
 ```
 
+**[Back to top](#step-by-step-instructions-with-sandbox-data)**
+
 ## View API Documentation
 
 All three of the above options will yield a running server and you should now you should be able to access the Swagger UI pages:
@@ -48,35 +50,92 @@ All three of the above options will yield a running server and you should now yo
 * [FHIR R4 Swagger](https://localhost:8080/fhir/r4/swagger-ui/index.html)
 * [FHIR R5 Swagger](https://localhost:8080/fhir/r5/swagger-ui/index.html)
 
+**[Back to top](#step-by-step-instructions-with-sandbox-data)**
+
 ## Loading SANDBOX data
 
-... load via API from src/main/resources/data
+The sandbox data is a collection of mini terminology assets derived from the major
+vocabularies used in healthcare in the US including SNOMED, LOINC, RXNORM, ICD10.
+This data exactly corresponds to the data in the "Sandbox" public project in TermHub
+cloud server itself. Copies of these files exist in src/main/resources/data and so 
+can be loaded directly from here once the server is running.
 
-curl -X 'POST' \
-  'http://localhost:8080/fhir/r4/CodeSystem' \
-  -H 'accept: application/fhir+json' \
-  -H 'Content-Type: application/fhir+json' \
-  -d '{ Content from code system file }'
+Use one of the options above to ensure the server is running and then run the
+following curl commands which will load the data from FHIR R5 CodeSystem and ConceptMap
+resources.
+
+#### Load Sandbox SNOMEDCT
+
+```
+curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
+  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
+  -d '@src/main/resources/data/CodeSystem-snomedct-sandbox-20240101-r5.json'
+```
+
+#### Load Sandbox SNOMEDCT_US
+
+```
+curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
+  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
+  -d '@src/main/resources/data/CodeSystem-snomedctus-sandbox-20240301-r5.json'
+```
+
+#### Load Sandbox RXNORM
+
+```
+curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
+  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
+  -d '@src/main/resources/data/CodeSystem-rxnorm-sandbox-04012024-r5.json'
+```
+
+#### Load Sandbox ICD10CM
+
+```
+curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
+  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
+  -d '@src/main/resources/data/CodeSystem-icd10cm-sandbox-2023-r5.json'
+```
+
+#### Load Sandbox LNC
+
+```
+curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
+  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
+  -d '@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json'
+```
+
+#### Load the SNOMEDCT_US to ICD10CM concept maps
+
+```
+curl -X POST http://localhost:8080/fhir/r5/ConceptMap \
+  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
+  -d '@src/main/resources/data/ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json'
+```
   
-curl -X 'POST' \
-  'http://localhost:8080/fhir/r5/CodeSystem' \
-  -H 'accept: application/fhir+json' \
-  -H 'Content-Type: application/fhir+json' \
-  -d '{ Content from code system file }'
-  
-curl -X 'POST' \
-  'http://localhost:8080/fhir/r4/ConceptMap' \
-  -H 'accept: application/fhir+json' \
-  -H 'Content-Type: application/fhir+json' \
-  -d '{ Content from concept map file as json }'
-  
-curl -X 'POST' \
-  'http://localhost:8080/fhir/r5/ConceptMap' \
-  -H 'accept: application/fhir+json' \
-  -H 'Content-Type: application/fhir+json' \
-  -d '{ Content from concept map file as json }'
+After running the commands above, the running server should be loaded with the
+specified data.  The entire runtime for this is about 1 min.
+
+**[Back to top](#step-by-step-instructions-with-sandbox-data)**
+
 
 ## Demonstrating the UI
 
-try these curl commands
-OR try the postman collecition (postman-tutorial.json)
+Now that we have data loaded, we can try a several curl commands to demonstrate
+basic function.  And a [Postman Collection](postman-open-termhub.json) is also
+provided
+
+### Testing the "native" API
+
+
+
+
+
+### Testing the FHIR R4 API
+
+
+### Testing the FHIR R5 API
+
+
+
+**[Back to top](#step-by-step-instructions-with-sandbox-data)**
+

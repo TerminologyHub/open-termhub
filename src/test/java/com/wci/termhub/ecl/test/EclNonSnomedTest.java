@@ -95,7 +95,8 @@ public class EclNonSnomedTest {
   private List<String> handleExpressionWithLucene(final String expression) throws Exception {
     final EclToLuceneConverter converter = new EclToLuceneConverter();
     logger.info("Running {}", expression);
-    final String cleansedExpression = ExpressionConstraintListener.removeComments(expression.trim());
+    final String cleansedExpression =
+        ExpressionConstraintListener.removeComments(expression.trim());
     final Query query = converter.parse(cleansedExpression);
     final List<Concept> concepts = luceneEclDataAccess.getConcepts(query);
     if (concepts == null) {

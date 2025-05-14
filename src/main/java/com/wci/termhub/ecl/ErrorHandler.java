@@ -39,7 +39,8 @@ public class ErrorHandler implements ANTLRErrorStrategy {
 
   /* see superclass */
   @Override
-  public void recover(final Parser parser, final RecognitionException e) throws RecognitionException {
+  public void recover(final Parser parser, final RecognitionException e)
+    throws RecognitionException {
     // n/a
   }
 

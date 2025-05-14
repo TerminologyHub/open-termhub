@@ -34,8 +34,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Document(indexName = "metadata-v1")
 @JsonInclude(Include.NON_EMPTY)
 public class Metadata extends AbstractTerminologyComponent
-    implements Copyable<Metadata>, Comparable<Metadata>
-{
+    implements Copyable<Metadata>, Comparable<Metadata> {
 
   /** The model. */
   @Field(type = FieldType.Keyword)

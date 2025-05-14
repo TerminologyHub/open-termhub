@@ -9,7 +9,7 @@ container works seamlessly with terminology content provided by
 ## Table of Contents
 
 1. [Build, Test, and make Docker Images](doc/BUILD.md)
-2. [Step-by-step instructions with sandbox data](doc/TUTORIAL1.md)
+2. [Step-by-step instructions with Sandbox data](doc/TUTORIAL1.md)
 3. [Step-by-step instructions with TermHub data](doc/TUTORIAL2.md)
 
 ## Contributing
