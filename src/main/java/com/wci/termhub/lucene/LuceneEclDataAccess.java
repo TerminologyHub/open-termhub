@@ -80,16 +80,19 @@ public class LuceneEclDataAccess {
    * @return the refinement query
    * @throws IOException Signals that an I/O exception has occurred.
    */
-  public Query getRefinementQuery(final Query fromQuery, final Query toQuery,
-    Query additionalTypeQuery) throws IOException {
-    try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
-        DirectoryReader relationshipReader =
-            DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))) {
-      final IndexSearcher searcher = new IndexSearcher(new MultiReader(reader, relationshipReader));
+  public Query getRefinementQuery(Query fromQuery, Query toQuery, Query additionalTypeQuery) throws IOException {
+    try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory))); DirectoryReader relationshipReader = DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))
+    ) {
+      IndexSearcher searcher = new IndexSearcher(new MultiReader(reader, relationshipReader));
       Query conceptJoinFromQuery = null;
       if (fromQuery != null) {
-        conceptJoinFromQuery = JoinUtil.createJoinQuery("code", false, "from.code", fromQuery,
-            searcher, ScoreMode.None);
+        conceptJoinFromQuery = JoinUtil.createJoinQuery(
+                "code",
+                false,
+                "from.code",
+                fromQuery,
+                searcher,
+                ScoreMode.None);
       } else {
         conceptJoinFromQuery = new TermQuery(new Term("from.code", "*"));
       }
@@ -98,31 +101,37 @@ public class LuceneEclDataAccess {
         if (toQuery.toString().contains("toValue")) {
           conceptJoinToQuery = toQuery;
         } else {
-          conceptJoinToQuery =
-              JoinUtil.createJoinQuery("code", false, "to.code", toQuery, searcher, ScoreMode.None);
+          conceptJoinToQuery = JoinUtil.createJoinQuery(
+                  "code",
+                  false,
+                  "to.code",
+                  toQuery,
+                  searcher,
+                  ScoreMode.None);
         }
       } else {
         conceptJoinToQuery = new TermQuery(new Term("code", "*"));
       }
       // additionalType queries are different.
-      // The reason being that not all terminologies have the
-      // additionalType/relationType as a code in the Concept index.
+      // The reason being that not all terminologies have the additionalType/relationType as a code in the Concept index.
       // So there is nothing to join on.
-      // However, we still need to support this for Snomed where the
-      // additionalType can be a complex expression.
+      // However, we still need to support this for Snomed where the additionalType can be a complex expression.
+      // Any additionalType that is not a TermQuery needs to join with the Concept index.
       if (additionalTypeQuery == null) {
         additionalTypeQuery = new TermQuery(new Term("additionalType", "*"));
-      } else if (!(additionalTypeQuery instanceof TermQuery)) {
+      } else if (!(additionalTypeQuery instanceof TermQuery) || !((TermQuery) additionalTypeQuery).getTerm().field().equals("additionalType")) {
         // Anything more than a TermQuery needs to join with the Concept index
-        additionalTypeQuery = JoinUtil.createJoinQuery("code", false, "additionalType",
-            additionalTypeQuery, searcher, ScoreMode.None);
+        additionalTypeQuery = JoinUtil.createJoinQuery(
+                "code",
+                false,
+                "additionalType",
+                additionalTypeQuery,
+                searcher,
+                ScoreMode.None);
       }
-      final FilteredQuery filteredQuery = new FilteredQuery(searcher.rewrite(additionalTypeQuery),
-          searcher.rewrite(conceptJoinToQuery));
-      final FilteredQuery filteredQuery2 = fromQuery != null
-          ? new FilteredQuery(searcher.rewrite(conceptJoinFromQuery), filteredQuery) : null;
-      return JoinUtil.createJoinQuery("from.code", false, "code",
-          filteredQuery2 != null ? filteredQuery2 : filteredQuery, searcher, ScoreMode.None);
+      FilteredQuery filteredQuery = new FilteredQuery(searcher.rewrite(additionalTypeQuery), searcher.rewrite(conceptJoinToQuery));
+      FilteredQuery filteredQuery2 = fromQuery != null ? new FilteredQuery(searcher.rewrite(conceptJoinFromQuery), filteredQuery) : null;
+      return JoinUtil.createJoinQuery("from.code", false, "code", filteredQuery2 != null ? filteredQuery2 : filteredQuery, searcher, ScoreMode.None);
     }
   }
 
@@ -178,79 +187,13 @@ public class LuceneEclDataAccess {
     return node.get("code").textValue();
   }
 
-  /**
-   * Search.
-   *
-   * @throws IOException Signals that an I/O exception has occurred.
-   */
-  public void search() throws IOException {
-    final TermQuery termQuery = new TermQuery(new Term("ancestors", "72431002"));
-    final TermQuery termQuery2 = new TermQuery(new Term("additionalType", "has_component"));
-    final BooleanQuery booleanQuery =
-        new BooleanQuery.Builder().add(termQuery, BooleanClause.Occur.SHOULD)
-            .add(termQuery2, BooleanClause.Occur.SHOULD).build();
-
-    final TermQuery termQuery3 = new TermQuery(new Term("code", "LP73603-0"));
-    final TermQuery termQuery4 = new TermQuery(new Term("ancestors", "410942007"));
-    final TermQuery termQuery5 = new TermQuery(new Term("code", "410942007"));
-    final BooleanQuery booleanQuery3 =
-        new BooleanQuery.Builder().add(termQuery4, BooleanClause.Occur.SHOULD)
-            .add(termQuery5, BooleanClause.Occur.SHOULD).build();
-
-    try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
-        DirectoryReader relationshipReader =
-            DirectoryReader.open(FSDirectory.open(Paths.get(relationshipIndexDirectory)))) {
-      final MultiReader multiReader = new MultiReader(reader, relationshipReader);
-      final IndexSearcher relationshipSearcher = new IndexSearcher(multiReader);
-      final Query joinQuery = JoinUtil.createJoinQuery("codeJoin", false, "fromCode", booleanQuery,
-          relationshipSearcher, ScoreMode.None);
-      final Query joinQuery2 = JoinUtil.createJoinQuery("code", false, "to.code", termQuery3,
-          relationshipSearcher, ScoreMode.None);
-      final Query joinQuery3 = JoinUtil.createJoinQuery("code", false, "additionalType", termQuery2,
-          relationshipSearcher, ScoreMode.None);
-      final FilteredQuery filteredQuery = new FilteredQuery(
-          relationshipSearcher.rewrite(joinQuery2), relationshipSearcher.rewrite(joinQuery3));
-      final FilteredQuery filteredQuery2 =
-          new FilteredQuery(relationshipSearcher.rewrite(joinQuery), filteredQuery);
-      final Query joinQuery4 = JoinUtil.createJoinQuery("fromCodeJoin", false, "code",
-          filteredQuery2, relationshipSearcher, ScoreMode.None);
-      // Query joinQuery6 = JoinUtil.createJoinQuery("toCodeJoin", false,
-      // "code", joinQuery3, relationshipSearcher, ScoreMode.None);
-      // Query booleanQuery4 = new BooleanQuery.Builder().add(joinQuery6,
-      // BooleanClause.Occur.MUST).add(booleanQuery3,
-      // BooleanClause.Occur.MUST).build();
-      // FunctionScoreQuery functionScoreQuery = new
-      // FunctionScoreQuery(joinQuery3, new
-      // MultiQueryDoubleValuesSource(joinQuery2));
-      // FunctionScoreQuery functionScoreQuery2 = new
-      // FunctionScoreQuery(functionScoreQuery, new
-      // MultiQueryDoubleValuesSource(joinQuery));
-
-      // Query joinQuery7 = JoinUtil.createJoinQuery("codeJoin", false,
-      // "toCode", joinQuery6, relationshipSearcher, ScoreMode.None);
-      // Query joinQuery4 = JoinUtil.createJoinQuery("toCodeJoin", false,
-      // "code", joinQuery7, relationshipSearcher, ScoreMode.None);
-      // Query booleanQuery4 = new BooleanQuery.Builder().add(joinQuery4,
-      // BooleanClause.Occur.MUST).add(booleanQuery3,
-      // BooleanClause.Occur.MUST).build();
-      // Query joinQuery5 = JoinUtil.createJoinQuery("fromCodeJoin", false,
-      // "code", joinQuery2, relationshipSearcher, ScoreMode.None);
-
-      // BooleanQuery booleanQuery2 = new BooleanQuery.Builder().add(joinQuery,
-      // BooleanClause.Occur.MUST).add(functionScoreQuery,
-      // BooleanClause.Occur.MUST).build();
-      if (relationshipIndexDirectory == null) {
-        // TopDocs docs = fromSearcher.search(booleanQuery2, 1000000);
-        // System.out.println(docs.totalHits.value);
-      } else {
-        final List<Concept> concepts = getConcepts(termQuery2);
-        concepts.stream().map(Concept::getCode).forEach(System.out::println);
-        System.out.println("Results:" + concepts.size());
-      }
-      // List<Concept> concepts = getConcepts(booleanQuery2);
-      // concepts.stream().map(Concept::getCode).forEach(System.out::println);
-
+  public static Query getOrQuery(List<String> conceptCodes) {
+    BooleanQuery.Builder builder = new BooleanQuery.Builder();
+    for (String conceptCode : conceptCodes) {
+      TermQuery query = new TermQuery(new Term("code", conceptCode));
+      builder.add(query, BooleanClause.Occur.SHOULD);
     }
+    return builder.build();
   }
 
   /**
@@ -401,20 +344,5 @@ public class LuceneEclDataAccess {
     concept.setDescendants(descendants);
     concept.setRelationships(relationships);
     return concept;
-  }
-
-  /**
-   * The main method.
-   *
-   * @param args the arguments
-   * @throws IOException Signals that an I/O exception has occurred.
-   */
-  public static void main(final String[] args) throws IOException {
-    // LuceneDao luceneDao = new
-    // LuceneDao("/Users/squareroot/wci/snomed/index/snomed");
-    final LuceneEclDataAccess luceneEclDataAccess = new LuceneEclDataAccess(
-        "/Users/squareroot/wci/snomed/open-termhub/index/com.wci.termhub.model.Concept",
-        "/Users/squareroot/wci/snomed/open-termhub/index/com.wci.termhub.model.ConceptRelationship");
-    luceneEclDataAccess.search();
   }
 }

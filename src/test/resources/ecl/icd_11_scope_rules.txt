@@ -1,0 +1,37 @@
+<<86406008 |Human immunodeficiency virus infection| MINUS <<420721002 |Acquired immunodeficiency syndrome-associated disorder (disorder)|
+<< 272379006 |Event|
+* : 246075003=<<410607006
+<<72431002 |Accidental poisoning| : 246075003=<<410942007 |Drug or medicament|
+<<72431002 |Accidental poisoning| MINUS (<<72431002 |Accidental poisoning| : 246075003=<410942007 |Drug or medicament|)
+<<410061008 |Intentional poisoning| : 246075003=<<410942007 |Drug or medicament|
+<<410061008 |Intentional poisoning| MINUS (<<410061008 |Intentional poisoning| : 246075003=<410942007 |Drug or medicament|)
+<< 281647001:<<47429007=<<410942007 |Drug or medicament|
+<< 281647001:<<47429007=<<418165002
+<<219186006 |Assault by poisoning| : 246075003=<<410942007 |Drug or medicament|
+<<219186006 |Assault by poisoning| MINUS (<<219186006 |Assault by poisoning| : 246075003=<410942007 |Drug or medicament|)
+(<< 281647001:<<47429007=<<105590001) MINUS (<<281647001:<<47429007=(<<410942007 OR <<418165002))
+(<<75478009 |Poisoning| : 246075003=<<410942007 |Drug or medicament|) MINUS (<<72431002 |Accidental poisoning| OR <<410061008 |Intentional poisoning| OR <<219186006 |Assault by poisoning|)
+(<<75478009 |Poisoning| MINUS (<<75478009 |Poisoning| : 246075003=<410942007 |Drug or medicament|)) MINUS (<<72431002 |Accidental poisoning| OR <<410061008 |Intentional poisoning| OR <<219186006 |Assault by poisoning|)
+<<420721002 |Acquired immunodeficiency syndrome-associated disorder (disorder)| AND <<56717001|Tuberculosis|
+<<420721002 |Acquired immunodeficiency syndrome-associated disorder (disorder)| AND <<61462000|Malaria|
+<<420721002 |Acquired immunodeficiency syndrome-associated disorder (disorder)| MINUS (<<56717001|Tuberculosis|  OR <<61462000|Malaria|)
+<<110359009 MINUS (<<110359009: 246454002= 255399007)
+(<< 64572001:<<47429007=<< 272181003) MINUS (<248982007)
+(<<404684003:371881003=<<71388002) MINUS (<1269435001 OR <248982007)
+# There is a bug in Snomed (<<404684003:42752001=<<71388002) MINUS (<1269435001 OR <248982007)
+<< 269691005
+#<<272379006 MINUS ^injuryInHealthcare
+<<110359009: 246454002= 255399007
+<<243796009: 246090004= (<<404684003 OR <<272379006)
+<<243796009: 363589002=*
+<248982007
+<<385486001 MINUS ((<< 64572001:<<47429007=<< 272181003) OR (<<404684003:371881003=<<71388002) OR (<<404684003:42752001=<<71388002))
+<<57958006 |Endocrine myopathy (disorder)|
+<<91302008 |Sepsis (disorder)|
+<<417237009 |Blister of skin AND/OR mucosa (disorder)| MINUS (<< 23957004 OR 83070001 OR 63785008)
+<<721244002 |Infection causing myelitis (disorder)|
+(<<404684003:<< 47429007= <<34801009) OR (<<404684003:<< 47429007=<<417044008) OR (<<404684003:<< 47429007=<<363681007)
+<<27075004 | Venereal disease in mother complicating pregnancy, childbirth AND/OR puerperium |
+<<199745000 |Complication occurring during labor and delivery (disorder)|
+<<80113008 |Complication of the puerperium (disorder)|
+<<198609003 |Complication of pregnancy, childbirth and/or puerperium (disorder)| MINUS (<<27075004 | Venereal disease in mother complicating pregnancy, childbirth AND/OR puerperium | OR <<80113008 |Complication of the puerperium (disorder)| OR <<199745000 |Complication occurring during labor and delivery (disorder)|)
