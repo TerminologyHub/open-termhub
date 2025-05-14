@@ -98,8 +98,7 @@ public class PropertyUtility {
    * Return properties with the specified prefix.
    *
    * @param prefix the prefix of the properties to return
-   * @param removePrefix Should the prefix be removed from the keys of the
-   *          returned properties
+   * @param removePrefix Should the prefix be removed from the keys of the returned properties
    * @return the properties with the specified prefix
    * @throws Exception the exception
    */
