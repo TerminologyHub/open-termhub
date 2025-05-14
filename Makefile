@@ -20,7 +20,7 @@ clean: ## Clean build artifacts. Override for your project
 	./gradlew clean
 
 build: ## Build the library without tests
-	./gradlew build	test -x javadoc
+	./gradlew build -x test -x spotbugsMain -x spotbugsTest -x javadoc
 
 scan: ## scan for vulnerabilities in dependencies
 	/bin/rm -rf gradle/dependency-locks
@@ -30,7 +30,7 @@ scan: ## scan for vulnerabilities in dependencies
 	/bin/rm -rf gradle.lockfile
 
 test: ## Run all tests
-	./gradlew test
+	./gradlew test spotbugsMain spotbugsTest
 
 test-r4: ## Run R4 tests only
 	./gradlew testR4
