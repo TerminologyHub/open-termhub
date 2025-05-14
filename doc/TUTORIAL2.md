@@ -1,5 +1,5 @@
-# Step-by-step instructions with sandbox data
-Instructions on using data local to this project to get Open Termhub up and running within 5 minutes.
+# Step-by-step instructions with TermHub data
+Instructions on using data from a TermHub project to Open Termhub up and running within 5 minutes.
 
 [Tutorial Training Video](https://youtu.be/Vto42DIMw2U)
 
@@ -47,9 +47,40 @@ All three of the above options will yield a running server and you should now yo
 * [Swagger](https://localhost:8080/swagger-ui/index.html)
 * [FHIR R4 Swagger](https://localhost:8080/fhir/r4/swagger-ui/index.html)
 
-## Loading SANDBOX data
+## Create TermHub account/login
 
-... load via API from src/main/resources/data
+### Creating an account (skip if you have one)
+
+Start by going to the [Termhub Signup Page](https://app.terminologyhub.com/signup).  You can sign up with a username/password or via social login using a Google or Microsoft account.  Your email address will be your username.
+
+### Logging in (once you have created an account)
+
+Go to the [Termhub Login Page](https://app.terminologyhub.com/login) and log in using the account created in the previous step.
+
+## Creating a TermHub Project
+
+To properly test this, you'll want to create a TermHub project with the terminologies that you want to load into the Open TermHub container.
+
+Steps
+* Go to "Projects" sidebar
+* Click "New Project"
+* Set "Project Name" to "OpenTermhub Test Project"
+* Set "Project Description" to "OpenTermhub Test Project"
+* Scroll down to choose terminologies to add
+  * SNOMEDCT
+  * LOINC
+  * ISO-639-1
+  * ISO-639-2
+* Click "Create project" - you can always get back to this project from your "dashboard" or from the project list on the "Projects" sidebar item.
+* Click the icon to download all terminologies in your project
+<need image>
+
+## Loading data
+
+After the previous step, you will have CodeSystem .json files downloaded from TermHub and these can now be loaded through the API into a running container.
+
+... curl commands ... info about runtime
+
 
 ## Demonstrating the UI
 
