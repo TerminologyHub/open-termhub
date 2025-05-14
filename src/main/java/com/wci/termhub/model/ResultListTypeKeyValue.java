@@ -25,8 +25,7 @@ public class ResultListTypeKeyValue extends ResultList<TypeKeyValue> {
   }
 
   /**
-   * Instantiates a {@link ResultListTypeKeyValue} from the specified
-   * parameters.
+   * Instantiates a {@link ResultListTypeKeyValue} from the specified parameters.
    *
    * @param list the list
    */

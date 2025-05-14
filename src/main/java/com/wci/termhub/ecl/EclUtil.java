@@ -11,8 +11,18 @@ package com.wci.termhub.ecl;
 
 import java.util.List;
 
+/**
+ * The Class EclUtil.
+ */
 public class EclUtil {
-    public static final String HISTORY_MAX_PARENT = "900000000000522004";
-    public static final List<String> HISTORY_MIN_CONCEPTS = List.of("900000000000527005");
-    public static final List<String> HISTORY_MOD_CONCEPTS = List.of("900000000000527005", "900000000000526001", "900000000000528000", "1186924009");
+
+  /** The Constant HISTORY_MAX_PARENT. */
+  public static final String HISTORY_MAX_PARENT = "900000000000522004";
+
+  /** The Constant HISTORY_MIN_CONCEPTS. */
+  public static final List<String> HISTORY_MIN_CONCEPTS = List.of("900000000000527005");
+
+  /** The Constant HISTORY_MOD_CONCEPTS. */
+  public static final List<String> HISTORY_MOD_CONCEPTS =
+      List.of("900000000000527005", "900000000000526001", "900000000000528000", "1186924009");
 }

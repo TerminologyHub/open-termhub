@@ -44,7 +44,7 @@ public final class ClientFactory {
     if (cache.containsKey(service)) {
       return (T) cache.get(service);
     }
-    T client = HandlerUtility.newStandardHandlerInstanceWithConfiguration("client." + service,
+    final T client = HandlerUtility.newStandardHandlerInstanceWithConfiguration("client." + service,
         "DEFAULT", clazz);
     cache.put(service, client);
     return client;

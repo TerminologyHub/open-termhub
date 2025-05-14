@@ -15,8 +15,6 @@ import java.util.Properties;
 /**
  * Application properties configuration.
  */
-
-@SuppressWarnings("serial")
 public class ApplicationProperties extends Properties {
 
   /**

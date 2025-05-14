@@ -22,8 +22,8 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.util.StringUtility;
 
 /**
- * Default implementation a query builder for use by the browser. Make
- * improvements to what's typed in to produce ideal browser results.
+ * Default implementation a query builder for use by the browser. Make improvements to what's typed
+ * in to produce ideal browser results.
  */
 @Component
 @Order(2)

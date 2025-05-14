@@ -43,7 +43,6 @@ import com.google.common.base.CaseFormat;
 /**
  * Utility class for interacting with Strings.
  */
-@SuppressWarnings("resource")
 public final class StringUtility {
 
   /** The logger. */
@@ -54,6 +53,7 @@ public final class StringUtility {
   private static final String PUNCTUATION = " \t-({[)}]_!@#%&*\\:;\"',.?/~+=|<>$`^";
 
   /** The Constant NORM_PUNCTUATION. */
+  @SuppressWarnings("unused")
   private static final String NORM_PUNCTUATION = " \t-{}_!@#%&*\\:;,?/~+=|<>$`^";
 
   /** The Constant PUNCTUATION_REGEX. */
@@ -61,6 +61,7 @@ public final class StringUtility {
       "[ \\t\\-\\(\\{\\[\\)\\}\\]_!@#%&\\*\\\\:;\\\"',\\.\\?\\/~\\+=\\|<>$`^]";
 
   /** The Constant NORM_PUNCTUATION_REGEX. */
+  @SuppressWarnings("unused")
   private static final String NORM_PUNCTUATION_REGEX = "[ \\t\\-{}_!@#%&\\*\\\\:;,?/~+=|<>$`^]";
 
   /** The Constant UUID_REGEX. */
@@ -147,8 +148,8 @@ public final class StringUtility {
   // }
 
   /**
-   * Convert roman numeral to arabic. For example MCMXLIX returns 1949. The
-   * roman numeral is first validated and then converted.
+   * Convert roman numeral to arabic. For example MCMXLIX returns 1949. The roman numeral is first
+   * validated and then converted.
    *
    * @param number the number
    * @return the int
@@ -226,9 +227,8 @@ public final class StringUtility {
   }
 
   /**
-   * Converts string field to case-insensitive string of tokens with punctuation
-   * removed For example, "HIV Infection" becomes "hiv infection", while
-   * "1,2-hydroxy" becomes "1 2 hydroxy".
+   * Converts string field to case-insensitive string of tokens with punctuation removed For
+   * example, "HIV Infection" becomes "hiv infection", while "1,2-hydroxy" becomes "1 2 hydroxy".
    *
    * @param value the value
    * @return the string
@@ -511,8 +511,7 @@ public final class StringUtility {
   }
 
   /**
-   * Compose query from a list of possibly empty/null clauses and an operator
-   * (typically OR or AND).
+   * Compose query from a list of possibly empty/null clauses and an operator (typically OR or AND).
    *
    * @param operator the operator
    * @param clauses the clauses
@@ -583,8 +582,7 @@ public final class StringUtility {
    *
    * @param fieldName the field name
    * @param fieldValue the field value
-   * @param escapeValue - whether the value can have characters that need to be
-   *          escaped
+   * @param escapeValue - whether the value can have characters that need to be escaped
    * @return the string
    * @throws Exception the exception
    */

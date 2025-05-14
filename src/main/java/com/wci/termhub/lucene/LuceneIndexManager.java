@@ -18,7 +18,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.FSDirectory;
 
 /**
- * The Class LuceneIndexManager.
+ * Lucene index manager.
  */
 public final class LuceneIndexManager {
 
@@ -49,6 +49,7 @@ public final class LuceneIndexManager {
       indexDir.mkdirs();
     }
 
+    @SuppressWarnings("resource")
     final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
     this.indexReader = DirectoryReader.open(fsDirectory);
     this.indexSearcher = new IndexSearcher(indexReader);

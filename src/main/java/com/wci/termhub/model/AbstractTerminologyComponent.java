@@ -16,7 +16,8 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
  * Represents an abstract implementation of TerminologyComponent.
  */
 public abstract class AbstractTerminologyComponent extends AbstractHasModified
-    implements TerminologyComponent {
+    implements TerminologyComponent
+{
   /** The terminology. */
   @Field(type = FieldType.Keyword)
   private String terminology;

@@ -32,7 +32,6 @@ import com.wci.termhub.service.EntityRepositoryService;
 public class MetadataSearchUnitTest extends BaseUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER = LoggerFactory.getLogger(MetadataSearchUnitTest.class);
 
   /** The search service. */

@@ -34,8 +34,8 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 
 /**
- * Represents a cache of information used by terminology loaders to
- * allow/support concept-at-a-time loads.
+ * Represents a cache of information used by terminology loaders to allow/support concept-at-a-time
+ * loads.
  */
 public class TerminologyCache {
 
@@ -253,10 +253,9 @@ public class TerminologyCache {
   // }
 
   /**
-   * Gets the ancestors with depth. How many recursive levels it took to (first)
-   * discover it. So a parent would be 1, a grandparent would be 2, and so on.
-   * In SNOMED, the same ancestor may be in multiple paths-to-root, so choose
-   * the min depth value.
+   * Gets the ancestors with depth. How many recursive levels it took to (first) discover it. So a
+   * parent would be 1, a grandparent would be 2, and so on. In SNOMED, the same ancestor may be in
+   * multiple paths-to-root, so choose the min depth value.
    *
    * @param code the code
    * @return the ancestors with depth
@@ -333,14 +332,12 @@ public class TerminologyCache {
   }
 
   /**
-   * public Set<String> getAncestorPaths(String code) { // ... transitive
-   * closure over chdPar to the root ...; Set<String> ancestorPaths = new
-   * HashSet<>(); String child = code; if (code.contains("~")) { child =
-   * code.substring(0, code.indexOf("~")); } if (chdPar.get(child) != null) {
-   * for (String parent : chdPar.get(child)) {
-   * ancestorPaths.addAll(getAncestorPaths(parent + "~" + code)); } // we've hit
-   * the root, so print out ptr } else { ancestorPaths.add(code); } return
-   * ancestorPaths; }
+   * public Set<String> getAncestorPaths(String code) { // ... transitive closure over chdPar to the
+   * root ...; Set<String> ancestorPaths = new HashSet<>(); String child = code; if
+   * (code.contains("~")) { child = code.substring(0, code.indexOf("~")); } if (chdPar.get(child) !=
+   * null) { for (String parent : chdPar.get(child)) { ancestorPaths.addAll(getAncestorPaths(parent
+   * + "~" + code)); } // we've hit the root, so print out ptr } else { ancestorPaths.add(code); }
+   * return ancestorPaths; }
    *
    * @param par the par
    * @return the children
@@ -569,8 +566,8 @@ public class TerminologyCache {
   }
 
   /**
-   * Adds the leaf. ONLY use this to explicitly override the normal
-   * hierarchy-based leaf calculation.
+   * Adds the leaf. ONLY use this to explicitly override the normal hierarchy-based leaf
+   * calculation.
    *
    * @param code the code
    * @param leaf the leaf
@@ -618,9 +615,8 @@ public class TerminologyCache {
   }
 
   /**
-   * This method loads a terminology cache from elasticsearch for the
-   * terminology specified. This cache just has enough populated to generate
-   * concept refs.
+   * This method loads a terminology cache from elasticsearch for the terminology specified. This
+   * cache just has enough populated to generate concept refs.
    *
    * @param searchService the search service
    * @param terminology the terminology

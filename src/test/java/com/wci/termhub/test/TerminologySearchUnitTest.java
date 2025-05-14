@@ -32,7 +32,6 @@ import com.wci.termhub.service.EntityRepositoryService;
 public class TerminologySearchUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER = LoggerFactory.getLogger(TerminologySearchUnitTest.class);
 
   /** The search service. */

@@ -44,8 +44,7 @@ public class AbstractTest {
   private static String adminJwt = null;
 
   /**
-   * Setup once. NOTE: Using @BeforeAll means the PropertyUtility is not yet
-   * configured.
+   * Setup once. NOTE: Using @BeforeAll means the PropertyUtility is not yet configured.
    *
    * @throws Exception the exception
    */

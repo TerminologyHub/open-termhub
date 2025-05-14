@@ -33,7 +33,8 @@ import jakarta.persistence.Table;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TypeKeyValue extends AbstractHasModified
-    implements Comparable<TypeKeyValue>, HasLazyInit {
+    implements Comparable<TypeKeyValue>, HasLazyInit
+{
 
   /** The type. */
   @Field(type = FieldType.Keyword)

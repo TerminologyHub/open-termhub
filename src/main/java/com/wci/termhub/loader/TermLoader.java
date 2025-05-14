@@ -27,7 +27,7 @@ import com.wci.termhub.model.Term;
 import com.wci.termhub.util.ModelUtility;
 
 /**
- * The Class TermLoader.
+ * Term loader.
  */
 public final class TermLoader {
 
@@ -56,6 +56,7 @@ public final class TermLoader {
       }
 
       // get file name from command line
+      @SuppressWarnings("null")
       final String fullFileName = args[0];
       if (!Files.exists(Paths.get(fullFileName))) {
         logger.error("File does not exist at " + fullFileName);

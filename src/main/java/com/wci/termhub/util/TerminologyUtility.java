@@ -574,7 +574,7 @@ public final class TerminologyUtility {
     final Query expression = getExpressionQuery("<" + concept.getCode());
 
     final SearchParameters params = new SearchParameters(expression, 0, 1000, "code", null);
-    String searchAfter = null;
+    // String searchAfter = null;
 
     final int ct = 0;
     while (true) {
@@ -585,7 +585,7 @@ public final class TerminologyUtility {
       }
       list.addAll(concepts.stream().map(c -> new ConceptRef(c)).collect(Collectors.toList()));
 
-      searchAfter = concepts.get(concepts.size() - 1).getId();
+      // searchAfter = concepts.get(concepts.size() - 1).getId();
       logger.info("    count = " + ct);
 
     }
@@ -1074,11 +1074,8 @@ public final class TerminologyUtility {
         final Matcher m2 = p2.matcher(right);
         while (m2.find()) {
           // skip boolean operators that "look like codes"
-          if (m2.group(0).matches("(OR|AND|NOT)")) {
-            continue;
-          }
           // skip if next char is =
-          if (right.length() < m2.end() && right.charAt(m2.end()) == '=') {
+          if (m2.group(0).matches("(OR|AND|NOT)") || (right.length() < m2.end() && right.charAt(m2.end()) == '=')) {
             continue;
           }
           // logger.info(" CODE = " + m2.group(0));

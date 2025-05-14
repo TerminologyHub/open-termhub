@@ -32,8 +32,7 @@ import com.wci.termhub.model.TypeKeyValue;
 import com.wci.termhub.model.User;
 
 /**
- * Utility class for interacting with the configuration, serializing to JSON and
- * other purposes.
+ * Utility class for interacting with the configuration, serializing to JSON and other purposes.
  */
 public final class TestUtility {
 
@@ -106,10 +105,7 @@ public final class TestUtility {
           // n/a
         });
     for (final Concept cpt : concepts) {
-      if (cpt.getName().equals(conceptName)) {
-        return cpt;
-      }
-      if (cpt.getId().equals(conceptName)) {
+      if (cpt.getName().equals(conceptName) || cpt.getId().equals(conceptName)) {
         return cpt;
       }
     }
@@ -133,10 +129,7 @@ public final class TestUtility {
         continue;
       }
       final LicenseInfo candidate = ModelUtility.fromJson(line, LicenseInfo.class);
-      if (candidate.getName().equals(license)) {
-        return candidate;
-      }
-      if (candidate.getType().equals(license)) {
+      if (candidate.getName().equals(license) || candidate.getType().equals(license)) {
         return candidate;
       }
     }
@@ -160,10 +153,7 @@ public final class TestUtility {
         continue;
       }
       final FamilyInfo candidate = ModelUtility.fromJson(line, FamilyInfo.class);
-      if (candidate.getName().equals(family)) {
-        return candidate;
-      }
-      if (candidate.getType().equals(family)) {
+      if (candidate.getName().equals(family) || candidate.getType().equals(family)) {
         return candidate;
       }
     }
@@ -187,10 +177,7 @@ public final class TestUtility {
         continue;
       }
       final PublisherInfo candidate = ModelUtility.fromJson(line, PublisherInfo.class);
-      if (candidate.getName().equals(publisher)) {
-        return candidate;
-      }
-      if (candidate.getType().equals(publisher)) {
+      if (candidate.getName().equals(publisher) || candidate.getType().equals(publisher)) {
         return candidate;
       }
     }
@@ -262,10 +249,7 @@ public final class TestUtility {
         continue;
       }
       final TerminologyInfo candidate = ModelUtility.fromJson(line, TerminologyInfo.class);
-      if (candidate.getName().equals(terminology)) {
-        return candidate;
-      }
-      if (candidate.getType().equals(terminology)) {
+      if (candidate.getName().equals(terminology) || candidate.getType().equals(terminology)) {
         return candidate;
       }
     }
@@ -313,10 +297,7 @@ public final class TestUtility {
         continue;
       }
       final LanguageInfo candidate = ModelUtility.fromJson(line, LanguageInfo.class);
-      if (candidate.getName().equals(language)) {
-        return candidate;
-      }
-      if (candidate.getType().equals(language)) {
+      if (candidate.getName().equals(language) || candidate.getType().equals(language)) {
         return candidate;
       }
     }

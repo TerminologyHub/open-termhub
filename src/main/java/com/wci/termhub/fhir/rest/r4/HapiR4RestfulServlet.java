@@ -38,9 +38,9 @@ public class HapiR4RestfulServlet extends RestfulServer {
   private static Logger logger = LoggerFactory.getLogger(HapiR4RestfulServlet.class);
 
   /**
-   * The initialize method is automatically called when the servlet is starting
-   * up, so it can be used to configure the servlet to define resource
-   * providers, or set up configuration, interceptors, etc.
+   * The initialize method is automatically called when the servlet is starting up, so it can be
+   * used to configure the servlet to define resource providers, or set up configuration,
+   * interceptors, etc.
    *
    * @throws ServletException the servlet exception
    */
@@ -76,8 +76,8 @@ public class HapiR4RestfulServlet extends RestfulServer {
     setServerAddressStrategy(new ca.uhn.fhir.rest.server.IncomingRequestAddressStrategy());
 
     /*
-     * The servlet defines any number of resource providers, and configures
-     * itself to use them by calling setResourceProviders()
+     * The servlet defines any number of resource providers, and configures itself to use them by
+     * calling setResourceProviders()
      */
     final WebApplicationContext applicationContext =
         WebApplicationContextUtils.getWebApplicationContext(this.getServletContext());

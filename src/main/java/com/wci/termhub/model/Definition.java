@@ -28,7 +28,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Definition extends AbstractHasModified
-    implements TerminologyComponent, HasAttributes, Copyable<Definition>, Comparable<Definition> {
+    implements TerminologyComponent, HasAttributes, Copyable<Definition>, Comparable<Definition>
+{
 
   /** The definition (no need for keyword indexing). */
   @Field(type = FieldType.Text)

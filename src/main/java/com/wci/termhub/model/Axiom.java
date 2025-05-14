@@ -25,7 +25,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Axiom extends AbstractHasModified
-    implements TerminologyComponent, Copyable<Axiom>, Comparable<Axiom> {
+    implements TerminologyComponent, Copyable<Axiom>, Comparable<Axiom>
+{
 
   /** The value (not indexed). */
   @Field(type = FieldType.Object, enabled = false)

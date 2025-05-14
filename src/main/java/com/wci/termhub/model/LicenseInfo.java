@@ -26,9 +26,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 /**
- * Represents a license type for published content. This is configuration
- * information to better describe and access license resource information
- * supported by termhub.
+ * Represents a license type for published content. This is configuration information to better
+ * describe and access license resource information supported by termhub.
  */
 @Entity
 @Table(name = "license_info")

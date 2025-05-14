@@ -27,5 +27,5 @@ import com.wci.termhub.rest.test.TerminologyServiceRestImplUnitTest;
     TerminologyServiceRestImplUnitTest.class, CleanupUnitTest.class
 })
 public class AllTestsSuite {
-
+  // n/a
 }

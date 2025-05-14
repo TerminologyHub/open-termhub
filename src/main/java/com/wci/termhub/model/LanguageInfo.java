@@ -35,7 +35,8 @@ import jakarta.persistence.Transient;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LanguageInfo extends AbstractHasModified
-    implements HasLazyInit, Copyable<LanguageInfo> {
+    implements HasLazyInit, Copyable<LanguageInfo>
+{
 
   /** The type. e.g. "en", "en_US", "en_GB" */
   @Column(nullable = false)

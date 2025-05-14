@@ -37,7 +37,6 @@ import com.wci.termhub.util.StringUtility;
 public class MultithreadedReadUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER = LoggerFactory.getLogger(MultithreadedReadUnitTest.class);
 
   /** The search service. */
@@ -115,6 +114,6 @@ public class MultithreadedReadUnitTest {
     assertTrue(matchCount.get() > 0);
     assertEquals(0, missCount.get());
 
-  };
+  }
 
 }

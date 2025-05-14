@@ -77,8 +77,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.primitives.UnsignedBytes;
 
 /**
- * Utility class for interacting with the configuration, serializing to JSON and
- * other purposes.
+ * Utility class for interacting with the configuration, serializing to JSON and other purposes.
  */
 public final class ConfigUtility {
 
@@ -179,8 +178,8 @@ public final class ConfigUtility {
   }
 
   /**
-   * Reset config properties. Needed for testing so we can reset the state of
-   * config.properties and reload it.
+   * Reset config properties. Needed for testing so we can reset the state of config.properties and
+   * reload it.
    */
   public static void resetConfigProperties() {
     config = null;
@@ -271,7 +270,6 @@ public final class ConfigUtility {
    * @return the config properties
    * @throws Exception the exception
    */
-  @SuppressWarnings("unchecked")
   public static Properties getConfigProperties() throws Exception {
     if (isNull(config)) {
 
@@ -716,8 +714,8 @@ public final class ConfigUtility {
   }
 
   /**
-   * This method is intended to bypass some incorrect static code analysis from
-   * the FindBugs Eclipse plugin.
+   * This method is intended to bypass some incorrect static code analysis from the FindBugs Eclipse
+   * plugin.
    *
    * @param o the o
    * @return <code>true</code> if so, <code>false</code> otherwise
@@ -813,8 +811,8 @@ public final class ConfigUtility {
   private static final int BUFFER_SIZE = 4096;
 
   /**
-   * Extracts a zip file specified by the zipFilePath to a directory specified
-   * by destDirectory (will be created if does not exists).
+   * Extracts a zip file specified by the zipFilePath to a directory specified by destDirectory
+   * (will be created if does not exists).
    *
    * @param zipFilePath the zip file path
    * @param destDirectory the dest directory
@@ -1155,7 +1153,6 @@ public final class ConfigUtility {
    * @return the first non-null value
    */
   @SafeVarargs
-  @SuppressWarnings("unchecked")
   public static <T> T firstNotNull(final T... values) {
     for (final T t : values) {
       if (t != null) {
@@ -1250,7 +1247,6 @@ public final class ConfigUtility {
    * @return the list of strings
    * @throws Exception if error occurs
    */
-  @SuppressWarnings("unchecked")
   public static List<String> asList(final String[] values) throws Exception {
     return new ArrayList<>(Arrays.asList(values));
   }
@@ -1263,7 +1259,6 @@ public final class ConfigUtility {
    * @return the list
    */
   @SafeVarargs
-  @SuppressWarnings("unchecked")
   public static <T> List<T> asList(final T... values) {
     final List<T> list = new ArrayList<>(values.length);
     for (final T value : values) {
@@ -1282,7 +1277,6 @@ public final class ConfigUtility {
    * @return the set
    */
   @SafeVarargs
-  @SuppressWarnings("unchecked")
   public static <T> Set<T> asSet(final T... values) {
     final Set<T> set = new HashSet<>(values.length);
     for (final T value : values) {
@@ -1714,8 +1708,7 @@ public final class ConfigUtility {
   }
 
   /**
-   * Returns the name from class by stripping package and putting spaces where
-   * CamelCase is used.
+   * Returns the name from class by stripping package and putting spaces where CamelCase is used.
    *
    * @param clazz the clazz
    * @return the name from class

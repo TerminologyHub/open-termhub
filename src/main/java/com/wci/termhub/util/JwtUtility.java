@@ -392,8 +392,8 @@ public final class JwtUtility {
   }
 
   /**
-   * Mock account jwt. Used for short-window timeout tokens used in automated
-   * emails (like password reset).
+   * Mock account jwt. Used for short-window timeout tokens used in automated emails (like password
+   * reset).
    *
    * @param userId the user id
    * @return the string

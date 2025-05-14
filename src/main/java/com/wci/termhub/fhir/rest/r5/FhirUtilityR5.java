@@ -402,8 +402,7 @@ public final class FhirUtilityR5 {
    * Recover code.
    *
    * @param code the code
-   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the
-   *          string
+   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the string
    * @return the string
    */
   public static String recoverCode(final CodeType code, final Coding coding) {

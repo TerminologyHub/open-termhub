@@ -25,8 +25,7 @@ public class ResultListConceptTreePosition extends ResultList<ConceptTreePositio
   }
 
   /**
-   * Instantiates a {@link ResultListConceptTreePosition} from the specified
-   * parameters.
+   * Instantiates a {@link ResultListConceptTreePosition} from the specified parameters.
    *
    * @param list the list
    */

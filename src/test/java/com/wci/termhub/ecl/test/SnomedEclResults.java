@@ -11,32 +11,71 @@ package com.wci.termhub.ecl.test;
 
 import java.util.List;
 
+/**
+ * Represents an ECL result.
+ */
 public class SnomedEclResults {
-    private String ecl;
-    private int count;
-    private List<String> concepts;
 
-    public String getEcl() {
-        return ecl;
-    }
+  /** The ecl. */
+  private String ecl;
 
-    public void setEcl(String ecl) {
-        this.ecl = ecl;
-    }
+  /** The count. */
+  private int count;
 
-    public int getCount() {
-        return count;
-    }
+  /** The concepts. */
+  private List<String> concepts;
 
-    public void setCount(int count) {
-        this.count = count;
-    }
+  /**
+   * Gets the ecl.
+   *
+   * @return the ecl
+   */
+  public String getEcl() {
+    return ecl;
+  }
 
-    public List<String> getConcepts() {
-        return concepts;
-    }
+  /**
+   * Sets the ecl.
+   *
+   * @param ecl the new ecl
+   */
+  public void setEcl(final String ecl) {
+    this.ecl = ecl;
+  }
 
-    public void setConcepts(List<String> concepts) {
-        this.concepts = concepts;
-    }
+  /**
+   * Gets the count.
+   *
+   * @return the count
+   */
+  public int getCount() {
+    return count;
+  }
+
+  /**
+   * Sets the count.
+   *
+   * @param count the new count
+   */
+  public void setCount(final int count) {
+    this.count = count;
+  }
+
+  /**
+   * Gets the concepts.
+   *
+   * @return the concepts
+   */
+  public List<String> getConcepts() {
+    return concepts;
+  }
+
+  /**
+   * Sets the concepts.
+   *
+   * @param concepts the new concepts
+   */
+  public void setConcepts(final List<String> concepts) {
+    this.concepts = concepts;
+  }
 }

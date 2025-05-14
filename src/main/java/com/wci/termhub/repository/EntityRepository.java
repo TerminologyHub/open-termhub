@@ -26,6 +26,7 @@ public interface EntityRepository<T extends BaseModel, ID> {
    * Delete index.
    *
    * @param entity the entity
+   * @throws Exception the exception
    */
   public void deleteIndex(final T entity) throws Exception;
 
@@ -33,6 +34,7 @@ public interface EntityRepository<T extends BaseModel, ID> {
    * Creates the index.
    *
    * @param entity the entity
+   * @throws Exception the exception
    */
   public void createIndex(final T entity) throws Exception;
 
@@ -40,6 +42,7 @@ public interface EntityRepository<T extends BaseModel, ID> {
    * Adds the.
    *
    * @param entity the entity
+   * @throws Exception the exception
    */
   public void add(final T entity) throws Exception;
 
@@ -47,6 +50,7 @@ public interface EntityRepository<T extends BaseModel, ID> {
    * Removes the.
    *
    * @param entity the entity
+   * @throws Exception the exception
    */
   public void remove(final T entity) throws Exception;
 
@@ -56,6 +60,7 @@ public interface EntityRepository<T extends BaseModel, ID> {
    * @param searchParameters the search parameters
    * @param clazz the clazz
    * @return the optional
+   * @throws Exception the exception
    */
   public Optional<T> find(final SearchParameters searchParameters, final Class<T> clazz)
     throws Exception;

@@ -126,6 +126,11 @@ public class CodeSystemLoadUnitTest {
     assertTrue(true, "Code systems were loaded without errors");
   }
 
+  /**
+   * Test verify data loading.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void testVerifyDataLoading() throws Exception {
     // Verify terminologies are loaded

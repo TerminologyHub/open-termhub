@@ -10,8 +10,8 @@
 package com.wci.termhub.util;
 
 /**
- * Represents a known exception with a user-friendly error message that is
- * handled differently by error handlers.
+ * Represents a known exception with a user-friendly error message that is handled differently by
+ * error handlers.
  */
 public class LocalException extends Exception {
 

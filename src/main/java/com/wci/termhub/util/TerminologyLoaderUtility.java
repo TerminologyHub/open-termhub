@@ -29,7 +29,7 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
- * The Class TerminologyLoaderUtility.
+ * Terminology loader utility.
  */
 public final class TerminologyLoaderUtility {
 
@@ -92,6 +92,13 @@ public final class TerminologyLoaderUtility {
     indexConceptRelationships(service, terminology, 1000, -1, computeTreePositions);
   }
 
+  /**
+   * Load mapset.
+   *
+   * @param service the service
+   * @param terminology the terminology
+   * @throws Exception the exception
+   */
   public static void loadMapset(final EntityRepositoryService service, final String terminology)
     throws Exception {
     indexMapset(service, terminology, 1000, -1);

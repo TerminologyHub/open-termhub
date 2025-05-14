@@ -100,6 +100,9 @@ import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 
+/**
+ * Terminology service rest implementation.
+ */
 @OpenAPIDefinition(info = @Info(title = "Terminology Hub Terminology Terminology API",
     version = "1.0.0",
     description = "API documentation for the interacting with terminologies and concepts. "
@@ -126,7 +129,8 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 public class TerminologyServiceRestImpl extends RootServiceRestImpl
-    implements TerminologyServiceRest {
+    implements TerminologyServiceRest
+{
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(TerminologyServiceRestImpl.class);
@@ -172,8 +176,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   }
 
   /**
-   * Instantiates a {@link TerminologyServiceRestImpl} from the specified
-   * parameters. For testing.
+   * Instantiates a {@link TerminologyServiceRestImpl} from the specified parameters. For testing.
    *
    * @param request the request
    * @throws Exception the exception
@@ -983,9 +986,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "active", required = false) final Boolean active,
     @RequestParam(name = "leaf", required = false) final Boolean leaf,
     @RequestParam(value = "include", required = false) final String include,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     authorize(request);
     try {
@@ -1075,9 +1077,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "active", required = false) final Boolean active,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     authorize(request);
     try {
@@ -1182,11 +1183,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "active", required = false) final Boolean active,
     @RequestParam(name = "leaf", required = false) final Boolean leaf,
     @RequestParam(value = "include", required = false) final String include,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler,
-    @org.springframework.web.bind.annotation.RequestBody(required = false) @Parameter(
-        hidden = true) final String queries)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler,
+    @org.springframework.web.bind.annotation.RequestBody(required = false)
+    @Parameter(hidden = true) final String queries) throws Exception {
 
     authorize(request);
     try {
@@ -1419,9 +1419,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     authorize(request);
     try {
@@ -1514,9 +1513,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     authorize(request);
     try {
@@ -1597,9 +1595,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     authorize(request);
     try {
@@ -1695,9 +1692,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     authorize(request);
     try {
@@ -1778,9 +1774,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     authorize(request);
     try {
@@ -1887,9 +1882,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     authorize(request);
     try {
@@ -1982,9 +1976,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     @SuppressWarnings("unused")
     final AuthContext context = authorize(request);
@@ -2104,9 +2097,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     @SuppressWarnings("unused")
     final AuthContext context = authorize(request);
@@ -2422,7 +2414,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
       final IncludeParam ip = new IncludeParam("minimal");
-      final Map<String, Terminology> map = lookupTerminologyMap();
+      // final Map<String, Terminology> map = lookupTerminologyMap();
 
       // Get the concept
       final String query = "id:" + StringUtility.escapeQuery(conceptId);
@@ -2495,7 +2487,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     try {
       final IncludeParam ip = new IncludeParam("minimal");
 
-      final Map<String, Terminology> map = lookupTerminologyMap();
+      // final Map<String, Terminology> map = lookupTerminologyMap();
 
       // Get the concept
       final String query = "id:" + StringUtility.escapeQuery(conceptId);
@@ -2573,7 +2565,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @PathVariable("terminology") final String terminology, @PathVariable("code") final String code)
     throws Exception {
 
-    final AuthContext context = authorizeProject(request);
+    authorizeProject(request);
     try {
 
       final IncludeParam ip = new IncludeParam("minimal");

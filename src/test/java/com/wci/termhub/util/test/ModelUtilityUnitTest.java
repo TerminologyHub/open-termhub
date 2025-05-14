@@ -287,6 +287,7 @@ public class ModelUtilityUnitTest {
     final String listJson = "[{\"name\":\"Test1\",\"age\":25},{\"name\":\"Test2\",\"age\":30}]";
     final List<TestClass> list =
         ModelUtility.fromJson(listJson, new TypeReference<List<TestClass>>() {
+          // n/a
         });
     assertNotNull(list);
     assertEquals(2, list.size());

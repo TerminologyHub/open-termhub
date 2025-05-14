@@ -16,6 +16,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Base loader.
+ */
 public final class Loader {
 
   /** The logger. */
@@ -33,6 +36,7 @@ public final class Loader {
    *
    * @param args the arguments
    */
+  @SuppressWarnings("null")
   public static void main(final String[] args) {
 
     try {

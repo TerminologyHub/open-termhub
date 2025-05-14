@@ -9,49 +9,61 @@
  */
 package com.wci.termhub.ecl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.antlr.v4.runtime.ANTLRErrorStrategy;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * The Class ErrorHandler.
+ */
 public class ErrorHandler implements ANTLRErrorStrategy {
-    final List<RecognitionException> exceptions = new ArrayList<>();
 
-    @Override
-    public void reset(Parser parser) {
+  /** The exceptions. */
+  final List<RecognitionException> exceptions = new ArrayList<>();
 
-    }
+  /* see superclass */
+  @Override
+  public void reset(final Parser parser) {
+    // n/a
+  }
 
-    @Override
-    public Token recoverInline(Parser parser) throws RecognitionException {
-        return null;
-    }
+  /* see superclass */
+  @Override
+  public Token recoverInline(final Parser parser) throws RecognitionException {
+    return null;
+  }
 
-    @Override
-    public void recover(Parser parser, RecognitionException e) throws RecognitionException {
+  /* see superclass */
+  @Override
+  public void recover(final Parser parser, final RecognitionException e) throws RecognitionException {
+    // n/a
+  }
 
-    }
+  /* see superclass */
+  @Override
+  public void sync(final Parser parser) throws RecognitionException {
+    // n/a
+  }
 
-    @Override
-    public void sync(Parser parser) throws RecognitionException {
+  /* see superclass */
+  @Override
+  public boolean inErrorRecoveryMode(final Parser parser) {
+    return false;
+  }
 
-    }
+  /* see superclass */
+  @Override
+  public void reportMatch(final Parser parser) {
+    // n/a
+  }
 
-    @Override
-    public boolean inErrorRecoveryMode(Parser parser) {
-        return false;
-    }
-
-    @Override
-    public void reportMatch(Parser parser) {
-
-    }
-
-    @Override
-    public void reportError(Parser parser, RecognitionException e) {
-        exceptions.add(e);
-    }
+  /* see superclass */
+  @Override
+  public void reportError(final Parser parser, final RecognitionException e) {
+    exceptions.add(e);
+  }
 }

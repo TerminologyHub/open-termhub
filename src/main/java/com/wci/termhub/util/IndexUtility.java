@@ -46,7 +46,6 @@ import com.wci.termhub.model.SearchParameters;
 public final class IndexUtility {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(IndexUtility.class);
 
   /**
@@ -239,7 +238,7 @@ public final class IndexUtility {
 
       final MultiField multiFieldAnnotation = field.getAnnotation(MultiField.class);
 
-      if (multiFieldAnnotation != null && fieldValue != null) {
+      if (multiFieldAnnotation != null) {
 
         final String indexName = ((StringUtils.isNotEmpty(indexNamePrefix)
             ? indexNamePrefix + "." + field.getName() : field.getName()));

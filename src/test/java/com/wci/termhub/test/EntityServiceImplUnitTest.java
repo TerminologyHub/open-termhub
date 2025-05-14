@@ -44,7 +44,6 @@ import com.wci.termhub.service.EntityRepositoryService;
 public class EntityServiceImplUnitTest extends BaseUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(EntityServiceImplUnitTest.class);
 
   /** The search service. */

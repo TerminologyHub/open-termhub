@@ -25,8 +25,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Transient;
 
 /**
- * Represents an explicit collection of mappings from one terminology to
- * another.
+ * Represents an explicit collection of mappings from one terminology to another.
  */
 @Schema(
     description = "Represents an explicit collection of mappings from one terminology to another")
@@ -36,8 +35,8 @@ import jakarta.persistence.Transient;
 public class Mapset extends MapsetRef implements TerminologyComponent, HasAttributes {
 
   /**
-   * Attribute keys that can be associated with a terminology (and their
-   * descriptions) rendered as terminology attributes when building a data set.
+   * Attribute keys that can be associated with a terminology (and their descriptions) rendered as
+   * terminology attributes when building a data set.
    */
   public enum Attributes {
 

@@ -219,7 +219,7 @@ public class IncludeParamUnitTest extends AbstractTest {
     try {
       new IncludeParam("bad");
       fail("Expected an exception");
-    } catch (Exception e) {
+    } catch (final Exception e) {
       // n/a
     }
 
@@ -227,7 +227,7 @@ public class IncludeParamUnitTest extends AbstractTest {
     try {
       new IncludeParam("summary,bad");
       fail("Expected an exception");
-    } catch (Exception e) {
+    } catch (final Exception e) {
       // n/a
     }
   }

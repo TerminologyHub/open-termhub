@@ -67,7 +67,6 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class FhirUtilityR4 {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
 
   /**

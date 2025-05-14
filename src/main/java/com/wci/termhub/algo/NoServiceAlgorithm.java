@@ -12,14 +12,13 @@ package com.wci.termhub.algo;
 import com.wci.termhub.model.Configurable;
 
 /**
- * Represents an algorithm without a service. Implementations must fully
- * configure themselves before the compute call is made.
+ * Represents an algorithm without a service. Implementations must fully configure themselves before
+ * the compute call is made.
  */
 public interface NoServiceAlgorithm extends ProgressReporter, Configurable {
 
   /**
-   * Check preconditions for action. This will make use of data structures
-   * configured in the action.
+   * Check preconditions for action. This will make use of data structures configured in the action.
    *
    * @return true, if successful
    * @throws Exception the exception
@@ -48,8 +47,8 @@ public interface NoServiceAlgorithm extends ProgressReporter, Configurable {
   public void cancel() throws Exception;
 
   /**
-   * Returns the default description, especially for algorithms that are
-   * configured via algorighm configs.
+   * Returns the default description, especially for algorithms that are configured via algorighm
+   * configs.
    *
    * @return the description
    */

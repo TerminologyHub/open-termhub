@@ -27,12 +27,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * The Class FileUtility.
+ * File utility.
  */
 public final class FileUtility {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FileUtility.class);
 
   /**

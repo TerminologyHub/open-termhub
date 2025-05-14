@@ -24,15 +24,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Transient;
 
 /**
- * Represents a terminology reference. This serves as a pointer from a project
- * to an actual terminology. It can also be used to compute the terminology keys
- * used by the model objects.
+ * Represents a terminology reference. This serves as a pointer from a project to an actual
+ * terminology. It can also be used to compute the terminology keys used by the model objects.
  */
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TerminologyRef extends AbstractHasModified // extends
     // AbstractHasJsonData
-    implements HasName, HasMinimize, Copyable<TerminologyRef>, Comparable<TerminologyRef> {
+    implements HasName, HasMinimize, Copyable<TerminologyRef>, Comparable<TerminologyRef>
+{
 
   /** The abbreviation. */
   @Transient

@@ -28,8 +28,7 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
- * Unit tests for concept relationship functionality with FHIR Code System
- * files.
+ * Unit tests for concept relationship functionality with FHIR Code System files.
  */
 @TestInstance(Lifecycle.PER_CLASS)
 @SpringBootTest(classes = Application.class)

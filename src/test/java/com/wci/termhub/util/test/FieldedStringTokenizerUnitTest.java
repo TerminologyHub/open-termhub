@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.wci.termhub.util.FieldedStringTokenizer;
 
@@ -29,10 +27,6 @@ import com.wci.termhub.util.FieldedStringTokenizer;
  * Unit tests for {@link FieldedStringTokenizer}.
  */
 public class FieldedStringTokenizerUnitTest {
-
-  /** The logger. */
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(FieldedStringTokenizerUnitTest.class);
 
   /**
    * Test basic split functionality.

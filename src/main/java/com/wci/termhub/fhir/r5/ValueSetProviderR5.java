@@ -175,11 +175,10 @@ public class ValueSetProviderR5 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
-        name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
-        name = "_offset") final NumberParam offset)
-    throws Exception {
+    @Description(shortDefinition = "Number of entries to return")
+    @OptionalParam(name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page")
+    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
 
@@ -565,11 +564,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
         // for SNOMED, check whether the url matches the terminology FHIR
         // version
-        if (url == null) {
-          continue;
-        }
-        if (!url.getValue().equals(terminology.getAttributes().get("fhirVersion"))
-            && !url.getValue().startsWith(terminology.getAttributes().get("fhirVersion") + "=")) {
+        if ((url == null) || (!url.getValue().equals(terminology.getAttributes().get("fhirVersion"))
+            && !url.getValue().startsWith(terminology.getAttributes().get("fhirVersion") + "="))) {
           continue;
         }
       }

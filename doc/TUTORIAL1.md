@@ -52,7 +52,29 @@ All three of the above options will yield a running server and you should now yo
 
 ... load via API from src/main/resources/data
 
-??? curl command for loading?
+curl -X 'POST' \
+  'http://localhost:8080/fhir/r4/CodeSystem' \
+  -H 'accept: application/fhir+json' \
+  -H 'Content-Type: application/fhir+json' \
+  -d '{ Content from code system file }'
+  
+curl -X 'POST' \
+  'http://localhost:8080/fhir/r5/CodeSystem' \
+  -H 'accept: application/fhir+json' \
+  -H 'Content-Type: application/fhir+json' \
+  -d '{ Content from code system file }'
+  
+curl -X 'POST' \
+  'http://localhost:8080/fhir/r4/ConceptMap' \
+  -H 'accept: application/fhir+json' \
+  -H 'Content-Type: application/fhir+json' \
+  -d '{ Content from concept map file as json }'
+  
+curl -X 'POST' \
+  'http://localhost:8080/fhir/r5/ConceptMap' \
+  -H 'accept: application/fhir+json' \
+  -H 'Content-Type: application/fhir+json' \
+  -d '{ Content from concept map file as json }'
 
 ## Demonstrating the UI
 
