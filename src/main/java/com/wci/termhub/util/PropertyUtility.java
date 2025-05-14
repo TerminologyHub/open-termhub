@@ -9,7 +9,6 @@
  */
 package com.wci.termhub.util;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Properties;
@@ -29,7 +28,6 @@ import jakarta.annotation.PostConstruct;
 /**
  * Set up config properties cache.
  */
-@SuppressWarnings("resource")
 @Component
 public class PropertyUtility {
 
@@ -46,29 +44,12 @@ public class PropertyUtility {
   /** The is test mode. */
   private static Boolean isTestMode = null;
 
-  static {
-    try {
-      // Load main application properties
-      properties.load(
-          PropertyUtility.class.getClassLoader().getResourceAsStream("application.properties"));
-
-      // If in test mode, load test properties
-      if ("true".equals(properties.getProperty("test.mode"))) {
-        properties.load(PropertyUtility.class.getClassLoader()
-            .getResourceAsStream("application-test.properties"));
-      }
-    } catch (final IOException e) {
-      e.printStackTrace();
-    }
-  }
-
   /**
    * initialize the properties.
    */
   @SuppressWarnings("rawtypes")
   @PostConstruct
   private void init() {
-
     logger.info("Initializing PropertyUtility...");
 
     final MutablePropertySources sources = ((AbstractEnvironment) env).getPropertySources();
@@ -78,7 +59,6 @@ public class PropertyUtility {
         .map(ps -> ((EnumerablePropertySource) ps).getPropertyNames()).flatMap(Arrays::stream)
         .distinct().forEach(prop -> properties.setProperty(prop, env.getProperty(prop)));
 
-    System.out.println("Loaded properties: " + properties);
     logger.info("Loaded properties: {}", properties);
   }
 
@@ -98,7 +78,6 @@ public class PropertyUtility {
    * @param value The property value
    */
   public static void setProperty(final String key, final String value) {
-
     properties.put(key, value);
   }
 
@@ -109,11 +88,9 @@ public class PropertyUtility {
    * @return the value of the requested property or null
    */
   public static String getProperty(final String key) {
-
     if (properties.containsKey(key)) {
       return properties.getProperty(key);
     }
-
     return null;
   }
 
@@ -121,7 +98,8 @@ public class PropertyUtility {
    * Return properties with the specified prefix.
    *
    * @param prefix the prefix of the properties to return
-   * @param removePrefix Should the prefix be removed from the keys of the returned properties
+   * @param removePrefix Should the prefix be removed from the keys of the
+   *          returned properties
    * @return the properties with the specified prefix
    * @throws Exception the exception
    */
@@ -133,21 +111,17 @@ public class PropertyUtility {
 
     // get any properties that start with the prefix
     while (keys.hasNext()) {
-
       String key = keys.next().toString();
       final String originalKey = key;
 
       if (key.startsWith(prefix)) {
-
         if (removePrefix) {
           key = key.replace(prefix, "");
         }
-
         propertiesSubset.put(key, properties.getProperty(originalKey));
       }
     }
 
-    // logger.debug("****** propertiesSubset: ", propertiesSubset);
     return propertiesSubset;
   }
 
@@ -198,5 +172,4 @@ public class PropertyUtility {
     sb.append(path);
     return sb.toString();
   }
-
 }
