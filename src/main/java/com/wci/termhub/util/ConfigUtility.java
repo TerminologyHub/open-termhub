@@ -72,6 +72,9 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.primitives.UnsignedBytes;
@@ -80,6 +83,7 @@ import com.google.common.primitives.UnsignedBytes;
  * Utility class for interacting with the configuration, serializing to JSON and
  * other purposes.
  */
+@Component
 public final class ConfigUtility {
 
   /** The logger. */
@@ -91,15 +95,31 @@ public final class ConfigUtility {
   /** The config properties map. */
   private static Map<String, Properties> configPropertiesMap = new HashMap<>();
 
+  /** The environment. */
+  private static Environment env;
+
+  /** The config. */
+  private static Properties config = null;
+
+  /** The Constant TEST_MODE. */
+  private static boolean testMode = false;
+
+  /**
+   * Sets the environment.
+   *
+   * @param environment the new environment
+   */
+  @Autowired
+  public void setEnvironment(final Environment environment) {
+    env = environment;
+  }
+
   /**
    * Instantiates an empty {@link ConfigUtility}.
    */
   private ConfigUtility() {
     // n/a
   }
-
-  /** The Constant TEST_MODE. */
-  private static boolean testMode;
 
   /** The Constant DEFAULT. */
   public static final String DEFAULT = "DEFAULT";
@@ -166,17 +186,6 @@ public final class ConfigUtility {
 
   /** The Constant NORM_PUNCTUATION_REGEX. */
   public static final String NORM_PUNCTUATION_REGEX = "[ \\t\\-{}_!@#%&\\*\\\\:;,?/~+=|<>$`^]";
-
-  /** The config. */
-  private static Properties config = null;
-
-  static {
-    try {
-      testMode = "true".equals("" + ConfigUtility.getConfigProperties().get("test.mode"));
-    } catch (final Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   /**
    * Reset config properties. Needed for testing so we can reset the state of
@@ -274,7 +283,6 @@ public final class ConfigUtility {
   @SuppressWarnings("unchecked")
   public static Properties getConfigProperties() throws Exception {
     if (isNull(config)) {
-
       final String label = getConfigLabel();
 
       // Now get the properties from the corresponding setting
@@ -284,7 +292,6 @@ public final class ConfigUtility {
       final String configFileName = System.getProperty("run.config" + label);
       String path = null;
       if (configFileName != null) {
-        // logger.debug(" run.config" + label + " = " + configFileName);
         config = new Properties();
         try (final FileReader in = new FileReader(new File(configFileName))) {
           config.load(in);
@@ -298,45 +305,27 @@ public final class ConfigUtility {
           path = new File(getLocalConfigFile()).getParent();
         }
       } else {
-        try (final InputStream is = ConfigUtility.class.getResourceAsStream("/config.properties")) {
-          logger.debug("Cannot find ENV 'run.config" + label
-              + "', looking for config.properties in the classpath");
-          if (is != null) {
-            config = new Properties();
-            config.load(is);
-          }
+        // Use Spring's environment instead of loading directly
+        config = new Properties();
+        for (final String propertyName : env.getActiveProfiles()) {
+          config.setProperty(propertyName, env.getProperty(propertyName));
         }
       }
 
       // Interpolate "env" variables
-      if (config != null) {
-        final Map<String, String> envMap = System.getenv();
-        for (final Object property : config.keySet()) {
-          String value = config.getProperty(property.toString());
-          while (value.matches(".*\\$\\{env:.*}.*")) {
-            final String envProp = value.replaceFirst(".*\\$\\{env:(.*)}.*", "$1");
-            // Find system property - use blank value if cannot be found
-            final String env = envMap.get(envProp) == null ? "" : envMap.get(envProp);
-            value = value.replaceFirst("(.*)(\\$\\{env:.*})(.*)", "$1" + env + "$3");
-            logger.debug("    Interpolated " + envProp + " as "
-                + ((envProp.toLowerCase().contains("password")
-                    || envProp.toLowerCase().contains("_key")) ? "*******"
-                        : (ConfigUtility.isEmpty(env) ? "<blank>" : env)));
+      final Iterator<Object> keys = config.keySet().iterator();
+      while (keys.hasNext()) {
+        final String key = keys.next().toString();
+        final String value = config.getProperty(key);
+        if (value != null && value.startsWith("${") && value.endsWith("}")) {
+          final String envVar = value.substring(2, value.length() - 1);
+          final String envValue = System.getenv(envVar);
+          if (envValue != null) {
+            config.setProperty(key, envValue);
           }
-          config.setProperty(property.toString(), value);
         }
-      } else {
-        // If nothing else, return an empty properties file
-        config = new Properties();
       }
-      // This can reveal passwords and injected properties
-      // logger.debug(" properties = " + config);
-
-      // Handle import
-      handleConfigImport(config, path);
-
     }
-
     return config;
   }
 
