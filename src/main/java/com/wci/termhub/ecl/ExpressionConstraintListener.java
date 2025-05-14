@@ -19,6 +19,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -46,6 +47,10 @@ public class ExpressionConstraintListener extends EclLogListener {
     @Override
     public void enterSubexpressionconstraint(final ECLParser.SubexpressionconstraintContext ctx) {
         String text = ctx.getText();
+
+        if (ctx.historysupplement() != null) {
+            text = text.replace(ctx.historysupplement().getText(), "").trim();
+        }
 
         final ECLParser.EclfocusconceptContext focusconcept = ctx.eclfocusconcept();
         if (focusconcept == null) {
@@ -82,6 +87,27 @@ public class ExpressionConstraintListener extends EclLogListener {
                 TermQuery selfTermQuery = new TermQuery(new Term("code", conceptId));
                 BooleanQuery selfDescendantsQuery = new BooleanQuery.Builder().add(descendantsTermQuery, BooleanClause.Occur.SHOULD).add(selfTermQuery, BooleanClause.Occur.SHOULD).build();
                 queries.put(text, selfDescendantsQuery);
+            }
+        }
+        if (ctx.historysupplement() != null) {
+            addHistorical(ctx.historysupplement());
+        }
+    }
+
+    private void addHistorical(ECLParser.HistorysupplementContext ctx) {
+        if (ctx.historyprofilesuffix() != null) {
+            ECLParser.HistoryprofilesuffixContext historyprofilesuffix = ctx.historyprofilesuffix();
+            if (historyprofilesuffix.historymaximumsuffix() != null) {
+                TermQuery ancestorsQuery = new TermQuery(new Term("ancestors.code", EclUtil.HISTORY_MAX_PARENT));
+                queries.put(ctx.getText(), ancestorsQuery);
+            }
+            if (historyprofilesuffix.historyminimumsuffix() != null) {
+                Query query = new TermQuery(new Term("additionalType", EclUtil.HISTORY_MIN_CONCEPTS.get(0)));
+                queries.put(ctx.getText(), query);
+            }
+            if (historyprofilesuffix.historymoderatesuffix() != null) {
+                Query query = LuceneEclDataAccess.getOrQuery(EclUtil.HISTORY_MOD_CONCEPTS);
+                queries.put(ctx.getText(), query);
             }
         }
     }
@@ -243,6 +269,25 @@ public class ExpressionConstraintListener extends EclLogListener {
 
     @Override
     public void exitSubexpressionconstraint(ECLParser.SubexpressionconstraintContext ctx) {
+        if (ctx.historysupplement() != null) {
+            EclExpression expression = getExpression(ctx);
+            handleExpression(
+                    expression,
+                    (lhsConcepts, rhsConcepts) -> {
+                        try {
+                            Query fromQuery = ALL_CONCEPTS.equals(currentRefinementSubExpression) ? null : queries.get(currentRefinementSubExpression);
+                            Query toQuery = ALL_CONCEPTS.equals(expression.lhsOperand.expression) ? new MatchAllDocsQuery() : lhsConcepts;
+                            Query additionalQuery = ALL_CONCEPTS.equals(expression.rhsOperand.expression) ? new MatchAllDocsQuery() : rhsConcepts;
+                            Query query = luceneEclDataAccess.getRefinementQuery(fromQuery, toQuery, additionalQuery);
+                            BooleanQuery booleanQuery = new BooleanQuery.Builder().add(query, BooleanClause.Occur.SHOULD).add(toQuery, BooleanClause.Occur.SHOULD).build();
+                            queries.put(expression.expressionText, booleanQuery);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    },
+                    operands -> {
+                    });
+        }
         handleSubExpression(ctx);
         if (isRefinment) {
             currentRefinementSubExpression = ctx.getText();
@@ -326,6 +371,13 @@ public class ExpressionConstraintListener extends EclLogListener {
         // This for expressions that only have 2 operands. For example, (<<246075003 OR <762952000).
         // This is most common case
         if (context.getChildCount() == 5) {
+            EclExpression eclExpression = null;
+            if (context instanceof ECLParser.SubexpressionconstraintContext) {
+                eclExpression = getHistoricalExpression(expressionText, context);
+                if (eclExpression != null) {
+                    return eclExpression;
+                }
+            }
             String lhs = cleanExpression(context.getChild(0).getText());
             String rhs = cleanExpression(context.getChild(4).getText());
             boolean rhsLiteral = isLiteral(context);
@@ -450,5 +502,24 @@ public class ExpressionConstraintListener extends EclLogListener {
 
     public Map<String, Query> getQueries() {
         return this.queries;
+    }
+
+    private static EclExpression getHistoricalExpression(String expressionText, ParserRuleContext ctx) {
+        ECLParser.SubexpressionconstraintContext subCtx = (ECLParser.SubexpressionconstraintContext) ctx;
+        if (subCtx.historysupplement() != null) {
+            String lhs = cleanExpression(subCtx.getText());
+            String rhs = subCtx.historysupplement().historyprofilesuffix() != null ? cleanExpression(subCtx.historysupplement().getText()) : getHistorySubsetExpression(subCtx.historysupplement().historysubset());
+            // remove the historical supplement from expression
+            lhs = lhs.replace(subCtx.historysupplement().getText(), "").trim();
+            return new EclExpression(expressionText, new Operand(lhs, false, "lhs"), new Operand(rhs, false, "rhs"), null);
+        }
+        return null;
+    }
+
+    private static String getHistorySubsetExpression(ECLParser.HistorysubsetContext subCtx) {
+        if (subCtx.getChildCount() == 5) {
+            return subCtx.getChild(2).getText();
+        }
+        throw new RuntimeException("Unable to create history expression from: " + subCtx.getText());
     }
 }
