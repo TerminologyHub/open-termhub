@@ -134,13 +134,16 @@ The following code block has a number of curl commands that test a few of the te
 
 ```
 # Find terminologies
-curl http://localhost:8080/terminologies | jq
+curl http://localhost:8080/terminology | jq
 
 # Get a SNOMEDCT concept by code
+curl http://localhost:8080/concept/SNOMEDCT/107907001 | jq
 
 # Perform a SNOMEDCT search with a query
+curl http://localhost:8080/concept?terminology=SNOMEDCT&query=cancer&include=minimal | jq
 
 # Perform a SNOMEDCT search with a query and an ECL expression
+curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=cancer&expression=<<128927009&include=minimal" | jq
 
 # Find mapsets
 
