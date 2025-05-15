@@ -79,12 +79,12 @@ dependencies {
 
   // REST
   implementation 'jakarta.ws.rs:jakarta.ws.rs-api:4.0.0'
-
-  // SpringDoc/Swagger
-  implementation 'io.swagger.core.v3:swagger-core:2.2.20'
-  implementation 'io.swagger.core.v3:swagger-jaxrs2:2.2.20'
-  implementation ('org.webjars:swagger-ui:5.10.3') {
-    exclude group: 'org.webjars', module: 'webjars-locator-core'
+  
+  // OpenAPI/Swagger UI - Using HAPI FHIR's built-in support
+  implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0") {
+    // Remove slf4j-api 2+
+    exclude group: "org.slf4j", module: "slf4j-simple"
+    exclude group: "org.slf4j", module: "slf4j-api"
   }
   
   implementation 'org.apache.commons:commons-text:1.12.0'
@@ -92,7 +92,6 @@ dependencies {
   implementation 'org.apache.commons:commons-math3:3.6.1'
   
   implementation 'org.reflections:reflections:0.10.2'
-  // was 32.1.1-jre
   implementation ('com.google.guava:guava:33.4.8-jre') { 
 	attributes{
 	  attribute(Attribute.of('org.gradle.jvm.environment', String),'standard-jvm')
