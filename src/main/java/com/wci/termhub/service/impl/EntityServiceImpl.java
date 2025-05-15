@@ -95,7 +95,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOGGER.info("Adding {} entity to index {}", entity, clazz.getSimpleName());
+    LOGGER.info("Adding {} entity to index {}", entity.getId(), clazz.getSimpleName());
     luceneData.add(entity);
   }
 

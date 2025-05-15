@@ -97,7 +97,6 @@ dependencies {
   implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.0.0'
   implementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 
-  // OpenAPI/Swagger UI - Using HAPI FHIR's built-in support
   implementation 'io.swagger.core.v3:swagger-core:2.2.20'
   implementation 'io.swagger.core.v3:swagger-jaxrs2:2.2.20'
   implementation ('org.webjars:swagger-ui:5.10.3') {

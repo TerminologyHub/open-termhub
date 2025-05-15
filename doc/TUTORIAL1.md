@@ -14,6 +14,7 @@ Instructions on using data local to this project to get Open Termhub up and runn
 One option is to just build the code and run the server locally and use an INDEX_DIR environment variable to specify the directory where Lucene indexes should live (make sure this directory exists)
 
 ```
+# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 mkdir -p $INDEX_DIR
 make build
@@ -25,13 +26,11 @@ make run
 the other option is to build the docker image and run as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists)
 
 ```
+# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 make docker
-image=wcinformatics/open-termhub:`grep "version = " build.gradle | cut -d\' -f 2`
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 $image
-
-docker run -d --rm --name open-termhub -p 8080:8080 $image
+docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
 ### Option 3: run with public docker image
@@ -39,9 +38,10 @@ docker run -d --rm --name open-termhub -p 8080:8080 $image
 The final option is to run the latest published public docker image as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists):
 
 ```
+# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 termhub/open-termhub:latest
+docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
@@ -80,7 +80,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-snomedctus-sandbox-20240301-r5.json'
+  -d '@src/main/resources/data/CodeSystem-snomedctus-sandbox-20240301-r5.json' | jq
 ```
 
 #### Load Sandbox RXNORM
@@ -88,7 +88,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-rxnorm-sandbox-04012024-r5.json'
+  -d '@src/main/resources/data/CodeSystem-rxnorm-sandbox-04012024-r5.json' | jq
 ```
 
 #### Load Sandbox ICD10CM
@@ -96,7 +96,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-icd10cm-sandbox-2023-r5.json'
+  -d '@src/main/resources/data/CodeSystem-icd10cm-sandbox-2023-r5.json' | jq
 ```
 
 #### Load Sandbox LNC
@@ -104,7 +104,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json'
+  -d '@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json' | jq
 ```
 
 #### Load the SNOMEDCT_US to ICD10CM concept maps

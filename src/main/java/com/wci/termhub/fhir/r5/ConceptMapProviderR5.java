@@ -810,7 +810,9 @@ public class ConceptMapProviderR5 implements IResourceProvider {
 
             // Save mapping
             searchService.add(Mapping.class, mapping);
-            logger.info("Created mapping: {}", mapping);
+
+            // Too much info
+            // logger.info("Created mapping: {}", mapping);
           }
         }
       }
