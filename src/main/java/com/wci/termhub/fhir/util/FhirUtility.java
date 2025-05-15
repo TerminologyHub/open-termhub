@@ -28,7 +28,6 @@ import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.wci.termhub.model.AuthContext;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
@@ -38,10 +37,7 @@ import com.wci.termhub.model.PublisherInfo;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
-import com.wci.termhub.rest.client.ConfigClient;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.service.RootServiceRestImpl;
-import com.wci.termhub.util.ClientFactory;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TimerCache;
@@ -49,7 +45,6 @@ import com.wci.termhub.util.TimerCache;
 import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.StringParam;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
@@ -80,35 +75,6 @@ public final class FhirUtility {
    */
   private FhirUtility() {
     // n/a
-  }
-
-  /**
-   * Cache publisher info.
-   *
-   * @throws Exception the exception
-   */
-  public static void cachePublisherInfo() throws Exception {
-    if (publisherInfoMap.isEmpty()) {
-      for (final PublisherInfo pi : ClientFactory.get(ConfigClient.class).getAllPublisherInfo()) {
-        publisherInfoMap.put(pi.getType(), pi);
-      }
-    }
-  }
-
-  /**
-   * Authorize.
-   *
-   * @param request the request
-   * @return the auth context
-   * @throws Exception the exception
-   */
-  public static AuthContext authorize(final HttpServletRequest request) throws Exception {
-    try {
-      return new RootServiceRestImpl().authorizeProject(request);
-    } catch (final Exception e) {
-      throw exception("Authentication failed", OperationOutcome.IssueType.LOGIN,
-          HttpServletResponse.SC_UNAUTHORIZED);
-    }
   }
 
   /**
@@ -686,18 +652,6 @@ public final class FhirUtility {
       }
     }
     return lowerFlag && upperFlag;
-  }
-
-  /**
-   * Gets the publisher info.
-   *
-   * @param key the key
-   * @return the publisher info
-   * @throws Exception the exception
-   */
-  public static PublisherInfo getPublisherInfo(final String key) throws Exception {
-    cachePublisherInfo();
-    return publisherInfoMap.get(key);
   }
 
   /**

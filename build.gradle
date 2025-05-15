@@ -86,10 +86,6 @@ dependencies {
   implementation 'org.apache.lucene:lucene-join:9.11.1'
   implementation 'org.apache.lucene:lucene-queries:9.11.1'
 
-  // Security
-  implementation 'com.auth0:java-jwt:4.4.0' 
-  implementation 'com.auth0:jwks-rsa:0.22.1'
-
   // Other 3rd party Libraries
   implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
 
