@@ -13,7 +13,6 @@ import static com.wci.termhub.util.IndexUtility.getAndQuery;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,7 +50,6 @@ import com.wci.termhub.Application;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.handler.QueryBuilder;
 import com.wci.termhub.lucene.LuceneQueryBuilder;
-import com.wci.termhub.model.AuthContext;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
@@ -103,11 +101,10 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * Terminology service rest implementation.
  */
-@OpenAPIDefinition(info = @Info(title = "Terminology Hub Terminology Terminology API",
-    version = "1.0.0",
+@OpenAPIDefinition(info = @Info(title = "Open TermHub Terminology API", version = "1.0.0",
     description = "API documentation for the interacting with terminologies and concepts. "
-        + "<p>For a guided tour of using this API, see our github project "
-        + "<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes\">"
+        + "<p>For more information, see our github project "
+        + "<a href=\"https://github.com/terminologyhub/open-termhub\">"
         + "https://github.com/terminologyhub/termhub-in-5-minutes</a></p>"
         + "<p>See <a href=\"/fhir/r4/swagger-ui/index.html\" target=\"_blank\">FHIR R4 API</a></p>"
         + "<p>See <a href=\"/fhir/r5/swagger-ui/index.html\" target=\"_blank\">FHIR R5 API</a></p>",
@@ -134,10 +131,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(TerminologyServiceRestImpl.class);
 
-  /** The Constant DF. */
-  @SuppressWarnings("unused")
-  private static final DecimalFormat DF = new DecimalFormat("#.#####");
-
   /** The terminologies cache. */
   private static TimerCache<Map<String, Terminology>> terminologyCache =
       new TimerCache<>(1000, 10000);
@@ -146,6 +139,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   private static TimerCache<Map<String, Mapset>> mapsetCache = new TimerCache<>(1000, 10000);
 
   /** The request. */
+  @SuppressWarnings("unused")
   @Autowired
   private HttpServletRequest request;
 
@@ -200,7 +194,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     throws Exception {
 
     // Authorize
-    authorize(request);
+    // authorize(request);
 
     try {
 
@@ -244,7 +238,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody(required = false) final String payload)
     throws Exception {
 
-    authorizeAdmin(request);
+    // authorizeAdmin(request);
     try {
 
       if (adminKey != null
@@ -306,8 +300,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<Terminology> getTerminology(@PathVariable("id") final String id)
     throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
+    // final AuthContext context = authorize(request);
     try {
       final Terminology terminology = searchService.get(id, Terminology.class);
       // not found - 404
@@ -352,8 +345,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<List<Metadata>> getTerminologyMetadata(@PathVariable("id") final String id)
     throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
+    // final AuthContext context = authorize(request);
     try {
 
       final Terminology terminology = searchService.get(id, Terminology.class);
@@ -395,7 +387,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody final String terminologyStr)
     throws Exception {
 
-    authorizeAdmin(request);
+    // authorizeAdmin(request);
     try {
 
       Terminology terminology = null;
@@ -433,14 +425,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    */
   @RequestMapping(value = "/terminology/fhir/codeSystem", method = RequestMethod.POST,
       consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @Operation(summary = "FHIR CodeSystem operation",
-      description = "Performs a FHIR CodeSystem operation", tags = {
-          "terminology"
-      })
-  @Parameters({
-      @Parameter(name = "file", description = "ZIP file containing FHIR CodeSystem resources",
-          required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-  })
+  @Hidden
+  // @Operation(summary = "FHIR CodeSystem operation",
+  // description = "Performs a FHIR CodeSystem operation", tags = {
+  // "terminology"
+  // })
+  // @Parameters({
+  // @Parameter(name = "file", description = "ZIP file containing FHIR CodeSystem resources",
+  // required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+  // })
   public ResponseEntity<String> addTerminologyFhirCodeSystem(
     @RequestParam("file") final MultipartFile file) throws Exception {
 
@@ -507,7 +500,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody final String terminologyStr)
     throws Exception {
 
-    authorizeAdmin(request);
+    // authorizeAdmin(request);
     try {
       Terminology terminology = null;
       try {
@@ -552,7 +545,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<Void> deleteTerminology(@PathVariable("id") final String id)
     throws Exception {
 
-    authorizeAdmin(request);
+    // authorizeAdmin(request);
     try {
       // Find the object
       final Terminology terminology = searchService.get(id, Terminology.class);
@@ -621,8 +614,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
+    // final AuthContext context = authorize(request);
     try {
 
       // limit return objects to 1000 regardless of user request
@@ -679,8 +671,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<Concept> getConcept(@PathVariable("conceptId") final String conceptId,
     @RequestParam(value = "include", required = false) final String include) throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
+    // final AuthContext context = authorize(request);
     try {
       final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
 
@@ -767,7 +758,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @PathVariable("code") final String code,
     @RequestParam(value = "include", required = false) final String include) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
@@ -853,7 +844,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(value = "codes", required = true) final String codes,
     @RequestParam(value = "include", required = false) final String include) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
@@ -988,7 +979,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "highlights" : include);
@@ -1079,7 +1070,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       // Build a query from the handler and use it in findHelper
@@ -1187,7 +1178,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody(required = false)
     @Parameter(hidden = true) final String queries) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "semanticTypes" : include);
@@ -1339,7 +1330,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       final Map<String, Terminology> map = lookupTerminologyMap();
@@ -1421,7 +1412,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       // look up concept first and get code
@@ -1515,7 +1506,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       // limit return objects to 1000 regardless of user request
@@ -1597,7 +1588,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       // look up concept first and get code
@@ -1694,7 +1685,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       // limit return objects to 1000 regardless of user request
@@ -1776,7 +1767,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       final Map<String, Terminology> map = lookupTerminologyMap();
@@ -1884,7 +1875,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       // validate terminology - throw exception if not found
@@ -1978,8 +1969,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
+    // final AuthContext context = authorize(request);
     try {
 
       // look up concept first and get code
@@ -2099,8 +2089,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
+    // final AuthContext context = authorize(request);
     try {
 
       // Find this thing
@@ -2155,33 +2144,35 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * @throws Exception the exception
    */
   @RequestMapping(value = "/terminology/{terminology}/trees", method = RequestMethod.POST)
-  @Operation(summary = "Compute concept tree positions by terminology, publisher and version",
-      description = "Computes concept tree positions for the specified terminology, publisher and version.",
-      tags = {
-          "concept by code"
-      })
-  @ApiResponses({
-      @ApiResponse(responseCode = "200",
-          description = "Result list of matching concept tree positions"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
-      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
-      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
-      @ApiResponse(responseCode = "500", description = "Internal server error",
-          content = @Content())
-  })
-  @Parameters({
-      @Parameter(name = "terminology",
-          description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\"."),
-      @Parameter(name = "publisher", description = "Terminology publisher. e.g. \"SANDBOX\"."),
-      @Parameter(name = "version", description = "Terminology version. e.g. \"20240301\"."),
-  })
+  @Hidden
+  // @Operation(summary = "Compute concept tree positions by terminology, publisher and version",
+  // description = "Computes concept tree positions for the specified terminology, publisher and
+  // version.",
+  // tags = {
+  // "concept by code"
+  // })
+  // @ApiResponses({
+  // @ApiResponse(responseCode = "200",
+  // description = "Result list of matching concept tree positions"),
+  // @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
+  // @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
+  // @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+  // @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+  // @ApiResponse(responseCode = "500", description = "Internal server error",
+  // content = @Content())
+  // })
+  // @Parameters({
+  // @Parameter(name = "terminology",
+  // description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\"."),
+  // @Parameter(name = "publisher", description = "Terminology publisher. e.g. \"SANDBOX\"."),
+  // @Parameter(name = "version", description = "Terminology version. e.g. \"20240301\"."),
+  // })
   public ResponseEntity<String> computeTreePositions(
     @PathVariable("terminology") final String terminology,
     @RequestParam("publisher") final String publisher,
     @RequestParam("version") final String version) throws Exception {
 
-    authorize(request);
+    // authorize(request);
     try {
 
       // throw exception if any parameter is null or empty
@@ -2564,7 +2555,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @PathVariable("terminology") final String terminology, @PathVariable("code") final String code)
     throws Exception {
 
-    authorizeProject(request);
+    // authorizeProject(request);
     try {
 
       final IncludeParam ip = new IncludeParam("minimal");

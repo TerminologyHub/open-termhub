@@ -22,10 +22,10 @@ import org.apache.lucene.search.Weight;
 public abstract class FilterScorer extends Scorer {
 
   /** The in. */
-  protected final Scorer IN;
+  private final Scorer IN;
 
   /** The iterator. */
-  protected final DocIdSetIterator ITERATOR;
+  private final DocIdSetIterator ITERATOR;
 
   /**
    * Create a new FilterScorer.
