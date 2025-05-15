@@ -1,6 +1,6 @@
 buildscript {
   ext {
-    springBootVersion = "3.3.5"
+    springBootVersion = "3.3.11"
   }
   repositories {
     mavenLocal()
@@ -14,7 +14,6 @@ buildscript {
 
   dependencies {
     classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-    classpath "gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:4.7.5"
   }
 }
 
@@ -84,7 +83,7 @@ dependencies {
   implementation 'org.apache.lucene:lucene-queries:9.11.1'
 
   // Security
-  implementation 'com.auth0:java-jwt:4.4.0' //3.8.3'
+  implementation 'com.auth0:java-jwt:4.4.0'
   implementation ('com.auth0:jwks-rsa:0.22.1') {
     exclude group: 'com.google.guava', module: 'guava'
   }
@@ -139,19 +138,19 @@ dependencies {
   // FHIR libraries
   // The guava exclusion is to avoid things like
   // - ...Could not resolve com.google.guava:guava:32.0.1-jre
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-base:7.0.3") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-base:7.6.1") {
      exclude group: "com.google.guava", module: "guava"
      exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
      exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
      exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:7.0.3") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:7.6.1") {
      exclude group: "com.google.guava", module: "guava"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-server:7.0.3") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-server:7.6.1") {
      exclude group: "com.google.guava", module: "guava"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-jpaserver-base:7.0.3") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-jpaserver-base:7.6.1") {
      exclude group: "ca.uhn.hapi.fhir", module: "hapi-fhir-sql-migrate"
      exclude group: "org.elasticsearch.client", module: "elasticsearch-rest-high-level-client"
      exclude group: "org.hibernate.search"
@@ -161,16 +160,17 @@ dependencies {
      exclude group: "org.glassfish", module: "javax.el"
      exclude group: "org.apache.logging.log4j", module: "log4j-to-slf4j"
      exclude group: "com.google.guava", module: "guava"
+     exclude group: "org.apache.jena"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-server-openapi:7.0.3") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-server-openapi:7.6.1") {
      exclude group: "com.google.guava", module: "guava"
      exclude group: "org.springdoc", module: "springdoc-openapi-starter-webmvc-ui"
      exclude group: "org.webjars", module: "swagger-ui"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-structures-dstu2:7.0.3") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-structures-dstu2:7.6.1") {
      exclude group: "com.google.guava", module: "guava"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-validation:7.0.3") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-validation:7.6.1") {
      exclude group: "com.google.guava", module: "guava"
   }
 
@@ -179,6 +179,12 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
   testImplementation 'org.junit.platform:junit-platform-suite-engine:1.9.3'
+}
+
+dependencyManagement {
+  dependencies {
+    dependency('org.fhir:ucum:1.0.9')
+  }
 }
 
 // ./gradlew clean test
@@ -377,3 +383,4 @@ jacocoTestCoverageVerification {
 dependencyLocking {
     lockAllConfigurations() // Lock all configurations by default
 }
+
