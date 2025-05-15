@@ -1,5 +1,0 @@
-# Generated from GenerateMockTestData.generateConfig() - TBD
-{"id":"92aa2b33-4e4f-4064-a0a2-de4f8ae51421","modified":"2023-07-21T16:39:26.986-07:00","created":"2023-07-21T16:39:26.986-07:00","local":false,"active":true,"type":"UNLIMITED","term":-1,"description":"UNLIMTED sample description."}
-{"id":"6ff8378d-ebb6-4164-a1ce-26ab7fec0b93","modified":"2023-07-21T16:39:27.007-07:00","created":"2023-07-21T16:39:27.007-07:00","local":false,"active":true,"type":"STARTER","term":90,"termUnit":"day","description":"STARTER sample description."}
-{"id":"45da18e5-43cc-45dc-84e0-108f93533882","modified":"2023-07-21T16:39:27.008-07:00","created":"2023-07-21T16:39:27.008-07:00","local":false,"active":true,"type":"BASIC","term":1, "termUnit": "year","description":"BASIC sample description."}
-{"id":"a14010a4-fe52-4150-9a65-5f66f8fdf0f4","modified":"2023-07-21T16:39:27.008-07:00","created":"2023-07-21T16:39:27.008-07:00","local":false,"active":true,"type":"BASIC-MONTHLY","term":1, "termUnit": "month","description":"BASIC-MONTHLY sample description."}

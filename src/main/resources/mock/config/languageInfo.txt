@@ -1,4 +1,0 @@
-# Generated from GenerateMockTestData.generateConfig() - TBD
-{"id":"350bef78-ba12-46e9-a844-0b7dd6839e28","modified":"2023-07-21T17:01:24.610-07:00","created":"2023-07-21T17:01:24.610-07:00","modifiedBy":"admin","local":false,"active":true,"type":"en","name":"English","iso2Code":"en","iso3Code":"eng"}
-{"id":"e483fd2b-5592-4973-bac3-4f6e14e48395","modified":"2023-07-21T17:01:24.616-07:00","created":"2023-07-21T17:01:24.616-07:00","modifiedBy":"admin","local":false,"active":true,"type":"en_US","name":"US English","iso2Code":"en","iso3Code":"eng","isoCountryCode":"US","country":"United States"}
-{"id":"c22af243-0acb-480d-9026-25a8c2f5eb55","modified":"2023-07-21T17:01:24.617-07:00","created":"2023-07-21T17:01:24.617-07:00","modifiedBy":"admin","local":false,"active":true,"type":"en_GB","name":"British English","iso2Code":"en","iso3Code":"eng","isoCountryCode":"GB","country":"Great Britain"}
