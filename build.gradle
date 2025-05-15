@@ -60,7 +60,11 @@ java {
 
 dependencies {
   // NOTE: "spring-boot-starter-web" must be the first dependency
-  implementation('org.springframework.boot:spring-boot-starter-web')
+  implementation "org.springframework.boot:spring-boot-starter-web"
+  implementation "org.springframework.boot:spring-boot-starter-actuator"
+
+  // prometheus
+  implementation "io.micrometer:micrometer-registry-prometheus"
 
   // Add ANTLR runtime dependency to match code generation version
   implementation 'org.antlr:antlr4-runtime:4.13.2'
@@ -83,10 +87,8 @@ dependencies {
   implementation 'org.apache.lucene:lucene-queries:9.11.1'
 
   // Security
-  implementation 'com.auth0:java-jwt:4.4.0'
-  implementation ('com.auth0:jwks-rsa:0.22.1') {
-    exclude group: 'com.google.guava', module: 'guava'
-  }
+  implementation 'com.auth0:java-jwt:4.4.0' 
+  implementation 'com.auth0:jwks-rsa:0.22.1'
 
   // Other 3rd party Libraries
   implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
@@ -95,7 +97,6 @@ dependencies {
   implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.0.0'
   implementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 
-  // OpenAPI/Swagger UI - Using HAPI FHIR's built-in support
   implementation 'io.swagger.core.v3:swagger-core:2.2.20'
   implementation 'io.swagger.core.v3:swagger-jaxrs2:2.2.20'
   implementation ('org.webjars:swagger-ui:5.10.3') {
@@ -328,7 +329,7 @@ tasks.withType(JavaExec) {
 }
 
 tasks.named('bootRun') {
-    args = ['--spring.profiles.active=your-profile']
+    // args = ['--spring.profiles.active=your-profile']
 }
 
 bootRun {
@@ -383,4 +384,3 @@ jacocoTestCoverageVerification {
 dependencyLocking {
     lockAllConfigurations() // Lock all configurations by default
 }
-

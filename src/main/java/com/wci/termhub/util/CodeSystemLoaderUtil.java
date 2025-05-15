@@ -211,7 +211,8 @@ public final class CodeSystemLoaderUtil {
           termCount++;
         }
 
-        LOGGER.info("indexCodeSystem: concept: {}", concept);
+        // too much logging
+        // LOGGER.info("indexCodeSystem: concept: {}", concept);
 
         // Add concept to batch
         conceptBatch.add(concept);

@@ -12,7 +12,7 @@ GIT_VERSION              ?= $(shell echo `git describe --match=NeVeRmAtCh --alwa
 GIT_COMMIT               ?= $(shell echo `git log | grep -m1 -oE '[^ ]+$'`)
 GIT_COMMITTED_AT         ?= $(shell echo `git log -1 --format=%ct`)
 GIT_BRANCH               ?= $(shell echo `git branch --show-current`)
-DOCKER_INT_REGISTRY      := termhub
+DOCKER_INT_REGISTRY      := wcinformatics
 
 .PHONY: build
 
@@ -44,12 +44,13 @@ run: ## Run the server
 rundebug: ## Run the server in debug mode
 	./gradlew bootRun --debug-jvm
 
-docker: ## Build the docker image
+docker: ## Build the docker image and tag with version and latest
 	@echo APP_VERSION=$(APP_VERSION)
 	@echo REGISTRY=$(DOCKER_INT_REGISTRY)
 	@echo SERVICE=$(SERVICE)
 	docker build --no-cache-filter=gradle-build -t $(SERVICE) .
 	docker tag $(SERVICE) $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	docker tag $(SERVICE) $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
 
 scandocker:
 	trivy image $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"

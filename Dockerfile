@@ -22,7 +22,6 @@ RUN mkdir -p "${PROJECT}/.gradpwdle"
 RUN mkdir -p "${PROJECT}/.cache"
 
 # copy source
-COPY --chown=gradle:gradle .gradle/gradle.properties ${HOME}/.gradle/gradle.properties
 COPY --chown=gradle:gradle config/ "${PROJECT}"/config
 COPY --chown=gradle:gradle src/ "${PROJECT}/src"
 COPY --chown=gradle:gradle [bs]*.gradle ${PROJECT}/
@@ -54,8 +53,6 @@ RUN chmod +x /srv/rt/run.sh
 USER $RUNTIME_USER
 COPY --from=gradle-build --chown=server:server /home/gradle/project/build/libs/ /srv/rt/
 WORKDIR /srv/rt
-
-RUN ls -l /srv/rt
 
 # Run the built product when the container launches
 CMD "/srv/rt/run.sh"

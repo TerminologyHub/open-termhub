@@ -782,6 +782,9 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
       // Return success
       final MethodOutcome outcome = new MethodOutcome();
+      // Clear the "concepts" of the code system before sending it back
+      codeSystem.setCount(codeSystem.getConcept().size());
+      codeSystem.getConcept().clear();
       outcome.setResource(codeSystem);
       outcome.setCreated(true);
       return outcome;

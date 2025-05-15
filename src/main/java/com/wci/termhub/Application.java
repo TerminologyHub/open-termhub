@@ -26,7 +26,6 @@ import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.util.AdhocUtility;
-import com.wci.termhub.util.JwtUtility;
 import com.wci.termhub.util.ModelUtility;
 
 /**
@@ -58,7 +57,7 @@ public class Application extends SpringBootServletInitializer {
     SpringApplication.run(Application.class, args);
 
     // Log start of application
-    JwtUtility.initThreadContext("application");
+    // JwtUtility.initThreadContext("application");
     logger.debug("TERMHUB TERMINOLOGY APPLICATION START");
 
     // Bootstrap indexes

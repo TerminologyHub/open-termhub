@@ -14,6 +14,7 @@ Instructions on using data local to this project to get Open Termhub up and runn
 One option is to just build the code and run the server locally and use an INDEX_DIR environment variable to specify the directory where Lucene indexes should live (make sure this directory exists)
 
 ```
+# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 mkdir -p $INDEX_DIR
 make build
@@ -25,10 +26,11 @@ make run
 the other option is to build the docker image and run as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists)
 
 ```
+# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
-mkdir -p $INDEX_DIR
+/bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 make docker
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 termhub/open-termhub:1.1.0-SNAPSHOT
+docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
 ### Option 3: run with public docker image
@@ -36,9 +38,10 @@ docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/in
 The final option is to run the latest published public docker image as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists):
 
 ```
+# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
-mkdir -p $INDEX_DIR
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 termhub/open-termhub:1.1.0.202505
+/bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
+docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
@@ -46,9 +49,9 @@ docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/in
 ## View API Documentation
 
 All three of the above options will yield a running server and you should now you should be able to access the Swagger UI pages:
-* [Swagger](https://localhost:8080/swagger-ui/index.html)
-* [FHIR R4 Swagger](https://localhost:8080/fhir/r4/swagger-ui/index.html)
-* [FHIR R5 Swagger](https://localhost:8080/fhir/r5/swagger-ui/index.html)
+* Swagger [http://localhost:8080/swagger-ui/index.html](https://localhost:8080/swagger-ui/index.html)
+* FHIR R4 Swagger [http://localhost:8080/fhir/r4/swagger-ui/index.html](https://localhost:8080/fhir/r4/swagger-ui/index.html)
+* FHIR R5 Swagger [http://localhost:8080/fhir/r5/swagger-ui/index.html](https://localhost:8080/fhir/r5/swagger-ui/index.html)
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
 
@@ -77,7 +80,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-snomedctus-sandbox-20240301-r5.json'
+  -d '@src/main/resources/data/CodeSystem-snomedctus-sandbox-20240301-r5.json' | jq
 ```
 
 #### Load Sandbox RXNORM
@@ -85,7 +88,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-rxnorm-sandbox-04012024-r5.json'
+  -d '@src/main/resources/data/CodeSystem-rxnorm-sandbox-04012024-r5.json' | jq
 ```
 
 #### Load Sandbox ICD10CM
@@ -93,7 +96,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-icd10cm-sandbox-2023-r5.json'
+  -d '@src/main/resources/data/CodeSystem-icd10cm-sandbox-2023-r5.json' | jq
 ```
 
 #### Load Sandbox LNC
@@ -101,7 +104,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json'
+  -d '@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json' | jq
 ```
 
 #### Load the SNOMEDCT_US to ICD10CM concept maps
@@ -121,20 +124,73 @@ specified data.  The entire runtime for this is about 1 min.
 ## Demonstrating the UI
 
 Now that we have data loaded, we can try a several curl commands to demonstrate
-basic function.  And a [Postman Collection](postman-open-termhub.json) is also
-provided
+basic function. Alternatively, you can
 
-### Testing the "native" API
+[![Run in Postman](https://run.pstmn.io/button.svg)](postman-open-termhub.json).
 
+### Testing the Terminology API
 
+The following code block has a number of curl commands that test a few of the terminology API endpoints of the server to demonstrate basic function.
 
+```
+# Find terminologies
+curl http://localhost:8080/terminology | jq
 
+# Get a SNOMEDCT concept by code
+curl http://localhost:8080/concept/SNOMEDCT/107907001 | jq
+
+# Perform a SNOMEDCT search with a query
+curl http://localhost:8080/concept?terminology=SNOMEDCT&query=cancer&include=minimal | jq
+
+# Perform a SNOMEDCT search with a query and an ECL expression
+curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=cancer&expression=<<128927009&include=minimal" | jq
+
+# Find mapsets
+
+# Find "target" codes of mappings for a particular SNOMEDCT code
+```
 
 ### Testing the FHIR R4 API
 
+The following code block has a number of curl commands that test a few of the FHIR R4 API endpoints of the server to demonstrate basic function.
+
+```
+# Find CodeSystems
+curl -X POST http://localhost:8080/fhir/r4/CodeSystem | jq
+
+# Perform a SNOMEDCT CodeSystem $lookup for a code
+
+# Find implied ValueSets for CodeSystems
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
+
+# Find ConceptMaps
+
+# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
+```
 
 ### Testing the FHIR R5 API
 
+The following code block has a number of curl commands that test a few of the FHIR R5 API endpoints of the server to demonstrate basic function.
+
+```
+# Find CodeSystems
+curl -X POST http://localhost:8080/fhir/r5/CodeSystem | jq
+
+# Perform a SNOMEDCT CodeSystem $lookup for a code
+
+# Find implied ValueSets for CodeSystems
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
+
+# Find ConceptMaps
+
+# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
+```
 
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
