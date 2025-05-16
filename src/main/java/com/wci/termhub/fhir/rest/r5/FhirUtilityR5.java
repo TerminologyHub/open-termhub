@@ -807,8 +807,6 @@ public final class FhirUtilityR5 {
     cs.setName(terminology.getName());
     cs.setTitle(terminology.getAbbreviation());
 
-    // OLD
-    // cs.setPublisher(FhirUtility.getPublisherInfo(terminology.getPublisher()).getName());
     cs.setPublisher(terminology.getPublisher());
 
     cs.setStatus(Enumerations.PublicationStatus.ACTIVE);

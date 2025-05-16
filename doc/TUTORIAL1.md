@@ -165,19 +165,32 @@ The following code block has a number of curl commands that test a few of the FH
 
 ```
 # Find CodeSystems
-curl http://localhost:8080/fhir/r4/CodeSystem | jq
+curl 'http://localhost:8080/fhir/r4/CodeSystem' | jq
 
 # Perform a SNOMEDCT CodeSystem $lookup for a code
 
+curl http://localhost:8080/fhir/r4/CodeSystem/$lookup?system=...&code= | jq
+
 # Find implied ValueSets for CodeSystems
+
+curl 'http://localhost:8080/fhir/r4/ValueSet'
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter
 
+curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=' | jq
+
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
+
+curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=' | jq
 
 # Find ConceptMaps
 
+curl 'http://localhost:8080/fhir/r4/ConceptMap' | jq
+
 # Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
+
+curl 'http://localhost:8080/fhir/r4/ConceptMap/$translate' | jq
+
 ```
 
 ### Testing the FHIR R5 API

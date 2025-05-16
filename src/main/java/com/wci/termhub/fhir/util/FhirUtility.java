@@ -34,14 +34,11 @@ import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
-import com.wci.termhub.model.PublisherInfo;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
-import com.wci.termhub.rest.client.ConfigClient;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.service.RootServiceRestImpl;
-import com.wci.termhub.util.ClientFactory;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TimerCache;
@@ -60,9 +57,6 @@ public final class FhirUtility {
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(FhirUtility.class);
 
-  /** The publisher info map. */
-  private static Map<String, PublisherInfo> publisherInfoMap = new HashMap<>();
-
   /** The terminologies cache. */
   private static TimerCache<List<Terminology>> terminologyCache = new TimerCache<>(1000, 10000);
 
@@ -80,19 +74,6 @@ public final class FhirUtility {
    */
   private FhirUtility() {
     // n/a
-  }
-
-  /**
-   * Cache publisher info.
-   *
-   * @throws Exception the exception
-   */
-  public static void cachePublisherInfo() throws Exception {
-    if (publisherInfoMap.isEmpty()) {
-      for (final PublisherInfo pi : ClientFactory.get(ConfigClient.class).getAllPublisherInfo()) {
-        publisherInfoMap.put(pi.getType(), pi);
-      }
-    }
   }
 
   /**
@@ -686,18 +667,6 @@ public final class FhirUtility {
       }
     }
     return lowerFlag && upperFlag;
-  }
-
-  /**
-   * Gets the publisher info.
-   *
-   * @param key the key
-   * @return the publisher info
-   * @throws Exception the exception
-   */
-  public static PublisherInfo getPublisherInfo(final String key) throws Exception {
-    cachePublisherInfo();
-    return publisherInfoMap.get(key);
   }
 
   /**
