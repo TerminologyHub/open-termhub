@@ -760,7 +760,7 @@ public final class FhirUtilityR4 {
 
     // cs.setUrl(terminology.getAttributes().get("fhirUri"));
     // fhirUri is not in the json data files. setting to id for now
-    cs.setUrl(terminology.getId());
+    cs.setUrl(terminology.getUri());
 
     cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
 
@@ -841,7 +841,7 @@ public final class FhirUtilityR4 {
     cm.setId(mapset.getId());
     cm.setName(mapset.getName());
     cm.setTitle(mapset.getAbbreviation());
-    cm.setPublisher(FhirUtility.getPublisherInfo(mapset.getPublisher()).getName());
+    cm.setPublisher(mapset.getPublisher()).getName();
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
     cm.setCopyright(mapset.getAttributes().get("copyright"));
     cm.setIdentifier(new Identifier().setValue(mapset.getCode()));

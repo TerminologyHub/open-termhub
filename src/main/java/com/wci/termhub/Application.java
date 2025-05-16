@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
@@ -32,7 +33,7 @@ import com.wci.termhub.util.ModelUtility;
  * The Application entry point.
  */
 @SpringBootApplication(exclude = {
-    DataSourceAutoConfiguration.class
+    DataSourceAutoConfiguration.class, QuartzAutoConfiguration.class,
 })
 @ComponentScan
 @EnableCaching
@@ -57,7 +58,6 @@ public class Application extends SpringBootServletInitializer {
     SpringApplication.run(Application.class, args);
 
     // Log start of application
-    // JwtUtility.initThreadContext("application");
     logger.debug("TERMHUB TERMINOLOGY APPLICATION START");
 
     // Bootstrap indexes

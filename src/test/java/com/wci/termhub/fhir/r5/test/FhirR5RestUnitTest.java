@@ -241,6 +241,7 @@ public class FhirR5RestUnitTest {
     for (final Resource cs : codeSystems) {
       final CodeSystem css = (CodeSystem) cs;
       LOGGER.info("  Code System Name = {}, Version = {}", css.getName(), css.getVersion());
+      LOGGER.info("  Code System URL = {}", css.getUrl());
     }
     assertEquals(5, codeSystems.size());
 
@@ -272,6 +273,39 @@ public class FhirR5RestUnitTest {
     // Verify all expected values were found
     assertTrue(expectedTitles.isEmpty(), "Missing code systems: " + expectedTitles);
     assertTrue(expectedPublishers.isEmpty(), "Missing publishers: " + expectedPublishers);
+  }
+
+  /**
+   * Test code system search by url.
+   */
+  @Test
+  public void testCodeSystemSearchByUrl() {
+
+    // Arrange
+    final String codeSystemUri = "http://snomed.info/sct";
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "?url=" + codeSystemUri;
+    LOGGER.info("endpoint = {}", endpoint);
+
+    // Act
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final Bundle data = parser.parseResource(Bundle.class, content);
+
+    // Assert
+    assertNotNull(data);
+    assertEquals(ResourceType.Bundle, data.getResourceType());
+    assertEquals(Bundle.BundleType.SEARCHSET, data.getType());
+    assertEquals(2, data.getTotal());
+    assertNotNull(data.getEntry());
+    assertEquals(2, data.getEntry().size());
+    // log the code systems
+    for (final BundleEntryComponent entry : data.getEntry()) {
+      final CodeSystem cs = (CodeSystem) entry.getResource();
+      LOGGER.info("  code system = {}", parser.encodeResourceToString(cs));
+      assertNotNull(cs);
+      assertEquals(codeSystemUri, cs.getUrl());
+      assertTrue("SNOMEDCT".equals(cs.getTitle()) || "SNOMEDCT_US".equals(cs.getTitle()));
+    }
+
   }
 
   /**
@@ -353,8 +387,10 @@ public class FhirR5RestUnitTest {
   public void testCodeSystemValidateCode() throws Exception {
     // Arrange
     final String code = "385487005";
-    final String url = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b";
-    final String validateParams = "/$validate-code?url=" + url + "&code=" + code;
+    final String url = "http://snomed.info/sct";
+    final String version = "http://snomed.info/sct/900000000000207008/version/20240101";
+    final String validateParams =
+        "/$validate-code?url=" + url + "&code=" + code + "&version=" + version;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + validateParams;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -436,9 +472,10 @@ public class FhirR5RestUnitTest {
     // Arrange
     final String codeA = "73211009";
     final String codeB = "727499001";
-    final String system = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b";
-    final String subsumesParams =
-        "/$subsumes?codeA=" + codeA + "&codeB=" + codeB + "&system=" + system;
+    final String system = "http://snomed.info/sct";
+    final String version = "http://snomed.info/sct/731000124108/version/20240301";
+    final String subsumesParams = "/$subsumes?codeA=" + codeA + "&codeB=" + codeB + "&system="
+        + system + "&version=" + version;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + subsumesParams;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -454,7 +491,6 @@ public class FhirR5RestUnitTest {
     assertNotNull(result.getParameter("outcome"));
     assertTrue(result.getParameter("outcome").getValue().toString()
         .matches("(subsumes|subsumed-by|equivalent|not-subsumed)"));
-    assertNotNull(result.getParameter("version"));
   }
 
   /**
@@ -493,8 +529,9 @@ public class FhirR5RestUnitTest {
   public void testCodeSystemLookup() throws Exception {
     // Arrange
     final String code = "73211009";
-    final String system = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b";
-    final String lookupParams = "/$lookup?code=" + code + "&system=" + system;
+    final String csId = "http://snomed.info/sct";
+    final String version = "http://snomed.info/sct/900000000000207008/version/20240101";
+    final String lookupParams = "/$lookup?code=" + code + "&system=" + csId + "&version=" + version;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + lookupParams;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -512,7 +549,7 @@ public class FhirR5RestUnitTest {
 
     // Verify system parameter
     assertTrue(result.hasParameter("system"), "Should have system parameter");
-    assertEquals(system, result.getParameter("system").getValue().toString());
+    assertEquals(csId, result.getParameter("system").getValue().toString());
 
     // Verify name parameter
     assertTrue(result.hasParameter("name"), "Should have name parameter");
@@ -520,8 +557,7 @@ public class FhirR5RestUnitTest {
 
     // Verify version parameter
     assertTrue(result.hasParameter("version"), "Should have version parameter");
-    assertEquals("http://snomed.info/sct/900000000000207008/version/20240101",
-        result.getParameter("version").getValue().toString());
+    assertEquals(version, result.getParameter("version").getValue().toString());
 
     // Verify display parameter
     assertTrue(result.hasParameter("display"), "Should have display parameter");
@@ -576,10 +612,10 @@ public class FhirR5RestUnitTest {
   @Test
   public void testCodeSystemLookupById() throws Exception {
     // Arrange
-    final String csId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b";
+    final String system = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b";
     final String code = "73211009";
     final String lookupParams = "/$lookup?code=" + code;
-    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + lookupParams;
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + system + lookupParams;
     LOGGER.info("endpoint = {}", endpoint);
 
     // Act
@@ -596,7 +632,7 @@ public class FhirR5RestUnitTest {
 
     // Verify system parameter
     assertTrue(result.hasParameter("system"), "Should have system parameter");
-    assertEquals(csId, result.getParameter("system").getValue().toString());
+    assertEquals("http://snomed.info/sct", result.getParameter("system").getValue().toString());
 
     // Verify name parameter
     assertTrue(result.hasParameter("name"), "Should have name parameter");

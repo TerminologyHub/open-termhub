@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.tika.utils.ExceptionUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -451,46 +450,6 @@ public final class ModelUtility<T> {
   }
 
   /**
-   * Returns the stack trace.
-   *
-   * @param t the t
-   * @return the stack trace
-   */
-  public static String getStackTrace(final Throwable t) {
-    return getStackTrace(t, false);
-  }
-
-  /**
-   * Returns the stack trace.
-   *
-   * @param t the t
-   * @param wciFlag the wci flag
-   * @return the stack trace
-   */
-  public static String getStackTrace(final Throwable t, final boolean wciFlag) {
-    final String stackTrace = ExceptionUtils.getStackTrace(t);
-    if (!wciFlag) {
-      return stackTrace;
-    }
-    final String[] lines = FieldedStringTokenizer.split(stackTrace, "\n");
-    final StringBuilder sb = new StringBuilder();
-    boolean found = false;
-    for (final String line : lines) {
-      final boolean wciLine = line.contains("com.wci.");
-      if (wciLine) {
-        found = true;
-      }
-      // if found and not a wci line, stop
-      if (found && !wciLine) {
-        sb.append("\t...");
-        break;
-      }
-      sb.append(line.replaceAll("\r", "")).append("\n");
-    }
-    return sb.toString();
-  }
-
-  /**
    * Gets the sort field.
    *
    * @param <T> the generic type
@@ -732,15 +691,6 @@ public final class ModelUtility<T> {
     return fields;
   }
 
-  // /**
-  // * Checks if is soft deleted.
-  // *
-  // * @param obj the obj
-  // * @return true, if is soft deleted
-  // */
-  // public static boolean isSoftDeleted(final HasSoftDelete obj) {
-  // return obj.getSoftDeleted() != null && obj.getSoftDeleted();
-  // }
 
   /**
    * Gets the annotation.

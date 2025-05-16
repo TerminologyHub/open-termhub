@@ -11,20 +11,44 @@ package com.wci.termhub.test;
 
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
+import org.junit.platform.suite.api.SuiteDisplayName;
+import org.junit.platform.suite.api.IncludeEngines;
 
 import com.wci.termhub.rest.test.TerminologyServiceRestImplUnitTest;
+import com.wci.termhub.ecl.test.EclToLuceneConverterTest;
 
 /**
  * The Class AllTestsSuite. Tests that are dependent on CodeSystemLoadUnitTest.
  */
 @Suite
-@SelectClasses({
-    CodeSystemLoadUnitTest.class, TerminologyCodeSystemUnitTest.class,
-    ConceptCodeSystemUnitTest.class, ConceptRelationshipCodeSystemUnitTest.class,
+@SuiteDisplayName("All Tests")
+@IncludeEngines("junit-jupiter")
+@SelectClasses(value = {
 
-    MetadataSearchUnitTest.class, TerminologySearchUnitTest.class, ConceptSearchUnitTest.class,
-    TermSearchUnitTest.class, MultithreadedReadUnitTest.class,
-    TerminologyServiceRestImplUnitTest.class, CleanupUnitTest.class
+    CleanupUnitTest.class,
+
+    CodeSystemLoadUnitTest.class,
+
+    // Run tests that verify the data
+    TerminologyCodeSystemUnitTest.class,
+    ConceptCodeSystemUnitTest.class,
+    ConceptRelationshipCodeSystemUnitTest.class,
+
+    MetadataSearchUnitTest.class,
+    TerminologySearchUnitTest.class,
+    ConceptSearchUnitTest.class,
+    ConceptTreePositionSearchUnitTest.class,
+    TermSearchUnitTest.class,
+    MultithreadedReadUnitTest.class,
+
+    // Then run ECL tests that depend on concept data
+    EclToLuceneConverterTest.class,
+
+    // Then run REST tests
+    TerminologyServiceRestImplUnitTest.class,
+
+    // Finally cleanup
+    CleanupUnitTest.class
 })
 public class AllTestsSuite {
   // n/a

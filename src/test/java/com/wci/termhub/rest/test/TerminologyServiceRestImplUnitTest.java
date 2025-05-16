@@ -21,7 +21,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +57,7 @@ import com.wci.termhub.test.AbstractTerminologyServerTest;
 @SpringBootTest(classes = Application.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-test.properties")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServerTest {
 
   /** The logger. */
@@ -73,10 +74,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   /** The object mapper. */
   @Autowired
   private ObjectMapper objectMapper;
-
-  /** The terminology service rest impl unit test. */
-  @InjectMocks
-  private TerminologyServiceRestImplUnitTest terminologyServiceRestImplUnitTest;
 
   /**
    * Sets the up.
