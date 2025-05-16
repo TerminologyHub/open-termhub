@@ -246,7 +246,9 @@ public final class ModelUtility<T> {
    * @return the json for graph
    */
   public static String toJson(final Object object) {
-    return toJson(object, true);
+    // Switch these for debugging
+    // return toJson(object, true);
+    return toJson(object, false);
   }
 
   /**

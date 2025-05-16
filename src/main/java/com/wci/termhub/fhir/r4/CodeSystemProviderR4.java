@@ -749,7 +749,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
     throws Exception {
 
     try {
-      logger.info("Creating code system with {} concepts",
+      logger.info("Create code system with {} concepts",
           codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
 
       // Convert CodeSystem to JSON

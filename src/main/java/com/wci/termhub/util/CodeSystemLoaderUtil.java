@@ -83,7 +83,7 @@ public final class CodeSystemLoaderUtil {
     if (!indexDir.exists()) {
       // Create the directory if it doesn't exist
       indexDir.mkdirs();
-      LOGGER.info("Created directory for indexes: {}", indexDir.getAbsolutePath());
+      LOGGER.info("Create directory for indexes: {}", indexDir.getAbsolutePath());
     }
 
     indexCodeSystem(service, fullFileName, 1000, -1);
@@ -101,7 +101,7 @@ public final class CodeSystemLoaderUtil {
   private static void indexCodeSystem(final EntityRepositoryService service,
     final String fullFileName, final int batchSize, final int limit) throws Exception {
 
-    LOGGER.debug("indexCodeSystem: batch size: {} limit: {}", batchSize, limit);
+    LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
     final long startTime = System.currentTimeMillis();
     final List<Concept> conceptBatch = new ArrayList<>(batchSize);
     final List<ConceptRelationship> relationshipBatch = new ArrayList<>(batchSize);
@@ -161,7 +161,7 @@ public final class CodeSystemLoaderUtil {
             if (relationshipBatch.size() == batchSize) {
               service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
               relationshipBatch.clear();
-              LOGGER.info("indexCodeSystem: processed relationships count: {}", relationshipCount);
+              LOGGER.info("  processed relationships count: {}", relationshipCount);
             }
 
             // Safely get the valueCoding and its code
@@ -170,7 +170,7 @@ public final class CodeSystemLoaderUtil {
               concept.getEclClauses().add(
                   propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
             } else {
-              LOGGER.warn("Missing valueCoding or code for parent relationship in concept: {}",
+              LOGGER.warn("    Missing valueCoding or code for parent relationship in concept: {}",
                   concept.getCode());
             }
 
@@ -192,7 +192,7 @@ public final class CodeSystemLoaderUtil {
                     + propertyValueCoding.path("code").asText());
               } else {
                 LOGGER.warn(
-                    "Skipping relationship due to missing valueCoding or code for concept: {}",
+                    "    Skipping relationship due to missing valueCoding or code for concept: {}",
                     concept.getCode());
               }
             }
@@ -206,7 +206,7 @@ public final class CodeSystemLoaderUtil {
           if (termBatch.size() == batchSize) {
             service.addBulk(Term.class, new ArrayList<>(termBatch));
             termBatch.clear();
-            LOGGER.info("indexCodeSystem: processed terms count: {}", termCount);
+            LOGGER.info("  processed terms count: {}", termCount);
           }
           termCount++;
         }
@@ -222,7 +222,7 @@ public final class CodeSystemLoaderUtil {
           service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
           SystemReportUtility.logMemory();
           conceptBatch.clear();
-          LOGGER.info("indexCodeSystem: processed concepts count: {}", conceptCount);
+          LOGGER.info("  processed concepts count: {}", conceptCount);
         }
         conceptCount++;
       }
@@ -245,12 +245,12 @@ public final class CodeSystemLoaderUtil {
       computeConceptTreePositions(service, metadataList.get(0).getTerminology(),
           metadataList.get(0).getPublisher(), metadataList.get(0).getVersion());
 
-      LOGGER.info("indexCodeSystem: final counts - concepts: {}, relationships: {}, terms: {}",
-          conceptCount, relationshipCount, termCount);
-      LOGGER.info("indexCodeSystem: duration: {} ms", (System.currentTimeMillis() - startTime));
+      LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}", conceptCount,
+          relationshipCount, termCount);
+      LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
     } catch (final Exception e) {
-      LOGGER.error("indexCodeSystem: Error processing file {}", fullFileName, e);
+      LOGGER.error("Error indexing code system {}", fullFileName, e);
       throw e;
     }
   }

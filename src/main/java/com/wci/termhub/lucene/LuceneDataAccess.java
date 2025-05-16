@@ -359,7 +359,7 @@ public class LuceneDataAccess {
       final BooleanQuery queryBuilder =
           new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
 
-      LOGGER.info("Query: {}", queryBuilder);
+      LOGGER.debug("Query: {}", queryBuilder);
 
       searcher = new IndexSearcher(reader);
 
@@ -367,15 +367,15 @@ public class LuceneDataAccess {
           ? IndexUtility.getDefaultSortOrder(clazz)
           : IndexUtility.getSortOrder(searchParameters, clazz);
 
-      LOGGER.info("Search Parameters ({}): {}", clazz.getCanonicalName(), searchParameters);
+      LOGGER.debug("Search Parameters ({}): {}", clazz.getCanonicalName(), searchParameters);
       final int start = searchParameters.getOffset();
       final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-      LOGGER.info("Search Parameters: start:{}, end:{}", start, end);
+      LOGGER.debug("Search Parameters: start:{}, end:{}", start, end);
 
       final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
           : searcher.search(queryBuilder, end);
-      LOGGER.info("Query topDocs: {}", topDocs.totalHits.value);
+      LOGGER.debug("Query topDocs: {}", topDocs.totalHits.value);
 
       final ResultList<T> results = new ResultList<>();
       final ObjectMapper mapper = new ObjectMapper();

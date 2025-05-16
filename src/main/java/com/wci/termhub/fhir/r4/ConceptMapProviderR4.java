@@ -728,6 +728,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     final ServletRequestDetails details, @ResourceParam final ConceptMap conceptMap)
     throws Exception {
     try {
+
       // Extract source and target from group if not set at root level
       if ((conceptMap.getSource() == null || conceptMap.getTarget() == null)
           && !conceptMap.getGroup().isEmpty()) {
@@ -740,7 +741,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
         }
       }
 
-      logger.debug("Set source={} and target={} from group", conceptMap.getSource(),
+      logger.debug("Create ConceptMap with source: {} and target:{}", conceptMap.getSource(),
           conceptMap.getTarget());
 
       // Validate required fields
@@ -777,7 +778,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       String sourceUri = conceptMap.getSourceUriType().getValue();
       String targetUri = conceptMap.getTargetUriType().getValue();
 
-      logger.info("Setting terminology URIs: source={}, target={}", sourceUri, targetUri);
+      logger.info("  sourceUri: {}, targetUri: {}", sourceUri, targetUri);
 
       // Store the URIs without the ?fhir_vs suffix if present
       sourceUri = sourceUri.replace("?fhir_vs", "");
@@ -791,13 +792,11 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       mapset.getAttributes().put("sourceScopeUri", sourceUri);
       mapset.getAttributes().put("targetScopeUri", targetUri);
 
-      logger.info("Created Mapset with fromTerminology={}, toTerminology={}",
-          mapset.getFromTerminology(), mapset.getToTerminology());
-
       // Save mapset
       searchService.add(Mapset.class, mapset);
 
       // Process mappings from groups and elements
+      int ct = 0;
       for (final ConceptMap.ConceptMapGroupComponent group : conceptMap.getGroup()) {
         for (final ConceptMap.SourceElementComponent element : group.getElement()) {
           for (final ConceptMap.TargetElementComponent target : element.getTarget()) {
@@ -838,17 +837,24 @@ public class ConceptMapProviderR4 implements IResourceProvider {
 
             // Save mapping
             searchService.add(Mapping.class, mapping);
-            logger.info("Created mapping: {}", mapping);
+            if (++ct % 5000 == 0) {
+              logger.info("  count: {}", ct);
+            }
+            // Too much info
+            logger.debug("    Created mapping: {}", mapping);
+
           }
         }
       }
+      logger.info("  count: {}", ct);
 
       // Convert back to ConceptMap and return
       final ConceptMap savedCm = FhirUtilityR4.toR4(mapset);
-      logger.info("Returning ConceptMap with source={}, target={}", savedCm.getSource(),
-          savedCm.getTarget());
+      final MethodOutcome outcome = new MethodOutcome();
+      outcome.setResource(savedCm);
+      outcome.setCreated(true);
+      return outcome;
 
-      return new MethodOutcome(new IdType(savedCm.getId()));
     } catch (final Exception e) {
       logger.error("Unexpected error creating concept map", e);
       throw FhirUtilityR4.exception("Failed to create concept map", IssueType.EXCEPTION,

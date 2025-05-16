@@ -178,13 +178,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     this.request = request;
   }
 
-  /**
-   * Health.
-   *
-   * @param dependencies the dependencies
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/health", method = RequestMethod.GET)
@@ -192,9 +185,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<HealthCheck> health(
     @RequestParam(name = "dependencies", required = false) final Boolean dependencies)
     throws Exception {
-
-    // Authorize
-    // authorize(request);
 
     try {
 
@@ -218,16 +208,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
-  /**
-   * Admin.
-   *
-   * @param task the task
-   * @param adminKey the admin key
-   * @param background the background
-   * @param payload the payload
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/admin", method = RequestMethod.POST)
@@ -238,7 +218,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody(required = false) final String payload)
     throws Exception {
 
-    // authorizeAdmin(request);
     try {
 
       if (adminKey != null
@@ -272,13 +251,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the terminology.
-   *
-   * @param id the id
-   * @return the terminology
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.GET)
@@ -288,8 +260,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Terminology"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -300,7 +270,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<Terminology> getTerminology(@PathVariable("id") final String id)
     throws Exception {
 
-    // final AuthContext context = authorize(request);
     try {
       final Terminology terminology = searchService.get(id, Terminology.class);
       // not found - 404
@@ -317,13 +286,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the terminology metadata.
-   *
-   * @param id the id
-   * @return the terminology metadata
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}/metadata", method = RequestMethod.GET)
@@ -333,8 +295,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Terminology"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -345,7 +305,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<List<Metadata>> getTerminologyMetadata(@PathVariable("id") final String id)
     throws Exception {
 
-    // final AuthContext context = authorize(request);
     try {
 
       final Terminology terminology = searchService.get(id, Terminology.class);
@@ -371,13 +330,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Adds the terminology.
-   *
-   * @param terminologyStr the terminology str
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.POST,
@@ -387,7 +339,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody final String terminologyStr)
     throws Exception {
 
-    // authorizeAdmin(request);
     try {
 
       Terminology terminology = null;
@@ -483,14 +434,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
-  /**
-   * Update terminology.
-   *
-   * @param id the id
-   * @param terminologyStr the terminology str
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.PATCH,
@@ -500,7 +443,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody final String terminologyStr)
     throws Exception {
 
-    // authorizeAdmin(request);
     try {
       Terminology terminology = null;
       try {
@@ -531,13 +473,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Delete terminology.
-   *
-   * @param id the id
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.DELETE)
@@ -545,7 +480,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<Void> deleteTerminology(@PathVariable("id") final String id)
     throws Exception {
 
-    // authorizeAdmin(request);
     try {
       // Find the object
       final Terminology terminology = searchService.get(id, Terminology.class);
@@ -564,17 +498,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find terminologies.
-   *
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.GET)
@@ -584,8 +507,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching terminologies"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -614,7 +535,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
 
-    // final AuthContext context = authorize(request);
     try {
 
       // limit return objects to 1000 regardless of user request
@@ -634,14 +554,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept.
-   *
-   * @param conceptId the concept id
-   * @param include the include
-   * @return the concept
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}", method = RequestMethod.GET)
@@ -651,8 +563,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Concept matching specified id"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -671,7 +581,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<Concept> getConcept(@PathVariable("conceptId") final String conceptId,
     @RequestParam(value = "include", required = false) final String include) throws Exception {
 
-    // final AuthContext context = authorize(request);
     try {
       final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
 
@@ -712,15 +621,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param include the include
-   * @return the concept
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}", method = RequestMethod.GET)
@@ -731,8 +631,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Concept matching specified terminology and code"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -758,7 +656,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @PathVariable("code") final String code,
     @RequestParam(value = "include", required = false) final String include) throws Exception {
 
-    // authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
@@ -798,15 +695,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept codes.
-   *
-   * @param terminology the terminology
-   * @param codes the codes
-   * @param include the include
-   * @return the concept codes
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology:[A-Z].*}", method = RequestMethod.GET)
@@ -816,8 +704,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Concepts mathcing code"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -844,7 +730,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(value = "codes", required = true) final String codes,
     @RequestParam(value = "include", required = false) final String include) throws Exception {
 
-    // authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
@@ -893,23 +778,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concepts.
-   *
-   * @param terminology the terminology
-   * @param query the query
-   * @param expression the expression
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param leaf the leaf
-   * @param include the include
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept", method = RequestMethod.GET)
@@ -919,8 +787,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching concepts"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -979,7 +845,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "highlights" : include);
@@ -1005,20 +870,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find terms.
-   *
-   * @param terminology the terminology
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/term", method = RequestMethod.GET)
@@ -1028,8 +879,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching terms"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1070,7 +919,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // authorize(request);
     try {
 
       // Build a query from the handler and use it in findHelper
@@ -1103,20 +951,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Lookup.
-   *
-   * @param terminology the terminology
-   * @param expression the expression
-   * @param limit the limit
-   * @param active the active
-   * @param leaf the leaf
-   * @param include the include
-   * @param handler the handler
-   * @param queries the queries
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/bulk", method = RequestMethod.POST)
@@ -1127,8 +961,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "List of result lists of matching concepts for each query"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1178,7 +1010,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody(required = false)
     @Parameter(hidden = true) final String queries) throws Exception {
 
-    // authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "semanticTypes" : include);
@@ -1280,17 +1111,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
-  /**
-   * Find metadata.
-   *
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/metadata", method = RequestMethod.GET)
@@ -1301,8 +1121,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Matadata for the specified query parameters"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -1330,7 +1148,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
 
-    // authorize(request);
     try {
 
       final Map<String, Terminology> map = lookupTerminologyMap();
@@ -1355,19 +1172,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept relationships.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/relationships", method = RequestMethod.GET)
@@ -1378,8 +1182,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept relationships"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1412,7 +1214,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // authorize(request);
     try {
 
       // look up concept first and get code
@@ -1443,20 +1244,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept relationships.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/relationships", method = RequestMethod.GET)
@@ -1467,8 +1254,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept relationships"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1506,7 +1291,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // authorize(request);
     try {
 
       // limit return objects to 1000 regardless of user request
@@ -1531,19 +1315,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept inverse relationships.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/inverseRelationships", method = RequestMethod.GET)
@@ -1554,8 +1325,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept inverse relationships"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1588,7 +1357,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // authorize(request);
     try {
 
       // look up concept first and get code
@@ -1620,20 +1388,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept inverse relationships.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/inverseRelationships",
@@ -1646,8 +1400,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept inverse relationships"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1685,7 +1437,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // authorize(request);
     try {
 
       // limit return objects to 1000 regardless of user request
@@ -1710,19 +1461,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree positions.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/trees", method = RequestMethod.GET)
@@ -1733,8 +1471,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept tree positions"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1767,7 +1503,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // authorize(request);
     try {
 
       final Map<String, Terminology> map = lookupTerminologyMap();
@@ -1813,20 +1548,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree positions.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/trees", method = RequestMethod.GET)
@@ -1837,8 +1558,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept tree positions"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1875,7 +1594,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // authorize(request);
     try {
 
       // validate terminology - throw exception if not found
@@ -1910,19 +1628,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree position children.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/trees/children", method = RequestMethod.GET)
@@ -1934,8 +1639,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept tree position children"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1969,7 +1672,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // final AuthContext context = authorize(request);
     try {
 
       // look up concept first and get code
@@ -2024,20 +1726,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree position children.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/trees/children",
@@ -2050,8 +1738,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept tree position children"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -2089,7 +1775,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
-    // final AuthContext context = authorize(request);
     try {
 
       // Find this thing
@@ -2154,8 +1839,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   // @ApiResponses({
   // @ApiResponse(responseCode = "200",
   // description = "Result list of matching concept tree positions"),
-  // @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-  // @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
   // @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
   // @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
   // @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -2172,7 +1855,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam("publisher") final String publisher,
     @RequestParam("version") final String version) throws Exception {
 
-    // authorize(request);
     try {
 
       // throw exception if any parameter is null or empty
@@ -2198,20 +1880,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find mappings.
-   *
-   * @param mapset the mapset
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param leaf the leaf
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapping", method = RequestMethod.GET)
@@ -2221,8 +1889,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching mappings"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -2285,20 +1951,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find mapset mappings.
-   *
-   * @param mapsetId the mapset id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param leaf the leaf
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapset/{mapset}/mappings", method = RequestMethod.GET)
@@ -2309,8 +1961,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching mappings"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -2371,13 +2021,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept mappings.
-   *
-   * @param conceptId the concept id
-   * @return the concept mappings
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/mappings", method = RequestMethod.GET)
@@ -2390,8 +2033,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Mappings from the concept matching specified id in specified project",
           content = @Content(
               array = @ArraySchema(schema = @Schema(implementation = Mapping.class)))),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -2443,13 +2084,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept inverse mappings.
-   *
-   * @param conceptId the concept id
-   * @return the concept inverse mappings
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/inverseMappings",
@@ -2462,8 +2096,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @ApiResponse(responseCode = "200", description = "Mappings to the concept",
           content = @Content(
               array = @ArraySchema(schema = @Schema(implementation = Mapping.class)))),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -2515,14 +2147,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept mappings.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @return the concept mappings
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/mappings", method = RequestMethod.GET)
@@ -2536,8 +2160,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Mappings from the concept matching specified terminology and code",
           content = @Content(
               array = @ArraySchema(schema = @Schema(implementation = Mapping.class)))),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -2555,7 +2177,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @PathVariable("terminology") final String terminology, @PathVariable("code") final String code)
     throws Exception {
 
-    // authorizeProject(request);
     try {
 
       final IncludeParam ip = new IncludeParam("minimal");
@@ -2601,14 +2222,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept inverse mappings.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @return the concept inverse mappings
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "concept/{terminology}/{code}/inverseMappings",
@@ -2622,8 +2235,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Mappings to the concept matching specified terminology and code",
           content = @Content(
               array = @ArraySchema(schema = @Schema(implementation = Mapping.class)))),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",

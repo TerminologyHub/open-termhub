@@ -3,9 +3,11 @@ Instructions on using data local to this project to get Open Termhub up and runn
 
 [Tutorial Training Video](https://youtu.be/Vto42DIMw2U)
 
+
 ## Prerequisites/Setup
 * Java 17+
 * This tutorial assumes you have cloned this open-termhub repository.
+
 
 ## Build and run the server
 
@@ -16,7 +18,7 @@ One option is to just build the code and run the server locally and use an INDEX
 ```
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
-mkdir -p $INDEX_DIR
+/bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build
 make run
 ```
@@ -30,7 +32,8 @@ the other option is to build the docker image and run as a container with an IND
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 make docker
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
+docker run -d --rm --name open-termhub -e INDEX_DIR="/index" \
+  -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
 ### Option 3: run with public docker image
@@ -41,10 +44,12 @@ The final option is to run the latest published public docker image as a contain
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
+docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v \
+  "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
+
 
 ## View API Documentation
 
@@ -54,6 +59,7 @@ All three of the above options will yield a running server and you should now yo
 * FHIR R5 Swagger [http://localhost:8080/fhir/r5/swagger-ui/index.html](https://localhost:8080/fhir/r5/swagger-ui/index.html)
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
+
 
 ## Loading SANDBOX data
 
@@ -72,7 +78,7 @@ resources.
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-snomedct-sandbox-20240101-r5.json'
+  -d '@src/main/resources/data/CodeSystem-snomedct-sandbox-20240101-r5.json' | jq
 ```
 
 #### Load Sandbox SNOMEDCT_US
@@ -112,7 +118,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
 ```
 curl -X POST http://localhost:8080/fhir/r5/ConceptMap \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json'
+  -d '@src/main/resources/data/ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json' | jq
 ```
   
 After running the commands above, the running server should be loaded with the
@@ -146,8 +152,11 @@ curl http://localhost:8080/concept?terminology=SNOMEDCT&query=cancer&include=min
 curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=cancer&expression=<<128927009&include=minimal" | jq
 
 # Find mapsets
+curl http://localhost:8080/mapset | jq
 
 # Find "target" codes of mappings for a particular SNOMEDCT code
+
+
 ```
 
 ### Testing the FHIR R4 API
@@ -156,7 +165,7 @@ The following code block has a number of curl commands that test a few of the FH
 
 ```
 # Find CodeSystems
-curl -X POST http://localhost:8080/fhir/r4/CodeSystem | jq
+curl http://localhost:8080/fhir/r4/CodeSystem | jq
 
 # Perform a SNOMEDCT CodeSystem $lookup for a code
 
@@ -191,7 +200,6 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem | jq
 
 # Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
 ```
-
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
 

@@ -31,7 +31,7 @@ import com.wci.termhub.service.FindCallbackHandler;
 import com.wci.termhub.util.ModelUtility;
 
 /**
- * The Class EntityServiceImpl.
+ * Entity service implementation.
  */
 @Service
 public class EntityServiceImpl implements EntityRepositoryService {
@@ -55,12 +55,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
     findAllPageSize = pageSize;
   }
 
-  /**
-   * Creates the index.
-   *
-   * @param clazz the clazz
-   * @throws Exception the exception
-   */
+  /* see superclass */
   @Override
   public void createIndex(final Class<? extends HasId> clazz) throws Exception {
 
@@ -69,12 +64,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
     luceneData.createIndex(clazz);
   }
 
-  /**
-   * Delete index.
-   *
-   * @param clazz the clazz
-   * @throws Exception the exception
-   */
+  /* see superclass */
   @Override
   public void deleteIndex(final Class<? extends HasId> clazz) throws Exception {
 
@@ -83,67 +73,40 @@ public class EntityServiceImpl implements EntityRepositoryService {
     luceneData.deleteIndex(clazz);
   }
 
-  /**
-   * Adds the entity.
-   *
-   * @param clazz the clazz
-   * @param entity the entity
-   * @throws Exception the exception
-   */
+  /* see superclass */
   @Override
   public void add(final Class<? extends HasId> clazz, final HasId entity) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOGGER.info("Adding {} entity to index {}", entity.getId(), clazz.getSimpleName());
+    LOGGER.debug("    ADD {} entity to index {}", entity, clazz.getSimpleName());
     luceneData.add(entity);
   }
 
-  /**
-   * Adds the entity.
-   *
-   * @param clazz the clazz
-   * @param entity the entity
-   * @throws Exception the exception
-   */
+  /* see superclass */
   @Override
   public void addBulk(final Class<? extends HasId> clazz, final List<HasId> entity)
     throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOGGER.info("Adding {} entities to index = {}", clazz.getSimpleName(), entity.size());
+    LOGGER.info("    ADD {} entities to index: {}", clazz.getSimpleName(), entity.size());
     luceneData.add(entity);
   }
 
-  /**
-   * Update the entity.
-   *
-   * @param clazz the clazz
-   * @param id the id
-   * @param entity the entity
-   * @throws Exception the exception
-   */
+  /* see superclass */
   @Override
   public void update(final Class<? extends HasId> clazz, final String id, final HasId entity)
     throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOGGER.info("Update {} entities to index {}", entity, clazz.getSimpleName());
+    LOGGER.debug("    UPDATE {} entity to index {}", entity, clazz.getSimpleName());
     luceneData.remove(clazz, id);
     luceneData.add(entity);
   }
 
-  /**
-   * Find all objects from index of this object type.
-   *
-   * @param <T> the generic type
-   * @param searchParameters the search parameters
-   * @param clazz the clazz
-   * @return the iterable
-   * @throws Exception the exception
-   */
+  /* see superclass */
   @Override
   public <T extends HasId> ResultList<T> findAll(final SearchParameters searchParameters,
     final Class<T> clazz) throws Exception {
@@ -154,15 +117,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return luceneData.find(clazz, searchParameters);
   }
 
-  /**
-   * Find by id.
-   *
-   * @param <T> the generic type
-   * @param id the id
-   * @param clazz the clazz
-   * @return the optional
-   * @throws Exception the exception
-   */
+  /* see superclass */
   @Override
   public <T extends HasId> T get(final String id, final Class<T> clazz) throws Exception {
 
@@ -179,15 +134,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return null;
   }
 
-  /**
-   * Find ids.
-   *
-   * @param <T> the generic type
-   * @param params the params
-   * @param clazz the clazz
-   * @return the result list
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> ResultList<String> findIds(final SearchParameters params,
@@ -201,13 +147,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return ids;
   }
 
-  /**
-   * Delete object from index.
-   *
-   * @param id the id
-   * @param clazz the clazz
-   * @throws Exception the exception
-   */
+  /* see superclass */
   @Override
   public void remove(final String id, final Class<? extends HasId> clazz) throws Exception {
 
@@ -232,15 +172,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     }
   }
 
-  /**
-   * Find.
-   *
-   * @param <T> the generic type
-   * @param searchParameters the search parameters
-   * @param clazz the clazz
-   * @return the result list
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> ResultList<T> find(final SearchParameters searchParameters,
@@ -251,16 +182,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return luceneData.find(clazz, searchParameters);
   }
 
-  /**
-   * Find.
-   *
-   * @param <T> the generic type
-   * @param searchParameters the search parameters
-   * @param clazz the clazz
-   * @param handler the handler
-   * @return the result list
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> ResultList<T> find(final SearchParameters searchParameters,
@@ -301,16 +222,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     }
   }
 
-  /**
-   * Find fields.
-   *
-   * @param <T> the generic type
-   * @param searchParameters the search parameters
-   * @param fields the fields
-   * @param clazz the clazz
-   * @return the result list
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> ResultList<T> findFields(final SearchParameters searchParameters,
@@ -321,16 +232,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return luceneData.find(clazz, searchParameters);
   }
 
-  /**
-   * Find all with fields.
-   *
-   * @param <T> the generic type
-   * @param query the query
-   * @param fields the fields
-   * @param clazz the clazz
-   * @return the list
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> List<T> findAllWithFields(final Query query, final List<String> fields,
@@ -338,17 +239,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return findAllWithFields(query, fields, clazz, null);
   }
 
-  /**
-   * Find all with fields.
-   *
-   * @param <T> the generic type
-   * @param query the query
-   * @param fields the fields
-   * @param clazz the clazz
-   * @param handler the handler
-   * @return the list
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> List<T> findAllWithFields(final Query query, final List<String> fields,
@@ -380,16 +270,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return list;
   }
 
-  /**
-   * Find all.
-   *
-   * @param <T> the generic type
-   * @param query the query
-   * @param luceneQuery the lucene query
-   * @param clazz the clazz
-   * @return the list
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> List<T> findAll(final String query, final Query luceneQuery,
@@ -397,17 +277,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return findAll(query, luceneQuery, clazz, null);
   }
 
-  /**
-   * Find all.
-   *
-   * @param <T> the generic type
-   * @param query the query
-   * @param luceneQuery the lucene query
-   * @param clazz the clazz
-   * @param handler the handler
-   * @return the list
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> List<T> findAll(final String query, final Query luceneQuery,
@@ -442,15 +311,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return list;
   }
 
-  /**
-   * Find all ids.
-   *
-   * @param <T> the generic type
-   * @param query the query
-   * @param clazz the clazz
-   * @return the list
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> List<String> findAllIds(final Query query, final Class<T> clazz)
@@ -479,15 +339,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     return list;
   }
 
-  /**
-   * Find single.
-   *
-   * @param <T> the generic type
-   * @param params the params
-   * @param clazz the clazz
-   * @return the t
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   public <T extends HasId> T findSingle(final SearchParameters params, final Class<T> clazz)
