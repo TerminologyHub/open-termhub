@@ -14,7 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +36,9 @@ import com.wci.termhub.util.StringUtility;
  */
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class TerminologyCodeSystemUnitTest {
+@TestMethodOrder(OrderAnnotation.class)
+@Order(2)
+public class TerminologyCodeSystemUnitTest extends BaseUnitTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(TerminologyCodeSystemUnitTest.class);

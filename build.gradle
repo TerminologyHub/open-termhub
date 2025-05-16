@@ -92,7 +92,7 @@ dependencies {
   implementation 'org.apache.commons:commons-math3:3.6.1'
   
   implementation 'org.reflections:reflections:0.10.2'
-  implementation ('com.google.guava:guava:33.4.8-jre') { 
+  implementation ('com.google.guava:guava:33.4.8-jre') {
 	attributes{
 	  attribute(Attribute.of('org.gradle.jvm.environment', String),'standard-jvm')
 	}
@@ -141,6 +141,7 @@ dependencies {
   // For Test
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
   testImplementation 'org.junit.platform:junit-platform-suite-api:1.10.5'
+  testImplementation 'org.junit.platform:junit-platform-suite-engine:1.10.5'
 }
 
 dependencyManagement {
@@ -153,9 +154,24 @@ dependencyManagement {
 test {
     useJUnitPlatform()
     systemProperty 'spring.profiles.active', 'test'
-    maxParallelForks = 1
     exclude '**/r4/**'
     exclude '**/r5/**'
+
+    // Exclude tests that are part of AllTestsSuite to prevent double execution
+    exclude '**/CodeSystemLoadUnitTest.class'
+    exclude '**/TerminologyCodeSystemUnitTest.class'
+    exclude '**/ConceptCodeSystemUnitTest.class'
+    exclude '**/ConceptRelationshipCodeSystemUnitTest.class'
+    exclude '**/ConceptTreePositionSearchUnitTest.class'
+    exclude '**/MetadataSearchUnitTest.class'
+    exclude '**/TerminologySearchUnitTest.class'
+    exclude '**/ConceptSearchUnitTest.class'
+    exclude '**/TermSearchUnitTest.class'
+    exclude '**/MultithreadedReadUnitTest.class'
+    exclude '**/EclToLuceneConverterTest.class'
+    exclude '**/TerminologyServiceRestImplUnitTest.class'
+    exclude '**/CleanupUnitTest.class'
+
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
@@ -167,8 +183,6 @@ task testR4(type: Test) {
     useJUnitPlatform()
     systemProperty 'spring.profiles.active', 'test-r4'
     include '**/r4/**'
-    exclude '**/r5/**'
-    maxParallelForks = 1
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
@@ -180,13 +194,31 @@ task testR5(type: Test) {
     useJUnitPlatform()
     systemProperty 'spring.profiles.active', 'test-r5'
     include '**/r5/**'
-    exclude '**/r4/**'
-    maxParallelForks = 1
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
     }
 
+}
+
+// Run AllTestsSuite separately
+task testSuite(type: Test) {
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test'
+    filter {
+        includeTestsMatching "com.wci.termhub.test.AllTestsSuite"
+    }
+    testLogging {
+        events "passed","skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
+// Add a composite task to run both test suites in order
+task allTests {
+    dependsOn testSuite
+    dependsOn test
+    tasks.findByName('test').mustRunAfter 'testSuite'
 }
 
 // use "gradle licenseFormatMain/Test" to automatically generate headers

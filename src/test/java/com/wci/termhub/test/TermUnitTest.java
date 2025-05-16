@@ -252,12 +252,12 @@ public class TermUnitTest extends BaseUnitTest {
     // wild card search
     searchParameters.setQuery("*:*");
     foundTermsObjects = searchService.find(searchParameters, Term.class);
-    assertTrue(foundTermsObjects.getItems().size() > 3);
+    assertEquals(3, foundTermsObjects.getItems().size());
 
     // search for all
     searchParameters.setQuery(null);
     foundTermsObjects = searchService.findAll(searchParameters, Term.class);
-    assertTrue(foundTermsObjects.getItems().size() > 3);
+    assertEquals(3, foundTermsObjects.getItems().size());
 
     // search by id
     searchParameters.setQuery(null);

@@ -349,7 +349,7 @@ public class LuceneDataAccess {
 
     IndexSearcher searcher = null;
 
-    LOGGER.error("indexRootDirectory is {}; index is {}", indexRootDirectory,
+    LOGGER.debug("indexRootDirectory is {}; index is {}", indexRootDirectory,
         clazz.getCanonicalName());
 
     final File indexDir = new File(indexRootDirectory, clazz.getCanonicalName());
