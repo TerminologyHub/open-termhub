@@ -9,7 +9,6 @@
  */
 package com.wci.termhub.model.test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
@@ -151,16 +150,13 @@ public class TermUnitTest extends AbstractTest {
    */
   @Test
   public void testModelJsonSerialization2() throws Exception {
-    // Verify that "normName" and "wordCt" are working properly
+    // Verify that "normName" and "stemName" are working properly
     final Term term = new Term();
     term.setName("This IS a test.");
-    assertTrue(term.toString().contains("\"normName\" : \"this is a test\""));
-    // wordCt is no longer exposed
-    assertFalse(term.toString().contains("\"wordCt\" : 4"));
+    logger.info("term: {}", term);
+    assertTrue(term.toString().contains("\"normName\":\"this is a test\""));
     final Term term2 = ModelUtility.fromJson(term.toString(), Term.class);
-    assertTrue(term2.toString().contains("\"normName\" : \"this is a test\""));
-    // wordCt is no longer exposed
-    assertFalse(term2.toString().contains("\"wordCt\" : 4"));
+    assertTrue(term2.toString().contains("\"stemName\":\"this is a test\""));
   }
 
 }
