@@ -606,4 +606,56 @@ public class IncludeParam extends BaseModel {
     this.semanticTypes = semanticTypes;
   }
 
+  /**
+   * Apply include.
+   *
+   * @param concept the concept
+   * @param ip the ip
+   */
+  public static void applyInclude(final Concept concept, final IncludeParam ip) {
+
+    if (concept == null) {
+      return;
+    }
+
+    if (!ip.isAncestors()) {
+      concept.setAncestors(null);
+    }
+    if (!ip.isAttributes()) {
+      concept.setAttributes(null);
+    }
+    if (!ip.isAxioms()) {
+      concept.setAxioms(null);
+    }
+    if (!ip.isChildren()) {
+      concept.setChildren(null);
+    }
+    if (!ip.isDefinitions()) {
+      concept.setDefinitions(null);
+    }
+    if (!ip.isDescendants()) {
+      concept.setDescendants(null);
+    }
+    if (!ip.isHighlights()) {
+      concept.setHighlights(null);
+    }
+    if (!ip.isInverseRelationships()) {
+      concept.setInverseRelationships(null);
+    }
+    if (!ip.isParents()) {
+      concept.setParents(null);
+    }
+    if (!ip.isRelationships()) {
+      concept.setRelationships(null);
+    }
+    if (!ip.isSemanticTypes()) {
+      concept.setSemanticTypes(null);
+    }
+    if (!ip.isTerms()) {
+      concept.setTerms(null);
+    }
+    if (!ip.isTreePositions()) {
+      concept.setTreePositions(null);
+    }
+  }
 }
