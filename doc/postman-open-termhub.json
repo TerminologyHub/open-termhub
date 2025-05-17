@@ -1,0 +1,441 @@
+{
+	"info": {
+		"_postman_id": "c7c52095-80fc-4b1a-b14f-844bf41b5762",
+		"name": "Open Termhub Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11076096"
+	},
+	"item": [
+		{
+			"name": "Terminology API",
+			"item": [
+				{
+					"name": "Find terminologies",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/terminologies",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"terminologies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get a SNOMEDCT concept by code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/terminology/concept/SNOMEDCT/code",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"terminology",
+								"concept",
+								"SNOMEDCT",
+								"code"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "FHIR R4 API",
+			"item": [
+				{
+					"name": "Find CodeSystems",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/CodeSystem",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"CodeSystem"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT CodeSystem $lookup for a code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/CodeSystem/$lookup?system=http://snomed.info/sct&code=107907001",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"CodeSystem",
+								"$lookup"
+							],
+							"query": [
+								{
+									"key": "system",
+									"value": "http://snomed.info/sct",
+									"description": "http://snomed.info/sct"
+								},
+								{
+									"key": "code",
+									"value": "107907001"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find implied ValueSets for CodeSystems",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search via a ValueSet $expand with a filter",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet/$expand?url=8218df61-f65d-4c1f-a5ce-a6499fe5f8f4?fhir_vs&filter=cancer",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "8218df61-f65d-4c1f-a5ce-a6499fe5f8f4?fhir_vs",
+									"description": "http://snomed.info/sct"
+								},
+								{
+									"key": "filter",
+									"value": "cancer"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet/$expand?url=8218df61-f65d-4c1f-a5ce-a6499fe5f8f4%3Ffhir_vs%3Decl%3C%3C128927009&filter=cancer",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "8218df61-f65d-4c1f-a5ce-a6499fe5f8f4%3Ffhir_vs%3Decl%3C%3C128927009",
+									"description": "http://snomed.info/sct"
+								},
+								{
+									"key": "filter",
+									"value": "cancer"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/fhir/r4/ConceptMap",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ConceptMap",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ConceptMap"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a ConceptMap $translate to find \"target\" codes for a SNOMEDCT code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&code=384821006",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ConceptMap",
+								"$translate"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_cm=6011000124106"
+								},
+								{
+									"key": "code",
+									"value": "384821006"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "FHIR R5 API",
+			"item": [
+				{
+					"name": "Find CodeSystems Copy",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/CodeSystem",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"CodeSystem"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT CodeSystem $lookup for a code Copy",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/CodeSystem/$lookup?system=http://snomed.info/sct&code=107907001",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"CodeSystem",
+								"$lookup"
+							],
+							"query": [
+								{
+									"key": "system",
+									"value": "http://snomed.info/sct",
+									"description": "http://snomed.info/sct"
+								},
+								{
+									"key": "code",
+									"value": "107907001"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find implied ValueSets for CodeSystems Copy",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search via a ValueSet $expand with a filter Copy",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet/$expand?url=8218df61-f65d-4c1f-a5ce-a6499fe5f8f4?fhir_vs&filter=cancer",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "8218df61-f65d-4c1f-a5ce-a6499fe5f8f4?fhir_vs",
+									"description": "http://snomed.info/sct"
+								},
+								{
+									"key": "filter",
+									"value": "cancer"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression Copy",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet/$expand?url=8218df61-f65d-4c1f-a5ce-a6499fe5f8f4%3Ffhir_vs%3Decl%3C%3C128927009&filter=cancer",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "8218df61-f65d-4c1f-a5ce-a6499fe5f8f4%3Ffhir_vs%3Decl%3C%3C128927009",
+									"description": "http://snomed.info/sct"
+								},
+								{
+									"key": "filter",
+									"value": "cancer"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/fhir/r4/ConceptMap Copy",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ConceptMap",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ConceptMap"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a ConceptMap $translate to find \"target\" codes for a SNOMEDCT code Copy",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ConceptMap/$translate",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ConceptMap",
+								"$translate"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "API_URL",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
