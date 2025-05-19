@@ -18,9 +18,12 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +53,9 @@ import com.wci.termhub.util.PropertyUtility;
 @TestInstance(Lifecycle.PER_CLASS)
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class CodeSystemLoadUnitTest {
+@TestMethodOrder(OrderAnnotation.class)
+@Order(1)
+public class CodeSystemLoadUnitTest extends BaseUnitTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeSystemLoadUnitTest.class);

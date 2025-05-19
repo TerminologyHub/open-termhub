@@ -794,7 +794,7 @@ public final class FhirUtilityR5 {
 
     // cs.setUrl(terminology.getAttributes().get("fhirUri"));
     // fhirUri is not in the json data files. setting to id for now
-    cs.setUrl(terminology.getId());
+    cs.setUrl(terminology.getUri());
 
     cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
     String version = terminology.getAttributes().get("fhirVersion");

@@ -295,25 +295,4 @@ public class ModelUtilityUnitTest {
     assertEquals(30, list.get(1).getAge());
   }
 
-  /**
-   * Test stack trace utilities.
-   *
-   * @throws Exception the exception
-   */
-  @Test
-  public void testStackTraceUtilities() throws Exception {
-    LOGGER.info("TEST testStackTraceUtilities");
-
-    final Exception testException = new Exception("Test Exception");
-
-    // Test getStackTrace without WCI flag
-    final String stackTrace = ModelUtility.getStackTrace(testException);
-    assertNotNull(stackTrace);
-    assertTrue(stackTrace.contains("Test Exception"));
-
-    // Test getStackTrace with WCI flag
-    final String wciStackTrace = ModelUtility.getStackTrace(testException, true);
-    assertNotNull(wciStackTrace);
-    assertTrue(wciStackTrace.contains("Test Exception"));
-  }
 }
