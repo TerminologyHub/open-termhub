@@ -191,6 +191,7 @@ curl 'http://localhost:8080/fhir/r4/ConceptMap' | jq
 
 curl 'http://localhost:8080/fhir/r4/ConceptMap/$translate' | jq
 
+TODO: need to do SNOMEDCT and SNOMEDCT_US
 ```
 
 ### Testing the FHIR R5 API
