@@ -76,17 +76,6 @@ public final class LuceneQueryBuilder {
     }
   }
 
-  // /**
-  // * Backward compatible parse method, defaults to Concept.class.
-  // *
-  // * @param queryText the query text
-  // * @return the query
-  // * @throws ParseException the parse exception
-  // */
-  // public static Query parse(final String queryText) throws ParseException {
-  // return parse(queryText, Concept.class);
-  // }
-
   /**
    * Returns the list of searchable fields for a given model class. Uses
    * reflection to find String or List<String> fields, or those annotated
