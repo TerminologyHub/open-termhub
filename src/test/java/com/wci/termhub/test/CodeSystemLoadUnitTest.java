@@ -71,6 +71,7 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
           "CodeSystem-snomedct-sandbox-20240101-r5.json", "CodeSystem-lnc-sandbox-277-r5.json",
           "CodeSystem-icd10cm-sandbox-2023-r5.json", "CodeSystem-rxnorm-sandbox-04012024-r5.json");
 
+  /** The Constant CONCEPT_MAP_FILES. */
   private static final List<String> CONCEPT_MAP_FILES =
       List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json");
 
