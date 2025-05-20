@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.InnerField;
@@ -31,13 +30,13 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 /**
- * Represents a information about a terminology. Intended for use in ApplicationConfiguration.
+ * Represents a information about a terminology. Intended for use in
+ * ApplicationConfiguration.
  */
 @Entity
 @Table(name = "terminology_info")
 @Schema(description = "Represents metadata and other info about a terminology. "
     + "This is for platform level tracking of terminologies and not tied to version.")
-@Document(indexName = "terminology-info-v1")
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TerminologyInfo extends AbstractHasModified
@@ -92,15 +91,16 @@ public class TerminologyInfo extends AbstractHasModified
   private List<String> labels;
 
   /**
-   * Other identifiers this terminology is known by for lookup, including FHIR OIDs, UMLS SAB, etc.
+   * Other identifiers this terminology is known by for lookup, including FHIR
+   * OIDs, UMLS SAB, etc.
    */
   @Transient
   @Field(type = FieldType.Keyword)
   private List<String> identifiers;
 
   /**
-   * For terminologies like UMLS, this gives us a chance to identify the sub-terminologies that are
-   * "in scope".
+   * For terminologies like UMLS, this gives us a chance to identify the
+   * sub-terminologies that are "in scope".
    */
   @Transient
   @Field(type = FieldType.Keyword)
@@ -128,8 +128,9 @@ public class TerminologyInfo extends AbstractHasModified
   // languages
 
   /**
-   * The ui labels. This is so we can say "descriptions" instead of "terms" when looking at SNOMED.
-   * The set of labels can be managed by an enum if we want but is like this:
+   * The ui labels. This is so we can say "descriptions" instead of "terms" when
+   * looking at SNOMED. The set of labels can be managed by an enum if we want
+   * but is like this:
    *
    * <pre>
    * terms-label => "Descriptions"
