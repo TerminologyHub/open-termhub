@@ -77,9 +77,6 @@ public class Mapping extends AbstractTerminologyComponent
   @Field(type = FieldType.Object)
   private Map<String, String> attributes;
 
-  // /** The workflow status. */
-  // private WorkflowStatus workflowStatus = WorkflowStatus.NEW;
-
   /**
    * Instantiates an empty {@link Mapping}.
    */

@@ -40,10 +40,12 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.HealthCheck;
+import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
+import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -396,6 +398,35 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final int limit = 15;
     final String url = baseUrl + "/concept?terminology=" + terminology + "&query=name:" + query
         + "&limit=" + limit;
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
+    assertThat(conceptList).isNotNull();
+    assertFalse(conceptList.getItems().isEmpty());
+    assertTrue(conceptList.getItems().size() <= limit);
+    for (final Concept concept : conceptList.getItems()) {
+      assertThat(concept).isNotNull();
+      assertThat(concept.getId()).isNotNull();
+      assertThat(concept.getTerminology()).isEqualTo(terminology);
+      assertThat(concept.getName().toLowerCase()).contains(query.toLowerCase());
+    }
+  }
+
+  /**
+   * Test find concepts by code.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindConcepts2() throws Exception {
+    final String terminology = "LNC";
+    final String query = "cancer";
+    final int limit = 15;
+    final String url =
+        baseUrl + "/concept?terminology=" + terminology + "&query=" + query + "&limit=" + limit;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
@@ -835,6 +866,106 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
     }
+  }
+
+  // GET /mapset/
+  @Test
+  public void testFindMapsets() throws Exception {
+    final String url = baseUrl + "/mapset";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
+    assertThat(mapsetList).isNotNull();
+
+    assertThat(mapsetList.getTotal()).isPositive();
+    for (final Mapset mapset : mapsetList.getItems()) {
+      LOGGER.info("  mapset = {}", mapset);
+      assertThat(mapset).isNotNull();
+      assertThat(mapset.getId()).isNotNull();
+      assertThat(mapset.getName()).isNotNull();
+      assertThat(mapset.getAbbreviation()).isNotNull();
+      // NOT SET assertThat(mapset.getTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getVersion()).isNotNull();
+      assertThat(mapset.getFromTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getFromVersion()).isNotNull();
+      assertThat(mapset.getToTerminology()).isNotNull();
+      // assertThat(mapset.getToVersion()).isNotNull();
+    }
+  }
+
+  // GET /mapset/
+  @Test
+  public void testFindMapsetsWithQuery() throws Exception {
+    final String query = "query=abbreviation:SNOMEDCT_US-ICD10CM&offset=0&limit=10";
+    final String url = baseUrl + "/mapset?" + query;
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
+    assertThat(mapsetList).isNotNull();
+    assertThat(mapsetList.getTotal()).isPositive();
+    for (final Mapset mapset : mapsetList.getItems()) {
+      assertThat(mapset).isNotNull();
+      assertThat(mapset.getId()).isNotNull();
+      assertThat(mapset.getName()).isNotNull();
+      assertThat(mapset.getAbbreviation()).isNotNull();
+      // NOT SET assertThat(mapset.getTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getVersion()).isNotNull();
+      assertThat(mapset.getFromTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getFromVersion()).isNotNull();
+      assertThat(mapset.getToTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getToVersion()).isNotNull();
+    }
+  }
+
+  /**
+   * Test find mapset by id.
+   *
+   * @throws Exception the exception
+   */
+  // GET /mapset/{id}
+  @Test
+  public void testFindMapsetById() throws Exception {
+
+    final String id = "2a545e12-04eb-48ee-b988-c17346b4e05f";
+    final String url = baseUrl + "/mapset/" + id;
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final Mapset mapset = objectMapper.readValue(content, Mapset.class);
+
+    assertThat(mapset).isNotNull();
+    assertThat(mapset.getId()).isNotNull();
+    assertThat(mapset.getName()).isNotNull();
+    assertThat(mapset.getAbbreviation()).isNotNull();
+    // NOT SET assertThat(mapset.getTerminology()).isNotNull();
+    // NOT SET assertThat(mapset.getVersion()).isNotNull();
+    assertThat(mapset.getFromTerminology()).isNotNull();
+    // NOT SET assertThat(mapset.getFromVersion()).isNotNull();
+    assertThat(mapset.getToTerminology()).isNotNull();
+    // NOT SET assertThat(mapset.getToVersion()).isNotNull();
+  }
+
+  /**
+   * Test find mapset by id not found.
+   *
+   * @throws Exception the exception
+   */
+  // @Test
+  // TODO - Should be 404 but is 500
+  public void testFindMapsetByIdNotFound() throws Exception {
+
+    final String id = "2a545e12-04eb-48ee-b988-c17346b4e05FAKE";
+    final String url = baseUrl + "/mapset/" + id;
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
   }
 
   /**

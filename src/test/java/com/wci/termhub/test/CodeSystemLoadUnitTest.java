@@ -45,6 +45,7 @@ import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
+import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.PropertyUtility;
 
 /**
@@ -69,6 +70,9 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
       List.of("CodeSystem-snomedctus-sandbox-20240301-r5.json",
           "CodeSystem-snomedct-sandbox-20240101-r5.json", "CodeSystem-lnc-sandbox-277-r5.json",
           "CodeSystem-icd10cm-sandbox-2023-r5.json", "CodeSystem-rxnorm-sandbox-04012024-r5.json");
+
+  private static final List<String> CONCEPT_MAP_FILES =
+      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json");
 
   /**
    * Setup - load the FHIR Code System files.
@@ -113,8 +117,28 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
 
         LOGGER.info("Loading code system from classpath resource: data/{}", codeSystemFile);
         CodeSystemLoaderUtil.loadCodeSystem(searchService, resource.getFile().getAbsolutePath());
+
       } catch (final Exception e) {
         LOGGER.error("Error loading code system file: {}", codeSystemFile, e);
+        throw e;
+      }
+    }
+
+    for (final String conceptMapFile : CONCEPT_MAP_FILES) {
+      try {
+        // Read file from classpath directly using Spring's resource mechanism
+        final Resource resource = new ClassPathResource("data/" + conceptMapFile,
+            CodeSystemLoadUnitTest.class.getClassLoader());
+
+        if (!resource.exists()) {
+          throw new FileNotFoundException("Could not find resource: data/" + conceptMapFile);
+        }
+
+        LOGGER.info("Loading concept map from classpath resource: data/{}", conceptMapFile);
+        ConceptMapLoaderUtil.loadConceptMap(searchService, resource.getFile().getAbsolutePath());
+
+      } catch (final Exception e) {
+        LOGGER.error("Error loading concept map file: {}", conceptMapFile, e);
         throw e;
       }
     }

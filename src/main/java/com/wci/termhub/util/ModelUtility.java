@@ -90,7 +90,8 @@ public final class ModelUtility<T> {
   }
 
   /**
-   * Returns the name from class by stripping package and putting spaces where CamelCase is used.
+   * Returns the name from class by stripping package and putting spaces where
+   * CamelCase is used.
    *
    * @param clazz the clazz
    * @return the name from class
@@ -245,9 +246,7 @@ public final class ModelUtility<T> {
    * @return the json for graph
    */
   public static String toJson(final Object object) {
-    // Switch these for debugging
-    // return toJson(object, true);
-    return toJson(object, false);
+    return toJson(object, true);
   }
 
   /**
@@ -478,8 +477,8 @@ public final class ModelUtility<T> {
         final Type type = candidateField.getGenericType();
         if (type instanceof ParameterizedType) {
           final ParameterizedType pType = (ParameterizedType) type;
-          logger.debug("Raw type: " + pType.getRawType() + " - ");
-          logger.debug("Type args: " + pType.getActualTypeArguments()[0]);
+          logger.debug("Raw type: {} - ", pType.getRawType());
+          logger.debug("Type args: {}", pType.getActualTypeArguments()[0]);
           sortField = firstTerm + "." + getSortField((Class<?>) pType.getActualTypeArguments()[0],
               field.substring(field.indexOf('.') + 1));
           cacheSortField(clazz, field, sortField);
@@ -531,15 +530,15 @@ public final class ModelUtility<T> {
   }
 
   /**
-   * Gets the declared field. This method is necessary to ensure superclasses are searched for the
-   * field in addition to the clazz parameter.
+   * Gets the declared field. This method is necessary to ensure superclasses
+   * are searched for the field in addition to the clazz parameter.
    *
    * @param clazz the clazz
    * @param field the field
    * @return the declared field
    */
   private static Field getDeclaredField(final Class<?> clazz, final String field) {
-    final List<Field> fields = new ArrayList<Field>();
+    final List<Field> fields = new ArrayList<>();
     for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
       fields.addAll(Arrays.asList(c.getDeclaredFields()));
     }
@@ -555,7 +554,8 @@ public final class ModelUtility<T> {
    * Returns the managed objects.
    *
    * @param service the service
-   * @param objects the comma separated list of simple object names (null for all managed objects)
+   * @param objects the comma separated list of simple object names (null for
+   *          all managed objects)
    * @return the managed objects
    * @throws Exception the exception
    */
@@ -566,20 +566,20 @@ public final class ModelUtility<T> {
     // Turn objects param into a set
     final Set<String> objectsSet = (objects == null || objects.isEmpty() || objects.equals("null"))
         ? new HashSet<>() : Arrays.asList(objects.split(",")).stream().collect(Collectors.toSet());
-    logger.info("  objects = " + objects);
+    logger.info("  objects = {}", objects);
 
     // Find indexed objects
     final Reflections reflections = new Reflections("com.wci.termhub.model");
     final Set<Class<?>> indexedSet = new HashSet<>(reflections
         .getTypesAnnotatedWith(org.springframework.data.elasticsearch.annotations.Document.class));
-    logger.info("  indexedSet = " + indexedSet);
+    logger.info("  indexedSet = {}", indexedSet);
 
     // Find managed classes
     @SuppressWarnings("resource")
     final Set<EntityType<?>> entities = service.getEntityManager().getMetamodel().getEntities();
     final List<Class<?>> classes = entities.stream().map(EntityType::getJavaType)
         .filter(o -> o != null).collect(Collectors.toList());
-    logger.info("  classes = " + classes);
+    logger.info("  classes = {}", classes);
 
     // Ensure all objects to delete are in indexedSet, otherwise fail
     if (!objectsSet.isEmpty()) {
@@ -624,13 +624,13 @@ public final class ModelUtility<T> {
     // Turn objects param into a set
     final Set<String> objectsSet = (objects == null || objects.isEmpty() || objects.equals("null"))
         ? new HashSet<>() : Arrays.asList(objects.split(",")).stream().collect(Collectors.toSet());
-    logger.info("  objects = " + objects);
+    logger.info("  objects = {}", objects);
 
     // Find indexed objects
     final Reflections reflections = new Reflections("com.wci.termhub.model");
     final Set<Class<?>> indexedSet = new HashSet<>(reflections
         .getTypesAnnotatedWith(org.springframework.data.elasticsearch.annotations.Document.class));
-    logger.info("  indexedSet = " + indexedSet);
+    logger.info("  indexedSet = {}", indexedSet);
 
     // Ensure all objects to delete are in indexedSet, otherwise fail
     if (!objectsSet.isEmpty()) {
@@ -667,7 +667,7 @@ public final class ModelUtility<T> {
         || f.getType().isAssignableFrom(Date.class) || f.getType().isAssignableFrom(Boolean.class)
         || f.getType().isAssignableFrom(Integer.class) || f.getType().isAssignableFrom(Long.class)
         || f.getType().isAssignableFrom(Float.class) || f.getType().isAssignableFrom(Double.class))
-        .collect(Collectors.toList());
+        .toList();
   }
 
   /**
@@ -679,18 +679,13 @@ public final class ModelUtility<T> {
   public static List<java.lang.reflect.Field> getAllFields(final Class<?> type) {
     final List<java.lang.reflect.Field> fields = new ArrayList<>();
     if (type.getSuperclass() != null) {
-      for (final java.lang.reflect.Field field : type.getDeclaredFields()) {
-        fields.add(field);
-      }
+      fields.addAll(Arrays.asList(type.getDeclaredFields()));
       fields.addAll(getAllFields(type.getSuperclass()));
       return fields;
     }
-    for (final java.lang.reflect.Field field : type.getDeclaredFields()) {
-      fields.add(field);
-    }
+    fields.addAll(Arrays.asList(type.getDeclaredFields()));
     return fields;
   }
-
 
   /**
    * Gets the annotation.

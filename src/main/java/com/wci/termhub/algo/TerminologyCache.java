@@ -644,7 +644,7 @@ public class TerminologyCache {
         "publisher:" + StringUtility.escapeQuery(terminology.getPublisher()),
         "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
         "version:" + StringUtility.escapeQuery(terminology.getVersion()));
-    final Query query = LuceneQueryBuilder.parse(strQuery);
+    final Query query = LuceneQueryBuilder.parse(strQuery, Concept.class);
     searchService.findAllWithFields(query, fields, Concept.class, handler);
 
     logger.info("    cache size = {}", cache.size());

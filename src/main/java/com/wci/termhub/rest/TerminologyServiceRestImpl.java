@@ -64,6 +64,7 @@ import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
 import com.wci.termhub.model.ResultListMapping;
+import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -169,7 +170,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   }
 
   /**
-   * Instantiates a {@link TerminologyServiceRestImpl} from the specified parameters. For testing.
+   * Instantiates a {@link TerminologyServiceRestImpl} from the specified
+   * parameters. For testing.
    *
    * @param request the request
    * @throws Exception the exception
@@ -241,9 +243,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
         }
 
-      } else {
-        throw new RestException(false, 403, "Forbidden", null);
       }
+
       return new ResponseEntity<>("Successful", new HttpHeaders(), HttpStatus.OK);
     } catch (final Exception e) {
       handleException(e, "trying to perform admin = " + task);
@@ -382,8 +383,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   // "terminology"
   // })
   // @Parameters({
-  // @Parameter(name = "file", description = "ZIP file containing FHIR CodeSystem resources",
-  // required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+  // @Parameter(name = "file", description = "ZIP file containing FHIR
+  // CodeSystem resources",
+  // required = true, content = @Content(mediaType =
+  // MediaType.MULTIPART_FORM_DATA_VALUE))
   // })
   public ResponseEntity<String> addTerminologyFhirCodeSystem(
     @RequestParam("file") final MultipartFile file) throws Exception {
@@ -573,7 +576,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
@@ -647,7 +650,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
@@ -720,7 +723,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
@@ -826,7 +829,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
@@ -842,8 +845,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "active", required = false) final Boolean active,
     @RequestParam(name = "leaf", required = false) final Boolean leaf,
     @RequestParam(value = "include", required = false) final String include,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
@@ -858,7 +862,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Handler applied, send null handler below
       final ResultList<Concept> list = findHelper(tlist, query2, expression, offset, maxLimit, sort,
-          ascending, active, leaf, null, ip);
+          ascending, active, leaf, ip);
 
       return new ResponseEntity<>(new ResultListConcept(list), new HttpHeaders(), HttpStatus.OK);
 
@@ -916,15 +920,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "active", required = false) final Boolean active,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
       // Build a query from the handler and use it in findHelper
       final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
-
-      logger.info("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx query2: {}", query2);
 
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -988,7 +991,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false)
@@ -1005,10 +1008,11 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "active", required = false) final Boolean active,
     @RequestParam(name = "leaf", required = false) final Boolean leaf,
     @RequestParam(value = "include", required = false) final String include,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler,
-    @org.springframework.web.bind.annotation.RequestBody(required = false)
-    @Parameter(hidden = true) final String queries) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler,
+    @org.springframework.web.bind.annotation.RequestBody(required = false) @Parameter(
+        hidden = true) final String queries)
+    throws Exception {
 
     try {
 
@@ -1022,14 +1026,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
         final int useLimit = limit == null ? 1 : (limit > 10 ? 10 : limit);
         final ResultList<Concept> result =
-            findHelper(tlist, query2, expression, 0, useLimit, null, null, active, leaf, null, ip);
+            findHelper(tlist, query2, expression, 0, useLimit, null, null, active, leaf, ip);
         result.getParameters().setQuery(query2);
         result.getParameters().setExpression(expression);
-
-        // Round confidences to 4 places
-        // result.getItems().stream()
-        // .forEach(c -> c.setConfidence(Precision.round(c.getConfidence(),
-        // 3)));
 
         if (query.isEmpty() || result.getItems().isEmpty()) {
           final Concept concept = new Concept();
@@ -1039,8 +1038,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           concept.setPublisher("");
           concept.getSemanticTypes().add("");
           concept.setName("No match");
-          result.getItems().clear();
-          result.getItems().add(concept);
+          result.setItems(new ArrayList<>(Arrays.asList(concept)));
         }
         list.add(new ResultListConcept(result));
       }
@@ -1067,15 +1065,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * @param ascending the ascending
    * @param active the active
    * @param leaf the leaf
-   * @param handler the handler
    * @param ip the ip
    * @return the result list
    * @throws Exception the exception
    */
   private ResultList<Concept> findHelper(final List<Terminology> terminologies, final String query,
     final String expression, final Integer offset, final Integer limit, final String sort,
-    final Boolean ascending, final Boolean active, final Boolean leaf, final String handler,
-    final IncludeParam ip) throws Exception {
+    final Boolean ascending, final Boolean active, final Boolean leaf, final IncludeParam ip)
+    throws Exception {
 
     // Check for a single terminology
     final Terminology single = terminologies.isEmpty() ? null : terminologies.get(0);
@@ -1084,7 +1081,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       throw new RestException(false, 417, "Expecation failed",
           "Expression parameter can only be used in " + "conjunction with a single terminology");
     }
-    final Query keywordQuery = LuceneQueryBuilder.parse(query);
+    final Query keywordQuery = LuceneQueryBuilder.parse(query, Concept.class);
     final Query expressionQuery = TerminologyUtility.getExpressionQuery(expression);
     final Query booleanQuery = getAndQuery(keywordQuery, expressionQuery);
     final SearchParameters params =
@@ -1095,8 +1092,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     if (leaf != null && leaf) {
       params.setLeaf(true);
     }
+
     final ResultList<Concept> list = searchService.findFields(params,
-        new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+        new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class,
+        terminologies.stream().map(t -> t.getAbbreviation()).collect(Collectors.toSet()));
 
     for (final Concept concept : list.getItems()) {
       concept.cleanForApi();
@@ -1211,8 +1210,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
@@ -1288,8 +1288,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
@@ -1354,8 +1355,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
@@ -1434,8 +1436,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
@@ -1500,8 +1503,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
@@ -1591,8 +1595,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
@@ -1669,8 +1674,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
@@ -1772,8 +1778,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler", required = false)
-    @Parameter(hidden = true) final String handler) throws Exception {
+    @RequestParam(name = "handler",
+        required = false) @Parameter(hidden = true) final String handler)
+    throws Exception {
 
     try {
 
@@ -1830,8 +1837,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    */
   @RequestMapping(value = "/terminology/{terminology}/trees", method = RequestMethod.POST)
   @Hidden
-  // @Operation(summary = "Compute concept tree positions by terminology, publisher and version",
-  // description = "Computes concept tree positions for the specified terminology, publisher and
+  // @Operation(summary = "Compute concept tree positions by terminology,
+  // publisher and version",
+  // description = "Computes concept tree positions for the specified
+  // terminology, publisher and
   // version.",
   // tags = {
   // "concept by code"
@@ -1839,16 +1848,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   // @ApiResponses({
   // @ApiResponse(responseCode = "200",
   // description = "Result list of matching concept tree positions"),
-  // @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
-  // @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+  // @ApiResponse(responseCode = "404", description = "Not found", content =
+  // @Content()),
+  // @ApiResponse(responseCode = "417", description = "Expectation failed",
+  // content = @Content()),
   // @ApiResponse(responseCode = "500", description = "Internal server error",
   // content = @Content())
   // })
   // @Parameters({
   // @Parameter(name = "terminology",
   // description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\"."),
-  // @Parameter(name = "publisher", description = "Terminology publisher. e.g. \"SANDBOX\"."),
-  // @Parameter(name = "version", description = "Terminology version. e.g. \"20240301\"."),
+  // @Parameter(name = "publisher", description = "Terminology publisher. e.g.
+  // \"SANDBOX\"."),
+  // @Parameter(name = "version", description = "Terminology version. e.g.
+  // \"20240301\"."),
   // })
   public ResponseEntity<String> computeTreePositions(
     @PathVariable("terminology") final String terminology,
@@ -2292,6 +2305,91 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     } catch (final Exception e) {
       handleException(e, "trying to get concept mappings for = " + code);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/mapset/{id:[a-f0-9].+}", method = RequestMethod.GET)
+  @Operation(summary = "Get mapset by id", description = "Gets mapset for the specified id")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Mapset"),
+      @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "id", description = "Mapset id, e.g. \"uuid\"", required = true)
+  })
+  public ResponseEntity<Mapset> getMapset(@PathVariable("id") final String id) throws Exception {
+
+    try {
+      final Mapset mapset = searchService.get(id, Mapset.class);
+      // not found - 404
+      if (mapset == null) {
+        throw new RestException(false, 404, "Not Found", "Unable to find mapset for " + id);
+      }
+
+      mapset.cleanForApi();
+
+      // Return the object
+      return new ResponseEntity<>(mapset, new HttpHeaders(), HttpStatus.OK);
+    } catch (final Exception e) {
+      handleException(e, "trying to get mapset = " + id);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/mapset", method = RequestMethod.GET)
+  @Operation(summary = "Find mapsets", description = "Finds mapsets matching specified criteria.")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Result list of matching mapsets"),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "query", description = "Search text", required = false,
+          schema = @Schema(implementation = String.class)),
+      @Parameter(name = "offset", description = "Start index for search results", required = false,
+          schema = @Schema(implementation = Integer.class), example = "0"),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+      @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "ascending",
+          description = "<code>true</code> for ascending, <code>false</code> for descending,"
+              + " <code>null</code> for unspecified",
+          required = false, schema = @Schema(implementation = Boolean.class))
+  })
+  public ResponseEntity<ResultListMapset> findMapsets(
+    @RequestParam(name = "query", required = false) final String query,
+    @RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
+    @RequestParam(name = "sort", required = false) final String sort,
+    @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
+
+    try {
+
+      // limit return objects to 1000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+
+      // Limit to loaded mapsets
+      final SearchParameters params =
+          new SearchParameters("*:*" + ((query == null || query.isEmpty()) ? "" : " AND " + query),
+              offset, maxLimit, sort, ascending);
+      final ResultList<Mapset> list = searchService.find(params, Mapset.class);
+      list.setParameters(params);
+      list.getItems().forEach(t -> t.cleanForApi());
+
+      return new ResponseEntity<>(new ResultListMapset(list), new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to find mapsets");
       return null;
     }
   }

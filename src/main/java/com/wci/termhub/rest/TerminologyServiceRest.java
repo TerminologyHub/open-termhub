@@ -15,11 +15,13 @@ import org.springframework.http.ResponseEntity;
 
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.Mapping;
+import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
 import com.wci.termhub.model.ResultListMapping;
+import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -345,6 +347,29 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<ResultListConceptTreePosition> findTreePositionChildren(String terminology,
     String code, String query, Integer offset, Integer limit, Boolean ascending, String sort,
     String handler) throws Exception;
+
+  /**
+   * Gets the mapset.
+   *
+   * @param id the id
+   * @return the mapset
+   * @throws Exception the exception
+   */
+  public ResponseEntity<Mapset> getMapset(String id) throws Exception;
+
+  /**
+   * Find mapsets.
+   *
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<ResultListMapset> findMapsets(String query, Integer offset, Integer limit,
+    String sort, Boolean ascending) throws Exception;
 
   /**
    * Find mappings.

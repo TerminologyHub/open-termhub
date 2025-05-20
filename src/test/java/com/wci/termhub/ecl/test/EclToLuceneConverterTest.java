@@ -104,6 +104,7 @@ public class EclToLuceneConverterTest extends AbstractTest {
 
     final Query multipleDescendantQuery =
         converter.parse("<<255412001 OR <<263714004 OR <<260245000");
+    logger.info("multipleDescendantQuery: {}", multipleDescendantQuery);
     assertNotNull(multipleDescendantQuery);
 
     final Query attributeQuery = converter.parse("< 609328004 : 246075003 = 762952008");
@@ -131,7 +132,7 @@ public class EclToLuceneConverterTest extends AbstractTest {
    */
   @Test
   public void testInvalidQueries() throws Exception {
-    // final EclToLuceneConverter converter = new EclToLuceneConverter();
+    final EclToLuceneConverter converter = new EclToLuceneConverter();
 
     // Test that ALL_CONCEPTS query throws an exception
     // assertThrows(RuntimeException.class, () -> {
