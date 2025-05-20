@@ -330,7 +330,7 @@ public class LuceneDataAccess {
     }
 
     return find(clazz, sp, sp.getLuceneQuery() != null ? sp.getLuceneQuery()
-        : LuceneQueryBuilder.parse(sp.getQuery()));
+        : LuceneQueryBuilder.parse(sp.getQuery(), clazz));
   }
 
   /**

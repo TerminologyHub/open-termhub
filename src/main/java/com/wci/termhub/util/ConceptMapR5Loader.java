@@ -30,9 +30,6 @@ public final class ConceptMapR5Loader {
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapR5Loader.class);
 
-  /** The object mapper. */
-  // private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
   /** The FHIR context. */
   private static final FhirContext FHIR_CONTEXT = FhirContext.forR5();
 

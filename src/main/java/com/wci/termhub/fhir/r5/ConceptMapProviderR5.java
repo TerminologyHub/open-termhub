@@ -9,9 +9,10 @@
  */
 package com.wci.termhub.fhir.r5;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.Bundle;
@@ -33,16 +34,16 @@ import org.springframework.stereotype.Component;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
-import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
-import com.wci.termhub.model.MapsetRef;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.IdParam;
@@ -710,12 +711,6 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     throws Exception {
     try {
 
-      logger.debug("Create ConceptMap with sourceScope={}, targetScope={}",
-          conceptMap.getSourceScope() != null ? ((UriType) conceptMap.getSourceScope()).getValue()
-              : "null",
-          conceptMap.getTargetScope() != null ? ((UriType) conceptMap.getTargetScope()).getValue()
-              : "null");
-
       // Validate required fields
       if (conceptMap.getUrl() == null || conceptMap.getUrl().isEmpty()) {
         throw FhirUtilityR5.exception("ConceptMap.url is required", IssueType.INVALID,
@@ -730,98 +725,20 @@ public class ConceptMapProviderR5 implements IResourceProvider {
             HttpServletResponse.SC_BAD_REQUEST);
       }
 
-      // Convert to internal model
-      final Mapset mapset = new Mapset();
-      mapset.setId(UUID.randomUUID().toString());
-      mapset.setName(conceptMap.getName());
-      mapset.setActive(true);
-      mapset.setDescription(conceptMap.getDescription());
-      mapset.setPublisher(conceptMap.getPublisher());
-      mapset.setVersion(conceptMap.getVersion());
-      // Store the full FHIR version string in attributes
-      mapset.getAttributes().put("fhirVersion", conceptMap.getVersion());
-      if (!conceptMap.getIdentifier().isEmpty()) {
-        mapset.setCode(conceptMap.getIdentifier().get(0).getValue());
-      }
-      mapset.setAbbreviation(conceptMap.getTitle());
+      logger.debug("Create ConceptMap with source: {} and target:{}", conceptMap.getSourceScope(),
+          conceptMap.getTargetScope());
 
-      // Store the source and target URIs in the mapset
-      final String sourceUri = ((UriType) conceptMap.getSourceScope()).getValue();
-      final String targetUri = ((UriType) conceptMap.getTargetScope()).getValue();
+      // Convert CodeSystem to JSON
+      final String content = FhirContext.forR5().newJsonParser().encodeResourceToString(conceptMap);
 
-      logger.info("  terminology URIs: source={}, target={}", sourceUri, targetUri);
+      // Write content to temporary file
+      final Path tempFile = Files.createTempFile("codesystem-", ".json");
+      Files.write(tempFile, content.getBytes());
 
-      // Store the URIs without the ?fhir_vs suffix if present
-      // sourceUri = sourceUri.replace("?fhir_vs", "");
-      // targetUri = targetUri.replace("?fhir_vs", "");
+      final Mapset mapset = ConceptMapLoaderUtil.loadConceptMap(searchService, tempFile.toString());
 
-      mapset.setFromTerminology(sourceUri);
-      mapset.setToTerminology(targetUri);
+      Files.delete(tempFile);
 
-      // Store the original URIs in attributes
-      mapset.getAttributes().put("fhirUri", conceptMap.getUrl());
-      mapset.getAttributes().put("sourceScopeUri", sourceUri);
-      mapset.getAttributes().put("targetScopeUri", targetUri);
-
-      logger.info("  fromTerminology: {}, toTerminology: {}", mapset.getFromTerminology(),
-          mapset.getToTerminology());
-
-      // Save mapset
-      searchService.add(Mapset.class, mapset);
-
-      // Process mappings from groups and elements
-      int ct = 0;
-      for (final ConceptMap.ConceptMapGroupComponent group : conceptMap.getGroup()) {
-        for (final ConceptMap.SourceElementComponent element : group.getElement()) {
-          for (final ConceptMap.TargetElementComponent target : element.getTarget()) {
-            // Create mapping
-            final Mapping mapping = new Mapping();
-            mapping.setId(UUID.randomUUID().toString());
-            mapping.setMapset(new MapsetRef(mapset));
-
-            // Set source concept
-            final ConceptRef fromConcept = new ConceptRef();
-            fromConcept.setCode(element.getCode());
-            fromConcept.setName(element.getDisplay());
-            fromConcept.setTerminology(sourceUri);
-            mapping.setFrom(fromConcept);
-
-            // Set target concept
-            final ConceptRef toConcept = new ConceptRef();
-            toConcept.setCode(target.getCode());
-            toConcept.setName(target.getDisplay());
-            toConcept.setTerminology(targetUri);
-            mapping.setTo(toConcept);
-
-            // Set mapping attributes from extensions
-            for (final org.hl7.fhir.r5.model.Extension ext : target.getExtension()) {
-              final String url = ext.getUrl();
-              final String value = ((org.hl7.fhir.r5.model.StringType) ext.getValue()).getValue();
-
-              if (url.endsWith("concept-map-group")) {
-                mapping.getAttributes().put("group", value);
-              } else if (url.endsWith("concept-map-rule")) {
-                mapping.getAttributes().put("rule", value);
-              } else if (url.endsWith("concept-map-priority")) {
-                mapping.getAttributes().put("priority", value);
-              } else if (url.endsWith("concept-map-advice")) {
-                mapping.getAttributes().put("advice", value);
-              }
-            }
-
-            // Save mapping
-            searchService.add(Mapping.class, mapping);
-            if (++ct % 5000 == 0) {
-              logger.info("  count: {}", ct);
-            }
-            // Too much info
-            logger.debug("    Created mapping: {}", mapping);
-          }
-        }
-      }
-      logger.info("  count: {}", ct);
-
-      // Convert back to ConceptMap and return
       final ConceptMap savedCm = FhirUtilityR5.toR5(mapset);
       final MethodOutcome outcome = new MethodOutcome();
       outcome.setResource(savedCm);

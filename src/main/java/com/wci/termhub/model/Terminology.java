@@ -125,11 +125,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
   @Transient
   private String uri;
 
-  /** The index name. */
-  @Transient
-  @Field(type = FieldType.Keyword)
-  private String indexName;
-
   /** The attributes. */
   @Transient
   @Field(type = FieldType.Object)
@@ -191,7 +186,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
       releaseDate = other.getReleaseDate();
       uri = other.getUri();
       family = other.getFamily();
-      indexName = other.getIndexName();
       attributes = new HashMap<>(other.getAttributes());
       roots = new ArrayList<>(other.getRoots());
       conceptCt = other.getConceptCt();
@@ -223,9 +217,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
       }
       if (other.getUri() != null) {
         uri = other.getUri();
-      }
-      if (other.getIndexName() != null) {
-        indexName = other.getIndexName();
       }
       if (other.getConceptCt() != null) {
         conceptCt = other.getConceptCt();
@@ -410,25 +401,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
   }
 
   /**
-   * Gets the index name.
-   *
-   * @return the index name
-   */
-  @Schema(hidden = true)
-  public String getIndexName() {
-    return indexName;
-  }
-
-  /**
-   * Sets the index name.
-   *
-   * @param indexName the new index name
-   */
-  public void setIndexName(final String indexName) {
-    this.indexName = indexName;
-  }
-
-  /**
    * Gets the concept ct.
    *
    * @return the concept ct
@@ -514,15 +486,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
   public void minimize() {
     super.minimize();
     cleanForApi();
-  }
-
-  /**
-   * Clean for api.
-   */
-  /* see superclass */
-  @Override
-  public void cleanForApi() {
-    indexName = null;
   }
 
 }

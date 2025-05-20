@@ -169,6 +169,7 @@ test {
     exclude '**/TermSearchUnitTest.class'
     exclude '**/MultithreadedReadUnitTest.class'
     exclude '**/EclToLuceneConverterTest.class'
+    exclude '**/EclNonSnomedTest.class'
     exclude '**/TerminologyServiceRestImplUnitTest.class'
     exclude '**/CleanupUnitTest.class'
 

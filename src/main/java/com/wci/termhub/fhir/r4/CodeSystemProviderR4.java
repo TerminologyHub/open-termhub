@@ -9,6 +9,8 @@
  */
 package com.wci.termhub.fhir.r4;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -44,6 +46,7 @@ import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
@@ -753,19 +756,17 @@ public class CodeSystemProviderR4 implements IResourceProvider {
           codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
 
       // Convert CodeSystem to JSON
-      final String content = ca.uhn.fhir.context.FhirContext.forR4().newJsonParser()
-          .encodeResourceToString(codeSystem);
+      final String content = FhirContext.forR4().newJsonParser().encodeResourceToString(codeSystem);
 
       // Write content to temporary file
-      final java.nio.file.Path tempFile =
-          java.nio.file.Files.createTempFile("codesystem-", ".json");
-      java.nio.file.Files.write(tempFile, content.getBytes());
+      final Path tempFile = Files.createTempFile("codesystem-", ".json");
+      Files.write(tempFile, content.getBytes());
 
       // Use existing loader utility
       CodeSystemLoaderUtil.loadCodeSystem(searchService, tempFile.toString());
 
       // Clean up temp file
-      java.nio.file.Files.delete(tempFile);
+      Files.delete(tempFile);
 
       // Return success
       final MethodOutcome outcome = new MethodOutcome();

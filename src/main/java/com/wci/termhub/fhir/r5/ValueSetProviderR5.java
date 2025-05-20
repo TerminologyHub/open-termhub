@@ -597,8 +597,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // } ]
       // }
       final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
-      final Query browserQuery = LuceneQueryBuilder
-          .parse(new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()));
+      final Query browserQuery = LuceneQueryBuilder.parse(
+          new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()),
+          Concept.class);
       final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
       final SearchParameters params =
           new SearchParameters(getAndQuery(expressionQuery, browserQuery), offset, ct, null, null);
@@ -702,14 +703,14 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // display 'abc' did not match any designations."
 
       final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
-      final Query codeQuery =
-          LuceneQueryBuilder.parse("code:\"" + StringUtility.escapeQuery(code) + "\"");
+      final Query codeQuery = LuceneQueryBuilder
+          .parse("code:\"" + StringUtility.escapeQuery(code) + "\"", Concept.class);
 
       final List<Concept> list =
           searchService.findAll(null, getAndQuery(codeQuery, expressionQuery), Concept.class);
       final Parameters parameters = new Parameters();
       // If no match
-      if (list.size() == 0) {
+      if (list.isEmpty()) {
         parameters.addParameter(
             new ParametersParameterComponent().setName("result").setValue(new BooleanType(false)));
         parameters.addParameter(new ParametersParameterComponent().setName("message")
