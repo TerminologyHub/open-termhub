@@ -9,7 +9,6 @@
  */
 package com.wci.termhub.model;
 
-import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
@@ -29,7 +28,6 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "type_key_values")
 @Schema(description = "Represents a type key value tuple for config purposes.")
-@Document(indexName = "type-key-value-v1")
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TypeKeyValue extends AbstractHasModified

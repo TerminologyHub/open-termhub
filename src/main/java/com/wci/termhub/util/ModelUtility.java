@@ -34,6 +34,7 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.InnerField;
 import org.springframework.data.elasticsearch.annotations.MultiField;
 import org.springframework.stereotype.Component;
@@ -647,12 +648,30 @@ public final class ModelUtility<T> {
     }
 
     // Go through entity classes and identify indexed ones and any specific
-    // object
-    // ones
+    // object ones
     return indexedSet.stream()
         .filter(clazz -> objects == null || objects.isEmpty() || objects.equals("null")
             || objectsSet.contains(clazz.getSimpleName()))
         .map(c -> (Class<? extends HasId>) c).collect(Collectors.toList());
+
+  }
+
+  /**
+   * Gets the indexed objects.
+   *
+   * @return the indexed objects
+   */
+  @SuppressWarnings("unchecked")
+  public static List<Class<? extends HasId>> getIndexedObjects() {
+
+    // Scan for all @Document classes in com.wci.termhub.model
+    final Reflections reflections = new Reflections("com.wci.termhub.model");
+    final Set<Class<?>> documentClasses = reflections.getTypesAnnotatedWith(Document.class);
+
+    logger.info("Found @Document classes: {}", documentClasses);
+
+    return documentClasses.stream().map(c -> (Class<? extends HasId>) c)
+        .collect(Collectors.toList());
 
   }
 

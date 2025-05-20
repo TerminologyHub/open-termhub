@@ -9,7 +9,6 @@
  */
 package com.wci.termhub.model;
 
-import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.InnerField;
@@ -32,7 +31,6 @@ import jakarta.persistence.Transient;
 @Table(name = "resource_info")
 @Schema(
     description = "Represents information about a resource like a video, web page, or other information")
-@Document(indexName = "resource-info-v1")
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ResourceInfo extends AbstractHasModified implements Copyable<ResourceInfo> {

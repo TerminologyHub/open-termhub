@@ -22,10 +22,10 @@ import org.apache.lucene.search.Weight;
 public abstract class FilterScorer extends Scorer {
 
   /** The in. */
-  private final Scorer IN;
+  private final Scorer in;
 
   /** The iterator. */
-  private final DocIdSetIterator ITERATOR;
+  private final DocIdSetIterator interator;
 
   /**
    * Create a new FilterScorer.
@@ -35,8 +35,8 @@ public abstract class FilterScorer extends Scorer {
    */
   public FilterScorer(final Scorer in, final DocIdSetIterator iterator) {
     super(in.getWeight());
-    this.IN = in;
-    this.ITERATOR = iterator;
+    this.in = in;
+    this.interator = iterator;
   }
 
   /**
@@ -51,8 +51,8 @@ public abstract class FilterScorer extends Scorer {
     if (in == null) {
       throw new NullPointerException("wrapped Scorer must not be null");
     }
-    this.IN = in;
-    this.ITERATOR = iterator;
+    this.in = in;
+    this.interator = iterator;
   }
 
   /**
@@ -63,7 +63,7 @@ public abstract class FilterScorer extends Scorer {
    */
   @Override
   public float score() throws IOException {
-    return IN.score();
+    return in.score();
   }
 
   // Leave maxScore abstract on purpose since the goal of this Filter class is
@@ -76,7 +76,7 @@ public abstract class FilterScorer extends Scorer {
    */
   @Override
   public final int docID() {
-    return IN.docID();
+    return in.docID();
   }
 
   /**
@@ -86,7 +86,7 @@ public abstract class FilterScorer extends Scorer {
    */
   @Override
   public final DocIdSetIterator iterator() {
-    return ITERATOR;
+    return interator;
   }
 
   /**
@@ -96,6 +96,6 @@ public abstract class FilterScorer extends Scorer {
    */
   @Override
   public final TwoPhaseIterator twoPhaseIterator() {
-    return IN.twoPhaseIterator();
+    return in.twoPhaseIterator();
   }
 }

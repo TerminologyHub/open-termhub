@@ -56,14 +56,14 @@ public final class LuceneQueryBuilder {
    */
   public static Query parse(final String queryText, final Class<?> modelClass)
     throws ParseException {
-    logger.info("IN Parsing query: {} for class {}", queryText,
+    logger.debug("IN Parsing query: {} for class {}", queryText,
         modelClass != null ? modelClass.getSimpleName() : "null");
     final boolean isFieldedQuery = queryText != null && queryText.matches(".*\\w+:.*");
     if (isFieldedQuery) {
       final KeywordAnalyzer analyzer = new KeywordAnalyzer();
       final QueryParser queryParser = new QueryParser("", analyzer);
       final Query query = queryParser.parse(queryText);
-      logger.info("Parsed Query: {}", query);
+      logger.debug("Parsed Query: {}", query);
       return query;
     } else {
       final String[] fields = getSearchableFields(modelClass != null ? modelClass : Concept.class);
@@ -71,7 +71,7 @@ public final class LuceneQueryBuilder {
       final MultiFieldQueryParser multiFieldQueryParser =
           new MultiFieldQueryParser(fields, analyzer);
       final Query query = multiFieldQueryParser.parse(queryText);
-      logger.info("Parsed Query (multi-field): {}", query);
+      logger.debug("Parsed Query (multi-field): {}", query);
       return query;
     }
   }

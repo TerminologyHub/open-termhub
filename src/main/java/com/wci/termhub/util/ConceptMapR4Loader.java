@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.wci.termhub.fhir.r4.ConceptMapProviderR4;
-import com.wci.termhub.model.Mapset;
 import com.wci.termhub.service.EntityRepositoryService;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -73,8 +72,6 @@ public final class ConceptMapR4Loader {
     final long startTime = System.currentTimeMillis();
 
     try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
-      // Create required indexes
-      service.createIndex(Mapset.class);
 
       // Parse JSON to FHIR ConceptMap
       final String json = br.lines().reduce("", String::concat);
@@ -87,8 +84,8 @@ public final class ConceptMapR4Loader {
         final String sourceSystem = firstGroup.getSource();
         final String targetSystem = firstGroup.getTarget();
 
-        LOGGER.info("Setting source URI: {}", sourceSystem + "?fhir_vs");
-        LOGGER.info("Setting target URI: {}", targetSystem + "?fhir_vs");
+        LOGGER.info("Setting source URI: {}?fhir_vs", sourceSystem);
+        LOGGER.info("Setting target URI: {}?fhir_vs", targetSystem);
 
         conceptMap.setSource(new UriType(sourceSystem + "?fhir_vs"));
         conceptMap.setTarget(new UriType(targetSystem + "?fhir_vs"));

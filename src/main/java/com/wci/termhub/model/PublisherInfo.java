@@ -9,7 +9,6 @@
  */
 package com.wci.termhub.model;
 
-import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.InnerField;
@@ -31,7 +30,6 @@ import jakarta.persistence.Transient;
 @Entity
 @Table(name = "publisher_info")
 @Schema(description = "Represents a content publisher from which data can be obtained")
-@Document(indexName = "publisher-info-v1")
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PublisherInfo extends AbstractHasModified
