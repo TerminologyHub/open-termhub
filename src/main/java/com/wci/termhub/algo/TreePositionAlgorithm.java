@@ -61,9 +61,6 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
   /** The batch. */
   private final List<HasId> batch = new ArrayList<>();
 
-  /** The prefix. */
-  // private String prefix = "";
-
   /** The seen. */
   private final List<String> seen = new ArrayList<>();
 
@@ -118,15 +115,6 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     logInfo("  publisher = " + getPublisher());
     logInfo("  version = " + getVersion());
 
-    // Get all relationships
-    // Get prefix for index name
-    // prefix =
-    // StringUtility.removeNonAlphanumeric(getTerminology().toLowerCase()) + "-"
-    // + StringUtility.removeNonAlphanumeric(getPublisher().toLowerCase()) + "-"
-    // + StringUtility.removeNonAlphanumeric(getVersion().toLowerCase());
-
-    // Create index if it doesn't exist
-    // searchService.createIndex(prefix, ConceptTreePosition.class, false);
     if (searchService == null) {
       throw new NullPointerException("searchService is null");
     }
@@ -137,13 +125,9 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     final Terminology term = TerminologyUtility.getTerminology(searchService, getTerminology(),
         getPublisher(), getVersion());
     if (term == null) {
-      throw new Exception("Unable to find terminology = " + getTerminology() + ", " + getPublisher()
-          + ", " + getVersion());
+      throw new Exception("Unable to find terminology = " + getTerminology() + ", publisher = "
+          + getPublisher() + ", version = " + getVersion());
     }
-    // if (!term.getIndexName().equals(prefix)) {
-    // throw new Exception("Tree Position algorithm expects " + prefix
-    // + " terminology index to have indexName set to prefix.");
-    // }
 
     final Date startDate = new Date();
 

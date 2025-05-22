@@ -11,9 +11,6 @@ package com.wci.termhub.util;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,7 +27,6 @@ import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
-import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.Definition;
 import com.wci.termhub.model.MetaModel;
 import com.wci.termhub.model.Metadata;
@@ -68,57 +64,51 @@ public final class CodeSystemLoaderUtil {
    * Load concepts from CodeSystem format JSON.
    *
    * @param service the service
-   * @param fullFileName the full file name
+   * @param content the content
+   * @return the string
    * @throws Exception the exception
    */
-  public static void loadCodeSystem(final EntityRepositoryService service,
-    final String fullFileName) throws Exception {
+  public static String loadCodeSystem(final EntityRepositoryService service, final String content)
+    throws Exception {
 
-    // Ensure index directory exists
-    final String indexDirPath =
-        PropertyUtility.getProperties().getProperty("lucene.index.directory");
-    // Fix the path if it's a Windows absolute path to ensure it's treated
-    // correctly
-    final File indexDir = new File(indexDirPath.replace('/', File.separatorChar));
-    if (!indexDir.exists()) {
-      // Create the directory if it doesn't exist
-      indexDir.mkdirs();
-      LOGGER.info("Create directory for indexes: {}", indexDir.getAbsolutePath());
-    }
-
-    indexCodeSystem(service, fullFileName, 1000, -1);
+    return indexCodeSystem(service, content, 1000, -1);
   }
 
   /**
    * Index concepts from CodeSystem format JSON.
    *
    * @param service the service
-   * @param fullFileName the full file name
+   * @param content the content
    * @param batchSize the batch size
    * @param limit the limit
+   * @return the string
    * @throws Exception the exception
    */
-  private static void indexCodeSystem(final EntityRepositoryService service,
-    final String fullFileName, final int batchSize, final int limit) throws Exception {
+  private static String indexCodeSystem(final EntityRepositoryService service, final String content,
+    final int batchSize, final int limit) throws Exception {
 
     LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
     final long startTime = System.currentTimeMillis();
     final List<Concept> conceptBatch = new ArrayList<>(batchSize);
     final List<ConceptRelationship> relationshipBatch = new ArrayList<>(batchSize);
     final List<Term> termBatch = new ArrayList<>(batchSize);
+    final String id;
 
-    try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
-
-      service.createIndex(Terminology.class);
-      service.createIndex(Metadata.class);
-      service.createIndex(Concept.class);
-      service.createIndex(Term.class);
-      service.createIndex(ConceptRelationship.class);
-      service.createIndex(ConceptTreePosition.class);
+    try {
 
       // Read the entire file as a JSON object
-      final JsonNode root = OBJECT_MAPPER.readTree(br);
-      final Terminology terminology = getTerminology(service, root);
+      final JsonNode root = OBJECT_MAPPER.readTree(content);
+      Terminology terminology = getTerminology(service, root);
+
+      if (terminology != null) {
+        throw new Exception("Can not create multiple CodeSystem resources with CodeSystem.url "
+            + terminology.getUri() + " and CodeSystem.version " + terminology.getVersion()
+            + ", already have one with resource ID: CodeSystem/" + terminology.getId());
+      }
+
+      // Create the terminology
+      terminology = createTerminology(service, root);
+      id = terminology.getId();
 
       // Extract metadata from root
       final List<Metadata> metadataList = createMetadata(root);
@@ -173,7 +163,6 @@ public final class CodeSystemLoaderUtil {
               LOGGER.warn("    Missing valueCoding or code for parent relationship in concept: {}",
                   concept.getCode());
             }
-
             relationshipCount++;
           }
 
@@ -197,7 +186,6 @@ public final class CodeSystemLoaderUtil {
               }
             }
           }
-
         }
 
         // Process terms
@@ -210,9 +198,6 @@ public final class CodeSystemLoaderUtil {
           }
           termCount++;
         }
-
-        // too much logging
-        // LOGGER.info("indexCodeSystem: concept: {}", concept);
 
         // Add concept to batch
         conceptBatch.add(concept);
@@ -241,6 +226,7 @@ public final class CodeSystemLoaderUtil {
       if (metadataList == null) {
         throw new Exception("Unexpected null metadata list");
       }
+
       // compute tree positions
       computeConceptTreePositions(service, metadataList.get(0).getTerminology(),
           metadataList.get(0).getPublisher(), metadataList.get(0).getVersion());
@@ -249,8 +235,10 @@ public final class CodeSystemLoaderUtil {
           relationshipCount, termCount);
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
+      return id;
+
     } catch (final Exception e) {
-      LOGGER.error("Error indexing code system {}", fullFileName, e);
+      LOGGER.error("Error indexing code system.", e);
       throw e;
     }
   }
@@ -268,18 +256,15 @@ public final class CodeSystemLoaderUtil {
 
     final String abbreviation = root.path("title").asText();
     final String publisher = root.path("publisher").asText();
-    // Extract simple version number to avoid Lucene parsing issues
-    final String fullVersion = root.path("version").asText();
-    final String simpleVersion = fullVersion.replaceFirst("^.*?version/", "");
+    final String version = root.path("version").asText();
 
     final SearchParameters searchParams = new SearchParameters();
     searchParams.setQuery("abbreviation: " + StringUtility.escapeQuery(abbreviation)
         + " publisher: '" + StringUtility.escapeQuery(publisher) + "' and version: '"
-        + StringUtility.escapeQuery(simpleVersion) + "'");
+        + StringUtility.escapeQuery(version) + "'");
     final ResultList<Terminology> terminology = service.find(searchParams, Terminology.class);
 
-    return (terminology.getItems().isEmpty()) ? createTerminology(service, root)
-        : terminology.getItems().get(0);
+    return (terminology.getItems().isEmpty()) ? null : terminology.getItems().get(0);
   }
 
   /**
@@ -805,6 +790,9 @@ public final class CodeSystemLoaderUtil {
    */
   private static void computeConceptTreePositions(final EntityRepositoryService service,
     final String terminologyName, final String publisher, final String version) throws Exception {
+
+    LOGGER.info("Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
+        terminologyName, publisher, version);
 
     final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
     treepos.setTerminology(terminologyName);

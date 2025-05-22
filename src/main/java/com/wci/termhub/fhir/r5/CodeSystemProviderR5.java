@@ -9,8 +9,6 @@
  */
 package com.wci.termhub.fhir.r5;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -771,15 +769,8 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       // Convert CodeSystem to JSON
       final String content = FhirContext.forR5().newJsonParser().encodeResourceToString(codeSystem);
 
-      // Write content to temporary file
-      final Path tempFile = Files.createTempFile("codesystem-", ".json");
-      Files.write(tempFile, content.getBytes());
-
       // Use existing loader utility
-      CodeSystemLoaderUtil.loadCodeSystem(searchService, tempFile.toString());
-
-      // Clean up temp file
-      Files.delete(tempFile);
+      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content);
 
       // Return success
       final MethodOutcome outcome = new MethodOutcome();
@@ -788,6 +779,8 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       codeSystem.getConcept().clear();
       outcome.setResource(codeSystem);
       outcome.setCreated(true);
+      final IdType id = new IdType("CodeSystem", terminologyId);
+      codeSystem.setId(id);
       return outcome;
 
     } catch (final Exception e) {

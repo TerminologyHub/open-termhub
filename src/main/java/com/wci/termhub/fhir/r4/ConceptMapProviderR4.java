@@ -9,8 +9,6 @@
  */
 package com.wci.termhub.fhir.r4;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -762,19 +760,15 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       // Convert CodeSystem to JSON
       final String content = FhirContext.forR4().newJsonParser().encodeResourceToString(conceptMap);
 
-      // Write content to temporary file
-      final Path tempFile = Files.createTempFile("codesystem-", ".json");
-      Files.write(tempFile, content.getBytes());
-
-      final Mapset mapset = ConceptMapLoaderUtil.loadConceptMap(searchService, tempFile.toString());
-
-      Files.delete(tempFile);
+      final Mapset mapset = ConceptMapLoaderUtil.loadConceptMap(searchService, content);
 
       // Convert back to ConceptMap and return
       final ConceptMap savedCm = FhirUtilityR4.toR4(mapset);
       final MethodOutcome outcome = new MethodOutcome();
       outcome.setResource(savedCm);
       outcome.setCreated(true);
+      final IdType id = new IdType("ConceptMap", mapset.getId());
+      savedCm.setId(id);
       return outcome;
 
     } catch (final Exception e) {

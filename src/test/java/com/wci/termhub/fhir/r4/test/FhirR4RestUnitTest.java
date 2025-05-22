@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,24 +53,19 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.model.Concept;
-import com.wci.termhub.model.ConceptRelationship;
-import com.wci.termhub.model.ConceptTreePosition;
-import com.wci.termhub.model.Mapping;
-import com.wci.termhub.model.Mapset;
-import com.wci.termhub.model.Metadata;
-import com.wci.termhub.model.Term;
-import com.wci.termhub.model.Terminology;
+import com.wci.termhub.model.HasId;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
+import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
 /**
- * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4 endpoints, CodeSystem,
- * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set id's
+ * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4
+ * endpoints, CodeSystem, ValueSet, and ConceptMap. All passed ids MUST be
+ * lowercase, so they match our internally set id's
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -139,17 +135,13 @@ public class FhirR4RestUnitTest {
       FileUtils.deleteDirectory(indexDir);
     }
 
-    // Delete all indexes
-    searchService.deleteIndex(Terminology.class);
-    searchService.deleteIndex(Metadata.class);
-    searchService.deleteIndex(Concept.class);
-    searchService.deleteIndex(Term.class);
-    searchService.deleteIndex(ConceptRelationship.class);
-    searchService.deleteIndex(ConceptTreePosition.class);
-    searchService.deleteIndex(Mapset.class);
-    searchService.deleteIndex(Mapping.class);
+    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
+    for (final Class<? extends HasId> clazz : indexedObjects) {
+      searchService.deleteIndex(clazz);
+      searchService.createIndex(clazz);
+    }
 
-    // Load each code system
+    // Load each code system using FHIR R4 endpoint
     for (final String codeSystemFile : CODE_SYSTEM_FILES) {
       try {
         // Read file from classpath
@@ -160,8 +152,12 @@ public class FhirR4RestUnitTest {
           throw new FileNotFoundException("Could not find resource: data/" + codeSystemFile);
         }
 
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
         LOGGER.info("Loading code system from file: {}", codeSystemFile);
-        CodeSystemLoaderUtil.loadCodeSystem(searchService, resource.getFile().getAbsolutePath());
+        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent);
+
       } catch (final Exception e) {
         LOGGER.error("Error loading code system file: {}", codeSystemFile, e);
         throw e;

@@ -14,16 +14,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.UriType;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,8 +37,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.fhir.r5.ConceptMapProviderR5;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.UriParam;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
@@ -90,23 +83,7 @@ public class ConceptMapProviderR5UnitTest {
    */
   @BeforeAll
   public void setupClass() throws Exception {
-    // Load test data
-    final String testDataPath =
-        "src/main/resources/data/ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json";
-    LOGGER.info("Loading test data from: {}", testDataPath);
 
-    // Parse JSON to FHIR ConceptMap
-    final String json = new String(Files.readAllBytes(Paths.get(testDataPath)));
-    final IParser parser = FhirContext.forR5().newJsonParser();
-    final ConceptMap conceptMap = parser.parseResource(ConceptMap.class, json);
-    LOGGER.info("Parsed ConceptMap: id={}, version={}, url={}", conceptMap.getId(),
-        conceptMap.getVersion(), conceptMap.getUrl());
-
-    // Create the ConceptMap
-    provider.createConceptMap(null, null, conceptMap);
-    LOGGER.info("Created ConceptMap");
-
-    // Debug what's in the repository
     final List<ConceptMap> maps = provider.findCandidates();
     LOGGER.info("All concept maps in repository:");
     for (final ConceptMap cm : maps) {
@@ -430,19 +407,5 @@ public class ConceptMapProviderR5UnitTest {
       LOGGER.info("    TEST_MAP_URL={}", TEST_MAP_URL);
       LOGGER.info("    TEST_MAP_TARGET={}", TEST_MAP_TARGET);
     });
-  }
-
-  /**
-   * Cleanup.
-   *
-   * @throws Exception the exception
-   */
-  @AfterAll
-  public void cleanup() throws Exception {
-    // Clean up Lucene index
-    final File indexDir = new File("target/lucene-index-r5");
-    if (indexDir.exists()) {
-      FileUtils.deleteDirectory(indexDir);
-    }
   }
 }

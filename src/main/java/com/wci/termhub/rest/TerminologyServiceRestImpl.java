@@ -119,7 +119,8 @@ import jakarta.servlet.http.HttpServletRequest;
             description = "Concept service endpoints with \"by id\" parameters"),
         @Tag(name = "concept by code",
             description = "Concept service endpoints with \"by code\" parameters"),
-        @Tag(name = "term", description = "Term endpoints")
+        @Tag(name = "term", description = "Term endpoints"),
+        @Tag(name = "mapset", description = "Mapset endpoints"),
     }, servers = {
         @Server(description = "Current Instance", url = "/")
     })
@@ -350,7 +351,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
             "Unable to parse terminology = " + terminologyStr);
       }
 
-      searchService.createIndex(Terminology.class);
       searchService.add(Terminology.class, terminology);
 
       // Compute the URI location
@@ -2312,7 +2312,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapset/{id:[a-f0-9].+}", method = RequestMethod.GET)
-  @Operation(summary = "Get mapset by id", description = "Gets mapset for the specified id")
+  @Operation(summary = "Get mapset by id", description = "Gets mapset for the specified id",
+      tags = {
+          "mapset"
+      })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Mapset"),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
@@ -2344,7 +2347,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapset", method = RequestMethod.GET)
-  @Operation(summary = "Find mapsets", description = "Finds mapsets matching specified criteria.")
+  @Operation(summary = "Find mapsets", description = "Finds mapsets matching specified criteria.",
+      tags = {
+          "mapset"
+      })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching mapsets"),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
