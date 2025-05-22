@@ -11,9 +11,6 @@ package com.wci.termhub.util;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -51,27 +48,14 @@ public final class ConceptMapLoaderUtil {
    * Load concept map from a JSON file and save it using the repository service.
    *
    * @param service the repository service to use for saving
-   * @param fullFileName the path to the JSON file
+   * @param conceptMap the concept map
    * @return the mapset
    * @throws Exception if there is an error reading or processing the file
    */
   public static Mapset loadConceptMap(final EntityRepositoryService service,
-    final String fullFileName) throws Exception {
-    LOGGER.info("Loading ConceptMap from file: {}", fullFileName);
+    final String conceptMap) throws Exception {
 
-    // Ensure index directory exists
-    final String indexDirPath =
-        PropertyUtility.getProperties().getProperty("lucene.index.directory");
-    // Fix the path if it's a Windows absolute path to ensure it's treated
-    // correctly
-    final File indexDir = new File(indexDirPath.replace('/', File.separatorChar));
-    if (!indexDir.exists()) {
-      // Create the directory if it doesn't exist
-      indexDir.mkdirs();
-      LOGGER.info("Create directory for indexes: {}", indexDir.getAbsolutePath());
-    }
-
-    return indexConceptMap(service, fullFileName, 1000, -1);
+    return indexConceptMap(service, conceptMap, 1000, -1);
 
   }
 
@@ -79,26 +63,31 @@ public final class ConceptMapLoaderUtil {
    * Index concept map.
    *
    * @param service the service
-   * @param fullFileName the full file name
+   * @param conceptMap the concept map
    * @param batchSize the batch size
    * @param limit the limit
    * @return the mapset
    * @throws Exception the exception
    */
   private static Mapset indexConceptMap(final EntityRepositoryService service,
-    final String fullFileName, final int batchSize, final int limit) throws Exception {
+    final String conceptMap, final int batchSize, final int limit) throws Exception {
 
     LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
     final long startTime = System.currentTimeMillis();
 
-    try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
-
-      service.createIndex(Mapset.class);
-      service.createIndex(Mapping.class);
+    try {
 
       // Read the entire file as a JSON object
-      final JsonNode root = OBJECT_MAPPER.readTree(br);
-      final Mapset mapset = getMapSet(service, root);
+      final JsonNode root = OBJECT_MAPPER.readTree(conceptMap);
+
+      Mapset mapset = getMapSet(service, root);
+      if (mapset != null) {
+        throw new Exception("Can not create multiple ConceptMap resources with ConceptMap from "
+            + mapset.getFromTerminology() + " to " + mapset.getToTerminology()
+            + ", already have one with resource ID: ConceptMap/" + mapset.getId());
+      }
+
+      mapset = createMapset(service, root);
 
       final int mapsetCount = 0;
       final int mappingCount = 0;
@@ -130,7 +119,6 @@ public final class ConceptMapLoaderUtil {
 
             // Set target concept
             final ConceptRef toConcept = new ConceptRef();
-            LOGGER.info("  target: {}", targetNode);
             if (targetNode.has("code")) {
               toConcept.setCode(targetNode.get("code").asText());
             }
@@ -177,6 +165,10 @@ public final class ConceptMapLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       return mapset;
+
+    } catch (final Exception e) {
+      LOGGER.error("Error loading concept map: {}", conceptMap, e);
+      throw e;
     }
   }
 
@@ -193,17 +185,15 @@ public final class ConceptMapLoaderUtil {
 
     final String abbreviation = root.path("title").asText();
     final String publisher = root.path("publisher").asText();
-    // Extract simple version number to avoid Lucene parsing issues
-    final String fullVersion = root.path("version").asText();
-    final String simpleVersion = fullVersion.replaceFirst("^.*?version/", "");
+    final String version = root.path("version").asText();
 
     final SearchParameters searchParams = new SearchParameters();
     searchParams.setQuery("abbreviation: " + StringUtility.escapeQuery(abbreviation)
         + " publisher: '" + StringUtility.escapeQuery(publisher) + "' and version: '"
-        + StringUtility.escapeQuery(simpleVersion) + "'");
+        + StringUtility.escapeQuery(version) + "'");
     final ResultList<Mapset> mapset = service.find(searchParams, Mapset.class);
 
-    return (mapset.getItems().isEmpty()) ? createMapset(service, root) : mapset.getItems().get(0);
+    return (mapset.getItems().isEmpty()) ? null : mapset.getItems().get(0);
   }
 
   /**
