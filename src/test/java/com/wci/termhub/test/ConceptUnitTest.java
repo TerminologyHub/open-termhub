@@ -347,40 +347,23 @@ public class ConceptUnitTest extends BaseUnitTest {
   // assertEquals(concept.toString(), foundConceptObject.toString());
   // }
   // }
-  //
-  // /**
-  // * Find concept by missing term name.
-  // *
-  // * @throws Exception the exception
-  // */
-  // @Test
-  // @Order(7)
-  // public void findConceptByMissingTermName() throws Exception {
-  //
-  // final SearchParameters searchParameters = new
-  // SearchParameters("term.name:\"dummy term name\"", 100, 0);
-  // logger.info("Search for : {}", searchParameters.getQuery());
-  //
-  // final ResultList<Concept> foundConceptObjects =
-  // searchService.find(searchParameters, Concept.class);
-  // assertEquals(0, foundConceptObjects.getItems().size());
-  // }
 
-  // /**
-  // * Delete index.
-  // *
-  // * @throws Exception the exception
-  // */
-  // @Test
-  // @Order(6)
-  // public void deleteIndex() throws Exception {
-  //
-  // logger.info("Deleting index for Concept from {}",
-  // Paths.get(INDEX_DIRECTORY, INDEX_NAME).toString());
-  // searchService.deleteIndex(Concept.class);
-  //
-  // // assert directory does not exist
-  // assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-  // }
+  /**
+   * Find concept by missing term name.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(7)
+  public void findConceptByMissingTermName() throws Exception {
+
+    final SearchParameters searchParameters =
+        new SearchParameters("term.name:\"dummy term name\"", 100, 0);
+    logger.info("Search for : {}", searchParameters.getQuery());
+
+    final ResultList<Concept> foundConceptObjects =
+        searchService.find(searchParameters, Concept.class);
+    assertEquals(0, foundConceptObjects.getItems().size());
+  }
 
 }

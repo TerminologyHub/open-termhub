@@ -11,6 +11,7 @@ package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -104,16 +105,18 @@ public class ConceptRelationshipCodeSystemUnitTest {
     final String conceptCode = "73211009";
 
     final SearchParameters params = new SearchParameters();
-    params.setQuery("terminology:SNOMEDCT_US AND fromCode:" + conceptCode);
+    params.setQuery("terminology:SNOMEDCT_US AND from.code:" + conceptCode);
 
     final ResultList<ConceptRelationship> results =
         searchService.find(params, ConceptRelationship.class);
 
-    LOGGER.info("Found {} relationships for concept {}", results.getItems().size(), conceptCode);
+    assertTrue(!results.getItems().isEmpty(),
+        "Expected at least one relationship for concept " + conceptCode);
 
     for (final ConceptRelationship rel : results.getItems()) {
       assertEquals(conceptCode, rel.getFrom().getCode());
-      LOGGER.info("Relationship: type={}, to={}", rel.getType(), rel.getTo().getCode());
+      LOGGER.info("Relationship: type={}, from={}, to={}, additionslType={}", rel.getType(),
+          rel.getFrom().getCode(), rel.getTo().getCode(), rel.getAdditionalType());
     }
   }
 
@@ -125,40 +128,47 @@ public class ConceptRelationshipCodeSystemUnitTest {
   @Test
   public void testFindParentChildRelationships() throws Exception {
     // Use a known SNOMED CT concept code
-    final String conceptCode = "73211009"; // Diabetes mellitus
+    final String fromConceptCode = "73211009"; // Diabetes mellitus
 
     // Find parent concepts (concepts that this concept is a child of)
     final SearchParameters parentsParams = new SearchParameters();
     parentsParams.setQuery(
-        "terminology:SNOMEDCT_US AND fromCode:" + conceptCode + " AND additionalType:ISA");
+        "terminology:SNOMEDCT_US AND from.code:" + fromConceptCode + " AND additionalType:ISA");
 
     final ResultList<ConceptRelationship> parentRels =
         searchService.find(parentsParams, ConceptRelationship.class);
 
+    assertTrue(!parentRels.getItems().isEmpty(),
+        "Expected at least one relationship for concept " + fromConceptCode);
+
     LOGGER.info("Found {} parent relationships for concept {}", parentRels.getItems().size(),
-        conceptCode);
+        fromConceptCode);
 
     for (final ConceptRelationship rel : parentRels.getItems()) {
-      assertEquals(conceptCode, rel.getFrom().getCode());
-      assertEquals("ISA", rel.getType());
-      LOGGER.info("Parent concept: {}", rel.getTo().getCode());
+      assertEquals(fromConceptCode, rel.getFrom().getCode());
+      assertEquals("parent", rel.getType());
+      LOGGER.info("Parent concept: {}", rel);
     }
 
+    final String toConceptCode = "126877002";
     // Find child concepts (concepts that are children of this concept)
     final SearchParameters childrenParams = new SearchParameters();
-    childrenParams
-        .setQuery("terminology:SNOMEDCT_US AND toCode:" + conceptCode + " AND additionalType:ISA");
+    childrenParams.setQuery(
+        "terminology:SNOMEDCT_US AND to.code:" + toConceptCode + " AND additionalType:ISA");
     childrenParams.setLimit(10);
 
     final ResultList<ConceptRelationship> childRels =
         searchService.find(childrenParams, ConceptRelationship.class);
 
+    assertTrue(!childRels.getItems().isEmpty(),
+        "Expected at least one relationship for concept " + toConceptCode);
+
     LOGGER.info("Found {} child relationships for concept {} (limited to 10)",
-        childRels.getItems().size(), conceptCode);
+        childRels.getItems().size(), toConceptCode);
 
     for (final ConceptRelationship rel : childRels.getItems()) {
-      assertEquals(conceptCode, rel.getTo().getCode());
-      assertEquals("ISA", rel.getType());
+      assertEquals(toConceptCode, rel.getTo().getCode());
+      assertEquals("parent", rel.getType());
       LOGGER.info("Child concept: {}", rel.getFrom().getCode());
     }
   }
