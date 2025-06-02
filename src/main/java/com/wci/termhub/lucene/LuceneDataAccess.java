@@ -268,7 +268,7 @@ public class LuceneDataAccess {
     try (final StandardAnalyzer analyzer = new StandardAnalyzer()) {
       final IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
-      LOGGER.info("Removing id: {} for index:{}", id, indexDirectory);
+      LOGGER.debug("Removing id: {} for index:{}", id, indexDirectory);
 
       final File indexDir = new File(indexRootDirectory, indexDirectory);
       if (!indexDir.exists()) {
