@@ -11,6 +11,7 @@ package com.wci.termhub.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.search.Query;
@@ -105,6 +106,27 @@ public class EntityServiceImpl implements EntityRepositoryService {
     LOGGER.debug("    UPDATE {} entity to index {}", entity, clazz.getSimpleName());
     luceneData.remove(clazz, id);
     luceneData.add(entity);
+  }
+
+  /* see superclass */
+  @Override
+  public void updateBulk(final Class<? extends HasId> clazz, final Map<String, HasId> entities)
+    throws Exception {
+
+    checkIfEntityHasDocumentAnnotation(clazz);
+    final LuceneDataAccess luceneData = new LuceneDataAccess();
+
+    for (final String id : entities.keySet()) {
+      final HasId entity = entities.get(id);
+      if (entity == null) {
+        LOGGER.warn("    UPDATE {} entity to index {} - entity is null", id, clazz.getSimpleName());
+        continue;
+      }
+      LOGGER.debug("    UPDATE {} entity to index {}", entity, clazz.getSimpleName());
+      luceneData.remove(clazz, id);
+      luceneData.add(entity);
+    }
+
   }
 
   /* see superclass */

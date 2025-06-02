@@ -10,6 +10,7 @@
 package com.wci.termhub.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.search.Query;
@@ -67,6 +68,16 @@ public interface EntityRepositoryService {
    * @throws Exception the exception
    */
   public void update(final Class<? extends HasId> clazz, final String id, final HasId entity)
+    throws Exception;
+
+  /**
+   * Update the entity.
+   *
+   * @param clazz the clazz
+   * @param entities the entities
+   * @throws Exception the exception
+   */
+  public void updateBulk(final Class<? extends HasId> clazz, final Map<String, HasId> entities)
     throws Exception;
 
   /**
