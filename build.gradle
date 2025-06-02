@@ -265,7 +265,7 @@ spotbugsTest {
 
 // Checkstyle
 checkstyle {
-  toolVersion '10.12.0'
+  toolVersion '10.25.0'
   ignoreFailures = true
   // Path to your Checkstyle configuration file
   configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
