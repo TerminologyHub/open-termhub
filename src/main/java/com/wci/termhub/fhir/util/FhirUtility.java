@@ -141,10 +141,13 @@ public final class FhirUtility {
     if (t != null) {
       return t.get(0);
     }
-    final ResultList<Terminology> tlist = searchService
-        .find(new SearchParameters("abbreviation:" + StringUtility.escapeQuery(terminology)
-            + " AND publisher:" + StringUtility.escapeQuery(publisher) + " AND version:"
-            + StringUtility.escapeQuery(version), 2, 0), Terminology.class);
+    final ResultList<Terminology> tlist =
+        searchService
+            .find(
+                new SearchParameters("abbreviation:" + StringUtility.escapeQuery(terminology)
+                    + " AND publisher: \"" + StringUtility.escapeQuery(publisher)
+                    + "\" AND version:" + StringUtility.escapeQuery(version), 2, 0),
+                Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
