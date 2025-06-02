@@ -11,6 +11,7 @@ package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -103,7 +104,7 @@ public class TermUnitTest extends BaseUnitTest {
     TERM2.setAttributes(attributes2);
 
     TERM3.setId("722b9816-3226-40aa-9935-3bcd0ebd47aa");
-    TERM3.setName("dummyname");
+    TERM3.setName("dummyname with space");
     TERM3.setTerminology("dummyterminology");
     TERM3.setVersion("dummyversion");
     TERM3.setPublisher("dummypublisher");
@@ -133,32 +134,13 @@ public class TermUnitTest extends BaseUnitTest {
     assertTrue(clazz1.isAnnotationPresent(Document.class));
   }
 
-  // /**
-  // * Delete index.
-  // *
-  // * @throws Exception the exception
-  // */
-  // @Test
-  // @Order(3)
-  // public void deleteIndex() throws Exception {
-  //
-  // logger.info("Deleting index for Term");
-  // searchService.deleteIndex(Term.class);
-  //
-  // logger.info("Deleted index for Term: {}", INDEX_DIRECTORY + "/" +
-  // INDEX_NAME);
-  //
-  // // assert directory does not exist
-  // assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-  // }
-
   /**
    * Creates the index.
    *
    * @throws Exception the exception
    */
   @Test
-  @Order(4)
+  @Order(3)
   public void createIndex() throws Exception {
 
     logger.info("Creating index for Term");
@@ -175,7 +157,7 @@ public class TermUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(5)
+  @Order(4)
   public void testAddTerm() throws Exception {
 
     logger.info("Creating objects");
@@ -190,7 +172,7 @@ public class TermUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(6)
+  @Order(5)
   public void testFind() throws Exception {
 
     ResultList<Term> foundTermsObjects = null;
@@ -204,7 +186,7 @@ public class TermUnitTest extends BaseUnitTest {
 
     for (final Object foundTermObject : foundTermsObjects.getItems()) {
       final Term foundTerm = (Term) foundTermObject;
-      logger.info("Term found: {}", foundTerm.toString());
+      logger.info("Term found: {}", foundTerm);
       assertEquals(TERM1.toString(), foundTerm.toString());
     }
 
@@ -216,7 +198,7 @@ public class TermUnitTest extends BaseUnitTest {
 
     for (final Object foundTermObject : foundTermsObjects.getItems()) {
       final Term foundTerm = (Term) foundTermObject;
-      logger.info("Term found: {}", foundTerm.toString());
+      logger.info("Term found: {}", foundTerm);
       assertEquals(TERM2.toString(), foundTerm.toString());
     }
 
@@ -229,7 +211,7 @@ public class TermUnitTest extends BaseUnitTest {
       final Term foundTerm = (Term) foundTermObject;
       foundTerm.getAttributes().entrySet().stream().sorted(Map.Entry.comparingByKey());
       assertEquals(TERM1.toString(), foundTerm.toString());
-      logger.info("Term found: {}", foundTerm.toString());
+      logger.info("Term found: {}", foundTerm);
     }
 
     searchParameters.setQuery("code:" + TERM1.getCode() + " OR code:" + TERM2.getCode());
@@ -262,7 +244,7 @@ public class TermUnitTest extends BaseUnitTest {
     // search by id
     searchParameters.setQuery(null);
     final Term foundTermOjbect = searchService.get(TERM3.getId(), Term.class);
-    assertTrue(foundTermOjbect != null);
+    assertNotNull(foundTermOjbect);
     assertEquals(TERM3.toString(), foundTermOjbect.toString());
   }
 
@@ -272,7 +254,7 @@ public class TermUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(7)
+  @Order(6)
   public void testRemove() throws Exception {
 
     logger.info("Deleting objects");
