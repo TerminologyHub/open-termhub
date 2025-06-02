@@ -11,6 +11,8 @@ package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,7 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.StringUtility;
 
 /**
  * The Class TerminologySearchUnitTest.
@@ -161,6 +164,36 @@ public class TerminologySearchUnitTest {
     final ResultList<Terminology> terminologies =
         searchService.find(SEARCH_PARAMETERS, Terminology.class);
     assertEquals(0, terminologies.getItems().size());
+  }
+
+  /**
+   * Test publisher search.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testPublisherSearch() throws Exception {
+
+    final String publisher = "SNOMEDCT International";
+    // create a terminology with publisher = "SNOMEDCT International"
+    final Terminology terminology = new Terminology();
+    terminology.setId(UUID.randomUUID().toString());
+    terminology.setAbbreviation("FAKE");
+    terminology.setName("Fake Terminology for Testing");
+    terminology.setVersion("http://fake.info/");
+    terminology.setPublisher(publisher);
+    terminology.setFamily("Fake Family");
+    searchService.add(Terminology.class, terminology);
+
+    final String query = "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"";
+
+    LOGGER.info("testPublisherSearch Query: {}", query);
+
+    SEARCH_PARAMETERS.setQuery(query);
+    final ResultList<Terminology> terminologies =
+        searchService.find(SEARCH_PARAMETERS, Terminology.class);
+    assertEquals(1, terminologies.getItems().size());
+    assertEquals(publisher, terminologies.getItems().get(0).getPublisher());
   }
 
 }
