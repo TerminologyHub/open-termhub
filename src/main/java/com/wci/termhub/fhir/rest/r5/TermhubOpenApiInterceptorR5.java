@@ -120,8 +120,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Termhub Api interceptor to fix header, inject header auth token. Borrowed from OpenApiInterceptor
- * and modified.
+ * Termhub Api interceptor to fix header, inject header auth token. Borrowed
+ * from OpenApiInterceptor and modified.
  */
 public class TermhubOpenApiInterceptorR5 {
 
@@ -413,8 +413,9 @@ public class TermhubOpenApiInterceptorR5 {
   }
 
   /**
-   * If supplied, this field can be used to provide additional CSS text that should be loaded by the
-   * swagger-ui page. The contents should be raw CSS text, e.g. <code>
+   * If supplied, this field can be used to provide additional CSS text that
+   * should be loaded by the swagger-ui page. The contents should be raw CSS
+   * text, e.g. <code>
    * BODY { font-size: 1.1em; }
    * </code>
    *
@@ -425,8 +426,9 @@ public class TermhubOpenApiInterceptorR5 {
   }
 
   /**
-   * If supplied, this field can be used to provide additional CSS text that should be loaded by the
-   * swagger-ui page. The contents should be raw CSS text, e.g. <code>
+   * If supplied, this field can be used to provide additional CSS text that
+   * should be loaded by the swagger-ui page. The contents should be raw CSS
+   * text, e.g. <code>
    * BODY { font-size: 1.1em; }
    * </code>
    *
@@ -1380,7 +1382,7 @@ public class TermhubOpenApiInterceptorR5 {
   /**
    * SwaggerUiTemplateResolver.
    */
-  private class SwaggerUiTemplateResolver implements ITemplateResolver {
+  private final class SwaggerUiTemplateResolver implements ITemplateResolver {
 
     /**
      * Gets the name.
@@ -1427,7 +1429,7 @@ public class TermhubOpenApiInterceptorR5 {
   /**
    * The Class TemplateLinkBuilder.
    */
-  private static class TemplateLinkBuilder extends AbstractLinkBuilder {
+  private static final class TemplateLinkBuilder extends AbstractLinkBuilder {
 
     /**
      * Builds the link.
