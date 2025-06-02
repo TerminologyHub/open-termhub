@@ -24,6 +24,13 @@ build: ## Build the library without tests
 
 scan: ## scan for vulnerabilities in dependencies
 	/bin/rm -rf gradle/dependency-locks
+	./gradlew dependencies --write-locks --configuration runtimeClasspath
+	trivy fs gradle.lockfile --format template -o report.html --template "@config/trivy/html.tpl"
+	grep CRITICAL report.html
+	/bin/rm -rf gradle.lockfile
+	
+fullscan: ## scan for vulnerabilities in dependencies
+	/bin/rm -rf gradle/dependency-locks
 	./gradlew dependencies --write-locks
 	trivy fs gradle.lockfile --format template -o report.html --template "@config/trivy/html.tpl"
 	grep CRITICAL report.html
