@@ -319,7 +319,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final SearchParameters params = new SearchParameters();
       params.setQuery(StringUtility.composeQuery("AND",
           "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
-          "publisher:" + StringUtility.escapeQuery(terminology.getPublisher()),
+          "publisher: \"" + StringUtility.escapeQuery(terminology.getPublisher()) + "\"",
           "version:" + StringUtility.escapeQuery(terminology.getVersion())));
       params.setLimit(100000);
 
@@ -668,7 +668,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final String query =
           StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
               "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-              "publisher:" + StringUtility.escapeQuery(term.getPublisher()),
+              "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
               "version:" + StringUtility.escapeQuery(term.getVersion()));
 
       // then do a find on the query
@@ -755,7 +755,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
                   .collect(Collectors.toList()))
               + ")",
           "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-          "publisher:" + StringUtility.escapeQuery(term.getPublisher()),
+          "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
           "version:" + StringUtility.escapeQuery(term.getVersion()));
 
       // then do a find on the query
@@ -1092,6 +1092,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     if (leaf != null && leaf) {
       params.setLeaf(true);
     }
+
+    logger.info(
+        "findHelper: query = " + query + ", expression = " + expression + ", params = " + params);
 
     final ResultList<Concept> list = searchService.findFields(params,
         new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class,
@@ -2085,7 +2088,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "from.terminology:" + concept.getTerminology(),
-              "from.publisher:" + concept.getPublisher()),
+              "from.publisher: \"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true, null).getItems();
 
       // Return the object
@@ -2148,7 +2151,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
               "to.terminology:" + concept.getTerminology(),
-              "to.publisher:" + concept.getPublisher()),
+              "to.publisher: \"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true, null).getItems();
 
       // Return the object
@@ -2199,7 +2202,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final String query =
           StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
               "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-              "publisher:" + StringUtility.escapeQuery(term.getPublisher()),
+              "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
               "version:" + StringUtility.escapeQuery(term.getVersion()));
 
       // then do a find on the query
@@ -2223,7 +2226,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "from.terminology:" + concept.getTerminology(),
-              "from.publisher:" + concept.getPublisher()),
+              "from.publisher: \"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true, null).getItems();
 
       // Return the object
@@ -2274,7 +2277,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final String query =
           StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
               "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-              "publisher:" + StringUtility.escapeQuery(term.getPublisher()),
+              "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
               "version:" + StringUtility.escapeQuery(term.getVersion()));
 
       // then do a find on the query
@@ -2297,7 +2300,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
               "to.terminology:" + concept.getTerminology(),
-              "to.publisher:" + concept.getPublisher()),
+              "to.publisher: \"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true, null).getItems();
 
       // Return the object
@@ -2600,20 +2603,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Boolean active, final Boolean leaf) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
-    final String mapsetClause =
-        "(" + String
-            .join(" OR ",
-                mapsets.stream()
-                    .map(
-                        m -> "("
-                            + StringUtility.composeQuery("AND",
-                                "mapset.abbreviation:"
-                                    + StringUtility.escapeQuery(m.getAbbreviation()),
-                                "mapset.publisher:" + StringUtility.escapeQuery(m.getPublisher()),
-                                "mapset.version:" + StringUtility.escapeQuery(m.getVersion()))
-                            + ")")
-                    .collect(Collectors.toList()))
-            + ")";
+    final String mapsetClause = "(" + String.join(" OR ",
+        mapsets.stream()
+            .map(m -> "(" + StringUtility.composeQuery("AND",
+                "mapset.abbreviation:" + StringUtility.escapeQuery(m.getAbbreviation()),
+                "mapset.publisher: \"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
+                "mapset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
+            .collect(Collectors.toList()))
+        + ")";
     final SearchParameters params = new SearchParameters(
         StringUtility.composeQuery("AND", query, mapsetClause), offset, limit, sort, ascending);
     if (active != null && active) {

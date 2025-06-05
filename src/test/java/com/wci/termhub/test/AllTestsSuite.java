@@ -28,14 +28,26 @@ import com.wci.termhub.rest.test.TerminologyServiceRestImplUnitTest;
 
     CleanupUnitTest.class,
 
+    // Load the code system data
     CodeSystemLoadUnitTest.class,
 
     // Run tests that verify the data
-    TerminologyCodeSystemUnitTest.class, ConceptCodeSystemUnitTest.class,
+    TerminologyCodeSystemUnitTest.class,
+
+    TerminologySearchUnitTest.class,
+
+    MetadataSearchUnitTest.class,
+
+    ConceptCodeSystemUnitTest.class,
+
+    ConceptSearchUnitTest.class,
+
+    TermSearchUnitTest.class,
+
     ConceptRelationshipCodeSystemUnitTest.class,
 
-    MetadataSearchUnitTest.class, TerminologySearchUnitTest.class, ConceptSearchUnitTest.class,
-    ConceptTreePositionSearchUnitTest.class, TermSearchUnitTest.class,
+    ConceptTreePositionSearchUnitTest.class,
+
     MultithreadedReadUnitTest.class,
 
     // Then run ECL tests that depend on concept data

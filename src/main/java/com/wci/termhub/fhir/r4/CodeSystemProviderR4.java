@@ -753,8 +753,11 @@ public class CodeSystemProviderR4 implements IResourceProvider {
       logger.info("Create code system with {} concepts",
           codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
 
-      // Convert CodeSystem to JSON
+      // Convert CodeSystem to JSON string
       final String content = FhirContext.forR4().newJsonParser().encodeResourceToString(codeSystem);
+      final int conceptCount = codeSystem.getConcept().size();
+      codeSystem.getConcept().clear();
+      codeSystem.setConcept(null);
 
       // Use existing loader utility
       final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content);
@@ -762,7 +765,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
       // Return success
       final MethodOutcome outcome = new MethodOutcome();
       // Clear the "concepts" of the code system before sending it back
-      codeSystem.setCount(codeSystem.getConcept().size());
+      codeSystem.setCount(conceptCount);
       codeSystem.getConcept().clear();
       outcome.setResource(codeSystem);
       outcome.setCreated(true);

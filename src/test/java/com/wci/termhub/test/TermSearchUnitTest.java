@@ -155,14 +155,15 @@ public class TermSearchUnitTest extends BaseUnitTest {
   public void testFindConceptByTermName() throws Exception {
 
     final String term = "Procedure on gastrointestinal tract";
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
-        "http://snomed.info/sct/731000124108/version/20240301", null, term);
+    final String terminology = "SNOMEDCT_US";
+    final String version = "http://snomed.info/sct/731000124108/version/20240301";
+    final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, term);
     final SearchParameters sp = new SearchParameters(termQuery.getQuery(), 100, 0);
 
     final ResultList<Term> results = searchService.find(sp, Term.class);
 
     for (final Term t : results.getItems()) {
-      LOGGER.info(t.toString());
+      LOGGER.info("testFindConceptByTermName found {}", t.toString());
     }
 
     // check that each concept has at least a term has the word 'Procedure on

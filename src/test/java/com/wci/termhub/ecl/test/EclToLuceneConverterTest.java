@@ -10,6 +10,7 @@
 package com.wci.termhub.ecl.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.apache.lucene.search.Query;
 import org.junit.jupiter.api.Test;
@@ -135,12 +136,13 @@ public class EclToLuceneConverterTest extends AbstractTest {
     final EclToLuceneConverter converter = new EclToLuceneConverter();
 
     // Test that ALL_CONCEPTS query throws an exception
-    // assertThrows(RuntimeException.class, () -> {
-    // converter.parse("*");
-    // }, "Query * would match too many concepts. Please refine");
+    assertThrows(RuntimeException.class, () -> {
+      converter.parse("*");
+    }, "Query * would match too many concepts. Please refine");
 
     // Test syntax error - using an invalid character that should cause a syntax
     // error
+    // fail, does not throw an exception
     // assertThrows(RuntimeException.class, () -> {
     // converter.parse("11111111 @ 22222222");
     // }, "Syntax error");

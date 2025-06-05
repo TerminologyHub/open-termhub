@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -243,7 +242,7 @@ public class TerminologyUnitTest extends AbstractTest {
     t5.setVersion("20230101");
 
     final List<Terminology> list =
-        ModelUtility.asList(t2, t5, t4, t1, t3).stream().sorted().collect(Collectors.toList());
+        ModelUtility.asList(t2, t5, t4, t1, t3).stream().sorted().toList();
     assertEquals(list.toString(), ModelUtility.asList(t1, t2, t3, t4, t5).toString());
   }
 
@@ -271,7 +270,7 @@ public class TerminologyUnitTest extends AbstractTest {
     t5.setVersion("20230101");
 
     final List<Terminology> list =
-        ModelUtility.asList(t2, t5, t3, t1, t4).stream().sorted().collect(Collectors.toList());
+        ModelUtility.asList(t2, t5, t3, t1, t4).stream().sorted().toList();
     assertEquals(list.toString(), ModelUtility.asList(t1, t2, t3, t4, t5).toString());
   }
 

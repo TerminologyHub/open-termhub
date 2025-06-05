@@ -95,10 +95,13 @@ public class ConceptCodeSystemUnitTest {
   public void testFindConceptsByName() throws Exception {
     // Search for concepts with "diabetes" in their name
     final SearchParameters params = new SearchParameters();
-    params.setQuery("name: diabetes AND terminology: SNOMEDCT_US");
+    params.setQuery("name: diabetes AND terminology: SNOMEDCT");
     params.setLimit(10);
 
     final ResultList<Concept> results = searchService.find(params, Concept.class);
+
+    results.getItems().stream().forEach(r -> LOGGER.info("found concept: {}", r));
+
 
     assertFalse(results.getItems().isEmpty(), "Should find diabetes concepts");
     LOGGER.info("Found {} diabetes concepts (limited to 10)", results.getItems().size());

@@ -189,7 +189,7 @@ public final class ConceptMapLoaderUtil {
 
     final SearchParameters searchParams = new SearchParameters();
     searchParams.setQuery("abbreviation: " + StringUtility.escapeQuery(abbreviation)
-        + " publisher: '" + StringUtility.escapeQuery(publisher) + "' and version: '"
+        + " publisher: '" + StringUtility.escapeQuery(publisher) + "' AND version: '"
         + StringUtility.escapeQuery(version) + "'");
     final ResultList<Mapset> mapset = service.find(searchParams, Mapset.class);
 
