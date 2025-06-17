@@ -33,7 +33,6 @@ import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
-import com.wci.termhub.model.PublisherInfo;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
@@ -54,9 +53,6 @@ public final class FhirUtility {
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(FhirUtility.class);
-
-  /** The publisher info map. */
-  private static Map<String, PublisherInfo> publisherInfoMap = new HashMap<>();
 
   /** The terminologies cache. */
   private static TimerCache<List<Terminology>> terminologyCache = new TimerCache<>(1000, 10000);

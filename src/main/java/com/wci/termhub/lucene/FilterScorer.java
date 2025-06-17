@@ -25,7 +25,7 @@ public abstract class FilterScorer extends Scorer {
   private final Scorer in;
 
   /** The iterator. */
-  private final DocIdSetIterator interator;
+  private final DocIdSetIterator iterator;
 
   /**
    * Create a new FilterScorer.
@@ -36,7 +36,7 @@ public abstract class FilterScorer extends Scorer {
   public FilterScorer(final Scorer in, final DocIdSetIterator iterator) {
     super(in.getWeight());
     this.in = in;
-    this.interator = iterator;
+    this.iterator = iterator;
   }
 
   /**
@@ -52,7 +52,7 @@ public abstract class FilterScorer extends Scorer {
       throw new NullPointerException("wrapped Scorer must not be null");
     }
     this.in = in;
-    this.interator = iterator;
+    this.iterator = iterator;
   }
 
   /**
@@ -86,7 +86,7 @@ public abstract class FilterScorer extends Scorer {
    */
   @Override
   public final DocIdSetIterator iterator() {
-    return interator;
+    return iterator;
   }
 
   /**

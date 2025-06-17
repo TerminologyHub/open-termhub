@@ -840,7 +840,7 @@ public final class FhirUtilityR4 {
     cm.setId(mapset.getId());
     cm.setName(mapset.getName());
     cm.setTitle(mapset.getAbbreviation());
-    cm.setPublisher(mapset.getPublisher()).getName();
+    cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
     cm.setCopyright(mapset.getAttributes().get("copyright"));
     cm.setIdentifier(new Identifier().setValue(mapset.getCode()));
