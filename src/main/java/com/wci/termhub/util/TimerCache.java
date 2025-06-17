@@ -55,7 +55,7 @@ public class TimerCache<T> {
       /* see superclass */
       @Override
       protected boolean removeEldestEntry(final Map.Entry<String, T> eldest) {
-        boolean flag = size() > TimerCache.this.size;
+        final boolean flag = size() > TimerCache.this.size;
         if (flag) {
           timeMap.remove(eldest.getKey());
         }

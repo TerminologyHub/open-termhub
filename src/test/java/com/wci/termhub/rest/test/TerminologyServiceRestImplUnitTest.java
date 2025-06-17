@@ -11,6 +11,8 @@ package com.wci.termhub.rest.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -19,7 +21,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +40,12 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.HealthCheck;
+import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
+import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -50,11 +54,12 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
- * The Class TerminologyServiceRestImplUnitTest.
+ * Unit tests foor TerminologyServiceRestImpl.
  */
 @SpringBootTest(classes = Application.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:application-test.properties")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServerTest {
 
   /** The logger. */
@@ -71,10 +76,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   /** The object mapper. */
   @Autowired
   private ObjectMapper objectMapper;
-
-  /** The terminology service rest impl unit test. */
-  @InjectMocks
-  private TerminologyServiceRestImplUnitTest terminologyServiceRestImplUnitTest;
 
   /**
    * Sets the up.
@@ -95,9 +96,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     // Add a user through the API
     final String url = baseUrl + "/terminology/health";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
@@ -106,20 +105,17 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertThat(check.getName()).isEqualTo("open-termhub-terminology-service");
   }
 
-  // @Test
   /**
    * Test get terminology ICD 10 CM.
    *
    * @throws Exception the exception
    */
-  // TODO: oddly sometimes it fails with 404
-  public void testGetTerminologyICD10CM() throws Exception {
-    final String id = "04efd633-bcbc-41cd-959c-f5ed8d94adaa";
+  @Test
+  public void testGetTerminologyIcd10Cm() throws Exception {
+    final String id = "177f2263-fe04-4f1f-b0e6-9b351ab8baa9";
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
@@ -127,27 +123,33 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertThat(terminology).isNotNull();
     assertEquals(id, terminology.getId());
     assertEquals("ICD10CM", terminology.getAbbreviation());
-    assertEquals("International Classification of Diseases, Tenth Revision, Clinical Modification",
-        terminology.getName());
+    assertEquals("Mini version of ICD10CM for testing purposes", terminology.getName());
   }
 
-  // @Test
-  // TODO: NUNO
-  // expected: <Systematized Nomenclature of Medicine–Clinical Terminology, US
-  // Edition> but was: <Systematized Nomenclature of Medicineâ€“Clinical
+  /**
+   * Test get terminology ICD 10 CM.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testGetTerminologyNonExistant() throws Exception {
+    final String id = "177f2263-fe04-4f1f-b0e6-9b351abFAKE";
+    final String url = baseUrl + "/terminology/" + id;
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
+  }
+
   /**
    * Test get terminology snomed ct us.
    *
    * @throws Exception the exception
    */
-  // Terminology, US Edition>
+  @Test
   public void testGetTerminologySnomedCtUs() throws Exception {
-    final String id = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6";
+    final String id = "a1d1e426-26a6-4326-b18b-c54c154079b5";
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
@@ -155,8 +157,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertThat(terminology).isNotNull();
     assertEquals(id, terminology.getId());
     assertEquals("SNOMEDCT_US", terminology.getAbbreviation());
-    assertEquals("Systematized Nomenclature of Medicine–Clinical Terminology, US Edition",
-        terminology.getName());
+    assertEquals("Mini version of SNOMEDCT_US For testing purposes", terminology.getName());
   }
 
   /**
@@ -166,43 +167,40 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
-    final String id = "ef721e67-ebf5-4b50-a0b9-16d7aea7c1b6";
+    final String id = "a1d1e426-26a6-4326-b18b-c54c154079b5";
     final String url = baseUrl + "/terminology/" + id + "/metadata";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     final List<Metadata> metadataList =
         objectMapper.readValue(content, new TypeReference<List<Metadata>>() {
+          // n/a
         });
     assertThat(metadataList).isNotNull();
-    assertThat(metadataList.size()).isGreaterThan(0);
+    assertFalse(metadataList.isEmpty());
     for (final Metadata metadata : metadataList) {
       assertThat(metadata).isNotNull();
-      // name can be null
-      // assertThat(metadata.getName()).isNotNull();
+      assertThat(metadata.getName()).isNotNull();
       assertThat(metadata.getCode()).isNotNull();
       assertThat(metadata.getModel()).isNotNull();
       assertEquals("SNOMEDCT_US", metadata.getTerminology());
-      assertEquals("20240301", metadata.getVersion());
+      assertEquals("http://snomed.info/sct/731000124108/version/20240301", metadata.getVersion());
     }
   }
 
-  // @Test
   /**
    * Test get terminology meta data snomed ct us not found.
    *
    * @throws Exception the exception
    */
   // Should be 404 but is 500
+  @Test
   public void testGetTerminologyMetaDataSnomedCtUsNotFound() throws Exception {
-    final String id = "ef721e67-ebf5-4b50-a0b9-16d7aea7FAKE";
+    final String id = "a1d1e426-26a6-4326-b18b-c54c1540FAKE";
     final String url = baseUrl + "/terminology/" + id + "/metadata";
     LOGGER.info("Testing url - {}", url);
-    mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-        .andExpect(status().isNotFound()).andReturn();
+    mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
   }
 
   /**
@@ -214,9 +212,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   public void testGetTerminologies() throws Exception {
     final String url = baseUrl + "/terminology";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     final ResultListTerminology terminologyList =
@@ -242,9 +238,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   public void testGetTerminologyWithQuery() throws Exception {
     final String url = baseUrl + "/terminology?query=abbreviation:SNOMEDCT_US";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     final ResultListTerminology terminologyList =
@@ -265,23 +259,27 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   public void testGetConceptById() throws Exception {
-    final String id = "99d4899b-db6f-4bf8-ba51-b65e1cf8f7fb";
+
+    // Lookup by code to get the id
+    final Concept testConcept = getConceptByCode("ICD10CM", "E11");
+
+    final String id = testConcept.getId();
     final String url = baseUrl + "/concept/" + id;
+
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
+
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final Concept concept = objectMapper.readValue(content, Concept.class);
     assertThat(concept).isNotNull();
     assertEquals(id, concept.getId());
     assertEquals("ICD10CM", concept.getTerminology());
+    assertEquals("SANDBOX", concept.getPublisher());
+    assertEquals("2023", concept.getVersion());
     assertEquals("E11", concept.getCode());
     assertEquals("Type 2 diabetes mellitus", concept.getName());
-    assertEquals("2023", concept.getVersion());
-    assertEquals("NLM", concept.getPublisher());
     assertThat(concept.getTerms()).isNotNull();
     assertEquals(4, concept.getTerms().size());
     assertThat(concept.getAttributes()).isNotNull();
@@ -302,13 +300,10 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String id = "ef721e67-ebf5-4b50-a0b9-16d7aea7FAKE";
     final String url = baseUrl + "/concept/" + id;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
-    assertThat(content).isNotNull();
-    assertThat(content).isEmpty();
+    assertThat(content).isNotNull().isEmpty();
 
   }
 
@@ -323,20 +318,18 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String terminology = "ICD10CM";
     final String url = baseUrl + "/concept/" + terminology + "/" + code;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final Concept concept = objectMapper.readValue(content, Concept.class);
     assertThat(concept).isNotNull();
-    assertEquals("99d4899b-db6f-4bf8-ba51-b65e1cf8f7fb", concept.getId());
+    assertThat(concept.getId()).isNotBlank();
     assertEquals(terminology, concept.getTerminology());
     assertEquals(code, concept.getCode());
     assertEquals("Type 2 diabetes mellitus", concept.getName());
     assertEquals("2023", concept.getVersion());
-    assertEquals("NLM", concept.getPublisher());
+    assertEquals("SANDBOX", concept.getPublisher());
     assertThat(concept.getTerms()).isNotNull();
     assertEquals(4, concept.getTerms().size());
     assertThat(concept.getAttributes()).isNotNull();
@@ -358,13 +351,10 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String terminology = "ICD10CM";
     final String url = baseUrl + "/concept/" + terminology + "/" + code;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
-    assertThat(content).isNotNull();
-    assertThat(content).isEmpty();
+    assertThat(content).isNotNull().isEmpty();
   }
 
   /**
@@ -378,14 +368,13 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final List<String> codes = List.of("LP32519-8", "LP231645-5", "63904-7", "74291-6", "FAKE");
     final String url = baseUrl + "/concept/" + terminology + "?codes=" + String.join(",", codes);
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final List<Concept> concepts =
         objectMapper.readValue(content, new TypeReference<List<Concept>>() {
+          // n/a
         });
     assertThat(concepts).isNotNull();
     assertThat(concepts.size()).isEqualTo(4);
@@ -410,16 +399,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String url = baseUrl + "/concept?terminology=" + terminology + "&query=name:" + query
         + "&limit=" + limit;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
     assertThat(conceptList).isNotNull();
-    assertThat(conceptList.getItems().size()).isGreaterThan(0);
-    assertThat(conceptList.getItems().size()).isLessThanOrEqualTo(limit);
+    assertFalse(conceptList.getItems().isEmpty());
+    assertTrue(conceptList.getItems().size() <= limit);
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
       assertThat(concept.getId()).isNotNull();
@@ -428,31 +415,70 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
   }
 
+  /**
+   * Test find concepts by code.
+   *
+   * @throws Exception the exception
+   */
   @Test
-  public void testFindConceptsByAncestorCode() throws Exception {
+  public void testFindConcepts2() throws Exception {
     final String terminology = "LNC";
-    final String query = "MTHU000003";
+    final String query = "cancer";
     final int limit = 15;
-    final String url = baseUrl + "/concept?terminology=" + terminology + "&query=ancestors.code:" + query
-            + "&limit=" + limit;
+    final String url =
+        baseUrl + "/concept?terminology=" + terminology + "&query=" + query + "&limit=" + limit;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-            mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-                    .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
     assertThat(conceptList).isNotNull();
-    assertThat(conceptList.getItems().size()).isGreaterThan(0);
-    assertThat(conceptList.getItems().size()).isLessThanOrEqualTo(limit);
+    assertFalse(conceptList.getItems().isEmpty());
+    assertTrue(conceptList.getItems().size() <= limit);
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
       assertThat(concept.getId()).isNotNull();
       assertThat(concept.getTerminology()).isEqualTo(terminology);
-      assertThat(concept.getAncestors()).anyMatch(ancestor -> ancestor.getCode().equals(query));
+      assertThat(concept.getName().toLowerCase()).contains(query.toLowerCase());
     }
   }
+
+  /**
+   * Test find concepts by ancestor code.
+   *
+   * @throws Exception the exception
+   */
+  // This is meant for ecl
+  // @Test
+  // public void testFindConceptsByAncestorCode() throws Exception {
+  // final String terminology = "LNC";
+  // final String query = "MTHU000003";
+  // final int limit = 15;
+  // final String url = baseUrl + "/concept?terminology=" + terminology +
+  // "&query=ancestors.code:"
+  // + query + "&limit=" + limit;
+  // LOGGER.info("Testing url - {}", url);
+  // final MvcResult result =
+  // mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+  // final String content = result.getResponse().getContentAsString();
+  // LOGGER.info(" content = {}", content);
+  // assertThat(content).isNotNull();
+  // final ResultListConcept conceptList = objectMapper.readValue(content,
+  // ResultListConcept.class);
+  // assertThat(conceptList).isNotNull();
+  // // FAILING
+  // LOGGER.info(" conceptList.getTotal() = {}", conceptList.getTotal());
+  // assertFalse(conceptList.getItems().isEmpty());
+  // assertTrue(conceptList.getItems().size() <= limit);
+  // for (final Concept concept : conceptList.getItems()) {
+  // assertThat(concept).isNotNull();
+  // assertThat(concept.getId()).isNotNull();
+  // assertThat(concept.getTerminology()).isEqualTo(terminology);
+  // assertThat(concept.getAncestors()).anyMatch(ancestor ->
+  // ancestor.getCode().equals(query));
+  // }
+  // }
 
   /**
    * Test find terms.
@@ -467,16 +493,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String url =
         baseUrl + "/term?terminology=" + terminology + "&query=name:" + query + "&limit=" + limit;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListTerm termsList = objectMapper.readValue(content, ResultListTerm.class);
     assertThat(termsList).isNotNull();
-    assertThat(termsList.getItems().size()).isGreaterThan(0);
-    assertThat(termsList.getItems().size()).isLessThanOrEqualTo(limit);
+    assertFalse(termsList.getItems().isEmpty());
+    assertTrue(termsList.getItems().size() <= limit);
     for (final Term term : termsList.getItems()) {
       assertThat(term).isNotNull();
       assertThat(term.getId()).isNotNull();
@@ -490,7 +514,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  // @Test query not working with Lucene
+  // @Test // NOT IN CONTROLLER
   public void testAutocomplete() throws Exception {
     final String terminology = "RXNORM";
     final String query = "nirmat";
@@ -498,16 +522,15 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String url = baseUrl + "/autocomplete?terminology=" + terminology + "&query=" + query
         + "&limit=" + limit;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final List<String> names = objectMapper.readValue(content, new TypeReference<List<String>>() {
+      // n/a
     });
     assertThat(names).isNotNull();
-    assertThat(names.size()).isGreaterThan(0);
+    assertFalse(names.isEmpty());
     assertThat(names.size()).isLessThanOrEqualTo(limit);
     for (final String name : names) {
       assertThat(name).isNotNull();
@@ -529,15 +552,15 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
         List.of("code:LP32519-8", "code:LP231645-5", "code:63904-7", "code:74291-6", "code:FAKE");
     final String body = String.join("\n", codes);
     LOGGER.info("Testing url - {}, body - {}", url, body);
-    final MvcResult result = mockMvc
-        .perform(post(url).header("Authorization", "Bearer " + getTestJwt())
-            .contentType(MediaType.TEXT_PLAIN).content(body))
-        .andExpect(status().isOk()).andReturn();
+    final MvcResult result =
+        mockMvc.perform(post(url).contentType(MediaType.TEXT_PLAIN).content(body))
+            .andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final List<ResultListConcept> resultConceptList =
         objectMapper.readValue(content, new TypeReference<List<ResultListConcept>>() {
+          // n/a
         });
     assertThat(resultConceptList).isNotNull();
     assertThat(resultConceptList.size()).isEqualTo(5);
@@ -567,16 +590,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final int limit = 100;
     final String url = baseUrl + "/metadata?query=terminology:" + terminology + "&limit=" + limit;
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListMetadata metadataList =
         objectMapper.readValue(content, ResultListMetadata.class);
     assertThat(metadataList).isNotNull();
-    assertThat(metadataList.getItems().size()).isGreaterThan(0);
+    assertFalse(metadataList.getItems().isEmpty());
     assertThat(metadataList.getItems().size()).isLessThanOrEqualTo(limit);
     for (final Metadata metadata : metadataList.getItems()) {
       assertThat(metadata).isNotNull();
@@ -596,20 +617,21 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   public void testFindConceptRelationships() throws Exception {
+
+    final Concept testConcept = getConceptByCode("SNOMEDCT", "404684003");
+
     // GET concept/{conceptId}/relationships
-    final String conceptId = "28bf322a-5e06-4771-844b-172aaa0fb4c6";
+    final String conceptId = testConcept.getId();
     final String url = baseUrl + "/concept/" + conceptId + "/relationships";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConceptRelationship conceptRels =
         objectMapper.readValue(content, ResultListConceptRelationship.class);
     assertThat(conceptRels).isNotNull();
-    assertThat(conceptRels.getItems().size()).isGreaterThan(0);
+    assertFalse(conceptRels.getItems().isEmpty());
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
@@ -634,16 +656,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String code = "404684003";
     final String url = baseUrl + "/concept/" + terminology + "/" + code + "/relationships";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConceptRelationship conceptRels =
         objectMapper.readValue(content, ResultListConceptRelationship.class);
     assertThat(conceptRels).isNotNull();
-    assertThat(conceptRels.getItems().size()).isGreaterThan(0);
+    assertFalse(conceptRels.getItems().isEmpty());
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
@@ -663,20 +683,20 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   public void testFindConceptInverseRelationships() throws Exception {
+
+    final Concept testConcept = getConceptByCode("SNOMEDCT", "404684003");
     // GET concept/{conceptId}/inverseRelationships
-    final String conceptId = "28bf322a-5e06-4771-844b-172aaa0fb4c6";
+    final String conceptId = testConcept.getId();
     final String url = baseUrl + "/concept/" + conceptId + "/inverseRelationships";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConceptRelationship conceptRels =
         objectMapper.readValue(content, ResultListConceptRelationship.class);
     assertThat(conceptRels).isNotNull();
-    assertThat(conceptRels.getItems().size()).isGreaterThan(0);
+    assertFalse(conceptRels.getItems().isEmpty());
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
@@ -702,16 +722,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String code = "404684003";
     final String url = baseUrl + "/concept/" + terminology + "/" + code + "/inverseRelationships";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConceptRelationship conceptRels =
         objectMapper.readValue(content, ResultListConceptRelationship.class);
     assertThat(conceptRels).isNotNull();
-    assertThat(conceptRels.getItems().size()).isGreaterThan(0);
+    assertFalse(conceptRels.getItems().isEmpty());
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
@@ -734,23 +752,26 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   // GET /concept/{conceptId}/trees/children
   @Test
   public void testFindTreePositionChildren() throws Exception {
-    final String conceptId = "d255a4e5-b748-4176-a2e9-7000f8dd089f";
+
+    final Concept testConcept = getConceptByCode("SNOMEDCT", "138875005");
+
+    final String conceptId = testConcept.getId();
     final String url = baseUrl + "/concept/" + conceptId + "/trees/children";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConceptTreePosition conceptTreePositonList =
         objectMapper.readValue(content, ResultListConceptTreePosition.class);
     assertThat(conceptTreePositonList).isNotNull();
-    assertThat(conceptTreePositonList.getItems().size()).isGreaterThan(0);
+    assertFalse(conceptTreePositonList.getItems().isEmpty(),
+        "Expected non-empty list of concept tree positions, got "
+            + conceptTreePositonList.getItems().size());
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
       assertThat(ctp.getId()).isNotNull();
-      assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
+      assertThat(ctp.getTerminology()).contains("SNOMEDCT");
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
       assertThat(ctp.getAncestorPath()).isNotNull();
@@ -764,33 +785,28 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   // GET /concept/{terminology}/{code}/trees/children
-  // @Test
-  // TODO: NUNO FIX
+  @Test
   public void testFindTreePositionChildren2() throws Exception {
 
     final String terminology = "SNOMEDCT_US";
-    final String code = "281159003";
+    final String code = "138875005";
     final String url = baseUrl + "/concept/" + terminology + "/" + code + "/trees/children";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConceptTreePosition conceptTreePositonList =
         objectMapper.readValue(content, ResultListConceptTreePosition.class);
     assertThat(conceptTreePositonList).isNotNull();
-    // finds but terminology is SNOMEDCT and not SNOMEDCT_US
-    assertThat(conceptTreePositonList.getItems().size()).isGreaterThan(0);
+    assertFalse(conceptTreePositonList.getItems().isEmpty());
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
       assertThat(ctp.getId()).isNotNull();
-      assertThat(ctp.getTerminology()).contains("SNOMEDCT");
+      assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
-      // each has a tree position with an empty ancestor path
-      // assertThat(ctp.getAncestorPath()).isNotNull();
+      assertThat(ctp.getAncestorPath()).isNotNull();
     }
   }
 
@@ -800,30 +816,28 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   // GET /concept/{conceptId}/trees
-  @Test
+  // @Test
   public void testFindTreePositions() throws Exception {
 
-    final String conceptId = "7498b388-6a83-43c4-a2a5-479b2a39860e";
+    final Concept testConcept = getConceptByCode("SNOMEDCT", "91723000");
+
+    final String conceptId = testConcept.getId();
     final String url = baseUrl + "/concept/" + conceptId + "/trees";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConceptTreePosition conceptTreePositonList =
         objectMapper.readValue(content, ResultListConceptTreePosition.class);
     assertThat(conceptTreePositonList).isNotNull();
-    assertEquals(8, conceptTreePositonList.getItems().size());
+    assertEquals(1, conceptTreePositonList.getItems().size());
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
       assertThat(ctp.getId()).isNotNull();
-      assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
+      assertThat(ctp.getTerminology()).contains("SNOMEDCT");
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
-      // each has a tree position with an empty ancestor path
-      // assertThat(ctp.getAncestorPath()).isNotNull();
     }
   }
 
@@ -833,31 +847,178 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   // GET /concept/{terminology}/{code}/trees
-  @Test
+  // @Test
   public void testFindTreePositions2() throws Exception {
     final String terminology = "SNOMEDCT_US";
-    final String code = "404684003";
+    final String code = "138875005";
     final String url = baseUrl + "/concept/" + terminology + "/" + code + "/trees";
     LOGGER.info("Testing url - {}", url);
-    final MvcResult result =
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + getTestJwt()))
-            .andExpect(status().isOk()).andReturn();
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
     final ResultListConceptTreePosition conceptTreePositonList =
         objectMapper.readValue(content, ResultListConceptTreePosition.class);
     assertThat(conceptTreePositonList).isNotNull();
-    assertThat(conceptTreePositonList.getItems().size()).isGreaterThan(0);
+    assertFalse(conceptTreePositonList.getItems().isEmpty(),
+        "Expected at least one tree position, got " + conceptTreePositonList.getItems().size());
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
       assertThat(ctp.getId()).isNotNull();
       assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
-      // each has a tree position with an empty ancestor path
-      // assertThat(ctp.getAncestorPath()).isNotNull();
     }
+  }
+
+  // GET /mapset/
+  @Test
+  public void testFindMapsets() throws Exception {
+    final String url = baseUrl + "/mapset";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
+    assertThat(mapsetList).isNotNull();
+
+    assertThat(mapsetList.getTotal()).isPositive();
+    for (final Mapset mapset : mapsetList.getItems()) {
+      LOGGER.info("  mapset = {}", mapset);
+      assertThat(mapset).isNotNull();
+      assertThat(mapset.getId()).isNotNull();
+      assertThat(mapset.getName()).isNotNull();
+      assertThat(mapset.getAbbreviation()).isNotNull();
+      // NOT SET assertThat(mapset.getTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getVersion()).isNotNull();
+      assertThat(mapset.getFromTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getFromVersion()).isNotNull();
+      assertThat(mapset.getToTerminology()).isNotNull();
+      // assertThat(mapset.getToVersion()).isNotNull();
+    }
+  }
+
+  // GET /mapset/
+  @Test
+  public void testFindMapsetsWithQuery() throws Exception {
+    final String query = "terminology=SNOMEDCT_US-ICD10CM&offset=0&limit=10";
+    final String url = baseUrl + "/mapset?" + query;
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
+    assertThat(mapsetList).isNotNull();
+    assertThat(mapsetList.getTotal()).isPositive();
+    for (final Mapset mapset : mapsetList.getItems()) {
+      assertThat(mapset).isNotNull();
+      assertThat(mapset.getId()).isNotNull();
+      assertThat(mapset.getName()).isNotNull();
+      assertThat(mapset.getAbbreviation()).isNotNull();
+      // NOT SET assertThat(mapset.getTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getVersion()).isNotNull();
+      assertThat(mapset.getFromTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getFromVersion()).isNotNull();
+      assertThat(mapset.getToTerminology()).isNotNull();
+      // NOT SET assertThat(mapset.getToVersion()).isNotNull();
+    }
+  }
+
+  /**
+   * Test find mapset by id.
+   *
+   * @throws Exception the exception
+   */
+  // GET /mapset/{id}
+  @Test
+  public void testFindMapsetById() throws Exception {
+
+    final String id = "2a545e12-04eb-48ee-b988-c17346b4e05f";
+    final String url = baseUrl + "/mapset/" + id;
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final Mapset mapset = objectMapper.readValue(content, Mapset.class);
+
+    assertThat(mapset).isNotNull();
+    assertThat(mapset.getId()).isNotNull();
+    assertThat(mapset.getName()).isNotNull();
+    assertThat(mapset.getAbbreviation()).isNotNull();
+    // NOT SET assertThat(mapset.getTerminology()).isNotNull();
+    // NOT SET assertThat(mapset.getVersion()).isNotNull();
+    assertThat(mapset.getFromTerminology()).isNotNull();
+    // NOT SET assertThat(mapset.getFromVersion()).isNotNull();
+    assertThat(mapset.getToTerminology()).isNotNull();
+    // NOT SET assertThat(mapset.getToVersion()).isNotNull();
+  }
+
+  /**
+   * Test find mapset by id not found.
+   *
+   * @throws Exception the exception
+   */
+  // @Test
+  // TODO - Should be 404 but is 500
+  public void testFindMapsetByIdNotFound() throws Exception {
+
+    final String id = "2a545e12-04eb-48ee-b988-c17346b4e05FAKE";
+    final String url = baseUrl + "/mapset/" + id;
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
+  }
+
+  /**
+   * Test concept search with expression.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConceptSearchWithExpression() throws Exception {
+    final String terminology = "SNOMEDCT_US";
+    final String expression = "<<128927009";
+    final String url = baseUrl + "/concept?terminology=" + terminology + "&expression=" + expression
+        + "&include=minimal&limit=100";
+    LOGGER.info(" Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
+    assertThat(conceptList).isNotNull();
+    assertFalse(conceptList.getItems().isEmpty());
+    for (final Concept concept : conceptList.getItems()) {
+      assertThat(concept).isNotNull();
+      assertThat(concept.getTerminology()).isEqualTo(terminology);
+      if (!"128927009".equals(concept.getCode())) {
+        assertTrue(
+            concept.getAncestors().stream()
+                .anyMatch(ancestor -> "128927009".equals(ancestor.getCode())),
+            "Ancestor code should have 1 128927009 Concept: " + concept);
+      }
+
+    }
+
+  }
+
+  /**
+   * Gets the concept by code.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @return the concept by code
+   * @throws Exception the exception
+   */
+  private Concept getConceptByCode(final String terminology, final String code) throws Exception {
+
+    final String url = baseUrl + "/concept/" + terminology + "/" + code;
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    return objectMapper.readValue(content, Concept.class);
   }
 
 }

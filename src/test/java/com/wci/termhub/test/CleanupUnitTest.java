@@ -9,6 +9,8 @@
  */
 package com.wci.termhub.test;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -19,12 +21,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.Application;
-import com.wci.termhub.model.Concept;
-import com.wci.termhub.model.ConceptRelationship;
-import com.wci.termhub.model.Metadata;
-import com.wci.termhub.model.Term;
-import com.wci.termhub.model.Terminology;
+import com.wci.termhub.model.HasId;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.ModelUtility;
 
 /**
  * The Class CleanupUnitTest.
@@ -35,7 +34,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 public class CleanupUnitTest {
 
   /** The Constant LOG. */
-  private static final Logger LOG = LoggerFactory.getLogger(CleanupUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CleanupUnitTest.class);
 
   /** The search service. */
   @Autowired
@@ -54,11 +53,10 @@ public class CleanupUnitTest {
   @AfterAll
   public void tearDown() throws Exception {
 
-    LOG.info("Cleaning up indexes");
-    searchService.deleteIndex(Terminology.class);
-    searchService.deleteIndex(Metadata.class);
-    searchService.deleteIndex(Concept.class);
-    searchService.deleteIndex(Term.class);
-    searchService.deleteIndex(ConceptRelationship.class);
+    LOGGER.info("Cleaning up indexes");
+    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
+    for (final Class<? extends HasId> clazz : indexedObjects) {
+      searchService.deleteIndex(clazz);
+    }
   }
 }

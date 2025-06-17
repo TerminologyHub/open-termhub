@@ -10,6 +10,10 @@
 package com.wci.termhub.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.lucene.search.Query;
 
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.ResultList;
@@ -64,6 +68,16 @@ public interface EntityRepositoryService {
    * @throws Exception the exception
    */
   public void update(final Class<? extends HasId> clazz, final String id, final HasId entity)
+    throws Exception;
+
+  /**
+   * Update the entity.
+   *
+   * @param clazz the clazz
+   * @param entities the entities
+   * @throws Exception the exception
+   */
+  public void updateBulk(final Class<? extends HasId> clazz, final Map<String, HasId> entities)
     throws Exception;
 
   /**
@@ -149,6 +163,21 @@ public interface EntityRepositoryService {
     final List<String> fields, final Class<T> clazz) throws Exception;
 
   /**
+   * Find fields.
+   *
+   * @param <T> the generic type
+   * @param params the params
+   * @param fields the fields
+   * @param clazz the clazz
+   * @param terminologies the terminologies
+   * @return the result list
+   * @throws Exception the exception
+   */
+  public <T extends HasId> ResultList<T> findFields(final SearchParameters params,
+    final List<String> fields, final Class<T> clazz, final Set<String> terminologies)
+    throws Exception;
+
+  /**
    * Find all with fields.
    *
    * @param <T> the generic type
@@ -158,7 +187,7 @@ public interface EntityRepositoryService {
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAllWithFields(final String query, final List<String> fields,
+  public <T extends HasId> List<T> findAllWithFields(final Query query, final List<String> fields,
     final Class<T> clazz) throws Exception;
 
   /**
@@ -173,33 +202,35 @@ public interface EntityRepositoryService {
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAllWithFields(String query, List<String> fields,
-    Class<T> clazz, FindCallbackHandler<T> handler) throws Exception;
+  public <T extends HasId> List<T> findAllWithFields(final Query query, final List<String> fields,
+    final Class<T> clazz, final FindCallbackHandler<T> handler) throws Exception;
 
   /**
    * Find all.
    *
    * @param <T> the generic type
    * @param query the query
+   * @param luceneQuery the lucene query
    * @param clazz the clazz
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAll(final String query, final Class<T> clazz)
-    throws Exception;
+  public <T extends HasId> List<T> findAll(final String query, final Query luceneQuery,
+    final Class<T> clazz) throws Exception;
 
   /**
    * Find all.
    *
    * @param <T> the generic type
    * @param query the query
+   * @param luceneQuery the lucene query
    * @param clazz the clazz
    * @param handler the handler
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<T> findAll(final String query, final Class<T> clazz,
-    final FindCallbackHandler<T> handler) throws Exception;
+  public <T extends HasId> List<T> findAll(final String query, final Query luceneQuery,
+    final Class<T> clazz, final FindCallbackHandler<T> handler) throws Exception;
 
   /**
    * Find all ids.
@@ -210,7 +241,8 @@ public interface EntityRepositoryService {
    * @return the list
    * @throws Exception the exception
    */
-  public <T extends HasId> List<String> findAllIds(String query, Class<T> clazz) throws Exception;
+  public <T extends HasId> List<String> findAllIds(final Query query, final Class<T> clazz)
+    throws Exception;
 
   /**
    * Find single.

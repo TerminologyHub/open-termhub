@@ -27,7 +27,7 @@ import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.util.ModelUtility;
 
 /**
- * The Class ConceptLoader.
+ * Concept relationship loader.
  */
 public final class ConceptRelationshipLoader {
 
@@ -56,6 +56,7 @@ public final class ConceptRelationshipLoader {
       }
 
       // get file name from command line
+      @SuppressWarnings("null")
       final String fullFileName = args[0];
       if (!Files.exists(Paths.get(fullFileName))) {
         logger.error("File does not exist at " + fullFileName);
@@ -125,8 +126,9 @@ public final class ConceptRelationshipLoader {
 
         final JsonNode rootNode = objectMapper.readTree(line);
         final JsonNode conceptRelNode = rootNode.get("_source");
-        final ConceptRelationship conceptRel = ModelUtility.fromJson(conceptRelNode != null ? conceptRelNode.toString() : rootNode.toString(),
-                ConceptRelationship.class);
+        final ConceptRelationship conceptRel = ModelUtility.fromJson(
+            conceptRelNode != null ? conceptRelNode.toString() : rootNode.toString(),
+            ConceptRelationship.class);
         conceptRelBatch.add(conceptRel);
 
         if (conceptRelBatch.size() == batchSize) {

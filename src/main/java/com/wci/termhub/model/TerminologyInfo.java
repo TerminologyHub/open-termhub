@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.InnerField;
@@ -38,7 +37,6 @@ import jakarta.persistence.Transient;
 @Table(name = "terminology_info")
 @Schema(description = "Represents metadata and other info about a terminology. "
     + "This is for platform level tracking of terminologies and not tied to version.")
-@Document(indexName = "terminology-info-v1")
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TerminologyInfo extends AbstractHasModified
@@ -133,14 +131,14 @@ public class TerminologyInfo extends AbstractHasModified
    * The ui labels. This is so we can say "descriptions" instead of "terms" when
    * looking at SNOMED. The set of labels can be managed by an enum if we want
    * but is like this:
-   * 
+   *
    * <pre>
    * terms-label => "Descriptions"
    * hierarchies-label => "Trees"
    * relationships-label -> "Attributes"
    * axioms-label => "Axioms"
    * </pre>
-   * 
+   *
    * These are "overrides" so if not specified, default labels are still used.
    */
   @Transient
@@ -217,19 +215,19 @@ public class TerminologyInfo extends AbstractHasModified
     if (other.getUri() != null) {
       uri = other.getUri();
     }
-    if (other.getIdentifiers().size() > 0) {
+    if (!other.getIdentifiers().isEmpty()) {
       // Supports add only via patch
       getIdentifiers().addAll(other.getIdentifiers());
     }
-    if (other.getRegions().size() > 0) {
+    if (!other.getRegions().isEmpty()) {
       // Supports add only via patch
       getRegions().addAll(other.getRegions());
     }
-    if (other.getLabels().size() > 0) {
+    if (!other.getLabels().isEmpty()) {
       // Supports add only via patch
       getLabels().addAll(other.getLabels());
     }
-    if (other.getSubTerminologies().size() > 0) {
+    if (!other.getSubTerminologies().isEmpty()) {
       // Supports add only via patch
       getSubTerminologies().addAll(other.getSubTerminologies());
     }
@@ -242,7 +240,7 @@ public class TerminologyInfo extends AbstractHasModified
     if (other.getDocumentationUri() != null) {
       documentationUri = other.getDocumentationUri();
     }
-    if (other.getUiLabels().size() > 0) {
+    if (!other.getUiLabels().isEmpty()) {
       // Supports add only via patch
       getUiLabels().putAll(other.getUiLabels());
     }

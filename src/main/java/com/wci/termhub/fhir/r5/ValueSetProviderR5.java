@@ -9,6 +9,8 @@
  */
 package com.wci.termhub.fhir.r5;
 
+import static com.wci.termhub.util.IndexUtility.getAndQuery;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.search.Query;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -46,6 +49,7 @@ import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.handler.BrowserQueryBuilder;
+import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -171,11 +175,10 @@ public class ValueSetProviderR5 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
-        name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
-        name = "_offset") final NumberParam offset)
-    throws Exception {
+    @Description(shortDefinition = "Number of entries to return")
+    @OptionalParam(name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page")
+    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
 
@@ -561,11 +564,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
         // for SNOMED, check whether the url matches the terminology FHIR
         // version
-        if (url == null) {
-          continue;
-        }
-        if (!url.getValue().equals(terminology.getAttributes().get("fhirVersion"))
-            && !url.getValue().startsWith(terminology.getAttributes().get("fhirVersion") + "=")) {
+        if ((url == null) || (!url.getValue().equals(terminology.getAttributes().get("fhirVersion"))
+            && !url.getValue().startsWith(terminology.getAttributes().get("fhirVersion") + "="))) {
           continue;
         }
       }
@@ -596,12 +596,13 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // "designations": [...]
       // } ]
       // }
-      final String expression = getExpressionQuery(terminology, vs.getUrl());
+      final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
+      final Query browserQuery = LuceneQueryBuilder.parse(
+          new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()),
+          Concept.class);
       final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
-      final SearchParameters params = new SearchParameters(
-          StringUtility.composeQuery("AND", expression,
-              new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue())),
-          offset, ct, null, null);
+      final SearchParameters params =
+          new SearchParameters(getAndQuery(expressionQuery, browserQuery), offset, ct, null, null);
       if (activeOnly) {
         params.setActive(activeOnly);
       }
@@ -701,12 +702,15 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // however the
       // display 'abc' did not match any designations."
 
-      final String expression = getExpressionQuery(terminology, vs.getUrl());
-      final List<Concept> list = searchService.findAll(StringUtility.composeQuery("AND", expression,
-          "code:\"" + StringUtility.escapeQuery(code) + "\""), Concept.class);
+      final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
+      final Query codeQuery = LuceneQueryBuilder
+          .parse("code:\"" + StringUtility.escapeQuery(code) + "\"", Concept.class);
+
+      final List<Concept> list =
+          searchService.findAll(null, getAndQuery(codeQuery, expressionQuery), Concept.class);
       final Parameters parameters = new Parameters();
       // If no match
-      if (list.size() == 0) {
+      if (list.isEmpty()) {
         parameters.addParameter(
             new ParametersParameterComponent().setName("result").setValue(new BooleanType(false)));
         parameters.addParameter(new ParametersParameterComponent().setName("message")
@@ -741,7 +745,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the expression
    * @throws Exception the exception
    */
-  private String getExpressionQuery(final Terminology terminology, final String url)
+  private Query getExpressionQuery(final Terminology terminology, final String url)
     throws Exception {
     final String part = url.replaceFirst(".*fhir_vs", "");
     String expression = null;
@@ -759,9 +763,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       return null;
     }
     try {
-      return TerminologyUtility.getExpressionQuery(searchService, terminology.getAbbreviation(),
-          terminology.getPublisher(), terminology.getVersion(), expression,
-          terminology.getIndexName());
+      return TerminologyUtility.getExpressionQuery(expression);
     } catch (final Exception e) {
       throw FhirUtilityR5.exception("Unable to parse expression = " + expression,
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

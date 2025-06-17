@@ -26,8 +26,7 @@ public class AbstractTerminologyServerTest extends AbstractTest {
   private static boolean setup2 = false;
 
   /**
-   * Setup once. Use @BeforeEach because with @BeforeAll, PropertyUtility will
-   * not be setup.
+   * Setup once. Use @BeforeEach because with @BeforeAll, PropertyUtility will not be setup.
    *
    * @throws Exception the exception
    */

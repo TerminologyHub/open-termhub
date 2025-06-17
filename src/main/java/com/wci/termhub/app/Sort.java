@@ -14,10 +14,24 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * The Interface Sort.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Sort {
+
+  /**
+   * Order.
+   *
+   * @return the int
+   */
   int order() default 0;
 
+  /**
+   * Direction.
+   *
+   * @return the direction
+   */
   Direction direction() default Direction.ASC;
 }

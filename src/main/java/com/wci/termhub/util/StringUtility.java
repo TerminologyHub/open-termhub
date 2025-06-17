@@ -43,7 +43,6 @@ import com.google.common.base.CaseFormat;
 /**
  * Utility class for interacting with Strings.
  */
-@SuppressWarnings("resource")
 public final class StringUtility {
 
   /** The logger. */
@@ -54,6 +53,7 @@ public final class StringUtility {
   private static final String PUNCTUATION = " \t-({[)}]_!@#%&*\\:;\"',.?/~+=|<>$`^";
 
   /** The Constant NORM_PUNCTUATION. */
+  @SuppressWarnings("unused")
   private static final String NORM_PUNCTUATION = " \t-{}_!@#%&*\\:;,?/~+=|<>$`^";
 
   /** The Constant PUNCTUATION_REGEX. */
@@ -61,6 +61,7 @@ public final class StringUtility {
       "[ \\t\\-\\(\\{\\[\\)\\}\\]_!@#%&\\*\\\\:;\\\"',\\.\\?\\/~\\+=\\|<>$`^]";
 
   /** The Constant NORM_PUNCTUATION_REGEX. */
+  @SuppressWarnings("unused")
   private static final String NORM_PUNCTUATION_REGEX = "[ \\t\\-{}_!@#%&\\*\\\\:;,?/~+=|<>$`^]";
 
   /** The Constant UUID_REGEX. */
@@ -147,8 +148,8 @@ public final class StringUtility {
   // }
 
   /**
-   * Convert roman numeral to arabic. For example MCMXLIX returns 1949. The
-   * roman numeral is first validated and then converted.
+   * Convert roman numeral to arabic. For example MCMXLIX returns 1949. The roman numeral is first
+   * validated and then converted.
    *
    * @param number the number
    * @return the int
@@ -226,9 +227,8 @@ public final class StringUtility {
   }
 
   /**
-   * Converts string field to case-insensitive string of tokens with punctuation
-   * removed For example, "HIV Infection" becomes "hiv infection", while
-   * "1,2-hydroxy" becomes "1 2 hydroxy".
+   * Converts string field to case-insensitive string of tokens with punctuation removed For
+   * example, "HIV Infection" becomes "hiv infection", while "1,2-hydroxy" becomes "1 2 hydroxy".
    *
    * @param value the value
    * @return the string
@@ -511,8 +511,7 @@ public final class StringUtility {
   }
 
   /**
-   * Compose query from a list of possibly empty/null clauses and an operator
-   * (typically OR or AND).
+   * Compose query from a list of possibly empty/null clauses and an operator (typically OR or AND).
    *
    * @param operator the operator
    * @param clauses the clauses
@@ -583,8 +582,7 @@ public final class StringUtility {
    *
    * @param fieldName the field name
    * @param fieldValue the field value
-   * @param escapeValue - whether the value can have characters that need to be
-   *          escaped
+   * @param escapeValue - whether the value can have characters that need to be escaped
    * @return the string
    * @throws Exception the exception
    */
@@ -611,45 +609,6 @@ public final class StringUtility {
   public static boolean isEmpty(final String str) {
     return str == null || str.isEmpty();
   }
-
-  // /**
-  // * Similarity.
-  // *
-  // * @param s1 the s 1
-  // * @param s2 the s 2
-  // * @return the double
-  // */
-  // public static double similarity(final String s1, final String s2) {
-  //
-  // final String ls1 = s1.toLowerCase();
-  // final String ls2 = s2.toLowerCase();
-  // // https://github.com/tdebatty/java-string-similarity
-  // if (s1.length() < 3) {
-  // if (s1.equals(s2)) {
-  // return 1;
-  // } else if (ls1.equals(ls2)) {
-  // return 0.9;
-  // } else {
-  // return 0.0;
-  // }
-  // }
-  //
-  // // Let's work with sequences of 3 characters...
-  // final Cosine cosine = new Cosine(3);
-  //
-  // // Pre-compute the profile of strings
-  // final Map<String, Integer> profile1 = getProfile(ls1, 3);
-  // final Map<String, Integer> profile2 = getProfile(ls2, 3);
-  // final double d1 = cosine.similarity(profile1, profile2);
-  // if (d1 > 0.9) {
-  // return d1;
-  // }
-  // final Set<String> w1 = wordindNoStopwords(ls1);
-  // final Set<String> w2 = wordindNoStopwords(ls2);
-  // final double d2 = (Sets.intersection(w1, w2).size() * 2.0) / (w1.size() +
-  // w2.size());
-  // return (Math.max(d1, d2) * 0.9) + (Math.min(d1, d2) * 0.1);
-  // }
 
   /**
    * Returns the profile.

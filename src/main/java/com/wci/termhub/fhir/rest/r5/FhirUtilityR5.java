@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -403,8 +402,7 @@ public final class FhirUtilityR5 {
    * Recover code.
    *
    * @param code the code
-   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the
-   *          string
+   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the string
    * @return the string
    */
   public static String recoverCode(final CodeType code, final Coding coding) {
@@ -608,7 +606,6 @@ public final class FhirUtilityR5 {
       if (displayMap.containsKey(term.getType())) {
         final Coding coding = new Coding();
         coding.setCode(term.getType());
-        // coding.setSystem(codeSystem.getUrl());
         coding.setDisplay(displayMap.get(term.getType()));
         designation.addPart().setName("use").setValue(coding);
       } else {
@@ -641,7 +638,7 @@ public final class FhirUtilityR5 {
       }
       final String value = concept.getAttributes().get(key);
       // Check for boolean value
-      if (value.equals("true") || value.equals("false")) {
+      if ("true".equals(value) || "false".equals(value)) {
         parameters.addParameter(createProperty(key, Boolean.valueOf(value), false));
       }
       // Check for coding
@@ -663,7 +660,7 @@ public final class FhirUtilityR5 {
     if (properties == null || properties.contains("parent")) {
       for (final ConceptRef parent : relationships.stream()
           .filter(r -> r.getHierarchical() != null && r.getHierarchical()).map(r -> r.getTo())
-          .collect(Collectors.toList())) {
+          .toList()) {
         final Coding coding = new Coding();
         coding.setCode(parent.getCode());
         coding.setSystem(codeSystem.getUrl());
@@ -796,33 +793,39 @@ public final class FhirUtilityR5 {
 
     // cs.setUrl(terminology.getAttributes().get("fhirUri"));
     // fhirUri is not in the json data files. setting to id for now
-    cs.setUrl(terminology.getId());
+    cs.setUrl(terminology.getUri());
 
     cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
-    cs.setVersion(terminology.getAttributes().get("fhirVersion"));
+    String version = terminology.getAttributes().get("fhirVersion");
+    if (version == null) {
+      version = terminology.getVersion();
+    }
+    cs.setVersion(version);
     // cs.setId(terminology.getAttributes().get("fhirId"));
     cs.setId(terminology.getId());
     cs.setName(terminology.getName());
     cs.setTitle(terminology.getAbbreviation());
-
-    // OLD
-    // cs.setPublisher(FhirUtility.getPublisherInfo(terminology.getPublisher()).getName());
     cs.setPublisher(terminology.getPublisher());
 
     cs.setStatus(Enumerations.PublicationStatus.ACTIVE);
     cs.setHierarchyMeaning(CodeSystem.CodeSystemHierarchyMeaning.ISA);
     cs.setCompositional("true".equals(terminology.getAttributes().get("fhirCompositional")));
+
     if ("SANDBOX".equals(terminology.getPublisher())) {
       cs.setContent(CodeSystemContentMode.FRAGMENT);
     } else {
       cs.setContent(CodeSystemContentMode.COMPLETE);
     }
+
     cs.setExperimental(false);
     if (terminology.getStatistics().containsKey("concepts")) {
       cs.setCount(terminology.getStatistics().get("concepts"));
     } else if (terminology.getConceptCt() != null) {
       cs.setCount(terminology.getConceptCt().intValue());
     }
+
+    logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
+        cs.getName(), cs.getVersion());
 
     return cs;
   }
@@ -835,26 +838,56 @@ public final class FhirUtilityR5 {
    * @throws Exception the exception
    */
   public static ConceptMap toR5(final Mapset mapset) throws Exception {
+    if (mapset == null) {
+      throw new FHIRServerResponseException(HttpServletResponse.SC_BAD_REQUEST,
+          "Mapset cannot be null", null);
+    }
+
     final ConceptMap cm = new ConceptMap();
+    final Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
+
+    // Debug logging for Mapset data
+    logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
+        mapset.getFromTerminology(), mapset.getToTerminology());
+
+    // Set other fields
     cm.setUrl(mapset.getAttributes().get("fhirUri"));
-    cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(mapset.getReleaseDate()));
-    cm.setVersion(mapset.getAttributes().get("fhirVersion"));
-    // cs.setId(terminology.getAttributes().get("fhirId"));
+    // Use the stored FHIR version if available, otherwise use the regular
+    // version
+    cm.setVersion(mapset.getAttributes().containsKey("fhirVersion")
+        ? mapset.getAttributes().get("fhirVersion") : mapset.getVersion());
     cm.setId(mapset.getId());
     cm.setName(mapset.getName());
     cm.setTitle(mapset.getAbbreviation());
-    cm.setPublisher(FhirUtility.getPublisherInfo(mapset.getPublisher()).getName());
+    cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
-    cm.setCopyright(mapset.getAttributes().get("copyright"));
-    cm.addIdentifier(new Identifier().setValue(mapset.getCode()));
-    if (mapset.getAttributes().containsKey("fhirFromTerminologyUri")) {
-      cm.setSourceScope(
-          new UriType(mapset.getAttributes().get("fhirFromTerminologyUri") + "?fhir_vs"));
+    if (mapset.getCode() != null) {
+      cm.addIdentifier(new Identifier().setValue(mapset.getCode()));
     }
-    if (mapset.getAttributes().containsKey("fhirToTerminologyUri")) {
-      cm.setTargetScope(
-          new UriType(mapset.getAttributes().get("fhirToTerminologyUri") + "?fhir_vs"));
+
+    // Set source and target scopes from fromTerminology and toTerminology
+    if (mapset.getFromTerminology() != null) {
+      cm.setSourceScope(new UriType(mapset.getFromTerminology()));
+      logger.info("Set sourceScope from fromTerminology: {}", mapset.getFromTerminology());
+    } else if (mapset.getAttributes().containsKey("sourceScopeUri")) {
+      cm.setSourceScope(new UriType(mapset.getAttributes().get("sourceScopeUri")));
+      logger.info("Set sourceScope from attributes: {}",
+          mapset.getAttributes().get("sourceScopeUri"));
     }
+
+    if (mapset.getToTerminology() != null) {
+      cm.setTargetScope(new UriType(mapset.getToTerminology()));
+      logger.info("Set targetScope from toTerminology: {}", mapset.getToTerminology());
+    } else if (mapset.getAttributes().containsKey("targetScopeUri")) {
+      cm.setTargetScope(new UriType(mapset.getAttributes().get("targetScopeUri")));
+      logger.info("Set targetScope from attributes: {}",
+          mapset.getAttributes().get("targetScopeUri"));
+    }
+
+    // Debug final state
+    logger.info("Converted ConceptMap: id={}, sourceScope={}, targetScope={}", cm.getId(),
+        cm.getSourceScope() != null ? ((UriType) cm.getSourceScope()).getValue() : "null",
+        cm.getTargetScope() != null ? ((UriType) cm.getTargetScope()).getValue() : "null");
 
     return cm;
   }

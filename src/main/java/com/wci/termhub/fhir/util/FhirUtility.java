@@ -28,27 +28,23 @@ import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.wci.termhub.model.AuthContext;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.PublisherInfo;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
-import com.wci.termhub.model.TypeKeyValue;
-import com.wci.termhub.rest.client.ConfigClient;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.service.RootServiceRestImpl;
-import com.wci.termhub.util.ClientFactory;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TimerCache;
 
 import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.StringParam;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
@@ -57,7 +53,6 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class FhirUtility {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtility.class);
 
   /** The publisher info map. */
@@ -65,6 +60,9 @@ public final class FhirUtility {
 
   /** The terminologies cache. */
   private static TimerCache<List<Terminology>> terminologyCache = new TimerCache<>(1000, 10000);
+
+  /** The mapset cache. */
+  private static TimerCache<List<Mapset>> mapsetCache = new TimerCache<>(1000, 10000);
 
   /** The code system uri cache. */
   private static TimerCache<String> codeSystemUriCache = new TimerCache<>(1000, 10000);
@@ -80,87 +78,29 @@ public final class FhirUtility {
   }
 
   /**
-   * Cache publisher info.
-   *
-   * @throws Exception the exception
-   */
-  public static void cachePublisherInfo() throws Exception {
-    if (publisherInfoMap.isEmpty()) {
-      for (final PublisherInfo pi : ClientFactory.get(ConfigClient.class).getAllPublisherInfo()) {
-        publisherInfoMap.put(pi.getType(), pi);
-      }
-    }
-  }
-
-  /**
-   * Authorize.
-   *
-   * @param request the request
-   * @return the auth context
-   * @throws Exception the exception
-   */
-  public static AuthContext authorize(final HttpServletRequest request) throws Exception {
-    try {
-      return new RootServiceRestImpl().authorizeProject(request);
-    } catch (final Exception e) {
-      throw exception("Authentication failed", OperationOutcome.IssueType.LOGIN,
-          HttpServletResponse.SC_UNAUTHORIZED);
-    }
-  }
-
-  /**
    * Lookup terminologies.
    *
-   * @param searchService the search service
+   * @param service the search service
    * @return the list
    * @throws Exception the exception
    */
-  public static List<Terminology> lookupTerminologies(final EntityRepositoryService searchService)
+  public static List<Terminology> lookupTerminologies(final EntityRepositoryService service)
     throws Exception {
 
-    final String query = "active:true";
-    List<Terminology> terminologies = terminologyCache.get(query);
+    final SearchParameters params = new SearchParameters();
+    params.setQuery("*:*");
+    params.setLimit(100);
 
-    if (terminologies != null) {
-      return terminologies;
+    logger.info("Looking up terminologies with query: {}", params.getQuery());
+    final ResultList<Terminology> terminologies = service.find(params, Terminology.class);
+    logger.info("Found {} terminologies", terminologies.getItems().size());
+
+    for (final Terminology term : terminologies.getItems()) {
+      logger.info("Found terminology: {} ({}), version: {}, publisher: {}", term.getName(),
+          term.getAbbreviation(), term.getVersion(), term.getPublisher());
     }
 
-    // then do a find on the query
-    final SearchParameters params = new SearchParameters(query, null, 1000, null, null);
-    final ResultList<Terminology> results = searchService.find(params, Terminology.class);
-    terminologies = results.getItems();
-
-    // then sort the results (just use the natural terminology sort order)
-    Collections.sort(terminologies);
-    terminologyCache.put(query, terminologies);
-
-    return terminologies;
-  }
-
-  /**
-   * Lookup terminology.
-   *
-   * @param codeSystemUri the code system uri
-   * @return the string
-   * @throws Exception the exception
-   */
-  public static String lookupTerminology(final String codeSystemUri) throws Exception {
-
-    String terminology = codeSystemUriCache.get(codeSystemUri);
-    if (terminology == null) {
-      for (final TypeKeyValue tkv : ClientFactory.get(ConfigClient.class)
-          .findTypeKeyValue("type:codeSystemUri", null, 1000, terminology, null).getItems()) {
-        codeSystemUriCache.put(tkv.getValue(), tkv.getKey());
-      }
-      for (final TypeKeyValue tkv : ClientFactory.get(ConfigClient.class)
-          .findTypeKeyValue("type:codeSystemOid", null, 1000, terminology, null).getItems()) {
-        codeSystemUriCache.put(tkv.getValue(), tkv.getKey());
-      }
-      terminology = codeSystemUriCache.get(codeSystemUri);
-    }
-
-    return terminology;
-
+    return terminologies.getItems();
   }
 
   /**
@@ -201,9 +141,13 @@ public final class FhirUtility {
     if (t != null) {
       return t.get(0);
     }
-    final ResultList<Terminology> tlist = searchService.find(new SearchParameters(
-        "abbreviation:" + terminology + " AND publisher:" + publisher + " AND version:" + version,
-        2, 0), Terminology.class);
+    final ResultList<Terminology> tlist =
+        searchService
+            .find(
+                new SearchParameters("abbreviation:" + StringUtility.escapeQuery(terminology)
+                    + " AND publisher: \"" + StringUtility.escapeQuery(publisher)
+                    + "\" AND version:" + StringUtility.escapeQuery(version), 2, 0),
+                Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
@@ -214,6 +158,44 @@ public final class FhirUtility {
     }
     terminologyCache.put(key, ModelUtility.asList(tlist.getItems().get(0)));
     return tlist.getItems().get(0);
+  }
+
+  /**
+   * Lookup terminology.
+   *
+   * @param searchService the search service
+   * @param codeSystemUri the code system uri
+   * @return the string
+   * @throws Exception the exception
+   */
+  public static String lookupTerminology(final EntityRepositoryService searchService,
+    final String codeSystemUri) throws Exception {
+
+    String terminology = codeSystemUriCache.get(codeSystemUri);
+
+    if (terminology != null) {
+      return terminology;
+    }
+
+    final String query = "uri:" + StringUtility.escapeQuery(codeSystemUri);
+    final SearchParameters params = new SearchParameters(query, null, 1000, null, null);
+    logger.debug("lookupTerminology: query: {}", query);
+    final ResultList<Terminology> tlist = searchService.find(params, Terminology.class);
+
+    if (tlist.getItems().isEmpty()) {
+      return null;
+    }
+
+    if (tlist.getItems().size() > 1) {
+      throw new Exception("Too many terminology matches = " + codeSystemUri);
+    }
+
+    terminology = tlist.getItems().get(0).getAbbreviation();
+
+    codeSystemUriCache.put(codeSystemUri, terminology);
+
+    return terminology;
+
   }
 
   /**
@@ -676,18 +658,6 @@ public final class FhirUtility {
   }
 
   /**
-   * Gets the publisher info.
-   *
-   * @param key the key
-   * @return the publisher info
-   * @throws Exception the exception
-   */
-  public static PublisherInfo getPublisherInfo(final String key) throws Exception {
-    cachePublisherInfo();
-    return publisherInfoMap.get(key);
-  }
-
-  /**
    * Gets the display map.
    *
    * @param searchService the search service
@@ -711,7 +681,7 @@ public final class FhirUtility {
     for (final Metadata metadata : searchService.findAll(
         "active:true AND ((model:concept AND field:attribute) OR "
             + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))",
-        Metadata.class).stream().collect(Collectors.toList())) {
+        null, Metadata.class).stream().collect(Collectors.toList())) {
       map.put(metadata.getCode(), metadata.getName());
     }
     displayMap.put(key, map);
@@ -787,6 +757,39 @@ public final class FhirUtility {
     }
 
     return builder.toString();
+  }
+
+  /**
+   * Lookup mapsets.
+   *
+   * @param searchService the search service
+   * @return the list
+   * @throws Exception the exception
+   */
+  public static List<Mapset> lookupMapsets(final EntityRepositoryService searchService)
+    throws Exception {
+
+    // final String query = "active:true";
+    final String query = "*:*";
+    List<Mapset> mapsets = mapsetCache.get(query);
+
+    if (mapsets == null) {
+      // then do a find on the query
+      final SearchParameters params = new SearchParameters(query, null, 1000, null, null);
+      final ResultList<Mapset> results = searchService.find(params, Mapset.class);
+      mapsets = results.getItems();
+
+      // HOW MANY?
+      logger.info("Found {} mapsets", mapsets.size());
+      for (final Mapset mapset : mapsets) {
+        logger.info("Mapset: {}", mapset);
+      }
+
+      // then sort the results (just use the natural terminology sort order)
+      Collections.sort(mapsets);
+      mapsetCache.put(query, mapsets);
+    }
+    return mapsets;
   }
 
   /**

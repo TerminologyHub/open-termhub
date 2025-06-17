@@ -12,44 +12,56 @@ GIT_VERSION              ?= $(shell echo `git describe --match=NeVeRmAtCh --alwa
 GIT_COMMIT               ?= $(shell echo `git log | grep -m1 -oE '[^ ]+$'`)
 GIT_COMMITTED_AT         ?= $(shell echo `git log -1 --format=%ct`)
 GIT_BRANCH               ?= $(shell echo `git branch --show-current`)
+DOCKER_INT_REGISTRY      := wcinformatics
 
 .PHONY: build
 
-# Clean build artifacts. Override for your project
-clean:
+clean: ## Clean build artifacts. Override for your project
 	./gradlew clean
+
+build: ## Build the library without tests
+	./gradlew build -x test -x spotbugsMain -x spotbugsTest -x javadoc
+
+scan: ## scan for vulnerabilities in dependencies
+	/bin/rm -rf gradle/dependency-locks
+	./gradlew dependencies --write-locks --configuration runtimeClasspath
+	trivy fs gradle.lockfile --format template -o report.html --template "@config/trivy/html.tpl"
+	grep CRITICAL report.html
+	/bin/rm -rf gradle.lockfile
+	
+fullscan: ## scan for vulnerabilities in dependencies
+	/bin/rm -rf gradle/dependency-locks
+	./gradlew dependencies --write-locks
+	trivy fs gradle.lockfile --format template -o report.html --template "@config/trivy/html.tpl"
+	grep CRITICAL report.html
+	/bin/rm -rf gradle.lockfile
+
+test: ## Run all tests
+	./gradlew test spotbugsMain spotbugsTest
+
+test-r4: ## Run R4 tests only
+	./gradlew testR4
+
+test-r5: ## Run R5 tests only
+	./gradlew testR5
+
+run: ## Run the server
+	./gradlew bootRun
+
+rundebug: ## Run the server in debug mode
+	./gradlew bootRun --debug-jvm
+
+docker: ## Build the docker image and tag with version and latest
+	@echo APP_VERSION=$(APP_VERSION)
+	@echo REGISTRY=$(DOCKER_INT_REGISTRY)
+	@echo SERVICE=$(SERVICE)
+	docker build --no-cache-filter=gradle-build -t $(SERVICE) .
+	docker tag $(SERVICE) $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	docker tag $(SERVICE) $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
 
 scandocker:
 	trivy image $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
 	grep CRITICAL report.html
-
-# Build the library without tests
-build:
-	./gradlew build	test -x javadoc -x spotbugsMain -x spotbugsTest
-
-scan:
-	/bin/rm -rf gradle/dependency-locks
-	./gradlew dependencies --write-locks
-	cp gradle/dependency-locks/compileClasspath.lockfile gradle/dependency-locks/gradle.lockfile
-	trivy fs gradle/dependency-locks/gradle.lockfile --format template -o report.html --template "@config/trivy/html.tpl"
-	grep CRITICAL report.html
-	/bin/rm -rf gradle/dependency-locks
-
-test:
-	./gradlew test
-
-install:
-	./gradlew install -x test -x javadoc
-
-# Publish artifacts to nexus (requires a local .gradle/gradle.properties propery configured)
-release:
-	./gradlew uploadArchives
-
-rundebug:
-	./gradlew bootRun --debug-jvm
-	
-run:
-	./gradlew bootRun
 
 version:
 	@echo $(APP_VERSION)

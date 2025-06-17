@@ -34,7 +34,7 @@ public class StringUtilityUnitTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(StringUtilityUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(StringUtilityUnitTest.class);
 
   /**
    * Test roman numeral conversion.

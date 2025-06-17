@@ -44,6 +44,7 @@ import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
@@ -92,11 +93,15 @@ public class CodeSystemProviderR4 implements IResourceProvider {
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
+      logger.info("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
 
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
         final CodeSystem cs = FhirUtilityR4.toR4(terminology);
+        logger.info("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
+
         // Skip non-matching
         if (id != null && id.getIdPart().equals(cs.getId())) {
+          logger.info("Found matching code system: {}", cs.getTitle());
           return cs;
         }
       }
@@ -161,11 +166,10 @@ public class CodeSystemProviderR4 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
-        name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
-        name = "_offset") final NumberParam offset)
-    throws Exception {
+    @Description(shortDefinition = "Number of entries to return")
+    @OptionalParam(name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page")
+    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
 
@@ -336,7 +340,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
       // FhirUtility.notSupported("date", date);
 
       final Terminology terminology =
-          FhirUtilityR4.getTerminology(searchService, id, null, "system", null, null, null);
+          FhirUtilityR4.getTerminology(searchService, id, null, null, null, null, null);
 
       final String codeStr = FhirUtilityR4.getCode(code, coding);
       return lookupHelper(terminology, codeStr, properties);
@@ -608,10 +612,10 @@ public class CodeSystemProviderR4 implements IResourceProvider {
     // Lookup parents/children
     final List<ConceptRelationship> relationships =
         searchService.findAll(StringUtility.composeQuery("AND", "active:true",
-            "from.code:" + StringUtility.escapeQuery(code)), ConceptRelationship.class);
+            "from.code:" + StringUtility.escapeQuery(code)), null, ConceptRelationship.class);
     final List<ConceptRelationship> children =
         searchService.findAll(StringUtility.composeQuery("AND", "active:true", "hierarchical:true",
-            "to.code:" + StringUtility.escapeQuery(code)), ConceptRelationship.class);
+            "to.code:" + StringUtility.escapeQuery(code)), null, ConceptRelationship.class);
 
     // Look up metadata
     final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService, terminology);
@@ -746,28 +750,27 @@ public class CodeSystemProviderR4 implements IResourceProvider {
     throws Exception {
 
     try {
-      logger.info("Creating code system with {} concepts",
+      logger.info("Create code system with {} concepts",
           codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
 
-      // Convert CodeSystem to JSON
-      final String content = ca.uhn.fhir.context.FhirContext.forR4().newJsonParser()
-          .encodeResourceToString(codeSystem);
-
-      // Write content to temporary file
-      final java.nio.file.Path tempFile =
-          java.nio.file.Files.createTempFile("codesystem-", ".json");
-      java.nio.file.Files.write(tempFile, content.getBytes());
+      // Convert CodeSystem to JSON string
+      final String content = FhirContext.forR4().newJsonParser().encodeResourceToString(codeSystem);
+      final int conceptCount = codeSystem.getConcept().size();
+      codeSystem.getConcept().clear();
+      codeSystem.setConcept(null);
 
       // Use existing loader utility
-      CodeSystemLoaderUtil.loadCodeSystem(searchService, tempFile.toString());
-
-      // Clean up temp file
-      java.nio.file.Files.delete(tempFile);
+      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content);
 
       // Return success
       final MethodOutcome outcome = new MethodOutcome();
+      // Clear the "concepts" of the code system before sending it back
+      codeSystem.setCount(conceptCount);
+      codeSystem.getConcept().clear();
       outcome.setResource(codeSystem);
       outcome.setCreated(true);
+      final IdType id = new IdType("CodeSystem", terminologyId);
+      codeSystem.setId(id);
       return outcome;
 
     } catch (final Exception e) {

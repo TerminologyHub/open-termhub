@@ -17,10 +17,9 @@ import java.util.Set;
 
 /**
  * Breaks character deliminted strings into constituent fields. Unlike the
- * {@link java.util.StringTokenizer} it recognizes empty tokens. For example,
- * using a pipe character '|' as a delimiter, it would tokenize the string
- * "a||b" into three tokens "a", "", "b". Following is an example of how to use
- * this class.
+ * {@link java.util.StringTokenizer} it recognizes empty tokens. For example, using a pipe character
+ * '|' as a delimiter, it would tokenize the string "a||b" into three tokens "a", "", "b". Following
+ * is an example of how to use this class.
  */
 public class FieldedStringTokenizer implements Enumeration<Object> {
 
@@ -31,12 +30,12 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   private int ct = 0;
 
   /**
-   * Instantiates a {@link FieldedStringTokenizer} for the specified string. The
-   * characters in the <code>delim</code> argument are the delimiters for
-   * separating tokens. Delimiter characters themselves will not be treated as
-   * tokens. This tokenizer will return null tokens for adjacent delimiters.
+   * Instantiates a {@link FieldedStringTokenizer} for the specified string. The characters in the
+   * <code>delim</code> argument are the delimiters for separating tokens. Delimiter characters
+   * themselves will not be treated as tokens. This tokenizer will return null tokens for adjacent
+   * delimiters.
    *
-   * @param str   a {@link String} to be tokenized
+   * @param str a {@link String} to be tokenized
    * @param delim a {@link String} containing delimiter characters
    */
   public FieldedStringTokenizer(final String str, final String delim) {
@@ -53,10 +52,10 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   }
 
   /**
-   * Splits a line on delimiter characters and returns a {@link String}
-   * <code>[]</code> of the tokens.
+   * Splits a line on delimiter characters and returns a {@link String} <code>[]</code> of the
+   * tokens.
    *
-   * @param line  a {@link String} to be split
+   * @param line a {@link String} to be split
    * @param delim a {@link String} containing delimiter characters
    * @return a <code>String []</code> containing tokens from the string
    */
@@ -105,10 +104,10 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   }
 
   /**
-   * Splits a line on delimiter characters and returns a {@link String}
-   * <code>[]</code> of the tokens.
+   * Splits a line on delimiter characters and returns a {@link String} <code>[]</code> of the
+   * tokens.
    *
-   * @param line  a {@link String} to be split
+   * @param line a {@link String} to be split
    * @param delim a {@link String} containing delimiter characters
    * @return a <code>String []</code> containing tokens from the string
    */
@@ -121,11 +120,11 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   }
 
   /**
-   * Splits a line on delimiter characters when the number of fields is known in
-   * advance and returns a string array of the tokens.
+   * Splits a line on delimiter characters when the number of fields is known in advance and returns
+   * a string array of the tokens.
    *
-   * @param line    a {@link String} to be split
-   * @param delim   a {@link String} containing delimiter characters
+   * @param line a {@link String} to be split
+   * @param delim a {@link String} containing delimiter characters
    * @param fieldCt the number of fields in the line to be split.
    * @return a <code>String []</code> containing tokens from the string
    */
@@ -190,16 +189,16 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   }
 
   /**
-   * Splits a line on delimiter characters when the number of fields is known in
-   * advance and populates the specified String[].
+   * Splits a line on delimiter characters when the number of fields is known in advance and
+   * populates the specified String[].
    *
-   * @param line    a {@link String} to be split
-   * @param delim   a {@link String} containing delimiter characters
+   * @param line a {@link String} to be split
+   * @param delim a {@link String} containing delimiter characters
    * @param fieldCt <code>int</code> indicates the max number of fields to split
-   * @param tokens  a {@link String}[] of the right number of tokens.
+   * @param tokens a {@link String}[] of the right number of tokens.
    */
   public static void split(final String line, final String delim, final int fieldCt,
-      final String[] tokens) {
+    final String[] tokens) {
     // return line.split("[" + delim + "]", field_ct);
 
     //
@@ -260,9 +259,8 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   //
 
   /**
-   * Calculates the number of times that this tokenizer's {@link #nextToken()}
-   * method can be called before it generates an exception. The current position
-   * is not advanced.
+   * Calculates the number of times that this tokenizer's {@link #nextToken()} method can be called
+   * before it generates an exception. The current position is not advanced.
    *
    * @return an <code>int</code> count of the number of tokens
    */
@@ -271,11 +269,10 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   }
 
   /**
-   * Returns the same value as the {@link #hasMoreTokens()} method. It exists so
-   * that this class can implement the {@link Enumeration} interface.
+   * Returns the same value as the {@link #hasMoreTokens()} method. It exists so that this class can
+   * implement the {@link Enumeration} interface.
    *
-   * @return <code>true</code> if there are more tokens; <code>false</code>
-   *         otherwise
+   * @return <code>true</code> if there are more tokens; <code>false</code> otherwise
    */
   @Override
   public boolean hasMoreElements() {
@@ -283,21 +280,19 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   }
 
   /**
-   * Tests if there are more tokens available from this tokenizer's string. If
-   * this method returns true, then a subsequent call to {@link #nextToken()}
-   * will successfully return a token.
+   * Tests if there are more tokens available from this tokenizer's string. If this method returns
+   * true, then a subsequent call to {@link #nextToken()} will successfully return a token.
    *
-   * @return <code>true</code> if there are more tokens; <code>false</code>
-   *         otherwise
+   * @return <code>true</code> if there are more tokens; <code>false</code> otherwise
    */
   public boolean hasMoreTokens() {
     return ((tokens.size() - ct) > 0);
   }
 
   /**
-   * Returns the same value as the {@link #nextToken()} method, except that its
-   * declared return value is {@link Object} rather than {@link String}. It
-   * exists so that this class can implement the {@link Enumeration} interface.
+   * Returns the same value as the {@link #nextToken()} method, except that its declared return
+   * value is {@link Object} rather than {@link String}. It exists so that this class can implement
+   * the {@link Enumeration} interface.
    *
    * @return An object {@link String} representation of the next token
    */
@@ -319,7 +314,7 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   /**
    * Join a list of strings into a single string.
    *
-   * @param strs  the strings to join
+   * @param strs the strings to join
    * @param delim the delimiter
    * @return a joined string
    */
@@ -335,7 +330,7 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   /**
    * Join a set of strings into a single string.
    *
-   * @param strs  the strings to join
+   * @param strs the strings to join
    * @param delim the delimiter
    * @return a joined string
    */
@@ -351,7 +346,7 @@ public class FieldedStringTokenizer implements Enumeration<Object> {
   /**
    * Join a list of strings into a single string.
    *
-   * @param strs  the strings to join
+   * @param strs the strings to join
    * @param delim the delimiter
    * @return a joined string
    */

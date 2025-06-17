@@ -77,15 +77,14 @@ public class ConceptRelationship extends AbstractHasModified implements Terminol
   private Boolean historical;
 
   /**
-   * The asserted flag. Indicates whether this relationship is in the asserted
-   * asserted (for terminologies that assert directions)
+   * The asserted flag. Indicates whether this relationship is in the asserted asserted (for
+   * terminologies that assert directions)
    */
   @Field(type = FieldType.Boolean)
   private Boolean asserted;
 
   /**
-   * The defining flag. Indicates whether this relationship is part of the
-   * logical definition.
+   * The defining flag. Indicates whether this relationship is part of the logical definition.
    */
   @Field(type = FieldType.Boolean)
   private Boolean defining;

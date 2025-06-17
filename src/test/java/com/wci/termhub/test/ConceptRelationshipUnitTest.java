@@ -14,8 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -37,6 +36,9 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
 
+/**
+ * Tests for ConceptRelationship.
+ */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
@@ -108,36 +110,21 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
   /** The Constant INDEX_NAME. */
   private static final String INDEX_NAME = ConceptRelationship.class.getCanonicalName();
 
-  // /**
-  // * Delete index.
-  // *
-  // * @throws Exception the exception
-  // */
-  // @Test
-  // @Order(1)
-  // public void deleteIndex() throws Exception {
-  //
-  // logger.info("Deleting index for Concept Relationship");
-  // searchService.deleteIndex(ConceptRelationship.class);
-  //
-  // // assert directory does not exist
-  // assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-  // }
-
   /**
    * Creates the index.
    *
    * @throws Exception the exception
    */
   @Test
-  @Order(2)
+  @Order(1)
   public void createIndex() throws Exception {
 
     logger.info("Creating index for Concept Relationship");
     searchService.createIndex(ConceptRelationship.class);
 
     // test if directory exists
-    assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
+    final File indexFile = new File(INDEX_DIRECTORY, INDEX_NAME);
+    assertTrue(indexFile.exists());
   }
 
   /**
@@ -146,7 +133,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(3)
+  @Order(2)
   public void testAddConceptRelationship() throws Exception {
 
     final ObjectMapper objectMapper = new ObjectMapper();
@@ -155,7 +142,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 
     if (conceptRelNode != null) {
       conceptRelationship = objectMapper.treeToValue(conceptRelNode, ConceptRelationship.class);
-      logger.info("Concept Relationship: {}", conceptRelationship.toString());
+      logger.info("Concept Relationship: {}", conceptRelationship);
       assertDoesNotThrow(() -> searchService.add(ConceptRelationship.class, conceptRelationship));
     } else {
       logger.error("No '_source' node found in the provided JSON.");
@@ -168,7 +155,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(4)
+  @Order(3)
   public void findConceptRelationshipById() throws Exception {
 
     final ConceptRelationship foundConceptRelObjects =
@@ -185,7 +172,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(5)
+  @Order(4)
   public void findConceptRelationshipByFromCode() throws Exception {
 
     final SearchParameters searchParameters = new SearchParameters();
@@ -198,7 +185,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
 
     for (final Object foundConceptObject : foundConceptRelObjects.getItems()) {
       final ConceptRelationship foundConceptRel = (ConceptRelationship) foundConceptObject;
-      logger.info("Concept Relationship found: {}", foundConceptRel.toString());
+      logger.info("Concept Relationship found: {}", foundConceptRel);
       assertEquals(conceptRelationship.toString(), foundConceptRel.toString());
     }
   }

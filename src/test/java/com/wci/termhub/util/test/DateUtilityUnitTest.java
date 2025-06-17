@@ -33,8 +33,7 @@ import com.wci.termhub.util.DateUtility;
 public class DateUtilityUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(DateUtilityUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DateUtilityUnitTest.class);
 
   /**
    * Test time zone offset label.
@@ -44,16 +43,16 @@ public class DateUtilityUnitTest {
   @Test
   public void testTimeZoneOffsetLabel() throws Exception {
     // Test with known time zones
-    ZoneId edtZone = ZoneId.of("America/New_York");
-    ZoneId pdtZone = ZoneId.of("America/Los_Angeles");
-    ZoneId parisZone = ZoneId.of("Europe/Paris");
+    final ZoneId edtZone = ZoneId.of("America/New_York");
+    final ZoneId pdtZone = ZoneId.of("America/Los_Angeles");
+    final ZoneId parisZone = ZoneId.of("Europe/Paris");
 
-    ZonedDateTime now = ZonedDateTime.now();
+    final ZonedDateTime now = ZonedDateTime.now();
 
     // Calculate expected offsets dynamically
-    String expectedEDTOffset = now.withZoneSameInstant(edtZone).getOffset().getId();
-    String expectedPDTOffset = now.withZoneSameInstant(pdtZone).getOffset().getId();
-    String expectedParisOffset = now.withZoneSameInstant(parisZone).getOffset().getId();
+    final String expectedEDTOffset = now.withZoneSameInstant(edtZone).getOffset().getId();
+    final String expectedPDTOffset = now.withZoneSameInstant(pdtZone).getOffset().getId();
+    final String expectedParisOffset = now.withZoneSameInstant(parisZone).getOffset().getId();
 
     // Test with known time zones
     assertEquals(expectedEDTOffset, DateUtility.getTimeZoneOffsetLabel("EDT", new Date()));
@@ -62,12 +61,14 @@ public class DateUtilityUnitTest {
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel(null, new Date()));
 
     // Test with ZoneId format
-    assertEquals(expectedParisOffset, DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
+    assertEquals(expectedParisOffset,
+        DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
 
     // Test with America/Los_Angeles
-    ZoneId laZone = ZoneId.of("America/Los_Angeles");
-    String expectedLAOffset = now.withZoneSameInstant(laZone).getOffset().getId();
-    assertEquals(expectedLAOffset, DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
+    final ZoneId laZone = ZoneId.of("America/Los_Angeles");
+    final String expectedLAOffset = now.withZoneSameInstant(laZone).getOffset().getId();
+    assertEquals(expectedLAOffset,
+        DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
   }
 
   /**
@@ -105,7 +106,7 @@ public class DateUtilityUnitTest {
     final long currentTime = System.currentTimeMillis();
 
     // Test UTC
-    LOG.info("TimeZone {}", DateUtility.getTimeZone(currentTime, 0));
+    LOGGER.info("TimeZone {}", DateUtility.getTimeZone(currentTime, 0));
     assertEquals("UTC", DateUtility.getTimeZone(currentTime, 0));
 
     // Test EDT (-4 hours = -14400 seconds)

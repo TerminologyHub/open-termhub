@@ -26,6 +26,9 @@ import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.util.ModelUtility;
 
+/**
+ * Metadata loader.
+ */
 public final class MetadataLoader {
 
   /** The logger. */
@@ -53,6 +56,7 @@ public final class MetadataLoader {
       }
 
       // get file name from command line
+      @SuppressWarnings("null")
       final String fullFileName = args[0];
       if (!Files.exists(Paths.get(fullFileName))) {
         logger.error("File does not exist at " + fullFileName);

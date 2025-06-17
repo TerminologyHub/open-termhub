@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_40_50;
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_43_50;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
@@ -175,6 +177,9 @@ public class TermhubOpenApiInterceptorR5 {
   /** The my use resource pages. */
   private boolean myUseResourcePages;
 
+  /** The ignore parameters. */
+  private final Set<Triple<String, String, String>> ignoreParameter = new HashSet<>();
+
   /**
    * Constructor.
    */
@@ -210,6 +215,10 @@ public class TermhubOpenApiInterceptorR5 {
 
     myExtensionToContentType.put(".png", "image/png");
     myExtensionToContentType.put(".css", "text/css; charset=UTF-8");
+
+    ignoreParameter.add(Triple.of("CodeSystem", "validate-code", "system"));
+    ignoreParameter.add(Triple.of("CodeSystem", "validate-code", "systemVersion"));
+    ignoreParameter.add(Triple.of("ValueSet", "validate-code", "version"));
   }
 
   /**
@@ -986,6 +995,13 @@ public class TermhubOpenApiInterceptorR5 {
 
       for (final OperationDefinition.OperationDefinitionParameterComponent nextParameter : theOperationDefinition
           .getParameter()) {
+
+        // Don't display unsupported parameters
+        if (ignoreParameter.contains(Triple.of(theResourceType, theOperationDefinition.getCode(),
+            nextParameter.getName()))) {
+          continue;
+        }
+
         if ("0".equals(nextParameter.getMax())
             || !nextParameter.getUse().equals(OperationParameterUse.IN)
             || (!isPrimitive(nextParameter) && nextParameter.getMin() == 0)) {
@@ -1366,7 +1382,7 @@ public class TermhubOpenApiInterceptorR5 {
   /**
    * SwaggerUiTemplateResolver.
    */
-  private class SwaggerUiTemplateResolver implements ITemplateResolver {
+  private final class SwaggerUiTemplateResolver implements ITemplateResolver {
 
     /**
      * Gets the name.
@@ -1413,7 +1429,7 @@ public class TermhubOpenApiInterceptorR5 {
   /**
    * The Class TemplateLinkBuilder.
    */
-  private static class TemplateLinkBuilder extends AbstractLinkBuilder {
+  private static final class TemplateLinkBuilder extends AbstractLinkBuilder {
 
     /**
      * Builds the link.

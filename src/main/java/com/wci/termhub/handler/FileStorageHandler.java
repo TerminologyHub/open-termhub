@@ -98,8 +98,8 @@ public interface FileStorageHandler extends Configurable {
   public InputStream getAndDecryptFile(String uri, String key, String salt) throws Exception;
 
   /**
-   * Returns an input stream for a large file. In the background, this may get
-   * downloaded to a local directory first. *
+   * Returns an input stream for a large file. In the background, this may get downloaded to a local
+   * directory first. *
    * 
    * @param uri the uri
    * @return the file

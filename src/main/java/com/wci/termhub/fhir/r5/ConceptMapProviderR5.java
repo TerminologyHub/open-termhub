@@ -10,9 +10,7 @@
 package com.wci.termhub.fhir.r5;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.Bundle;
@@ -35,20 +33,25 @@ import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Mapping;
+import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.annotation.Description;
+import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
+import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
-import ca.uhn.fhir.rest.param.DateRangeParam;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
@@ -85,21 +88,35 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
-      final List<ConceptMap> candidates = new ArrayList<>(); // findCandidates();
+      logger.info("Getting concept map with id = {}", id);
+      final List<ConceptMap> candidates = findCandidates();
+      logger.info("Found {} candidate concept maps", candidates.size());
       for (final ConceptMap map : candidates) {
-        if (id != null && id.getIdPart().equals(map.getId())) {
+        logger.info("Checking candidate map: id={}, identifier={}, title={}", map.getId(),
+            map.getIdentifierFirstRep().getValue(), map.getTitle());
+        // Strip any resource prefix from the ID for comparison
+        final String requestedId = id.getIdPart();
+        String candidateId = map.getId();
+        if (candidateId.contains("/")) {
+          candidateId = candidateId.substring(candidateId.lastIndexOf("/") + 1);
+        }
+        logger.info("Comparing requested id {} with candidate id {}", requestedId, candidateId);
+        if (requestedId.equals(candidateId)) {
+          logger.info("Found matching concept map: id={}, title={}", map.getId(), map.getTitle());
           return map;
         }
       }
+      logger.warn("No concept map found matching id={}", id);
       throw FhirUtilityR5.exception(
           "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
           HttpServletResponse.SC_NOT_FOUND);
 
     } catch (final FHIRServerResponseException e) {
+      logger.error("FHIR Server Response Exception", e);
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
-      throw FhirUtilityR5.exception("Failed to load value set",
+      throw FhirUtilityR5.exception("Failed to load concept map",
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
@@ -143,8 +160,8 @@ public class ConceptMapProviderR5 implements IResourceProvider {
    * @param identifier the identifier
    * @param name the name
    * @param publisher the publisher
-   * @param sourceCode the source code
    * @param sourceSystem the source system
+   * @param sourceCode the source code
    * @param sourceScopeUri the source scope uri
    * @param targetCode the target code
    * @param targetSystem the target system
@@ -160,147 +177,109 @@ public class ConceptMapProviderR5 implements IResourceProvider {
   @Search
   public Bundle findConceptMaps(final HttpServletRequest request,
     final ServletRequestDetails details, @OptionalParam(name = "_id") final TokenParam id,
-    @OptionalParam(name = "date") final DateRangeParam date,
+    @OptionalParam(name = "date") final StringParam date,
     @OptionalParam(name = "description") final StringParam description,
     @OptionalParam(name = "identifier") final StringParam identifier,
     @OptionalParam(name = "name") final StringParam name,
     @OptionalParam(name = "publisher") final StringParam publisher,
-    @OptionalParam(name = "source-code") final TokenParam sourceCode,
     @OptionalParam(name = "source-group-system") final UriParam sourceSystem,
+    @OptionalParam(name = "source-code") final TokenParam sourceCode,
     @OptionalParam(name = "source-scope-uri") final UriParam sourceScopeUri,
     @OptionalParam(name = "target-code") final TokenParam targetCode,
     @OptionalParam(name = "target-group-system") final UriParam targetSystem,
     @OptionalParam(name = "target-scope-uri") final UriParam targetScopeUri,
     @OptionalParam(name = "title") final StringParam title,
-    @OptionalParam(name = "url") final StringParam url,
+    @OptionalParam(name = "url") final UriType url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
-        name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
-        name = "_offset") final NumberParam offset)
-    throws Exception {
+    @Description(shortDefinition = "Number of entries to return")
+    @OptionalParam(name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page")
+    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
+      logger.info("Searching for concept maps with parameters:");
+      logger.info("  sourceSystem={}", sourceSystem != null ? sourceSystem.getValue() : "null");
+      logger.info("  sourceScopeUri={}",
+          sourceScopeUri != null ? sourceScopeUri.getValue() : "null");
+      logger.info("  targetSystem={}", targetSystem != null ? targetSystem.getValue() : "null");
+      logger.info("  targetScopeUri={}",
+          targetScopeUri != null ? targetScopeUri.getValue() : "null");
+      logger.info("  version={}", version != null ? version.getValue() : "null");
 
       FhirUtilityR5.notSupportedSearchParams(request);
 
-      // Lookup source codes if they're specified
-      final Set<String> mapsetsMatchingSourceCodes = new HashSet<>();
-      if (sourceCode != null) {
-        if (sourceSystem != null) {
-          mapsetsMatchingSourceCodes.addAll(searchService
-              .find(new SearchParameters(
-                  "fromTerminology:" + FhirUtility.lookupTerminology(sourceSystem.getValue())
-                      + " AND from.code:" + StringUtility.escapeQuery(sourceCode.getValue()),
-                  null, 1000, null, null), Mapping.class)
-              .getItems().stream().map(m -> m.getMapset().getCode()).collect(Collectors.toSet()));
-        } else {
-          mapsetsMatchingSourceCodes.addAll(searchService
-              .find(new SearchParameters(
-                  "from.code:" + StringUtility.escapeQuery(sourceCode.getValue()), null, 1000, null,
-                  null), Mapping.class)
-              .getItems().stream().map(m -> m.getMapset().getCode()).collect(Collectors.toSet()));
-        }
-      }
-      // Lookup target codes if they're specified
-      final Set<String> mapsetsMatchingTargetCodes = new HashSet<>();
-      if (targetCode != null) {
-        if (targetSystem != null) {
-          mapsetsMatchingTargetCodes.addAll(searchService
-              .find(new SearchParameters(
-                  "toTerminology:" + FhirUtility.lookupTerminology(targetSystem.getValue())
-                      + " AND to.code:" + StringUtility.escapeQuery(targetCode.getValue()),
-                  null, 1000, null, null), Mapping.class)
-              .getItems().stream().map(m -> m.getMapset().getCode()).collect(Collectors.toSet()));
-        } else {
-          mapsetsMatchingTargetCodes.addAll(searchService
-              .find(new SearchParameters(
-                  "to.code:" + StringUtility.escapeQuery(targetCode.getValue()), null, 1000, null,
-                  null), Mapping.class)
-              .getItems().stream().map(m -> m.getMapset().getCode()).collect(Collectors.toSet()));
-        }
+      // Get all mapsets and then restrict
+      final List<ConceptMap> candidates = findCandidates();
+      logger.info("Found {} candidate concept maps", candidates.size());
+
+      // Debug each candidate
+      for (final ConceptMap cm : candidates) {
+        logger.info("Candidate ConceptMap:");
+        logger.info("  id={}", cm.getId());
+        logger.info("  url={}", cm.getUrl());
+        logger.info("  version={}", cm.getVersion());
+        logger.info("  sourceScope={}",
+            cm.getSourceScope() != null ? ((UriType) cm.getSourceScope()).getValue() : "null");
+        logger.info("  targetScope={}",
+            cm.getTargetScope() != null ? ((UriType) cm.getTargetScope()).getValue() : "null");
       }
 
       final List<ConceptMap> list = new ArrayList<>();
-      final List<ConceptMap> candidates = new ArrayList<>(); // findCandidates();
       for (final ConceptMap cm : candidates) {
-
         // Skip non-matching
         if ((id != null && !id.getValue().equals(cm.getId()))
             || (url != null && !url.getValue().equals(cm.getUrl()))) {
+          logger.info("  SKIP id/url mismatch");
           continue;
         }
-        if (identifier != null && !cm.getIdentifier().isEmpty()
-            && !FhirUtility.compareString(identifier, cm.getIdentifier().get(0).getValue())) {
-          logger.info("  SKIP identifier mismatch = " + cm.getIdentifier().get(0).getValue());
+
+        // Check source system
+        if (sourceSystem != null) {
+          logger.info("Checking sourceSystem match: expected={}, actual={}",
+              sourceSystem.getValue(),
+              cm.getSourceScope() != null ? ((UriType) cm.getSourceScope()).getValue() : "null");
+
+          if (cm.getSourceScope() == null || ((UriType) cm.getSourceScope()).getValue() == null
+              || !((UriType) cm.getSourceScope()).getValue().equals(sourceSystem.getValue())) {
+            logger.info("  SKIP sourceSystem mismatch = {}", sourceSystem.getValue());
+            continue;
+          }
+        }
+
+        // Check target system
+        if (targetSystem != null) {
+          logger.info("Checking targetSystem match: expected={}, actual={}",
+              targetSystem.getValue(),
+              cm.getTargetScope() != null ? ((UriType) cm.getTargetScope()).getValue() : "null");
+
+          if (cm.getTargetScope() == null || ((UriType) cm.getTargetScope()).getValue() == null
+              || !((UriType) cm.getTargetScope()).getValue().equals(targetSystem.getValue())) {
+            logger.info("  SKIP targetSystem mismatch = {}", targetSystem.getValue());
+            continue;
+          }
+        }
+
+        // Check version
+        if (version != null && !version.getValue().equals(cm.getVersion())) {
+          logger.info("  SKIP version mismatch: expected={}, actual={}", version.getValue(),
+              cm.getVersion());
           continue;
         }
-        if (date != null && !FhirUtility.compareDateRange(date, cm.getDate())) {
-          logger.info("  SKIP date mismatch = " + cm.getDate());
-          continue;
-        }
-        if (description != null && !FhirUtility.compareString(description, cm.getDescription())) {
-          logger.info("  SKIP description mismatch = " + cm.getDescription());
-          continue;
-        }
-        if (name != null && !FhirUtility.compareString(name, cm.getName())) {
-          logger.info("  SKIP name mismatch = " + cm.getName());
-          continue;
-        }
-        if (publisher != null && !FhirUtility.compareString(publisher, cm.getPublisher())) {
-          logger.info("  SKIP publisher mismatch = " + cm.getPublisher());
-          continue;
-        }
-        if (title != null && !FhirUtility.compareString(title, cm.getTitle())) {
-          logger.info("  SKIP title mismatch = " + cm.getTitle());
-          continue;
-        }
-        if (version != null && !FhirUtility.compareString(version, cm.getVersion())) {
-          logger.info("  SKIP version mismatch = " + cm.getVersion());
-          continue;
-        }
-        if (sourceSystem != null
-            && !cm.getSourceScopeUriType().getValue().startsWith(sourceSystem.getValue())) {
-          logger.info("  SKIP sourceSystem mismatch = " + cm.getSourceScopeUriType().getValue());
-          continue;
-        }
-        if (targetSystem != null
-            && !cm.getTargetScopeUriType().getValue().startsWith(targetSystem.getValue())) {
-          logger.info("  SKIP targetSystem mismatch = " + cm.getTargetScopeUriType().getValue());
-          continue;
-        }
-        if (sourceScopeUri != null
-            && !sourceScopeUri.getValue().equals(cm.getSourceScopeUriType().getValue())) {
-          logger.info("  SKIP sourceSystem mismatch = " + cm.getSourceScopeUriType().getValue());
-          continue;
-        }
-        if (targetScopeUri != null
-            && !targetScopeUri.getValue().equals(cm.getTargetScopeUriType().getValue())) {
-          logger.info("  SKIP targetScopeUri mismatch = " + cm.getTargetScopeUriType().getValue());
-          continue;
-        }
-        if (sourceCode != null && !mapsetsMatchingSourceCodes.contains(sourceCode.getValue())) {
-          logger.info("  SKIP source-code not found = " + sourceCode.getValue());
-          continue;
-        }
-        if (targetCode != null && !mapsetsMatchingTargetCodes.contains(targetCode.getValue())) {
-          logger.info("  SKIP target-code not found = " + targetCode.getValue());
-          continue;
-        }
+
         list.add(cm);
+        logger.info("  ADDED to results");
       }
 
-      // Sort the results by uri.
+      // Sort and return
       final List<ConceptMap> list2 = list.stream()
           .sorted((a, b) -> a.getUrl().compareTo(b.getUrl())).collect(Collectors.toList());
+      logger.info("Returning bundle with {} concept maps", list2.size());
       return FhirUtilityR5.makeBundle(request, list2, count, offset);
 
-    } catch (final FHIRServerResponseException e) {
-      throw e;
     } catch (final Exception e) {
-      logger.error("Unexpected FHIR error", e);
-      throw FhirUtilityR5.exception("Failed to load value set",
-          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      logger.error("Unexpected error finding concept maps", e);
+      throw FhirUtilityR5.exception("Failed to find concept maps", IssueType.EXCEPTION,
+          HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -355,14 +334,18 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     @OperationParam(name = "targetScope") final UriType targetScope,
     @OperationParam(name = "targetSystem") final UriType targetSystem) throws Exception {
 
-    // Reject post
-    if (request.getMethod().equals("POST")) {
-      throw FhirUtilityR5.exception("POST method not supported for $translate",
-          IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-    }
+    logger.info("translateInstance called with parameters:");
+    logger.info("  id: {}", id);
+    logger.info("  url: {}", url);
+    logger.info("  sourceCode: {}", sourceCode);
+    logger.info("  system: {}", sourceSystem);
+    logger.info("  sourceCoding: {}", sourceCoding);
+    logger.info("  targetCode: {}", targetCode);
+    logger.info("  targetCoding: {}", targetCoding);
 
     // Reject post
     if (request.getMethod().equals("POST")) {
+      logger.warn("POST method not supported for $translate");
       throw FhirUtilityR5.exception("POST method not supported for $translate",
           IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
@@ -372,16 +355,22 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     FhirUtilityR5.mutuallyExclusive("targetScope", targetScope, "targetSystem", targetSystem);
 
     try {
-
       final String sourceCodeStr = FhirUtilityR5.getCode(sourceCode, sourceCoding);
       final String targetCodeStr = FhirUtilityR5.getCode(targetCode, targetCoding);
+      logger.info("Extracted codes - sourceCodeStr: {}, targetCodeStr: {}", sourceCodeStr,
+          targetCodeStr);
+
       final Terminology sourceTerminology = FhirUtilityR5.getTerminology(searchService, null,
           sourceCode, "sourceSystem", sourceSystem, sourceVersion, sourceCoding, true);
       final Terminology targetTerminology = FhirUtilityR5.getTerminology(searchService, null,
           targetCode, "targetSystem", targetSystem, sourceVersion, targetCoding, true);
+      logger.info("Retrieved terminologies - source: {}, target: {}",
+          sourceTerminology != null ? sourceTerminology.getAbbreviation() : "null",
+          targetTerminology != null ? targetTerminology.getAbbreviation() : "null");
 
       // Get all mapsets and then restrict
-      final List<ConceptMap> candidates = new ArrayList<>(); // findCandidates();
+      final List<ConceptMap> candidates = findCandidates();
+      logger.info("Found {} candidate concept maps", candidates.size());
       for (final ConceptMap cm : candidates) {
 
         // Skip non-matching
@@ -395,21 +384,22 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           continue;
         }
         if (sourceScope != null
-            && !sourceScope.getValue().equals(cm.getSourceScopeUriType().getValue())) {
-          logger.info("  SKIP sourceScope mismatch = " + sourceScope.getValue() + ", "
-              + cm.getSourceScopeUriType().getValue());
+            && !sourceScope.getValue().equals(((UriType) cm.getSourceScope()).getValue())) {
+          logger.info("  SKIP sourceScope mismatch = {}, {}", sourceScope.getValue(),
+              ((UriType) cm.getSourceScope()).getValue());
           continue;
         }
         if (targetScope != null
-            && !targetScope.getValue().equals(cm.getTargetScopeUriType().getValue())) {
-          logger.info("  SKIP targetScope mismatch = " + targetScope.getValue() + ", "
-              + cm.getTargetScopeUriType().getValue());
+            && !targetScope.getValue().equals(((UriType) cm.getTargetScope()).getValue())) {
+          logger.info("  SKIP targetScope mismatch = {}, {}", targetScope.getValue(),
+              ((UriType) cm.getTargetScope()).getValue());
           continue;
         }
-        if (targetSystem != null
-            && !cm.getTargetScopeUriType().getValue().startsWith(targetSystem.getValue())) {
-          logger.info("  SKIP targetSystem mismatch = " + targetSystem.getValue() + ", "
-              + cm.getTargetScopeUriType().getValue());
+        if (targetSystem != null && cm.getTargetScope() != null
+            && ((UriType) cm.getTargetScope()).getValue() != null
+            && !((UriType) cm.getTargetScope()).getValue().startsWith(targetSystem.getValue())) {
+          logger.info("  SKIP targetSystem mismatch = {}",
+              ((UriType) cm.getTargetScope()).getValue());
           continue;
         }
         final boolean reverse = sourceCodeStr == null;
@@ -499,7 +489,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           targetCode, "targetSystem", targetSystem, null, targetCoding, true);
 
       // Get all mapsets and then restrict
-      final List<ConceptMap> candidates = new ArrayList<>(); // findCandidates();
+      final List<ConceptMap> candidates = findCandidates();
       final List<ConceptMap> list = new ArrayList<>();
       for (final ConceptMap cm : candidates) {
 
@@ -508,32 +498,33 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           continue;
         }
         if (conceptMapVersion != null && !conceptMapVersion.getValue().equals(cm.getVersion())) {
-          logger.info("  SKIP concept map version mismatch = " + cm.getVersion());
+          logger.info("  SKIP concept map version mismatch = {}", cm.getVersion());
           continue;
         }
         if (sourceScope != null
-            && !sourceScope.getValue().equals(cm.getSourceScopeUriType().getValue())) {
-          logger.info("  SKIP sourceScope mismatch = " + sourceScope.getValue() + ", "
-              + cm.getSourceScopeUriType().getValue());
+            && !sourceScope.getValue().equals(((UriType) cm.getSourceScope()).getValue())) {
+          logger.info("  SKIP sourceScope mismatch = {}, {}", sourceScope.getValue(),
+              ((UriType) cm.getSourceScope()).getValue());
           continue;
         }
         if (targetScope != null
-            && !targetScope.getValue().equals(cm.getTargetScopeUriType().getValue())) {
-          logger.info("  SKIP targetScope mismatch = " + targetScope.getValue() + ", "
-              + cm.getTargetScopeUriType().getValue());
+            && !targetScope.getValue().equals(((UriType) cm.getTargetScope()).getValue())) {
+          logger.info("  SKIP targetScope mismatch = {}, {}", targetScope.getValue(),
+              ((UriType) cm.getTargetScope()).getValue());
           continue;
         }
-        if (targetSystem != null
-            && !cm.getTargetScopeUriType().getValue().startsWith(targetSystem.getValue())) {
-          logger.info("  SKIP targetSystem mismatch = " + targetSystem.getValue() + ", "
-              + cm.getTargetScopeUriType().getValue());
+        if (targetSystem != null && cm.getTargetScope() != null
+            && ((UriType) cm.getTargetScope()).getValue() != null
+            && !((UriType) cm.getTargetScope()).getValue().startsWith(targetSystem.getValue())) {
+          logger.info("  SKIP targetSystem mismatch = {}, {}", targetSystem.getValue(),
+              ((UriType) cm.getTargetScope()).getValue());
           continue;
         }
 
         list.add(cm);
       }
 
-      if (list.size() > 0) {
+      if (!list.isEmpty()) {
         final boolean reverse = sourceCodeStr == null;
         return translateHelper(list, sourceTerminology, targetTerminology,
             reverse ? targetCodeStr : sourceCodeStr, reverse);
@@ -577,26 +568,24 @@ public class ConceptMapProviderR5 implements IResourceProvider {
    * @throws Exception the exception
    */
   public List<ConceptMap> findCandidates() throws Exception {
+    logger.info("Finding candidate concept maps from Lucene");
 
-    // try {
-    //
-    // // Lookup and filter mapsets
-    // final List<ConceptMap> list = new ArrayList<>();
-    // for (final Mapset mapset : FhirUtility.lookupMapsets(searchService)) {
-    // final ConceptMap cm = FhirUtilityR5.toR5(mapset);
-    // list.add(cm);
-    // }
-    // return list;
-    //
-    // } catch (final FHIRServerResponseException e) {
-    // throw e;
-    // } catch (final Exception e) {
-    // logger.error("Unexpected FHIR error", e);
-    // throw FhirUtilityR5.exception("Failed to find concept maps",
-    // OperationOutcome.IssueType.EXCEPTION,
-    // HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-    // }
-    return new ArrayList<>();
+    try {
+      // Lookup and filter mapsets
+      final List<ConceptMap> list = new ArrayList<>();
+      for (final Mapset mapset : FhirUtility.lookupMapsets(searchService)) {
+        final ConceptMap cm = FhirUtilityR5.toR5(mapset);
+        list.add(cm);
+      }
+      return list;
+
+    } catch (final FHIRServerResponseException e) {
+      throw e;
+    } catch (final Exception e) {
+      logger.error("Unexpected FHIR error", e);
+      throw FhirUtilityR5.exception("Failed to find concept maps",
+          OperationOutcome.IssueType.EXCEPTION, 500);
+    }
   }
 
   /**
@@ -614,43 +603,23 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     final Terminology sourceTerminology, final Terminology targetTerminology, final String code,
     final boolean reverse) throws Exception {
 
+    logger.info("translateHelper called with parameters:");
+    logger.info("  maps size: {}", maps.size());
+    logger.info("  sourceTerminology: {}",
+        sourceTerminology != null ? sourceTerminology.getAbbreviation() : "null");
+    logger.info("  targetTerminology: {}",
+        targetTerminology != null ? targetTerminology.getAbbreviation() : "null");
+    logger.info("  code: {}", code);
+    logger.info("  reverse: {}", reverse);
+
     final Parameters parameters = new Parameters();
     final List<ParametersParameterComponent> matches = new ArrayList<>();
-
-    // {
-    // "resourceType": "Parameters",
-    // "parameter": [ {
-    // "name": "result",
-    // "valueBoolean": true
-    // }, {
-    // "name": "message",
-    // "valueString": "Please observe the following map advice. Group:1,
-    // Priority:1,
-    // Rule:TRUE,
-    // Advice:'ALWAYS N28.9', Map Category:'Map source concept is properly
-    // classified'."
-    // }, {
-    // "name": "match",
-    // "part": [ {
-    // "name": "equivalence",
-    // "valueCode": "unmatched"
-    // }, {
-    // "name": "concept",
-    // "valueCoding": {
-    // "system": "http://hl7.org/fhir/sid/icd-10",
-    // "code": "N28.9"
-    // }
-    // }, {
-    // "name": "source",
-    // "valueString":
-    // "http://snomed.info/sct/900000000000207008/version/20240101?fhir_cm=447562003"
-    // } ]
-    // } ]
-    // }
 
     for (final ConceptMap map : maps) {
       // Get the identifier from the map
       final String mapsetCode = map.getIdentifier().get(0).getValue();
+      logger.info("Processing concept map: id={}, code={}, url={}", map.getId(), mapsetCode,
+          map.getUrl());
 
       final List<Mapping> mappings =
           searchService.find(new SearchParameters(StringUtility.composeQuery("AND",
@@ -658,14 +627,18 @@ public class ConceptMapProviderR5 implements IResourceProvider {
               (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
               // terminology clause (null if null) - no reversing
               sourceTerminology == null ? null
-                  : ("from.terminology:" + sourceTerminology.getAbbreviation()),
+                  : ("from.terminology:"
+                      + StringUtility.escapeQuery(sourceTerminology.getAbbreviation())),
               targetTerminology == null ? null
-                  : ("to.terminology:" + targetTerminology.getAbbreviation()),
+                  : ("to.terminology:"
+                      + StringUtility.escapeQuery(targetTerminology.getAbbreviation())),
               // mapset clauses
-              // TODO: how do we include publisher?, needs to be in concept map
-              "mapset.abbreviation:" + map.getTitle(), "mapset.version:" + map.getVersion(),
+              "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
+              "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
               "mapset.code:" + mapsetCode), null, 1000, null, null), Mapping.class).getItems();
-      if (mappings.size() > 0) {
+
+      logger.info("Found {} mappings for concept map {}", mappings.size(), map.getId());
+      if (!mappings.isEmpty()) {
         for (final Mapping mapping : mappings) {
           final ParametersParameterComponent match = new ParametersParameterComponent();
           match.setName("match");
@@ -694,7 +667,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     }
 
     // If matches, proceed
-    if (matches.size() > 0) {
+    if (!matches.isEmpty()) {
       parameters.addParameter("result", true);
       for (final ParametersParameterComponent match : matches) {
         parameters.addParameter(match);
@@ -719,5 +692,57 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     parameters.addParameter("message", "No mapping found matching specified critiera = "
         + maps.stream().map(m -> m.getId()).collect(Collectors.toSet()));
     return parameters;
+  }
+
+  /**
+   * Creates the concept map.
+   *
+   * @param request the request
+   * @param details the details
+   * @param conceptMap the concept map
+   * @return the method outcome
+   * @throws Exception the exception
+   */
+  @Create
+  public MethodOutcome createConceptMap(final HttpServletRequest request,
+    final ServletRequestDetails details, @ResourceParam final ConceptMap conceptMap)
+    throws Exception {
+    try {
+
+      // Validate required fields
+      if (conceptMap.getUrl() == null || conceptMap.getUrl().isEmpty()) {
+        throw FhirUtilityR5.exception("ConceptMap.url is required", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+      if (conceptMap.getSourceScope() == null) {
+        throw FhirUtilityR5.exception("ConceptMap.sourceScope is required", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+      if (conceptMap.getTargetScope() == null) {
+        throw FhirUtilityR5.exception("ConceptMap.targetScope is required", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+
+      logger.debug("Create ConceptMap with source: {} and target:{}", conceptMap.getSourceScope(),
+          conceptMap.getTargetScope());
+
+      // Convert CodeSystem to JSON
+      final String content = FhirContext.forR5().newJsonParser().encodeResourceToString(conceptMap);
+
+      final Mapset mapset = ConceptMapLoaderUtil.loadConceptMap(searchService, content);
+
+      final ConceptMap savedCm = FhirUtilityR5.toR5(mapset);
+      final MethodOutcome outcome = new MethodOutcome();
+      outcome.setResource(savedCm);
+      outcome.setCreated(true);
+      final IdType id = new IdType("ConceptMap", mapset.getId());
+      savedCm.setId(id);
+      return outcome;
+
+    } catch (final Exception e) {
+      logger.error("Unexpected error creating concept map", e);
+      throw FhirUtilityR5.exception("Failed to create concept map", IssueType.EXCEPTION,
+          HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
   }
 }

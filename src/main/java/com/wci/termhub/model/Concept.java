@@ -60,10 +60,6 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
   })
   private String stemName;
 
-  // /** The anonymous flag. */
-  // @Field(type = FieldType.Keyword)
-  // private boolean anonymous = false;
-
   /**
    * The terms. (aka atoms, descriptions, names, synonyms, etc). Ignore the
    * ngram indexed field here.
@@ -177,8 +173,6 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
       attributes = new HashMap<>(concept.getAttributes());
       semanticTypes = new HashSet<>(concept.getSemanticTypes());
       labels = new HashSet<>(concept.getLabels());
-      // mappedBy= things don't get copied
-      // anonymous = other.isAnonymous();
       parents = new ArrayList<>(concept.getParents());
       children = new ArrayList<>(concept.getChildren());
       descendants = new ArrayList<>(concept.getDescendants());
@@ -230,8 +224,6 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
       if (!concept.getLabels().isEmpty()) {
         getLabels().addAll(concept.getLabels());
       }
-      // mappedBy= things don't get copied
-      // anonymous = other.isAnonymous();
 
     }
   }
@@ -418,26 +410,6 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
   public void setLabels(final Set<String> labels) {
     this.labels = labels;
   }
-
-  /**
-   * Indicates whether or not anonymous is the case.
-   *
-   * @param name the new name
-   * @return <code>true</code> if so, <code>false</code> otherwise
-   */
-  // @Schema(description = "Indicates whether or not the concept is anonymous")
-  // public boolean isAnonymous() {
-  // return anonymous;
-  // }
-
-  /**
-   * Sets the anonymous.
-   *
-   * @param anonymous the anonymous
-   */
-  // public void setAnonymous(final boolean anonymous) {
-  // this.anonymous = anonymous;
-  // }
 
   /* see superclass */
   @Override

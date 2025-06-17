@@ -9,8 +9,6 @@
  */
 package com.wci.termhub.fhir.r5;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -94,11 +92,15 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
+      logger.info("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
 
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
         final CodeSystem cs = FhirUtilityR5.toR5(terminology);
-        // Skip non-matching
+        logger.info("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
+
+        // Skip non-matching - comparing just the ID parts
         if (id != null && id.getIdPart().equals(cs.getId())) {
+          logger.info("Found matching code system: {}", cs.getTitle());
           return cs;
         }
       }
@@ -110,7 +112,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
-      throw FhirUtilityR5.exception("Failed to load value set",
+      throw FhirUtilityR5.exception("Failed to load code system",
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
@@ -163,11 +165,10 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
-        name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
-        name = "_offset") final NumberParam offset)
-    throws Exception {
+    @Description(shortDefinition = "Number of entries to return")
+    @OptionalParam(name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page")
+    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
 
@@ -188,34 +189,35 @@ public class CodeSystemProviderR5 implements IResourceProvider {
         // Skip non-matching
         if ((id != null && !id.getValue().equals(cs.getId()))
             || (url != null && !url.getValue().equals(cs.getUrl()))) {
+          logger.debug("  SKIP id/url mismatch = {}", cs.getUrl());
           continue;
         }
         if (date != null && !FhirUtility.compareDate(date, cs.getDate())) {
-          logger.info("  SKIP date mismatch = " + cs.getDate());
+          logger.debug("  SKIP date mismatch = {}", cs.getDate());
           continue;
         }
         if (description != null && !FhirUtility.compareString(description, cs.getDescription())) {
-          logger.info("  SKIP description mismatch = " + cs.getDescription());
+          logger.debug("  SKIP description mismatch = {}", cs.getDescription());
           continue;
         }
         if (name != null && !FhirUtility.compareString(name, cs.getName())) {
-          logger.info("  SKIP name mismatch = " + cs.getName());
+          logger.debug("  SKIP name mismatch = {}", cs.getName());
           continue;
         }
         if (publisher != null && !FhirUtility.compareString(publisher, cs.getPublisher())) {
-          logger.info("  SKIP publisher mismatch = " + cs.getPublisher());
+          logger.debug("  SKIP publisher mismatch = {}", cs.getPublisher());
           continue;
         }
         if (title != null && !FhirUtility.compareString(title, cs.getTitle())) {
-          logger.info("  SKIP title mismatch = " + cs.getTitle());
+          logger.debug("  SKIP title mismatch = {}", cs.getTitle());
           continue;
         }
         if (version != null && !FhirUtility.compareString(version, cs.getVersion())) {
-          logger.info("  SKIP version mismatch = " + cs.getVersion());
+          logger.debug("  SKIP version mismatch = {}", cs.getVersion());
           continue;
         }
         if (code != null && !mapsetsMatchingCodes.contains(code.getValue())) {
-          logger.info("  SKIP code not found = " + code.getValue());
+          logger.debug("  SKIP code not found = {}", code.getValue());
           continue;
         }
 
@@ -274,7 +276,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     }
 
     try {
-
       FhirUtilityR5.mutuallyExclusive("code", code, "coding", coding);
 
       final Terminology terminology = FhirUtilityR5.getTerminology(searchService, null, code,
@@ -598,9 +599,23 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final Set<CodeType> properties) throws Exception {
 
     // Lookup concept (only code is needed because we have terminology index)
-    final SearchParameters params =
-        new SearchParameters("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
-            + StringUtility.escapeQuery(terminology.getAbbreviation()), 0, 2, null, null);
+    // final SearchParameters params = new SearchParameters("code:" +
+    // StringUtility.escapeQuery(code) + " AND terminology:"
+    // + StringUtility.escapeQuery(terminology.getAbbreviation()), 0, 2, null,
+    // null);
+
+    String query = null;
+    if (StringUtility.isEmpty(code)) {
+
+      query = "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation());
+
+    } else {
+      query = "code:" + StringUtility.escapeQuery(code) + " AND terminology:"
+          + StringUtility.escapeQuery(terminology.getAbbreviation());
+
+    }
+
+    final SearchParameters params = new SearchParameters(query, 0, 2, null, null);
     final Concept concept = searchService.findSingle(params, Concept.class);
     if (concept == null) {
       throw FhirUtilityR5.exception("Unable to find code for system/version = " + code,
@@ -610,10 +625,10 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     // Lookup parents/children
     final List<ConceptRelationship> relationships =
         searchService.findAll(StringUtility.composeQuery("AND", "active:true",
-            "from.code:" + StringUtility.escapeQuery(code)), ConceptRelationship.class);
+            "from.code:" + StringUtility.escapeQuery(code)), null, ConceptRelationship.class);
     final List<ConceptRelationship> children =
         searchService.findAll(StringUtility.composeQuery("AND", "active:true", "hierarchical:true",
-            "to.code:" + StringUtility.escapeQuery(code)), ConceptRelationship.class);
+            "to.code:" + StringUtility.escapeQuery(code)), null, ConceptRelationship.class);
 
     // Look up metadata
     final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService, terminology);
@@ -621,8 +636,8 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     return FhirUtilityR5.toR5(FhirUtilityR5.toR5(terminology), concept,
         properties == null ? null
             : properties.stream().map(c -> c.getValue()).collect(Collectors.toSet()),
-        displayMap, relationships, children == null ? null
-            : children.stream().map(r -> r.getFrom()).collect(Collectors.toList()));
+        displayMap, relationships,
+        children == null ? null : children.stream().map(r -> r.getFrom()).toList());
   }
 
   /**
@@ -748,26 +763,27 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     throws Exception {
 
     try {
-      logger.info("Creating code system with {} concepts",
+      logger.info("Create code system with {} concepts",
           codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
 
-      // Convert CodeSystem to JSON
+      // Convert CodeSystem to JSON string
       final String content = FhirContext.forR5().newJsonParser().encodeResourceToString(codeSystem);
-
-      // Write content to temporary file
-      final Path tempFile = Files.createTempFile("codesystem-", ".json");
-      Files.write(tempFile, content.getBytes());
+      final int conceptCount = codeSystem.getConcept().size();
+      codeSystem.getConcept().clear();
+      codeSystem.setConcept(null);
 
       // Use existing loader utility
-      CodeSystemLoaderUtil.loadCodeSystem(searchService, tempFile.toString());
-
-      // Clean up temp file
-      Files.delete(tempFile);
+      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content);
 
       // Return success
       final MethodOutcome outcome = new MethodOutcome();
+      // Clear the "concepts" of the code system before sending it back
+      codeSystem.setCount(conceptCount);
+      codeSystem.getConcept().clear();
       outcome.setResource(codeSystem);
       outcome.setCreated(true);
+      final IdType id = new IdType("CodeSystem", terminologyId);
+      codeSystem.setId(id);
       return outcome;
 
     } catch (final Exception e) {

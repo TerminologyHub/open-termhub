@@ -14,10 +14,18 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * The app configuration.
+ */
 @Configuration
 @ComponentScan(basePackages = "com.wci.termhub")
 public class AppConfig {
-  // Additional bean definitions can go here if needed
+
+  /**
+   * Rest template.
+   *
+   * @return the rest template
+   */
   @Bean
   public RestTemplate restTemplate() {
     return new RestTemplate();

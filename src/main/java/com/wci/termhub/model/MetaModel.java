@@ -10,8 +10,8 @@
 package com.wci.termhub.model;
 
 /**
- * Meta model for terminology objects and attributes. For defining metadata for
- * controlling loader behavior, and other use cases.
+ * Meta model for terminology objects and attributes. For defining metadata for controlling loader
+ * behavior, and other use cases.
  */
 public final class MetaModel {
 

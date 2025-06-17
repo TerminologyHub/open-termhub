@@ -9,11 +9,14 @@
  */
 package com.wci.termhub.rest;
 
+import static com.wci.termhub.util.IndexUtility.getAndQuery;
+
 import java.io.File;
 import java.nio.file.Files;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
+import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,18 +49,22 @@ import org.springframework.web.multipart.MultipartFile;
 import com.wci.termhub.Application;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.handler.QueryBuilder;
-import com.wci.termhub.model.AuthContext;
+import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.HealthCheck;
 import com.wci.termhub.model.IncludeParam;
+import com.wci.termhub.model.Mapping;
+import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
+import com.wci.termhub.model.ResultListMapping;
+import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -80,6 +88,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -91,13 +100,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * Reference implementation of {@link TerminologyServiceRestOld}.
+ * Terminology service rest implementation.
  */
-@OpenAPIDefinition(info = @Info(title = "Terminology Hub Terminology Terminology API",
-    version = "1.0.0",
+@OpenAPIDefinition(info = @Info(title = "Open TermHub Terminology API", version = "1.0.0",
     description = "API documentation for the interacting with terminologies and concepts. "
-        + "<p>For a guided tour of using this API, see our github project "
-        + "<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes\">"
+        + "<p>For more information, see our github project "
+        + "<a href=\"https://github.com/terminologyhub/open-termhub\">"
         + "https://github.com/terminologyhub/termhub-in-5-minutes</a></p>"
         + "<p>See <a href=\"/fhir/r4/swagger-ui/index.html\" target=\"_blank\">FHIR R4 API</a></p>"
         + "<p>See <a href=\"/fhir/r5/swagger-ui/index.html\" target=\"_blank\">FHIR R5 API</a></p>",
@@ -111,7 +119,8 @@ import jakarta.servlet.http.HttpServletRequest;
             description = "Concept service endpoints with \"by id\" parameters"),
         @Tag(name = "concept by code",
             description = "Concept service endpoints with \"by code\" parameters"),
-        @Tag(name = "term", description = "Term endpoints")
+        @Tag(name = "term", description = "Term endpoints"),
+        @Tag(name = "mapset", description = "Mapset endpoints"),
     }, servers = {
         @Server(description = "Current Instance", url = "/")
     })
@@ -124,15 +133,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(TerminologyServiceRestImpl.class);
 
-  /** The Constant DF. */
-  @SuppressWarnings("unused")
-  private static final DecimalFormat DF = new DecimalFormat("#.#####");
-
   /** The terminologies cache. */
   private static TimerCache<Map<String, Terminology>> terminologyCache =
       new TimerCache<>(1000, 10000);
 
+  /** The terminologies cache. */
+  private static TimerCache<Map<String, Mapset>> mapsetCache = new TimerCache<>(1000, 10000);
+
   /** The request. */
+  @SuppressWarnings("unused")
   @Autowired
   private HttpServletRequest request;
 
@@ -172,13 +181,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     this.request = request;
   }
 
-  /**
-   * Health.
-   *
-   * @param dependencies the dependencies
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/health", method = RequestMethod.GET)
@@ -186,9 +188,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<HealthCheck> health(
     @RequestParam(name = "dependencies", required = false) final Boolean dependencies)
     throws Exception {
-
-    // Authorize
-    authorize(request);
 
     try {
 
@@ -212,16 +211,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
-  /**
-   * Admin.
-   *
-   * @param task the task
-   * @param adminKey the admin key
-   * @param background the background
-   * @param payload the payload
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/admin", method = RequestMethod.POST)
@@ -232,7 +221,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody(required = false) final String payload)
     throws Exception {
 
-    authorizeAdmin(request);
     try {
 
       if (adminKey != null
@@ -256,9 +244,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
         }
 
-      } else {
-        throw new RestException(false, 403, "Forbidden", null);
       }
+
       return new ResponseEntity<>("Successful", new HttpHeaders(), HttpStatus.OK);
     } catch (final Exception e) {
       handleException(e, "trying to perform admin = " + task);
@@ -266,13 +253,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the terminology.
-   *
-   * @param id the id
-   * @return the terminology
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.GET)
@@ -282,8 +262,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Terminology"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -294,13 +272,11 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<Terminology> getTerminology(@PathVariable("id") final String id)
     throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
     try {
       final Terminology terminology = searchService.get(id, Terminology.class);
       // not found - 404
       if (terminology == null) {
-        throw new RestException(false, 404, "Not Found", "Unable to find terminology for " + id);
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.NOT_FOUND);
       }
       terminology.cleanForApi();
 
@@ -312,13 +288,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the terminology metadata.
-   *
-   * @param id the id
-   * @return the terminology metadata
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}/metadata", method = RequestMethod.GET)
@@ -328,8 +297,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Terminology"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -340,20 +307,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<List<Metadata>> getTerminologyMetadata(@PathVariable("id") final String id)
     throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
     try {
 
       final Terminology terminology = searchService.get(id, Terminology.class);
       // not found - 404
       if (terminology == null) {
-        throw new RestException(false, 404, "Not Found", "Unable to find terminology = " + id);
+        return new ResponseEntity<>(Collections.emptyList(), new HttpHeaders(),
+            HttpStatus.NOT_FOUND);
       }
 
       final SearchParameters params = new SearchParameters();
-      params.setQuery(
-          StringUtility.composeQuery("AND", "terminology:" + terminology.getAbbreviation(),
-              "publisher:" + terminology.getPublisher(), "version:" + terminology.getVersion()));
+      params.setQuery(StringUtility.composeQuery("AND",
+          "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
+          "publisher: \"" + StringUtility.escapeQuery(terminology.getPublisher()) + "\"",
+          "version:" + StringUtility.escapeQuery(terminology.getVersion())));
       params.setLimit(100000);
 
       // Find and return the list
@@ -365,13 +332,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Adds the terminology.
-   *
-   * @param terminologyStr the terminology str
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.POST,
@@ -381,7 +341,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody final String terminologyStr)
     throws Exception {
 
-    authorizeAdmin(request);
     try {
 
       Terminology terminology = null;
@@ -392,7 +351,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
             "Unable to parse terminology = " + terminologyStr);
       }
 
-      searchService.createIndex(Terminology.class);
       searchService.add(Terminology.class, terminology);
 
       // Compute the URI location
@@ -419,14 +377,17 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    */
   @RequestMapping(value = "/terminology/fhir/codeSystem", method = RequestMethod.POST,
       consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @Operation(summary = "FHIR CodeSystem operation",
-      description = "Performs a FHIR CodeSystem operation", tags = {
-          "terminology"
-      })
-  @Parameters({
-      @Parameter(name = "file", description = "ZIP file containing FHIR CodeSystem resources",
-          required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-  })
+  @Hidden
+  // @Operation(summary = "FHIR CodeSystem operation",
+  // description = "Performs a FHIR CodeSystem operation", tags = {
+  // "terminology"
+  // })
+  // @Parameters({
+  // @Parameter(name = "file", description = "ZIP file containing FHIR
+  // CodeSystem resources",
+  // required = true, content = @Content(mediaType =
+  // MediaType.MULTIPART_FORM_DATA_VALUE))
+  // })
   public ResponseEntity<String> addTerminologyFhirCodeSystem(
     @RequestParam("file") final MultipartFile file) throws Exception {
 
@@ -476,14 +437,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
-  /**
-   * Update terminology.
-   *
-   * @param id the id
-   * @param terminologyStr the terminology str
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.PATCH,
@@ -493,7 +446,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @org.springframework.web.bind.annotation.RequestBody final String terminologyStr)
     throws Exception {
 
-    authorizeAdmin(request);
     try {
       Terminology terminology = null;
       try {
@@ -524,13 +476,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Delete terminology.
-   *
-   * @param id the id
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.DELETE)
@@ -538,7 +483,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<Void> deleteTerminology(@PathVariable("id") final String id)
     throws Exception {
 
-    authorizeAdmin(request);
     try {
       // Find the object
       final Terminology terminology = searchService.get(id, Terminology.class);
@@ -557,17 +501,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find terminologies.
-   *
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.GET)
@@ -577,8 +510,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching terminologies"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -607,8 +538,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
     try {
 
       // limit return objects to 1000 regardless of user request
@@ -628,14 +557,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept.
-   *
-   * @param conceptId the concept id
-   * @param include the include
-   * @return the concept
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}", method = RequestMethod.GET)
@@ -645,8 +566,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Concept matching specified id"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -657,7 +576,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
@@ -665,8 +584,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   public ResponseEntity<Concept> getConcept(@PathVariable("conceptId") final String conceptId,
     @RequestParam(value = "include", required = false) final String include) throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
     try {
       final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
 
@@ -707,15 +624,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param include the include
-   * @return the concept
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}", method = RequestMethod.GET)
@@ -726,8 +634,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Concept matching specified terminology and code"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -744,7 +650,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
@@ -753,7 +659,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @PathVariable("code") final String code,
     @RequestParam(value = "include", required = false) final String include) throws Exception {
 
-    authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
@@ -763,7 +668,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final String query =
           StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
               "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-              "publisher:" + StringUtility.escapeQuery(term.getPublisher()),
+              "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
               "version:" + StringUtility.escapeQuery(term.getVersion()));
 
       // then do a find on the query
@@ -793,15 +698,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept codes.
-   *
-   * @param terminology the terminology
-   * @param codes the codes
-   * @param include the include
-   * @return the concept codes
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology:[A-Z].*}", method = RequestMethod.GET)
@@ -811,8 +707,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Concepts mathcing code"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -829,7 +723,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
@@ -839,7 +733,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(value = "codes", required = true) final String codes,
     @RequestParam(value = "include", required = false) final String include) throws Exception {
 
-    authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "summary" : include);
@@ -862,7 +755,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
                   .collect(Collectors.toList()))
               + ")",
           "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-          "publisher:" + StringUtility.escapeQuery(term.getPublisher()),
+          "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
           "version:" + StringUtility.escapeQuery(term.getVersion()));
 
       // then do a find on the query
@@ -888,23 +781,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concepts.
-   *
-   * @param terminology the terminology
-   * @param query the query
-   * @param expression the expression
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param leaf the leaf
-   * @param include the include
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept", method = RequestMethod.GET)
@@ -914,8 +790,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching concepts"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -955,7 +829,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
@@ -975,7 +849,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "highlights" : include);
@@ -989,7 +862,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Handler applied, send null handler below
       final ResultList<Concept> list = findHelper(tlist, query2, expression, offset, maxLimit, sort,
-          ascending, active, leaf, null, ip);
+          ascending, active, leaf, ip);
 
       return new ResponseEntity<>(new ResultListConcept(list), new HttpHeaders(), HttpStatus.OK);
 
@@ -1001,20 +874,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find terms.
-   *
-   * @param terminology the terminology
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/term", method = RequestMethod.GET)
@@ -1024,8 +883,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching terms"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1067,7 +924,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    authorize(request);
     try {
 
       // Build a query from the handler and use it in findHelper
@@ -1098,20 +954,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Lookup.
-   *
-   * @param terminology the terminology
-   * @param expression the expression
-   * @param limit the limit
-   * @param active the active
-   * @param leaf the leaf
-   * @param include the include
-   * @param handler the handler
-   * @param queries the queries
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/bulk", method = RequestMethod.POST)
@@ -1122,8 +964,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "List of result lists of matching concepts for each query"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1151,7 +991,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions"
+              + "subsets, terms, treePositions "
               + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false)
@@ -1174,7 +1014,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         hidden = true) final String queries)
     throws Exception {
 
-    authorize(request);
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "semanticTypes" : include);
@@ -1187,13 +1026,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
         final int useLimit = limit == null ? 1 : (limit > 10 ? 10 : limit);
         final ResultList<Concept> result =
-            findHelper(tlist, query2, expression, 0, useLimit, null, null, active, leaf, null, ip);
+            findHelper(tlist, query2, expression, 0, useLimit, null, null, active, leaf, ip);
         result.getParameters().setQuery(query2);
         result.getParameters().setExpression(expression);
-
-        // Round confidences to 4 places
-        result.getItems().stream()
-            .forEach(c -> c.setConfidence(Precision.round(c.getConfidence(), 3)));
 
         if (query.isEmpty() || result.getItems().isEmpty()) {
           final Concept concept = new Concept();
@@ -1203,8 +1038,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           concept.setPublisher("");
           concept.getSemanticTypes().add("");
           concept.setName("No match");
-          result.getItems().clear();
-          result.getItems().add(concept);
+          result.setItems(new ArrayList<>(Arrays.asList(concept)));
         }
         list.add(new ResultListConcept(result));
       }
@@ -1231,15 +1065,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * @param ascending the ascending
    * @param active the active
    * @param leaf the leaf
-   * @param handler the handler
    * @param ip the ip
    * @return the result list
    * @throws Exception the exception
    */
   private ResultList<Concept> findHelper(final List<Terminology> terminologies, final String query,
     final String expression, final Integer offset, final Integer limit, final String sort,
-    final Boolean ascending, final Boolean active, final Boolean leaf, final String handler,
-    final IncludeParam ip) throws Exception {
+    final Boolean ascending, final Boolean active, final Boolean leaf, final IncludeParam ip)
+    throws Exception {
 
     // Check for a single terminology
     final Terminology single = terminologies.isEmpty() ? null : terminologies.get(0);
@@ -1248,21 +1081,24 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       throw new RestException(false, 417, "Expecation failed",
           "Expression parameter can only be used in " + "conjunction with a single terminology");
     }
-
-    final SearchParameters params = new SearchParameters(
-        StringUtility.composeQuery("AND", query,
-            single == null ? null
-                : TerminologyUtility.getExpressionQuery(searchService, single.getAbbreviation(),
-                    single.getPublisher(), single.getVersion(), expression, single.getIndexName())),
-        offset, limit, sort, ascending);
+    final Query keywordQuery = LuceneQueryBuilder.parse(query, Concept.class);
+    final Query expressionQuery = TerminologyUtility.getExpressionQuery(expression);
+    final Query booleanQuery = getAndQuery(keywordQuery, expressionQuery);
+    final SearchParameters params =
+        new SearchParameters(booleanQuery, offset, limit, sort, ascending);
     if (active != null && active) {
       params.setActive(true);
     }
     if (leaf != null && leaf) {
       params.setLeaf(true);
     }
+
+    logger.info(
+        "findHelper: query = " + query + ", expression = " + expression + ", params = " + params);
+
     final ResultList<Concept> list = searchService.findFields(params,
-        new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+        new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class,
+        terminologies.stream().map(t -> t.getAbbreviation()).collect(Collectors.toSet()));
 
     for (final Concept concept : list.getItems()) {
       concept.cleanForApi();
@@ -1277,17 +1113,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
-  /**
-   * Find metadata.
-   *
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/metadata", method = RequestMethod.GET)
@@ -1298,8 +1123,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Matadata for the specified query parameters"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
@@ -1327,7 +1150,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
 
-    authorize(request);
     try {
 
       final Map<String, Terminology> map = lookupTerminologyMap();
@@ -1352,19 +1174,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept relationships.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/relationships", method = RequestMethod.GET)
@@ -1375,8 +1184,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept relationships"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1410,7 +1217,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    authorize(request);
     try {
 
       // look up concept first and get code
@@ -1441,20 +1247,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept relationships.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/relationships", method = RequestMethod.GET)
@@ -1465,8 +1257,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept relationships"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1505,7 +1295,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    authorize(request);
     try {
 
       // limit return objects to 1000 regardless of user request
@@ -1530,19 +1319,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept inverse relationships.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/inverseRelationships", method = RequestMethod.GET)
@@ -1553,8 +1329,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept inverse relationships"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1588,7 +1362,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    authorize(request);
     try {
 
       // look up concept first and get code
@@ -1620,20 +1393,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept inverse relationships.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/inverseRelationships",
@@ -1646,8 +1405,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept inverse relationships"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1686,7 +1443,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    authorize(request);
     try {
 
       // limit return objects to 1000 regardless of user request
@@ -1711,19 +1467,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree positions.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/trees", method = RequestMethod.GET)
@@ -1734,8 +1477,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept tree positions"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1769,7 +1510,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    authorize(request);
     try {
 
       final Map<String, Terminology> map = lookupTerminologyMap();
@@ -1815,20 +1555,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree positions.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/trees", method = RequestMethod.GET)
@@ -1839,8 +1565,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept tree positions"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1878,7 +1602,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    authorize(request);
     try {
 
       // validate terminology - throw exception if not found
@@ -1913,19 +1636,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree position children.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/trees/children", method = RequestMethod.GET)
@@ -1937,8 +1647,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept tree position children"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -1973,8 +1681,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
     try {
 
       // look up concept first and get code
@@ -1997,7 +1703,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final ResultList<ConceptTreePosition> list =
           searchService.find(params, ConceptTreePosition.class);
       if (list.getItems().isEmpty()) {
-        list.setParameters(new SearchParameters(null, offset, maxLimit, sort, ascending));
+        list.setParameters(new SearchParameters((String) null, offset, maxLimit, sort, ascending));
         return new ResponseEntity<>(new ResultListConceptTreePosition(list), new HttpHeaders(),
             HttpStatus.OK);
       }
@@ -2006,7 +1712,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Find its children
       final SearchParameters paramsChd =
-          new SearchParameters(null, offset, maxLimit, sort, ascending);
+          new SearchParameters((String) null, offset, maxLimit, sort, ascending);
       final String ancPath =
           (StringUtils.isEmpty(tp.getAncestorPath()) ? "" : tp.getAncestorPath() + "~")
               + concept.getCode();
@@ -2014,8 +1720,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           "terminology:" + StringUtility.escapeQuery(tp.getTerminology()),
           "ancestorPath:" + StringUtility.escapeQuery(ancPath),
           QueryBuilder.findBuilder(builders, handler).buildQuery(query)));
+
       final ResultList<ConceptTreePosition> listChd =
           searchService.find(paramsChd, ConceptTreePosition.class);
+
       listChd.setParameters(paramsChd);
 
       return new ResponseEntity<>(new ResultListConceptTreePosition(listChd), new HttpHeaders(),
@@ -2027,20 +1735,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree position children.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/trees/children",
@@ -2053,8 +1747,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @ApiResponses({
       @ApiResponse(responseCode = "200",
           description = "Result list of matching concept tree position children"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
       @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
       @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
@@ -2093,8 +1785,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         required = false) @Parameter(hidden = true) final String handler)
     throws Exception {
 
-    @SuppressWarnings("unused")
-    final AuthContext context = authorize(request);
     try {
 
       // Find this thing
@@ -2110,7 +1800,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final ResultList<ConceptTreePosition> list =
           searchService.find(params, ConceptTreePosition.class);
       if (list.getItems().isEmpty()) {
-        list.setParameters(new SearchParameters(null, offset, maxLimit, sort, ascending));
+        list.setParameters(new SearchParameters((String) null, offset, maxLimit, sort, ascending));
         return new ResponseEntity<>(new ResultListConceptTreePosition(list), new HttpHeaders(),
             HttpStatus.OK);
       }
@@ -2119,7 +1809,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Find its children
       final SearchParameters paramsChd =
-          new SearchParameters(null, offset, maxLimit, sort, ascending);
+          new SearchParameters((String) null, offset, maxLimit, sort, ascending);
       final String ancPath =
           (StringUtils.isEmpty(tp.getAncestorPath()) ? "" : tp.getAncestorPath() + "~") + code;
       paramsChd.setQuery(StringUtility.composeQuery("AND",
@@ -2149,33 +1839,38 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * @throws Exception the exception
    */
   @RequestMapping(value = "/terminology/{terminology}/trees", method = RequestMethod.POST)
-  @Operation(summary = "Compute concept tree positions by terminology, publisher and version",
-      description = "Computes concept tree positions for the specified terminology, publisher and version.",
-      tags = {
-          "concept by code"
-      })
-  @ApiResponses({
-      @ApiResponse(responseCode = "200",
-          description = "Result list of matching concept tree positions"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
-      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
-      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
-      @ApiResponse(responseCode = "500", description = "Internal server error",
-          content = @Content())
-  })
-  @Parameters({
-      @Parameter(name = "terminology",
-          description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\"."),
-      @Parameter(name = "publisher", description = "Terminology publisher. e.g. \"SANDBOX\"."),
-      @Parameter(name = "version", description = "Terminology version. e.g. \"20240301\"."),
-  })
+  @Hidden
+  // @Operation(summary = "Compute concept tree positions by terminology,
+  // publisher and version",
+  // description = "Computes concept tree positions for the specified
+  // terminology, publisher and
+  // version.",
+  // tags = {
+  // "concept by code"
+  // })
+  // @ApiResponses({
+  // @ApiResponse(responseCode = "200",
+  // description = "Result list of matching concept tree positions"),
+  // @ApiResponse(responseCode = "404", description = "Not found", content =
+  // @Content()),
+  // @ApiResponse(responseCode = "417", description = "Expectation failed",
+  // content = @Content()),
+  // @ApiResponse(responseCode = "500", description = "Internal server error",
+  // content = @Content())
+  // })
+  // @Parameters({
+  // @Parameter(name = "terminology",
+  // description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\"."),
+  // @Parameter(name = "publisher", description = "Terminology publisher. e.g.
+  // \"SANDBOX\"."),
+  // @Parameter(name = "version", description = "Terminology version. e.g.
+  // \"20240301\"."),
+  // })
   public ResponseEntity<String> computeTreePositions(
     @PathVariable("terminology") final String terminology,
     @RequestParam("publisher") final String publisher,
     @RequestParam("version") final String version) throws Exception {
 
-    authorize(request);
     try {
 
       // throw exception if any parameter is null or empty
@@ -2197,6 +1892,513 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     } catch (final Exception e) {
       handleException(e, "trying to compute tree positions for terminology = " + terminology);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/mapping", method = RequestMethod.GET)
+  @Operation(summary = "Find mappings across mapsets",
+      description = "Finds mapping matching specified search criteria.", tags = {
+          "mapset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Result list of matching mappings"),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "mapset",
+          description = "Comma-separated list of mapset ids or abbreviations (or null for all mapsets)."
+              + " e.g. \"uuid1,uuid2\", \"SNOMEDCT_US-ICD10CM,CVX-NDC\".",
+          required = false),
+      @Parameter(name = "query", description = "Search text", required = false),
+      @Parameter(name = "offset", description = "Start index for search results", required = false,
+          schema = @Schema(implementation = Integer.class), example = "0"),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+      @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "ascending",
+          description = "<code>true</code> for ascending, <code>false</code> for descending,"
+              + " <code>null</code> for unspecified",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+      @Parameter(name = "active",
+          description = "<code>true</code> for active mappings only, <code>false</code> for inactive mappings only,"
+              + " <code>null</code> for both",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+      @Parameter(name = "leaf",
+          description = "<code>true</code> for leaf nodes only, <code>false</code> for non-leaf nodes,"
+              + " <code>null</code> for either",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+  })
+  public ResponseEntity<ResultListMapping> findMappings(
+    @RequestParam(name = "mapset", required = false) final String mapset,
+    @RequestParam(name = "query", required = false) final String query,
+    @RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
+    @RequestParam(name = "sort", required = false) final String sort,
+    @RequestParam(name = "ascending", required = false) final Boolean ascending,
+    @RequestParam(name = "active", required = false) final Boolean active,
+    @RequestParam(name = "leaf", required = false) final Boolean leaf) throws Exception {
+
+    try {
+
+      // Allow mapset to be blank here
+      final List<Mapset> mapsets = lookupMapsets(mapset, true);
+
+      // Build a query from the handler and use it in findHelper
+      // limit return objects to 1000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+
+      // Handler applied, send null handler below
+      final ResultList<Mapping> list =
+          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active, leaf);
+
+      return new ResponseEntity<>(new ResultListMapping(list), new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to find mappings");
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/mapset/{mapset}/mappings", method = RequestMethod.GET)
+  @Operation(summary = "Find mappings for the specified mapset",
+      description = "Finds mapping for the specified mapset and the specified search criteria.",
+      tags = {
+          "mapset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Result list of matching mappings"),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "mapset",
+          description = "Mapset id or abbreviation" + " e.g. \"uuid1\" or \"CVX-NDC\"."),
+      @Parameter(name = "query", description = "Search text", required = false),
+      @Parameter(name = "offset", description = "Start index for search results", required = false,
+          schema = @Schema(implementation = Integer.class), example = "0"),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+      @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "ascending",
+          description = "<code>true</code> for ascending, <code>false</code> for descending,"
+              + " <code>null</code> for unspecified",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+      @Parameter(name = "active",
+          description = "<code>true</code> for active mappings only, <code>false</code> for inactive mappings only,"
+              + " <code>null</code> for both",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+      @Parameter(name = "leaf",
+          description = "<code>true</code> for leaf nodes only, <code>false</code> for non-leaf nodes,"
+              + " <code>null</code> for either",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+  })
+  public ResponseEntity<ResultListMapping> findMapsetMappings(
+    @PathVariable("mapset") final String mapsetId,
+    @RequestParam(name = "query", required = false) final String query,
+    @RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
+    @RequestParam(name = "sort", required = false) final String sort,
+    @RequestParam(name = "ascending", required = false) final Boolean ascending,
+    @RequestParam(name = "active", required = false) final Boolean active,
+    @RequestParam(name = "leaf", required = false) final Boolean leaf) throws Exception {
+
+    try {
+
+      // Allow mapset to be blank here
+      final List<Mapset> mapsets = lookupMapsets(mapsetId, false);
+
+      // Build a query from the handler and use it in findHelper
+      // limit return objects to 1000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+
+      // Handler applied, send null handler below
+      final ResultList<Mapping> list =
+          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active, leaf);
+
+      return new ResponseEntity<>(new ResultListMapping(list), new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to find mapset mappings");
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/mappings", method = RequestMethod.GET)
+  @Operation(summary = "Get mappings from concept by id",
+      description = "Gets mappings from the specified concept", tags = {
+          "concept by id"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Mappings from the concept matching specified id in specified project",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = Mapping.class)))),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true)
+  })
+  public ResponseEntity<List<Mapping>> getConceptMappings(
+    @PathVariable("conceptId") final String conceptId) throws Exception {
+
+    try {
+      final IncludeParam ip = new IncludeParam("minimal");
+      // final Map<String, Terminology> map = lookupTerminologyMap();
+
+      // Get the concept
+      final String query = "id:" + StringUtility.escapeQuery(conceptId);
+
+      // then do a find on the query
+      // don't use 'get' because it doesn't work with include param fields
+      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(params,
+          new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+
+      if (results.getTotal() == 0) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.OK);
+      }
+      if (results.getTotal() > 1) {
+        throw new RestException(false, 417, "Expecation failed",
+            "Too many matching concepts for id = " + conceptId);
+      }
+
+      final Concept concept = results.getItems().get(0);
+
+      // Find mappings
+      final List<Mapset> mapsets = lookupMapsets(null, true);
+      final List<Mapping> mappings = findMappingsHelper(mapsets,
+          StringUtility.composeQuery("AND",
+              "from.code:" + StringUtility.escapeQuery(concept.getCode()),
+              "from.terminology:" + concept.getTerminology(),
+              "from.publisher: \"" + concept.getPublisher()) + "\"",
+          0, 10000, null, null, true, null).getItems();
+
+      // Return the object
+      return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get concept mappings = " + conceptId);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/inverseMappings",
+      method = RequestMethod.GET)
+  @Operation(summary = "Get mappings to concept by id",
+      description = "Gets mappings to the specified concept", tags = {
+          "concept by id"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Mappings to the concept",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = Mapping.class)))),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true)
+  })
+  public ResponseEntity<List<Mapping>> getConceptInverseMappings(
+    @PathVariable("conceptId") final String conceptId) throws Exception {
+
+    try {
+      final IncludeParam ip = new IncludeParam("minimal");
+
+      // final Map<String, Terminology> map = lookupTerminologyMap();
+
+      // Get the concept
+      final String query = "id:" + StringUtility.escapeQuery(conceptId);
+
+      // then do a find on the query
+      // don't use 'get' because it doesn't work with include param fields
+      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(params,
+          new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+
+      if (results.getTotal() == 0) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.OK);
+      }
+      if (results.getTotal() > 1) {
+        throw new RestException(false, 417, "Expecation failed",
+            "Too many matching concepts for id = " + conceptId);
+      }
+
+      final Concept concept = results.getItems().get(0);
+
+      // Find mappings
+      final List<Mapset> mapsets = lookupMapsets(null, true);
+      final List<Mapping> mappings = findMappingsHelper(mapsets,
+          StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
+              "to.terminology:" + concept.getTerminology(),
+              "to.publisher: \"" + concept.getPublisher()) + "\"",
+          0, 10000, null, null, true, null).getItems();
+
+      // Return the object
+      return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get concept mappings = " + conceptId);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/concept/{terminology}/{code}/mappings", method = RequestMethod.GET)
+  @Operation(summary = "Get mappings from concept by terminology and code",
+      description = "Gets mappings from the concept with the specified terminology and code.",
+      tags = {
+          "concept by code"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Mappings from the concept matching specified terminology and code",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = Mapping.class)))),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "terminology",
+          description = "Terminology id or abbreviation." + " e.g. \"uuid1\" or \"ICD10CM\".",
+          required = true),
+      @Parameter(name = "code",
+          description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"",
+          required = true)
+  })
+  public ResponseEntity<List<Mapping>> getConceptMappings(
+    @PathVariable("terminology") final String terminology, @PathVariable("code") final String code)
+    throws Exception {
+
+    try {
+
+      final IncludeParam ip = new IncludeParam("minimal");
+      final Terminology term = lookupTerminology(terminology);
+
+      // find with code, term, pub, version
+      final String query =
+          StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
+              "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
+              "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
+              "version:" + StringUtility.escapeQuery(term.getVersion()));
+
+      // then do a find on the query
+      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(params,
+          new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+
+      if (results.getTotal() == 0) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.OK);
+      }
+      if (results.getTotal() > 1) {
+        throw new RestException(false, 417, "Expecation failed",
+            "Too many matching concepts for terminology/code = " + terminology + ", " + code);
+      }
+
+      final Concept concept = results.getItems().get(0);
+
+      // Find mappings
+      final List<Mapset> mapsets = lookupMapsets(null, true);
+      final List<Mapping> mappings = findMappingsHelper(mapsets,
+          StringUtility.composeQuery("AND",
+              "from.code:" + StringUtility.escapeQuery(concept.getCode()),
+              "from.terminology:" + concept.getTerminology(),
+              "from.publisher: \"" + concept.getPublisher()) + "\"",
+          0, 10000, null, null, true, null).getItems();
+
+      // Return the object
+      return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get concept mappings for = " + code);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "concept/{terminology}/{code}/inverseMappings",
+      method = RequestMethod.GET)
+  @Operation(summary = "Get mappings to concept by terminology and code",
+      description = "Gets mappings tothe concept with the specified terminology and code.", tags = {
+          "concept by code"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Mappings to the concept matching specified terminology and code",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = Mapping.class)))),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "terminology",
+          description = "Terminology id or abbreviation." + " e.g. \"uuid1\" or \"ICD10CM\".",
+          required = true),
+      @Parameter(name = "code",
+          description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"",
+          required = true)
+  })
+  public ResponseEntity<List<Mapping>> getConceptInverseMappings(
+    @PathVariable("terminology") final String terminology, @PathVariable("code") final String code)
+    throws Exception {
+
+    try {
+
+      final IncludeParam ip = new IncludeParam("minimal");
+      final Terminology term = lookupTerminology(terminology);
+
+      // find with code, term, pub, version
+      final String query =
+          StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
+              "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
+              "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
+              "version:" + StringUtility.escapeQuery(term.getVersion()));
+
+      // then do a find on the query
+      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(params,
+          new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+
+      if (results.getTotal() == 0) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.OK);
+      }
+      if (results.getTotal() > 1) {
+        throw new RestException(false, 417, "Expecation failed",
+            "Too many matching concepts for terminology/code = " + terminology + ", " + code);
+      }
+
+      final Concept concept = results.getItems().get(0);
+
+      // Find mappings
+      final List<Mapset> mapsets = lookupMapsets(null, true);
+      final List<Mapping> mappings = findMappingsHelper(mapsets,
+          StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
+              "to.terminology:" + concept.getTerminology(),
+              "to.publisher: \"" + concept.getPublisher()) + "\"",
+          0, 10000, null, null, true, null).getItems();
+
+      // Return the object
+      return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get concept mappings for = " + code);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/mapset/{id:[a-f0-9].+}", method = RequestMethod.GET)
+  @Operation(summary = "Get mapset by id", description = "Gets mapset for the specified id",
+      tags = {
+          "mapset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Mapset"),
+      @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "id", description = "Mapset id, e.g. \"uuid\"", required = true)
+  })
+  public ResponseEntity<Mapset> getMapset(@PathVariable("id") final String id) throws Exception {
+
+    try {
+      final Mapset mapset = searchService.get(id, Mapset.class);
+      // not found - 404
+      if (mapset == null) {
+        throw new RestException(false, 404, "Not Found", "Unable to find mapset for " + id);
+      }
+
+      mapset.cleanForApi();
+
+      // Return the object
+      return new ResponseEntity<>(mapset, new HttpHeaders(), HttpStatus.OK);
+    } catch (final Exception e) {
+      handleException(e, "trying to get mapset = " + id);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/mapset", method = RequestMethod.GET)
+  @Operation(summary = "Find mapsets", description = "Finds mapsets matching specified criteria.",
+      tags = {
+          "mapset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Result list of matching mapsets"),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "query", description = "Search text", required = false,
+          schema = @Schema(implementation = String.class)),
+      @Parameter(name = "offset", description = "Start index for search results", required = false,
+          schema = @Schema(implementation = Integer.class), example = "0"),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+      @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "ascending",
+          description = "<code>true</code> for ascending, <code>false</code> for descending,"
+              + " <code>null</code> for unspecified",
+          required = false, schema = @Schema(implementation = Boolean.class))
+  })
+  public ResponseEntity<ResultListMapset> findMapsets(
+    @RequestParam(name = "query", required = false) final String query,
+    @RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
+    @RequestParam(name = "sort", required = false) final String sort,
+    @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
+
+    try {
+
+      // limit return objects to 1000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+
+      // Limit to loaded mapsets
+      final SearchParameters params =
+          new SearchParameters("*:*" + ((query == null || query.isEmpty()) ? "" : " AND " + query),
+              offset, maxLimit, sort, ascending);
+      final ResultList<Mapset> list = searchService.find(params, Mapset.class);
+      list.setParameters(params);
+      list.getItems().forEach(t -> t.cleanForApi());
+
+      return new ResponseEntity<>(new ResultListMapset(list), new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to find mapsets");
       return null;
     }
   }
@@ -2293,7 +2495,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         .toList();
     if (list.isEmpty()) {
       throw new RestException(false, 417, "Expectation failed",
-          "Unable to find any matching terminology in project = " + terminology);
+          "Unable to find any matching terminology = " + terminology);
     }
     return list;
   }
@@ -2316,9 +2518,139 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       logger.error(
           "    key = " + concept.getTerminology() + concept.getPublisher() + concept.getVersion());
       throw new RestException(false, 417, "Expectation failed",
-          "Specified concept is not valid for this project = " + concept.getId());
+          "Specified concept is not valid for this terminology = " + concept.getId());
     }
     return terminology;
+  }
+
+  /**
+   * Lookup mapsets.
+   *
+   * @param mapset the mapset
+   * @param allowBlank the allow blank
+   * @return the list
+   * @throws Exception the exception
+   */
+  private List<Mapset> lookupMapsets(final String mapset, final boolean allowBlank)
+    throws Exception {
+
+    if (!allowBlank && StringUtility.isEmpty(mapset)) {
+      throw new RestException(false, 417, "Expectation failed",
+          "Mapset parameter should not be blank");
+    }
+
+    final Map<String, Mapset> map = lookupMapsetMap();
+    // Find mapsets
+    final Set<String> mapsets = new HashSet<>();
+    if (mapset != null) {
+      for (final String value : mapset.split(",")) {
+        mapsets.add(value);
+      }
+    }
+    final List<Mapset> list = map.values().stream().filter(m -> (allowBlank && mapsets.isEmpty())
+        || mapsets.contains(m.getId()) || mapsets.contains(m.getAbbreviation())).toList();
+    if (!allowBlank && list.isEmpty()) {
+      throw new RestException(false, 417, "Expectation failed",
+          "Unable to find any matching mapset = " + mapset);
+    }
+    return list;
+  }
+
+  /**
+   * Lookup mapset map.
+   *
+   * @return the map
+   * @throws Exception the exception
+   */
+  private Map<String, Mapset> lookupMapsetMap() throws Exception {
+
+    final String query = "*:*";
+    Map<String, Mapset> indexMap = mapsetCache.get(query);
+
+    if (indexMap == null) {
+      // then do a find on the query
+      final SearchParameters params = new SearchParameters(query, null, 100000, null, null);
+      final ResultList<Mapset> results = searchService.find(params, Mapset.class);
+      final List<Mapset> mapsets = results.getItems();
+
+      // then sort the results (just use the natural mapset sort order)
+      indexMap = new HashMap<>();
+      for (final Mapset mapset : mapsets) {
+        indexMap.put(mapset.getAbbreviation() + mapset.getPublisher() + mapset.getVersion(),
+            mapset);
+      }
+      mapsetCache.put(query, indexMap);
+    }
+    return indexMap;
+  }
+
+  /**
+   * Find mapset helper.
+   *
+   * @param mapsets the mapsets
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @param leaf the leaf
+   * @return the result list
+   * @throws Exception the exception
+   */
+  private ResultList<Mapping> findMappingsHelper(final List<Mapset> mapsets, final String query,
+    final Integer offset, final Integer limit, final String sort, final Boolean ascending,
+    final Boolean active, final Boolean leaf) throws Exception {
+
+    // We are not using multiple indexes, so we instead have to add constraints
+    final String mapsetClause = "(" + String.join(" OR ",
+        mapsets.stream()
+            .map(m -> "(" + StringUtility.composeQuery("AND",
+                "mapset.abbreviation:" + StringUtility.escapeQuery(m.getAbbreviation()),
+                "mapset.publisher: \"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
+                "mapset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
+            .collect(Collectors.toList()))
+        + ")";
+    final SearchParameters params = new SearchParameters(
+        StringUtility.composeQuery("AND", query, mapsetClause), offset, limit, sort, ascending);
+    if (active != null && active) {
+      params.setActive(true);
+    }
+    if (leaf != null && leaf) {
+      params.setLeaf(true);
+    }
+
+    // Bail if no mapsets
+    if (ModelUtility.isEmpty(mapsets)) {
+      return new ResultList<Mapping>();
+    }
+
+    final ResultList<Mapping> list = searchService.find(params, Mapping.class);
+
+    // for (final Mapping mapping : list.getItems()) {
+    // mapping.cleanForApi();
+    // TerminologyUtility.populateConcept(mapping, ip, single, searchService);
+    // }
+
+    // Sort the mappings by mapsetCode, group, priority
+    Collections.sort(list.getItems(), new Comparator<Mapping>() {
+
+      /* see superclass */
+      @Override
+      public int compare(final Mapping m1, final Mapping m2) {
+        final String k1 = m1.getMapset().getCode() + StringUtils.leftPad(m1.getGroup(), 2, "0")
+            + StringUtils.leftPad(m1.getPriority(), 2, "0");
+        final String k2 = m2.getMapset().getCode() + StringUtils.leftPad(m2.getGroup(), 2, "0")
+            + StringUtils.leftPad(m2.getPriority(), 2, "0");
+        return k1.compareTo(k2);
+      }
+    });
+
+    // Restore the original query for the response
+    params.setQuery(query);
+    list.setParameters(params);
+    return list;
+
   }
 
 }

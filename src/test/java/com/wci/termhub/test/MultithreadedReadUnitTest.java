@@ -10,6 +10,7 @@
 package com.wci.termhub.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,6 +27,7 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.StringUtility;
 
 /**
  * The Class MultithreadedReadUnitTest.
@@ -35,8 +37,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 public class MultithreadedReadUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(MultithreadedReadUnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MultithreadedReadUnitTest.class);
 
   /** The search service. */
   @Autowired
@@ -60,8 +61,8 @@ public class MultithreadedReadUnitTest {
     final ResultList<Concept> allConcepts =
         searchService.findAll(new SearchParameters(5000, 0), Concept.class);
 
-    LOG.info("Found {} concepts", allConcepts.getItems().size());
-    assertTrue(allConcepts.getItems().size() > 0);
+    LOGGER.info("Found {} concepts", allConcepts.getItems().size());
+    assertFalse(allConcepts.getItems().isEmpty());
 
     final String queryTemplate = "terminology:%s AND version:%s AND code:%s";
 
@@ -75,9 +76,11 @@ public class MultithreadedReadUnitTest {
       // public void run() {
 
       try {
-        SEARCH_PARAMETERS.setQuery(String.format(queryTemplate, concept.getTerminology(),
-            concept.getVersion(), concept.getCode()));
-        LOG.info("Query is {}", SEARCH_PARAMETERS.getQuery());
+        SEARCH_PARAMETERS.setQuery(
+            String.format(queryTemplate, StringUtility.escapeQuery(concept.getTerminology()),
+                StringUtility.escapeQuery(concept.getVersion()),
+                StringUtility.escapeQuery(concept.getCode())));
+        LOGGER.info("Query is {}", SEARCH_PARAMETERS.getQuery());
 
         final ResultList<Concept> searchResults =
             searchService.find(SEARCH_PARAMETERS, Concept.class);
@@ -87,14 +90,14 @@ public class MultithreadedReadUnitTest {
           matchCount.incrementAndGet();
         } else {
           final Concept foundConcept = searchResults.getItems().get(0);
-          LOG.info("Miss - concept {}:{}:{} does not match {}:{}:{}", concept.getTerminology(),
+          LOGGER.info("Miss - concept {}:{}:{} does not match {}:{}:{}", concept.getTerminology(),
               concept.getVersion(), concept.getCode(), foundConcept.getTerminology(),
               foundConcept.getVersion(), foundConcept.getCode());
           missCount.incrementAndGet();
         }
 
       } catch (final Exception e) {
-        LOG.error("Miss - error while fetching concept for {}", SEARCH_PARAMETERS.getQuery(), e);
+        LOGGER.error("Miss - error while fetching concept for {}", SEARCH_PARAMETERS.getQuery(), e);
         missCount.incrementAndGet();
       }
     }
@@ -104,13 +107,13 @@ public class MultithreadedReadUnitTest {
     // executor.shutdown();
     // executor.awaitTermination(10, TimeUnit.SECONDS);
 
-    LOG.info("Match count is {}", matchCount.get());
-    LOG.info("Miss count is {}", missCount.get());
+    LOGGER.info("Match count is {}", matchCount.get());
+    LOGGER.info("Miss count is {}", missCount.get());
 
     // count match or miss matches
     assertTrue(matchCount.get() > 0);
     assertEquals(0, missCount.get());
 
-  };
+  }
 
 }

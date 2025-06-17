@@ -52,7 +52,7 @@ public class ProxyTester {
 
   /**
    * Constructs a new tester for the specified class.
-   * 
+   *
    * @param obj Object to test.
    */
   public ProxyTester(final Object obj) {
@@ -60,11 +60,10 @@ public class ProxyTester {
   }
 
   /**
-   * Adds a field to the list of tested fields. If this method is called, the
-   * tester will not attempt to list all the getters and setters on the object
-   * under test, and will instead simply test all the fields in the include
-   * list.
-   * 
+   * Adds a field to the list of tested fields. If this method is called, the tester will not
+   * attempt to list all the getters and setters on the object under test, and will instead simply
+   * test all the fields in the include list.
+   *
    * @param field Field name whose getter/setter should be tested.
    */
   public void include(final String field) {
@@ -73,7 +72,7 @@ public class ProxyTester {
 
   /**
    * Adds a field to the list of excluded fields.
-   * 
+   *
    * @param field Field name to exclude from testing.
    */
   public void exclude(final String field) {
@@ -111,8 +110,8 @@ public class ProxyTester {
   }
 
   /**
-   * Walks through the methods in the class looking for getters and setters that
-   * are on our include list (if any) and are not on our exclude list.
+   * Walks through the methods in the class looking for getters and setters that are on our include
+   * list (if any) and are not on our exclude list.
    *
    * @param initializer a value that when used produces certain field values
    * @return the object
@@ -167,12 +166,8 @@ public class ProxyTester {
         continue;
       }
 
-      if (!includes.isEmpty() && includes.contains(fieldName.toLowerCase()) && reverseIncludes) {
-        // skip if includes are explicit and none are listed
-        continue;
-      }
-
-      if (excludes.contains(fieldName.toLowerCase())) {
+      if ((!includes.isEmpty() && includes.contains(fieldName.toLowerCase()) && reverseIncludes)
+          || excludes.contains(fieldName.toLowerCase())) {
         // skip excludes always
         continue;
       }
@@ -208,7 +203,7 @@ public class ProxyTester {
           notSeen.add(field);
         }
       }
-      if (notSeen.size() > 0) {
+      if (!notSeen.isEmpty()) {
         throw new Exception("Some included fields were not found: " + notSeen);
       }
     }
@@ -220,7 +215,7 @@ public class ProxyTester {
           notSeen.add(field);
         }
       }
-      if (notSeen.size() > 0) {
+      if (!notSeen.isEmpty()) {
         throw new Exception("Some excluded fields were not found: " + notSeen);
       }
     }
@@ -278,10 +273,9 @@ public class ProxyTester {
   }
 
   /**
-   * Makes a proxy of a given class. If the class is an interface type, uses the
-   * standard JDK proxy mechanism. If it's not, uses cglib. The use of cglib is
-   * via reflection so that cglib is not required to use this library unless the
-   * caller actually needs to proxy a concrete class.
+   * Makes a proxy of a given class. If the class is an interface type, uses the standard JDK proxy
+   * mechanism. If it's not, uses cglib. The use of cglib is via reflection so that cglib is not
+   * required to use this library unless the caller actually needs to proxy a concrete class.
    *
    * @param fieldName the field name
    * @param type the type
@@ -392,7 +386,7 @@ public class ProxyTester {
 
   /**
    * Returns an instance of an enum.
-   * 
+   *
    * JAVA5 - Comment out or remove this method on older Java versions.
    *
    * @param clazz1 the class

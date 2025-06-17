@@ -25,8 +25,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Transient;
 
 /**
- * Represents an explicit collection of mappings from one terminology to
- * another.
+ * Represents an explicit collection of mappings from one terminology to another.
  */
 @Schema(
     description = "Represents an explicit collection of mappings from one terminology to another")
@@ -36,8 +35,8 @@ import jakarta.persistence.Transient;
 public class Mapset extends MapsetRef implements TerminologyComponent, HasAttributes {
 
   /**
-   * Attribute keys that can be associated with a terminology (and their
-   * descriptions) rendered as terminology attributes when building a data set.
+   * Attribute keys that can be associated with a terminology (and their descriptions) rendered as
+   * terminology attributes when building a data set.
    */
   public enum Attributes {
 
@@ -79,11 +78,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
   /** The terminology. */
   @Field(type = FieldType.Keyword)
   private String terminology;
-
-  /** The index name. */
-  @Transient
-  @Field(type = FieldType.Keyword)
-  private String indexName;
 
   /** The description. */
   @Field(type = FieldType.Object, enabled = false)
@@ -152,7 +146,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
       final Mapset mapset = (Mapset) other;
 
       description = mapset.getDescription();
-      indexName = mapset.getIndexName();
       releaseDate = mapset.getReleaseDate();
 
       terminology = mapset.getTerminology();
@@ -174,9 +167,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
       final Mapset mapset = (Mapset) other;
       if (mapset.getDescription() != null) {
         description = mapset.getDescription();
-      }
-      if (mapset.getIndexName() != null) {
-        indexName = mapset.getIndexName();
       }
       if (mapset.getReleaseDate() != null) {
         releaseDate = mapset.getReleaseDate();
@@ -223,25 +213,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
    */
   public void setDescription(final String description) {
     this.description = description;
-  }
-
-  /**
-   * Gets the index name.
-   *
-   * @return the index name
-   */
-  @Schema(hidden = true)
-  public String getIndexName() {
-    return indexName;
-  }
-
-  /**
-   * Sets the index name.
-   *
-   * @param indexName the new index name
-   */
-  public void setIndexName(final String indexName) {
-    this.indexName = indexName;
   }
 
   /**
@@ -339,15 +310,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
   public void minimize() {
     super.minimize();
     cleanForApi();
-  }
-
-  /**
-   * Clean for api.
-   */
-  /* see superclass */
-  @Override
-  public void cleanForApi() {
-    indexName = null;
   }
 
   /**

@@ -87,8 +87,8 @@ public final class TreePositionUtility {
   }
 
   /**
-   * Exclude these standard non-defining types for performance (and they are
-   * HIGH volume). NOTE: keep LOINC "answer_to" and some others
+   * Exclude these standard non-defining types for performance (and they are HIGH volume). NOTE:
+   * keep LOINC "answer_to" and some others
    * 
    * @param type the type
    * @return true, if successful
@@ -139,7 +139,7 @@ public final class TreePositionUtility {
     try {
       computeTransitiveClosure(code, "", reverseParChd, tolerateCycles);
       return false;
-    } catch (LocalException e) {
+    } catch (final LocalException e) {
       return true;
     }
   }

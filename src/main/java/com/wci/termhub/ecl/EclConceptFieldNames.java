@@ -10,7 +10,7 @@
 package com.wci.termhub.ecl;
 
 /**
- * Concept field names.
+ * The Class EclConceptFieldNames.
  */
 public final class EclConceptFieldNames {
 

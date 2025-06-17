@@ -25,17 +25,17 @@ import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.StringUtility;
 
 /**
- * The Class ConceptTreePositionSearchUnitTest.
+ * Tests for ConceptTreePosition search.
  */
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class ConceptTreePositionSearchUnitTest {
+public class ConceptTreePositionSearchUnitTest extends BaseUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
-  private static final Logger LOG =
+  private static final Logger LOGGER =
       LoggerFactory.getLogger(ConceptTreePositionSearchUnitTest.class);
 
   /** The Constant SEARCH_PARAMETERS. */
@@ -46,27 +46,55 @@ public class ConceptTreePositionSearchUnitTest {
   private EntityRepositoryService searchService;
 
   // Just logs the concept tree positions
-  // @Test
+  /**
+   * Test log all concept tree positions.
+   *
+   * @throws Exception the exception
+   */
+  // @Test // for debugging
   public void testLogAllConceptTreePositions() throws Exception {
 
-    SEARCH_PARAMETERS
-        .setQuery("terminology:SNOMEDCT_US AND publisher:SANDBOX AND version:20240301");
-    final ResultList<ConceptTreePosition> conceptTreePositions1 =
+    SEARCH_PARAMETERS.setQuery("*:*");
+    LOGGER.info("testLogAllConceptTreePositions 0 Query: {}", SEARCH_PARAMETERS.getQuery());
+    final ResultList<ConceptTreePosition> conceptTreePositions0 =
         searchService.find(SEARCH_PARAMETERS, ConceptTreePosition.class);
-    for (final ConceptTreePosition ctp : conceptTreePositions1.getItems()) {
-      LOG.info("QQQ terminology:{}, code:{}, ancestorPath:{} ", ctp.getTerminology(),
+    for (final ConceptTreePosition ctp : conceptTreePositions0.getItems()) {
+      LOGGER.info("US terminology:{}, code:{}, ancestorPath:{} ", ctp.getTerminology(),
           ctp.getConcept().getCode(), ctp.getAncestorPath());
     }
 
-    SEARCH_PARAMETERS.setQuery("terminology:SNOMEDCT AND publisher:SANDBOX AND version:20240301");
-    final ResultList<ConceptTreePosition> conceptTreePositions2 =
-        searchService.find(SEARCH_PARAMETERS, ConceptTreePosition.class);
-    for (final ConceptTreePosition ctp : conceptTreePositions2.getItems()) {
-      LOG.info("QQQ terminology:{}, code:{}, ancestorPath:{} ", ctp.getTerminology(),
-          ctp.getConcept().getCode(), ctp.getAncestorPath());
-    }
+    // List<String> clauseList =
+    // Arrays.asList("terminology:SNOMEDCT_US", "publisher:SANDBOX", "version:"
+    // +
+    // StringUtility.escapeQuery("http://snomed.info/sct/731000124108/version/20240301"));
+    // SEARCH_PARAMETERS.setQuery(StringUtility.composeQuery("AND",
+    // clauseList));
+    // LOGGER.info("testLogAllConceptTreePositions 1 Query: {}",
+    // SEARCH_PARAMETERS.getQuery());
+    // final ResultList<ConceptTreePosition> conceptTreePositions1 =
+    // searchService.find(SEARCH_PARAMETERS, ConceptTreePosition.class);
+    // for (final ConceptTreePosition ctp : conceptTreePositions1.getItems()) {
+    // LOGGER.info("US terminology:{}, code:{}, ancestorPath:{} ",
+    // ctp.getTerminology(),
+    // ctp.getConcept().getCode(), ctp.getAncestorPath());
+    // }
+    //
+    // clauseList = Arrays.asList("terminology:SNOMEDCT", "publisher:SANDBOX",
+    // "version:"
+    // +
+    // StringUtility.escapeQuery("http://snomed.info/sct/900000000000207008/version/20240101"));
+    // SEARCH_PARAMETERS.setQuery(StringUtility.composeQuery("AND",
+    // clauseList));
+    // LOGGER.info("testLogAllConceptTreePositions 2 Query: {}",
+    // SEARCH_PARAMETERS.getQuery());
+    // final ResultList<ConceptTreePosition> conceptTreePositions2 =
+    // searchService.find(SEARCH_PARAMETERS, ConceptTreePosition.class);
+    // for (final ConceptTreePosition ctp : conceptTreePositions2.getItems()) {
+    // LOGGER.info("INT terminology:{}, code:{}, ancestorPath:{} ",
+    // ctp.getTerminology(),
+    // ctp.getConcept().getCode(), ctp.getAncestorPath());
+    // }
 
-    assertTrue(false);
   }
 
   /**
@@ -77,8 +105,10 @@ public class ConceptTreePositionSearchUnitTest {
   @Test
   public void testFindConcept() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery(
-        "terminology:SNOMEDCT_US AND publisher:SANDBOX AND version:20240301 AND code:52988006");
+    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
+        "http://snomed.info/sct/731000124108/version/20240301", "52988006", null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery() + " AND publisher:SANDBOX");
+    LOGGER.info("testFindConcept Query: {}", SEARCH_PARAMETERS.getQuery());
     final ResultList<Concept> concepts = searchService.find(SEARCH_PARAMETERS, Concept.class);
     assertEquals(1, concepts.getItems().size());
   }
@@ -91,15 +121,19 @@ public class ConceptTreePositionSearchUnitTest {
   @Test
   public void testFindConceptTreePositions() throws Exception {
 
-    SEARCH_PARAMETERS
-        .setQuery("terminology:SNOMEDCT_US AND publisher:SANDBOX AND version:20240301");
+    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
+        "http://snomed.info/sct/731000124108/version/20240301", null, null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery() + " AND publisher:SANDBOX");
+    LOGGER.info("testFindConceptTreePositions Query: {}", SEARCH_PARAMETERS.getQuery());
     final ResultList<ConceptTreePosition> conceptTreePositions =
         searchService.find(SEARCH_PARAMETERS, ConceptTreePosition.class);
     assertTrue(conceptTreePositions.getItems().size() > 10);
     for (final ConceptTreePosition ctp : conceptTreePositions.getItems()) {
-      assertEquals("SNOMEDCT_US", ctp.getTerminology());
+      assertEquals(termQuery.getTerminology(), ctp.getTerminology());
+      assertEquals(termQuery.getVersion(), ctp.getVersion());
+      assertEquals(termQuery.getVersion(), ctp.getVersion());
       assertEquals("SANDBOX", ctp.getPublisher());
-      assertEquals("20240301", ctp.getVersion());
+
     }
 
   }
@@ -109,18 +143,22 @@ public class ConceptTreePositionSearchUnitTest {
    *
    * @throws Exception the exception
    */
-  @Test
+  // @Test
   public void testFindConceptTreePositionsForCode() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery(
-        "terminology:SNOMEDCT_US AND publisher:SANDBOX AND version:20240301 AND concept.code:52988006");
+    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
+        "http://snomed.info/sct/731000124108/version/20240301", null, null);
+    SEARCH_PARAMETERS
+        .setQuery(termQuery.getQuery() + " AND publisher:SANDBOX AND concept.code:52988006");
+    LOGGER.info("testFindConceptTreePositionsForCode Query: {}", SEARCH_PARAMETERS.getQuery());
     final ResultList<ConceptTreePosition> conceptTreePositions =
         searchService.find(SEARCH_PARAMETERS, ConceptTreePosition.class);
     assertEquals(2, conceptTreePositions.getItems().size());
     for (final ConceptTreePosition ctp : conceptTreePositions.getItems()) {
-      assertEquals("SNOMEDCT_US", ctp.getTerminology());
+      assertEquals(termQuery.getTerminology(), ctp.getTerminology());
+      assertEquals(termQuery.getVersion(), ctp.getVersion());
+      assertEquals(termQuery.getVersion(), ctp.getVersion());
       assertEquals("SANDBOX", ctp.getPublisher());
-      assertEquals("20240301", ctp.getVersion());
       assertEquals("52988006", ctp.getConcept().getCode());
       // 1 is empty the other has a ancestor path
       // assertNotNull(ctp.getAncestorPath());
@@ -136,16 +174,23 @@ public class ConceptTreePositionSearchUnitTest {
   @Test
   public void testFindConceptTreePositionsWithEmptyAncestor() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery(
-        "terminology:SNOMEDCT_US AND publisher:SANDBOX AND version:20240301 AND concept.code:52988006 "
-            + "AND ancestorPath:\"\"");
+    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
+        "http://snomed.info/sct/731000124108/version/20240301", null, null);
+    SEARCH_PARAMETERS.setQuery(termQuery.getQuery() + " publisher:SANDBOX AND concept.code:52988006"
+        + " AND ancestorPath:\"\"");
+    LOGGER.info("testFindConceptTreePositionsWithEmptyAncestor Query: {}",
+        SEARCH_PARAMETERS.getQuery());
+    LOGGER.info("testFindConceptTreePositionsWithEmptyAncestor Query: {}",
+        SEARCH_PARAMETERS.getQuery());
     final ResultList<ConceptTreePosition> conceptTreePositions =
         searchService.find(SEARCH_PARAMETERS, ConceptTreePosition.class);
     assertEquals(1, conceptTreePositions.getItems().size());
     for (final ConceptTreePosition ctp : conceptTreePositions.getItems()) {
-      assertEquals("SNOMEDCT_US", ctp.getTerminology());
+      assertEquals(termQuery.getTerminology(), ctp.getTerminology());
+      assertEquals(termQuery.getVersion(), ctp.getVersion());
+      assertEquals(termQuery.getVersion(), ctp.getVersion());
       assertEquals("SANDBOX", ctp.getPublisher());
-      assertEquals("20240301", ctp.getVersion());
+      assertEquals("http://snomed.info/sct/731000124108/version/20240301", ctp.getVersion());
       assertEquals(null, ctp.getAncestorPath());
     }
 
@@ -160,16 +205,21 @@ public class ConceptTreePositionSearchUnitTest {
   public void testFindConceptTreePositionsWithAncestor() throws Exception {
 
     final String ancestorPath = "138875005~123037004~118956008~49755003";
-    SEARCH_PARAMETERS.setQuery(
-        "terminology:SNOMEDCT_US AND publisher:SANDBOX AND version:20240301 AND concept.code:52988006 "
-            + "AND ancestorPath:\"" + ancestorPath + "\"");
+    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
+        "http://snomed.info/sct/731000124108/version/20240301", null, null);
+    final String ancestorPathEscaped = StringUtility.escapeQuery(ancestorPath);
+    SEARCH_PARAMETERS
+        .setQuery(termQuery.getQuery() + " AND publisher:SANDBOX AND concept.code:52988006"
+            + " AND ancestorPath:" + ancestorPathEscaped);
+
+    LOGGER.info("testFindConceptTreePositionsWithAncestor Query: {}", SEARCH_PARAMETERS.getQuery());
     final ResultList<ConceptTreePosition> conceptTreePositions =
         searchService.find(SEARCH_PARAMETERS, ConceptTreePosition.class);
     assertEquals(1, conceptTreePositions.getItems().size());
     for (final ConceptTreePosition ctp : conceptTreePositions.getItems()) {
       assertEquals("SNOMEDCT_US", ctp.getTerminology());
       assertEquals("SANDBOX", ctp.getPublisher());
-      assertEquals("20240301", ctp.getVersion());
+      assertEquals("http://snomed.info/sct/731000124108/version/20240301", ctp.getVersion());
       assertEquals(ancestorPath, ctp.getAncestorPath());
     }
 

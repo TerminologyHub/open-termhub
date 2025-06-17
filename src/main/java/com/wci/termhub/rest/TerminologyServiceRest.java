@@ -14,10 +14,14 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.Mapping;
+import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
+import com.wci.termhub.model.ResultListMapping;
+import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -38,8 +42,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<Terminology> getTerminology(String id) throws Exception;
 
   /**
-   * Returns the terminology metadata. GET /terminology/{id:[a-f0-9].+}/metadata
-   * tag=metadata
+   * Returns the terminology metadata. GET /terminology/{id:[a-f0-9].+}/metadata tag=metadata
    *
    * @param id the id
    * @return the terminology
@@ -101,9 +104,8 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<Concept> getConcept(String conceptId, String include) throws Exception;
 
   /**
-   * Gets the concept for the specified terminology and code. This call assumes
-   * that the project has only a single terminology/publisher/version
-   * configured, otherwise it will return a 409. GET
+   * Gets the concept for the specified terminology and code. This call assumes that the project has
+   * only a single terminology/publisher/version configured, otherwise it will return a 409. GET
    * /concept/{terminology}/{code} tag=concept by code
    *
    * @param terminology the terminology
@@ -130,8 +132,8 @@ public interface TerminologyServiceRest extends RootServiceRest {
   /**
    * Find concepts. GET /concept?terminology=uuid1,uuid2&query=... tag=concept
    *
-   * @param terminology the terminology - if no terminologies are selected, it
-   *          searches across all of them.
+   * @param terminology the terminology - if no terminologies are selected, it searches across all
+   *          of them.
    * @param query the query
    * @param expression the expression
    * @param offset the offset
@@ -199,8 +201,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
     Integer limit, String sort, Boolean ascending) throws Exception;
 
   /**
-   * Find concept relationships. GET /concept/{conceptId}/relationships
-   * tag=concept
+   * Find concept relationships. GET /concept/{conceptId}/relationships tag=concept
    *
    * @param conceptId the concept id
    * @param query the query
@@ -217,9 +218,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Find concept relationships. This call assumes that the project has only a
-   * single terminology/publisher/version configured, otherwise it will return a
-   * 409. GET /concept/{terminology}/{code}/relationships tag=concept by code
+   * Find concept relationships. This call assumes that the project has only a single
+   * terminology/publisher/version configured, otherwise it will return a 409. GET
+   * /concept/{terminology}/{code}/relationships tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -237,8 +238,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
     String handler) throws Exception;
 
   /**
-   * Find concept inverse relationships. GET
-   * /concept/{conceptId}/inverseRelationships tag=concept
+   * Find concept inverse relationships. GET /concept/{conceptId}/inverseRelationships tag=concept
    *
    * @param conceptId the concept id
    * @param query the query
@@ -255,10 +255,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
     String handler) throws Exception;
 
   /**
-   * Find concept inverse relationships. This call assumes that the project has
-   * only a single terminology/publisher/version configured, otherwise it will
-   * return a 409. GET /concept/{terminology}/{code}/inverseRelationships
-   * tag=concept by code
+   * Find concept inverse relationships. This call assumes that the project has only a single
+   * terminology/publisher/version configured, otherwise it will return a 409. GET
+   * /concept/{terminology}/{code}/inverseRelationships tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -293,9 +292,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Find concept tree positions. This call assumes that the project has only a
-   * single terminology/publisher/version configured, otherwise it will return a
-   * 409. GET /concept/{terminology}/{code}/treepos tag=concept by code
+   * Find concept tree positions. This call assumes that the project has only a single
+   * terminology/publisher/version configured, otherwise it will return a 409. GET
+   * /concept/{terminology}/{code}/treepos tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -313,8 +312,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
     String handler) throws Exception;
 
   /**
-   * Find concept tree position children. GET
-   * /concept/{conceptId}/treepos/children tag=concept
+   * Find concept tree position children. GET /concept/{conceptId}/treepos/children tag=concept
    *
    * @param conceptId the concept id
    * @param query the query
@@ -331,9 +329,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Find concept tree positions. This call assumes that the project has only a
-   * single terminology/publisher/version configured, otherwise it will return a
-   * 409. GET /concept/{terminology}/{code}/treepos/children tag=concept by code
+   * Find concept tree positions. This call assumes that the project has only a single
+   * terminology/publisher/version configured, otherwise it will return a 409. GET
+   * /concept/{terminology}/{code}/treepos/children tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -349,5 +347,103 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<ResultListConceptTreePosition> findTreePositionChildren(String terminology,
     String code, String query, Integer offset, Integer limit, Boolean ascending, String sort,
     String handler) throws Exception;
+
+  /**
+   * Gets the mapset.
+   *
+   * @param id the id
+   * @return the mapset
+   * @throws Exception the exception
+   */
+  public ResponseEntity<Mapset> getMapset(String id) throws Exception;
+
+  /**
+   * Find mapsets.
+   *
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<ResultListMapset> findMapsets(String query, Integer offset, Integer limit,
+    String sort, Boolean ascending) throws Exception;
+
+  /**
+   * Find mappings.
+   *
+   * @param mapset the mapset
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @param leaf the leaf
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<ResultListMapping> findMappings(String mapset, String query, Integer offset,
+    Integer limit, String sort, Boolean ascending, Boolean active, Boolean leaf) throws Exception;
+
+  /**
+   * Find mapset.
+   *
+   * @param mapset the mapset id
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @param leaf the leaf
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<ResultListMapping> findMapsetMappings(String mapset, String query,
+    Integer offset, Integer limit, String sort, Boolean ascending, Boolean active, Boolean leaf)
+    throws Exception;
+
+  /**
+   * Find concept mappings.
+   *
+   * @param conceptId the concept id
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<List<Mapping>> getConceptMappings(String conceptId) throws Exception;
+
+  /**
+   * Gets the concept inverse mappings.
+   *
+   * @param conceptId the concept id
+   * @return the concept inverse mappings
+   * @throws Exception the exception
+   */
+  public ResponseEntity<List<Mapping>> getConceptInverseMappings(String conceptId) throws Exception;
+
+  /**
+   * Gets the concept mappings.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @return the concept mappings
+   * @throws Exception the exception
+   */
+  public ResponseEntity<List<Mapping>> getConceptMappings(String terminology, String code)
+    throws Exception;
+
+  /**
+   * Gets the concept inverse mappings.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @return the concept inverse mappings
+   * @throws Exception the exception
+   */
+  public ResponseEntity<List<Mapping>> getConceptInverseMappings(String terminology, String code)
+    throws Exception;
 
 }

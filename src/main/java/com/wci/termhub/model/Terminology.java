@@ -39,8 +39,8 @@ import jakarta.persistence.Transient;
 public class Terminology extends TerminologyRef implements HasAttributes {
 
   /**
-   * Attribute keys that can be associated with a terminology (and their
-   * descriptions) rendered as terminology attributes when building a data set.
+   * Attribute keys that can be associated with a terminology (and their descriptions) rendered as
+   * terminology attributes when building a data set.
    */
   public enum Attributes {
 
@@ -58,8 +58,8 @@ public class Terminology extends TerminologyRef implements HasAttributes {
     /** The show sty. */
     showSty("show-sty"),
     /**
-     * The hierarchy sort style. TODO: rather than this ConceptTreePosition
-     * shoudl have a sort field.
+     * The hierarchy sort style. TODO: rather than this ConceptTreePosition shoudl have a sort
+     * field.
      */
     hierarchySortStyle("hierarchy-sort-style"),
     /** The polyhierarchy. */
@@ -125,11 +125,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
   @Transient
   private String uri;
 
-  /** The index name. */
-  @Transient
-  @Field(type = FieldType.Keyword)
-  private String indexName;
-
   /** The attributes. */
   @Transient
   @Field(type = FieldType.Object)
@@ -191,7 +186,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
       releaseDate = other.getReleaseDate();
       uri = other.getUri();
       family = other.getFamily();
-      indexName = other.getIndexName();
       attributes = new HashMap<>(other.getAttributes());
       roots = new ArrayList<>(other.getRoots());
       conceptCt = other.getConceptCt();
@@ -223,9 +217,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
       }
       if (other.getUri() != null) {
         uri = other.getUri();
-      }
-      if (other.getIndexName() != null) {
-        indexName = other.getIndexName();
       }
       if (other.getConceptCt() != null) {
         conceptCt = other.getConceptCt();
@@ -308,9 +299,8 @@ public class Terminology extends TerminologyRef implements HasAttributes {
   }
 
   /**
-   * Here, we want to search a variety of different ways. Including: 1. Search
-   * by whether an attribute exists. 2. Search by whether an attribute has a
-   * particular value.
+   * Here, we want to search a variety of different ways. Including: 1. Search by whether an
+   * attribute exists. 2. Search by whether an attribute has a particular value.
    *
    * @return the attributes
    */
@@ -411,25 +401,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
   }
 
   /**
-   * Gets the index name.
-   *
-   * @return the index name
-   */
-  @Schema(hidden = true)
-  public String getIndexName() {
-    return indexName;
-  }
-
-  /**
-   * Sets the index name.
-   *
-   * @param indexName the new index name
-   */
-  public void setIndexName(final String indexName) {
-    this.indexName = indexName;
-  }
-
-  /**
    * Gets the concept ct.
    *
    * @return the concept ct
@@ -515,15 +486,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
   public void minimize() {
     super.minimize();
     cleanForApi();
-  }
-
-  /**
-   * Clean for api.
-   */
-  /* see superclass */
-  @Override
-  public void cleanForApi() {
-    indexName = null;
   }
 
 }

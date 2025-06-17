@@ -68,8 +68,7 @@ public abstract class AbstractHasModifiedNoGenerator extends AbstractHasIdNoGene
   }
 
   /**
-   * Instantiates a {@link AbstractHasModifiedNoGenerator} from the specified
-   * parameters.
+   * Instantiates a {@link AbstractHasModifiedNoGenerator} from the specified parameters.
    *
    * @param other the other
    */

@@ -45,8 +45,7 @@ public abstract class AbstractHasIdNoGenerator implements HasId {
   }
 
   /**
-   * Instantiates a {@link AbstractHasIdNoGenerator} from the specified
-   * parameters.
+   * Instantiates a {@link AbstractHasIdNoGenerator} from the specified parameters.
    *
    * @param other the other
    */
@@ -65,9 +64,8 @@ public abstract class AbstractHasIdNoGenerator implements HasId {
   }
 
   /**
-   * Returns the id. NOTE: this causes a hibernate warning, but the background
-   * behavior is correct. Moving it or removing it causes either other problems
-   * or the field to not be indexed.
+   * Returns the id. NOTE: this causes a hibernate warning, but the background behavior is correct.
+   * Moving it or removing it causes either other problems or the field to not be indexed.
    * 
    * @return the id
    */

@@ -19,9 +19,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * Represents a mapset reference. This serves as a pointer from a project to an
- * actual mapset. It can also be used to compute the mapset keys used by the
- * model objects.
+ * Represents a mapset reference. This serves as a pointer from a project to an actual mapset. It
+ * can also be used to compute the mapset keys used by the model objects.
  */
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)

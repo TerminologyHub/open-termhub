@@ -13,8 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -240,15 +239,15 @@ public class ConceptUnitTest extends BaseUnitTest {
       }
                 """;
 
+  /** The Constant INDEX_NAME. */
+  private static final String INDEX_NAME = Concept.class.getCanonicalName();
+
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
 
   /** The concept. */
   private static Concept concept;
-
-  /** The Constant INDEX_NAME. */
-  private static final String INDEX_NAME = Concept.class.getCanonicalName();
 
   /**
    * Creates the index.
@@ -258,10 +257,10 @@ public class ConceptUnitTest extends BaseUnitTest {
   @Test
   @Order(1)
   public void createIndex() throws Exception {
-
     logger.info("Creating index for Concept");
     searchService.createIndex(Concept.class);
-    assertTrue(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
+    final File indexFile = new File(INDEX_DIRECTORY, INDEX_NAME);
+    assertTrue(indexFile.exists());
   }
 
   /**
@@ -279,7 +278,7 @@ public class ConceptUnitTest extends BaseUnitTest {
 
     if (conceptNode != null) {
       concept = objectMapper.treeToValue(conceptNode, Concept.class);
-      logger.info("Concept: {}", concept.toString());
+      logger.info("Concept: {}", concept);
       assertDoesNotThrow(() -> searchService.add(Concept.class, concept));
     } else {
       logger.error("No '_source' node found in the provided JSON.");
@@ -304,7 +303,7 @@ public class ConceptUnitTest extends BaseUnitTest {
 
     for (final Object foundConceptObject : foundConceptObjects.getItems()) {
       final Concept foundConcept = (Concept) foundConceptObject;
-      logger.info("Concept found: {}", foundConcept.toString());
+      logger.info("Concept found: {}", foundConcept);
       assertEquals(concept.toString(), foundConcept.toString());
     }
   }
@@ -348,40 +347,23 @@ public class ConceptUnitTest extends BaseUnitTest {
   // assertEquals(concept.toString(), foundConceptObject.toString());
   // }
   // }
-  //
-  // /**
-  // * Find concept by missing term name.
-  // *
-  // * @throws Exception the exception
-  // */
-  // @Test
-  // @Order(7)
-  // public void findConceptByMissingTermName() throws Exception {
-  //
-  // final SearchParameters searchParameters = new
-  // SearchParameters("term.name:\"dummy term name\"", 100, 0);
-  // logger.info("Search for : {}", searchParameters.getQuery());
-  //
-  // final ResultList<Concept> foundConceptObjects =
-  // searchService.find(searchParameters, Concept.class);
-  // assertEquals(0, foundConceptObjects.getItems().size());
-  // }
 
-  // /**
-  // * Delete index.
-  // *
-  // * @throws Exception the exception
-  // */
-  // @Test
-  // @Order(6)
-  // public void deleteIndex() throws Exception {
-  //
-  // logger.info("Deleting index for Concept from {}",
-  // Paths.get(INDEX_DIRECTORY, INDEX_NAME).toString());
-  // searchService.deleteIndex(Concept.class);
-  //
-  // // assert directory does not exist
-  // assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-  // }
+  /**
+   * Find concept by missing term name.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(7)
+  public void findConceptByMissingTermName() throws Exception {
+
+    final SearchParameters searchParameters =
+        new SearchParameters("term.name:\"dummy term name\"", 100, 0);
+    logger.info("Search for : {}", searchParameters.getQuery());
+
+    final ResultList<Concept> foundConceptObjects =
+        searchService.find(searchParameters, Concept.class);
+    assertEquals(0, foundConceptObjects.getItems().size());
+  }
 
 }
