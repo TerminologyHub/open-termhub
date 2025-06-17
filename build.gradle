@@ -63,6 +63,9 @@ dependencies {
   implementation "org.springframework.boot:spring-boot-starter-web"
   implementation "org.springframework.boot:spring-boot-starter-actuator"
 
+  // Vulnerability import
+  implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.42"
+
   // prometheus
   implementation "io.micrometer:micrometer-registry-prometheus"
 
