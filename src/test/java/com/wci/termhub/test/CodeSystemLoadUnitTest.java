@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -34,17 +35,14 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.Application;
 import com.wci.termhub.model.Concept;
-import com.wci.termhub.model.ConceptRelationship;
-import com.wci.termhub.model.ConceptTreePosition;
-import com.wci.termhub.model.Mapping;
-import com.wci.termhub.model.Mapset;
-import com.wci.termhub.model.Metadata;
+import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
+import com.wci.termhub.util.ConceptMapLoaderUtil;
+import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
 
 /**
@@ -70,6 +68,10 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
           "CodeSystem-snomedct-sandbox-20240101-r5.json", "CodeSystem-lnc-sandbox-277-r5.json",
           "CodeSystem-icd10cm-sandbox-2023-r5.json", "CodeSystem-rxnorm-sandbox-04012024-r5.json");
 
+  /** The Constant CONCEPT_MAP_FILES. */
+  private static final List<String> CONCEPT_MAP_FILES =
+      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json");
+
   /**
    * Setup - load the FHIR Code System files.
    *
@@ -91,14 +93,11 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
       FileUtils.deleteDirectory(indexDir);
     }
 
-    searchService.deleteIndex(Terminology.class);
-    searchService.deleteIndex(Metadata.class);
-    searchService.deleteIndex(Concept.class);
-    searchService.deleteIndex(Term.class);
-    searchService.deleteIndex(ConceptRelationship.class);
-    searchService.deleteIndex(ConceptTreePosition.class);
-    searchService.deleteIndex(Mapset.class);
-    searchService.deleteIndex(Mapping.class);
+    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
+    for (final Class<? extends HasId> clazz : indexedObjects) {
+      searchService.deleteIndex(clazz);
+      searchService.createIndex(clazz);
+    }
 
     // Load each code system by reading directly from the classpath
     for (final String codeSystemFile : CODE_SYSTEM_FILES) {
@@ -111,10 +110,36 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
           throw new FileNotFoundException("Could not find resource: data/" + codeSystemFile);
         }
 
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
         LOGGER.info("Loading code system from classpath resource: data/{}", codeSystemFile);
-        CodeSystemLoaderUtil.loadCodeSystem(searchService, resource.getFile().getAbsolutePath());
+        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent);
+
       } catch (final Exception e) {
         LOGGER.error("Error loading code system file: {}", codeSystemFile, e);
+        throw e;
+      }
+    }
+
+    for (final String conceptMapFile : CONCEPT_MAP_FILES) {
+      try {
+        // Read file from classpath directly using Spring's resource mechanism
+        final Resource resource = new ClassPathResource("data/" + conceptMapFile,
+            CodeSystemLoadUnitTest.class.getClassLoader());
+
+        if (!resource.exists()) {
+          throw new FileNotFoundException("Could not find resource: data/" + conceptMapFile);
+        }
+
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
+        LOGGER.info("Loading concept map from classpath resource: data/{}", conceptMapFile);
+        ConceptMapLoaderUtil.loadConceptMap(searchService, fileContent);
+
+      } catch (final Exception e) {
+        LOGGER.error("Error loading concept map file: {}", conceptMapFile, e);
         throw e;
       }
     }

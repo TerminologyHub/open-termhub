@@ -10,6 +10,7 @@
 package com.wci.termhub.ecl.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.apache.lucene.search.Query;
 import org.junit.jupiter.api.Test;
@@ -104,6 +105,7 @@ public class EclToLuceneConverterTest extends AbstractTest {
 
     final Query multipleDescendantQuery =
         converter.parse("<<255412001 OR <<263714004 OR <<260245000");
+    logger.info("multipleDescendantQuery: {}", multipleDescendantQuery);
     assertNotNull(multipleDescendantQuery);
 
     final Query attributeQuery = converter.parse("< 609328004 : 246075003 = 762952008");
@@ -131,15 +133,16 @@ public class EclToLuceneConverterTest extends AbstractTest {
    */
   @Test
   public void testInvalidQueries() throws Exception {
-    // final EclToLuceneConverter converter = new EclToLuceneConverter();
+    final EclToLuceneConverter converter = new EclToLuceneConverter();
 
     // Test that ALL_CONCEPTS query throws an exception
-    // assertThrows(RuntimeException.class, () -> {
-    // converter.parse("*");
-    // }, "Query * would match too many concepts. Please refine");
+    assertThrows(RuntimeException.class, () -> {
+      converter.parse("*");
+    }, "Query * would match too many concepts. Please refine");
 
     // Test syntax error - using an invalid character that should cause a syntax
     // error
+    // fail, does not throw an exception
     // assertThrows(RuntimeException.class, () -> {
     // converter.parse("11111111 @ 22222222");
     // }, "Syntax error");

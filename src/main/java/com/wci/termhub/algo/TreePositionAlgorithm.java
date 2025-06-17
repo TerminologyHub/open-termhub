@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
@@ -33,6 +34,7 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
@@ -58,11 +60,14 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
   /** The object ct. */
   private int objectCt = 0;
 
+  /** The Constant FETCH_SIZE. */
+  private static final int FETCH_SIZE = 5000;
+
+  /** The Constant BATCH_SIZE. */
+  private static final int BATCH_SIZE = 1000;
+
   /** The batch. */
   private final List<HasId> batch = new ArrayList<>();
-
-  /** The prefix. */
-  // private String prefix = "";
 
   /** The seen. */
   private final List<String> seen = new ArrayList<>();
@@ -118,15 +123,6 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     logInfo("  publisher = " + getPublisher());
     logInfo("  version = " + getVersion());
 
-    // Get all relationships
-    // Get prefix for index name
-    // prefix =
-    // StringUtility.removeNonAlphanumeric(getTerminology().toLowerCase()) + "-"
-    // + StringUtility.removeNonAlphanumeric(getPublisher().toLowerCase()) + "-"
-    // + StringUtility.removeNonAlphanumeric(getVersion().toLowerCase());
-
-    // Create index if it doesn't exist
-    // searchService.createIndex(prefix, ConceptTreePosition.class, false);
     if (searchService == null) {
       throw new NullPointerException("searchService is null");
     }
@@ -137,13 +133,9 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     final Terminology term = TerminologyUtility.getTerminology(searchService, getTerminology(),
         getPublisher(), getVersion());
     if (term == null) {
-      throw new Exception("Unable to find terminology = " + getTerminology() + ", " + getPublisher()
-          + ", " + getVersion());
+      throw new Exception("Unable to find terminology = " + getTerminology() + ", publisher = "
+          + getPublisher() + ", version = " + getVersion());
     }
-    // if (!term.getIndexName().equals(prefix)) {
-    // throw new Exception("Tree Position algorithm expects " + prefix
-    // + " terminology index to have indexName set to prefix.");
-    // }
 
     final Date startDate = new Date();
 
@@ -152,10 +144,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
     // Load blocks of 10k, need to specify sort=id for this to work
     final SearchParameters params = new SearchParameters(
-        "terminology:" + StringUtility.escapeQuery(getTerminology()) + " AND publisher:"
-            + StringUtility.escapeQuery(getPublisher()) + " AND version:"
+        "terminology:" + StringUtility.escapeQuery(getTerminology()) + " AND publisher: \""
+            + StringUtility.escapeQuery(getPublisher()) + "\" AND version:"
             + StringUtility.escapeQuery(getVersion()) + " AND hierarchical:true AND active:true",
-        0, 10000, "id", null);
+        0, FETCH_SIZE, "id", null);
     final ResultList<ConceptRelationship> list = new ResultList<>();
     final Map<String, String> additionalTypeMap = new HashMap<>();
     // String searchAfter = null;
@@ -197,7 +189,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
       list.getItems().addAll(innerList.getItems());
       logInfo("    count = " + list.getItems().size());
-      params.setOffset(params.getOffset() + 10000);
+      params.setOffset(params.getOffset() + FETCH_SIZE);
     }
 
     logInfo("    relationships = " + list.getItems().size());
@@ -283,8 +275,119 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     // Process the final batch
     logInfo("    BATCH index = " + batch.size());
 
-    // Give indexes a chance to resolve before computing stats
-    Thread.sleep(1000);
+    // --- BEGIN RELATIONSHIP POPULATION LOGIC ---
+    // Build relationship maps
+    final Map<String, Set<String>> codeToChildren = new HashMap<>();
+    final Map<String, Set<String>> codeToParents = new HashMap<>();
+    final Map<String, Set<String>> codeToAncestors = new HashMap<>();
+    final Map<String, Set<String>> codeToDescendants = new HashMap<>();
+
+    // Populate children and parents from parChd and chdPar
+    for (final String parent : parChd.keySet()) {
+      for (final String child : parChd.get(parent)) {
+        codeToChildren.computeIfAbsent(parent, k -> new HashSet<>()).add(child);
+        codeToParents.computeIfAbsent(child, k -> new HashSet<>()).add(parent);
+      }
+    }
+
+    // Compute ancestors and descendants using DFS
+    for (final String code : codeToChildren.keySet()) {
+      final Set<String> descendants = new HashSet<>();
+      final Set<String> visited = new HashSet<>();
+      dfsDescendants(code, codeToChildren, descendants, visited);
+      codeToDescendants.put(code, descendants);
+    }
+    for (final String code : codeToParents.keySet()) {
+      final Set<String> ancestors = new HashSet<>();
+      final Set<String> visited = new HashSet<>();
+      dfsAncestors(code, codeToParents, ancestors, visited);
+      codeToAncestors.put(code, ancestors);
+    }
+
+    // Gather all codes to update
+    final Set<String> allCodes = new HashSet<>();
+    allCodes.addAll(codeToChildren.keySet());
+    allCodes.addAll(codeToParents.keySet());
+    allCodes.addAll(codeToAncestors.keySet());
+    allCodes.addAll(codeToDescendants.keySet());
+
+    // Fetch all Concept objects in one query
+    final StringBuilder queryBuilder = new StringBuilder();
+    int i = 0;
+    for (final String code : allCodes) {
+      if (i++ > 0) {
+        queryBuilder.append(" OR ");
+      }
+      queryBuilder.append("code:").append(StringUtility.escapeQuery(code));
+    }
+    final SearchParameters conceptParams = new SearchParameters(
+        "terminology:" + StringUtility.escapeQuery(getTerminology()) + " AND publisher: \""
+            + StringUtility.escapeQuery(getPublisher()) + "\" AND version:"
+            + StringUtility.escapeQuery(getVersion())
+            + (queryBuilder.length() > 0 ? " AND (" + queryBuilder + ")" : ""),
+        0, allCodes.size(), null, null);
+    final List<String> fields =
+        ModelUtility.asList("id", "name", "code", "terminology", "publisher", "version");
+    final List<Concept> concepts =
+        searchService.findFields(conceptParams, fields, Concept.class).getItems();
+    final Map<String, Concept> codeToConcept = new HashMap<>();
+    for (final Concept c : concepts) {
+      codeToConcept.put(c.getCode(), c);
+    }
+
+    // Update each Concept's relationships
+    final Map<String, HasId> conceptBatch = new HashMap<>();
+    for (final String code : allCodes) {
+      final Concept concept = codeToConcept.get(code);
+      if (concept == null) {
+        continue;
+      }
+      // Children
+      final List<ConceptRef> childrenRefs = new ArrayList<>();
+      for (final String ch : codeToChildren.getOrDefault(code, Set.of())) {
+        final Concept chConcept = codeToConcept.get(ch);
+        if (chConcept != null) {
+          childrenRefs.add(new ConceptRef(chConcept.getCode(), chConcept.getName()));
+        }
+      }
+      concept.setChildren(childrenRefs);
+      // Parents
+      final List<ConceptRef> parentRefs = new ArrayList<>();
+      for (final String par : codeToParents.getOrDefault(code, Set.of())) {
+        final Concept parConcept = codeToConcept.get(par);
+        if (parConcept != null) {
+          parentRefs.add(new ConceptRef(parConcept.getCode(), parConcept.getName()));
+        }
+      }
+      concept.setParents(parentRefs);
+      // Ancestors
+      final List<ConceptRef> ancestorRefs = new ArrayList<>();
+      for (final String anc : codeToAncestors.getOrDefault(code, Set.of())) {
+        final Concept ancConcept = codeToConcept.get(anc);
+        if (ancConcept != null) {
+          ancestorRefs.add(new ConceptRef(ancConcept.getCode(), ancConcept.getName()));
+        }
+      }
+      concept.setAncestors(ancestorRefs);
+      // Descendants
+      final List<ConceptRef> descendantRefs = new ArrayList<>();
+      for (final String desc : codeToDescendants.getOrDefault(code, Set.of())) {
+        final Concept descConcept = codeToConcept.get(desc);
+        if (descConcept != null) {
+          descendantRefs.add(new ConceptRef(descConcept.getCode(), descConcept.getName()));
+        }
+      }
+      concept.setDescendants(descendantRefs);
+      conceptBatch.put(concept.getId(), concept);
+      if (conceptBatch.size() % FETCH_SIZE == 0) {
+        searchService.updateBulk(Concept.class, conceptBatch);
+        conceptBatch.clear();
+      }
+    }
+    if (!conceptBatch.isEmpty()) {
+      searchService.updateBulk(Concept.class, conceptBatch);
+    }
+    // --- END RELATIONSHIP POPULATION LOGIC ---
 
     // Mark the terminology as having computed tree positions and count tree
     // positions
@@ -301,6 +404,12 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
     logInfo("  treepos count = " + objectCt);
     logInfo("FINISH compute tree positions");
+
+    if (!batch.isEmpty()) {
+      searchService.addBulk(ConceptTreePosition.class, batch);
+      objectCt += batch.size();
+      batch.clear();
+    }
 
   }
 
@@ -396,7 +505,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     // set the children count
     tp.setChildCt(parChd.containsKey(code) ? parChd.get(code).size() : 0);
     batch.add(tp);
-    if ((batch.size() % 100) == 0) {
+    if ((batch.size() % BATCH_SIZE) == 0) {
       searchService.addBulk(ConceptTreePosition.class, batch);
       objectCt += batch.size();
       batch.clear();
@@ -456,6 +565,46 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
   @Override
   public String getDescription() {
     return "Tree position computer";
+  }
+
+  /**
+   * Dfs descendants.
+   *
+   * @param code the code
+   * @param codeToChildren the code to children
+   * @param descendants the descendants
+   * @param visited the visited
+   */
+  private void dfsDescendants(final String code, final Map<String, Set<String>> codeToChildren,
+    final Set<String> descendants, final Set<String> visited) {
+    if (!visited.add(code)) {
+      return;
+    }
+    for (final String child : codeToChildren.getOrDefault(code, Set.of())) {
+      if (descendants.add(child)) {
+        dfsDescendants(child, codeToChildren, descendants, visited);
+      }
+    }
+  }
+
+  /**
+   * Dfs ancestors.
+   *
+   * @param code the code
+   * @param codeToParents the code to parents
+   * @param ancestors the ancestors
+   * @param visited the visited
+   */
+  private void dfsAncestors(final String code, final Map<String, Set<String>> codeToParents,
+    final Set<String> ancestors, final Set<String> visited) {
+    if (!visited.add(code)) {
+      return;
+    }
+    for (final String parent : codeToParents.getOrDefault(code, Set.of())) {
+      if (ancestors.add(parent)) {
+        dfsAncestors(parent, codeToParents, ancestors, visited);
+      }
+    }
   }
 
 }

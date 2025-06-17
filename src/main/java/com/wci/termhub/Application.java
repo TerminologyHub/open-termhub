@@ -22,10 +22,8 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.HasId;
-import com.wci.termhub.model.Mapping;
-import com.wci.termhub.model.Mapset;
-import com.wci.termhub.model.Terminology;
 import com.wci.termhub.util.AdhocUtility;
 import com.wci.termhub.util.ModelUtility;
 
@@ -61,8 +59,7 @@ public class Application extends SpringBootServletInitializer {
     logger.debug("TERMHUB TERMINOLOGY APPLICATION START");
 
     // Bootstrap indexes
-    // TODO: is this needed?
-    // bootstrap();
+    bootstrap();
 
     if (System.getenv().get("ADHOC") != null) {
       AdhocUtility.execute(System.getenv("ADHOC"));
@@ -75,11 +72,24 @@ public class Application extends SpringBootServletInitializer {
    * @return the managed objects
    * @throws Exception the exception
    */
-  @SuppressWarnings("unchecked")
   public static List<Class<? extends HasId>> getManagedObjects() throws Exception {
-    // Create indexes on application startup
-    return ModelUtility.asList(Terminology.class, Mapset.class, Mapping.class);
-    // Concept, ConceptRelationship, ConceptTreePosition and Metadata all have
-    // their own indexes now
+
+    return ModelUtility.getIndexedObjects();
+
+  }
+
+  /**
+   * Bootstrap.
+   *
+   * @throws Exception the exception
+   */
+  private static void bootstrap() throws Exception {
+
+    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
+    final LuceneDataAccess luceneDataAccess = new LuceneDataAccess();
+
+    for (final Class<? extends HasId> clazz : indexedObjects) {
+      luceneDataAccess.createIndex(clazz);
+    }
   }
 }

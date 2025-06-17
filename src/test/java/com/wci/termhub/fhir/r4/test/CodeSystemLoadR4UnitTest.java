@@ -9,10 +9,13 @@
  */
 package com.wci.termhub.fhir.r4.test;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -29,16 +32,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.Application;
-import com.wci.termhub.model.Concept;
-import com.wci.termhub.model.ConceptRelationship;
-import com.wci.termhub.model.ConceptTreePosition;
-import com.wci.termhub.model.Mapping;
-import com.wci.termhub.model.Mapset;
-import com.wci.termhub.model.Metadata;
-import com.wci.termhub.model.Term;
-import com.wci.termhub.model.Terminology;
+import com.wci.termhub.model.HasId;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
+import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
 
 /**
@@ -82,14 +79,11 @@ public class CodeSystemLoadR4UnitTest {
       FileUtils.deleteDirectory(indexDir);
     }
 
-    searchService.deleteIndex(Terminology.class);
-    searchService.deleteIndex(Metadata.class);
-    searchService.deleteIndex(Concept.class);
-    searchService.deleteIndex(Term.class);
-    searchService.deleteIndex(ConceptRelationship.class);
-    searchService.deleteIndex(ConceptTreePosition.class);
-    searchService.deleteIndex(Mapset.class);
-    searchService.deleteIndex(Mapping.class);
+    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
+    for (final Class<? extends HasId> clazz : indexedObjects) {
+      searchService.deleteIndex(clazz);
+      searchService.createIndex(clazz);
+    }
 
     // Load each code system by reading directly from the classpath
     for (final String codeSystemFile : CODE_SYSTEM_FILES) {
@@ -102,8 +96,12 @@ public class CodeSystemLoadR4UnitTest {
           throw new FileNotFoundException("Could not find resource: data/" + codeSystemFile);
         }
 
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
         LOGGER.info("Loading code system from classpath resource: data/{}", codeSystemFile);
-        CodeSystemLoaderUtil.loadCodeSystem(searchService, resource.getFile().getAbsolutePath());
+        assertNotNull(CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent));
+
       } catch (final Exception e) {
         LOGGER.error("Error loading code system file: {}", codeSystemFile, e);
         throw e;
@@ -111,6 +109,36 @@ public class CodeSystemLoadR4UnitTest {
     }
 
     LOGGER.info("Finished loading code systems");
+  }
+
+  /**
+   * Test reload code system.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testReloadCodeSystem() throws Exception {
+    // Should throw an exception if the code system is already loaded
+    for (final String codeSystemFile : CODE_SYSTEM_FILES) {
+      try {
+        // Read file from classpath directly using Spring's resource mechanism
+        final Resource resource = new ClassPathResource("data/" + codeSystemFile,
+            CodeSystemLoadR4UnitTest.class.getClassLoader());
+
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
+        assertThrows(Exception.class, () -> {
+          LOGGER.info("Attempt reload of code system from classpath resource: data/{}",
+              codeSystemFile);
+          CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent);
+        });
+
+      } catch (final Exception e) {
+        LOGGER.error("Error reloading code system file: {}", codeSystemFile, e);
+        throw e;
+      }
+    }
   }
 
   /**

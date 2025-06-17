@@ -641,10 +641,10 @@ public class TerminologyCache {
     final List<String> fields = ModelUtility.asList("code", "terminology", "publisher", "version",
         "name", "leaf", "defined", "parents", "parents.code");
     final String strQuery = StringUtility.composeQuery("AND",
-        "publisher:" + StringUtility.escapeQuery(terminology.getPublisher()),
+        "publisher: \"" + StringUtility.escapeQuery(terminology.getPublisher()) + "\"",
         "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
         "version:" + StringUtility.escapeQuery(terminology.getVersion()));
-    final Query query = LuceneQueryBuilder.parse(strQuery);
+    final Query query = LuceneQueryBuilder.parse(strQuery, Concept.class);
     searchService.findAllWithFields(query, fields, Concept.class, handler);
 
     logger.info("    cache size = {}", cache.size());

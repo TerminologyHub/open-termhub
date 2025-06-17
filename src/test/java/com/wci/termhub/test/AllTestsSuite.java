@@ -9,13 +9,14 @@
  */
 package com.wci.termhub.test;
 
+import org.junit.platform.suite.api.IncludeEngines;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.SuiteDisplayName;
-import org.junit.platform.suite.api.IncludeEngines;
 
-import com.wci.termhub.rest.test.TerminologyServiceRestImplUnitTest;
+import com.wci.termhub.ecl.test.EclNonSnomedTest;
 import com.wci.termhub.ecl.test.EclToLuceneConverterTest;
+import com.wci.termhub.rest.test.TerminologyServiceRestImplUnitTest;
 
 /**
  * The Class AllTestsSuite. Tests that are dependent on CodeSystemLoadUnitTest.
@@ -27,22 +28,30 @@ import com.wci.termhub.ecl.test.EclToLuceneConverterTest;
 
     CleanupUnitTest.class,
 
+    // Load the code system data
     CodeSystemLoadUnitTest.class,
 
     // Run tests that verify the data
     TerminologyCodeSystemUnitTest.class,
-    ConceptCodeSystemUnitTest.class,
-    ConceptRelationshipCodeSystemUnitTest.class,
+
+    TerminologySearchUnitTest.class,
 
     MetadataSearchUnitTest.class,
-    TerminologySearchUnitTest.class,
+
+    ConceptCodeSystemUnitTest.class,
+
     ConceptSearchUnitTest.class,
-    ConceptTreePositionSearchUnitTest.class,
+
     TermSearchUnitTest.class,
+
+    ConceptRelationshipCodeSystemUnitTest.class,
+
+    ConceptTreePositionSearchUnitTest.class,
+
     MultithreadedReadUnitTest.class,
 
     // Then run ECL tests that depend on concept data
-    EclToLuceneConverterTest.class,
+    EclToLuceneConverterTest.class, EclNonSnomedTest.class,
 
     // Then run REST tests
     TerminologyServiceRestImplUnitTest.class,

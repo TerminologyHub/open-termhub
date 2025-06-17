@@ -74,13 +74,13 @@ public final class IndexUtility {
     logger.debug("Add: object field instance of Collection");
 
     for (final Object item : collection) {
-      if (item instanceof String) {
-        indexableFields.add(new StringField(field.getName(), (String) item,
-            org.apache.lucene.document.Field.Store.NO));
+      if (item instanceof final String value) {
+        indexableFields.add(
+            new StringField(field.getName(), value, org.apache.lucene.document.Field.Store.NO));
 
-      } else if (item instanceof Integer) {
-        indexableFields.add(new NumericDocValuesField(field.getName(), (Integer) item));
-        indexableFields.add(new StoredField(field.getName(), (Integer) item));
+      } else if (item instanceof final Integer value) {
+        indexableFields.add(new NumericDocValuesField(field.getName(), value));
+        indexableFields.add(new StoredField(field.getName(), value));
 
       } else if (item instanceof BaseModel) {
 

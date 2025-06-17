@@ -606,7 +606,6 @@ public final class FhirUtilityR5 {
       if (displayMap.containsKey(term.getType())) {
         final Coding coding = new Coding();
         coding.setCode(term.getType());
-        // coding.setSystem(codeSystem.getUrl());
         coding.setDisplay(displayMap.get(term.getType()));
         designation.addPart().setName("use").setValue(coding);
       } else {
@@ -812,17 +811,22 @@ public final class FhirUtilityR5 {
     cs.setStatus(Enumerations.PublicationStatus.ACTIVE);
     cs.setHierarchyMeaning(CodeSystem.CodeSystemHierarchyMeaning.ISA);
     cs.setCompositional("true".equals(terminology.getAttributes().get("fhirCompositional")));
+
     if ("SANDBOX".equals(terminology.getPublisher())) {
       cs.setContent(CodeSystemContentMode.FRAGMENT);
     } else {
       cs.setContent(CodeSystemContentMode.COMPLETE);
     }
+
     cs.setExperimental(false);
     if (terminology.getStatistics().containsKey("concepts")) {
       cs.setCount(terminology.getStatistics().get("concepts"));
     } else if (terminology.getConceptCt() != null) {
       cs.setCount(terminology.getConceptCt().intValue());
     }
+
+    logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
+        cs.getName(), cs.getVersion());
 
     return cs;
   }

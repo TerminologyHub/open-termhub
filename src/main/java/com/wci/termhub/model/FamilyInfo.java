@@ -9,7 +9,6 @@
  */
 package com.wci.termhub.model;
 
-import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.InnerField;
@@ -31,7 +30,6 @@ import jakarta.persistence.Transient;
 @Entity
 @Table(name = "family_info")
 @Schema(description = "Represents metadata and other info about a terminology family.")
-@Document(indexName = "family-info-v1")
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FamilyInfo extends AbstractHasModified implements HasLazyInit, Copyable<FamilyInfo> {

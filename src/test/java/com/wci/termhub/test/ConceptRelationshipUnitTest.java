@@ -110,29 +110,13 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
   /** The Constant INDEX_NAME. */
   private static final String INDEX_NAME = ConceptRelationship.class.getCanonicalName();
 
-  // /**
-  // * Delete index.
-  // *
-  // * @throws Exception the exception
-  // */
-  // @Test
-  // @Order(1)
-  // public void deleteIndex() throws Exception {
-  //
-  // logger.info("Deleting index for Concept Relationship");
-  // searchService.deleteIndex(ConceptRelationship.class);
-  //
-  // // assert directory does not exist
-  // assertFalse(Files.exists(Paths.get(INDEX_DIRECTORY, INDEX_NAME)));
-  // }
-
   /**
    * Creates the index.
    *
    * @throws Exception the exception
    */
   @Test
-  @Order(2)
+  @Order(1)
   public void createIndex() throws Exception {
 
     logger.info("Creating index for Concept Relationship");
@@ -149,7 +133,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(3)
+  @Order(2)
   public void testAddConceptRelationship() throws Exception {
 
     final ObjectMapper objectMapper = new ObjectMapper();
@@ -171,7 +155,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(4)
+  @Order(3)
   public void findConceptRelationshipById() throws Exception {
 
     final ConceptRelationship foundConceptRelObjects =
@@ -188,7 +172,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(5)
+  @Order(4)
   public void findConceptRelationshipByFromCode() throws Exception {
 
     final SearchParameters searchParameters = new SearchParameters();

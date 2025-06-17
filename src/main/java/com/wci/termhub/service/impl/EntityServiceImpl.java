@@ -11,7 +11,8 @@ package com.wci.termhub.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.TerminologyComponent;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.service.FindCallbackHandler;
 import com.wci.termhub.util.ModelUtility;
@@ -108,6 +110,27 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
   /* see superclass */
   @Override
+  public void updateBulk(final Class<? extends HasId> clazz, final Map<String, HasId> entities)
+    throws Exception {
+
+    checkIfEntityHasDocumentAnnotation(clazz);
+    final LuceneDataAccess luceneData = new LuceneDataAccess();
+
+    for (final String id : entities.keySet()) {
+      final HasId entity = entities.get(id);
+      if (entity == null) {
+        LOGGER.warn("    UPDATE {} entity to index {} - entity is null", id, clazz.getSimpleName());
+        continue;
+      }
+      LOGGER.debug("    UPDATE {} entity to index {}", entity, clazz.getSimpleName());
+      luceneData.remove(clazz, id);
+      luceneData.add(entity);
+    }
+
+  }
+
+  /* see superclass */
+  @Override
   public <T extends HasId> ResultList<T> findAll(final SearchParameters searchParameters,
     final Class<T> clazz) throws Exception {
 
@@ -139,11 +162,11 @@ public class EntityServiceImpl implements EntityRepositoryService {
   public <T extends HasId> ResultList<String> findIds(final SearchParameters params,
     final Class<T> clazz) throws Exception {
 
-    final ResultList<T> list = findFields(params, ModelUtility.asList("id"), clazz);
+    final ResultList<T> list = findFields(params, ModelUtility.asList("id"), clazz, null);
     final ResultList<String> ids = new ResultList<>();
     ids.setTotal(list.getTotal());
     ids.setParameters(params);
-    ids.setItems(list.getItems().stream().map(o -> o.getId()).collect(Collectors.toList()));
+    ids.setItems(list.getItems().stream().map(o -> o.getId()).toList());
     return ids;
   }
 
@@ -226,10 +249,43 @@ public class EntityServiceImpl implements EntityRepositoryService {
   @Override
   public <T extends HasId> ResultList<T> findFields(final SearchParameters searchParameters,
     final List<String> fields, final Class<T> clazz) throws Exception {
+    return findFields(searchParameters, fields, clazz, null);
+  }
+
+  /* see superclass */
+  @Override
+  public <T extends HasId> ResultList<T> findFields(final SearchParameters searchParameters,
+    final List<String> fields, final Class<T> clazz, final Set<String> terminologies)
+    throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    return luceneData.find(clazz, searchParameters);
+
+    final ResultList<T> results = luceneData.find(clazz, searchParameters);
+
+    // if class does not extend TerminologyComponent, skip filtering
+    if (!TerminologyComponent.class.isAssignableFrom(clazz) || terminologies == null
+        || terminologies.isEmpty()) {
+      return results;
+    }
+
+    // filter results by terminologies
+    final ResultList<T> filteredResultList = new ResultList<>();
+    filteredResultList.setParameters(searchParameters);
+
+    if (!terminologies.isEmpty()) {
+      final List<T> filteredItems = results.getItems().stream()
+          .filter(item -> terminologies.contains(((TerminologyComponent) item).getTerminology()))
+          .toList();
+      filteredResultList.setItems(filteredItems);
+      filteredResultList.setTotal(filteredItems.size());
+    } else {
+      // if no terminologies specified, return all results
+      filteredResultList.setItems(results.getItems());
+      filteredResultList.setTotal(results.getTotal());
+    }
+
+    return filteredResultList;
   }
 
   /* see superclass */
@@ -249,7 +305,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     final List<T> list = new ArrayList<>();
     while (true) {
-      final List<T> innerList = findFields(params, fields, clazz).getItems();
+      final List<T> innerList = findFields(params, fields, clazz, null).getItems();
 
       if (innerList.isEmpty()) {
         break;
@@ -375,7 +431,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
             : QueryBuilder.findBuilder(builders, handler).buildQuery(params);
     LOGGER.debug("    query [{}] offset={}, limit={}, {} {}", queryString, params.getOffset(),
         params.getLimit(), clazz.getSimpleName(), handler);
-    final Query query = LuceneQueryBuilder.parse(queryString);
+    final Query query = LuceneQueryBuilder.parse(queryString, clazz);
     return query;
 
   }

@@ -572,7 +572,6 @@ public final class FhirUtilityR4 {
       if (displayMap.containsKey(term.getType())) {
         final Coding coding = new Coding();
         coding.setCode(term.getType());
-        // coding.setSystem(codeSystem.getUrl());
         coding.setDisplay(displayMap.get(term.getType()));
         designation.addPart().setName("use").setValue(coding);
       } else {

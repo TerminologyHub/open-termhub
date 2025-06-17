@@ -594,8 +594,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // "designations": [...]
       // } ]
       // }
-      final Query browserQuery = LuceneQueryBuilder
-          .parse(new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()));
+      final Query browserQuery = LuceneQueryBuilder.parse(
+          new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()),
+          Concept.class);
       final Query expression = getExpressionQuery(terminology, vs.getUrl());
 
       final Query valueSetQuery = expression != null
@@ -703,14 +704,14 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // "valueString": "The code '16224591000119103' was found in the ValueSet,
       // however the
       // display 'abc' did not match any designations."
-      final Query codeQuery =
-          LuceneQueryBuilder.parse("code:\"" + StringUtility.escapeQuery(code) + "\"");
+      final Query codeQuery = LuceneQueryBuilder
+          .parse("code:\"" + StringUtility.escapeQuery(code) + "\"", Concept.class);
       final Query expression = getExpressionQuery(terminology, vs.getUrl());
       final Query booleanQuery = getAndQuery(codeQuery, expression);
       final List<Concept> list = searchService.findAll(null, booleanQuery, Concept.class);
       final Parameters parameters = new Parameters();
       // If no match
-      if (list.size() == 0) {
+      if (list.isEmpty()) {
         parameters.addParameter(
             new ParametersParameterComponent().setName("result").setValue(new BooleanType(false)));
         parameters.addParameter(new ParametersParameterComponent().setName("message")

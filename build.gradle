@@ -63,6 +63,9 @@ dependencies {
   implementation "org.springframework.boot:spring-boot-starter-web"
   implementation "org.springframework.boot:spring-boot-starter-actuator"
 
+  // Vulnerability import
+  implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.42"
+
   // prometheus
   implementation "io.micrometer:micrometer-registry-prometheus"
 
@@ -169,6 +172,7 @@ test {
     exclude '**/TermSearchUnitTest.class'
     exclude '**/MultithreadedReadUnitTest.class'
     exclude '**/EclToLuceneConverterTest.class'
+    exclude '**/EclNonSnomedTest.class'
     exclude '**/TerminologyServiceRestImplUnitTest.class'
     exclude '**/CleanupUnitTest.class'
 
@@ -264,7 +268,7 @@ spotbugsTest {
 
 // Checkstyle
 checkstyle {
-  toolVersion '10.12.0'
+  toolVersion '10.25.0'
   ignoreFailures = true
   // Path to your Checkstyle configuration file
   configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")

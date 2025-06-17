@@ -79,11 +79,11 @@ public class LuceneDataAccess {
     // Create only if the index does not exist
     final File indexDir = new File(indexRootDirectory, clazz.getCanonicalName());
     if (indexDir.exists()) {
-      LOGGER.info("Index already exists: {}", indexDir.getAbsolutePath());
+      LOGGER.debug("Index already exists: {}", indexDir.getAbsolutePath());
       return;
     }
 
-    LOGGER.info("Create Index: {}, directory: {}", indexRootDirectory, clazz.getCanonicalName());
+    LOGGER.info("Create Index: {}/{}", indexRootDirectory, clazz.getCanonicalName());
 
     // Create a new IndexWriter with default config to initialize the index
     try (final FSDirectory directory = FSDirectory.open(indexDir.toPath());
@@ -268,7 +268,7 @@ public class LuceneDataAccess {
     try (final StandardAnalyzer analyzer = new StandardAnalyzer()) {
       final IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
-      LOGGER.info("Removing id: {} for index:{}", id, indexDirectory);
+      LOGGER.debug("Removing id: {} for index:{}", id, indexDirectory);
 
       final File indexDir = new File(indexRootDirectory, indexDirectory);
       if (!indexDir.exists()) {
@@ -330,7 +330,7 @@ public class LuceneDataAccess {
     }
 
     return find(clazz, sp, sp.getLuceneQuery() != null ? sp.getLuceneQuery()
-        : LuceneQueryBuilder.parse(sp.getQuery()));
+        : LuceneQueryBuilder.parse(sp.getQuery(), clazz));
   }
 
   /**

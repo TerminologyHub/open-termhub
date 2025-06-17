@@ -44,6 +44,7 @@ import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
@@ -752,29 +753,24 @@ public class CodeSystemProviderR4 implements IResourceProvider {
       logger.info("Create code system with {} concepts",
           codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
 
-      // Convert CodeSystem to JSON
-      final String content = ca.uhn.fhir.context.FhirContext.forR4().newJsonParser()
-          .encodeResourceToString(codeSystem);
-
-      // Write content to temporary file
-      final java.nio.file.Path tempFile =
-          java.nio.file.Files.createTempFile("codesystem-", ".json");
-      java.nio.file.Files.write(tempFile, content.getBytes());
+      // Convert CodeSystem to JSON string
+      final String content = FhirContext.forR4().newJsonParser().encodeResourceToString(codeSystem);
+      final int conceptCount = codeSystem.getConcept().size();
+      codeSystem.getConcept().clear();
+      codeSystem.setConcept(null);
 
       // Use existing loader utility
-      CodeSystemLoaderUtil.loadCodeSystem(searchService, tempFile.toString());
-
-      // Clean up temp file
-      java.nio.file.Files.delete(tempFile);
+      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content);
 
       // Return success
       final MethodOutcome outcome = new MethodOutcome();
       // Clear the "concepts" of the code system before sending it back
-      codeSystem.setCount(codeSystem.getConcept().size());
+      codeSystem.setCount(conceptCount);
       codeSystem.getConcept().clear();
-
       outcome.setResource(codeSystem);
       outcome.setCreated(true);
+      final IdType id = new IdType("CodeSystem", terminologyId);
+      codeSystem.setId(id);
       return outcome;
 
     } catch (final Exception e) {
