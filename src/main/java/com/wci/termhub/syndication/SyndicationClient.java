@@ -100,7 +100,18 @@ public class SyndicationClient {
     final ResponseEntity<String> response = restTemplate.exchange("/terminology/syndication/feed",
         HttpMethod.GET, new HttpEntity<>(headers), String.class);
 
-    return parseFeed(response.getBody());
+    if (response == null) {
+      logger.error("Failed to retrieve syndication feed: Response is null");
+      throw new RuntimeException("Syndication feed response is null");
+    }
+
+    final String body = response.getBody();
+    if (body == null) {
+      logger.error("Failed to retrieve syndication feed: Body is null");
+      throw new RuntimeException("Syndication feed body is null");
+    }
+
+    return parseFeed(body);
   }
 
   /**
