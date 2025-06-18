@@ -33,12 +33,12 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * Algorithm to compute tree positions. Should not be autowired as it is not stateless or thread
- * safe. Use ApplicationContext with getBean to get an instance.
+ * Algorithm to compute tree positions. Should not be autowired as it is not
+ * stateless or thread safe. Use ApplicationContext with getBean to get an
+ * instance.
  */
 @Scope("prototype")
 @Component
