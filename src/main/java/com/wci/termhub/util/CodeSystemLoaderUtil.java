@@ -259,9 +259,8 @@ public final class CodeSystemLoaderUtil {
     final String version = root.path("version").asText();
 
     final SearchParameters searchParams = new SearchParameters();
-    searchParams.setQuery("abbreviation: " + StringUtility.escapeQuery(abbreviation)
-        + " publisher: \"" + StringUtility.escapeQuery(publisher) + "\" AND version: '"
-        + StringUtility.escapeQuery(version) + "'");
+    searchParams
+        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
     final ResultList<Terminology> terminology = service.find(searchParams, Terminology.class);
 
     return (terminology.getItems().isEmpty()) ? null : terminology.getItems().get(0);

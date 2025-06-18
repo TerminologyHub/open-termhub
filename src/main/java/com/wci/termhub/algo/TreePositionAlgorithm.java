@@ -143,11 +143,11 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     logInfo("  Find hierarchical relationships");
 
     // Load blocks of 10k, need to specify sort=id for this to work
+    final String queryStr =
+        TerminologyUtility.getTerminologyQuery(getTerminology(), getPublisher(), getVersion());
     final SearchParameters params = new SearchParameters(
-        "terminology:" + StringUtility.escapeQuery(getTerminology()) + " AND publisher: \""
-            + StringUtility.escapeQuery(getPublisher()) + "\" AND version:"
-            + StringUtility.escapeQuery(getVersion()) + " AND hierarchical:true AND active:true",
-        0, FETCH_SIZE, "id", null);
+        queryStr + " AND hierarchical:true AND active:true", 0, FETCH_SIZE, "id", null);
+
     final ResultList<ConceptRelationship> list = new ResultList<>();
     final Map<String, String> additionalTypeMap = new HashMap<>();
     // String searchAfter = null;
@@ -321,11 +321,8 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       queryBuilder.append("code:").append(StringUtility.escapeQuery(code));
     }
     final SearchParameters conceptParams = new SearchParameters(
-        "terminology:" + StringUtility.escapeQuery(getTerminology()) + " AND publisher: \""
-            + StringUtility.escapeQuery(getPublisher()) + "\" AND version:"
-            + StringUtility.escapeQuery(getVersion())
-            + (queryBuilder.length() > 0 ? " AND (" + queryBuilder + ")" : ""),
-        0, allCodes.size(), null, null);
+        queryStr + (queryBuilder.length() > 0 ? " AND (" + queryBuilder + ")" : ""), 0,
+        allCodes.size(), null, null);
     final List<String> fields =
         ModelUtility.asList("id", "name", "code", "terminology", "publisher", "version");
     final List<Concept> concepts =

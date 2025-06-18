@@ -7,30 +7,37 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub;
+package com.wci.termhub.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
 
 /**
- * The app configuration.
+ * Configuration for syndication-related beans.
  */
 @Configuration
-@ComponentScan(basePackages = {
-    "com.wci.termhub.algo", "com.wci.termhub.fhir", "com.wci.termhub.handler",
-    "com.wci.termhub.loader", "com.wci.termhub.lucene", "com.wci.termhub.util"
-})
-public class AppConfig {
+public class SyndicationConfig {
 
   /**
-   * Rest template.
+   * Syndication URL bean.
    *
-   * @return the rest template
+   * @param url the url
+   * @return the string
    */
   @Bean
-  public RestTemplate restTemplate() {
-    return new RestTemplate();
+  public String syndicationUrl(@Value("${syndication.url}") final String url) {
+    return url;
+  }
+
+  /**
+   * Syndication token bean.
+   *
+   * @param token the token
+   * @return the string
+   */
+  @Bean
+  public String syndicationToken(@Value("${syndication.token}") final String token) {
+    return token;
   }
 }

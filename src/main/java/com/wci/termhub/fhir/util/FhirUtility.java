@@ -40,6 +40,7 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
+import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.TimerCache;
 
 import ca.uhn.fhir.rest.param.DateParam;
@@ -141,13 +142,10 @@ public final class FhirUtility {
     if (t != null) {
       return t.get(0);
     }
-    final ResultList<Terminology> tlist =
-        searchService
-            .find(
-                new SearchParameters("abbreviation:" + StringUtility.escapeQuery(terminology)
-                    + " AND publisher: \"" + StringUtility.escapeQuery(publisher)
-                    + "\" AND version:" + StringUtility.escapeQuery(version), 2, 0),
-                Terminology.class);
+    final ResultList<Terminology> tlist = searchService.find(
+        new SearchParameters(
+            TerminologyUtility.getTerminologyAbbrQuery(terminology, publisher, version), 2, 0),
+        Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;

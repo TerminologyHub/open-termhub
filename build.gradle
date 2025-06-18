@@ -156,22 +156,9 @@ test {
     systemProperty 'spring.profiles.active', 'test'
     exclude '**/r4/**'
     exclude '**/r5/**'
-
-    // Exclude tests that are part of AllTestsSuite to prevent double execution
-    exclude '**/CodeSystemLoadUnitTest.class'
-    exclude '**/TerminologyCodeSystemUnitTest.class'
-    exclude '**/ConceptCodeSystemUnitTest.class'
-    exclude '**/ConceptRelationshipCodeSystemUnitTest.class'
-    exclude '**/ConceptTreePositionSearchUnitTest.class'
-    exclude '**/MetadataSearchUnitTest.class'
-    exclude '**/TerminologySearchUnitTest.class'
-    exclude '**/ConceptSearchUnitTest.class'
-    exclude '**/TermSearchUnitTest.class'
-    exclude '**/MultithreadedReadUnitTest.class'
-    exclude '**/EclToLuceneConverterTest.class'
-    exclude '**/EclNonSnomedTest.class'
-    exclude '**/TerminologyServiceRestImplUnitTest.class'
-    exclude '**/CleanupUnitTest.class'
+    exclude '**/group/**'
+    exclude '**/rest/**'
+    // exclude '**/integrationtest/**'
 
     testLogging {
         events "passed", "skipped", "failed"

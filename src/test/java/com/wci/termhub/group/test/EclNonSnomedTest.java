@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.ecl.test;
+package com.wci.termhub.group.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.wci.termhub.ecl.EclToLuceneConverter;
 import com.wci.termhub.ecl.ExpressionConstraintListener;
+import com.wci.termhub.ecl.test.EclConverterTest;
 import com.wci.termhub.lucene.LuceneEclDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.util.PropertyUtility;

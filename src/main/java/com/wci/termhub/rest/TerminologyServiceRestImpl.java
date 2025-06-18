@@ -181,6 +181,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     this.request = request;
   }
 
+  /**
+   * Health.
+   *
+   * @param dependencies the dependencies
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/health", method = RequestMethod.GET)
@@ -211,6 +218,16 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
+  /**
+   * Admin.
+   *
+   * @param task the task
+   * @param adminKey the admin key
+   * @param background the background
+   * @param payload the payload
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/admin", method = RequestMethod.POST)
@@ -253,6 +270,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the terminology.
+   *
+   * @param id the id
+   * @return the terminology
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.GET)
@@ -288,6 +312,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the terminology metadata.
+   *
+   * @param id the id
+   * @return the terminology metadata
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}/metadata", method = RequestMethod.GET)
@@ -317,10 +348,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       }
 
       final SearchParameters params = new SearchParameters();
-      params.setQuery(StringUtility.composeQuery("AND",
-          "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
-          "publisher: \"" + StringUtility.escapeQuery(terminology.getPublisher()) + "\"",
-          "version:" + StringUtility.escapeQuery(terminology.getVersion())));
+      params.setQuery(TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+          terminology.getPublisher(), terminology.getVersion()));
       params.setLimit(100000);
 
       // Find and return the list
@@ -332,6 +361,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Adds the terminology.
+   *
+   * @param terminologyStr the terminology str
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.POST,
@@ -437,6 +473,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
+  /**
+   * Update terminology.
+   *
+   * @param id the id
+   * @param terminologyStr the terminology str
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.PATCH,
@@ -476,6 +520,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Delete terminology.
+   *
+   * @param id the id
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.DELETE)
@@ -501,6 +552,17 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find terminologies.
+   *
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.GET)
@@ -557,6 +619,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the concept.
+   *
+   * @param conceptId the concept id
+   * @param include the include
+   * @return the concept
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}", method = RequestMethod.GET)
@@ -624,6 +694,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the concept.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @param include the include
+   * @return the concept
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}", method = RequestMethod.GET)
@@ -665,11 +744,18 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Terminology term = lookupTerminology(terminology);
 
       // find with code, term, pub, version
-      final String query =
-          StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
-              "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-              "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
-              "version:" + StringUtility.escapeQuery(term.getVersion()));
+      final String query = StringUtility.composeQuery("AND",
+          TerminologyUtility.getTerminologyQuery(term.getAbbreviation(), term.getPublisher(),
+              term.getVersion()),
+
+          "code:" + StringUtility.escapeQuery(code)
+
+      // "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
+      // "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) +
+      // "\"",
+      // "version:" + StringUtility.escapeQuery(term.getVersion())
+
+      );
 
       // then do a find on the query
       final SearchParameters params = new SearchParameters(query, null, 2, null, null);
@@ -698,6 +784,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the concept codes.
+   *
+   * @param terminology the terminology
+   * @param codes the codes
+   * @param include the include
+   * @return the concept codes
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology:[A-Z].*}", method = RequestMethod.GET)
@@ -750,13 +845,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // find with code, term, pub, version
       final String query = StringUtility.composeQuery("AND",
-          "code:(" + String.join(" OR ",
-              Arrays.asList(codeArray).stream().map(c -> StringUtility.escapeQuery(c))
-                  .collect(Collectors.toList()))
-              + ")",
-          "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-          "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
-          "version:" + StringUtility.escapeQuery(term.getVersion()));
+          TerminologyUtility.getTerminologyQuery(term.getAbbreviation(), term.getPublisher(),
+              term.getVersion()),
+          "code:("
+              + String.join(" OR ",
+                  Arrays.asList(codeArray).stream().map(c -> StringUtility.escapeQuery(c)).toList())
+              + ")");
 
       // then do a find on the query
       final SearchParameters params = new SearchParameters(query, 0, 500, null, null);
@@ -781,6 +875,23 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find concepts.
+   *
+   * @param terminology the terminology
+   * @param query the query
+   * @param expression the expression
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @param leaf the leaf
+   * @param include the include
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept", method = RequestMethod.GET)
@@ -874,6 +985,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find terms.
+   *
+   * @param terminology the terminology
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/term", method = RequestMethod.GET)
@@ -954,6 +1079,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Lookup.
+   *
+   * @param terminology the terminology
+   * @param expression the expression
+   * @param limit the limit
+   * @param active the active
+   * @param leaf the leaf
+   * @param include the include
+   * @param handler the handler
+   * @param queries the queries
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/bulk", method = RequestMethod.POST)
@@ -1113,6 +1252,17 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
+  /**
+   * Find metadata.
+   *
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/metadata", method = RequestMethod.GET)
@@ -1174,6 +1324,19 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find concept relationships.
+   *
+   * @param conceptId the concept id
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param ascending the ascending
+   * @param sort the sort
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/relationships", method = RequestMethod.GET)
@@ -1247,6 +1410,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find concept relationships.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param ascending the ascending
+   * @param sort the sort
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/relationships", method = RequestMethod.GET)
@@ -1319,6 +1496,19 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find concept inverse relationships.
+   *
+   * @param conceptId the concept id
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param ascending the ascending
+   * @param sort the sort
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/inverseRelationships", method = RequestMethod.GET)
@@ -1393,6 +1583,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find concept inverse relationships.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param ascending the ascending
+   * @param sort the sort
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/inverseRelationships",
@@ -1467,6 +1671,19 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find tree positions.
+   *
+   * @param conceptId the concept id
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param ascending the ascending
+   * @param sort the sort
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/trees", method = RequestMethod.GET)
@@ -1555,6 +1772,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find tree positions.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param ascending the ascending
+   * @param sort the sort
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/trees", method = RequestMethod.GET)
@@ -1636,6 +1867,19 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find tree position children.
+   *
+   * @param conceptId the concept id
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param ascending the ascending
+   * @param sort the sort
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/trees/children", method = RequestMethod.GET)
@@ -1735,6 +1979,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find tree position children.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param ascending the ascending
+   * @param sort the sort
+   * @param handler the handler
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/trees/children",
@@ -1896,6 +2154,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find mappings.
+   *
+   * @param mapset the mapset
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @param leaf the leaf
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapping", method = RequestMethod.GET)
@@ -1967,6 +2239,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find mapset mappings.
+   *
+   * @param mapsetId the mapset id
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @param leaf the leaf
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapset/{mapset}/mappings", method = RequestMethod.GET)
@@ -2037,6 +2323,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the concept mappings.
+   *
+   * @param conceptId the concept id
+   * @return the concept mappings
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/mappings", method = RequestMethod.GET)
@@ -2100,6 +2393,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the concept inverse mappings.
+   *
+   * @param conceptId the concept id
+   * @return the concept inverse mappings
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/inverseMappings",
@@ -2163,6 +2463,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the concept mappings.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @return the concept mappings
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/mappings", method = RequestMethod.GET)
@@ -2199,11 +2507,17 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Terminology term = lookupTerminology(terminology);
 
       // find with code, term, pub, version
-      final String query =
-          StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
-              "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-              "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
-              "version:" + StringUtility.escapeQuery(term.getVersion()));
+      final String query = StringUtility.composeQuery("AND",
+
+          TerminologyUtility.getTerminologyQuery(term.getAbbreviation(), term.getPublisher(),
+              term.getVersion()),
+          "code:" + StringUtility.escapeQuery(code) // ,
+      // "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
+      // "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) +
+      // "\"",
+      // "version:" + StringUtility.escapeQuery(term.getVersion())
+
+      );
 
       // then do a find on the query
       final SearchParameters params = new SearchParameters(query, null, 2, null, null);
@@ -2238,6 +2552,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the concept inverse mappings.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @return the concept inverse mappings
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "concept/{terminology}/{code}/inverseMappings",
@@ -2274,11 +2596,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Terminology term = lookupTerminology(terminology);
 
       // find with code, term, pub, version
-      final String query =
-          StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(code),
-              "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-              "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) + "\"",
-              "version:" + StringUtility.escapeQuery(term.getVersion()));
+      final String query = StringUtility.composeQuery("AND", TerminologyUtility
+          .getTerminologyQuery(term.getAbbreviation(), term.getPublisher(), term.getVersion()),
+          "code:" + StringUtility.escapeQuery(code)
+      // ,
+      // "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
+      // "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) +
+      // "\"",
+      // "version:" + StringUtility.escapeQuery(term.getVersion())
+      );
 
       // then do a find on the query
       final SearchParameters params = new SearchParameters(query, null, 2, null, null);
@@ -2312,6 +2638,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Gets the mapset.
+   *
+   * @param id the id
+   * @return the mapset
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapset/{id:[a-f0-9].+}", method = RequestMethod.GET)
@@ -2347,6 +2680,17 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
+  /**
+   * Find mapsets.
+   *
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @return the response entity
+   * @throws Exception the exception
+   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapset", method = RequestMethod.GET)
@@ -2402,6 +2746,55 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       return null;
     }
   }
+
+  // /**
+  // * Download all available syndication packages for a project.
+  // *
+  // * @param authorizationHeader the Bearer JWT
+  // * @return list of downloaded file paths
+  // */
+  // @Operation(summary = "Download all available syndication packages for a
+  // project",
+  // description = "Triggers download of all available syndication files for the
+  // given project id or URI label. "
+  // + "Requires Bearer JWT in Authorization header.",
+  // tags = {
+  // "terminology"
+  // })
+  // @ApiResponses({
+  // @ApiResponse(responseCode = "200", description = "List of downloaded file
+  // paths"),
+  // @ApiResponse(responseCode = "500", description = "Internal server error")
+  // })
+  // @Parameters({
+  // // @Parameter(name = "projectId", description = "Project id or URI label",
+  // // required = true),
+  // @Parameter(name = "Authorization", description = "Bearer JWT", required =
+  // true)
+  // })
+  // @RequestMapping(value = "/syndication/downloadAll", method =
+  // RequestMethod.POST,
+  // produces = MediaType.APPLICATION_JSON_VALUE)
+  // public ResponseEntity<List<String>> downloadAllSyndicationFiles(
+  // @RequestHeader("Authorization") final String authorizationHeader) {
+  // try {
+  // // Extract JWT from Bearer token
+  // final String projectId = "";
+  // final String jwt = authorizationHeader.replace("Bearer ", "").trim();
+  // final String syndicationUrl =
+  // PropertyUtility.getProperties().getProperty("syndication.url");
+  // final SyndicationClient client = new SyndicationClient(syndicationUrl,
+  // jwt);
+  // // final List<String> files =
+  // // client.downloadAllAvailablePackages(projectId);
+  // // return ResponseEntity.ok(files);
+  // return ResponseEntity.ok(List.of("Done"));
+  // } catch (final Exception e) {
+  // logger.error("Failed to download syndication files", e);
+  // return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+  // .body(List.of("Error: " + e.getMessage()));
+  // }
+  // }
 
   /**
    * Lookup terminologies.
