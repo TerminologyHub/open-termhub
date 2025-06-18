@@ -158,7 +158,7 @@ test {
     exclude '**/r5/**'
     exclude '**/group/**'
     exclude '**/rest/**'
-    // exclude '**/integrationtest/**'
+    exclude '**/integrationtest/**'
 
     testLogging {
         events "passed", "skipped", "failed"
