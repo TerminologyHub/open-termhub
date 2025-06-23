@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.ecl.test;
+package com.wci.termhub.group.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;

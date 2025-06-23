@@ -77,13 +77,9 @@ public final class TerminologyUtility {
   public static Terminology getTerminology(final EntityRepositoryService searchService,
     final String terminology, final String publisher, final String version) throws Exception {
 
-    final ResultList<Terminology> tlist =
-        searchService
-            .find(
-                new SearchParameters("abbreviation:" + StringUtility.escapeQuery(terminology)
-                    + " AND publisher: \"" + StringUtility.escapeQuery(publisher)
-                    + "\" AND version:" + StringUtility.escapeQuery(version), 2, 0),
-                Terminology.class);
+    final ResultList<Terminology> tlist = searchService.find(
+        new SearchParameters(getTerminologyAbbrQuery(terminology, publisher, version), 2, 0),
+        Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
@@ -109,10 +105,9 @@ public final class TerminologyUtility {
   public static Mapset getMapset(final EntityRepositoryService searchService,
     final String abbreviation, final String publisher, final String version) throws Exception {
 
-    final ResultList<Mapset> tlist = searchService
-        .find(new SearchParameters("abbreviation:" + StringUtility.escapeQuery(abbreviation)
-            + " AND publisher: \"" + StringUtility.escapeQuery(publisher) + "\" AND version:"
-            + StringUtility.escapeQuery(version), 2, 0), Mapset.class);
+    final ResultList<Mapset> tlist = searchService.find(
+        new SearchParameters(getTerminologyAbbrQuery(abbreviation, publisher, version), 2, 0),
+        Mapset.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
@@ -123,6 +118,40 @@ public final class TerminologyUtility {
     }
 
     return tlist.getItems().get(0);
+  }
+
+  /**
+   * Gets the terminology query.
+   *
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
+   * @return the terminology query
+   */
+  public static String getTerminologyQuery(final String terminology, final String publisher,
+    final String version) {
+
+    return StringUtility.composeQuery("AND",
+        "terminology: \"" + StringUtility.escapeQuery(terminology) + "\"",
+        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
+        "version: \"" + StringUtility.escapeQuery(version) + "\"");
+  }
+
+  /**
+   * Gets the terminology query.
+   *
+   * @param abbreviation the abbreviation
+   * @param publisher the publisher
+   * @param version the version
+   * @return the terminology query
+   */
+  public static String getTerminologyAbbrQuery(final String abbreviation, final String publisher,
+    final String version) {
+
+    return StringUtility.composeQuery("AND",
+        "abbreviation: \"" + StringUtility.escapeQuery(abbreviation) + "\"",
+        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
+        "version: \"" + StringUtility.escapeQuery(version) + "\"");
   }
 
   /**

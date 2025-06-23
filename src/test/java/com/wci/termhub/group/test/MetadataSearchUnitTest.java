@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.test;
+package com.wci.termhub.group.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -23,6 +23,7 @@ import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.test.BaseUnitTest;
 
 /**
  * The Class MetadataSearchUnitTest.

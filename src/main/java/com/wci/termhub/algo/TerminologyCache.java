@@ -31,7 +31,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.service.FindCallbackHandler;
 import com.wci.termhub.util.FieldedStringTokenizer;
 import com.wci.termhub.util.ModelUtility;
-import com.wci.termhub.util.StringUtility;
+import com.wci.termhub.util.TerminologyUtility;
 
 /**
  * Represents a cache of information used by terminology loaders to allow/support concept-at-a-time
@@ -640,10 +640,8 @@ public class TerminologyCache {
     };
     final List<String> fields = ModelUtility.asList("code", "terminology", "publisher", "version",
         "name", "leaf", "defined", "parents", "parents.code");
-    final String strQuery = StringUtility.composeQuery("AND",
-        "publisher: \"" + StringUtility.escapeQuery(terminology.getPublisher()) + "\"",
-        "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
-        "version:" + StringUtility.escapeQuery(terminology.getVersion()));
+    final String strQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), terminology.getVersion());
     final Query query = LuceneQueryBuilder.parse(strQuery, Concept.class);
     searchService.findAllWithFields(query, fields, Concept.class, handler);
 

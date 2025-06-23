@@ -14,8 +14,19 @@ import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.SuiteDisplayName;
 
-import com.wci.termhub.ecl.test.EclNonSnomedTest;
-import com.wci.termhub.ecl.test.EclToLuceneConverterTest;
+import com.wci.termhub.group.test.CleanupUnitTest;
+import com.wci.termhub.group.test.CodeSystemLoadUnitTest;
+import com.wci.termhub.group.test.ConceptCodeSystemUnitTest;
+import com.wci.termhub.group.test.ConceptRelationshipCodeSystemUnitTest;
+import com.wci.termhub.group.test.ConceptSearchUnitTest;
+import com.wci.termhub.group.test.ConceptTreePositionSearchUnitTest;
+import com.wci.termhub.group.test.EclNonSnomedTest;
+import com.wci.termhub.group.test.EclToLuceneConverterTest;
+import com.wci.termhub.group.test.MetadataSearchUnitTest;
+import com.wci.termhub.group.test.MultithreadedReadUnitTest;
+import com.wci.termhub.group.test.TermSearchUnitTest;
+import com.wci.termhub.group.test.TerminologyCodeSystemUnitTest;
+import com.wci.termhub.group.test.TerminologySearchUnitTest;
 import com.wci.termhub.rest.test.TerminologyServiceRestImplUnitTest;
 
 /**

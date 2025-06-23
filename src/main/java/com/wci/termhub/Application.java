@@ -16,10 +16,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
+import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.wci.termhub.lucene.LuceneDataAccess;
@@ -32,8 +36,9 @@ import com.wci.termhub.util.ModelUtility;
  */
 @SpringBootApplication(exclude = {
     DataSourceAutoConfiguration.class, QuartzAutoConfiguration.class,
+    HibernateJpaAutoConfiguration.class, ThymeleafAutoConfiguration.class,
+    SecurityAutoConfiguration.class, JmxAutoConfiguration.class, MailSenderAutoConfiguration.class
 })
-@ComponentScan
 @EnableCaching
 @EnableScheduling
 public class Application extends SpringBootServletInitializer {
