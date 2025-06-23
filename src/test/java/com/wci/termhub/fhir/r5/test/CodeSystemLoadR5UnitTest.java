@@ -100,7 +100,7 @@ public class CodeSystemLoadR5UnitTest {
             FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
         LOGGER.info("Loading code system from classpath resource: data/{}", codeSystemFile);
-        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent);
+        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, false);
       } catch (final Exception e) {
         LOGGER.error("Error loading code system file: {}", codeSystemFile, e);
         throw e;
@@ -130,7 +130,7 @@ public class CodeSystemLoadR5UnitTest {
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of code system from classpath resource: data/{}",
               codeSystemFile);
-          CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent);
+          CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, false);
         });
 
       } catch (final Exception e) {

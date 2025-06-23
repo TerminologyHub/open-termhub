@@ -14,8 +14,10 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -28,6 +30,7 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Definition;
+import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.MetaModel;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
@@ -45,10 +48,13 @@ public final class CodeSystemLoaderUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeSystemLoaderUtil.class);
 
   /** The terminologies cache. */
-  private static TimerCache<Concept> conceptCache = new TimerCache<>(1000, 10000);
+  private static TimerCache<Concept> conceptCache = new TimerCache<>(1000000, 60 * 60 * 1000);
 
   /** The key delimiter. */
   private static final String KEY_DELIMITER = "|";
+
+  /** The Constant BATCH_SIZE. */
+  private static final int BATCH_SIZE = 1000;
 
   /** The object mapper. */
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -65,13 +71,14 @@ public final class CodeSystemLoaderUtil {
    *
    * @param service the service
    * @param content the content
+   * @param computeTreePositions whether to compute tree positions
    * @return the string
    * @throws Exception the exception
    */
-  public static String loadCodeSystem(final EntityRepositoryService service, final String content)
-    throws Exception {
+  public static String loadCodeSystem(final EntityRepositoryService service, final String content,
+    final boolean computeTreePositions) throws Exception {
 
-    return indexCodeSystem(service, content, 1000, -1);
+    return indexCodeSystem(service, content, BATCH_SIZE, -1, computeTreePositions);
   }
 
   /**
@@ -81,11 +88,12 @@ public final class CodeSystemLoaderUtil {
    * @param content the content
    * @param batchSize the batch size
    * @param limit the limit
+   * @param computeTreePositions whether to compute tree positions
    * @return the string
    * @throws Exception the exception
    */
   private static String indexCodeSystem(final EntityRepositoryService service, final String content,
-    final int batchSize, final int limit) throws Exception {
+    final int batchSize, final int limit, final boolean computeTreePositions) throws Exception {
 
     LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
     final long startTime = System.currentTimeMillis();
@@ -107,7 +115,7 @@ public final class CodeSystemLoaderUtil {
       }
 
       // Create the terminology
-      terminology = createTerminology(service, root);
+      terminology = createTerminology(service, root, computeTreePositions);
       id = terminology.getId();
 
       // Extract metadata from root
@@ -118,11 +126,18 @@ public final class CodeSystemLoaderUtil {
         }
       }
 
+      if (metadataList == null) {
+        throw new Exception("Unexpected null metadata list");
+      }
+
       // Process concepts array
       final JsonNode concepts = root.path("concept");
       int conceptCount = 0;
       int relationshipCount = 0;
       int termCount = 0;
+
+      final Map<String, Set<String>> codeToChildren = new HashMap<>();
+      final Map<String, Set<String>> codeToParents = new HashMap<>();
 
       for (final JsonNode conceptNode : concepts) {
         if (limit != -1 && conceptCount >= limit) {
@@ -130,6 +145,7 @@ public final class CodeSystemLoaderUtil {
         }
 
         final Concept concept = createConcept(conceptNode, terminology);
+        final String conceptCode = concept.getCode();
 
         // Process relationships
         final JsonNode relationships = conceptNode.path("property");
@@ -148,6 +164,14 @@ public final class CodeSystemLoaderUtil {
             relationshipBatch.add(relationship);
             concept.getRelationships().add(relationship);
 
+            // Track parent-child relationship
+            final JsonNode valueCoding = propertyNode.path("valueCoding");
+            if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
+              final String parentCode = valueCoding.path("code").asText();
+              codeToChildren.computeIfAbsent(parentCode, k -> new HashSet<>()).add(conceptCode);
+              codeToParents.computeIfAbsent(conceptCode, k -> new HashSet<>()).add(parentCode);
+            }
+
             if (relationshipBatch.size() == batchSize) {
               service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
               relationshipBatch.clear();
@@ -155,12 +179,11 @@ public final class CodeSystemLoaderUtil {
             }
 
             // Safely get the valueCoding and its code
-            final JsonNode valueCoding = propertyNode.path("valueCoding");
             if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
               concept.getEclClauses().add(
                   propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
             } else {
-              LOGGER.warn("    Missing valueCoding or code for parent relationship in concept: {}",
+              LOGGER.debug("    Missing valueCoding or code for parent relationship in concept: {}",
                   concept.getCode());
             }
             relationshipCount++;
@@ -180,7 +203,7 @@ public final class CodeSystemLoaderUtil {
                 concept.getEclClauses().add(extensionValueCoding.path("code").asText() + "="
                     + propertyValueCoding.path("code").asText());
               } else {
-                LOGGER.warn(
+                LOGGER.debug(
                     "    Skipping relationship due to missing valueCoding or code for concept: {}",
                     concept.getCode());
               }
@@ -210,7 +233,7 @@ public final class CodeSystemLoaderUtil {
           LOGGER.info("  processed concepts count: {}", conceptCount);
         }
         conceptCount++;
-      }
+      } // end concepts loop
 
       // Add remaining batches
       if (!conceptBatch.isEmpty()) {
@@ -223,16 +246,97 @@ public final class CodeSystemLoaderUtil {
         service.addBulk(Term.class, new ArrayList<>(termBatch));
       }
 
-      if (metadataList == null) {
-        throw new Exception("Unexpected null metadata list");
+      LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}", conceptCount,
+          relationshipCount, termCount);
+      LOGGER.info("  begin compute for ancestors and descendants");
+
+      // Compute ancestors and descendants for each concept
+      final Map<String, HasId> batch = new HashMap<>(BATCH_SIZE);
+      int computedConceptsCount = 0;
+
+      // Build complete relationship maps
+      final Map<String, Set<String>> allAncestors = new HashMap<>();
+      final Map<String, Set<String>> allDescendants = new HashMap<>();
+
+      // First pass: compute all ancestor sets in one go
+      for (final String conceptCode : codeToParents.keySet()) {
+        if (!allAncestors.containsKey(conceptCode)) {
+          final Set<String> ancestors = new HashSet<>();
+          computeAncestors(conceptCode, codeToParents, ancestors);
+          allAncestors.put(conceptCode, ancestors);
+
+          // Add this concept as a descendant to all its ancestors
+          for (final String ancestor : ancestors) {
+            allDescendants.computeIfAbsent(ancestor, k -> new HashSet<>()).add(conceptCode);
+          }
+        }
+      }
+
+      // Process concepts in batches
+      final List<String> conceptCodes = new ArrayList<>(codeToParents.keySet());
+      for (int i = 0; i < conceptCodes.size(); i += BATCH_SIZE) {
+        final int end = Math.min(i + BATCH_SIZE, conceptCodes.size());
+        final List<String> batchCodes = conceptCodes.subList(i, end);
+
+        // Batch lookup concepts from cache
+        final Map<String, Concept> cachedConcepts = new HashMap<>();
+        for (final String code : batchCodes) {
+          final String cacheKey =
+              terminology.getPublisher() + KEY_DELIMITER + terminology.getAbbreviation()
+                  + KEY_DELIMITER + terminology.getVersion() + KEY_DELIMITER + code;
+          final Concept concept = conceptCache.get(cacheKey);
+          if (concept != null) {
+            cachedConcepts.put(code, concept);
+          }
+        }
+
+        // Process each concept in the batch
+        for (final String code : batchCodes) {
+          final Concept concept = cachedConcepts.get(code);
+          if (concept != null) {
+            // Add direct parents
+            final Set<String> parents = codeToParents.getOrDefault(code, new HashSet<>());
+            for (final String parentCode : parents) {
+              concept.getParents().add(createConceptRef(parentCode, concept));
+            }
+
+            // Add direct children
+            final Set<String> children = codeToChildren.getOrDefault(code, new HashSet<>());
+            for (final String childCode : children) {
+              concept.getChildren().add(createConceptRef(childCode, concept));
+            }
+
+            // Add ancestors
+            final Set<String> ancestors = allAncestors.getOrDefault(code, new HashSet<>());
+            for (final String ancestorCode : ancestors) {
+              concept.getAncestors().add(createConceptRef(ancestorCode, concept));
+            }
+
+            // Add descendants
+            final Set<String> descendants = allDescendants.getOrDefault(code, new HashSet<>());
+            for (final String descendantCode : descendants) {
+              concept.getDescendants().add(createConceptRef(descendantCode, concept));
+            }
+
+            batch.put(concept.getId(), concept);
+            computedConceptsCount++;
+          }
+        }
+
+        // Batch update concepts
+        if (!batch.isEmpty()) {
+          service.updateBulk(Concept.class, batch);
+          batch.clear();
+          LOGGER.info("  computed concepts count: {}", computedConceptsCount);
+        }
       }
 
       // compute tree positions
-      computeConceptTreePositions(service, metadataList.get(0).getTerminology(),
-          metadataList.get(0).getPublisher(), metadataList.get(0).getVersion());
+      if (computeTreePositions) {
+        computeConceptTreePositions(service, metadataList.get(0).getTerminology(),
+            metadataList.get(0).getPublisher(), metadataList.get(0).getVersion());
+      }
 
-      LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}", conceptCount,
-          relationshipCount, termCount);
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       return id;
@@ -271,11 +375,12 @@ public final class CodeSystemLoaderUtil {
    *
    * @param service the service
    * @param root the root
+   * @param computeTreePositions the compute tree positions
    * @return the terminology
    * @throws Exception the exception
    */
   private static Terminology createTerminology(final EntityRepositoryService service,
-    final JsonNode root) throws Exception {
+    final JsonNode root, final boolean computeTreePositions) throws Exception {
 
     // Validate that this is a CodeSystem resource
     if (!root.has("resourceType") || !"CodeSystem".equals(root.get("resourceType").asText())) {
@@ -313,6 +418,8 @@ public final class CodeSystemLoaderUtil {
       attributes.put(property.path("code").asText(), property.path("description").asText());
     }
     attributes.put("fhirVersion", root.path("version").asText());
+    attributes.put(Terminology.Attributes.treePositions.property(),
+        Boolean.toString(computeTreePositions));
     terminology.setAttributes(attributes);
 
     LOGGER.info("CodeSystemLoaderUtil: terminology: {}", terminology);
@@ -348,15 +455,6 @@ public final class CodeSystemLoaderUtil {
 
       final String code = property.path("code").asText();
       final String description = property.path("description").asText();
-
-      final Metadata metadata = new Metadata();
-      metadata.setId(UUID.randomUUID().toString());
-      metadata.setCode(code);
-      metadata.setName(description);
-      metadata.setActive(true);
-      metadata.setPublisher(publisher);
-      metadata.setTerminology(terminology);
-      metadata.setVersion(version);
       final String fieldType = uriParts[uriParts.length - 1];
 
       // Map 'attributes' model type to 'concept' as a fallback
@@ -368,9 +466,20 @@ public final class CodeSystemLoaderUtil {
       }
 
       try {
+
+        final Metadata metadata = new Metadata();
+        metadata.setId(UUID.randomUUID().toString());
+        metadata.setCode(code);
+        metadata.setName(description);
+        metadata.setActive(true);
+        metadata.setPublisher(publisher);
+        metadata.setTerminology(terminology);
+        metadata.setVersion(version);
+
         metadata.setModel(MetaModel.Model.valueOf(mappedModelType));
         metadata.setField(MetaModel.Field.valueOf(fieldType));
         metadataList.add(metadata);
+
       } catch (final IllegalArgumentException e) {
         LOGGER.warn(
             "Skipping metadata due to invalid model or field type: model={}, field={}, code={}, name={}",
@@ -647,7 +756,7 @@ public final class CodeSystemLoaderUtil {
           if (url.endsWith("/additionalType")) {
             final JsonNode valueCoding = extension.path("valueCoding");
             additionalType = valueCoding.path("code").asText();
-            LOGGER.info("Found additionalType: {}", additionalType);
+            LOGGER.debug("Found additionalType: {}", additionalType);
           } else if (url.endsWith("/group")) {
             group = extension.path("valueString").asText();
           }
@@ -656,12 +765,12 @@ public final class CodeSystemLoaderUtil {
 
       // Set relationship type based on code
       final String code = relationshipNode.path("code").asText();
-      LOGGER.info("Processing SNOMED CT relationship with code: {}", code);
+      LOGGER.debug("Processing SNOMED CT relationship with code: {}", code);
 
-      if ("parent".equals(code)) {
+      if ("parent".equalsIgnoreCase(code)) {
         type = "parent";
         additionalType = "ISA";
-        LOGGER.info("Set type to ISA for parent relationship");
+        LOGGER.debug("Set type to ISA for parent relationship");
       } else {
         type = "relationship";
       }
@@ -669,7 +778,7 @@ public final class CodeSystemLoaderUtil {
     } else if (terminology.getAbbreviation().contains("LNC")) {
       // Handle LOINC relationships
       final String code = relationshipNode.path("code").asText();
-      if ("parent".equals(code)) {
+      if ("parent".equalsIgnoreCase(code)) {
         type = "parent";
         additionalType = "ISA";
       } else if ("relationship".equals(code)) {
@@ -800,6 +909,60 @@ public final class CodeSystemLoaderUtil {
     treepos.checkPreconditions();
     treepos.compute();
 
+  }
+
+  /**
+   * Creates the concept ref.
+   *
+   * @param concept the concept
+   * @return the concept ref
+   */
+  private static ConceptRef createConceptRef(final String code, final Concept concept) {
+    final ConceptRef ref = new ConceptRef();
+    ref.setCode(code);
+    ref.setName(concept.getName());
+    ref.setTerminology(concept.getTerminology());
+    ref.setVersion(concept.getVersion());
+    ref.setPublisher(concept.getPublisher());
+    return ref;
+  }
+
+  /**
+   * Compute ancestors recursively.
+   *
+   * @param conceptCode the concept code
+   * @param codeToParents the code to parents map
+   * @param ancestors the ancestors set to populate
+   */
+  private static void computeAncestors(final String conceptCode,
+    final Map<String, Set<String>> codeToParents, final Set<String> ancestors) {
+    final Set<String> parents = codeToParents.get(conceptCode);
+    if (parents != null) {
+      for (final String parent : parents) {
+        if (ancestors.add(parent)) {
+          computeAncestors(parent, codeToParents, ancestors);
+        }
+      }
+    }
+  }
+
+  /**
+   * Compute descendants recursively.
+   *
+   * @param conceptCode the concept code
+   * @param codeToChildren the code to children map
+   * @param descendants the descendants set to populate
+   */
+  private static void computeDescendants(final String conceptCode,
+    final Map<String, Set<String>> codeToChildren, final Set<String> descendants) {
+    final Set<String> children = codeToChildren.get(conceptCode);
+    if (children != null) {
+      for (final String child : children) {
+        if (descendants.add(child)) {
+          computeDescendants(child, codeToChildren, descendants);
+        }
+      }
+    }
   }
 
 }

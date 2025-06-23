@@ -1730,16 +1730,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     try {
 
       final Map<String, Terminology> map = lookupTerminologyMap();
-
       // look up concept first and get code,
       // then do a find on the query
       final Concept concept = searchService.get(conceptId, Concept.class);
       if (concept == null) {
         throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
       }
-
       // Choose indexName for the concept
       final Terminology terminology = getTerminology(map, concept);
+      terminologyHasTreePositions(terminology);
 
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
@@ -1834,10 +1833,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     throws Exception {
 
     try {
-
       // validate terminology - throw exception if not found
-      lookupTerminology(terminology);
-
+      final Terminology term = lookupTerminology(terminology);
+      terminologyHasTreePositions(term);
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
@@ -1933,6 +1931,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       if (concept == null) {
         throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
       }
+      // check if terminology has tree positions
+      final Terminology terminology = lookupTerminology(concept.getTerminology());
+      terminologyHasTreePositions(terminology);
 
       // Find this thing
       final SearchParameters params = new SearchParameters(1, 0);
@@ -2044,6 +2045,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     throws Exception {
 
     try {
+
+      // check if terminology has tree positions
+      final Terminology term = lookupTerminology(terminology);
+      terminologyHasTreePositions(term);
 
       // Find this thing
       final SearchParameters params = new SearchParameters(1, 0);
@@ -2834,7 +2839,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     final List<Terminology> terminologies = lookupTerminologyMap().values().stream()
         .filter(t -> t.getId().equals(terminology) || t.getAbbreviation().equals(terminology))
-        .collect(Collectors.toList());
+        .toList();
     if (terminologies.isEmpty()) {
       throw new RestException(false, 417, "Expectation failed",
           "Unable to find terminology = " + terminology);
@@ -2996,13 +3001,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Boolean active, final Boolean leaf) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
-    final String mapsetClause = "(" + String.join(" OR ",
-        mapsets.stream()
-            .map(m -> "(" + StringUtility.composeQuery("AND",
-                "mapset.abbreviation:" + StringUtility.escapeQuery(m.getAbbreviation()),
-                "mapset.publisher: \"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
-                "mapset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
-            .collect(Collectors.toList()))
+    final String mapsetClause = "("
+        + String.join(" OR ",
+            mapsets.stream()
+                .map(m -> "(" + StringUtility.composeQuery("AND",
+                    "mapset.abbreviation:" + StringUtility.escapeQuery(m.getAbbreviation()),
+                    "mapset.publisher: \"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
+                    "mapset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
+                .toList())
         + ")";
     final SearchParameters params = new SearchParameters(
         StringUtility.composeQuery("AND", query, mapsetClause), offset, limit, sort, ascending);
@@ -3044,6 +3050,21 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     list.setParameters(params);
     return list;
 
+  }
+
+  /**
+   * Terminology has tree positions. Throw exception if not.
+   *
+   * @param terminology the terminology
+   */
+  private void terminologyHasTreePositions(final Terminology terminology) throws RestException {
+
+    if (!terminology.getAttributes().containsKey(Terminology.Attributes.treePositions.property())
+        || !"true".equalsIgnoreCase(
+            terminology.getAttributes().get(Terminology.Attributes.treePositions.property()))) {
+      throw new RestException(false, 417, "Expectation failed",
+          "Tree positions were not computed for " + terminology.getAbbreviation());
+    }
   }
 
 }

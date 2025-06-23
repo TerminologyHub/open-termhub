@@ -156,7 +156,7 @@ public class FhirR5RestUnitTest {
             FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
         LOGGER.info("Loading code system from file: {}", codeSystemFile);
-        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent);
+        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, true);
 
       } catch (final Exception e) {
         LOGGER.error("Error loading code system file: {}", codeSystemFile, e);

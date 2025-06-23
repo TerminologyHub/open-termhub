@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
@@ -34,7 +33,6 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
@@ -275,120 +273,9 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     // Process the final batch
     logInfo("    BATCH index = " + batch.size());
 
-    // --- BEGIN RELATIONSHIP POPULATION LOGIC ---
-    // Build relationship maps
-    final Map<String, Set<String>> codeToChildren = new HashMap<>();
-    final Map<String, Set<String>> codeToParents = new HashMap<>();
-    final Map<String, Set<String>> codeToAncestors = new HashMap<>();
-    final Map<String, Set<String>> codeToDescendants = new HashMap<>();
-
-    // Populate children and parents from parChd and chdPar
-    for (final String parent : parChd.keySet()) {
-      for (final String child : parChd.get(parent)) {
-        codeToChildren.computeIfAbsent(parent, k -> new HashSet<>()).add(child);
-        codeToParents.computeIfAbsent(child, k -> new HashSet<>()).add(parent);
-      }
-    }
-
-    // Compute ancestors and descendants using DFS
-    for (final String code : codeToChildren.keySet()) {
-      final Set<String> descendants = new HashSet<>();
-      final Set<String> visited = new HashSet<>();
-      dfsDescendants(code, codeToChildren, descendants, visited);
-      codeToDescendants.put(code, descendants);
-    }
-    for (final String code : codeToParents.keySet()) {
-      final Set<String> ancestors = new HashSet<>();
-      final Set<String> visited = new HashSet<>();
-      dfsAncestors(code, codeToParents, ancestors, visited);
-      codeToAncestors.put(code, ancestors);
-    }
-
-    // Gather all codes to update
-    final Set<String> allCodes = new HashSet<>();
-    allCodes.addAll(codeToChildren.keySet());
-    allCodes.addAll(codeToParents.keySet());
-    allCodes.addAll(codeToAncestors.keySet());
-    allCodes.addAll(codeToDescendants.keySet());
-
-    // Fetch all Concept objects in one query
-    final StringBuilder queryBuilder = new StringBuilder();
-    int i = 0;
-    for (final String code : allCodes) {
-      if (i++ > 0) {
-        queryBuilder.append(" OR ");
-      }
-      queryBuilder.append("code:").append(StringUtility.escapeQuery(code));
-    }
-    final SearchParameters conceptParams = new SearchParameters(
-        queryStr + (queryBuilder.length() > 0 ? " AND (" + queryBuilder + ")" : ""), 0,
-        allCodes.size(), null, null);
-    final List<String> fields =
-        ModelUtility.asList("id", "name", "code", "terminology", "publisher", "version");
-    final List<Concept> concepts =
-        searchService.findFields(conceptParams, fields, Concept.class).getItems();
-    final Map<String, Concept> codeToConcept = new HashMap<>();
-    for (final Concept c : concepts) {
-      codeToConcept.put(c.getCode(), c);
-    }
-
-    // Update each Concept's relationships
-    final Map<String, HasId> conceptBatch = new HashMap<>();
-    for (final String code : allCodes) {
-      final Concept concept = codeToConcept.get(code);
-      if (concept == null) {
-        continue;
-      }
-      // Children
-      final List<ConceptRef> childrenRefs = new ArrayList<>();
-      for (final String ch : codeToChildren.getOrDefault(code, Set.of())) {
-        final Concept chConcept = codeToConcept.get(ch);
-        if (chConcept != null) {
-          childrenRefs.add(new ConceptRef(chConcept.getCode(), chConcept.getName()));
-        }
-      }
-      concept.setChildren(childrenRefs);
-      // Parents
-      final List<ConceptRef> parentRefs = new ArrayList<>();
-      for (final String par : codeToParents.getOrDefault(code, Set.of())) {
-        final Concept parConcept = codeToConcept.get(par);
-        if (parConcept != null) {
-          parentRefs.add(new ConceptRef(parConcept.getCode(), parConcept.getName()));
-        }
-      }
-      concept.setParents(parentRefs);
-      // Ancestors
-      final List<ConceptRef> ancestorRefs = new ArrayList<>();
-      for (final String anc : codeToAncestors.getOrDefault(code, Set.of())) {
-        final Concept ancConcept = codeToConcept.get(anc);
-        if (ancConcept != null) {
-          ancestorRefs.add(new ConceptRef(ancConcept.getCode(), ancConcept.getName()));
-        }
-      }
-      concept.setAncestors(ancestorRefs);
-      // Descendants
-      final List<ConceptRef> descendantRefs = new ArrayList<>();
-      for (final String desc : codeToDescendants.getOrDefault(code, Set.of())) {
-        final Concept descConcept = codeToConcept.get(desc);
-        if (descConcept != null) {
-          descendantRefs.add(new ConceptRef(descConcept.getCode(), descConcept.getName()));
-        }
-      }
-      concept.setDescendants(descendantRefs);
-      conceptBatch.put(concept.getId(), concept);
-      if (conceptBatch.size() % FETCH_SIZE == 0) {
-        searchService.updateBulk(Concept.class, conceptBatch);
-        conceptBatch.clear();
-      }
-    }
-    if (!conceptBatch.isEmpty()) {
-      searchService.updateBulk(Concept.class, conceptBatch);
-    }
-    // --- END RELATIONSHIP POPULATION LOGIC ---
-
     // Mark the terminology as having computed tree positions and count tree
     // positions
-    term.getAttributes().put("tree-positions", "true");
+    term.getAttributes().put(Terminology.Attributes.treePositions.property(), "true");
     term.getAttributes().put(Terminology.Attributes.hierarchical.property(), "true");
     if (polyHierarchy) {
       term.getAttributes().put(Terminology.Attributes.polyhierarchy.property(), "true");
