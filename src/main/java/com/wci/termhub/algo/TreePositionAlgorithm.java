@@ -451,44 +451,4 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     return "Tree position computer";
   }
 
-  /**
-   * Dfs descendants.
-   *
-   * @param code the code
-   * @param codeToChildren the code to children
-   * @param descendants the descendants
-   * @param visited the visited
-   */
-  private void dfsDescendants(final String code, final Map<String, Set<String>> codeToChildren,
-    final Set<String> descendants, final Set<String> visited) {
-    if (!visited.add(code)) {
-      return;
-    }
-    for (final String child : codeToChildren.getOrDefault(code, Set.of())) {
-      if (descendants.add(child)) {
-        dfsDescendants(child, codeToChildren, descendants, visited);
-      }
-    }
-  }
-
-  /**
-   * Dfs ancestors.
-   *
-   * @param code the code
-   * @param codeToParents the code to parents
-   * @param ancestors the ancestors
-   * @param visited the visited
-   */
-  private void dfsAncestors(final String code, final Map<String, Set<String>> codeToParents,
-    final Set<String> ancestors, final Set<String> visited) {
-    if (!visited.add(code)) {
-      return;
-    }
-    for (final String parent : codeToParents.getOrDefault(code, Set.of())) {
-      if (ancestors.add(parent)) {
-        dfsAncestors(parent, codeToParents, ancestors, visited);
-      }
-    }
-  }
-
 }
