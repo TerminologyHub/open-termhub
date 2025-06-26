@@ -25,12 +25,12 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.algo.TerminologyCache;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Definition;
-import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.MetaModel;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
@@ -47,14 +47,8 @@ public final class CodeSystemLoaderUtil {
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeSystemLoaderUtil.class);
 
-  /** The terminologies cache. */
-  private static TimerCache<Concept> conceptCache = new TimerCache<>(1000000, 60 * 60 * 1000);
-
-  /** The key delimiter. */
-  private static final String KEY_DELIMITER = "|";
-
   /** The Constant BATCH_SIZE. */
-  private static final int BATCH_SIZE = 1000;
+  private static final int DEFAULT_BATCH_SIZE = 10000;
 
   /** The object mapper. */
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -78,7 +72,7 @@ public final class CodeSystemLoaderUtil {
   public static String loadCodeSystem(final EntityRepositoryService service, final String content,
     final boolean computeTreePositions) throws Exception {
 
-    return indexCodeSystem(service, content, BATCH_SIZE, -1, computeTreePositions);
+    return indexCodeSystem(service, content, -1, computeTreePositions);
   }
 
   /**
@@ -86,21 +80,21 @@ public final class CodeSystemLoaderUtil {
    *
    * @param service the service
    * @param content the content
-   * @param batchSize the batch size
    * @param limit the limit
    * @param computeTreePositions whether to compute tree positions
    * @return the string
    * @throws Exception the exception
    */
   private static String indexCodeSystem(final EntityRepositoryService service, final String content,
-    final int batchSize, final int limit, final boolean computeTreePositions) throws Exception {
+    final int limit, final boolean computeTreePositions) throws Exception {
 
-    LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
+    LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
     final long startTime = System.currentTimeMillis();
-    final List<Concept> conceptBatch = new ArrayList<>(batchSize);
-    final List<ConceptRelationship> relationshipBatch = new ArrayList<>(batchSize);
-    final List<Term> termBatch = new ArrayList<>(batchSize);
+    final List<ConceptRelationship> relationshipBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
+    final List<Term> termBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
     final String id;
+    final Set<Concept> conceptCache = new HashSet<>();
+    final TerminologyCache terminologyCache = new TerminologyCache();
 
     try {
 
@@ -136,9 +130,6 @@ public final class CodeSystemLoaderUtil {
       int relationshipCount = 0;
       int termCount = 0;
 
-      final Map<String, Set<String>> codeToChildren = new HashMap<>();
-      final Map<String, Set<String>> codeToParents = new HashMap<>();
-
       for (final JsonNode conceptNode : concepts) {
         if (limit != -1 && conceptCount >= limit) {
           break;
@@ -160,22 +151,22 @@ public final class CodeSystemLoaderUtil {
 
           if ("parent".equals(propertyType)) {
             final ConceptRelationship relationship =
-                createRelationship(propertyNode, concept, terminology);
+                createRelationship(propertyNode, concept, terminology, terminologyCache);
             relationshipBatch.add(relationship);
+            relationshipCount++;
             concept.getRelationships().add(relationship);
 
-            // Track parent-child relationship
+            // Track parent-child relationship using thread-safe collections
             final JsonNode valueCoding = propertyNode.path("valueCoding");
             if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
               final String parentCode = valueCoding.path("code").asText();
-              codeToChildren.computeIfAbsent(parentCode, k -> new HashSet<>()).add(conceptCode);
-              codeToParents.computeIfAbsent(conceptCode, k -> new HashSet<>()).add(parentCode);
+              terminologyCache.addParChd(parentCode, conceptCode);
             }
 
-            if (relationshipBatch.size() == batchSize) {
+            if (relationshipBatch.size() == DEFAULT_BATCH_SIZE) {
               service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
               relationshipBatch.clear();
-              LOGGER.info("  processed relationships count: {}", relationshipCount);
+              LOGGER.info("  loaded relationships count: {}", relationshipCount);
             }
 
             // Safely get the valueCoding and its code
@@ -186,7 +177,6 @@ public final class CodeSystemLoaderUtil {
               LOGGER.debug("    Missing valueCoding or code for parent relationship in concept: {}",
                   concept.getCode());
             }
-            relationshipCount++;
           }
 
           if ("relationship".equals(propertyType)) {
@@ -214,127 +204,72 @@ public final class CodeSystemLoaderUtil {
         // Process terms
         for (final Term term : concept.getTerms()) {
           termBatch.add(term);
-          if (termBatch.size() == batchSize) {
+          termCount++;
+          if (termBatch.size() == DEFAULT_BATCH_SIZE) {
             service.addBulk(Term.class, new ArrayList<>(termBatch));
             termBatch.clear();
-            LOGGER.info("  processed terms count: {}", termCount);
+            LOGGER.info("  loaded terms count: {}", termCount);
           }
-          termCount++;
         }
 
         // Add concept to batch
-        conceptBatch.add(concept);
-        final String conceptKey = getConceptCacheKey(concept);
-        conceptCache.put(conceptKey, concept);
-        if (conceptBatch.size() == batchSize) {
-          service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
-          SystemReportUtility.logMemory();
-          conceptBatch.clear();
-          LOGGER.info("  processed concepts count: {}", conceptCount);
-        }
+        terminologyCache.addConcept(concept);
+        conceptCache.add(concept);
         conceptCount++;
+        if (conceptCache.size() == DEFAULT_BATCH_SIZE) {
+          LOGGER.info("  processed concept count: {}", conceptCount);
+        }
       } // end concepts loop
 
-      // Add remaining batches
-      if (!conceptBatch.isEmpty()) {
-        service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
-      }
       if (!relationshipBatch.isEmpty()) {
         service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
       }
       if (!termBatch.isEmpty()) {
         service.addBulk(Term.class, new ArrayList<>(termBatch));
       }
+      LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}, time: {}",
+          conceptCount, relationshipCount, termCount, (System.currentTimeMillis() - startTime));
 
-      LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}", conceptCount,
-          relationshipCount, termCount);
-      LOGGER.info("  begin compute for ancestors and descendants");
-
-      // Compute ancestors and descendants for each concept
-      final Map<String, HasId> batch = new HashMap<>(BATCH_SIZE);
-      int computedConceptsCount = 0;
-
-      // Build complete relationship maps
-      final Map<String, Set<String>> allAncestors = new HashMap<>();
-      final Map<String, Set<String>> allDescendants = new HashMap<>();
-
-      // First pass: compute all ancestor sets in one go
-      for (final String conceptCode : codeToParents.keySet()) {
-        if (!allAncestors.containsKey(conceptCode)) {
-          final Set<String> ancestors = new HashSet<>();
-          computeAncestors(conceptCode, codeToParents, ancestors);
-          allAncestors.put(conceptCode, ancestors);
-
-          // Add this concept as a descendant to all its ancestors
-          for (final String ancestor : ancestors) {
-            allDescendants.computeIfAbsent(ancestor, k -> new HashSet<>()).add(conceptCode);
-          }
-        }
-      }
-
-      // Process concepts in batches
-      final List<String> conceptCodes = new ArrayList<>(codeToParents.keySet());
-      for (int i = 0; i < conceptCodes.size(); i += BATCH_SIZE) {
-        final int end = Math.min(i + BATCH_SIZE, conceptCodes.size());
-        final List<String> batchCodes = conceptCodes.subList(i, end);
-
-        // Batch lookup concepts from cache
-        final Map<String, Concept> cachedConcepts = new HashMap<>();
-        for (final String code : batchCodes) {
-          final String cacheKey =
-              terminology.getPublisher() + KEY_DELIMITER + terminology.getAbbreviation()
-                  + KEY_DELIMITER + terminology.getVersion() + KEY_DELIMITER + code;
-          final Concept concept = conceptCache.get(cacheKey);
-          if (concept != null) {
-            cachedConcepts.put(code, concept);
-          }
-        }
-
-        // Process each concept in the batch
-        for (final String code : batchCodes) {
-          final Concept concept = cachedConcepts.get(code);
-          if (concept != null) {
-            // Add direct parents
-            final Set<String> parents = codeToParents.getOrDefault(code, new HashSet<>());
-            for (final String parentCode : parents) {
-              concept.getParents().add(createConceptRef(parentCode, concept));
-            }
-
-            // Add direct children
-            final Set<String> children = codeToChildren.getOrDefault(code, new HashSet<>());
-            for (final String childCode : children) {
-              concept.getChildren().add(createConceptRef(childCode, concept));
-            }
-
-            // Add ancestors
-            final Set<String> ancestors = allAncestors.getOrDefault(code, new HashSet<>());
+      LOGGER.info("  begin compute for ancestors");
+      if (terminology.getAttributes() != null
+          && terminology.getAttributes().containsKey(Terminology.Attributes.hierarchical.property())
+          && Boolean.parseBoolean(
+              terminology.getAttributes().get(Terminology.Attributes.hierarchical.property()))) {
+        for (final Concept concept : conceptCache) {
+          final Set<String> ancestors = terminologyCache.getAncestors(concept.getCode());
+          // get the conceptRef for each ancestor
+          if (ancestors != null && !ancestors.isEmpty()) {
             for (final String ancestorCode : ancestors) {
-              concept.getAncestors().add(createConceptRef(ancestorCode, concept));
+              final ConceptRef ancestorRef =
+                  terminologyCache.getOrCreateConceptRef(ancestorCode, concept);
+              concept.getAncestors().add(ancestorRef);
             }
-
-            // Add descendants
-            final Set<String> descendants = allDescendants.getOrDefault(code, new HashSet<>());
-            for (final String descendantCode : descendants) {
-              concept.getDescendants().add(createConceptRef(descendantCode, concept));
-            }
-
-            batch.put(concept.getId(), concept);
-            computedConceptsCount++;
           }
         }
+      }
+      LOGGER.info("  finish compute for ancestors");
 
-        // Batch update concepts
-        if (!batch.isEmpty()) {
-          service.updateBulk(Concept.class, batch);
-          batch.clear();
-          LOGGER.info("  computed concepts count: {}", computedConceptsCount);
+      conceptCount = 0;
+      final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
+      for (final Concept concept : conceptCache) {
+        conceptBatch.add(concept);
+        conceptCount++;
+        if (conceptBatch.size() >= DEFAULT_BATCH_SIZE) {
+          LOGGER.info("  loaded concept count: {}", conceptCount);
+          service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
+          conceptBatch.clear();
         }
       }
 
-      // compute tree positions
+      if (!conceptBatch.isEmpty()) {
+        LOGGER.info("  loaded concept count: {}", conceptCount);
+        service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
+        conceptBatch.clear();
+      }
+
+      // compute tree positions if required
       if (computeTreePositions) {
-        computeConceptTreePositions(service, metadataList.get(0).getTerminology(),
-            metadataList.get(0).getPublisher(), metadataList.get(0).getVersion());
+        computeConceptTreePositions(service, terminology);
       }
 
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
@@ -410,9 +345,10 @@ public final class CodeSystemLoaderUtil {
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
       final String uri = property.path("uri").asText();
-      final String[] uriParts = FieldedStringTokenizer.split(uri, "/");
-      if (uriParts.length < 3 || !"terminology".equals(uriParts[uriParts.length - 2])
-          || !"attributes".equals(uriParts[uriParts.length - 1])) {
+      // [ https:, , terminologyhub.com, model, terminology, attributes,
+      // autocomplete ]
+      if (uri == null || uri.isEmpty() || !uri.contains("terminology/attributes")) {
+        LOGGER.warn("Skipping property with missing or empty URI: {}", property);
         continue;
       }
       attributes.put(property.path("code").asText(), property.path("description").asText());
@@ -730,10 +666,12 @@ public final class CodeSystemLoaderUtil {
    * @param relationshipNode the relationship JSON node
    * @param fromConcept the source concept
    * @param terminology the terminology
+   * @param terminologyCache the terminology cache
    * @return the concept relationship
    */
   private static ConceptRelationship createRelationship(final JsonNode relationshipNode,
-    final Concept fromConcept, final Terminology terminology) {
+    final Concept fromConcept, final Terminology terminology,
+    final TerminologyCache terminologyCache) {
 
     final ConceptRelationship relationship = new ConceptRelationship();
     relationship.setId(UUID.randomUUID().toString());
@@ -807,25 +745,15 @@ public final class CodeSystemLoaderUtil {
     relationship.setType(type);
     relationship.setAdditionalType(additionalType);
 
-    // Create a ConceptRef for the from concept to avoid circular references
-    final ConceptRef fromRef = new ConceptRef();
-    fromRef.setId(fromConcept.getId());
-    fromRef.setCode(fromConcept.getCode());
-    fromRef.setName(fromConcept.getName());
-    fromRef.setTerminology(terminology.getAbbreviation());
-    fromRef.setVersion(terminology.getVersion());
-    fromRef.setPublisher(terminology.getPublisher());
+    final ConceptRef fromRef =
+        terminologyCache.getOrCreateConceptRef(fromConcept.getCode(), fromConcept);
     relationship.setFrom(fromRef);
 
     // Set target concept reference from valueCoding
     final JsonNode valueCoding = relationshipNode.path("valueCoding");
     if (!valueCoding.isMissingNode()) {
-      final ConceptRef toRef = new ConceptRef();
-      toRef.setCode(valueCoding.path("code").asText());
-      toRef.setName(valueCoding.path("display").asText());
-      toRef.setTerminology(terminology.getAbbreviation());
-      toRef.setVersion(terminology.getVersion());
-      toRef.setPublisher(terminology.getPublisher());
+      final ConceptRef toRef = terminologyCache.getOrCreateConceptRef(
+          valueCoding.path("code").asText(), valueCoding.path("display").asText(), terminology);
       relationship.setTo(toRef);
     }
 
@@ -841,6 +769,28 @@ public final class CodeSystemLoaderUtil {
     }
 
     return relationship;
+  }
+
+  /**
+   * Compute concept tree positions.
+   *
+   * @param service the service
+   * @param terminology the terminology
+   * @throws Exception the exception
+   */
+  private static void computeConceptTreePositions(final EntityRepositoryService service,
+    final Terminology terminology) throws Exception {
+
+    LOGGER.info("Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
+        terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion());
+
+    final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
+    treepos.setTerminology(terminology.getAbbreviation());
+    treepos.setPublisher(terminology.getPublisher());
+    treepos.setVersion(terminology.getVersion());
+    treepos.checkPreconditions();
+    treepos.compute();
+
   }
 
   /**
@@ -870,100 +820,5 @@ public final class CodeSystemLoaderUtil {
       }
     }
     return definitions;
-
   }
-
-  /**
-   * Gets the concept cache key.
-   *
-   * @param concept the concept
-   * @return the concept cache key
-   */
-  private static String getConceptCacheKey(final Concept concept) {
-    if (concept == null) {
-      return null;
-    }
-    return concept.getPublisher() + KEY_DELIMITER + concept.getTerminology() + KEY_DELIMITER
-        + concept.getVersion() + KEY_DELIMITER + concept.getCode();
-  }
-
-  /**
-   * Compute concept tree positions.
-   *
-   * @param service the service
-   * @param terminologyName the terminology name
-   * @param publisher the publisher
-   * @param version the version
-   * @throws Exception the exception
-   */
-  private static void computeConceptTreePositions(final EntityRepositoryService service,
-    final String terminologyName, final String publisher, final String version) throws Exception {
-
-    LOGGER.info("Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
-        terminologyName, publisher, version);
-
-    final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
-    treepos.setTerminology(terminologyName);
-    treepos.setPublisher(publisher);
-    treepos.setVersion(version);
-    treepos.checkPreconditions();
-    treepos.compute();
-
-  }
-
-  /**
-   * Creates the concept ref.
-   *
-   * @param code the code
-   * @param concept the concept
-   * @return the concept ref
-   */
-  private static ConceptRef createConceptRef(final String code, final Concept concept) {
-    final ConceptRef ref = new ConceptRef();
-    ref.setCode(code);
-    ref.setName(concept.getName());
-    ref.setTerminology(concept.getTerminology());
-    ref.setVersion(concept.getVersion());
-    ref.setPublisher(concept.getPublisher());
-    return ref;
-  }
-
-  /**
-   * Compute ancestors recursively.
-   *
-   * @param conceptCode the concept code
-   * @param codeToParents the code to parents map
-   * @param ancestors the ancestors set to populate
-   */
-  private static void computeAncestors(final String conceptCode,
-    final Map<String, Set<String>> codeToParents, final Set<String> ancestors) {
-    final Set<String> parents = codeToParents.get(conceptCode);
-    if (parents != null) {
-      for (final String parent : parents) {
-        if (ancestors.add(parent)) {
-          computeAncestors(parent, codeToParents, ancestors);
-        }
-      }
-    }
-  }
-
-  /**
-   * Compute descendants recursively.
-   *
-   * @param conceptCode the concept code
-   * @param codeToChildren the code to children map
-   * @param descendants the descendants set to populate
-   */
-  private static void computeDescendants(final String conceptCode,
-    final Map<String, Set<String>> codeToChildren, final Set<String> descendants) {
-    final Set<String> children = codeToChildren.get(conceptCode);
-    if (children != null) {
-      for (final String child : children) {
-        if (descendants.add(child)) {
-          computeDescendants(child, codeToChildren, descendants);
-        }
-      }
-    }
-  }
-
 }
