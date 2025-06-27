@@ -275,8 +275,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
           continue;
         }
 
-        logger.info("  XXXXXXXXXXXXXXXX debug: sourceSystem = {}, targetSystem = {}",
-            cm.getSource(), cm.getTarget());
+        logger.debug(" sourceSystem = {}, targetSystem = {}", cm.getSource(), cm.getTarget());
 
         if (sourceSystem != null && (cm.getSourceUriType() == null
             || cm.getSourceUriType().getValue() == null || !cm.getSourceUriType().getValue()

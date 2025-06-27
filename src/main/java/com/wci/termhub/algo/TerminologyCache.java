@@ -34,8 +34,8 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * Represents a cache of information used by terminology loaders to allow/support concept-at-a-time
- * loads.
+ * Represents a cache of information used by terminology loaders to
+ * allow/support concept-at-a-time loads.
  */
 public class TerminologyCache {
 
@@ -68,6 +68,12 @@ public class TerminologyCache {
 
   /** The leaf map. */
   private final Map<String, Boolean> leafMap = new HashMap<>();
+
+  /** The key delimiter. */
+  private static final String KEY_DELIMITER = "|";
+
+  /** The concept ref map. */
+  private final Map<String, ConceptRef> conceptRefMap = new HashMap<>();
 
   /**
    * Instantiates a new terminology cache.
@@ -123,10 +129,10 @@ public class TerminologyCache {
    */
   public void addParChd(final String par, final String chd) throws Exception {
     if (par.equals("189975015")) {
-      throw new Exception("Descrption as parent");
+      throw new Exception("Description as parent");
     }
     if (chd.equals("189975015")) {
-      throw new Exception("Descrption as child");
+      throw new Exception("Description as child");
     }
     if (!parChd.containsKey(par)) {
       parChd.put(par, new HashSet<>());
@@ -253,9 +259,10 @@ public class TerminologyCache {
   // }
 
   /**
-   * Gets the ancestors with depth. How many recursive levels it took to (first) discover it. So a
-   * parent would be 1, a grandparent would be 2, and so on. In SNOMED, the same ancestor may be in
-   * multiple paths-to-root, so choose the min depth value.
+   * Gets the ancestors with depth. How many recursive levels it took to (first)
+   * discover it. So a parent would be 1, a grandparent would be 2, and so on.
+   * In SNOMED, the same ancestor may be in multiple paths-to-root, so choose
+   * the min depth value.
    *
    * @param code the code
    * @return the ancestors with depth
@@ -332,12 +339,14 @@ public class TerminologyCache {
   }
 
   /**
-   * public Set<String> getAncestorPaths(String code) { // ... transitive closure over chdPar to the
-   * root ...; Set<String> ancestorPaths = new HashSet<>(); String child = code; if
-   * (code.contains("~")) { child = code.substring(0, code.indexOf("~")); } if (chdPar.get(child) !=
-   * null) { for (String parent : chdPar.get(child)) { ancestorPaths.addAll(getAncestorPaths(parent
-   * + "~" + code)); } // we've hit the root, so print out ptr } else { ancestorPaths.add(code); }
-   * return ancestorPaths; }
+   * public Set<String> getAncestorPaths(String code) { // ... transitive
+   * closure over chdPar to the root ...; Set<String> ancestorPaths = new
+   * HashSet<>(); String child = code; if (code.contains("~")) { child =
+   * code.substring(0, code.indexOf("~")); } if (chdPar.get(child) != null) {
+   * for (String parent : chdPar.get(child)) {
+   * ancestorPaths.addAll(getAncestorPaths(parent + "~" + code)); } // we've hit
+   * the root, so print out ptr } else { ancestorPaths.add(code); } return
+   * ancestorPaths; }
    *
    * @param par the par
    * @return the children
@@ -566,8 +575,8 @@ public class TerminologyCache {
   }
 
   /**
-   * Adds the leaf. ONLY use this to explicitly override the normal hierarchy-based leaf
-   * calculation.
+   * Adds the leaf. ONLY use this to explicitly override the normal
+   * hierarchy-based leaf calculation.
    *
    * @param code the code
    * @param leaf the leaf
@@ -615,8 +624,9 @@ public class TerminologyCache {
   }
 
   /**
-   * This method loads a terminology cache from elasticsearch for the terminology specified. This
-   * cache just has enough populated to generate concept refs.
+   * This method loads a terminology cache from elasticsearch for the
+   * terminology specified. This cache just has enough populated to generate
+   * concept refs.
    *
    * @param searchService the search service
    * @param terminology the terminology
@@ -647,6 +657,57 @@ public class TerminologyCache {
 
     logger.info("    cache size = {}", cache.size());
     return cache;
+  }
+
+  /**
+   * Get or create a ConceptRef from cache.
+   *
+   * @param code the concept code
+   * @param concept the source concept for terminology info
+   * @return the ConceptRef
+   */
+  public ConceptRef getOrCreateConceptRef(final String code, final Concept concept) {
+    return getOrCreateConceptRef(code, concept.getName(), concept.getTerminology(),
+        concept.getVersion(), concept.getPublisher());
+  }
+
+  /**
+   * Get or create a ConceptRef from cache.
+   *
+   * @param code the concept code
+   * @param name the name
+   * @param terminology the terminology
+   * @return the ConceptRef
+   */
+  public ConceptRef getOrCreateConceptRef(final String code, final String name,
+    final Terminology terminology) {
+    return getOrCreateConceptRef(code, name, terminology.getAbbreviation(),
+        terminology.getVersion(), terminology.getPublisher());
+  }
+
+  /**
+   * Get or create a ConceptRef from cache.
+   *
+   * @param code the concept code
+   * @param name the name
+   * @param terminology the terminology
+   * @param version the version
+   * @param publisher the publisher
+   * @return the ConceptRef
+   */
+  public ConceptRef getOrCreateConceptRef(final String code, final String name,
+    final String terminology, final String version, final String publisher) {
+    final String cacheKey =
+        terminology + KEY_DELIMITER + version + KEY_DELIMITER + publisher + KEY_DELIMITER + code;
+    return conceptRefMap.computeIfAbsent(cacheKey, k -> {
+      final ConceptRef ref = new ConceptRef();
+      ref.setCode(code);
+      ref.setName(name);
+      ref.setTerminology(terminology);
+      ref.setVersion(version);
+      ref.setPublisher(publisher);
+      return ref;
+    });
   }
 
   /**

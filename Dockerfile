@@ -54,5 +54,8 @@ USER $RUNTIME_USER
 COPY --from=gradle-build --chown=server:server /home/gradle/project/build/libs/ /srv/rt/
 WORKDIR /srv/rt
 
+# Set runtime environment variables
+ENV ENABLE_POST_LOAD_COMPUTATIONS=false
+
 # Run the built product when the container launches
-CMD "/srv/rt/run.sh"
+CMD ["/srv/rt/run.sh"]

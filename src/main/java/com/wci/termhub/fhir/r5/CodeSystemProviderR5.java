@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.wci.termhub.EnablePostLoadComputations;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -77,6 +78,10 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
+
+  /** The enable post load computations. */
+  @Autowired
+  private EnablePostLoadComputations enablePostLoadComputations;
 
   /**
    * Gets the code system.
@@ -773,7 +778,8 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       codeSystem.setConcept(null);
 
       // Use existing loader utility
-      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content);
+      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content,
+          enablePostLoadComputations.isEnabled());
 
       // Return success
       final MethodOutcome outcome = new MethodOutcome();

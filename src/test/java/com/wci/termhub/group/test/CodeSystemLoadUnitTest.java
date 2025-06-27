@@ -115,7 +115,7 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
             FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
         LOGGER.info("Loading code system from classpath resource: data/{}", codeSystemFile);
-        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent);
+        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, true);
 
       } catch (final Exception e) {
         LOGGER.error("Error loading code system file: {}", codeSystemFile, e);

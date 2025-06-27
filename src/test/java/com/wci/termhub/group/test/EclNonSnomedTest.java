@@ -30,8 +30,6 @@ import com.wci.termhub.util.PropertyUtility;
 /**
  * The Class EclNonSnomedTest.
  */
-// @Disabled("The sandbox data does not have some of the concepts used in these
-// tests.")
 public class EclNonSnomedTest {
 
   /** The logger. */
@@ -102,6 +100,7 @@ public class EclNonSnomedTest {
     final String cleansedExpression =
         ExpressionConstraintListener.removeComments(expression.trim());
     final Query query = converter.parse(cleansedExpression);
+
     final List<Concept> concepts = luceneEclDataAccess.getConcepts(query);
     if (concepts == null) {
       logger.error("Results are null. {} did not parse correctly", cleansedExpression);
