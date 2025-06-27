@@ -329,6 +329,18 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
+   * Compute tree positions. POST /concept/{terminology}/trees tag=concept
+   *
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<String> computeTreePositions(String terminology, String publisher,
+    final String version) throws Exception;
+
+  /**
    * Find concept tree positions. This call assumes that the project has only a single
    * terminology/publisher/version configured, otherwise it will return a 409. GET
    * /concept/{terminology}/{code}/treepos/children tag=concept by code

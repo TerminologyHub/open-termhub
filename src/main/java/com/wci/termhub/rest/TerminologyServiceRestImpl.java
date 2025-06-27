@@ -11,8 +11,6 @@ package com.wci.termhub.rest;
 
 import static com.wci.termhub.util.IndexUtility.getAndQuery;
 
-import java.io.File;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,13 +24,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Precision;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -43,8 +38,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.wci.termhub.Application;
 import com.wci.termhub.algo.TreePositionAlgorithm;
@@ -74,7 +67,6 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.service.RootServiceRestImpl;
 import com.wci.termhub.util.AdhocUtility;
-import com.wci.termhub.util.FileUtility;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
 import com.wci.termhub.util.StringUtility;
@@ -149,17 +141,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Autowired
   private EntityRepositoryService searchService;
 
-  /** The application context. */
-  @Autowired
-  private ApplicationContext applicationContext;
-
   /** The builders. */
   @Autowired
   private List<QueryBuilder> builders;
-
-  /** The rest template. */
-  @Autowired
-  private RestTemplate restTemplate;
 
   /**
    * Instantiates an empty {@link TerminologyServiceRestImpl}.
@@ -181,13 +165,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     this.request = request;
   }
 
-  /**
-   * Health.
-   *
-   * @param dependencies the dependencies
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/health", method = RequestMethod.GET)
@@ -218,16 +195,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
-  /**
-   * Admin.
-   *
-   * @param task the task
-   * @param adminKey the admin key
-   * @param background the background
-   * @param payload the payload
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/admin", method = RequestMethod.POST)
@@ -270,13 +237,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the terminology.
-   *
-   * @param id the id
-   * @return the terminology
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.GET)
@@ -312,13 +272,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the terminology metadata.
-   *
-   * @param id the id
-   * @return the terminology metadata
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}/metadata", method = RequestMethod.GET)
@@ -361,13 +314,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Adds the terminology.
-   *
-   * @param terminologyStr the terminology str
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.POST,
@@ -404,83 +350,70 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Adds the terminology.
-   *
-   * @param file the terminology code system zip file
-   * @return the response entity
-   * @throws Exception the exception
-   */
-  @RequestMapping(value = "/terminology/fhir/codeSystem", method = RequestMethod.POST,
-      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  @Hidden
-  // @Operation(summary = "FHIR CodeSystem operation",
-  // description = "Performs a FHIR CodeSystem operation", tags = {
-  // "terminology"
-  // })
-  // @Parameters({
-  // @Parameter(name = "file", description = "ZIP file containing FHIR
-  // CodeSystem resources",
-  // required = true, content = @Content(mediaType =
-  // MediaType.MULTIPART_FORM_DATA_VALUE))
-  // })
-  public ResponseEntity<String> addTerminologyFhirCodeSystem(
-    @RequestParam("file") final MultipartFile file) throws Exception {
+  // /**
+  // * Adds the terminology.
+  // *
+  // * @param file the terminology code system zip file
+  // * @return the response entity
+  // * @throws Exception the exception
+  // */
+  // @RequestMapping(value = "/terminology/fhir/codeSystem", method =
+  // RequestMethod.POST,
+  // consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  // @Hidden
+  // public ResponseEntity<String> addTerminologyFhirCodeSystem(
+  // @RequestParam("file") final MultipartFile file) throws Exception {
+  //
+  // if (file == null || file.isEmpty()) {
+  // return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+  // }
+  //
+  // try {
+  //
+  // final File tempDir = FileUtility.extractFiles(file, "fhirCodeSystem");
+  //
+  // final long processStartTime = System.currentTimeMillis();
+  // long fileStartTime;
+  // // read json files in loop
+  // final File[] jsonFiles =
+  // tempDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".json"));
+  // if (jsonFiles == null) {
+  // return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+  // }
+  //
+  // for (final File jsonFile : jsonFiles) {
+  // fileStartTime = System.currentTimeMillis();
+  // // for each json file - send to /fhir/r5/CodeSystem
+  // final String jsonContent = new
+  // String(Files.readAllBytes(jsonFile.toPath()));
+  // final HttpHeaders headers = new HttpHeaders();
+  // headers.add("Content-Type", "application/fhir+json");
+  // final HttpEntity<String> entity = new HttpEntity<>(jsonContent, headers);
+  // final ResponseEntity<String> response = restTemplate
+  // .postForEntity("http://localhost:8080/fhir/r5/CodeSystem", entity,
+  // String.class);
+  // if (!response.getStatusCode().is2xxSuccessful()) {
+  // return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+  // }
+  // logger.info("Processed file: {} in {} seconds", jsonFile.getName(),
+  // Precision.round((System.currentTimeMillis() - fileStartTime) / 1000.0, 2));
+  // }
+  //
+  // logger.info("Processed all files in {} seconds",
+  // Precision.round((System.currentTimeMillis() - processStartTime) / 1000.0,
+  // 2));
+  //
+  // // return 200 OK
+  // return new ResponseEntity<>("Loaded the FHIR CodeSystem resources",
+  // HttpStatus.OK);
+  //
+  // } catch (final Exception e) {
+  // handleException(e, "trying to add terminology");
+  // return null;
+  // }
+  //
+  // }
 
-    if (file == null || file.isEmpty()) {
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    }
-
-    try {
-
-      final File tempDir = FileUtility.extractFiles(file, "fhirCodeSystem");
-
-      final long processStartTime = System.currentTimeMillis();
-      long fileStartTime;
-      // read json files in loop
-      final File[] jsonFiles =
-          tempDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".json"));
-      if (jsonFiles == null) {
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-
-      for (final File jsonFile : jsonFiles) {
-        fileStartTime = System.currentTimeMillis();
-        // for each json file - send to /fhir/r5/CodeSystem
-        final String jsonContent = new String(Files.readAllBytes(jsonFile.toPath()));
-        final HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Type", "application/fhir+json");
-        final HttpEntity<String> entity = new HttpEntity<>(jsonContent, headers);
-        final ResponseEntity<String> response = restTemplate
-            .postForEntity("http://localhost:8080/fhir/r5/CodeSystem", entity, String.class);
-        if (!response.getStatusCode().is2xxSuccessful()) {
-          return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        logger.info("Processed file: {} in {} seconds", jsonFile.getName(),
-            Precision.round((System.currentTimeMillis() - fileStartTime) / 1000.0, 2));
-      }
-
-      logger.info("Processed all files in {} seconds",
-          Precision.round((System.currentTimeMillis() - processStartTime) / 1000.0, 2));
-
-      // return 200 OK
-      return new ResponseEntity<>("Loaded the FHIR CodeSystem resources", HttpStatus.OK);
-
-    } catch (final Exception e) {
-      handleException(e, "trying to add terminology");
-      return null;
-    }
-
-  }
-
-  /**
-   * Update terminology.
-   *
-   * @param id the id
-   * @param terminologyStr the terminology str
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.PATCH,
@@ -520,13 +453,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Delete terminology.
-   *
-   * @param id the id
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.DELETE)
@@ -552,17 +478,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find terminologies.
-   *
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology", method = RequestMethod.GET)
@@ -619,14 +534,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept.
-   *
-   * @param conceptId the concept id
-   * @param include the include
-   * @return the concept
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}", method = RequestMethod.GET)
@@ -694,15 +601,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param include the include
-   * @return the concept
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}", method = RequestMethod.GET)
@@ -750,11 +648,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
           "code:" + StringUtility.escapeQuery(code)
 
-      // "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-      // "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) +
-      // "\"",
-      // "version:" + StringUtility.escapeQuery(term.getVersion())
-
       );
 
       // then do a find on the query
@@ -784,15 +677,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept codes.
-   *
-   * @param terminology the terminology
-   * @param codes the codes
-   * @param include the include
-   * @return the concept codes
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology:[A-Z].*}", method = RequestMethod.GET)
@@ -875,23 +759,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concepts.
-   *
-   * @param terminology the terminology
-   * @param query the query
-   * @param expression the expression
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param leaf the leaf
-   * @param include the include
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept", method = RequestMethod.GET)
@@ -985,20 +852,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find terms.
-   *
-   * @param terminology the terminology
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/term", method = RequestMethod.GET)
@@ -1079,20 +932,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Lookup.
-   *
-   * @param terminology the terminology
-   * @param expression the expression
-   * @param limit the limit
-   * @param active the active
-   * @param leaf the leaf
-   * @param include the include
-   * @param handler the handler
-   * @param queries the queries
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/bulk", method = RequestMethod.POST)
@@ -1252,17 +1091,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   }
 
-  /**
-   * Find metadata.
-   *
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/metadata", method = RequestMethod.GET)
@@ -1324,19 +1152,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept relationships.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/relationships", method = RequestMethod.GET)
@@ -1410,20 +1225,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept relationships.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/relationships", method = RequestMethod.GET)
@@ -1496,19 +1297,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept inverse relationships.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/inverseRelationships", method = RequestMethod.GET)
@@ -1583,20 +1371,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find concept inverse relationships.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/inverseRelationships",
@@ -1671,19 +1445,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree positions.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/trees", method = RequestMethod.GET)
@@ -1771,20 +1532,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree positions.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/trees", method = RequestMethod.GET)
@@ -1865,19 +1612,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree position children.
-   *
-   * @param conceptId the concept id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId}/trees/children", method = RequestMethod.GET)
@@ -1980,20 +1714,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find tree position children.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param ascending the ascending
-   * @param sort the sort
-   * @param handler the handler
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/trees/children",
@@ -2092,87 +1812,75 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Compute tree positions.
-   *
-   * @param terminology the terminology
-   * @param publisher the publisher
-   * @param version the version
-   * @return the response entity
-   * @throws Exception the exception
-   */
-  @RequestMapping(value = "/terminology/{terminology}/trees", method = RequestMethod.POST)
-  @Hidden
-  // @Operation(summary = "Compute concept tree positions by terminology,
-  // publisher and version",
-  // description = "Computes concept tree positions for the specified
-  // terminology, publisher and
-  // version.",
-  // tags = {
-  // "concept by code"
-  // })
-  // @ApiResponses({
-  // @ApiResponse(responseCode = "200",
-  // description = "Result list of matching concept tree positions"),
-  // @ApiResponse(responseCode = "404", description = "Not found", content =
-  // @Content()),
-  // @ApiResponse(responseCode = "417", description = "Expectation failed",
-  // content = @Content()),
-  // @ApiResponse(responseCode = "500", description = "Internal server error",
-  // content = @Content())
-  // })
-  // @Parameters({
-  // @Parameter(name = "terminology",
-  // description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\"."),
-  // @Parameter(name = "publisher", description = "Terminology publisher. e.g.
-  // \"SANDBOX\"."),
-  // @Parameter(name = "version", description = "Terminology version. e.g.
-  // \"20240301\"."),
-  // })
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/concept/{terminology}/trees", method = RequestMethod.POST)
+  @Operation(summary = "Compute concept tree positions by terminology, publisher and version",
+      description = "Computes concept tree positions for the specified terminology, publisher and version. "
+          + "This is useful when tree positions were not computed during initial load "
+          + "(ENABLE_POST_LOAD_COMPUTATIONS=false).",
+      tags = {
+          "concept"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Tree positions computed successfully"),
+      @ApiResponse(responseCode = "404", description = "Terminology not found",
+          content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "terminology",
+          description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\".", required = true),
+      @Parameter(name = "publisher", description = "Terminology publisher. e.g. \"SANDBOX\".",
+          required = true),
+      @Parameter(name = "version", description = "Terminology version. e.g. \"20240301\".",
+          required = true)
+  })
   public ResponseEntity<String> computeTreePositions(
     @PathVariable("terminology") final String terminology,
     @RequestParam("publisher") final String publisher,
     @RequestParam("version") final String version) throws Exception {
 
     try {
+      logger.info("Computing tree positions for terminology = {}, publisher = {}, version = {}",
+          terminology, publisher, version);
 
-      // throw exception if any parameter is null or empty
-      if (StringUtils.isAnyEmpty(terminology, publisher, version)) {
-        throw new RestException(false, 417, "Expectation failed",
-            "Terminology, publisher and version parameters must not be blank.");
+      // Look up the terminology to make sure it exists
+      final Terminology term =
+          TerminologyUtility.getTerminology(searchService, terminology, publisher, version);
+      if (term == null) {
+        throw new Exception("Unable to find terminology = " + terminology + ", publisher = "
+            + publisher + ", version = " + version);
       }
 
-      lookupTerminology(terminology);
-
-      final TreePositionAlgorithm treepos = applicationContext.getBean(TreePositionAlgorithm.class);
+      // Create and configure the tree position algorithm
+      final TreePositionAlgorithm treepos = new TreePositionAlgorithm(searchService);
       treepos.setTerminology(terminology);
       treepos.setPublisher(publisher);
       treepos.setVersion(version);
       treepos.checkPreconditions();
       treepos.compute();
 
-      return new ResponseEntity<>("Successful", new HttpHeaders(), HttpStatus.OK);
+      // Update the terminology attributes to indicate tree positions exist
+      if (term.getAttributes() == null) {
+        term.setAttributes(new HashMap<>());
+      }
+      term.getAttributes().put(Terminology.Attributes.treePositions.property(), "true");
+      searchService.update(Terminology.class, term.getId(), term);
+
+      // Force terminology cache to be reloaded
+      terminologyCache.put(term.getId(), null);
+
+      return ResponseEntity.ok("Tree positions computed successfully");
 
     } catch (final Exception e) {
-      handleException(e, "trying to compute tree positions for terminology = " + terminology);
-      return null;
+      logger.error("Unexpected error computing tree positions", e);
+      throw new Exception("Failed to compute tree positions: " + e.getMessage());
     }
   }
 
-  /**
-   * Find mappings.
-   *
-   * @param mapset the mapset
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param leaf the leaf
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapping", method = RequestMethod.GET)
@@ -2244,20 +1952,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find mapset mappings.
-   *
-   * @param mapsetId the mapset id
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @param leaf the leaf
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapset/{mapset}/mappings", method = RequestMethod.GET)
@@ -2328,13 +2022,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept mappings.
-   *
-   * @param conceptId the concept id
-   * @return the concept mappings
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/mappings", method = RequestMethod.GET)
@@ -2398,13 +2085,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept inverse mappings.
-   *
-   * @param conceptId the concept id
-   * @return the concept inverse mappings
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/inverseMappings",
@@ -2468,14 +2148,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept mappings.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @return the concept mappings
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/mappings", method = RequestMethod.GET)
@@ -2512,17 +2184,11 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Terminology term = lookupTerminology(terminology);
 
       // find with code, term, pub, version
-      final String query = StringUtility.composeQuery("AND",
-
-          TerminologyUtility.getTerminologyQuery(term.getAbbreviation(), term.getPublisher(),
-              term.getVersion()),
-          "code:" + StringUtility.escapeQuery(code) // ,
-      // "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-      // "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) +
-      // "\"",
-      // "version:" + StringUtility.escapeQuery(term.getVersion())
-
-      );
+      final String query =
+          StringUtility.composeQuery(
+              "AND", TerminologyUtility.getTerminologyQuery(term.getAbbreviation(),
+                  term.getPublisher(), term.getVersion()),
+              "code:" + StringUtility.escapeQuery(code));
 
       // then do a find on the query
       final SearchParameters params = new SearchParameters(query, null, 2, null, null);
@@ -2557,14 +2223,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the concept inverse mappings.
-   *
-   * @param terminology the terminology
-   * @param code the code
-   * @return the concept inverse mappings
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "concept/{terminology}/{code}/inverseMappings",
@@ -2601,15 +2259,11 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Terminology term = lookupTerminology(terminology);
 
       // find with code, term, pub, version
-      final String query = StringUtility.composeQuery("AND", TerminologyUtility
-          .getTerminologyQuery(term.getAbbreviation(), term.getPublisher(), term.getVersion()),
-          "code:" + StringUtility.escapeQuery(code)
-      // ,
-      // "terminology:" + StringUtility.escapeQuery(term.getAbbreviation()),
-      // "publisher: \"" + StringUtility.escapeQuery(term.getPublisher()) +
-      // "\"",
-      // "version:" + StringUtility.escapeQuery(term.getVersion())
-      );
+      final String query =
+          StringUtility.composeQuery(
+              "AND", TerminologyUtility.getTerminologyQuery(term.getAbbreviation(),
+                  term.getPublisher(), term.getVersion()),
+              "code:" + StringUtility.escapeQuery(code));
 
       // then do a find on the query
       final SearchParameters params = new SearchParameters(query, null, 2, null, null);
@@ -2643,13 +2297,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Gets the mapset.
-   *
-   * @param id the id
-   * @return the mapset
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapset/{id:[a-f0-9].+}", method = RequestMethod.GET)
@@ -2674,7 +2321,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       if (mapset == null) {
         throw new RestException(false, 404, "Not Found", "Unable to find mapset for " + id);
       }
-
       mapset.cleanForApi();
 
       // Return the object
@@ -2685,17 +2331,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /**
-   * Find mapsets.
-   *
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @return the response entity
-   * @throws Exception the exception
-   */
   /* see superclass */
   @Override
   @RequestMapping(value = "/mapset", method = RequestMethod.GET)
@@ -2752,55 +2387,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  // /**
-  // * Download all available syndication packages for a project.
-  // *
-  // * @param authorizationHeader the Bearer JWT
-  // * @return list of downloaded file paths
-  // */
-  // @Operation(summary = "Download all available syndication packages for a
-  // project",
-  // description = "Triggers download of all available syndication files for the
-  // given project id or URI label. "
-  // + "Requires Bearer JWT in Authorization header.",
-  // tags = {
-  // "terminology"
-  // })
-  // @ApiResponses({
-  // @ApiResponse(responseCode = "200", description = "List of downloaded file
-  // paths"),
-  // @ApiResponse(responseCode = "500", description = "Internal server error")
-  // })
-  // @Parameters({
-  // // @Parameter(name = "projectId", description = "Project id or URI label",
-  // // required = true),
-  // @Parameter(name = "Authorization", description = "Bearer JWT", required =
-  // true)
-  // })
-  // @RequestMapping(value = "/syndication/downloadAll", method =
-  // RequestMethod.POST,
-  // produces = MediaType.APPLICATION_JSON_VALUE)
-  // public ResponseEntity<List<String>> downloadAllSyndicationFiles(
-  // @RequestHeader("Authorization") final String authorizationHeader) {
-  // try {
-  // // Extract JWT from Bearer token
-  // final String projectId = "";
-  // final String jwt = authorizationHeader.replace("Bearer ", "").trim();
-  // final String syndicationUrl =
-  // PropertyUtility.getProperties().getProperty("syndication.url");
-  // final SyndicationClient client = new SyndicationClient(syndicationUrl,
-  // jwt);
-  // // final List<String> files =
-  // // client.downloadAllAvailablePackages(projectId);
-  // // return ResponseEntity.ok(files);
-  // return ResponseEntity.ok(List.of("Done"));
-  // } catch (final Exception e) {
-  // logger.error("Failed to download syndication files", e);
-  // return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-  // .body(List.of("Error: " + e.getMessage()));
-  // }
-  // }
-
   /**
    * Lookup terminologies.
    *
@@ -2809,7 +2395,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    */
   private Map<String, Terminology> lookupTerminologyMap() throws Exception {
 
-    final String query = "*:*"; // "latest:true";
+    final String query = "*:*";
     Map<String, Terminology> indexMap = terminologyCache.get(query);
 
     if (indexMap == null) {
@@ -2912,9 +2498,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Terminology terminology =
         map.get(concept.getTerminology() + concept.getPublisher() + concept.getVersion());
     if (terminology == null) {
-      logger.error("    indexMap = " + map);
-      logger.error(
-          "    key = " + concept.getTerminology() + concept.getPublisher() + concept.getVersion());
+      logger.error("    indexMap = {}", map);
+      logger.error("    key = {}{}{}", concept.getTerminology(), concept.getPublisher(),
+          concept.getVersion());
       throw new RestException(false, 417, "Expectation failed",
           "Specified concept is not valid for this terminology = " + concept.getId());
     }
