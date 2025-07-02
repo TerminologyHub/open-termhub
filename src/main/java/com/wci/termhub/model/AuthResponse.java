@@ -12,6 +12,7 @@ package com.wci.termhub.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 
 /**
  * Represents an authorization request.
@@ -82,7 +83,7 @@ public class AuthResponse extends BaseModel {
    * @return the access token
    */
   @JsonProperty("access_token")
-  @Schema(name = "access_token", required = true)
+  @Schema(name = "access_token", requiredMode = RequiredMode.REQUIRED)
   public String getAccessToken() {
     return accessToken;
   }
@@ -102,7 +103,7 @@ public class AuthResponse extends BaseModel {
    * @return the refresh token
    */
   @JsonProperty("refresh_token")
-  @Schema(name = "refresh_token", required = true)
+  @Schema(name = "refresh_token", requiredMode = RequiredMode.REQUIRED)
   public String getRefreshToken() {
     return refreshToken;
   }
@@ -122,7 +123,7 @@ public class AuthResponse extends BaseModel {
    * @return the expires in
    */
   @JsonProperty("expires_in")
-  @Schema(name = "expires_in", required = true)
+  @Schema(name = "expires_in", requiredMode = RequiredMode.REQUIRED)
   public long getExpiresIn() {
     return expiresIn;
   }
@@ -142,7 +143,7 @@ public class AuthResponse extends BaseModel {
    * @return the expires on
    */
   @JsonProperty("expires_on")
-  @Schema(name = "expires_on", required = true)
+  @Schema(name = "expires_on", requiredMode = RequiredMode.REQUIRED)
   public long getExpiresOn() {
     return expiresOn;
   }
@@ -162,7 +163,7 @@ public class AuthResponse extends BaseModel {
    * @return the token type
    */
   @JsonProperty("token_type")
-  @Schema(name = "token_type", required = true)
+  @Schema(name = "token_type", requiredMode = RequiredMode.REQUIRED)
   public String getTokenType() {
     return tokenType;
   }

@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.wci.termhub.util.StringUtility;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.persistence.Transient;
 
 /**
@@ -247,7 +248,7 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
    */
   /* see superclass */
   @Override
-  @Schema(description = "Unique identifier", required = true, format = "uuid")
+  @Schema(description = "Unique identifier", requiredMode = RequiredMode.REQUIRED, format = "uuid")
   public String getId() {
     return super.getId();
   }
