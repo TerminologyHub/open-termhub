@@ -34,6 +34,38 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Subset extends SubsetRef implements TerminologyComponent, HasAttributes {
 
+  /**
+   * Attribute keys that can be associated with a terminology (and their
+   * descriptions) rendered as terminology attributes when building a data set.
+   */
+  public enum Attributes {
+
+    /** The origin terminology. */
+    fhirDate("date"),
+
+    /** The origin version. */
+    fhirUrl("url"),
+
+    /** The experimental - e.g. "true" or "false". */
+    fhirExperimental("experimental"),
+
+    /** The identifier - e.g. "900000000000012004". */
+    fhirIdentifier("identifier");
+
+    /** The name. */
+    @SuppressWarnings("unused")
+    private final String property;
+
+    /**
+     * Instantiates a {@link Attributes} from the specified parameters.
+     *
+     * @param property the property
+     */
+    private Attributes(final String property) {
+      this.property = property;
+    }
+  }
+
   /** The terminology. */
   @Field(type = FieldType.Keyword)
   private String terminology;

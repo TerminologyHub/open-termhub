@@ -45,6 +45,7 @@ import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.util.SubsetLoaderUtil;
 
 /**
  * Test class for loading FHIR Code System files.
@@ -72,6 +73,10 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
   /** The Constant CONCEPT_MAP_FILES. */
   private static final List<String> CONCEPT_MAP_FILES =
       List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json");
+
+  /** The Constant VALUE_SET_FILES. */
+  private static final List<String> VALUE_SET_FILES =
+      List.of("ValueSet-snomedct_us-model-nlm-20240301-r5.json");
 
   /**
    * Setup - load the FHIR Code System files.
@@ -103,7 +108,6 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
     // Load each code system by reading directly from the classpath
     for (final String codeSystemFile : CODE_SYSTEM_FILES) {
       try {
-        // Read file from classpath directly using Spring's resource mechanism
         final Resource resource = new ClassPathResource("data/" + codeSystemFile,
             CodeSystemLoadUnitTest.class.getClassLoader());
 
@@ -125,7 +129,6 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
 
     for (final String conceptMapFile : CONCEPT_MAP_FILES) {
       try {
-        // Read file from classpath directly using Spring's resource mechanism
         final Resource resource = new ClassPathResource("data/" + conceptMapFile,
             CodeSystemLoadUnitTest.class.getClassLoader());
 
@@ -141,6 +144,27 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
 
       } catch (final Exception e) {
         LOGGER.error("Error loading concept map file: {}", conceptMapFile, e);
+        throw e;
+      }
+    }
+
+    for (final String valueSetFile : VALUE_SET_FILES) {
+      try {
+        final Resource resource = new ClassPathResource("data/" + valueSetFile,
+            CodeSystemLoadUnitTest.class.getClassLoader());
+
+        if (!resource.exists()) {
+          throw new FileNotFoundException("Could not find resource: data/" + valueSetFile);
+        }
+
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
+        LOGGER.info("Loading value set from classpath resource: data/{}", valueSetFile);
+        SubsetLoaderUtil.loadSubset(searchService, fileContent, true);
+
+      } catch (final Exception e) {
+        LOGGER.error("Error loading value set file: {}", valueSetFile, e);
         throw e;
       }
     }

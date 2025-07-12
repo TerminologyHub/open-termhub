@@ -59,9 +59,12 @@ import com.wci.termhub.model.ResultListConceptTreePosition;
 import com.wci.termhub.model.ResultListMapping;
 import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
+import com.wci.termhub.model.ResultListSubsetMember;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
@@ -131,6 +134,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   /** The terminologies cache. */
   private static TimerCache<Map<String, Mapset>> mapsetCache = new TimerCache<>(1000, 10000);
+
+  /** The subset cache. */
+  private static TimerCache<Map<String, Subset>> subsetCache = new TimerCache<>(1000, 10000);
 
   /** The request. */
   @SuppressWarnings("unused")
@@ -300,13 +306,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
             HttpStatus.NOT_FOUND);
       }
 
-      final SearchParameters params = new SearchParameters();
-      params.setQuery(TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+      final SearchParameters searchParams = new SearchParameters();
+      searchParams.setQuery(TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
           terminology.getPublisher(), terminology.getVersion()));
-      params.setLimit(100000);
+      searchParams.setLimit(100000);
 
       // Find and return the list
-      return new ResponseEntity<>(searchService.find(params, Metadata.class, null).getItems(),
+      return new ResponseEntity<>(searchService.find(searchParams, Metadata.class, null).getItems(),
           new HttpHeaders(), HttpStatus.OK);
     } catch (final Exception e) {
       handleException(e, "trying to get metadata for terminology = " + id);
@@ -349,70 +355,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       return null;
     }
   }
-
-  // /**
-  // * Adds the terminology.
-  // *
-  // * @param file the terminology code system zip file
-  // * @return the response entity
-  // * @throws Exception the exception
-  // */
-  // @RequestMapping(value = "/terminology/fhir/codeSystem", method =
-  // RequestMethod.POST,
-  // consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  // @Hidden
-  // public ResponseEntity<String> addTerminologyFhirCodeSystem(
-  // @RequestParam("file") final MultipartFile file) throws Exception {
-  //
-  // if (file == null || file.isEmpty()) {
-  // return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-  // }
-  //
-  // try {
-  //
-  // final File tempDir = FileUtility.extractFiles(file, "fhirCodeSystem");
-  //
-  // final long processStartTime = System.currentTimeMillis();
-  // long fileStartTime;
-  // // read json files in loop
-  // final File[] jsonFiles =
-  // tempDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".json"));
-  // if (jsonFiles == null) {
-  // return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-  // }
-  //
-  // for (final File jsonFile : jsonFiles) {
-  // fileStartTime = System.currentTimeMillis();
-  // // for each json file - send to /fhir/r5/CodeSystem
-  // final String jsonContent = new
-  // String(Files.readAllBytes(jsonFile.toPath()));
-  // final HttpHeaders headers = new HttpHeaders();
-  // headers.add("Content-Type", "application/fhir+json");
-  // final HttpEntity<String> entity = new HttpEntity<>(jsonContent, headers);
-  // final ResponseEntity<String> response = restTemplate
-  // .postForEntity("http://localhost:8080/fhir/r5/CodeSystem", entity,
-  // String.class);
-  // if (!response.getStatusCode().is2xxSuccessful()) {
-  // return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-  // }
-  // logger.info("Processed file: {} in {} seconds", jsonFile.getName(),
-  // Precision.round((System.currentTimeMillis() - fileStartTime) / 1000.0, 2));
-  // }
-  //
-  // logger.info("Processed all files in {} seconds",
-  // Precision.round((System.currentTimeMillis() - processStartTime) / 1000.0,
-  // 2));
-  //
-  // // return 200 OK
-  // return new ResponseEntity<>("Loaded the FHIR CodeSystem resources",
-  // HttpStatus.OK);
-  //
-  // } catch (final Exception e) {
-  // handleException(e, "trying to add terminology");
-  // return null;
-  // }
-  //
-  // }
 
   /* see superclass */
   @Override
@@ -519,10 +461,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
-      final SearchParameters params = new SearchParameters(
+      final SearchParameters searchParams = new SearchParameters(
           ((query == null || query.isEmpty()) ? "*:*" : query), offset, maxLimit, sort, ascending);
-      final ResultList<Terminology> list = searchService.find(params, Terminology.class);
-      list.setParameters(params);
+      final ResultList<Terminology> list = searchService.find(searchParams, Terminology.class);
+      list.setParameters(searchParams);
       list.getItems().forEach(t -> t.cleanForApi());
 
       return new ResponseEntity<>(new ResultListTerminology(list), new HttpHeaders(),
@@ -571,8 +513,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // then do a find on the query
       // don't use 'get' because it doesn't work with include param fields
-      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
-      final ResultList<Concept> results = searchService.findFields(params,
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
           new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
 
       if (results.getTotal() == 0) {
@@ -651,8 +593,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       );
 
       // then do a find on the query
-      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
-      final ResultList<Concept> results = searchService.findFields(params,
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
           new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
 
       if (results.getTotal() == 0) {
@@ -737,8 +679,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + ")");
 
       // then do a find on the query
-      final SearchParameters params = new SearchParameters(query, 0, 500, null, null);
-      final ResultList<Concept> results = searchService.findFields(params,
+      final SearchParameters searchParams = new SearchParameters(query, 0, 500, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
           new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
 
       results.getItems().forEach(c -> {
@@ -910,17 +852,17 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      final SearchParameters params =
+      final SearchParameters searchParams =
           new SearchParameters(query2, offset, maxLimit, sort, ascending);
       if (active != null && active) {
-        params.setActive(true);
+        searchParams.setActive(true);
       }
-      final ResultList<Term> list = searchService.find(params, Term.class);
+      final ResultList<Term> list = searchService.find(searchParams, Term.class);
       list.getItems().forEach(Term::cleanForApi);
 
       // Restore the original query for the response
-      params.setQuery(query);
-      list.setParameters(params);
+      searchParams.setQuery(query);
+      list.setParameters(searchParams);
 
       return new ResponseEntity<>(new ResultListTerm(list), new HttpHeaders(), HttpStatus.OK);
 
@@ -1062,19 +1004,19 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Query keywordQuery = LuceneQueryBuilder.parse(query, Concept.class);
     final Query expressionQuery = TerminologyUtility.getExpressionQuery(expression);
     final Query booleanQuery = getAndQuery(keywordQuery, expressionQuery);
-    final SearchParameters params =
+    final SearchParameters searchParams =
         new SearchParameters(booleanQuery, offset, limit, sort, ascending);
     if (active != null && active) {
-      params.setActive(true);
+      searchParams.setActive(true);
     }
     if (leaf != null && leaf) {
-      params.setLeaf(true);
+      searchParams.setLeaf(true);
     }
 
-    logger.info(
-        "findHelper: query = " + query + ", expression = " + expression + ", params = " + params);
+    logger.info("findHelper: query = " + query + ", expression = " + expression
+        + ", searchParams = " + searchParams);
 
-    final ResultList<Concept> list = searchService.findFields(params,
+    final ResultList<Concept> list = searchService.findFields(searchParams,
         new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class,
         terminologies.stream().map(t -> t.getAbbreviation()).collect(Collectors.toSet()));
 
@@ -1084,9 +1026,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
 
     // Restore the original query for the response
-    params.setQuery(query);
-    params.setExpression(expression);
-    list.setParameters(params);
+    searchParams.setQuery(query);
+    searchParams.setExpression(expression);
+    list.setParameters(searchParams);
     return list;
 
   }
@@ -1138,12 +1080,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 20000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 20000);
 
-      final SearchParameters params =
+      final SearchParameters searchParams =
           new SearchParameters(query, offset, maxLimit, sort, ascending);
-      final ResultList<Metadata> list = searchService.find(params, Metadata.class);
+      final ResultList<Metadata> list = searchService.find(searchParams, Metadata.class);
 
       // Minimize
-      list.setParameters(params);
+      list.setParameters(searchParams);
       return new ResponseEntity<>(new ResultListMetadata(list), new HttpHeaders(), HttpStatus.OK);
 
     } catch (final Exception e) {
@@ -1206,16 +1148,16 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      final SearchParameters params = new SearchParameters(
+      final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
       final ResultList<ConceptRelationship> list =
-          searchService.find(params, ConceptRelationship.class);
+          searchService.find(searchParams, ConceptRelationship.class);
 
-      list.setParameters(params);
+      list.setParameters(searchParams);
       return new ResponseEntity<>(new ResultListConceptRelationship(list), new HttpHeaders(),
           HttpStatus.OK);
 
@@ -1278,16 +1220,16 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      final SearchParameters params = new SearchParameters(
+      final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND", "terminology:" + StringUtility.escapeQuery(terminology),
               "from.code:" + StringUtility.escapeQuery(code),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
       final ResultList<ConceptRelationship> list =
-          searchService.find(params, ConceptRelationship.class);
+          searchService.find(searchParams, ConceptRelationship.class);
 
-      list.setParameters(params);
+      list.setParameters(searchParams);
       return new ResponseEntity<>(new ResultListConceptRelationship(list), new HttpHeaders(),
           HttpStatus.OK);
 
@@ -1352,16 +1294,16 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      final SearchParameters params = new SearchParameters(
+      final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND",
               "to.code:" + StringUtility.escapeQuery(concept.getCode()),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
       final ResultList<ConceptRelationship> list =
-          searchService.find(params, ConceptRelationship.class);
+          searchService.find(searchParams, ConceptRelationship.class);
 
-      list.setParameters(params);
+      list.setParameters(searchParams);
       return new ResponseEntity<>(new ResultListConceptRelationship(list), new HttpHeaders(),
           HttpStatus.OK);
 
@@ -1426,16 +1368,16 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      final SearchParameters params = new SearchParameters(
+      final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND", "terminology:" + StringUtility.escapeQuery(terminology),
               "to.code:" + StringUtility.escapeQuery(code),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
       final ResultList<ConceptRelationship> list =
-          searchService.find(params, ConceptRelationship.class);
+          searchService.find(searchParams, ConceptRelationship.class);
 
-      list.setParameters(params);
+      list.setParameters(searchParams);
       return new ResponseEntity<>(new ResultListConceptRelationship(list), new HttpHeaders(),
           HttpStatus.OK);
 
@@ -1504,7 +1446,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      final SearchParameters params = new SearchParameters(
+      final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND",
               "concept.code:" + StringUtility.escapeQuery(concept.getCode()),
               "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
@@ -1512,7 +1454,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           offset, maxLimit, sort, ascending);
 
       final ResultList<ConceptTreePosition> list =
-          searchService.find(params, ConceptTreePosition.class);
+          searchService.find(searchParams, ConceptTreePosition.class);
 
       final ResultList<ConceptTreePosition> treeList = new ResultList<>();
       for (final ConceptTreePosition treepos : list.getItems()) {
@@ -1520,7 +1462,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         final ConceptTreePosition tree = TerminologyUtility.computeTree(searchService, treepos);
         treeList.getItems().add(tree);
       }
-      treeList.setParameters(params);
+      treeList.setParameters(searchParams);
       treeList.setTotal(list.getTotal());
 
       return new ResponseEntity<>(new ResultListConceptTreePosition(treeList), new HttpHeaders(),
@@ -1586,21 +1528,21 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      final SearchParameters params = new SearchParameters(
+      final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND", "terminology:" + StringUtility.escapeQuery(terminology),
               "concept.code:" + StringUtility.escapeQuery(code),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
       final ResultList<ConceptTreePosition> list =
-          searchService.find(params, ConceptTreePosition.class);
+          searchService.find(searchParams, ConceptTreePosition.class);
 
       final ResultList<ConceptTreePosition> treeList = new ResultList<>();
       for (final ConceptTreePosition treepos : list.getItems()) {
         final ConceptTreePosition tree = TerminologyUtility.computeTree(searchService, treepos);
         treeList.getItems().add(tree);
       }
-      treeList.setParameters(params);
+      treeList.setParameters(searchParams);
       treeList.setTotal(list.getTotal());
 
       return new ResponseEntity<>(new ResultListConceptTreePosition(treeList), new HttpHeaders(),
@@ -1670,8 +1612,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       terminologyHasTreePositions(terminology);
 
       // Find this thing
-      final SearchParameters params = new SearchParameters(1, 0);
-      params.setQuery(StringUtility.composeQuery("AND",
+      final SearchParameters searchParams = new SearchParameters(1, 0);
+      searchParams.setQuery(StringUtility.composeQuery("AND",
           "terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
           "concept.code:" + StringUtility.escapeQuery(concept.getCode()),
           QueryBuilder.findBuilder(builders, handler).buildQuery(query)));
@@ -1680,7 +1622,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
       final ResultList<ConceptTreePosition> list =
-          searchService.find(params, ConceptTreePosition.class);
+          searchService.find(searchParams, ConceptTreePosition.class);
       if (list.getItems().isEmpty()) {
         list.setParameters(new SearchParameters((String) null, offset, maxLimit, sort, ascending));
         return new ResponseEntity<>(new ResultListConceptTreePosition(list), new HttpHeaders(),
@@ -1771,8 +1713,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       terminologyHasTreePositions(term);
 
       // Find this thing
-      final SearchParameters params = new SearchParameters(1, 0);
-      params.setQuery(StringUtility.composeQuery("AND",
+      final SearchParameters searchParams = new SearchParameters(1, 0);
+      searchParams.setQuery(StringUtility.composeQuery("AND",
           QueryBuilder.findBuilder(builders, handler).buildQuery(query),
           "terminology:" + StringUtility.escapeQuery(terminology),
           "concept.code:" + StringUtility.escapeQuery(code)));
@@ -1781,7 +1723,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
       final ResultList<ConceptTreePosition> list =
-          searchService.find(params, ConceptTreePosition.class);
+          searchService.find(searchParams, ConceptTreePosition.class);
       if (list.getItems().isEmpty()) {
         list.setParameters(new SearchParameters((String) null, offset, maxLimit, sort, ascending));
         return new ResponseEntity<>(new ResultListConceptTreePosition(list), new HttpHeaders(),
@@ -2053,8 +1995,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // then do a find on the query
       // don't use 'get' because it doesn't work with include param fields
-      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
-      final ResultList<Concept> results = searchService.findFields(params,
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
           new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
 
       if (results.getTotal() == 0) {
@@ -2109,16 +2051,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
       final IncludeParam ip = new IncludeParam("minimal");
-
-      // final Map<String, Terminology> map = lookupTerminologyMap();
-
       // Get the concept
       final String query = "id:" + StringUtility.escapeQuery(conceptId);
 
       // then do a find on the query
       // don't use 'get' because it doesn't work with include param fields
-      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
-      final ResultList<Concept> results = searchService.findFields(params,
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
           new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
 
       if (results.getTotal() == 0) {
@@ -2191,8 +2130,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               "code:" + StringUtility.escapeQuery(code));
 
       // then do a find on the query
-      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
-      final ResultList<Concept> results = searchService.findFields(params,
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
           new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
 
       if (results.getTotal() == 0) {
@@ -2266,8 +2205,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               "code:" + StringUtility.escapeQuery(code));
 
       // then do a find on the query
-      final SearchParameters params = new SearchParameters(query, null, 2, null, null);
-      final ResultList<Concept> results = searchService.findFields(params,
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
           new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
 
       if (results.getTotal() == 0) {
@@ -2372,17 +2311,155 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
       // Limit to loaded mapsets
-      final SearchParameters params =
+      final SearchParameters searchParams =
           new SearchParameters("*:*" + ((query == null || query.isEmpty()) ? "" : " AND " + query),
               offset, maxLimit, sort, ascending);
-      final ResultList<Mapset> list = searchService.find(params, Mapset.class);
-      list.setParameters(params);
+      final ResultList<Mapset> list = searchService.find(searchParams, Mapset.class);
+      list.setParameters(searchParams);
       list.getItems().forEach(t -> t.cleanForApi());
 
       return new ResponseEntity<>(new ResultListMapset(list), new HttpHeaders(), HttpStatus.OK);
 
     } catch (final Exception e) {
       handleException(e, "trying to find mapsets");
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/subset", method = RequestMethod.GET)
+  @Operation(summary = "Get subsets", description = "Gets subset objects.", tags = {
+      "subset"
+  })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Result list of subsets"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
+      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  public ResponseEntity<List<Subset>> getSubsets() throws Exception {
+
+    try {
+
+      // Return the object
+      return new ResponseEntity<>(
+          lookupSubsetMap().values().stream()
+              .sorted((a, b) -> a.getReleaseDate().compareTo(b.getReleaseDate())).toList(),
+          new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get subsets");
+      return null;
+    }
+
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/subset/{id:[a-f0-9].+}", method = RequestMethod.GET)
+  @Operation(summary = "Get subset by id", description = "Gets subset for the specified id",
+      tags = {
+          "subset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Subset"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
+      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
+      @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "id", description = "Subset id, e.g. \"uuid\"", required = true)
+  })
+  public ResponseEntity<Subset> getSubset(@PathVariable("id") final String id) throws Exception {
+
+    try {
+      final Subset subset = searchService.get(id, Subset.class);
+      // not found - 404
+      if (subset == null) {
+        throw new RestException(false, 404, "Not Found", "Unable to find subset for " + id);
+      }
+
+      subset.cleanForApi();
+
+      // Return the object
+      return new ResponseEntity<>(subset, new HttpHeaders(), HttpStatus.OK);
+    } catch (final Exception e) {
+      handleException(e, "trying to get subset = " + id);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/subset/{subset}/members", method = RequestMethod.GET)
+  @Operation(summary = "Find members for the specified subset",
+      description = "Finds members for the specified subset and the specified search criteria.",
+      tags = {
+          "subset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Result list of matching subset members"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
+      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "subset",
+          description = "Subset id or abbreviation"
+              + " e.g. \"uuid1\" or \"SNOMEDCT_US-EXTENSION\".",
+          required = true),
+      @Parameter(name = "query", description = "Search text", required = false),
+      @Parameter(name = "offset", description = "Start index for search results", required = false,
+          schema = @Schema(implementation = Integer.class), example = "0"),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+      @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "ascending",
+          description = "<code>true</code> for ascending, <code>false</code> for descending,"
+              + " <code>null</code> for unspecified",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+      @Parameter(name = "active",
+          description = "<code>true</code> for active members only, <code>false</code> for inactive members only,"
+              + " <code>null</code> for both",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+  })
+  public ResponseEntity<ResultListSubsetMember> findSubsetMembers(
+    @PathVariable("subset") final String subsetId,
+    @RequestParam(name = "query", required = false) final String query,
+    @RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
+    @RequestParam(name = "sort", required = false) final String sort,
+    @RequestParam(name = "ascending", required = false) final Boolean ascending,
+    @RequestParam(name = "active", required = false) final Boolean active) throws Exception {
+
+    try {
+
+      // Allow subset to be blank here
+      final List<Subset> subsets = List.of(lookupSubset(subsetId));
+
+      // Build a query from the handler and use it in findHelper
+      // limit return objects to 1000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+
+      // Handler applied, send null handler below
+      final ResultList<SubsetMember> list =
+          findSubsetMembersHelper(subsets, query, offset, maxLimit, sort, ascending, active);
+
+      return new ResponseEntity<>(new ResultListSubsetMember(list), new HttpHeaders(),
+          HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to find project subset members");
       return null;
     }
   }
@@ -2400,8 +2477,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     if (indexMap == null) {
       // then do a find on the query
-      final SearchParameters params = new SearchParameters(query, null, 100000, null, null);
-      final ResultList<Terminology> results = searchService.find(params, Terminology.class);
+      final SearchParameters searchParams = new SearchParameters(query, null, 100000, null, null);
+      final ResultList<Terminology> results = searchService.find(searchParams, Terminology.class);
       final List<Terminology> terminologies = results.getItems();
 
       // then sort the results (just use the natural terminology sort order)
@@ -2553,8 +2630,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     if (indexMap == null) {
       // then do a find on the query
-      final SearchParameters params = new SearchParameters(query, null, 100000, null, null);
-      final ResultList<Mapset> results = searchService.find(params, Mapset.class);
+      final SearchParameters searchParams = new SearchParameters(query, null, 100000, null, null);
+      final ResultList<Mapset> results = searchService.find(searchParams, Mapset.class);
       final List<Mapset> mapsets = results.getItems();
 
       // then sort the results (just use the natural mapset sort order)
@@ -2596,13 +2673,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
                     "mapset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
                 .toList())
         + ")";
-    final SearchParameters params = new SearchParameters(
+    final SearchParameters searchParams = new SearchParameters(
         StringUtility.composeQuery("AND", query, mapsetClause), offset, limit, sort, ascending);
     if (active != null && active) {
-      params.setActive(true);
+      searchParams.setActive(true);
     }
     if (leaf != null && leaf) {
-      params.setLeaf(true);
+      searchParams.setLeaf(true);
     }
 
     // Bail if no mapsets
@@ -2610,7 +2687,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       return new ResultList<Mapping>();
     }
 
-    final ResultList<Mapping> list = searchService.find(params, Mapping.class);
+    final ResultList<Mapping> list = searchService.find(searchParams, Mapping.class);
 
     // for (final Mapping mapping : list.getItems()) {
     // mapping.cleanForApi();
@@ -2632,8 +2709,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     });
 
     // Restore the original query for the response
-    params.setQuery(query);
-    list.setParameters(params);
+    searchParams.setQuery(query);
+    list.setParameters(searchParams);
     return list;
 
   }
@@ -2642,6 +2719,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * Terminology has tree positions. Throw exception if not.
    *
    * @param terminology the terminology
+   * @throws RestException the rest exception
    */
   private void terminologyHasTreePositions(final Terminology terminology) throws RestException {
 
@@ -2651,6 +2729,110 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       throw new RestException(false, 417, "Expectation failed",
           "Tree positions were not computed for " + terminology.getAbbreviation());
     }
+  }
+
+  /**
+   * Lookup subsets.
+   *
+   * @param subset the subset
+   * @return the subset
+   * @throws Exception the exception
+   */
+  private Subset lookupSubset(final String subset) throws Exception {
+
+    final List<Subset> subsets = lookupSubsetMap().values().stream()
+        .filter(m -> m.getId().equals(subset) || m.getAbbreviation().equals(subset)).toList();
+    if (subsets.isEmpty()) {
+      throw new RestException(false, 417, "Expectation failed",
+          "Unable to find subset = " + subset);
+    }
+
+    if (subsets.size() > 1) {
+      throw new RestException(false, 417, "Expectation failed",
+          "Too many subsets found = " + subset);
+    }
+    return subsets.get(0);
+
+  }
+
+  /**
+   * Lookup project subset map.
+   *
+   * @return the map
+   * @throws Exception the exception
+   */
+  public Map<String, Subset> lookupSubsetMap() throws Exception {
+
+    final String query = "*:*";
+    Map<String, Subset> indexMap = subsetCache.get(query);
+
+    if (indexMap == null) {
+      // then do a find on the query
+      final SearchParameters searchParams = new SearchParameters(query, null, 100000, null, null);
+      final ResultList<Subset> results = searchService.find(searchParams, Subset.class);
+      final List<Subset> subsets = results.getItems();
+
+      // then sort the results (just use the natural subset sort order)
+      indexMap = new HashMap<>();
+      for (final Subset subset : subsets) {
+        indexMap.put(subset.getAbbreviation() + subset.getPublisher() + subset.getVersion(),
+            subset);
+      }
+      subsetCache.put(query, indexMap);
+    }
+    return indexMap;
+  }
+
+  /**
+   * Find subset members helper.
+   *
+   * @param subsets the subsets
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @return the result list
+   * @throws Exception the exception
+   */
+  private ResultList<SubsetMember> findSubsetMembersHelper(final List<Subset> subsets,
+    final String query, final Integer offset, final Integer limit, final String sort,
+    final Boolean ascending, final Boolean active) throws Exception {
+
+    logger.info("find subset members for subsets: {}", subsets);
+
+    // We are not using multiple indexes, so we instead have to add constraints
+    final String subsetClause =
+        "(" + String.join(" OR ",
+            subsets.stream()
+                .map(m -> "("
+                    + StringUtility.composeQuery("AND",
+                        "subset.abbreviation: \"" + StringUtility.escapeQuery(m.getAbbreviation())
+                            + "\"",
+                        "subset.publisher: \"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
+                        "subset.version: \"" + StringUtility.escapeQuery(m.getVersion()) + "\"")
+                    + ")")
+                .toList())
+            + ")";
+    final SearchParameters searchParams = new SearchParameters(
+        StringUtility.composeQuery("AND", query, subsetClause), offset, limit, sort, ascending);
+
+    if (active != null && active) {
+      searchParams.setActive(true);
+    }
+
+    // Bail if no subsets
+    if (ModelUtility.isEmpty(subsets)) {
+      return new ResultList<>();
+    }
+
+    final ResultList<SubsetMember> list = searchService.find(searchParams, SubsetMember.class);
+    // Restore the original query for the response
+    searchParams.setQuery(query);
+    list.setParameters(searchParams);
+    return list;
+
   }
 
 }

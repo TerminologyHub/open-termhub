@@ -491,7 +491,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * To R 4.
+   * To R4.
    *
    * @param codeSystem the code system
    * @param concept the concept
@@ -648,7 +648,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * To R 4.
+   * To R4.
    *
    * @param codeSystem the code system
    * @param concept the concept
@@ -691,7 +691,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * To R 4 value set.
+   * To R4 value set.
    *
    * @param cs the code system
    * @return the value set
@@ -716,7 +716,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * To R 4 subsumes.
+   * To R4 subsumes.
    *
    * @param outcome the outcome
    * @param terminology the terminology
@@ -748,7 +748,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * To R 4.
+   * To R4.
    *
    * @param terminology the terminology
    * @return the coding
@@ -815,7 +815,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * To R 4.
+   * To R4.
    *
    * @param mapset the mapset
    * @return the concept map

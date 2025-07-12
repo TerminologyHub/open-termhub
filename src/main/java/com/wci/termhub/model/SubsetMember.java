@@ -32,215 +32,212 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SubsetMember extends AbstractTerminologyComponent
-        implements HasAttributes, Comparable<SubsetMember>, Copyable<SubsetMember> {
+    implements HasAttributes, Comparable<SubsetMember>, Copyable<SubsetMember> {
 
-    /** The name. */
-    @MultiField(mainField = @Field(type = FieldType.Text), otherFields = {
-            @InnerField(suffix = "keyword", type = FieldType.Keyword)
-    })
-    private String name;
+  /** The name. */
+  @MultiField(mainField = @Field(type = FieldType.Text), otherFields = {
+      @InnerField(suffix = "keyword", type = FieldType.Keyword)
+  })
+  private String name;
 
-    /** The code. */
-    @Field(type = FieldType.Keyword)
-    private String code;
+  /** The code. */
+  @Field(type = FieldType.Keyword)
+  private String code;
 
-    /** The subset this belongs to. */
-    @Field(type = FieldType.Object)
-    private SubsetRef subset;
+  /** The subset this belongs to. */
+  @Field(type = FieldType.Object)
+  private SubsetRef subset;
 
-    /** The code active. */
-    @Field(type = FieldType.Boolean)
-    private Boolean codeActive;
+  /** The code active. */
+  @Field(type = FieldType.Boolean)
+  private Boolean codeActive;
 
-    /** The code exists. */
-    @Field(type = FieldType.Boolean)
-    private Boolean codeExists;
+  /** The code exists. */
+  @Field(type = FieldType.Boolean)
+  private Boolean codeExists;
 
-    /** The attributes. */
-    @Field(type = FieldType.Object)
-    private Map<String, String> attributes;
+  /** The attributes. */
+  @Field(type = FieldType.Object)
+  private Map<String, String> attributes;
 
-    // /** The workflow status. */
-    // private WorkflowStatus workflowStatus = WorkflowStatus.NEW;
+  /**
+   * Instantiates an empty {@link SubsetMember}.
+   */
+  public SubsetMember() {
+    // n/a
+  }
 
-    /**
-     * Instantiates an empty {@link SubsetMember}.
-     */
-    public SubsetMember() {
-        // n/a
+  /**
+   * Instantiates a {@link SubsetMember} from the specified parameters.
+   *
+   * @param other the other
+   */
+  public SubsetMember(final SubsetMember other) {
+    populateFrom(other);
+  }
+
+  /* see superclass */
+  @Override
+  public void populateFrom(final SubsetMember other) {
+    super.populateFrom(other);
+
+    attributes = new HashMap<>(other.getAttributes());
+    code = other.getCode();
+    codeActive = other.getCodeActive();
+    codeExists = other.getCodeExists();
+    name = other.getName();
+    subset = other.getSubset();
+
+  }
+
+  /* see superclass */
+  @Override
+  public void patchFrom(final SubsetMember other) {
+    super.patchFrom(other);
+    if (!other.getAttributes().isEmpty()) {
+      getAttributes().putAll(other.getAttributes());
+    }
+    if (other.getCode() != null) {
+      code = other.getCode();
+    }
+    if (other.getCodeActive() != null) {
+      codeActive = other.getCodeActive();
+    }
+    if (other.getCodeExists() != null) {
+      codeExists = other.getCodeExists();
+    }
+    if (other.getCode() != null) {
+      code = other.getCode();
+    }
+    if (other.getName() != null) {
+      name = other.getName();
+    }
+    if (other.getSubset() != null) {
+      subset = other.getSubset();
     }
 
-    /**
-     * Instantiates a {@link SubsetMember} from the specified parameters.
-     *
-     * @param other the other
-     */
-    public SubsetMember(final SubsetMember other) {
-        populateFrom(other);
+  }
+
+  /**
+   * Compare to.
+   *
+   * @param other the other
+   * @return the int
+   */
+  /* see superclass */
+  @Override
+  public int compareTo(final SubsetMember other) {
+    return getCode().compareTo(other.getCode());
+  }
+
+  /* see superclass */
+  @Override
+  public Map<String, String> getAttributes() {
+    if (attributes == null) {
+      attributes = new HashMap<>();
     }
+    return attributes;
+  }
 
-    /* see superclass */
-    @Override
-    public void populateFrom(final SubsetMember other) {
-        super.populateFrom(other);
+  /* see superclass */
+  @Override
+  public void setAttributes(final Map<String, String> attributes) {
+    this.attributes = attributes;
+  }
 
-        attributes = new HashMap<>(other.getAttributes());
-        code = other.getCode();
-        codeActive = other.getCodeActive();
-        codeExists = other.getCodeExists();
-        name = other.getName();
-        subset = other.getSubset();
+  /**
+   * Gets the name.
+   *
+   * @return the name
+   */
+  @Schema(description = "Prefererd name of the member code")
+  public String getName() {
+    return name;
+  }
 
-    }
+  /**
+   * Sets the name.
+   *
+   * @param name the new name
+   */
+  public void setName(final String name) {
+    this.name = name;
+  }
 
-    /* see superclass */
-    @Override
-    public void patchFrom(final SubsetMember other) {
-        super.patchFrom(other);
-        if (!other.getAttributes().isEmpty()) {
-            getAttributes().putAll(other.getAttributes());
-        }
-        if (other.getCode() != null) {
-            code = other.getCode();
-        }
-        if (other.getCodeActive() != null) {
-            codeActive = other.getCodeActive();
-        }
-        if (other.getCodeExists() != null) {
-            codeExists = other.getCodeExists();
-        }
-        if (other.getCode() != null) {
-            code = other.getCode();
-        }
-        if (other.getName() != null) {
-            name = other.getName();
-        }
-        if (other.getSubset() != null) {
-            subset = other.getSubset();
-        }
+  /**
+   * Gets the code.
+   *
+   * @return the code
+   */
+  @Schema(description = "Member code in the subset")
+  public String getCode() {
+    return code;
+  }
 
-    }
+  /**
+   * Sets the code.
+   *
+   * @param code the new code
+   */
+  public void setCode(final String code) {
+    this.code = code;
+  }
 
-    /**
-     * Compare to.
-     *
-     * @param other the other
-     * @return the int
-     */
-    /* see superclass */
-    @Override
-    public int compareTo(final SubsetMember other) {
-        return getCode().compareTo(other.getCode());
-    }
+  /**
+   * Gets the subset .
+   *
+   * @return the subset
+   */
+  @Schema(description = "Reference to the subset this member is part of")
+  public SubsetRef getSubset() {
+    return subset;
+  }
 
-    /* see superclass */
-    @Override
-    public Map<String, String> getAttributes() {
-        if (attributes == null) {
-            attributes = new HashMap<>();
-        }
-        return attributes;
-    }
+  /**
+   * Sets the subset.
+   *
+   * @param subset the new subset
+   */
+  public void setSubset(final SubsetRef subset) {
+    this.subset = subset;
+  }
 
-    /* see superclass */
-    @Override
-    public void setAttributes(final Map<String, String> attributes) {
-        this.attributes = attributes;
-    }
+  /**
+   * Gets the code active.
+   *
+   * @return the code active
+   */
+  @Schema(description = "Indicates whether the member code is active or not")
+  public Boolean getCodeActive() {
+    return codeActive;
+  }
 
-    /**
-     * Gets the name.
-     *
-     * @return the name
-     */
-    @Schema(description = "Prefererd name of the member code")
-    public String getName() {
-        return name;
-    }
+  /**
+   * Sets the code active.
+   *
+   * @param codeActive the new code active
+   */
+  public void setCodeActive(final Boolean codeActive) {
+    this.codeActive = codeActive;
+  }
 
-    /**
-     * Sets the name.
-     *
-     * @param name the new name
-     */
-    public void setName(final String name) {
-        this.name = name;
-    }
+  /**
+   * Gets the code exists.
+   *
+   * @return the code exists
+   */
+  @Schema(description = "Indicates whether the member code exists or not")
+  public Boolean getCodeExists() {
+    return codeExists;
+  }
 
-    /**
-     * Gets the code.
-     *
-     * @return the code
-     */
-    @Schema(description = "Member code in the subset")
-    public String getCode() {
-        return code;
-    }
-
-    /**
-     * Sets the code.
-     *
-     * @param code the new code
-     */
-    public void setCode(final String code) {
-        this.code = code;
-    }
-
-    /**
-     * Gets the subset .
-     *
-     * @return the subset
-     */
-    @Schema(description = "Reference to the subset this member is part of")
-    public SubsetRef getSubset() {
-        return subset;
-    }
-
-    /**
-     * Sets the subset.
-     *
-     * @param subset the new subset
-     */
-    public void setSubset(final SubsetRef subset) {
-        this.subset = subset;
-    }
-
-    /**
-     * Gets the code active.
-     *
-     * @return the code active
-     */
-    @Schema(description = "Indicates whether the member code is active or not")
-    public Boolean getCodeActive() {
-        return codeActive;
-    }
-
-    /**
-     * Sets the code active.
-     *
-     * @param codeActive the new code active
-     */
-    public void setCodeActive(final Boolean codeActive) {
-        this.codeActive = codeActive;
-    }
-
-    /**
-     * Gets the code exists.
-     *
-     * @return the code exists
-     */
-    @Schema(description = "Indicates whether the member code exists or not")
-    public Boolean getCodeExists() {
-        return codeExists;
-    }
-
-    /**
-     * Sets the code exists.
-     *
-     * @param codeExists the new code exists
-     */
-    public void setCodeExists(final Boolean codeExists) {
-        this.codeExists = codeExists;
-    }
+  /**
+   * Sets the code exists.
+   *
+   * @param codeExists the new code exists
+   */
+  public void setCodeExists(final Boolean codeExists) {
+    this.codeExists = codeExists;
+  }
 
 }

@@ -47,8 +47,12 @@ import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
 import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
+import com.wci.termhub.model.ResultListSubsetMember;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetRef;
+import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
@@ -1004,6 +1008,79 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
   }
 
+  @Test
+  public void testGetSubsets() throws Exception {
+    final String url = baseUrl + "/subset";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final List<Subset> subsetList = objectMapper.readValue(content, new TypeReference<List<Subset>>() {
+      // n/a
+    });
+    assertThat(subsetList).isNotNull();
+    assertFalse(subsetList.isEmpty());
+    for (final Subset subset : subsetList) {
+      assertThat(subset).isNotNull();
+      assertThat(subset.getId()).isNotNull();
+      assertThat(subset.getAbbreviation()).isNotNull();
+      assertThat(subset.getName()).isNotNull();
+      // assertThat(subset.getTerminology()).isNotNull();
+      assertThat(subset.getPublisher()).isNotNull();
+      assertThat(subset.getVersion()).isNotNull();
+    }
+  }
+
+  @Test
+  public void testGetSubsetById() throws Exception {
+    // Get a subset dynamically to avoid hardcoded ID issues
+    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
+
+    final String id = testSubset.getId();
+    final String url = baseUrl + "/subset/" + id;
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final Subset subset = objectMapper.readValue(content, Subset.class);
+    assertThat(subset).isNotNull();
+    assertEquals(id, subset.getId());
+    assertEquals("SNOMEDCT_US-MODEL", subset.getAbbreviation());
+    assertEquals("SNOMEDCT model concepts", subset.getName());
+    assertEquals("National Library of Medicine", subset.getPublisher());
+    assertEquals("20240301", subset.getVersion());
+  }
+
+  @Test
+  public void testGetSubsetMembers() throws Exception {
+    // Get a subset dynamically to avoid hardcoded ID issues
+    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
+
+    final String subsetId = testSubset.getId();
+    final String url = baseUrl + "/subset/" + subsetId + "/members";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListSubsetMember subsetMemberList = objectMapper.readValue(content, ResultListSubsetMember.class);
+    assertThat(subsetMemberList).isNotNull();
+    assertFalse(subsetMemberList.getItems().isEmpty());
+    for (final SubsetMember subsetMember : subsetMemberList.getItems()) {
+      assertThat(subsetMember).isNotNull();
+      assertThat(subsetMember.getId()).isNotNull();
+      assertThat(subsetMember.getCode()).isNotNull();
+      assertThat(subsetMember.getName()).isNotNull();
+      final SubsetRef subsetRef = subsetMember.getSubset();
+      assertThat(subsetRef).isNotNull();
+      assertThat(subsetRef.getAbbreviation()).isNotNull();
+      assertThat(subsetRef.getPublisher()).isNotNull();
+      assertThat(subsetRef.getVersion()).isNotNull();
+    }
+  }
+
   /**
    * Gets the concept by code.
    *
@@ -1019,6 +1096,28 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     return objectMapper.readValue(content, Concept.class);
+  }
+
+  /**
+   * Gets the subset by abbreviation.
+   *
+   * @param abbreviation the abbreviation
+   * @return the subset by abbreviation
+   * @throws Exception the exception
+   */
+  private Subset getSubsetByAbbreviation(final String abbreviation) throws Exception {
+    final String url = baseUrl + "/subset";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    final List<Subset> subsetList = objectMapper.readValue(content, new TypeReference<List<Subset>>() {
+      // n/a
+    });
+
+    return subsetList.stream()
+        .filter(subset -> abbreviation.equals(subset.getAbbreviation()))
+        .findFirst()
+        .orElseThrow(() -> new RuntimeException("Subset with abbreviation " + abbreviation + " not found"));
   }
 
 }

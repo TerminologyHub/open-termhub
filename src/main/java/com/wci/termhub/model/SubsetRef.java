@@ -27,156 +27,156 @@ import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SubsetRef extends TerminologyRef {
 
-    /** The abbreviation. */
-    @Field(type = FieldType.Keyword)
-    private String code;
+  /** The abbreviation. */
+  @Field(type = FieldType.Keyword)
+  private String code;
 
-    /** The from publisher. */
-    @Field(type = FieldType.Keyword)
-    private String fromPublisher;
+  /** The from publisher. */
+  @Field(type = FieldType.Keyword)
+  private String fromPublisher;
 
-    /** The from terminology. */
-    @Field(type = FieldType.Keyword)
-    private String fromTerminology;
+  /** The from terminology. */
+  @Field(type = FieldType.Keyword)
+  private String fromTerminology;
 
-    /** The from version. */
-    @Field(type = FieldType.Keyword)
-    private String fromVersion;
+  /** The from version. */
+  @Field(type = FieldType.Keyword)
+  private String fromVersion;
 
-    /**
-     * Instantiates an empty {@link SubsetRef}.
-     */
-    public SubsetRef() {
-        // n/a
+  /**
+   * Instantiates an empty {@link SubsetRef}.
+   */
+  public SubsetRef() {
+    // n/a
+  }
+
+  /**
+   * Instantiates a new subset ref.
+   *
+   * @param other the other
+   */
+  public SubsetRef(final SubsetRef other) {
+    populateFrom(other);
+  }
+
+  /* see superclass */
+  @Override
+  public void populateFrom(final TerminologyRef other) {
+    super.populateFrom(other);
+
+    if (other instanceof SubsetRef) {
+      final SubsetRef subset = (SubsetRef) other;
+      code = subset.getCode();
+      fromTerminology = subset.getFromTerminology();
+      fromPublisher = subset.getFromPublisher();
+      fromVersion = subset.getFromVersion();
     }
+  }
 
-    /**
-     * Instantiates a new subset ref.
-     *
-     * @param other the other
-     */
-    public SubsetRef(final SubsetRef other) {
-        populateFrom(other);
+  /* see superclass */
+  @Override
+  public void patchFrom(final TerminologyRef other) {
+    super.patchFrom(other);
+    if (other instanceof SubsetRef) {
+      final SubsetRef subset = (SubsetRef) other;
+      if (subset.getCode() != null) {
+        code = subset.getCode();
+      }
+      if (subset.getFromTerminology() != null) {
+        fromTerminology = subset.getFromTerminology();
+      }
+      if (subset.getFromPublisher() != null) {
+        fromPublisher = subset.getFromPublisher();
+      }
+      if (subset.getFromVersion() != null) {
+        fromVersion = subset.getFromVersion();
+      }
     }
+  }
 
-    /* see superclass */
-    @Override
-    public void populateFrom(final TerminologyRef other) {
-        super.populateFrom(other);
+  /* see superclass */
+  @Override
+  @Schema(description = "Unique identifier", requiredMode = RequiredMode.NOT_REQUIRED,
+      format = "uuid")
+  public String getId() {
+    return super.getId();
+  }
 
-        if (other instanceof SubsetRef) {
-            final SubsetRef subset = (SubsetRef) other;
-            code = subset.getCode();
-            fromTerminology = subset.getFromTerminology();
-            fromPublisher = subset.getFromPublisher();
-            fromVersion = subset.getFromVersion();
-        }
-    }
+  /**
+   * Gets the code.
+   *
+   * @return the code
+   */
+  @Schema(description = "Subset code")
+  public String getCode() {
+    return code;
+  }
 
-    /* see superclass */
-    @Override
-    public void patchFrom(final TerminologyRef other) {
-        super.patchFrom(other);
-        if (other instanceof SubsetRef) {
-            final SubsetRef subset = (SubsetRef) other;
-            if (subset.getCode() != null) {
-                code = subset.getCode();
-            }
-            if (subset.getFromTerminology() != null) {
-                fromTerminology = subset.getFromTerminology();
-            }
-            if (subset.getFromPublisher() != null) {
-                fromPublisher = subset.getFromPublisher();
-            }
-            if (subset.getFromVersion() != null) {
-                fromVersion = subset.getFromVersion();
-            }
-        }
-    }
+  /**
+   * Sets the code.
+   *
+   * @param code the new code
+   */
+  public void setCode(final String code) {
+    this.code = code;
+  }
 
-    /* see superclass */
-    @Override
-    @Schema(description = "Unique identifier", requiredMode = RequiredMode.NOT_REQUIRED,
-            format = "uuid")
-    public String getId() {
-        return super.getId();
-    }
+  /**
+   * Gets the from terminology.
+   *
+   * @return the from terminology
+   */
+  @Schema(description = "Terminology abbreviation that members in this set are from, "
+      + "e.g. \"SNOMEDCT\"")
+  public String getFromTerminology() {
+    return fromTerminology;
+  }
 
-    /**
-     * Gets the code.
-     *
-     * @return the code
-     */
-    @Schema(description = "Subset code")
-    public String getCode() {
-        return code;
-    }
+  /**
+   * Sets the from terminology.
+   *
+   * @param fromTerminology the new from terminology
+   */
+  public void setFromTerminology(final String fromTerminology) {
+    this.fromTerminology = fromTerminology;
+  }
 
-    /**
-     * Sets the code.
-     *
-     * @param code the new code
-     */
-    public void setCode(final String code) {
-        this.code = code;
-    }
+  /**
+   * Gets the from publisher.
+   *
+   * @return the from publisher
+   */
+  @Schema(description = "Publisher that maps in this set are mapped from, " + "e.g. \"SNOMEDCT\"")
+  public String getFromPublisher() {
+    return fromPublisher;
+  }
 
-    /**
-     * Gets the from terminology.
-     *
-     * @return the from terminology
-     */
-    @Schema(description = "Terminology abbreviation that members in this set are from, "
-            + "e.g. \"SNOMEDCT\"")
-    public String getFromTerminology() {
-        return fromTerminology;
-    }
+  /**
+   * Sets the from publisher.
+   *
+   * @param fromPublisher the new from publisher
+   */
+  public void setFromPublisher(final String fromPublisher) {
+    this.fromPublisher = fromPublisher;
+  }
 
-    /**
-     * Sets the from terminology.
-     *
-     * @param fromTerminology the new from terminology
-     */
-    public void setFromTerminology(final String fromTerminology) {
-        this.fromTerminology = fromTerminology;
-    }
+  /**
+   * Gets the from version.
+   *
+   * @return the from version
+   */
+  @Schema(
+      description = "Terminology version that members in this set are from, " + "e.g. \"20230901\"")
+  public String getFromVersion() {
+    return fromVersion;
+  }
 
-    /**
-     * Gets the from publisher.
-     *
-     * @return the from publisher
-     */
-    @Schema(description = "Publisher that maps in this set are mapped from, " + "e.g. \"SNOMEDCT\"")
-    public String getFromPublisher() {
-        return fromPublisher;
-    }
-
-    /**
-     * Sets the from publisher.
-     *
-     * @param fromPublisher the new from publisher
-     */
-    public void setFromPublisher(final String fromPublisher) {
-        this.fromPublisher = fromPublisher;
-    }
-
-    /**
-     * Gets the from version.
-     *
-     * @return the from version
-     */
-    @Schema(description = "Terminology version that members in this set are from, "
-            + "e.g. \"20230901\"")
-    public String getFromVersion() {
-        return fromVersion;
-    }
-
-    /**
-     * Sets the from version.
-     *
-     * @param fromVersion the new from version
-     */
-    public void setFromVersion(final String fromVersion) {
-        this.fromVersion = fromVersion;
-    }
+  /**
+   * Sets the from version.
+   *
+   * @param fromVersion the new from version
+   */
+  public void setFromVersion(final String fromVersion) {
+    this.fromVersion = fromVersion;
+  }
 }
