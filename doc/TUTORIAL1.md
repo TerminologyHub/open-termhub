@@ -32,7 +32,7 @@ the other option is to build the docker image and run as a container with an IND
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 make docker
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" \
+docker run -d --rm --name open-termhub \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
@@ -44,8 +44,8 @@ The final option is to run the latest published public docker image as a contain
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" -v \
-  "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
+docker run -d --rm --name open-termhub \
+  -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
@@ -145,16 +145,29 @@ curl http://localhost:8080/terminology | jq
 # Get a SNOMEDCT concept by code
 curl http://localhost:8080/concept/SNOMEDCT/107907001 | jq
 
-# Perform a SNOMEDCT search with a query
-curl http://localhost:8080/concept?terminology=SNOMEDCT&query=cancer&include=minimal | jq
+# Perform a SNOMEDCT search with a word query
+curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=diabetes&include=minimal" | jq
+
+# Perform a SNOMEDCT search with a code query
+curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=73211009&include=minimal" | jq
+
+# Perform a SNOMEDCT search with just an ECL expression
+curl "http://localhost:8080/concept?terminology=SNOMEDCT&expression=%3C%3C128927009&include=minimal" | jq
 
 # Perform a SNOMEDCT search with a query and an ECL expression
-curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=cancer&expression=<<128927009&include=minimal" | jq
+curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=gastrointestinal&expression=%3C%3C128927009&include=minimal" | jq
 
 # Find mapsets
 curl http://localhost:8080/mapset | jq
 
-# Find "target" codes of mappings for a particular SNOMEDCT code
+# Find mappings across all mapsets
+curl http://localhost:8080/mapping | jq
+
+# Find mapset mappings
+curl http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping | jq
+
+# Find mappings in a particular mapset for a particular "from" SNOMEDCT code
+curl "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:12345" | jq
 
 
 ```

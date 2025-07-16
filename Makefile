@@ -8,10 +8,6 @@ INTERACTIVE := $(shell [ -t 0 ] && echo 1)
 
 # Most applications have their own method of maintaining a version number.
 APP_VERSION              := $(shell echo `grep "version = " build.gradle | cut -d\= -f 2`)
-GIT_VERSION              ?= $(shell echo `git describe --match=NeVeRmAtCh --always --dirty`)
-GIT_COMMIT               ?= $(shell echo `git log | grep -m1 -oE '[^ ]+$'`)
-GIT_COMMITTED_AT         ?= $(shell echo `git log -1 --format=%ct`)
-GIT_BRANCH               ?= $(shell echo `git branch --show-current`)
 DOCKER_INT_REGISTRY      := wcinformatics
 
 .PHONY: build

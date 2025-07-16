@@ -31,7 +31,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.Application;
 import com.wci.termhub.fhir.r4.test.CodeSystemLoadR4UnitTest;
 import com.wci.termhub.model.HasId;
@@ -39,6 +38,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.util.ThreadLocalMapper;
 
 /**
  * Test class for loading FHIR R5 ConceptMap files.
@@ -48,114 +48,113 @@ import com.wci.termhub.util.PropertyUtility;
 @TestPropertySource(locations = "classpath:application-test-r5.properties")
 public class ConceptMapLoadR5UnitTest {
 
-  /** The logger. */
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapLoadR5UnitTest.class);
+    /** The logger. */
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapLoadR5UnitTest.class);
 
-  /** The search service. */
-  @Autowired
-  private EntityRepositoryService searchService;
+    /** The search service. */
+    @Autowired
+    private EntityRepositoryService searchService;
 
-  /** The object mapper. */
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    /** List of FHIR ConceptMap files to load. */
+    private static final List<String> CONCEPT_MAP_FILES =
+            List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json");
 
-  /** List of FHIR ConceptMap files to load. */
-  private static final List<String> CONCEPT_MAP_FILES =
-      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json");
+    /**
+     * Setup - load the FHIR ConceptMap files.
+     *
+     * @throws Exception the exception
+     */
+    @BeforeAll
+    public void setup() throws Exception {
+        // Use File instead of Path to avoid colon issues in directory paths
+        final String indexDirPath =
+                PropertyUtility.getProperties().getProperty("lucene.index.directory");
 
-  /**
-   * Setup - load the FHIR ConceptMap files.
-   *
-   * @throws Exception the exception
-   */
-  @BeforeAll
-  public void setup() throws Exception {
-    // Use File instead of Path to avoid colon issues in directory paths
-    final String indexDirPath =
-        PropertyUtility.getProperties().getProperty("lucene.index.directory");
+        // Delete all indexes for a fresh start
+        LOGGER.info("Deleting existing indexes from directory: {}", indexDirPath);
+        final File indexDir = new File(indexDirPath);
+        LOGGER.info("Does this exist? {}", indexDir.exists());
 
-    // Delete all indexes for a fresh start
-    LOGGER.info("Deleting existing indexes from directory: {}", indexDirPath);
-    final File indexDir = new File(indexDirPath);
-    LOGGER.info("Does this exist? {}", indexDir.exists());
-
-    if (indexDir.exists()) {
-      FileUtils.deleteDirectory(indexDir);
-    }
-
-    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
-    for (final Class<? extends HasId> clazz : indexedObjects) {
-      searchService.deleteIndex(clazz);
-      searchService.createIndex(clazz);
-    }
-
-    // Load each concept map by reading directly from the classpath
-    for (final String conceptMapFile : CONCEPT_MAP_FILES) {
-      try {
-        // Read file from classpath directly using Spring's resource mechanism
-        final Resource resource = new ClassPathResource("data/" + conceptMapFile,
-            ConceptMapLoadR5UnitTest.class.getClassLoader());
-
-        if (!resource.exists()) {
-          throw new FileNotFoundException("Could not find resource: data/" + conceptMapFile);
+        if (indexDir.exists()) {
+            FileUtils.deleteDirectory(indexDir);
         }
 
-        LOGGER.info("Loading concept map from classpath resource: data/{}", conceptMapFile);
-        // Verify the file is a ConceptMap
-        @SuppressWarnings("resource")
-        final JsonNode root = OBJECT_MAPPER.readTree(resource.getInputStream());
-        if (!"ConceptMap".equals(root.path("resourceType").asText())) {
-          throw new IllegalArgumentException("Invalid resource type - expected ConceptMap");
+        final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
+        for (final Class<? extends HasId> clazz : indexedObjects) {
+            searchService.deleteIndex(clazz);
+            searchService.createIndex(clazz);
         }
 
-        final String content =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-        ConceptMapLoaderUtil.loadConceptMap(searchService, content);
+        // Load each concept map by reading directly from the classpath
+        for (final String conceptMapFile : CONCEPT_MAP_FILES) {
+            try {
+                // Read file from classpath directly using Spring's resource mechanism
+                final Resource resource = new ClassPathResource("data/" + conceptMapFile,
+                        ConceptMapLoadR5UnitTest.class.getClassLoader());
 
-      } catch (final Exception e) {
-        LOGGER.error("Error loading concept map file: {}", conceptMapFile, e);
-        throw e;
-      }
+                if (!resource.exists()) {
+                    throw new FileNotFoundException(
+                            "Could not find resource: data/" + conceptMapFile);
+                }
+
+                LOGGER.info("Loading concept map from classpath resource: data/{}", conceptMapFile);
+                // Verify the file is a ConceptMap
+                @SuppressWarnings("resource")
+                final JsonNode root = ThreadLocalMapper.get().readTree(resource.getInputStream());
+                if (!"ConceptMap".equals(root.path("resourceType").asText())) {
+                    throw new IllegalArgumentException(
+                            "Invalid resource type - expected ConceptMap");
+                }
+
+                final String content =
+                        FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+                ConceptMapLoaderUtil.loadConceptMap(searchService, content);
+
+            } catch (final Exception e) {
+                LOGGER.error("Error loading concept map file: {}", conceptMapFile, e);
+                throw e;
+            }
+        }
+
+        LOGGER.info("Finished loading concept maps");
     }
 
-    LOGGER.info("Finished loading concept maps");
-  }
+    /**
+     * Test reload of concept map.
+     *
+     * @throws Exception the exception
+     */
+    @Test
+    public void testReloadConceptMap() throws Exception {
+        // Should throw an exception if the code system is already loaded
+        for (final String conceptMapFile : CONCEPT_MAP_FILES) {
+            try {
+                // Read file from classpath directly using Spring's resource mechanism
+                final Resource resource = new ClassPathResource("data/" + conceptMapFile,
+                        CodeSystemLoadR4UnitTest.class.getClassLoader());
 
-  /**
-   * Test reload of concept map.
-   *
-   * @throws Exception the exception
-   */
-  @Test
-  public void testReloadConceptMap() throws Exception {
-    // Should throw an exception if the code system is already loaded
-    for (final String conceptMapFile : CONCEPT_MAP_FILES) {
-      try {
-        // Read file from classpath directly using Spring's resource mechanism
-        final Resource resource = new ClassPathResource("data/" + conceptMapFile,
-            CodeSystemLoadR4UnitTest.class.getClassLoader());
+                final String fileContent =
+                        FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+                assertThrows(Exception.class, () -> {
+                    LOGGER.info("Attempt reload of concept map from classpath resource: data/{}",
+                            conceptMapFile);
+                    ConceptMapLoaderUtil.loadConceptMap(searchService, fileContent);
+                });
 
-        assertThrows(Exception.class, () -> {
-          LOGGER.info("Attempt reload of concept map from classpath resource: data/{}",
-              conceptMapFile);
-          ConceptMapLoaderUtil.loadConceptMap(searchService, fileContent);
-        });
-
-      } catch (final Exception e) {
-        LOGGER.error("Error reloading code system file: {}", conceptMapFile, e);
-        throw e;
-      }
+            } catch (final Exception e) {
+                LOGGER.error("Error reloading code system file: {}", conceptMapFile, e);
+                throw e;
+            }
+        }
     }
-  }
 
-  /**
-   * Basic test to ensure setup was successful.
-   */
-  @Test
-  public void testConceptMapsLoaded() {
-    // This test simply verifies that the setup completed without errors
-    assertTrue(true, "Concept maps were loaded without errors");
-  }
+    /**
+     * Basic test to ensure setup was successful.
+     */
+    @Test
+    public void testConceptMapsLoaded() {
+        // This test simply verifies that the setup completed without errors
+        assertTrue(true, "Concept maps were loaded without errors");
+    }
 }
