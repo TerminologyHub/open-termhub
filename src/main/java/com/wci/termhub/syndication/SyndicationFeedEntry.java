@@ -24,17 +24,35 @@ public class SyndicationFeedEntry {
   /** The title. */
   private String title;
 
+  /** The links. */
+  private List<SyndicationLink> links;
+
+  /** The category. */
+  private SyndicationCategory category;
+
+  /** The author. */
+  private SyndicationAuthor author;
+
+  /** The id. */
+  private String id;
+
+  /** The rights. */
+  private String rights;
+
+  /** The updated. */
+  private String updated;
+
+  /** The published. */
+  private String published;
+
+  /** The summary. */
+  private String summary;
+
   /** The content item identifier. */
   private String contentItemIdentifier;
 
   /** The content item version. */
   private String contentItemVersion;
-
-  /** The category. */
-  private SyndicationCategory category;
-
-  /** The links. */
-  private List<SyndicationLink> links;
 
   /** The package dependency. */
   private SyndicationDependency packageDependency;
@@ -71,6 +89,61 @@ public class SyndicationFeedEntry {
    */
   public void setTitle(final String title) {
     this.title = title;
+  }
+
+  /**
+   * Gets the links.
+   *
+   * @return the links
+   */
+  @XmlElement(name = "link", type = SyndicationLink.class)
+  public List<SyndicationLink> getLinks() {
+    return links;
+  }
+
+  /**
+   * Sets the links.
+   *
+   * @param links the new links
+   */
+  public void setLinks(final List<SyndicationLink> links) {
+    this.links = links;
+  }
+
+  /**
+   * Gets the id.
+   *
+   * @return the id
+   */
+  public String getId() {
+    return id;
+  }
+
+  /**
+   * Gets the summary.
+   *
+   * @return the summary
+   */
+  public String getSummary() {
+    return summary;
+  }
+
+  /**
+   * Sets the summary.
+   *
+   * @param summary the new summary
+   */
+  public void setSummary(final String summary) {
+    this.summary = summary;
+  }
+
+  /**
+   * Sets the id.
+   *
+   * @param id the new id
+   */
+  public void setId(final String id) {
+    this.id = id;
   }
 
   /**
@@ -132,25 +205,6 @@ public class SyndicationFeedEntry {
   }
 
   /**
-   * Gets the links.
-   *
-   * @return the links
-   */
-  @XmlElement(name = "link", type = SyndicationLink.class)
-  public List<SyndicationLink> getLinks() {
-    return links;
-  }
-
-  /**
-   * Sets the links.
-   *
-   * @param links the new links
-   */
-  public void setLinks(final List<SyndicationLink> links) {
-    this.links = links;
-  }
-
-  /**
    * Gets the package dependency.
    *
    * @return the package dependency
@@ -171,33 +225,106 @@ public class SyndicationFeedEntry {
   }
 
   /**
-   * Equals.
+   * Gets the author.
    *
-   * @param o the o
-   * @return true, if successful
+   * @return the author
    */
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final SyndicationFeedEntry entry = (SyndicationFeedEntry) o;
-    return Objects.equals(title, entry.title)
-        && Objects.equals(contentItemIdentifier, entry.contentItemIdentifier)
-        && Objects.equals(contentItemVersion, entry.contentItemVersion)
-        && Objects.equals(category, entry.category);
+  @XmlElement(name = "author", type = SyndicationAuthor.class)
+  public SyndicationAuthor getAuthor() {
+    return author;
   }
 
   /**
-   * Hash code.
+   * Sets the author.
    *
-   * @return the int
+   * @param author the new author
    */
+  public void setAuthor(final SyndicationAuthor author) {
+    this.author = author;
+  }
+
+  /**
+   * Gets the rights.
+   *
+   * @return the rights
+   */
+  public String getRights() {
+    return rights;
+  }
+
+  /**
+   * Sets the rights.
+   *
+   * @param rights the new rights
+   */
+  public void setRights(final String rights) {
+    this.rights = rights;
+  }
+
+  /**
+   * Gets the updated.
+   *
+   * @return the updated
+   */
+  public String getUpdated() {
+    return updated;
+  }
+
+  /**
+   * Sets the updated.
+   *
+   * @param updated the new updated
+   */
+  public void setUpdated(final String updated) {
+    this.updated = updated;
+  }
+
+  /**
+   * Gets the published.
+   *
+   * @return the published
+   */
+  public String getPublished() {
+    return published;
+  }
+
+  /**
+   * Sets the published.
+   *
+   * @param published the new published
+   */
+  public void setPublished(final String published) {
+    this.published = published;
+  }
+
+  /* see superclass */
   @Override
   public int hashCode() {
-    return Objects.hash(title, contentItemIdentifier, contentItemVersion, category);
+    return Objects.hash(author, category, contentItemIdentifier, contentItemVersion, id, links,
+        packageDependency, published, rights, summary, title, updated);
   }
+
+  /* see superclass */
+  @Override
+  public boolean equals(final Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final SyndicationFeedEntry other = (SyndicationFeedEntry) obj;
+    return Objects.equals(author, other.author) && Objects.equals(category, other.category)
+        && Objects.equals(contentItemIdentifier, other.contentItemIdentifier)
+        && Objects.equals(contentItemVersion, other.contentItemVersion)
+        && Objects.equals(id, other.id) && Objects.equals(links, other.links)
+        && Objects.equals(packageDependency, other.packageDependency)
+        && Objects.equals(published, other.published) && Objects.equals(rights, other.rights)
+        && Objects.equals(summary, other.summary) && Objects.equals(title, other.title)
+        && Objects.equals(updated, other.updated);
+  }
+
 }
