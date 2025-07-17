@@ -2451,7 +2451,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     try {
 
       // Allow subset to be blank here
-      final List<Subset> subsets = List.of(lookupSubset(subsetId));
+      final List<Subset> subsets = lookupSubsets(subsetId);
 
       // Build a query from the handler and use it in findHelper
       // limit return objects to 1000 regardless of user request
@@ -2758,6 +2758,26 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           "Too many subsets found = " + subset);
     }
     return subsets.get(0);
+
+  }
+
+  /**
+   * Lookup subsets.
+   *
+   * @param subset the subset
+   * @return the subset
+   * @throws Exception the exception
+   */
+  private List<Subset> lookupSubsets(final String subset) throws Exception {
+
+    final List<Subset> subsets = lookupSubsetMap().values().stream()
+        .filter(m -> m.getId().equals(subset) || m.getAbbreviation().equals(subset)).toList();
+    if (subsets.isEmpty()) {
+      throw new RestException(false, 417, "Expectation failed",
+          "Unable to find subset = " + subset);
+    }
+
+    return subsets;
 
   }
 
