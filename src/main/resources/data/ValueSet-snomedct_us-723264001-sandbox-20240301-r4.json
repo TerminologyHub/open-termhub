@@ -1,0 +1,58 @@
+{
+  "resourceType": "ValueSet",
+  "id": "6729e634-e4ed-4adb-b8f7-7bb7861861bf",
+  "url": "http://snomed.info/sct?fhir_vs=723264001",
+  "identifier": [ {
+    "value": "723264001"
+  } ],
+  "version": "20240301",
+  "name": "Lateralizable body structure reference set",
+  "title": "SNOMEDCT_US-723264001",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-03-01T00:00:00+00:00",
+  "publisher": "SANDBOX",
+  "description": "Lateralizable body structure reference set",
+  "compose": {
+    "include": [ {
+      "system": "http://snomed.info/sct",
+      "concept": [ {
+        "code": "119184005",
+        "display": "Breast part"
+      }, {
+        "code": "181131000",
+        "display": "Entire breast"
+      }, {
+        "code": "204340007",
+        "display": "Entire mammary region"
+      }, {
+        "code": "251007",
+        "display": "Pectoral region structure"
+      }, {
+        "code": "261153006",
+        "display": "Entire pectoral region"
+      }, {
+        "code": "279009002",
+        "display": "Glandular structure of breast"
+      }, {
+        "code": "32655009",
+        "display": "Structure of mammary region"
+      }, {
+        "code": "422614002",
+        "display": "Structure of half of thorax lateral to midsagittal plane"
+      }, {
+        "code": "422697005",
+        "display": "Structure of half of trunk lateral to midsagittal plane"
+      }, {
+        "code": "423857001",
+        "display": "Structure of half of body lateral to midsagittal plane"
+      }, {
+        "code": "731728000",
+        "display": "Entire gland of breast"
+      }, {
+        "code": "76752008",
+        "display": "Breast structure"
+      } ]
+    } ]
+  }
+}
