@@ -23,6 +23,7 @@ import com.wci.termhub.model.ResultListConceptTreePosition;
 import com.wci.termhub.model.ResultListMapping;
 import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
+import com.wci.termhub.model.ResultListSubset;
 import com.wci.termhub.model.ResultListSubsetMember;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -475,7 +476,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @return the subsets
    * @throws Exception the exception
    */
-  public ResponseEntity<List<Subset>> getSubsets() throws Exception;
+  public ResponseEntity<ResultListSubset> getSubsets() throws Exception;
 
   /**
    * Find subset members.

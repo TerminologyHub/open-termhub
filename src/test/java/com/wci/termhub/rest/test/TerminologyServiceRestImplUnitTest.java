@@ -12,6 +12,7 @@ package com.wci.termhub.rest.test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,19 +41,23 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.HealthCheck;
+import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
+import com.wci.termhub.model.MapsetRef;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
+import com.wci.termhub.model.ResultListMapping;
 import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
+import com.wci.termhub.model.ResultListSubset;
 import com.wci.termhub.model.ResultListSubsetMember;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
 import com.wci.termhub.model.Subset;
-import com.wci.termhub.model.SubsetRef;
 import com.wci.termhub.model.SubsetMember;
+import com.wci.termhub.model.SubsetRef;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
@@ -150,7 +155,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   public void testGetTerminologySnomedCtUs() throws Exception {
-    final String id = "a1d1e426-26a6-4326-b18b-c54c154079b5";
+    final String id = "340c926f-9ad6-4f1b-b230-dc4ca14575ab";
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -171,7 +176,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
-    final String id = "a1d1e426-26a6-4326-b18b-c54c154079b5";
+    final String id = "340c926f-9ad6-4f1b-b230-dc4ca14575ab";
     final String url = baseUrl + "/terminology/" + id + "/metadata";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -381,7 +386,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
           // n/a
         });
     assertThat(concepts).isNotNull();
-    assertThat(concepts.size()).isEqualTo(4);
+    assertEquals(4, concepts.size());
     for (final Concept concept : concepts) {
       assertThat(concept).isNotNull();
       assertThat(concept.getId()).isNotNull();
@@ -960,6 +965,145 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     // NOT SET assertThat(mapset.getToVersion()).isNotNull();
   }
 
+  @Test
+  void testFindMappings() throws Exception {
+
+    final String url = baseUrl + "/mapping";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
+    assertThat(mappingList.getItems().size()).isLessThanOrEqualTo(10);
+    for (final Mapping mapping : mappingList.getItems()) {
+      assertThat(mapping).isNotNull();
+      assertThat(mapping.getId()).isNotNull();
+      assertThat(mapping.getMapset()).isNotNull();
+      assertThat(mapping.getFrom()).isNotNull();
+      assertThat(mapping.getTo()).isNotNull();
+      // assertThat(mapping.getGroup()).isNotNull();
+      // assertThat(mapping.getPriority()).isNotNull();
+    }
+  }
+
+  @Test
+  public void testFindMapsetByFromCode1() throws Exception {
+
+    final Mapset testMapset = getMapsetByAbbreviation("SNOMEDCT_US-ICD10CM");
+
+    final String id = testMapset.getId();
+    final String url = baseUrl + "/mapset/" + id + "/mapping?query=from.code:40733004";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping resultListMapping =
+        objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(resultListMapping).isNotNull();
+    assertThat(resultListMapping.getTotal()).isPositive();
+
+    for (final Mapping mapping : resultListMapping.getItems()) {
+
+      LOGGER.info("YYYYYYYYYYYYYYYYYYYY mapset = {}", mapping);
+
+      assertNotNull(mapping);
+
+      final MapsetRef mapsetRef = mapping.getMapset();
+      assertThat(mapsetRef).isNotNull();
+      assertEquals(mapsetRef.getId(), id);
+      assertEquals(mapsetRef.getAbbreviation(), "SNOMEDCT_US-ICD10CM");
+      assertNotNull(mapsetRef.getName());
+      assertNotNull(mapsetRef.getFromTerminology());
+      assertNotNull(mapsetRef.getToTerminology());
+      assertNotNull(mapsetRef.getVersion());
+      assertNotNull(mapsetRef.getPublisher());
+      assertNotNull(mapsetRef.getReleaseDate());
+
+      // mapping
+      assertNotNull(mapping.getId());
+      assertTrue(mapping.getActive());
+
+      // from
+      assertEquals(mapping.getFrom().getCode(), "40733004");
+      assertNotNull(mapping.getFrom().getName());
+      assertEquals(mapping.getFrom().getTerminology(), "http://snomed.info/sct");
+
+      // to
+      assertNotNull(mapping.getTo().getCode());
+      assertNotNull(mapping.getTo().getName());
+      assertEquals(mapping.getTo().getTerminology(), "http://hl7.org/fhir/sid/icd-10-cm");
+
+      // attributes
+      assertNotNull(mapping.getAttributes().get("advice"));
+      assertNotNull(mapping.getAttributes().get("rule"));
+      assertNotNull(mapping.getAttributes().get("priority"));
+      assertNotNull(mapping.getAttributes().get("group"));
+
+      assertNotNull(mapping.getType());
+    }
+  }
+
+  @Test
+  public void testFindMapsetByFromCode2() throws Exception {
+
+    final String name = "SNOMEDCT_US-ICD10CM";
+    final String url = baseUrl + "/mapset/" + name + "/mapping?query=from.code:40733004";
+
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping resultListMapping =
+        objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(resultListMapping).isNotNull();
+    assertThat(resultListMapping.getTotal()).isPositive();
+
+    for (final Mapping mapping : resultListMapping.getItems()) {
+
+      LOGGER.info("YYYYYYYYYYYYYYYYYYYY mapset = {}", mapping);
+
+      assertNotNull(mapping);
+
+      final MapsetRef mapsetRef = mapping.getMapset();
+      assertThat(mapsetRef).isNotNull();
+
+      assertEquals(mapsetRef.getAbbreviation(), name);
+      assertNotNull(mapsetRef.getName());
+      assertNotNull(mapsetRef.getFromTerminology());
+      assertNotNull(mapsetRef.getToTerminology());
+      assertNotNull(mapsetRef.getVersion());
+      assertNotNull(mapsetRef.getPublisher());
+      assertNotNull(mapsetRef.getReleaseDate());
+
+      // mapping
+      assertNotNull(mapping.getId());
+      assertTrue(mapping.getActive());
+
+      // from
+      assertEquals(mapping.getFrom().getCode(), "40733004");
+      assertNotNull(mapping.getFrom().getName());
+      assertEquals(mapping.getFrom().getTerminology(), "http://snomed.info/sct");
+
+      // to
+      assertNotNull(mapping.getTo().getCode());
+      assertNotNull(mapping.getTo().getName());
+      assertEquals(mapping.getTo().getTerminology(), "http://hl7.org/fhir/sid/icd-10-cm");
+
+      // attributes
+      assertNotNull(mapping.getAttributes().get("advice"));
+      assertNotNull(mapping.getAttributes().get("rule"));
+      assertNotNull(mapping.getAttributes().get("priority"));
+      assertNotNull(mapping.getAttributes().get("group"));
+
+      assertNotNull(mapping.getType());
+    }
+  }
+
   /**
    * Test find mapset by id not found.
    *
@@ -1003,9 +1147,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
                 .anyMatch(ancestor -> "128927009".equals(ancestor.getCode())),
             "Ancestor code should have 1 128927009 Concept: " + concept);
       }
-
     }
-
   }
 
   @Test
@@ -1016,12 +1158,13 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
-    final List<Subset> subsetList = objectMapper.readValue(content, new TypeReference<List<Subset>>() {
-      // n/a
-    });
+    final ResultListSubset subsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+          // n/a
+        });
     assertThat(subsetList).isNotNull();
-    assertFalse(subsetList.isEmpty());
-    for (final Subset subset : subsetList) {
+    assertFalse(subsetList.getItems().isEmpty());
+    for (final Subset subset : subsetList.getItems()) {
       assertThat(subset).isNotNull();
       assertThat(subset.getId()).isNotNull();
       assertThat(subset.getAbbreviation()).isNotNull();
@@ -1049,7 +1192,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertEquals(id, subset.getId());
     assertEquals("SNOMEDCT_US-MODEL", subset.getAbbreviation());
     assertEquals("SNOMEDCT model concepts", subset.getName());
-    assertEquals("National Library of Medicine", subset.getPublisher());
+    assertEquals("SANDBOX", subset.getPublisher());
     assertEquals("20240301", subset.getVersion());
   }
 
@@ -1059,13 +1202,43 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
 
     final String subsetId = testSubset.getId();
-    final String url = baseUrl + "/subset/" + subsetId + "/members";
+    final String url = baseUrl + "/subset/" + subsetId + "/member";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
-    final ResultListSubsetMember subsetMemberList = objectMapper.readValue(content, ResultListSubsetMember.class);
+    final ResultListSubsetMember subsetMemberList =
+        objectMapper.readValue(content, ResultListSubsetMember.class);
+    assertThat(subsetMemberList).isNotNull();
+    assertFalse(subsetMemberList.getItems().isEmpty());
+    for (final SubsetMember subsetMember : subsetMemberList.getItems()) {
+      assertThat(subsetMember).isNotNull();
+      assertThat(subsetMember.getId()).isNotNull();
+      assertThat(subsetMember.getCode()).isNotNull();
+      assertThat(subsetMember.getName()).isNotNull();
+      final SubsetRef subsetRef = subsetMember.getSubset();
+      assertThat(subsetRef).isNotNull();
+      assertThat(subsetRef.getAbbreviation()).isNotNull();
+      assertThat(subsetRef.getPublisher()).isNotNull();
+      assertThat(subsetRef.getVersion()).isNotNull();
+    }
+  }
+
+  @Test // NUNO UPDATE
+  public void testGetSubsetMembersByCode() throws Exception {
+    // Get a subset dynamically to avoid hardcoded ID issues
+    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
+
+    final String subsetId = testSubset.getId();
+    final String url = baseUrl + "/subset/" + subsetId + "/member";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListSubsetMember subsetMemberList =
+        objectMapper.readValue(content, ResultListSubsetMember.class);
     assertThat(subsetMemberList).isNotNull();
     assertFalse(subsetMemberList.getItems().isEmpty());
     for (final SubsetMember subsetMember : subsetMemberList.getItems()) {
@@ -1099,6 +1272,28 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
+   * Gets the mapset by abbreviation.
+   *
+   * @param abbreviation the abbreviation
+   * @return the mapset by abbreviation
+   * @throws Exception the exception
+   */
+  private Mapset getMapsetByAbbreviation(final String abbreviation) throws Exception {
+    final String url = baseUrl + "/mapset";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    final ResultListMapset mapsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListMapset>() {
+          // n/a
+        });
+
+    return mapsetList.getItems().stream()
+        .filter(mapset -> abbreviation.equals(mapset.getAbbreviation())).findFirst().orElseThrow(
+            () -> new RuntimeException("Subset with abbreviation " + abbreviation + " not found"));
+  }
+
+  /**
    * Gets the subset by abbreviation.
    *
    * @param abbreviation the abbreviation
@@ -1110,14 +1305,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
-    final List<Subset> subsetList = objectMapper.readValue(content, new TypeReference<List<Subset>>() {
-      // n/a
-    });
+    final ResultListSubset subsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+          // n/a
+        });
 
-    return subsetList.stream()
-        .filter(subset -> abbreviation.equals(subset.getAbbreviation()))
-        .findFirst()
-        .orElseThrow(() -> new RuntimeException("Subset with abbreviation " + abbreviation + " not found"));
+    return subsetList.getItems().stream()
+        .filter(subset -> abbreviation.equals(subset.getAbbreviation())).findFirst().orElseThrow(
+            () -> new RuntimeException("Subset with abbreviation " + abbreviation + " not found"));
   }
 
 }

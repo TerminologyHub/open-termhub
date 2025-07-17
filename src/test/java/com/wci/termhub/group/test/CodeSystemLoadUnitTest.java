@@ -66,7 +66,7 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
 
   /** List of FHIR Code System files to load. */
   private static final List<String> CODE_SYSTEM_FILES =
-      List.of("CodeSystem-snomedctus-sandbox-20240301-r5.json",
+      List.of("CodeSystem-snomedct_us-sandbox-20240301-r5.json",
           "CodeSystem-snomedct-sandbox-20240101-r5.json", "CodeSystem-lnc-sandbox-277-r5.json",
           "CodeSystem-icd10cm-sandbox-2023-r5.json", "CodeSystem-rxnorm-sandbox-04012024-r5.json");
 
@@ -76,7 +76,10 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
 
   /** The Constant VALUE_SET_FILES. */
   private static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-model-nlm-20240301-r5.json");
+      List.of("ValueSet-snomedct_us-723264001-sandbox-20240301-r5.json",
+          "ValueSet-snomedct_us-core-sandbox-20240301-r5.json",
+          "ValueSet-snomedct_us-extension-sandbox-20240301-r5.json",
+          "ValueSet-snomedct_us-model-sandbox-20240301-r5.json");
 
   /**
    * Setup - load the FHIR Code System files.

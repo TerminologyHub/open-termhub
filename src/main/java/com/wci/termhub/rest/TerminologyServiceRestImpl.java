@@ -59,6 +59,7 @@ import com.wci.termhub.model.ResultListConceptTreePosition;
 import com.wci.termhub.model.ResultListMapping;
 import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
+import com.wci.termhub.model.ResultListSubset;
 import com.wci.termhub.model.ResultListSubsetMember;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
@@ -1896,7 +1897,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   /* see superclass */
   @Override
-  @RequestMapping(value = "/mapset/{mapset}/mappings", method = RequestMethod.GET)
+  @RequestMapping(value = "/mapset/{mapset}/mapping", method = RequestMethod.GET)
   @Operation(summary = "Find mappings for the specified mapset",
       description = "Finds mapping for the specified mapset and the specified search criteria.",
       tags = {
@@ -2089,7 +2090,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   /* see superclass */
   @Override
-  @RequestMapping(value = "/concept/{terminology}/{code}/mappings", method = RequestMethod.GET)
+  @RequestMapping(value = "/concept/{terminology}/{code}/mapping", method = RequestMethod.GET)
   @Operation(summary = "Get mappings from concept by terminology and code",
       description = "Gets mappings from the concept with the specified terminology and code.",
       tags = {
@@ -2340,15 +2341,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
   })
-  public ResponseEntity<List<Subset>> getSubsets() throws Exception {
+  public ResponseEntity<ResultListSubset> getSubsets() throws Exception {
 
     try {
 
+      final List<Subset> subsets =
+          lookupSubsetMap().values().stream().sorted(Comparator.comparing(Subset::getReleaseDate,
+              Comparator.nullsFirst(Comparator.naturalOrder()))).toList();
+
+      final ResultListSubset resultListSubset = new ResultListSubset();
+      resultListSubset.getItems().addAll(subsets);
+      resultListSubset.setTotal(resultListSubset.getItems().size());
+
       // Return the object
-      return new ResponseEntity<>(
-          lookupSubsetMap().values().stream()
-              .sorted((a, b) -> a.getReleaseDate().compareTo(b.getReleaseDate())).toList(),
-          new HttpHeaders(), HttpStatus.OK);
+      return new ResponseEntity<>(resultListSubset, new HttpHeaders(), HttpStatus.OK);
 
     } catch (final Exception e) {
       handleException(e, "trying to get subsets");
@@ -2396,7 +2402,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   /* see superclass */
   @Override
-  @RequestMapping(value = "/subset/{subset}/members", method = RequestMethod.GET)
+  @RequestMapping(value = "/subset/{subset}/member", method = RequestMethod.GET)
   @Operation(summary = "Find members for the specified subset",
       description = "Finds members for the specified subset and the specified search criteria.",
       tags = {
@@ -2587,7 +2593,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /**
    * Lookup mapsets.
    *
-   * @param mapset the mapset
+   * @param mapset the mapset name or id
    * @param allowBlank the allow blank
    * @return the list
    * @throws Exception the exception
