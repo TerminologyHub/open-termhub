@@ -1008,8 +1008,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
     for (final Mapping mapping : resultListMapping.getItems()) {
 
-      LOGGER.info("YYYYYYYYYYYYYYYYYYYY mapset = {}", mapping);
-
       assertNotNull(mapping);
 
       final MapsetRef mapsetRef = mapping.getMapset();
@@ -1064,8 +1062,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertThat(resultListMapping.getTotal()).isPositive();
 
     for (final Mapping mapping : resultListMapping.getItems()) {
-
-      LOGGER.info("YYYYYYYYYYYYYYYYYYYY mapset = {}", mapping);
 
       assertNotNull(mapping);
 
@@ -1225,7 +1221,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
   }
 
-  @Test // NUNO UPDATE
+  @Test
   public void testGetSubsetMembersByCode() throws Exception {
     // Get a subset dynamically to avoid hardcoded ID issues
     final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
