@@ -109,7 +109,7 @@ public class FhirR4RestUnitTest {
 
   /** List of FHIR Code System files to load. */
   private static final List<String> CODE_SYSTEM_FILES =
-      List.of("CodeSystem-snomedctus-sandbox-20240301-r4.json",
+      List.of("CodeSystem-snomedct_us-sandbox-20240301-r4.json",
           "CodeSystem-snomedct-sandbox-20240101-r4.json", "CodeSystem-lnc-sandbox-277-r4.json",
           "CodeSystem-icd10cm-sandbox-2023-r4.json", "CodeSystem-rxnorm-sandbox-04012024-r4.json");
 
@@ -307,7 +307,7 @@ public class FhirR4RestUnitTest {
   @Test
   public void testCodeSystemById() throws Exception {
     // Arrange
-    final String csId = "a1d1e426-26a6-4326-b18b-c54c154079b5";
+    final String csId = "340c926f-9ad6-4f1b-b230-dc4ca14575ab";
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -334,7 +334,7 @@ public class FhirR4RestUnitTest {
     assertEquals(CodeSystemHierarchyMeaning.ISA, codeSystem.getHierarchyMeaning());
     assertFalse(codeSystem.getCompositional());
     assertEquals("fragment", codeSystem.getContent().toString().toLowerCase());
-    assertEquals(440, codeSystem.getCount());
+    assertEquals(456, codeSystem.getCount());
   }
 
   /**

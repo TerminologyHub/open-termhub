@@ -55,7 +55,7 @@ public class CodeSystemLoadR5UnitTest {
 
   /** List of FHIR Code System files to load. */
   private static final List<String> CODE_SYSTEM_FILES =
-      List.of("CodeSystem-snomedctus-sandbox-20240301-r5.json",
+      List.of("CodeSystem-snomedct_us-sandbox-20240301-r5.json",
           "CodeSystem-snomedct-sandbox-20240101-r5.json", "CodeSystem-lnc-sandbox-277-r5.json",
           "CodeSystem-icd10cm-sandbox-2023-r5.json", "CodeSystem-rxnorm-sandbox-04012024-r5.json");
 

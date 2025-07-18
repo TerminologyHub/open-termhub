@@ -34,30 +34,27 @@ import org.springframework.test.context.TestPropertySource;
 import com.wci.termhub.Application;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.util.SubsetLoaderUtil;
 
 /**
- * Test class for loading FHIR R4 Code System files.
+ * Test class for loading FHIR R4 Value Set files.
  */
 @TestInstance(Lifecycle.PER_CLASS)
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test-r4.properties")
-public class CodeSystemLoadR4UnitTest {
-
+public class ValueSetLoadR4UnitTest {
   /** The logger. */
-  private static final Logger LOGGER = LoggerFactory.getLogger(CodeSystemLoadR4UnitTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetLoadR4UnitTest.class);
 
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
 
   /** List of FHIR Code System files to load. */
-  private static final List<String> CODE_SYSTEM_FILES =
-      List.of("CodeSystem-snomedct_us-sandbox-20240301-r4.json",
-          "CodeSystem-snomedct-sandbox-20240101-r4.json", "CodeSystem-lnc-sandbox-277-r4.json",
-          "CodeSystem-icd10cm-sandbox-2023-r4.json", "CodeSystem-rxnorm-sandbox-04012024-r4.json");
+  private static final List<String> VALUE_SET_FILES =
+      List.of("ValueSet-snomedct_us-model-nlm-20240301-r4.json");
 
   /**
    * Setup - load the FHIR Code System files.
@@ -86,56 +83,55 @@ public class CodeSystemLoadR4UnitTest {
     }
 
     // Load each code system by reading directly from the classpath
-    for (final String codeSystemFile : CODE_SYSTEM_FILES) {
+    for (final String valueSetFile : VALUE_SET_FILES) {
       try {
         // Read file from classpath directly using Spring's resource mechanism
-        final Resource resource = new ClassPathResource("data/" + codeSystemFile,
-            CodeSystemLoadR4UnitTest.class.getClassLoader());
+        final Resource resource = new ClassPathResource("data/" + valueSetFile,
+            ValueSetLoadR4UnitTest.class.getClassLoader());
 
         if (!resource.exists()) {
-          throw new FileNotFoundException("Could not find resource: data/" + codeSystemFile);
+          throw new FileNotFoundException("Could not find resource: data/" + valueSetFile);
         }
 
         final String fileContent =
             FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
-        LOGGER.info("Loading code system from classpath resource: data/{}", codeSystemFile);
-        assertNotNull(CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, true));
+        LOGGER.info("Loading value sets from classpath resource: data/{}", valueSetFile);
+        assertNotNull(SubsetLoaderUtil.loadSubset(searchService, fileContent, false));
 
       } catch (final Exception e) {
-        LOGGER.error("Error loading code system file: {}", codeSystemFile, e);
+        LOGGER.error("Error loading value set file: {}", valueSetFile, e);
         throw e;
       }
     }
 
-    LOGGER.info("Finished loading code systems");
+    LOGGER.info("Finished loading value sets");
   }
 
   /**
-   * Test reload code system.
+   * Test reload value set.
    *
    * @throws Exception the exception
    */
   @Test
-  public void testReloadCodeSystem() throws Exception {
+  public void testReloadValueSet() throws Exception {
     // Should throw an exception if the code system is already loaded
-    for (final String codeSystemFile : CODE_SYSTEM_FILES) {
+    for (final String valueSetFile : VALUE_SET_FILES) {
       try {
         // Read file from classpath directly using Spring's resource mechanism
-        final Resource resource = new ClassPathResource("data/" + codeSystemFile,
-            CodeSystemLoadR4UnitTest.class.getClassLoader());
+        final Resource resource = new ClassPathResource("data/" + valueSetFile,
+            ValueSetLoadR4UnitTest.class.getClassLoader());
 
         final String fileContent =
             FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
         assertThrows(Exception.class, () -> {
-          LOGGER.info("Attempt reload of code system from classpath resource: data/{}",
-              codeSystemFile);
-          CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, false);
+          LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
+          SubsetLoaderUtil.loadSubset(searchService, fileContent, false);
         });
 
       } catch (final Exception e) {
-        LOGGER.error("Error reloading code system file: {}", codeSystemFile, e);
+        LOGGER.error("Error reloading value set file: {}", valueSetFile, e);
         throw e;
       }
     }
@@ -145,8 +141,9 @@ public class CodeSystemLoadR4UnitTest {
    * Basic test to ensure setup was successful.
    */
   @Test
-  public void testCodeSystemsLoaded() {
+  public void testValueSetLoaded() {
     // This test simply verifies that the setup completed without errors
-    assertTrue(true, "Code systems were loaded without errors");
+    assertTrue(true, "Value Sets were loaded without errors");
   }
+
 }

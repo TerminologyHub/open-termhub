@@ -54,10 +54,6 @@ public class SyndicationClient {
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(SyndicationClient.class);
 
-  // /** The Constant acceptablePackageTypes. */
-  // public static final Set<String> acceptablePackageTypes =
-  // Set.of("SCT_RF2_SNAPSHOT", "SCT_RF2_FULL", "SCT_RF2_ALL");
-
   /** The rest template. */
   private final RestTemplate restTemplate;
 
@@ -80,6 +76,11 @@ public class SyndicationClient {
     restTemplate = new RestTemplateBuilder().rootUri(url)
         .messageConverters(new StringHttpMessageConverter()).build();
     jaxbContext = JAXBContext.newInstance(SyndicationFeed.class);
+
+    logger.info("Syndication client configured with URL: {}", url);
+    logger.info("Syndication client configured with Token: {}",
+        Strings.isBlank(token) ? "No" : "Yes");
+
     this.token = token;
 
   }
@@ -100,13 +101,8 @@ public class SyndicationClient {
     final ResponseEntity<String> response = restTemplate.exchange("/terminology/syndication/feed",
         HttpMethod.GET, new HttpEntity<>(headers), String.class);
 
-    if (response == null) {
-      logger.error("Failed to retrieve syndication feed: Response is null");
-      throw new RuntimeException("Syndication feed response is null");
-    }
-
     final String body = response.getBody();
-    if (body == null) {
+    if (body == null || body.isEmpty()) {
       logger.error("Failed to retrieve syndication feed: Body is null");
       throw new RuntimeException("Syndication feed body is null");
     }
@@ -151,16 +147,12 @@ public class SyndicationClient {
     for (final SyndicationFeedEntry entry : feed.getEntries()) {
       final SyndicationLink zipLink = entry.getZipLink();
       final SyndicationCategory category = entry.getCategory();
-      if (category != null) {
-        // final String categoryString = category.getTerm();
-        if (zipLink != null // &&
-                            // acceptablePackageTypes.contains(categoryString)
-            && (entry.getContentItemVersion().equals(loadVersionUri)
-                || entry.getContentItemIdentifier().equals(loadVersionUri))) {
+      if (category != null && zipLink != null
+          && (entry.getContentItemVersion().equals(loadVersionUri)
+              || entry.getContentItemIdentifier().equals(loadVersionUri))) {
 
-          logger.info("Found entry to load {}", entry.getContentItemVersion());
-          return entry;
-        }
+        logger.info("Found entry to load {}", entry.getContentItemVersion());
+        return entry;
       }
     }
     logger.warn("No matching syndication entry was found for URI {}", loadVersionUri);
@@ -262,12 +254,9 @@ public class SyndicationClient {
     for (final SyndicationFeedEntry entry : sortedEntries) {
       final SyndicationLink zipLink = entry.getZipLink();
       if (zipLink != null && entry.getCategory() != null
-      // && acceptablePackageTypes.contains(entry.getCategory().getTerm())
           && (entry.getContentItemVersion().equals(loadVersionUri)
               || entry.getContentItemIdentifier().equals(loadVersionUri))) {
-
         downloadList.add(Pair.of(entry, zipLink));
-
         final SyndicationDependency packageDependency = entry.getPackageDependency();
         if (packageDependency != null) {
           if (packageDependency.getEditionDependency() != null) {
@@ -280,7 +269,6 @@ public class SyndicationClient {
             }
           }
         }
-
       }
     }
   }
@@ -301,10 +289,7 @@ public class SyndicationClient {
 
     for (final SyndicationFeedEntry entry : feed.getEntries()) {
       final SyndicationLink zipLink = entry.getZipLink();
-      // final SyndicationCategory category = entry.getCategory();
-      // && acceptablePackageTypes.contains(category.getTerm())
       if (zipLink != null) {
-        // && category != null) {
         logger.info("Downloading package {} file {}", entry.getContentItemVersion(),
             zipLink.getHref());
 
@@ -314,19 +299,14 @@ public class SyndicationClient {
         restTemplate.exchange(zipLink.getHref(), HttpMethod.OPTIONS, new HttpEntity<Void>(headers),
             Void.class);
 
-        final File outputFile =
-            java.nio.file.Files.createTempFile(UUID.randomUUID().toString(), ".zip").toFile();
+        final File outputFile = Files.createTempFile(UUID.randomUUID().toString(), ".zip").toFile();
         restTemplate.execute(zipLink.getHref(), HttpMethod.GET, request -> {
           request.getHeaders().setBearerAuth(syndicationCredentials);
         }, clientHttpResponse -> {
           try (final FileOutputStream outputStream = new FileOutputStream(outputFile)) {
             final String lengthString = zipLink.getLength();
-            int length;
-            if (lengthString == null || lengthString.isEmpty()) {
-              length = 1024 * 500;
-            } else {
-              length = Integer.parseInt(lengthString.replace(",", ""));
-            }
+            final int length = (lengthString == null || lengthString.isEmpty()) ? 1024 * 500
+                : Integer.parseInt(lengthString.replace(",", ""));
             try {
               StreamUtility.copyWithProgress(clientHttpResponse.getBody(), outputStream, length,
                   "Download progress: %s%%");

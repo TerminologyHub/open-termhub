@@ -1,0 +1,991 @@
+{
+  "resourceType": "ValueSet",
+  "id": "4c2a7181-43e0-40ad-bf41-f351c51547ef",
+  "url": "http://snomed.info/sct?fhir_vs=900000000000207008",
+  "identifier": [ {
+    "value": "900000000000207008"
+  } ],
+  "version": "20240301",
+  "name": "SNOMEDCT core concepts",
+  "title": "SNOMEDCT_US-CORE",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-03-01T00:00:00+00:00",
+  "publisher": "SANDBOX",
+  "description": "SNOMED CT core",
+  "compose": {
+    "include": [ {
+      "system": "http://snomed.info/sct",
+      "concept": [ {
+        "code": "105724001",
+        "display": "Disease related state"
+      }, {
+        "code": "105789008",
+        "display": "Cannula, tube AND/OR catheter"
+      }, {
+        "code": "106063007",
+        "display": "Cardiovascular finding"
+      }, {
+        "code": "107907001",
+        "display": "Operative procedure on digestive system"
+      }, {
+        "code": "107957009",
+        "display": "Operative procedure on digestive organ"
+      }, {
+        "code": "108273007",
+        "display": "Radiographic imaging procedure by site"
+      }, {
+        "code": "108369006",
+        "display": "Neoplasm"
+      }, {
+        "code": "112802009",
+        "display": "Cardiovascular surgical procedure"
+      }, {
+        "code": "113257007",
+        "display": "Structure of cardiovascular system"
+      }, {
+        "code": "113331007",
+        "display": "Structure of endocrine system"
+      }, {
+        "code": "113343008",
+        "display": "Body organ structure"
+      }, {
+        "code": "11527006",
+        "display": "Arterial system structure"
+      }, {
+        "code": "116004006",
+        "display": "Entire hollow viscus"
+      }, {
+        "code": "116339002",
+        "display": "Breast finding"
+      }, {
+        "code": "11705000",
+        "display": "RNA virus"
+      }, {
+        "code": "1179330005",
+        "display": "Structure of hollow viscus"
+      }, {
+        "code": "118153004",
+        "display": "Gastrointestinal tract repair"
+      }, {
+        "code": "118228005",
+        "display": "Functional finding"
+      }, {
+        "code": "118633002",
+        "display": "Artery of thorax"
+      }, {
+        "code": "118664000",
+        "display": "Procedure on body system"
+      }, {
+        "code": "118672003",
+        "display": "Procedure on cardiovascular system"
+      }, {
+        "code": "118673008",
+        "display": "Procedure on digestive system"
+      }, {
+        "code": "118694006",
+        "display": "Procedure on trunk"
+      }, {
+        "code": "118695007",
+        "display": "Procedure on thorax"
+      }, {
+        "code": "118696008",
+        "display": "Procedure on mediastinum"
+      }, {
+        "code": "118698009",
+        "display": "Procedure on abdomen"
+      }, {
+        "code": "118717007",
+        "display": "Procedure on organ"
+      }, {
+        "code": "1187376008",
+        "display": "Structure of inferior mediastinum"
+      }, {
+        "code": "1187377004",
+        "display": "Entire region of mediastinum"
+      }, {
+        "code": "118738001",
+        "display": "Procedure on soft tissue"
+      }, {
+        "code": "118760003",
+        "display": "Entire viscus"
+      }, {
+        "code": "118797008",
+        "display": "Procedure on heart"
+      }, {
+        "code": "118804001",
+        "display": "Procedure on blood vessel"
+      }, {
+        "code": "118805000",
+        "display": "Procedure on artery"
+      }, {
+        "code": "118806004",
+        "display": "Procedure on coronary arteries"
+      }, {
+        "code": "118808003",
+        "display": "Procedure on artery of thorax and abdomen"
+      }, {
+        "code": "118810001",
+        "display": "Procedure on artery of thorax"
+      }, {
+        "code": "118821005",
+        "display": "Procedure on digestive organ"
+      }, {
+        "code": "118826000",
+        "display": "Procedure on digestive tract"
+      }, {
+        "code": "118830002",
+        "display": "Procedure on stomach"
+      }, {
+        "code": "118946009",
+        "display": "Disorder of thorax"
+      }, {
+        "code": "118956008",
+        "display": "Morphologically altered structure"
+      }, {
+        "code": "119184005",
+        "display": "Breast part"
+      }, {
+        "code": "119201007",
+        "display": "Cardiovascular organ part"
+      }, {
+        "code": "119202000",
+        "display": "Heart part"
+      }, {
+        "code": "119204004",
+        "display": "Coronary artery part"
+      }, {
+        "code": "119205003",
+        "display": "Arterial part"
+      }, {
+        "code": "119206002",
+        "display": "Blood vessel part"
+      }, {
+        "code": "119593002",
+        "display": "Trunk repair"
+      }, {
+        "code": "1197434001",
+        "display": "Entire artery of thoracic cross-sectional segment of trunk"
+      }, {
+        "code": "1197435000",
+        "display": "Entire blood vessel of thoracic cross-sectional segment of trunk"
+      }, {
+        "code": "119761008",
+        "display": "Cardiovascular system repair"
+      }, {
+        "code": "119809001",
+        "display": "Thoracic artery repair"
+      }, {
+        "code": "120155006",
+        "display": "Thorax repair"
+      }, {
+        "code": "120166004",
+        "display": "Mediastinum repair"
+      }, {
+        "code": "120173009",
+        "display": "Abdomen repair"
+      }, {
+        "code": "123037004",
+        "display": "Body structure"
+      }, {
+        "code": "123960005",
+        "display": "Entire subregion of trunk"
+      }, {
+        "code": "1263732006",
+        "display": "SARSr-CoV"
+      }, {
+        "code": "126637008",
+        "display": "Neoplasm of trunk"
+      }, {
+        "code": "126877002",
+        "display": "Disorder of glucose metabolism"
+      }, {
+        "code": "126926005",
+        "display": "Neoplasm of breast"
+      }, {
+        "code": "128121009",
+        "display": "Disorder of trunk"
+      }, {
+        "code": "128259008",
+        "display": "Artery of mediastinum"
+      }, {
+        "code": "128262006",
+        "display": "Upper body structure"
+      }, {
+        "code": "128927009",
+        "display": "Procedure by method"
+      }, {
+        "code": "129264002",
+        "display": "Action"
+      }, {
+        "code": "129265001",
+        "display": "Evaluation - action"
+      }, {
+        "code": "129284003",
+        "display": "Surgical action"
+      }, {
+        "code": "129419002",
+        "display": "Dilation - action"
+      }, {
+        "code": "129428001",
+        "display": "Preventive intent"
+      }, {
+        "code": "138875005",
+        "display": "SNOMED CT Concept"
+      }, {
+        "code": "16453004",
+        "display": "Operation on stomach"
+      }, {
+        "code": "169443000",
+        "display": "Preventive procedure"
+      }, {
+        "code": "170497006",
+        "display": "Quarantine"
+      }, {
+        "code": "170499009",
+        "display": "Isolation of infection contact"
+      }, {
+        "code": "170549007",
+        "display": "Chronic disease monitoring"
+      }, {
+        "code": "170742000",
+        "display": "Diabetic monitoring"
+      }, {
+        "code": "181131000",
+        "display": "Entire breast"
+      }, {
+        "code": "181217005",
+        "display": "Entire mediastinum"
+      }, {
+        "code": "181294004",
+        "display": "Entire coronary artery"
+      }, {
+        "code": "181319006",
+        "display": "Branch of thoracic aorta"
+      }, {
+        "code": "182777000",
+        "display": "Monitoring of patient"
+      }, {
+        "code": "186747009",
+        "display": "Coronavirus infection"
+      }, {
+        "code": "187639008",
+        "display": "Entire thoracic viscus"
+      }, {
+        "code": "19923001",
+        "display": "Catheter"
+      }, {
+        "code": "204340007",
+        "display": "Entire mammary region"
+      }, {
+        "code": "20957000",
+        "display": "Disorder of carbohydrate metabolism"
+      }, {
+        "code": "2119009",
+        "display": "Repair of blood vessel"
+      }, {
+        "code": "21371007",
+        "display": "Operation on abdominal region"
+      }, {
+        "code": "22943007",
+        "display": "Trunk structure"
+      }, {
+        "code": "22953008",
+        "display": "Repair of heart"
+      }, {
+        "code": "233258006",
+        "display": "Angioplasty of artery"
+      }, {
+        "code": "237822008",
+        "display": "Autoimmune endocrine disease"
+      }, {
+        "code": "239516002",
+        "display": "Monitoring procedure"
+      }, {
+        "code": "243120004",
+        "display": "Regimes and therapies"
+      }, {
+        "code": "243599004",
+        "display": "Enveloped ssRNA virus without a DNA step in life-cycle"
+      }, {
+        "code": "243607003",
+        "display": "Family Coronaviridae"
+      }, {
+        "code": "243928005",
+        "display": "Entire body region"
+      }, {
+        "code": "243950006",
+        "display": "Entire inferior mediastinum"
+      }, {
+        "code": "243951005",
+        "display": "Subdivision of inferior mediastinum"
+      }, {
+        "code": "251007",
+        "display": "Pectoral region structure"
+      }, {
+        "code": "255058005",
+        "display": "Neoplasm of thorax"
+      }, {
+        "code": "257903006",
+        "display": "Repair - action"
+      }, {
+        "code": "258623008",
+        "display": "Vascular catheter"
+      }, {
+        "code": "260245000",
+        "display": "Finding value"
+      }, {
+        "code": "260787004",
+        "display": "Physical object"
+      }, {
+        "code": "261153006",
+        "display": "Entire pectoral region"
+      }, {
+        "code": "261583007",
+        "display": "Using"
+      }, {
+        "code": "262225004",
+        "display": "Entire trunk"
+      }, {
+        "code": "263680009",
+        "display": "Autoimmune process"
+      }, {
+        "code": "272099008",
+        "display": "Descriptor"
+      }, {
+        "code": "272181003",
+        "display": "Clinical equipment and/or device"
+      }, {
+        "code": "272625005",
+        "display": "Entire body organ"
+      }, {
+        "code": "27619001",
+        "display": "Disease caused by Coronaviridae"
+      }, {
+        "code": "276272002",
+        "display": "Catheter procedure"
+      }, {
+        "code": "277302009",
+        "display": "Natures"
+      }, {
+        "code": "277367001",
+        "display": "Nature of procedure values"
+      }, {
+        "code": "278110001",
+        "display": "Radiographic imaging - action"
+      }, {
+        "code": "278195005",
+        "display": "Entire body system"
+      }, {
+        "code": "278198007",
+        "display": "Entire cardiovascular system"
+      }, {
+        "code": "27832009",
+        "display": "Structure of thoracic viscus"
+      }, {
+        "code": "278876000",
+        "display": "Entire endocrine system"
+      }, {
+        "code": "279009002",
+        "display": "Glandular structure of breast"
+      }, {
+        "code": "280432007",
+        "display": "Region of mediastinum"
+      }, {
+        "code": "281157001",
+        "display": "Systemic vascular structure"
+      }, {
+        "code": "281159003",
+        "display": "Systemic arterial structure"
+      }, {
+        "code": "281233007",
+        "display": "Cardiovascular structure of trunk"
+      }, {
+        "code": "281301001",
+        "display": "Within reference range"
+      }, {
+        "code": "281467004",
+        "display": "Intrathoracic cardiovascular structure"
+      }, {
+        "code": "281586009",
+        "display": "Special atomic mapping values"
+      }, {
+        "code": "281827007",
+        "display": "Regional cardiovascular structure"
+      }, {
+        "code": "287332008",
+        "display": "Cardioplasty"
+      }, {
+        "code": "290073004",
+        "display": "Lesion of breast"
+      }, {
+        "code": "298705000",
+        "display": "Finding of region of thorax"
+      }, {
+        "code": "300848003",
+        "display": "Mass of body structure"
+      }, {
+        "code": "300862005",
+        "display": "Mass of body region"
+      }, {
+        "code": "30217000",
+        "display": "Proliferation"
+      }, {
+        "code": "302292003",
+        "display": "Finding of trunk structure"
+      }, {
+        "code": "302509004",
+        "display": "Entire heart"
+      }, {
+        "code": "302551006",
+        "display": "Entire thorax"
+      }, {
+        "code": "303102005",
+        "display": "Special disorder atoms"
+      }, {
+        "code": "303607000",
+        "display": "Biomedical equipment"
+      }, {
+        "code": "3041000",
+        "display": "Repair of stomach"
+      }, {
+        "code": "305072005",
+        "display": "Structure of breast and/or endocrine system"
+      }, {
+        "code": "306954006",
+        "display": "Regional blood vessel structure"
+      }, {
+        "code": "306955007",
+        "display": "Vascular structure of trunk"
+      }, {
+        "code": "308489006",
+        "display": "Pathological process"
+      }, {
+        "code": "308734009",
+        "display": "Artery of trunk"
+      }, {
+        "code": "30904006",
+        "display": "Vascular surgery procedure"
+      }, {
+        "code": "309524007",
+        "display": "Mass of trunk"
+      }, {
+        "code": "310362005",
+        "display": "Angioplasty catheter"
+      }, {
+        "code": "310787001",
+        "display": "Structure of lung and/or mediastinum"
+      }, {
+        "code": "313560002",
+        "display": "Entire artery of thorax AND/OR abdomen"
+      }, {
+        "code": "31413008",
+        "display": "Operative procedure on coronary artery"
+      }, {
+        "code": "32655009",
+        "display": "Structure of mammary region"
+      }, {
+        "code": "34014006",
+        "display": "Viral disease"
+      }, {
+        "code": "34362008",
+        "display": "Vascular device"
+      }, {
+        "code": "346802004",
+        "display": "Entire body compartment"
+      }, {
+        "code": "359715005",
+        "display": "Upper gastrointestinal procedure"
+      }, {
+        "code": "359718007",
+        "display": "Upper digestive tract operation"
+      }, {
+        "code": "359722002",
+        "display": "Upper gastrointestinal operation"
+      }, {
+        "code": "360037004",
+        "display": "Imaging - action"
+      }, {
+        "code": "360152008",
+        "display": "Monitoring - action"
+      }, {
+        "code": "361097006",
+        "display": "Entire blood vessel"
+      }, {
+        "code": "362010009",
+        "display": "Entire heart AND pericardium"
+      }, {
+        "code": "362030008",
+        "display": "Entire arterial system"
+      }, {
+        "code": "362604008",
+        "display": "Entire body tissue"
+      }, {
+        "code": "362661003",
+        "display": "Entire thoracic segment of trunk"
+      }, {
+        "code": "362688008",
+        "display": "Entire middle mediastinum"
+      }, {
+        "code": "362873000",
+        "display": "Entire body part"
+      }, {
+        "code": "362874006",
+        "display": "Entire upper body"
+      }, {
+        "code": "362877004",
+        "display": "Entire artery"
+      }, {
+        "code": "362937008",
+        "display": "Structure of viscus"
+      }, {
+        "code": "362958002",
+        "display": "Procedure by site"
+      }, {
+        "code": "362961001",
+        "display": "Procedure by intent"
+      }, {
+        "code": "362965005",
+        "display": "Disorder of body system"
+      }, {
+        "code": "362969004",
+        "display": "Disorder of endocrine system"
+      }, {
+        "code": "362981000",
+        "display": "Qualifier value"
+      }, {
+        "code": "363675004",
+        "display": "Intents"
+      }, {
+        "code": "363679005",
+        "display": "Imaging"
+      }, {
+        "code": "363680008",
+        "display": "Radiographic imaging procedure"
+      }, {
+        "code": "363787002",
+        "display": "Observable entity"
+      }, {
+        "code": "364708003",
+        "display": "Specimen observable"
+      }, {
+        "code": "365275006",
+        "display": "General well-being finding"
+      }, {
+        "code": "365860008",
+        "display": "General clinical state finding"
+      }, {
+        "code": "373351007",
+        "display": "Surgical procedure on soft tissue"
+      }, {
+        "code": "37661000",
+        "display": "Operation on digestive tract"
+      }, {
+        "code": "37759000",
+        "display": "Surgical instrument"
+      }, {
+        "code": "37884009",
+        "display": "Repair of artery of thorax and abdomen"
+      }, {
+        "code": "384719006",
+        "display": "Procedure on gastrointestinal tract"
+      }, {
+        "code": "384821006",
+        "display": "Mental state, behavior and/or psychosocial function finding"
+      }, {
+        "code": "385487005",
+        "display": "Surgical procedure on thorax"
+      }, {
+        "code": "386053000",
+        "display": "Evaluation procedure"
+      }, {
+        "code": "38629001",
+        "display": "Operative procedure on the arteries of the thorax and abdomen"
+      }, {
+        "code": "386621005",
+        "display": "Operation on gastrointestinal tract"
+      }, {
+        "code": "386765006",
+        "display": "Operation on mediastinum"
+      }, {
+        "code": "387713003",
+        "display": "Surgical procedure"
+      }, {
+        "code": "38866009",
+        "display": "Body part structure"
+      }, {
+        "code": "389099004",
+        "display": "Precautionary procedure"
+      }, {
+        "code": "392089008",
+        "display": "Breast procedure"
+      }, {
+        "code": "392242000",
+        "display": "Repair of artery"
+      }, {
+        "code": "39499005",
+        "display": "Structure of artery of thorax AND/OR abdomen"
+      }, {
+        "code": "399981008",
+        "display": "Neoplasm and/or hamartoma"
+      }, {
+        "code": "400177003",
+        "display": "Neoplasm and/or hamartoma"
+      }, {
+        "code": "40174006",
+        "display": "Isolation technique"
+      }, {
+        "code": "404684003",
+        "display": "Clinical finding"
+      }, {
+        "code": "40733004",
+        "display": "Infectious disease"
+      }, {
+        "code": "407343000",
+        "display": "Order Nidovirales"
+      }, {
+        "code": "409708007",
+        "display": "Heart and/or pericardium structure"
+      }, {
+        "code": "410607006",
+        "display": "Organism"
+      }, {
+        "code": "410817004",
+        "display": "Dilation repair - action"
+      }, {
+        "code": "41339005",
+        "display": "Coronary angioplasty"
+      }, {
+        "code": "413815006",
+        "display": "Chest imaging"
+      }, {
+        "code": "414029004",
+        "display": "Disorder of immune function"
+      }, {
+        "code": "4147007",
+        "display": "Mass"
+      }, {
+        "code": "415232002",
+        "display": "Radiographic procedure of chest"
+      }, {
+        "code": "416152001",
+        "display": "Neck, chest and abdomen"
+      }, {
+        "code": "416319003",
+        "display": "Neck, chest, abdomen, and pelvis"
+      }, {
+        "code": "416550000",
+        "display": "Chest and abdomen"
+      }, {
+        "code": "416775004",
+        "display": "Chest, abdomen, and pelvis"
+      }, {
+        "code": "416939005",
+        "display": "Proliferative mass"
+      }, {
+        "code": "417437006",
+        "display": "Neck and chest"
+      }, {
+        "code": "41801008",
+        "display": "Coronary artery structure"
+      }, {
+        "code": "418285008",
+        "display": "Angioplasty of blood vessel"
+      }, {
+        "code": "420473002",
+        "display": "Structure of subregion of trunk"
+      }, {
+        "code": "422614002",
+        "display": "Structure of half of thorax lateral to midsagittal plane"
+      }, {
+        "code": "422697005",
+        "display": "Structure of half of trunk lateral to midsagittal plane"
+      }, {
+        "code": "423857001",
+        "display": "Structure of half of body lateral to midsagittal plane"
+      }, {
+        "code": "425803006",
+        "display": "Region of thorax"
+      }, {
+        "code": "434912009",
+        "display": "Blood glucose concentration"
+      }, {
+        "code": "4365001",
+        "display": "Surgical repair"
+      }, {
+        "code": "440299000",
+        "display": "Mass of thoracic structure"
+      }, {
+        "code": "441862004",
+        "display": "Infectious process"
+      }, {
+        "code": "442083009",
+        "display": "Anatomical or acquired body structure"
+      }, {
+        "code": "442499005",
+        "display": "Interpretation value"
+      }, {
+        "code": "442705008",
+        "display": "Reference range interpretation value"
+      }, {
+        "code": "46635009",
+        "display": "Type 1 diabetes mellitus"
+      }, {
+        "code": "49062001",
+        "display": "Device"
+      }, {
+        "code": "49601007",
+        "display": "Disorder of cardiovascular system"
+      }, {
+        "code": "49755003",
+        "display": "Morphologically abnormal structure"
+      }, {
+        "code": "49872002",
+        "display": "Virus"
+      }, {
+        "code": "51114001",
+        "display": "Arterial structure"
+      }, {
+        "code": "51185008",
+        "display": "Thoracic structure"
+      }, {
+        "code": "52530000",
+        "display": "Body region structure"
+      }, {
+        "code": "52645000",
+        "display": "Functional disease present"
+      }, {
+        "code": "52988006",
+        "display": "Lesion"
+      }, {
+        "code": "55342001",
+        "display": "Neoplastic disease"
+      }, {
+        "code": "57134006",
+        "display": "Instrument"
+      }, {
+        "code": "57697001",
+        "display": "Growth alteration"
+      }, {
+        "code": "59820001",
+        "display": "Blood vessel structure"
+      }, {
+        "code": "609622007",
+        "display": "Disorder of thoracic segment of trunk"
+      }, {
+        "code": "609623002",
+        "display": "Finding of upper trunk"
+      }, {
+        "code": "62602005",
+        "display": "Organic disease present"
+      }, {
+        "code": "63653004",
+        "display": "Biomedical device"
+      }, {
+        "code": "64572001",
+        "display": "Disease"
+      }, {
+        "code": "64915003",
+        "display": "Operation on heart"
+      }, {
+        "code": "67734004",
+        "display": "Thoracic segment of trunk"
+      }, {
+        "code": "69608005",
+        "display": "Middle mediastinum structure"
+      }, {
+        "code": "697936008",
+        "display": "Genus Betacoronavirus"
+      }, {
+        "code": "698472009",
+        "display": "Blood glucose monitoring"
+      }, {
+        "code": "698967008",
+        "display": "Material anatomical entity"
+      }, {
+        "code": "699589007",
+        "display": "Structure of anatomical cluster"
+      }, {
+        "code": "699590003",
+        "display": "Structure of anatomical compartment"
+      }, {
+        "code": "699591004",
+        "display": "Entire anatomical compartment"
+      }, {
+        "code": "699593001",
+        "display": "Structure of thoracic cavity and/or content"
+      }, {
+        "code": "70104002",
+        "display": "Upper body part structure"
+      }, {
+        "code": "71025006",
+        "display": "Dilation procedure"
+      }, {
+        "code": "713689002",
+        "display": "Repair of coronary artery"
+      }, {
+        "code": "71388002",
+        "display": "Procedure"
+      }, {
+        "code": "71651007",
+        "display": "Mammography"
+      }, {
+        "code": "719982003",
+        "display": "Process"
+      }, {
+        "code": "72410000",
+        "display": "Mediastinal structure"
+      }, {
+        "code": "727285002",
+        "display": "Entire soft tissue"
+      }, {
+        "code": "727430004",
+        "display": "Entire artery of thorax"
+      }, {
+        "code": "727499001",
+        "display": "Entire artery of mediastinum"
+      }, {
+        "code": "727604005",
+        "display": "Entire branch of thoracic aorta"
+      }, {
+        "code": "729897000",
+        "display": "Entire artery of trunk"
+      }, {
+        "code": "730658008",
+        "display": "Entire neck and chest and abdomen and pelvis"
+      }, {
+        "code": "731165006",
+        "display": "Entire breast and endocrine system"
+      }, {
+        "code": "731166007",
+        "display": "Entire lung and mediastinum"
+      }, {
+        "code": "731472001",
+        "display": "Entire anatomical cluster"
+      }, {
+        "code": "731474000",
+        "display": "Entire compartment of thorax"
+      }, {
+        "code": "731728000",
+        "display": "Entire gland of breast"
+      }, {
+        "code": "731737000",
+        "display": "Entire cardiovascular structure of trunk"
+      }, {
+        "code": "731799000",
+        "display": "Entire blood vessel of trunk"
+      }, {
+        "code": "732031009",
+        "display": "Entire systemic artery"
+      }, {
+        "code": "732034001",
+        "display": "Entire intrathoracic cardiovascular structure"
+      }, {
+        "code": "732040008",
+        "display": "Entire regional cardiovascular structure"
+      }, {
+        "code": "732061001",
+        "display": "Entire regional blood vessel"
+      }, {
+        "code": "73211009",
+        "display": "Diabetes mellitus"
+      }, {
+        "code": "732163001",
+        "display": "Entire neck and chest and abdomen"
+      }, {
+        "code": "732164007",
+        "display": "Entire chest and abdomen"
+      }, {
+        "code": "732167000",
+        "display": "Entire chest and abdomen and pelvis"
+      }, {
+        "code": "732170001",
+        "display": "Entire neck and chest"
+      }, {
+        "code": "74943008",
+        "display": "Operation on trunk"
+      }, {
+        "code": "75934005",
+        "display": "Metabolic disease"
+      }, {
+        "code": "76752008",
+        "display": "Breast structure"
+      }, {
+        "code": "769247005",
+        "display": "Abnormal immune process"
+      }, {
+        "code": "771329004",
+        "display": "Procedure on body region"
+      }, {
+        "code": "77248004",
+        "display": "Infection control procedure"
+      }, {
+        "code": "79604008",
+        "display": "Disorder of breast"
+      }, {
+        "code": "80891009",
+        "display": "Heart structure"
+      }, {
+        "code": "816094009",
+        "display": "Cross-sectional thorax"
+      }, {
+        "code": "817954004",
+        "display": "Entire thoracic cross-sectional segment of trunk"
+      }, {
+        "code": "82832008",
+        "display": "General body state finding"
+      }, {
+        "code": "840533007",
+        "display": "SARS-CoV-2"
+      }, {
+        "code": "840539006",
+        "display": "COVID-19"
+      }, {
+        "code": "84101006",
+        "display": "Human coronavirus"
+      }, {
+        "code": "846601002",
+        "display": "Structure of blood vessel of thoracic cross-sectional segment of trunk"
+      }, {
+        "code": "846651007",
+        "display": "Structure of artery of thoracic cross-sectional segment of trunk"
+      }, {
+        "code": "85756007",
+        "display": "Body tissue structure"
+      }, {
+        "code": "85828009",
+        "display": "Autoimmune disease"
+      }, {
+        "code": "868196001",
+        "display": "Subgenus Sarbecovirus"
+      }, {
+        "code": "868197005",
+        "display": "Subfamily Orthocoronavirinae"
+      }, {
+        "code": "868198000",
+        "display": "Suborder Cornidovirineae"
+      }, {
+        "code": "87784001",
+        "display": "Soft tissue"
+      }, {
+        "code": "89164003",
+        "display": "Breast lump"
+      }, {
+        "code": "91689009",
+        "display": "Body system structure"
+      }, {
+        "code": "91717005",
+        "display": "Organ part"
+      }, {
+        "code": "91722005",
+        "display": "Physical anatomical entity"
+      }, {
+        "code": "91723000",
+        "display": "Anatomical structure"
+      }, {
+        "code": "91829005",
+        "display": "Structure of body cavity and/or content"
+      } ]
+    } ]
+  }
+}

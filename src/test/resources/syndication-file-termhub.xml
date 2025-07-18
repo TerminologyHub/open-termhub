@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--  sample file generated from TermHub unit test SyndicationBuilderTest to test parsing -->
+<feed xmlns:ns2="http://ns.electronichealth.net.au/ncts/syndication/asf/extensions/1.0.0" xmlns:ns3="http://terminologyhub.com/syndication/th-extension/1.0.0">
+	<title>Terminology Hub Syndication Feed</title>
+	<entry>
+		<title>Mini version of ICD10CM for testing purposes, 2023</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/terminology/39157ab5-dc75-4a10-af4f-be13558720cf/export?format=R5" rel="related" type="application/zip"/>
+		<category term="ICD10CM_FHIRR5_ALL" label="Value Set ICD10CM R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>SANDBOX</name>
+			<uri>https://www.terminologyhub.com</uri>
+			<email>support+sandbox@terminologyhub.com</email>
+		</author>
+		<id>urn:uuid:39157ab5-dc75-4a10-af4f-be13558720cf</id>
+		<updated>2023-04-30T17:00:00-07:00</updated>
+		<published>2023-04-30T17:00:00-07:00</published>
+		<summary>FHIR Package for ICD10CM 2023</summary>
+		<ns2:contentItemIdentifier>http://hl7.org/fhir/sid/icd-10-cm</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>2023</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mini version of SNOMEDCT For testing purposes, 20240101</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/terminology/60832b1d-cada-4ae1-9075-a3567624c0df/export?format=R5" rel="related" type="application/zip"/>
+		<category term="SNOMEDCT_FHIRR5_ALL" label="Value Set SNOMEDCT R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>SANDBOX</name>
+			<uri>https://www.terminologyhub.com</uri>
+			<email>support+sandbox@terminologyhub.com</email>
+		</author>
+		<id>urn:uuid:60832b1d-cada-4ae1-9075-a3567624c0df</id>
+		<updated>2023-12-31T16:00:00-08:00</updated>
+		<published>2023-12-31T16:00:00-08:00</published>
+		<summary>FHIR Package for SNOMEDCT http://snomed.info/sct/900000000000207008/version/20240101</summary>
+		<ns2:contentItemIdentifier>http://snomed.info/sct</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>http://snomed.info/sct/900000000000207008/version/20240101</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mini version of SNOMEDCT_US For testing purposes, 20240301</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/terminology/7048e7ec-949f-47a0-ae84-629190784acb/export?format=R5" rel="related" type="application/zip"/>
+		<category term="SNOMEDCT-US_FHIRR5_ALL" label="Value Set SNOMEDCT_US R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>SANDBOX</name>
+			<uri>https://www.terminologyhub.com</uri>
+			<email>support+sandbox@terminologyhub.com</email>
+		</author>
+		<id>urn:uuid:7048e7ec-949f-47a0-ae84-629190784acb</id>
+		<updated>2024-02-29T16:00:00-08:00</updated>
+		<published>2024-02-29T16:00:00-08:00</published>
+		<summary>FHIR Package for SNOMEDCT_US http://snomed.info/sct/731000124108/version/20240301</summary>
+		<ns2:contentItemIdentifier>http://snomed.info/sct</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>http://snomed.info/sct/731000124108/version/20240301</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mini version of RXNORM for testing purposes, 04012024</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/terminology/edf4a6ee-c742-42c6-abb8-59963c93f47c/export?format=R5" rel="related" type="application/zip"/>
+		<category term="RXNORM_FHIRR5_ALL" label="Value Set RXNORM R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>SANDBOX</name>
+			<uri>https://www.terminologyhub.com</uri>
+			<email>support+sandbox@terminologyhub.com</email>
+		</author>
+		<id>urn:uuid:edf4a6ee-c742-42c6-abb8-59963c93f47c</id>
+		<updated>2024-03-31T17:00:00-07:00</updated>
+		<published>2024-03-31T17:00:00-07:00</published>
+		<summary>FHIR Package for RXNORM 04012024</summary>
+		<ns2:contentItemIdentifier>http://www.nlm.nih.gov/research/umls/rxnorm</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>04012024</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mini version of LOINC for testing purposes, 277</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/terminology/4c7e2283-39b1-4021-8692-e740cba0dcdf/export?format=R5" rel="related" type="application/zip"/>
+		<category term="LNC_FHIRR5_ALL" label="Value Set LNC R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>SANDBOX</name>
+			<uri>https://www.terminologyhub.com</uri>
+			<email>support+sandbox@terminologyhub.com</email>
+		</author>
+		<id>urn:uuid:4c7e2283-39b1-4021-8692-e740cba0dcdf</id>
+		<updated>2024-05-05T17:00:00-07:00</updated>
+		<published>2024-05-05T17:00:00-07:00</published>
+		<summary>FHIR Package for LNC 277</summary>
+		<ns2:contentItemIdentifier>http://loinc.org</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>277</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>All Allergies, 3.0</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/9ab34afc-f7d1-4a5f-adf6-5e925203024c/export?format=R5" rel="related" type="application/zip"/>
+		<category term="ALLERGY-ALL_FHIRR5_ALL" label="Value Set ALLERGY-ALL R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>TERMHUB</name>
+			<uri>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-ALL</uri>
+		</author>
+		<id>urn:uuid:9ab34afc-f7d1-4a5f-adf6-5e925203024c</id>
+		<updated>2024-12-31T16:00:00-08:00</updated>
+		<published>2024-12-31T16:00:00-08:00</published>
+		<summary>FHIR Package for ALLERGY-ALL 3.0</summary>
+		<ns2:contentItemIdentifier>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-ALL</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>3.0</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Drug Allergies, 3.0</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/b17bbe3b-432e-4b67-a46a-261b6f656e71/export?format=R5" rel="related" type="application/zip"/>
+		<category term="ALLERGY-DRUG_FHIRR5_ALL" label="Value Set ALLERGY-DRUG R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>TERMHUB</name>
+			<uri>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-DRUG</uri>
+		</author>
+		<id>urn:uuid:b17bbe3b-432e-4b67-a46a-261b6f656e71</id>
+		<updated>2024-12-31T16:00:00-08:00</updated>
+		<published>2024-12-31T16:00:00-08:00</published>
+		<summary>FHIR Package for ALLERGY-DRUG 3.0</summary>
+		<ns2:contentItemIdentifier>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-DRUG</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>3.0</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Fabric Allergies, 3.0</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/6241c3a9-bba5-47eb-873c-e718d5f48cb0/export?format=R5" rel="related" type="application/zip"/>
+		<category term="ALLERGY-FABRIC_FHIRR5_ALL" label="Value Set ALLERGY-FABRIC R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>TERMHUB</name>
+			<uri>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-FABRIC</uri>
+		</author>
+		<id>urn:uuid:6241c3a9-bba5-47eb-873c-e718d5f48cb0</id>
+		<updated>2024-12-31T16:00:00-08:00</updated>
+		<published>2024-12-31T16:00:00-08:00</published>
+		<summary>FHIR Package for ALLERGY-FABRIC 3.0</summary>
+		<ns2:contentItemIdentifier>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-FABRIC</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>3.0</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Food Allergies, 3.0</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/474fddec-4b44-4412-ae92-804d431e3b1e/export?format=R5" rel="related" type="application/zip"/>
+		<category term="ALLERGY-FOOD_FHIRR5_ALL" label="Value Set ALLERGY-FOOD R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>TERMHUB</name>
+			<uri>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-FOOD</uri>
+		</author>
+		<id>urn:uuid:474fddec-4b44-4412-ae92-804d431e3b1e</id>
+		<updated>2024-12-31T16:00:00-08:00</updated>
+		<published>2024-12-31T16:00:00-08:00</published>
+		<summary>FHIR Package for ALLERGY-FOOD 3.0</summary>
+		<ns2:contentItemIdentifier>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-FOOD</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>3.0</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Metal Allergies, 3.0</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/81d15664-33f9-4a7e-a582-a35b6fbb3463/export?format=R5" rel="related" type="application/zip"/>
+		<category term="ALLERGY-METAL_FHIRR5_ALL" label="Value Set ALLERGY-METAL R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>TERMHUB</name>
+			<uri>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-METAL</uri>
+		</author>
+		<id>urn:uuid:81d15664-33f9-4a7e-a582-a35b6fbb3463</id>
+		<updated>2024-12-31T16:00:00-08:00</updated>
+		<published>2024-12-31T16:00:00-08:00</published>
+		<summary>FHIR Package for ALLERGY-METAL 3.0</summary>
+		<ns2:contentItemIdentifier>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-METAL</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>3.0</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Allergies With Synonyms, 3.0</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/a49d90b3-7da7-416c-b971-6e25640b9603/export?format=R5" rel="related" type="application/zip"/>
+		<category term="ALLERGY-SY_FHIRR5_ALL" label="Value Set ALLERGY-SY R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>TERMHUB</name>
+			<uri>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-SY</uri>
+		</author>
+		<id>urn:uuid:a49d90b3-7da7-416c-b971-6e25640b9603</id>
+		<updated>2024-12-31T16:00:00-08:00</updated>
+		<published>2024-12-31T16:00:00-08:00</published>
+		<summary>FHIR Package for ALLERGY-SY 3.0</summary>
+		<ns2:contentItemIdentifier>https://terminologyhub.com/ALLERGY?fhir_vs=ALLERGY-SY</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>3.0</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Lateralizable body structure reference set, 20240301</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/54a8ec2b-6257-409a-8fa9-640a1aee7543/export?format=R5" rel="related" type="application/zip"/>
+		<category term="SNOMEDCT-US-723264001_FHIRR5_ALL" label="Value Set SNOMEDCT_US-723264001 R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://snomed.info/sct?fhir_vs=723264001</uri>
+		</author>
+		<id>urn:uuid:54a8ec2b-6257-409a-8fa9-640a1aee7543</id>
+		<summary>FHIR Package for SNOMEDCT_US-723264001 20240301</summary>
+		<ns2:contentItemIdentifier>http://snomed.info/sct?fhir_vs=723264001</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>20240301</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>SNOMEDCT core concepts, 20240301</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/0687e375-fada-4934-8500-80acb0957204/export?format=R5" rel="related" type="application/zip"/>
+		<category term="SNOMEDCT-US-CORE_FHIRR5_ALL" label="Value Set SNOMEDCT_US-CORE R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://snomed.info/sct?fhir_vs=900000000000207008</uri>
+		</author>
+		<id>urn:uuid:0687e375-fada-4934-8500-80acb0957204</id>
+		<summary>FHIR Package for SNOMEDCT_US-CORE 20240301</summary>
+		<ns2:contentItemIdentifier>http://snomed.info/sct?fhir_vs=900000000000207008</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>20240301</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>SNOMEDCT_US extension concepts, 20240301</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/01021b27-a529-4467-b770-aa473e7ec895/export?format=R5" rel="related" type="application/zip"/>
+		<category term="SNOMEDCT-US-EXTENSION_FHIRR5_ALL" label="Value Set SNOMEDCT_US-EXTENSION R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://snomed.info/sct?fhir_vs=731000124108</uri>
+		</author>
+		<id>urn:uuid:01021b27-a529-4467-b770-aa473e7ec895</id>
+		<summary>FHIR Package for SNOMEDCT_US-EXTENSION 20240301</summary>
+		<ns2:contentItemIdentifier>http://snomed.info/sct?fhir_vs=731000124108</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>20240301</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>SNOMEDCT model concepts, 20240301</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/subset/224a6213-4903-428b-9c3f-8783586e3075/export?format=R5" rel="related" type="application/zip"/>
+		<category term="SNOMEDCT-US-MODEL_FHIRR5_ALL" label="Value Set SNOMEDCT_US-MODEL R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://snomed.info/sct?fhir_vs=900000000000012004</uri>
+		</author>
+		<id>urn:uuid:224a6213-4903-428b-9c3f-8783586e3075</id>
+		<summary>FHIR Package for SNOMEDCT_US-MODEL 20240301</summary>
+		<ns2:contentItemIdentifier>http://snomed.info/sct?fhir_vs=900000000000012004</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>20240301</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mapset from ATC 2024_01_19_24_03_04 to RXNORM 07012024, 07012024</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/mapset/22d334b7-7eaa-42e5-a6c1-ecb148037960/export?format=R5" rel="related" type="application/zip"/>
+		<category term="ATC-RXNORM_FHIRR5_ALL" label="ATC to RXNORM R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=ATC-RXNORM</uri>
+		</author>
+		<id>urn:uuid:22d334b7-7eaa-42e5-a6c1-ecb148037960</id>
+		<updated>2024-06-30T17:00:00-07:00</updated>
+		<published>2024-06-30T17:00:00-07:00</published>
+		<summary>FHIR Package for ATC-RXNORM 07012024</summary>
+		<ns2:contentItemIdentifier>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=ATC-RXNORM</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>07012024</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mapset from CVX 20240903 to NDC 20240901, 20240903</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/mapset/9023252a-6eda-4189-94b5-5ffcde337a89/export?format=R5" rel="related" type="application/zip"/>
+		<category term="CVX-NDC_FHIRR5_ALL" label="CVX to NDC R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>CDC</name>
+			<uri>http://hl7.org/fhir/sid/cvx?fhir_cm=CVX-NDC</uri>
+		</author>
+		<id>urn:uuid:9023252a-6eda-4189-94b5-5ffcde337a89</id>
+		<updated>2024-09-02T17:00:00-07:00</updated>
+		<published>2024-09-02T17:00:00-07:00</published>
+		<summary>FHIR Package for CVX-NDC 20240903</summary>
+		<ns2:contentItemIdentifier>http://hl7.org/fhir/sid/cvx?fhir_cm=CVX-NDC</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>20240903</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mapset from CVX 20240612 to RXNORM 07012024, 07012024</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/mapset/1306a893-a529-4ef9-989e-e41d6c41f5cc/export?format=R5" rel="related" type="application/zip"/>
+		<category term="CVX-RXNORM_FHIRR5_ALL" label="CVX to RXNORM R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=CVX-RXNORM</uri>
+		</author>
+		<id>urn:uuid:1306a893-a529-4ef9-989e-e41d6c41f5cc</id>
+		<updated>2024-06-30T17:00:00-07:00</updated>
+		<published>2024-06-30T17:00:00-07:00</published>
+		<summary>FHIR Package for CVX-RXNORM 07012024</summary>
+		<ns2:contentItemIdentifier>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=CVX-RXNORM</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>07012024</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mapset from NDC 20240901 to CVX 20240903, 20240903</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/mapset/eb8260cd-8b11-4562-8e74-88d44c342c92/export?format=R5" rel="related" type="application/zip"/>
+		<category term="NDC-CVX_FHIRR5_ALL" label="NDC to CVX R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>CDC</name>
+			<uri>http://hl7.org/fhir/sid/cvx?fhir_cm=NDC-CVX</uri>
+		</author>
+		<id>urn:uuid:eb8260cd-8b11-4562-8e74-88d44c342c92</id>
+		<updated>2024-09-02T17:00:00-07:00</updated>
+		<published>2024-09-02T17:00:00-07:00</published>
+		<summary>FHIR Package for NDC-CVX 20240903</summary>
+		<ns2:contentItemIdentifier>http://hl7.org/fhir/sid/cvx?fhir_cm=NDC-CVX</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>20240903</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mapset from NDC 20240609 to RXNORM 07012024, 07012024</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/mapset/a0af6433-3542-4312-9fee-3cde127418ac/export?format=R5" rel="related" type="application/zip"/>
+		<category term="NDC-RXNORM_FHIRR5_ALL" label="NDC to RXNORM R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=NDC-RXNORM</uri>
+		</author>
+		<id>urn:uuid:a0af6433-3542-4312-9fee-3cde127418ac</id>
+		<updated>2024-06-30T17:00:00-07:00</updated>
+		<published>2024-06-30T17:00:00-07:00</published>
+		<summary>FHIR Package for NDC-RXNORM 07012024</summary>
+		<ns2:contentItemIdentifier>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=NDC-RXNORM</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>07012024</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mapset from RXNORM 07012024 to ATC 2024_01_19_24_03_04, 07012024</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/mapset/7f6ecadc-ddbd-419c-b367-2c412e0a9f36/export?format=R5" rel="related" type="application/zip"/>
+		<category term="RXNORM-ATC_FHIRR5_ALL" label="RXNORM to ATC R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=RXNORM-ATC</uri>
+		</author>
+		<id>urn:uuid:7f6ecadc-ddbd-419c-b367-2c412e0a9f36</id>
+		<updated>2024-06-30T17:00:00-07:00</updated>
+		<published>2024-06-30T17:00:00-07:00</published>
+		<summary>FHIR Package for RXNORM-ATC 07012024</summary>
+		<ns2:contentItemIdentifier>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=RXNORM-ATC</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>07012024</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mapset from RXNORM 07012024 to CVX 20240612, 07012024</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/mapset/43042494-422a-4b31-b7cd-ceacb67c4ae0/export?format=R5" rel="related" type="application/zip"/>
+		<category term="RXNORM-CVX_FHIRR5_ALL" label="RXNORM to CVX R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=RXNORM-CVX</uri>
+		</author>
+		<id>urn:uuid:43042494-422a-4b31-b7cd-ceacb67c4ae0</id>
+		<updated>2024-06-30T17:00:00-07:00</updated>
+		<published>2024-06-30T17:00:00-07:00</published>
+		<summary>FHIR Package for RXNORM-CVX 07012024</summary>
+		<ns2:contentItemIdentifier>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=RXNORM-CVX</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>07012024</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mapset from RXNORM 07012024 to NDC 20240609, 07012024</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/mapset/04e434cb-9fb7-4194-8ddb-589aad4f1dbd/export?format=R5" rel="related" type="application/zip"/>
+		<category term="RXNORM-NDC_FHIRR5_ALL" label="RXNORM to NDC R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=RXNORM-NDC</uri>
+		</author>
+		<id>urn:uuid:04e434cb-9fb7-4194-8ddb-589aad4f1dbd</id>
+		<updated>2024-06-30T17:00:00-07:00</updated>
+		<published>2024-06-30T17:00:00-07:00</published>
+		<summary>FHIR Package for RXNORM-NDC 07012024</summary>
+		<ns2:contentItemIdentifier>http://www.nlm.nih.gov/research/umls/rxnorm?fhir_cm=RXNORM-NDC</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>07012024</ns2:contentItemVersion>
+	</entry>
+	<entry>
+		<title>Mapset from SNOMEDCT_US 20240301 to ICD10CM 2024, 20240301</title>
+		<link href="https://dev.terminologyhub.com/project/sandbox/mapset/d55eef93-9a58-4587-9bfa-ee7301ed7064/export?format=R5" rel="related" type="application/zip"/>
+		<category term="SNOMEDCT-US-ICD10CM_FHIRR5_ALL" label="SNOMEDCT_US to ICD10CM R5 All" scheme="http://ns.electronichealth.net.au/ncts/syndication/asf/scheme/1.0.0"/>
+		<author>
+			<name>NLM</name>
+			<uri>http://snomed.info/sct?fhir_cm=6011000124106</uri>
+		</author>
+		<id>urn:uuid:d55eef93-9a58-4587-9bfa-ee7301ed7064</id>
+		<updated>2024-02-29T16:00:00-08:00</updated>
+		<published>2024-02-29T16:00:00-08:00</published>
+		<summary>FHIR Package for SNOMEDCT_US-ICD10CM 20240301</summary>
+		<ns2:contentItemIdentifier>http://snomed.info/sct?fhir_cm=6011000124106</ns2:contentItemIdentifier>
+		<ns2:contentItemVersion>20240301</ns2:contentItemVersion>
+	</entry>
+</feed>

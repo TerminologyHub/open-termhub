@@ -121,8 +121,9 @@ public class ConceptMapProviderR5UnitTest {
   @Test
   public void testFindConceptMaps() throws Exception {
     // Test finding all concept maps
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // StringParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -161,8 +162,9 @@ public class ConceptMapProviderR5UnitTest {
     final StringParam title = new StringParam("SNOMEDCT_US-ICD10CM");
 
     // Test finding by title
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // StringParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -200,8 +202,9 @@ public class ConceptMapProviderR5UnitTest {
     final StringParam publisher = new StringParam("SANDBOX");
 
     // When
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // StringParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -238,8 +241,9 @@ public class ConceptMapProviderR5UnitTest {
     final StringParam version = new StringParam(VERSION);
 
     // When
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // StringParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -277,8 +281,9 @@ public class ConceptMapProviderR5UnitTest {
     final UriParam sourceScopeUri = new UriParam(TEST_MAP_URL);
 
     // When
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // StringParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -321,8 +326,9 @@ public class ConceptMapProviderR5UnitTest {
     final UriParam targetSystem = new UriParam(TEST_MAP_TARGET);
 
     // When
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // StringParam date
         null, // StringParam description
         null, // StringParam identifier

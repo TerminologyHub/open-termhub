@@ -34,7 +34,7 @@ public final class ConceptMapR5Loader {
   private static final FhirContext FHIR_CONTEXT = FhirContext.forR5();
 
   /**
-   * Instantiates a new concept map R 5 loader.
+   * Instantiates a new concept map R5 loader.
    */
   private ConceptMapR5Loader() {
     // n/a

@@ -56,26 +56,6 @@ public class SyndicationIntegrationTest {
   @Value("${syndication.token}")
   private String token;
 
-  @Test
-  public void testParseSyndicationFile() throws Exception {
-    // Create syndication client
-    final SyndicationClient client = new SyndicationClient(syndicationUrl, token);
-    assertNotNull(client, "SyndicationClient should be created successfully");
-
-    // Verify syndication feed file exists
-    final File feedFile = new File("src/test/resources/syndication-file-termhub.xml");
-    assertTrue(feedFile.exists(), "Syndication feed file should exist");
-
-    // convert feed file to SyndicationFeed
-    // read file to string
-    final String feedContent = new String(Files.readAllBytes(feedFile.toPath()));
-    final SyndicationFeed feed = client.parseFeed(feedContent);
-
-    // Find a suitable entry to download
-    final SyndicationFeedEntry entry = findSuitableEntry(feed);
-    assertNotNull(entry, "Should find a suitable entry to download");
-  }
-
   /**
    * Test syndication workflow.
    *
@@ -126,7 +106,7 @@ public class SyndicationIntegrationTest {
    */
   private SyndicationFeedEntry findSuitableEntry(final SyndicationFeed feed) {
     for (final SyndicationFeedEntry entry : feed.getEntries()) {
-      if (entry.getZipLink() != null) { // && entry.getCategory() != null) {
+      if (entry.getZipLink() != null) {
         return entry;
       }
     }

@@ -218,16 +218,19 @@ public class LuceneDataAccess {
 
             LOGGER.debug("Add: object field instance of BaseModel");
             final Object refEntity = fieldValue;
-            for (final java.lang.reflect.Field subClassField : refEntity.getClass()
-                .getDeclaredFields()) {
+            Class<?> refClass = refEntity.getClass();
+            while (refClass != null) {
+              for (final java.lang.reflect.Field subClassField : refClass.getDeclaredFields()) {
 
-              subClassField.setAccessible(true);
-              final List<IndexableField> indexableFieldsList =
-                  IndexUtility.getIndexableFields(refEntity, subClassField, field.getName(), false);
-              for (final IndexableField indexableField : indexableFieldsList) {
-                document.add(indexableField);
+                subClassField.setAccessible(true);
+                final List<IndexableField> indexableFieldsList =
+                    IndexUtility.getIndexableFields(refEntity, subClassField, field.getName(), false);
+                for (final IndexableField indexableField : indexableFieldsList) {
+                  document.add(indexableField);
+                }
+
               }
-
+              refClass = refClass.getSuperclass();
             }
           }
 
