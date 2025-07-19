@@ -16,7 +16,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.wci.termhub.fhir.r4.CodeSystemProviderR4;
 import com.wci.termhub.fhir.r4.ConceptMapProviderR4;
-import com.wci.termhub.fhir.r4.FHIRTerminologyCapabilitiesProviderR4;
+import com.wci.termhub.fhir.r4.FHIRMetadataProviderR4;
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -90,7 +90,7 @@ public class HapiR4RestfulServlet extends RestfulServer {
         applicationContext.getBean(ConceptMapProviderR4.class));
     // , applicationContext.getBean(TerminologyUploadProviderR4.class)
 
-    setServerConformanceProvider(new FHIRTerminologyCapabilitiesProviderR4(this));
+    setServerConformanceProvider(new FHIRMetadataProviderR4(this));
 
     // Register interceptors
     registerInterceptor(new TermhubOpenApiInterceptorR4());
