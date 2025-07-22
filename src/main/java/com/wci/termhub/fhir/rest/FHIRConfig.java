@@ -15,10 +15,8 @@ import org.springframework.context.annotation.Configuration;
 
 import com.wci.termhub.fhir.rest.r4.HapiR4RestfulServlet;
 import com.wci.termhub.fhir.rest.r5.HapiR5RestfulServlet;
-import com.wci.termhub.fhir.r5.FHIRMetadataProviderR5;
 
 import ca.uhn.fhir.rest.api.EncodingEnum;
-import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
 
 /**
  * Servlet registration bean.
