@@ -828,7 +828,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
     final String conceptId = testConcept.getId();
     final String url = baseUrl + "/concept/" + conceptId + "/trees";
-    LOGGER.info("XXXXXXXXXXXXXXXXX Testing url - {}", url);
+    LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
