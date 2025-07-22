@@ -265,14 +265,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
       final Terminology terminology = searchService.get(id, Terminology.class);
-      // not found - 404
       if (terminology == null) {
         return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.NOT_FOUND);
       }
-      terminology.cleanForApi();
 
-      // Return the object
+      terminology.cleanForApi();
       return new ResponseEntity<>(terminology, new HttpHeaders(), HttpStatus.OK);
+
     } catch (final Exception e) {
       handleException(e, "trying to get terminology = " + id);
       return null;
@@ -399,24 +398,104 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.DELETE)
-  @Hidden
+  @Operation(summary = "Delete terminology",
+      description = "Delete a terminology and concepts, relationships and tree positions for the specified terminology id",
+      tags = {
+          "terminology"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "202", description = "Deleted Terminology"),
+      @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "id", description = "Terminology id, e.g. \"uuid\"", required = true)
+  })
   public ResponseEntity<Void> deleteTerminology(@PathVariable("id") final String id)
     throws Exception {
 
     try {
-      // Find the object
+      // Verify the object exists
       final Terminology terminology = searchService.get(id, Terminology.class);
-      // not found - 404
       if (terminology == null) {
         throw new RestException(false, 404, "Not Found", "Unable to find terminology = " + id);
       }
 
-      searchService.remove(id, Terminology.class);
-
-      // Return the object
+      TerminologyUtility.removeTerminology(searchService, id);
       return new ResponseEntity<>(HttpStatus.ACCEPTED);
+
     } catch (final Exception e) {
       handleException(e, "trying to delete terminology = " + id);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/mapset/{id:[a-f0-9].+}", method = RequestMethod.DELETE)
+  @Operation(summary = "Delete mapset",
+      description = "Delete a mapset and releated mappings for the specified mapset id", tags = {
+          "mapset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "202", description = "Deleted Mapset"),
+      @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "id", description = "Mapset id, e.g. \"uuid\"", required = true)
+  })
+  public ResponseEntity<Void> deleteMapset(@PathVariable("id") final String id) throws Exception {
+
+    try {
+      // Verify the object exists
+      final Mapset mapset = searchService.get(id, Mapset.class);
+      if (mapset == null) {
+        throw new RestException(false, 404, "Not Found", "Unable to find mapset = " + id);
+      }
+
+      TerminologyUtility.removeMapset(searchService, id);
+      return new ResponseEntity<>(HttpStatus.ACCEPTED);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to delete mapset = " + id);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/subset/{id:[a-f0-9].+}", method = RequestMethod.DELETE)
+  @Operation(summary = "Delete subset/value set",
+      description = "Delete a subset/value set and related subset members for the specified subset id",
+      tags = {
+          "subset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "202", description = "Deleted Subset"),
+      @ApiResponse(responseCode = "404", description = "Not Found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "id", description = "Subset id, e.g. \"uuid\"", required = true)
+  })
+  public ResponseEntity<Void> deleteSubset(@PathVariable("id") final String id) throws Exception {
+
+    try {
+      // Verify the object exists
+      final Subset subset = searchService.get(id, Subset.class);
+      if (subset == null) {
+        throw new RestException(false, 404, "Not Found", "Unable to find subset = " + id);
+      }
+
+      TerminologyUtility.removeSubset(searchService, id);
+      return new ResponseEntity<>(HttpStatus.ACCEPTED);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to delete subset = " + id);
       return null;
     }
   }
@@ -2257,14 +2336,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
       final Mapset mapset = searchService.get(id, Mapset.class);
-      // not found - 404
       if (mapset == null) {
-        throw new RestException(false, 404, "Not Found", "Unable to find mapset for " + id);
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.NOT_FOUND);
       }
       mapset.cleanForApi();
-
-      // Return the object
       return new ResponseEntity<>(mapset, new HttpHeaders(), HttpStatus.OK);
+
     } catch (final Exception e) {
       handleException(e, "trying to get mapset = " + id);
       return null;
@@ -2385,15 +2462,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
       final Subset subset = searchService.get(id, Subset.class);
-      // not found - 404
       if (subset == null) {
-        throw new RestException(false, 404, "Not Found", "Unable to find subset for " + id);
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.NOT_FOUND);
       }
-
       subset.cleanForApi();
-
-      // Return the object
       return new ResponseEntity<>(subset, new HttpHeaders(), HttpStatus.OK);
+
     } catch (final Exception e) {
       handleException(e, "trying to get subset = " + id);
       return null;
