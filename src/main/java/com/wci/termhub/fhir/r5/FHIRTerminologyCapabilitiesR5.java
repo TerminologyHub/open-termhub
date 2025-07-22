@@ -62,7 +62,7 @@ public class FHIRTerminologyCapabilitiesR5 extends TerminologyCapabilities
    */
   public FHIRTerminologyCapabilitiesR5 withDefaults(final HttpServletRequest request,
     final RequestDetails requestDetails) {
-    setName("OPENTERMHUBTerminologyCapabilities");
+    setName("Open Termhub R5 Terminology Capabilities");
     setStatus(Enumerations.PublicationStatus.DRAFT);
     setTitle("Open Termhub  R5 Terminology Capability Statement");
     final String version = String.valueOf(PropertyUtility.getProperties().get("server.version"));
@@ -73,7 +73,7 @@ public class FHIRTerminologyCapabilitiesR5 extends TerminologyCapabilities
             + " capabilities.");
     setKind(Enumerations.CapabilityStatementKind.CAPABILITY);
     setSoftware(
-        new TerminologyCapabilitiesSoftwareComponent().setName("TERMHUB").setVersion(version));
+        new TerminologyCapabilitiesSoftwareComponent().setName("OPEN TERMHUB").setVersion(version));
     this.setExperimental(true);
     this.setPublisher("TERMHUB");
     final Meta meta = new Meta();

@@ -24,6 +24,7 @@ import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationDefinition;
+import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.StringType;
 import org.slf4j.Logger;
@@ -61,13 +62,17 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
    */
   private static Logger logger = LoggerFactory.getLogger(FHIRMetadataProviderR4.class);
 
+  /** The terminology capabilities R4. */
+  private FHIRTerminologyCapabilitiesR4 terminologyCapabilitiesR4;
+
   /**
-   * Instantiates a new FHIR terminology capabilities provider.
+   * Sets the terminology capabilities R4.
    *
-   * @param theServer the server
+   * @param terminologyCapabilitiesR4 the new terminology capabilities R4
    */
-  public FHIRMetadataProviderR4(final RestfulServer theServer) {
-    super(theServer);
+  public void setTerminologyCapabilitiesR4(
+    final FHIRTerminologyCapabilitiesR4 terminologyCapabilitiesR4) {
+    this.terminologyCapabilitiesR4 = terminologyCapabilitiesR4;
   }
 
   /**
@@ -95,6 +100,15 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
   }
 
   /**
+   * Instantiates a new FHIR terminology capabilities provider.
+   *
+   * @param theServer the server
+   */
+  public FHIRMetadataProviderR4(final RestfulServer theServer) {
+    super(theServer);
+  }
+
+  /**
    * Gets the metadata resource.
    *
    * @param request the request
@@ -112,10 +126,8 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
       // Check if the request is for the terminology mode
       // TerminologyCapabilities
       if (mode != null && "terminology".equals(mode)) {
-
-        return new FHIRTerminologyCapabilitiesR4().withDefaults(request, requestDetails);
+        return terminologyCapabilitiesR4.withDefaults(request, requestDetails);
       }
-
       // Check if the request is for general CapabilityStatement
       else {
         final IBaseConformance ibc = super.getServerConformance(request, requestDetails);
@@ -128,11 +140,11 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
             String.valueOf(PropertyUtility.getProperties().get("server.version"));
         capabilityStatement
             .setSoftware(new CapabilityStatement.CapabilityStatementSoftwareComponent()
-                .setName("OPENTERMHUB").setVersion(version).setReleaseDate(new Date()));
+                .setName("OPEN TERMHUB").setVersion(version).setReleaseDate(new Date()));
 
         capabilityStatement.setUrl("https://www.terminologyhub.com/fhir/4/metadata");
         capabilityStatement.setVersion(version);
-        capabilityStatement.setName("OPENTERMHUBFHIRTerminologyServer");
+        capabilityStatement.setName("Open Termhub R4 FHIR Terminology Server");
         capabilityStatement.setTitle("Open Termhub R4 FHIR Terminology Server");
         capabilityStatement.setStatus(Enumerations.PublicationStatus.ACTIVE);
         capabilityStatement.setExperimental(true);
@@ -171,8 +183,8 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
-      throw FhirUtilityR4.exception("Failed to find metadata",
-          org.hl7.fhir.r4.model.OperationOutcome.IssueType.EXCEPTION, 500);
+      throw FhirUtilityR4.exception("Failed to find metadata", OperationOutcome.IssueType.EXCEPTION,
+          500);
     }
   }
 

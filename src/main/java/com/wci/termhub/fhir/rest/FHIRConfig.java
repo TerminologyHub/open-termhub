@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.wci.termhub.fhir.rest.r4.HapiR4RestfulServlet;
 import com.wci.termhub.fhir.rest.r5.HapiR5RestfulServlet;
+import com.wci.termhub.fhir.r5.FHIRMetadataProviderR5;
 
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
@@ -40,9 +41,6 @@ public class FHIRConfig {
     hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
     hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
 
-    final ResponseHighlighterInterceptor interceptor = new ResponseHighlighterInterceptor();
-    hapiServlet.registerInterceptor(interceptor);
-
     return servletRegistrationBean;
   }
 
@@ -61,10 +59,6 @@ public class FHIRConfig {
     hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
     hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
 
-    final ResponseHighlighterInterceptor interceptor = new ResponseHighlighterInterceptor();
-    hapiServlet.registerInterceptor(interceptor);
-
     return servletRegistrationBean;
   }
-
 }

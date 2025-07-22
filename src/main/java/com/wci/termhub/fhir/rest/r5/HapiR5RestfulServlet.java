@@ -17,6 +17,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import com.wci.termhub.fhir.r5.CodeSystemProviderR5;
 import com.wci.termhub.fhir.r5.ConceptMapProviderR5;
 import com.wci.termhub.fhir.r5.FHIRMetadataProviderR5;
+import com.wci.termhub.fhir.r5.FHIRTerminologyCapabilitiesR5;
 import com.wci.termhub.fhir.r5.ValueSetProviderR5;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -83,9 +84,12 @@ public class HapiR5RestfulServlet extends RestfulServer {
     setResourceProviders(applicationContext.getBean(CodeSystemProviderR5.class),
         applicationContext.getBean(ValueSetProviderR5.class),
         applicationContext.getBean(ConceptMapProviderR5.class));
-    // , applicationContext.getBean(TerminologyUploadProviderR5.class));
 
-    setServerConformanceProvider(new FHIRMetadataProviderR5(this));
+    final FHIRTerminologyCapabilitiesR5 terminologyCapabilitiesR5 =
+        applicationContext.getBean(FHIRTerminologyCapabilitiesR5.class);
+    final FHIRMetadataProviderR5 metadataProvider = new FHIRMetadataProviderR5(this);
+    metadataProvider.setTerminologyCapabilitiesR5(terminologyCapabilitiesR5);
+    setServerConformanceProvider(metadataProvider);
 
     // Register interceptors
     registerInterceptor(new TermhubOpenApiInterceptorR5());

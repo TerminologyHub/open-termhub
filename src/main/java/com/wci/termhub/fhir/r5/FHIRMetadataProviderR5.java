@@ -62,6 +62,19 @@ public class FHIRMetadataProviderR5 extends ServerCapabilityStatementProvider {
    */
   private static Logger logger = LoggerFactory.getLogger(FHIRMetadataProviderR5.class);
 
+  /** The terminology capabilities R5. */
+  private FHIRTerminologyCapabilitiesR5 terminologyCapabilitiesR5;
+
+  /**
+   * Sets the terminology capabilities R5.
+   *
+   * @param terminologyCapabilitiesR5 the new terminology capabilities R5
+   */
+  public void setTerminologyCapabilitiesR5(
+    final FHIRTerminologyCapabilitiesR5 terminologyCapabilitiesR5) {
+    this.terminologyCapabilitiesR5 = terminologyCapabilitiesR5;
+  }
+
   /**
    * Instantiates a new FHIR terminology capabilities provider.
    *
@@ -113,10 +126,8 @@ public class FHIRMetadataProviderR5 extends ServerCapabilityStatementProvider {
       // Check if the request is for the terminology mode
       // TerminologyCapabilities
       if (mode != null && "terminology".equals(mode)) {
-
-        return new FHIRTerminologyCapabilitiesR5().withDefaults(request, requestDetails);
+        return terminologyCapabilitiesR5.withDefaults(request, requestDetails);
       }
-
       // Check if the request is for general CapabilityStatement
       else {
         final IBaseConformance ibc = super.getServerConformance(request, requestDetails);
@@ -129,11 +140,11 @@ public class FHIRMetadataProviderR5 extends ServerCapabilityStatementProvider {
             String.valueOf(PropertyUtility.getProperties().get("server.version"));
         capabilityStatement
             .setSoftware(new CapabilityStatement.CapabilityStatementSoftwareComponent()
-                .setName("OPENTERMHUB").setVersion(version).setReleaseDate(new Date()));
+                .setName("OPEN TERMHUB").setVersion(version).setReleaseDate(new Date()));
 
         capabilityStatement.setUrl("https://www.terminologyhub.com/fhir/5/metadata");
         capabilityStatement.setVersion(version);
-        capabilityStatement.setName("OPENTERMHUBFHIRTerminologyServer");
+        capabilityStatement.setName("Open Termhub R5 FHIR Terminology Server");
         capabilityStatement.setTitle("Open Termhub R5 FHIR Terminology Server");
         capabilityStatement.setStatus(Enumerations.PublicationStatus.ACTIVE);
         capabilityStatement.setExperimental(true);
