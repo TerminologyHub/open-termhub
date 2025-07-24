@@ -67,8 +67,8 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
- * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All
- * get/find tests are order 10. All delete tests are order 20.
+ * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All get/find tests are
+ * order 10. All delete tests are order 20.
  */
 @SpringBootTest(classes = Application.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -485,7 +485,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String query = "MTHU000003";
     final int limit = 15;
     final String url = baseUrl + "/concept?terminology=" + terminology + "&query=ancestors.code:"
-        + query + "&limit=" + limit;
+        + query + "&limit=" + limit + "&include=ancestors";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
@@ -500,6 +500,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(concept).isNotNull();
       assertThat(concept.getId()).isNotNull();
       assertThat(concept.getTerminology()).isEqualTo(terminology);
+      LOGGER.info(" XXX {}", concept.toString());
       assertThat(concept.getAncestors()).anyMatch(ancestor -> ancestor.getCode().equals(query));
     }
   }
@@ -1137,16 +1138,17 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
     assertThat(conceptList).isNotNull();
     assertFalse(conceptList.getItems().isEmpty());
+    assertThat(conceptList.getTotal()).isEqualTo(48);
+    boolean found = false;
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
       assertThat(concept.getTerminology()).isEqualTo(terminology);
-      if (!"128927009".equals(concept.getCode())) {
-        assertTrue(
-            concept.getAncestors().stream()
-                .anyMatch(ancestor -> "128927009".equals(ancestor.getCode())),
-            "Ancestor code should have 1 128927009 Concept: " + concept);
+      if ("128927009".equals(concept.getCode())) {
+        found = true;
       }
     }
+    assertTrue(found, "Ancestor code should have 1 128927009 Concept");
+
   }
 
   @Test

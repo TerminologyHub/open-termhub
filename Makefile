@@ -25,6 +25,10 @@ scan: ## scan for vulnerabilities in dependencies
 	grep CRITICAL report.html
 	/bin/rm -rf gradle.lockfile
 	
+scandocker:
+	trivy image $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
+	grep CRITICAL report.html
+
 fullscan: ## scan for vulnerabilities in dependencies
 	/bin/rm -rf gradle/dependency-locks
 	./gradlew dependencies --write-locks
@@ -32,13 +36,13 @@ fullscan: ## scan for vulnerabilities in dependencies
 	grep CRITICAL report.html
 	/bin/rm -rf gradle.lockfile
 
-test: ## Run all tests
+test: clean ## Run all tests
 	./gradlew test spotbugsMain spotbugsTest
 
-test-r4: ## Run R4 tests only
+test-r4: clean ## Run R4 tests only
 	./gradlew testR4
 
-test-r5: ## Run R5 tests only
+test-r5: clean ## Run R5 tests only
 	./gradlew testR5
 
 run: ## Run the server
@@ -54,10 +58,6 @@ docker: ## Build the docker image and tag with version and latest
 	docker build --no-cache-filter=gradle-build -t $(SERVICE) .
 	docker tag $(SERVICE) $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 	docker tag $(SERVICE) $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
-
-scandocker:
-	trivy image $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
-	grep CRITICAL report.html
 
 version:
 	@echo $(APP_VERSION)
