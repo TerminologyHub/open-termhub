@@ -618,6 +618,17 @@ public class TermhubOpenApiInterceptorR5 {
       capabilitiesOperation.setSummary("Fetch the server FHIR CapabilityStatement");
       addFhirResourceResponse(ctx, openApi, capabilitiesOperation, "CapabilityStatement");
 
+      final Parameter modeParameter = new Parameter();
+      modeParameter.setName("mode");
+      modeParameter.setIn("query");
+      modeParameter.setDescription(
+          "The mode parameter. Use 'terminology' to get TerminologyCapabilities instead of CapabilityStatement");
+      modeParameter.setRequired(false);
+      modeParameter.setSchema(new Schema<>().type("string"));
+      modeParameter.setStyle(Parameter.StyleEnum.SIMPLE);
+      modeParameter.setExample("terminology");
+      capabilitiesOperation.addParametersItem(modeParameter);
+
       final Set<CapabilityStatement.SystemRestfulInteraction> systemInteractions =
           cs.getRestFirstRep().getInteraction().stream().map(t -> t.getCode())
               .collect(Collectors.toSet());

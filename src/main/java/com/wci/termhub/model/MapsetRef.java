@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 
 /**
  * Represents a mapset reference. This serves as a pointer from a project to an actual mapset. It
@@ -70,11 +71,6 @@ public class MapsetRef extends TerminologyRef {
     populateFrom(other);
   }
 
-  /**
-   * Populate from.
-   *
-   * @param other the other
-   */
   /* see superclass */
   @Override
   public void populateFrom(final TerminologyRef other) {
@@ -94,11 +90,6 @@ public class MapsetRef extends TerminologyRef {
     }
   }
 
-  /**
-   * Patch from.
-   *
-   * @param other the other
-   */
   /* see superclass */
   @Override
   public void patchFrom(final TerminologyRef other) {
@@ -129,14 +120,10 @@ public class MapsetRef extends TerminologyRef {
     }
   }
 
-  /**
-   * Gets the id.
-   *
-   * @return the id
-   */
   /* see superclass */
   @Override
-  @Schema(description = "Unique identifier", required = false, format = "uuid")
+  @Schema(description = "Unique identifier", requiredMode = RequiredMode.NOT_REQUIRED,
+      format = "uuid")
   public String getId() {
     return super.getId();
   }
@@ -185,6 +172,7 @@ public class MapsetRef extends TerminologyRef {
    *
    * @return the to publisher
    */
+  @Schema(description = "Publisher that maps in this set are mapped from, " + "e.g. \"SNOMEDCT\"")
   public String getToPublisher() {
     return toPublisher;
   }
@@ -243,6 +231,7 @@ public class MapsetRef extends TerminologyRef {
    *
    * @return the from publisher
    */
+  @Schema(description = "Publisher that maps in this set are mapped from, " + "e.g. \"SNOMEDCT\"")
   public String getFromPublisher() {
     return fromPublisher;
   }

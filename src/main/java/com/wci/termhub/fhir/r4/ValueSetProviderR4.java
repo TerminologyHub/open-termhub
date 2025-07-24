@@ -55,20 +55,28 @@ import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.StringUtility;
+import com.wci.termhub.util.SubsetLoaderUtil;
 import com.wci.termhub.util.TerminologyUtility;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
+import ca.uhn.fhir.rest.annotation.Create;
+import ca.uhn.fhir.rest.annotation.Delete;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
+import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
@@ -106,13 +114,22 @@ public class ValueSetProviderR4 implements IResourceProvider {
     @IdParam final IdType id) throws Exception {
 
     try {
-
+      // 1. Check implicit code system ValueSets
       final ValueSet set = getImplicitCodeSystemValueSets().stream()
           .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
       if (set != null) {
         return set;
       }
-
+      // 2. Check loaded ValueSets (Subset)
+      final Subset subset = searchService.get(id.getIdPart(), Subset.class);
+      if (subset != null && "ValueSet".equals(subset.getCategory())) {
+        // Fetch members
+        final SearchParameters memberParams = new SearchParameters();
+        memberParams.getFilters().put("subset.code", subset.getCode());
+        final List<SubsetMember> members =
+            searchService.findAll(memberParams, SubsetMember.class).getItems();
+        return SubsetLoaderUtil.toR4ValueSet(subset, members);
+      }
       throw FhirUtilityR4.exception(
           "Value set not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
           HttpServletResponse.SC_NOT_FOUND);
@@ -176,10 +193,11 @@ public class ValueSetProviderR4 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return")
-    @OptionalParam(name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page")
-    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
+    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
+        name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
+        name = "_offset") final NumberParam offset)
+    throws Exception {
 
     try {
 
@@ -231,6 +249,55 @@ public class ValueSetProviderR4 implements IResourceProvider {
           continue;
         }
 
+        list.add(set);
+      }
+
+      // --- Add loaded ValueSets (Subset/SubsetMember) ---
+      // Find all Subset where category = "ValueSet"
+      final SearchParameters subsetParams = new SearchParameters();
+      subsetParams.getFilters().put("category", "ValueSet");
+      final List<Subset> subsets = searchService.findAll(subsetParams, Subset.class).getItems();
+      for (final Subset subset : subsets) {
+        // Fetch SubsetMembers for this subset
+        final SearchParameters memberParams = new SearchParameters();
+        memberParams.getFilters().put("subset.code", subset.getCode());
+        final int pageSize = (count != null) ? count.getValue().intValue() : 10;
+        final int pageOffset = (offset != null) ? offset.getValue().intValue() : 0;
+        memberParams.setLimit(pageSize);
+        memberParams.setOffset(pageOffset);
+        final List<SubsetMember> members =
+            searchService.findAll(memberParams, SubsetMember.class).getItems();
+        final ValueSet set = SubsetLoaderUtil.toR4ValueSet(subset, members);
+        // Apply the same filtering as above
+        if ((id != null && !id.getValue().equals(set.getId()))
+            || (url != null && !url.getValue().equals(set.getUrl()))) {
+          continue;
+        }
+        if (date != null && !FhirUtility.compareDate(date, set.getDate())) {
+          logger.info("  SKIP date mismatch = {}", set.getDate());
+          continue;
+        }
+        if (description != null && !FhirUtility.compareString(description, set.getDescription())) {
+          logger.info("  SKIP description mismatch = {}", set.getDescription());
+          continue;
+        }
+        if (name != null && !FhirUtility.compareString(name, set.getName())) {
+          logger.info("  SKIP name mismatch = {}", set.getName());
+          continue;
+        }
+        if (publisher != null && !FhirUtility.compareString(publisher, set.getPublisher())) {
+          logger.info("  SKIP publisher mismatch = {}", set.getPublisher());
+          continue;
+        }
+        if (title != null && !FhirUtility.compareString(title, set.getTitle())) {
+          logger.info("  SKIP title mismatch = {}", set.getTitle());
+          continue;
+        }
+        if (version != null && !FhirUtility.compareString(version, set.getVersion())) {
+          logger.info("  SKIP version mismatch = {}", set.getVersion());
+          continue;
+        }
+        // No code filter for loaded sets
         list.add(set);
       }
 
@@ -503,6 +570,116 @@ public class ValueSetProviderR4 implements IResourceProvider {
   }
 
   /**
+   * Loads a ValueSet from a FHIR R4 ValueSet resource and persists it as a
+   * Subset and SubsetMembers. Example usage: POST /ValueSet/$load with a FHIR
+   * R4 ValueSet resource in the body.
+   *
+   * @param valueSet the FHIR R4 ValueSet resource
+   * @return Parameters resource with the new Subset code
+   * @throws Exception if loading fails
+   */
+  @Operation(name = "$load", idempotent = true)
+  public Parameters loadValueSet(
+    @OperationParam(name = "valueSet", min = 1, max = 1) final ValueSet valueSet) throws Exception {
+    if (valueSet == null) {
+      throw FhirUtilityR4.exception("Missing valueSet parameter", IssueType.INVALID, 400);
+    }
+    final String subsetId = SubsetLoaderUtil.loadSubset(searchService,
+        FhirContext.forR4().newJsonParser().encodeResourceToString(valueSet), false);
+    final Parameters out = new Parameters();
+    out.addParameter().setName("subsetId").setValue(new StringType(subsetId));
+    return out;
+  }
+
+  /**
+   * Creates a ValueSet.
+   *
+   * @param valueSet the FHIR R4 ValueSet resource
+   * @return MethodOutcome with the new Subset code
+   * @throws Exception if creating fails
+   */
+  @Create
+  public MethodOutcome createValueSet(@ResourceParam final ValueSet valueSet) throws Exception {
+
+    try {
+
+      final String subsetId = SubsetLoaderUtil.loadSubset(searchService,
+          FhirContext.forR4().newJsonParser().encodeResourceToString(valueSet), true);
+
+      valueSet.getCompose().getInclude().clear();
+      valueSet.getCompose().getExclude().clear();
+
+      final MethodOutcome out = new MethodOutcome();
+      final IdType id = new IdType("ValueSet", subsetId);
+      out.setId(id);
+      out.setResource(valueSet);
+      out.setCreated(true);
+
+      final OperationOutcome outcome = new OperationOutcome();
+      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+          .setDiagnostics("ValueSet created. Subset ID: " + subsetId);
+
+      out.setOperationOutcome(outcome);
+
+      return out;
+
+    } catch (final Exception e) {
+      logger.error("Unexpected error creating value set", e);
+      throw FhirUtilityR4.exception("Failed to create value set: " + e.getMessage(),
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Deletes the value set.
+   *
+   * @param request the request
+   * @param details the details
+   * @param id the id
+   * @return the method outcome
+   * @throws Exception the exception
+   */
+  @Delete
+  public MethodOutcome deleteValueSet(final HttpServletRequest request,
+    final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
+
+    try {
+      if (id == null || id.getIdPart() == null) {
+        throw FhirUtilityR4.exception("Value Set ID required for delete", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+
+      // Check if it's an implicit code system ValueSet (these cannot be
+      // deleted)
+      final ValueSet implicitSet = getImplicitCodeSystemValueSets().stream()
+          .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
+      if (implicitSet != null) {
+        throw FhirUtilityR4.exception(
+            "Cannot delete implicit value set for code system = " + id.getIdPart(),
+            IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+      }
+
+      // Check if it's a loaded ValueSet (Subset)
+      final Subset subset = searchService.get(id.getIdPart(), Subset.class);
+      if (subset == null || !"ValueSet".equals(subset.getCategory())) {
+        throw FhirUtilityR4.exception("Value set not found = " + id.getIdPart(), IssueType.NOTFOUND,
+            HttpServletResponse.SC_NOT_FOUND);
+      }
+
+      TerminologyUtility.removeSubset(searchService, subset.getId());
+      return new MethodOutcome();
+
+    } catch (final FHIRServerResponseException e) {
+      throw e;
+    } catch (final Exception e) {
+      logger.error("Unexpected error deleting value set", e);
+      throw FhirUtilityR4.exception("Failed to delete value set: " + e.getMessage(),
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
    * Gets the implicit code system value sets.
    *
    * @return the implicit code system value sets
@@ -554,7 +731,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
     for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
       final ValueSet vs = getImplicitCodeSystemValueSet(terminology);
 
-      // Skip non-matching
       // Skip non-matching
       if ((id != null && !id.getIdPart().equals(vs.getId()))
           || (url != null && !url.getValue().equals(vs.getUrl())

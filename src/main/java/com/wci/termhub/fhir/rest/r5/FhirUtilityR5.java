@@ -402,7 +402,8 @@ public final class FhirUtilityR5 {
    * Recover code.
    *
    * @param code the code
-   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the string
+   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the
+   *          string
    * @return the string
    */
   public static String recoverCode(final CodeType code, final Coding coding) {
@@ -525,7 +526,7 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * To R 4.
+   * To R5.
    *
    * @param codeSystem the code system
    * @param concept the concept
@@ -682,7 +683,7 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * To R 4.
+   * To R5.
    *
    * @param codeSystem the code system
    * @param concept the concept
@@ -725,7 +726,7 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * To R 4 value set.
+   * To R5 value set.
    *
    * @param cs the code system
    * @return the value set
@@ -750,7 +751,7 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * To R 4 subsumes.
+   * To R5 subsumes.
    *
    * @param outcome the outcome
    * @param terminology the terminology
@@ -782,7 +783,7 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * To R 4.
+   * To R5.
    *
    * @param terminology the terminology
    * @return the coding
@@ -832,7 +833,7 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * To R 5.
+   * To R5.
    *
    * @param mapset the mapset
    * @return the concept map

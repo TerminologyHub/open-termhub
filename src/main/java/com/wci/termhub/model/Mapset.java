@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 
 /**
  * Represents an explicit collection of mappings from one terminology to another.
@@ -82,17 +83,9 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
   @Field(type = FieldType.Keyword)
   private String terminology;
 
-  /** The index name. */
-  @Field(type = FieldType.Keyword)
-  private String indexName;
-
   /** The description. */
   @Field(type = FieldType.Object, enabled = false)
   private String description;
-
-  /** The release date formatted as yyyy-MM-dd. */
-  @Field(type = FieldType.Keyword)
-  private String releaseDate;
 
   /** The attributes. */
   @Field(type = FieldType.Object)
@@ -145,11 +138,7 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 
     if (other instanceof Mapset) {
       final Mapset mapset = (Mapset) other;
-
       description = mapset.getDescription();
-      indexName = mapset.getIndexName();
-      releaseDate = mapset.getReleaseDate();
-
       license = mapset.getLicense();
       terminology = mapset.getTerminology();
       attributes = new HashMap<>(mapset.getAttributes());
@@ -165,12 +154,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
       final Mapset mapset = (Mapset) other;
       if (mapset.getDescription() != null) {
         description = mapset.getDescription();
-      }
-      if (mapset.getIndexName() != null) {
-        indexName = mapset.getIndexName();
-      }
-      if (mapset.getReleaseDate() != null) {
-        releaseDate = mapset.getReleaseDate();
       }
       if (mapset.getLicense() != null) {
         license = mapset.getLicense();
@@ -190,7 +173,7 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 
   /* see superclass */
   @Override
-  @Schema(description = "Unique identifier", required = true, format = "uuid")
+  @Schema(description = "Unique identifier", requiredMode = RequiredMode.REQUIRED, format = "uuid")
   public String getId() {
     return super.getId();
   }
@@ -212,44 +195,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
    */
   public void setDescription(final String description) {
     this.description = description;
-  }
-
-  /**
-   * Gets the index name.
-   *
-   * @return the index name
-   */
-  @Schema(hidden = true)
-  public String getIndexName() {
-    return indexName;
-  }
-
-  /**
-   * Sets the index name.
-   *
-   * @param indexName the new index name
-   */
-  public void setIndexName(final String indexName) {
-    this.indexName = indexName;
-  }
-
-  /**
-   * Returns the release date.
-   *
-   * @return the release date
-   */
-  @Schema(description = "YYYY-MM-DD rendering of the release date")
-  public String getReleaseDate() {
-    return releaseDate;
-  }
-
-  /**
-   * Sets the release date.
-   *
-   * @param releaseDate the release date
-   */
-  public void setReleaseDate(final String releaseDate) {
-    this.releaseDate = releaseDate;
   }
 
   /* see superclass */
@@ -325,11 +270,10 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
     cleanForApi();
   }
 
-
   /* see superclass */
   @Override
   public void cleanForApi() {
-    indexName = null;
+    // empty
   }
 
   /* see superclass */

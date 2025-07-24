@@ -40,10 +40,12 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
+import com.wci.termhub.util.TerminologyUtility;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
+import ca.uhn.fhir.rest.annotation.Delete;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
@@ -546,6 +548,43 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
       throw FhirUtilityR5.exception("Failed to translate concept map",
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Deletes the concept map.
+   *
+   * @param request the request
+   * @param details the details
+   * @param id the id
+   * @return the method outcome
+   * @throws Exception the exception
+   */
+  @Delete
+  public MethodOutcome deleteConceptMap(final HttpServletRequest request,
+    final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
+
+    try {
+      if (id == null || id.getIdPart() == null) {
+        throw FhirUtilityR5.exception("Concept Map ID required for delete", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+
+      final Mapset mapset = searchService.get(id.getIdPart(), Mapset.class);
+      if (mapset == null) {
+        throw FhirUtilityR5.exception("Concept map not found = " + id.getIdPart(),
+            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+      }
+
+      TerminologyUtility.removeMapset(searchService, mapset.getId());
+      return new MethodOutcome();
+
+    } catch (final FHIRServerResponseException e) {
+      throw e;
+    } catch (final Exception e) {
+      logger.error("Unexpected error deleting concept map", e);
+      throw FhirUtilityR5.exception("Failed to delete concept map: " + e.getMessage(),
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }

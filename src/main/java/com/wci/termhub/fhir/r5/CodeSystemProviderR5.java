@@ -48,6 +48,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
+import ca.uhn.fhir.rest.annotation.Delete;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
@@ -800,10 +801,44 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   }
 
   /**
-   * Gets the resource type.
+   * Deletes the code system.
    *
-   * @return the resource type
+   * @param request the request
+   * @param details the details
+   * @param id the id
+   * @return the method outcome
+   * @throws Exception the exception
    */
+  @Delete
+  public MethodOutcome deleteCodeSystem(final HttpServletRequest request,
+    final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
+
+    try {
+      if (id == null || id.getIdPart() == null) {
+        throw FhirUtilityR5.exception("Code system ID required for delete", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+
+      logger.info("Delete code system with ID: {}", id.getIdPart());
+
+      final Terminology terminology = searchService.get(id.getIdPart(), Terminology.class);
+      if (terminology == null) {
+        throw FhirUtilityR5.exception("Code system not found = " + id.getIdPart(),
+            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+      }
+
+      TerminologyUtility.removeTerminology(searchService, terminology.getId());
+      return new MethodOutcome();
+
+    } catch (final FHIRServerResponseException e) {
+      throw e;
+    } catch (final Exception e) {
+      logger.error("Unexpected error deleting code system", e);
+      throw FhirUtilityR5.exception("Failed to delete code system: " + e.getMessage(),
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+  }
+
   /* see superclass */
   @Override
   public Class<CodeSystem> getResourceType() {
