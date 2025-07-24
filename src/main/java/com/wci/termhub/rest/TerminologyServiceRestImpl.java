@@ -1032,7 +1032,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "semanticTypes" : include);
-      final List<Terminology> tlist = lookupTerminologies(terminology);
+      final List<Terminology> tlist = lookupTerminologies(terminology, false);
       final String[] array = ModelUtility.nvl(queries, "").split("\n");
 
       final List<ResultListConcept> list = new ArrayList<>();
@@ -2426,37 +2426,57 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /* see superclass */
   @Override
   @RequestMapping(value = "/subset", method = RequestMethod.GET)
-  @Operation(summary = "Get subsets", description = "Gets subset objects.", tags = {
-      "subset"
-  })
+  @Operation(summary = "Find subsets", description = "Finds subsets matching specified criteria.",
+      tags = {
+          "mapset"
+      })
   @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "Result list of subsets"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
-      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "200", description = "Result list of matching subsets"),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
   })
-  public ResponseEntity<ResultListSubset> getSubsets() throws Exception {
+  @Parameters({
+      @Parameter(name = "query", description = "Search text", required = false,
+          schema = @Schema(implementation = String.class)),
+      @Parameter(name = "offset", description = "Start index for search results", required = false,
+          schema = @Schema(implementation = Integer.class), example = "0"),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+      @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "ascending",
+          description = "<code>true</code> for ascending, <code>false</code> for descending,"
+              + " <code>null</code> for unspecified",
+          required = false, schema = @Schema(implementation = Boolean.class))
+  })
+  public ResponseEntity<ResultListSubset> findSubsets(
+    @RequestParam(name = "query", required = false) final String query,
+    @RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
+    @RequestParam(name = "sort", required = false) final String sort,
+    @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
 
     try {
 
-      final List<Subset> subsets =
-          lookupSubsetMap().values().stream().sorted(Comparator.comparing(Subset::getReleaseDate,
-              Comparator.nullsFirst(Comparator.naturalOrder()))).toList();
+      // limit return objects to 1000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      final ResultListSubset resultListSubset = new ResultListSubset();
-      resultListSubset.getItems().addAll(subsets);
-      resultListSubset.setTotal(resultListSubset.getItems().size());
+      // Limit to loaded mapsets
+      final SearchParameters searchParams =
+          new SearchParameters("*:*" + ((query == null || query.isEmpty()) ? "" : " AND " + query),
+              offset, maxLimit, sort, ascending);
+      final ResultList<Subset> list = searchService.find(searchParams, Subset.class);
+      list.setParameters(searchParams);
+      list.getItems().forEach(t -> t.cleanForApi());
 
-      // Return the object
-      return new ResponseEntity<>(resultListSubset, new HttpHeaders(), HttpStatus.OK);
+      return new ResponseEntity<>(new ResultListSubset(list), new HttpHeaders(), HttpStatus.OK);
 
     } catch (final Exception e) {
-      handleException(e, "trying to get subsets");
+      handleException(e, "trying to find subsets");
       return null;
     }
-
   }
 
   /* see superclass */
@@ -2599,7 +2619,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    */
   private Terminology lookupTerminology(final String terminology) throws Exception {
 
-    final List<Terminology> terminologies = lookupTerminologyMap().values().stream()
+    final List<Terminology> terminologies = lookupTerminologies(terminology, false).stream()
         .filter(t -> t.getId().equals(terminology) || t.getAbbreviation().equals(terminology))
         .toList();
     if (terminologies.isEmpty()) {
@@ -2613,17 +2633,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
     return terminologies.get(0);
 
-  }
-
-  /**
-   * Lookup terminologies.
-   *
-   * @param terminology the terminology
-   * @return the list
-   * @throws Exception the exception
-   */
-  private List<Terminology> lookupTerminologies(final String terminology) throws Exception {
-    return lookupTerminologies(terminology, false);
   }
 
   /**
@@ -2828,30 +2837,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       throw new RestException(false, 417, "Expectation failed",
           "Tree positions were not computed for " + terminology.getAbbreviation());
     }
-  }
-
-  /**
-   * Lookup subsets.
-   *
-   * @param subset the subset
-   * @return the subset
-   * @throws Exception the exception
-   */
-  private Subset lookupSubset(final String subset) throws Exception {
-
-    final List<Subset> subsets = lookupSubsetMap().values().stream()
-        .filter(m -> m.getId().equals(subset) || m.getAbbreviation().equals(subset)).toList();
-    if (subsets.isEmpty()) {
-      throw new RestException(false, 417, "Expectation failed",
-          "Unable to find subset = " + subset);
-    }
-
-    if (subsets.size() > 1) {
-      throw new RestException(false, 417, "Expectation failed",
-          "Too many subsets found = " + subset);
-    }
-    return subsets.get(0);
-
   }
 
   /**

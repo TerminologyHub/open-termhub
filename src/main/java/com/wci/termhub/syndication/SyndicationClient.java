@@ -168,6 +168,7 @@ public class SyndicationClient {
    * @throws RestException the rest exception
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public Set<String> downloadPackages(final SyndicationFeedEntry entry, final SyndicationFeed feed)
     throws RestException, Exception {
 
@@ -281,6 +282,7 @@ public class SyndicationClient {
    * @throws RestException the rest exception
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public List<String> downloadAllAvailablePackages(final SyndicationFeed feed)
     throws RestException, Exception {
 

@@ -61,27 +61,28 @@ public final class LuceneQueryBuilder {
     final boolean isFieldedQuery = queryText != null && queryText.matches(".*\\w+:.*");
 
     if (isFieldedQuery) {
-      final KeywordAnalyzer analyzer = new KeywordAnalyzer();
-      final QueryParser queryParser = new QueryParser("", analyzer);
-      final Query query = queryParser.parse(queryText);
-      logger.debug("  Parsed Query: {}", query);
-      return query;
+      try (final KeywordAnalyzer analyzer = new KeywordAnalyzer();) {
+        final QueryParser queryParser = new QueryParser("", analyzer);
+        final Query query = queryParser.parse(queryText);
+        logger.debug("  Parsed Query: {}", query);
+        return query;
+      }
     } else {
       // Handle non-fielded queries by searching across all searchable fields
       final String[] fields = getSearchableFields(modelClass != null ? modelClass : Concept.class);
-      final StandardAnalyzer analyzer = new StandardAnalyzer();
-      final MultiFieldQueryParser multiFieldQueryParser =
-          new MultiFieldQueryParser(fields, analyzer);
-      final Query query = multiFieldQueryParser.parse(queryText);
-      logger.debug("  Parsed Query (multi-field): {}", query);
-      return query;
+      try (final StandardAnalyzer analyzer = new StandardAnalyzer();) {
+        final MultiFieldQueryParser multiFieldQueryParser =
+            new MultiFieldQueryParser(fields, analyzer);
+        final Query query = multiFieldQueryParser.parse(queryText);
+        logger.debug("  Parsed Query (multi-field): {}", query);
+        return query;
+      }
     }
   }
 
   /**
-   * Returns the list of searchable fields for a given model class. Uses
-   * reflection to find String or List<String> fields, or those annotated
-   * with @Field(type = FieldType.Text) or MultiField.
+   * Returns the list of searchable fields for a given model class. Uses reflection to find String
+   * or List<String> fields, or those annotated with @Field(type = FieldType.Text) or MultiField.
    *
    * @param modelClass the model class
    * @return the searchable fields

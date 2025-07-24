@@ -31,7 +31,6 @@ import com.wci.termhub.test.AbstractTest;
 public class EclToLuceneConverterTest extends AbstractTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private final Logger logger = LoggerFactory.getLogger(EclToLuceneConverterTest.class);
 
   /**

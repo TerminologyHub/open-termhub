@@ -45,8 +45,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<Terminology> getTerminology(String id) throws Exception;
 
   /**
-   * Returns the terminology metadata. GET /terminology/{id:[a-f0-9].+}/metadata
-   * tag=metadata
+   * Returns the terminology metadata. GET /terminology/{id:[a-f0-9].+}/metadata tag=metadata
    *
    * @param id the id
    * @return the terminology
@@ -99,9 +98,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<Concept> getConcept(String conceptId, String include) throws Exception;
 
   /**
-   * Gets the concept for the specified terminology and code. This call assumes
-   * only a single terminology/publisher/version configured, otherwise it will
-   * return a 409. GET /concept/{terminology}/{code} tag=concept by code
+   * Gets the concept for the specified terminology and code. This call assumes only a single
+   * terminology/publisher/version configured, otherwise it will return a 409. GET
+   * /concept/{terminology}/{code} tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -213,9 +212,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Find concept relationships. This call assumes that only a single
-   * terminology/publisher/version configured, otherwise it will return a 409.
-   * GET /concept/{terminology}/{code}/relationships tag=concept by code
+   * Find concept relationships. This call assumes that only a single terminology/publisher/version
+   * configured, otherwise it will return a 409. GET /concept/{terminology}/{code}/relationships
+   * tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -251,8 +250,8 @@ public interface TerminologyServiceRest extends RootServiceRest {
 
   /**
    * Find concept inverse relationships. This call assumes that only a single
-   * terminology/publisher/version configured, otherwise it will return a 409.
-   * GET /concept/{terminology}/{code}/inverseRelationships tag=concept by code
+   * terminology/publisher/version configured, otherwise it will return a 409. GET
+   * /concept/{terminology}/{code}/inverseRelationships tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -287,9 +286,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Find concept tree positions. This call assumes that only a single
-   * terminology/publisher/version configured, otherwise it will return a 409.
-   * GET /concept/{terminology}/{code}/treepos tag=concept by code
+   * Find concept tree positions. This call assumes that only a single terminology/publisher/version
+   * configured, otherwise it will return a 409. GET /concept/{terminology}/{code}/treepos
+   * tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -336,9 +335,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
     final String version) throws Exception;
 
   /**
-   * Find concept tree positions. This call assumes that only a single
-   * terminology/publisher/version configured, otherwise it will return a 409.
-   * GET /concept/{terminology}/{code}/treepos/children tag=concept by code
+   * Find concept tree positions. This call assumes that only a single terminology/publisher/version
+   * configured, otherwise it will return a 409. GET /concept/{terminology}/{code}/treepos/children
+   * tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -463,12 +462,18 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<Subset> getSubset(String id) throws Exception;
 
   /**
-   * Gets the subsets.
+   * Find subsets.
    *
-   * @return the subsets
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @return the response entity
    * @throws Exception the exception
    */
-  public ResponseEntity<ResultListSubset> getSubsets() throws Exception;
+  public ResponseEntity<ResultListSubset> findSubsets(String query, Integer offset, Integer limit,
+    String sort, Boolean ascending) throws Exception;
 
   /**
    * Find subset members.

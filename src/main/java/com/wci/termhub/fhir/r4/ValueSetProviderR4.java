@@ -109,6 +109,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @return the value set
    * @throws Exception the exception
    */
+  @SuppressWarnings("null")
   @Read
   public ValueSet getValueSet(final HttpServletRequest request, final ServletRequestDetails details,
     @IdParam final IdType id) throws Exception {
@@ -193,11 +194,10 @@ public class ValueSetProviderR4 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
-        name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
-        name = "_offset") final NumberParam offset)
-    throws Exception {
+    @Description(shortDefinition = "Number of entries to return")
+    @OptionalParam(name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page")
+    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
 
@@ -570,9 +570,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
   }
 
   /**
-   * Loads a ValueSet from a FHIR R4 ValueSet resource and persists it as a
-   * Subset and SubsetMembers. Example usage: POST /ValueSet/$load with a FHIR
-   * R4 ValueSet resource in the body.
+   * Loads a ValueSet from a FHIR R4 ValueSet resource and persists it as a Subset and
+   * SubsetMembers. Example usage: POST /ValueSet/$load with a FHIR R4 ValueSet resource in the
+   * body.
    *
    * @param valueSet the FHIR R4 ValueSet resource
    * @return Parameters resource with the new Subset code

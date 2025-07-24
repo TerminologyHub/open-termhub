@@ -69,7 +69,6 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class FhirUtilityR5 {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
 
   /**
@@ -402,8 +401,7 @@ public final class FhirUtilityR5 {
    * Recover code.
    *
    * @param code the code
-   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the
-   *          string
+   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the string
    * @return the string
    */
   public static String recoverCode(final CodeType code, final Coding coding) {
