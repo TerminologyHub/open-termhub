@@ -38,10 +38,13 @@ import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.IncludeParam;
+import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
@@ -327,13 +330,19 @@ public final class TerminologyUtility {
     // Iterate over ancestor path
     for (final String code : fullAncPath.split("~")) {
       final StringBuilder finalQuery = new StringBuilder();
-      finalQuery.append("concept.code:" + QueryParserBase.escape(code)).append(" AND terminology:")
-          .append(StringUtility.escapeQuery(treePosition.getTerminology()))
-          .append(" AND publisher: \"")
-          .append(StringUtility.escapeQuery(treePosition.getPublisher())).append("\"")
-          .append(" AND version:").append(StringUtility.escapeQuery(treePosition.getVersion()))
-          .append(" AND ancestorPath:")
-          .append((partAncPath.isEmpty() ? "\"\"" : QueryParserBase.escape(partAncPath)));
+      finalQuery.append("concept.code:" + QueryParserBase.escape(code));
+      finalQuery.append(" AND terminology: \"")
+          .append(StringUtility.escapeQuery(treePosition.getTerminology())).append("\"");
+      finalQuery.append(" AND publisher: \"")
+          .append(StringUtility.escapeQuery(treePosition.getPublisher())).append("\"");
+      finalQuery.append(" AND version: \"")
+          .append(StringUtility.escapeQuery(treePosition.getVersion())).append("\"");
+      if (partAncPath.isEmpty()) {
+        finalQuery.append(" AND ancestorPath: \"\"");
+      } else {
+        finalQuery.append(" AND ancestorPath: \"").append(QueryParserBase.escape(partAncPath))
+            .append("\"");
+      }
 
       // No requirement for additional type to match in hierarchies
       // if (!StringUtility.isEmpty(treePosition.getAdditionalType())) {
@@ -1137,5 +1146,137 @@ public final class TerminologyUtility {
       }
     }
     return closest;
+  }
+
+  /**
+   * Removes the terminology and related concepts, relationships, etc.
+   *
+   * @param searchService the search service
+   * @param id the id
+   * @throws Exception the exception
+   */
+  public static void removeTerminology(final EntityRepositoryService searchService, final String id)
+    throws Exception {
+
+    final Terminology terminology = searchService.get(id, Terminology.class);
+    if (terminology == null) {
+      throw new Exception("Unable to find terminology with id = " + id);
+    }
+
+    final int batchSize = 5000;
+    final String query = getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), terminology.getVersion());
+    final SearchParameters params = new SearchParameters(query, 0, batchSize, null, null);
+
+    // delete terminology concepts in batches
+    int offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> conceptIds = searchService.findIds(params, Concept.class);
+      if (conceptIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(conceptIds.getItems(), Concept.class);
+      offset += batchSize;
+    }
+
+    // delete concept relationships in batches
+    offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> conceptRelIds =
+          searchService.findIds(params, ConceptRelationship.class);
+      if (conceptRelIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(conceptRelIds.getItems(), ConceptRelationship.class);
+      offset += batchSize;
+    }
+
+    // delete concept trees in batches
+    offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> conceptTreePositionIds =
+          searchService.findIds(params, ConceptTreePosition.class);
+      if (conceptTreePositionIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(conceptTreePositionIds.getItems(), ConceptTreePosition.class);
+      offset += batchSize;
+    }
+
+    // delete the terminology
+    searchService.remove(id, Terminology.class);
+
+  }
+
+  /**
+   * Removes the Mapset and related mappings.
+   *
+   * @param searchService the search service
+   * @param id the id
+   * @throws Exception the exception
+   */
+  public static void removeMapset(final EntityRepositoryService searchService, final String id)
+    throws Exception {
+
+    // find the mapset
+    final Mapset mapset = searchService.get(id, Mapset.class);
+    if (mapset == null) {
+      throw new Exception("Unable to find mapset with id = " + id);
+    }
+
+    final int batchSize = 5000;
+    final String query = getTerminologyAbbrQuery(mapset.getAbbreviation(), mapset.getPublisher(),
+        mapset.getVersion());
+    final SearchParameters params = new SearchParameters(query, null, batchSize, null, null);
+
+    int offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> mappingIds = searchService.findIds(params, Mapping.class);
+      if (mappingIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(mappingIds.getItems(), Mapping.class);
+      offset += batchSize;
+    }
+    searchService.remove(id, Mapset.class);
+  }
+
+  /**
+   * Removes the subset and related subset members.
+   *
+   * @param searchService the search service
+   * @param id the id
+   * @throws Exception the exception
+   */
+  public static void removeSubset(final EntityRepositoryService searchService, final String id)
+    throws Exception {
+
+    // find the subset/value set
+    final Subset subset = searchService.get(id, Subset.class);
+    if (subset == null) {
+      throw new Exception("Unable to find subset with id = " + id);
+    }
+
+    final int batchSize = 5000;
+    final String query = getTerminologyAbbrQuery(subset.getAbbreviation(), subset.getPublisher(),
+        subset.getVersion());
+    final SearchParameters params = new SearchParameters(query, null, batchSize, null, null);
+
+    // delete value set entries in batches
+    int offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> subsetMemberIds = searchService.findIds(params, SubsetMember.class);
+      if (subsetMemberIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(subsetMemberIds.getItems(), SubsetMember.class);
+      offset += batchSize;
+    }
+    searchService.remove(id, Subset.class);
   }
 }

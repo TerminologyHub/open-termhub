@@ -297,6 +297,49 @@ public class LuceneDataAccess {
   }
 
   /**
+   * Removes the entity.
+   *
+   * @param clazz the clazz
+   * @param ids the ids
+   * @throws IOException Signals that an I/O exception has occurred.
+   * @throws IllegalAccessException the illegal access exception
+   */
+  public void remove(final Class<? extends HasId> clazz, final List<String> ids)
+    throws IOException, IllegalAccessException {
+
+    if (ids == null || ids.isEmpty()) {
+      throw new IllegalArgumentException("ids cannot be null");
+    }
+
+    final String indexDirectory = clazz.getCanonicalName();
+    final File indexDir = new File(indexRootDirectory, indexDirectory);
+    Query query = null;
+
+    try (final StandardAnalyzer analyzer = new StandardAnalyzer()) {
+      final IndexWriterConfig config = new IndexWriterConfig(analyzer);
+
+      try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
+          final IndexWriter writer = new IndexWriter(fsDirectory, config)) {
+
+        for (final String id : ids) {
+          LOGGER.debug("Removing id: {} for index:{}", id, indexDirectory);
+
+          query = new TermQuery(new Term("id", id));
+          final BooleanQuery booleanQuery =
+              new BooleanQuery.Builder().add(query, BooleanClause.Occur.MUST).build();
+
+          writer.deleteDocuments(booleanQuery);
+        }
+        writer.commit();
+
+      } catch (final Exception e) {
+        LOGGER.error("Error: {}", e.getMessage(), e);
+        throw e;
+      }
+    }
+  }
+
+  /**
    * Find stored entities by search parameters.
    *
    * @param <T> the generic type

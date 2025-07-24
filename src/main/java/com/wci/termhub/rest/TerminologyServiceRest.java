@@ -45,7 +45,8 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<Terminology> getTerminology(String id) throws Exception;
 
   /**
-   * Returns the terminology metadata. GET /terminology/{id:[a-f0-9].+}/metadata tag=metadata
+   * Returns the terminology metadata. GET /terminology/{id:[a-f0-9].+}/metadata
+   * tag=metadata
    *
    * @param id the id
    * @return the terminology
@@ -72,15 +73,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
    */
   public ResponseEntity<Terminology> updateTerminology(String id, String terminologyStr)
     throws Exception;
-
-  /**
-   * Delete. DELETE /terminology/{id} tag=terminology
-   *
-   * @param terminologyStr the terminology str
-   * @return the response entity
-   * @throws Exception the exception
-   */
-  public ResponseEntity<Void> deleteTerminology(String terminologyStr) throws Exception;
 
   /**
    * Find terminologies. GET /terminology tag=terminology
@@ -493,5 +485,32 @@ public interface TerminologyServiceRest extends RootServiceRest {
    */
   public ResponseEntity<ResultListSubsetMember> findSubsetMembers(String subset, String query,
     Integer offset, Integer limit, String sort, Boolean ascending, Boolean active) throws Exception;
+
+  /**
+   * Delete. DELETE /terminology/{id} tag=terminology
+   *
+   * @param terminologyStr the terminology str
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<Void> deleteTerminology(String id) throws Exception;
+
+  /**
+   * Delete. DELETE /mapset/{id} tag=mapset
+   *
+   * @param id the id
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<Void> deleteMapset(String id) throws Exception;
+
+  /**
+   * Delete. DELETE /subset/{id} tag=subset
+   *
+   * @param id the id
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<Void> deleteSubset(String id) throws Exception;
 
 }

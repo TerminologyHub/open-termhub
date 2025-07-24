@@ -125,6 +125,16 @@ public interface EntityRepositoryService {
   public void remove(final String id, final Class<? extends HasId> clazz) throws Exception;
 
   /**
+   * Bulk Delete.
+   *
+   * @param id the list of ids to remove
+   * @param clazz the clazz
+   * @throws Exception the exception
+   */
+  public void removeBulk(final List<String> ids, final Class<? extends HasId> clazz)
+    throws Exception;
+
+  /**
    * Find.
    *
    * @param <T> the generic type

@@ -179,6 +179,16 @@ public class EntityServiceImpl implements EntityRepositoryService {
     luceneData.remove(clazz, id);
   }
 
+  /* see superclass */
+  @Override
+  public void removeBulk(final List<String> ids, final Class<? extends HasId> clazz)
+    throws Exception {
+    checkIfEntityHasDocumentAnnotation(clazz);
+    final LuceneDataAccess luceneData = new LuceneDataAccess();
+    luceneData.remove(clazz, ids);
+
+  }
+
   /**
    * Check if entity has document annotation.
    *

@@ -80,7 +80,7 @@ public final class ConceptMapLoaderUtil {
       // Read the entire file as a JSON object
       final JsonNode root = OBJECT_MAPPER.readTree(conceptMap);
 
-      Mapset mapset = getMapSet(service, root);
+      Mapset mapset = getMapset(service, root);
       if (mapset != null) {
         throw new Exception("Can not create multiple ConceptMap resources with ConceptMap from "
             + mapset.getFromTerminology() + " to " + mapset.getToTerminology()
@@ -180,7 +180,7 @@ public final class ConceptMapLoaderUtil {
    * @return the terminology
    * @throws Exception the exception
    */
-  private static Mapset getMapSet(final EntityRepositoryService service, final JsonNode root)
+  private static Mapset getMapset(final EntityRepositoryService service, final JsonNode root)
     throws Exception {
 
     final String abbreviation = root.path("title").asText();

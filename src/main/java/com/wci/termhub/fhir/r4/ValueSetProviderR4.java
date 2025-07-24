@@ -68,6 +68,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
+import ca.uhn.fhir.rest.annotation.Delete;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
@@ -626,6 +627,54 @@ public class ValueSetProviderR4 implements IResourceProvider {
     } catch (final Exception e) {
       logger.error("Unexpected error creating value set", e);
       throw FhirUtilityR4.exception("Failed to create value set: " + e.getMessage(),
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Deletes the value set.
+   *
+   * @param request the request
+   * @param details the details
+   * @param id the id
+   * @return the method outcome
+   * @throws Exception the exception
+   */
+  @Delete
+  public MethodOutcome deleteValueSet(final HttpServletRequest request,
+    final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
+
+    try {
+      if (id == null || id.getIdPart() == null) {
+        throw FhirUtilityR4.exception("Value Set ID required for delete", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+
+      // Check if it's an implicit code system ValueSet (these cannot be
+      // deleted)
+      final ValueSet implicitSet = getImplicitCodeSystemValueSets().stream()
+          .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
+      if (implicitSet != null) {
+        throw FhirUtilityR4.exception(
+            "Cannot delete implicit value set for code system = " + id.getIdPart(),
+            IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+      }
+
+      // Check if it's a loaded ValueSet (Subset)
+      final Subset subset = searchService.get(id.getIdPart(), Subset.class);
+      if (subset == null || !"ValueSet".equals(subset.getCategory())) {
+        throw FhirUtilityR4.exception("Value set not found = " + id.getIdPart(), IssueType.NOTFOUND,
+            HttpServletResponse.SC_NOT_FOUND);
+      }
+
+      TerminologyUtility.removeSubset(searchService, subset.getId());
+      return new MethodOutcome();
+
+    } catch (final FHIRServerResponseException e) {
+      throw e;
+    } catch (final Exception e) {
+      logger.error("Unexpected error deleting value set", e);
+      throw FhirUtilityR4.exception("Failed to delete value set: " + e.getMessage(),
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
