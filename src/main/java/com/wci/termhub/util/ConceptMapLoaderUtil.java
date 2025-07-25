@@ -260,6 +260,8 @@ public final class ConceptMapLoaderUtil {
     mapset.setToVersion(toRef.getVersion());
 
     // Store the full FHIR version string in attributes
+    // TODO: we need to check "identifiers" to find a "https://terminologyhub.com/fhir/mapset/code"
+    // identifier which can be used to set the code here.
     mapset.setCode(mapset.getId());
 
     // Store the original URIs in attributes

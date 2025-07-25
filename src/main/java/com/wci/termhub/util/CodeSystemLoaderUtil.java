@@ -344,7 +344,6 @@ public final class CodeSystemLoaderUtil {
       // [ https:, , terminologyhub.com, model, terminology, attributes,
       // autocomplete ]
       if (uri == null || uri.isEmpty() || !uri.contains("terminology/attributes")) {
-        LOGGER.warn("Skipping property with missing or empty URI: {}", property);
         continue;
       }
       attributes.put(property.path("code").asText(), property.path("description").asText());
