@@ -1958,10 +1958,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "<code>true</code> for active mappings only, "
               + "<code>false</code> for inactive mappings only," + " <code>null</code> for both",
           required = false, schema = @Schema(implementation = Boolean.class)),
-      @Parameter(name = "leaf",
-          description = "<code>true</code> for leaf nodes only, <code>false</code> for non-leaf nodes,"
-              + " <code>null</code> for either",
-          required = false, schema = @Schema(implementation = Boolean.class)),
   })
   public ResponseEntity<ResultListMapping> findMappings(
     @RequestParam(name = "mapset", required = false) final String mapset,
@@ -1970,8 +1966,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
-    @RequestParam(name = "active", required = false) final Boolean active,
-    @RequestParam(name = "leaf", required = false) final Boolean leaf) throws Exception {
+    @RequestParam(name = "active", required = false) final Boolean active) throws Exception {
 
     try {
 
@@ -1984,12 +1979,80 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Handler applied, send null handler below
       final ResultList<Mapping> list =
-          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active, leaf);
+          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active);
 
       return new ResponseEntity<>(new ResultListMapping(list), new HttpHeaders(), HttpStatus.OK);
 
     } catch (final Exception e) {
       handleException(e, "trying to find mappings");
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/member", method = RequestMethod.GET)
+  @Operation(summary = "Find members across all subsets",
+      description = "Finds member matching specified search criteria.", tags = {
+          "subset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Result list of matching subpings"),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "subset",
+          description = "Comma-separated list of subset ids or "
+              + "abbreviations (or null for all subsets)."
+              + " e.g. \"uuid1,uuid2\", \"SNOMEDCT_US-EXTENSION\".",
+          required = false),
+      @Parameter(name = "query", description = "Search text", required = false),
+      @Parameter(name = "offset", description = "Start index for search results", required = false,
+          schema = @Schema(implementation = Integer.class), example = "0"),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+      @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "ascending",
+          description = "<code>true</code> for ascending, <code>false</code> for descending,"
+              + " <code>null</code> for unspecified",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+      @Parameter(name = "active",
+          description = "<code>true</code> for active members only, "
+              + "<code>false</code> for inactive members only," + " <code>null</code> for both",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+  })
+  public ResponseEntity<ResultListSubsetMember> findMembers(
+    @RequestParam(name = "mapset", required = false) final String mapset,
+    @RequestParam(name = "query", required = false) final String query,
+    @RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
+    @RequestParam(name = "sort", required = false) final String sort,
+    @RequestParam(name = "ascending", required = false) final Boolean ascending,
+    @RequestParam(name = "active", required = false) final Boolean active) throws Exception {
+
+    try {
+
+      // Allow subset to be blank here
+      final List<Subset> subsets = lookupSubsets(mapset, true);
+
+      // Build a query from the handler and use it in findHelper
+      // limit return objects to 1000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+
+      // Handler applied, send null handler below
+      final ResultList<SubsetMember> list =
+          findMembersHelper(subsets, query, offset, maxLimit, sort, ascending, active);
+
+      return new ResponseEntity<>(new ResultListSubsetMember(list), new HttpHeaders(),
+          HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to find subpings");
       return null;
     }
   }
@@ -2040,8 +2103,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
-    @RequestParam(name = "active", required = false) final Boolean active,
-    @RequestParam(name = "leaf", required = false) final Boolean leaf) throws Exception {
+    @RequestParam(name = "active", required = false) final Boolean active) throws Exception {
 
     try {
 
@@ -2054,7 +2116,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Handler applied, send null handler below
       final ResultList<Mapping> list =
-          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active, leaf);
+          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active);
 
       return new ResponseEntity<>(new ResultListMapping(list), new HttpHeaders(), HttpStatus.OK);
 
@@ -2116,7 +2178,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "from.terminology:" + concept.getTerminology(),
               "from.publisher: \"" + concept.getPublisher()) + "\"",
-          0, 10000, null, null, true, null).getItems();
+          0, 10000, null, null, true).getItems();
 
       // Return the object
       return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
@@ -2176,7 +2238,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
               "to.terminology:" + concept.getTerminology(),
               "to.publisher: \"" + concept.getPublisher()) + "\"",
-          0, 10000, null, null, true, null).getItems();
+          0, 10000, null, null, true).getItems();
 
       // Return the object
       return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
@@ -2251,7 +2313,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "from.terminology:" + concept.getTerminology(),
               "from.publisher: \"" + concept.getPublisher()) + "\"",
-          0, 10000, null, null, true, null).getItems();
+          0, 10000, null, null, true).getItems();
 
       // Return the object
       return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
@@ -2325,7 +2387,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
               "to.terminology:" + concept.getTerminology(),
               "to.publisher: \"" + concept.getPublisher()) + "\"",
-          0, 10000, null, null, true, null).getItems();
+          0, 10000, null, null, true).getItems();
 
       // Return the object
       return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
@@ -2565,7 +2627,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     try {
 
       // Allow subset to be blank here
-      final List<Subset> subsets = lookupSubsets(subsetId);
+      final List<Subset> subsets = lookupSubsets(subsetId, false);
 
       // Build a query from the handler and use it in findHelper
       // limit return objects to 1000 regardless of user request
@@ -2764,13 +2826,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * @param sort the sort
    * @param ascending the ascending
    * @param active the active
-   * @param leaf the leaf
    * @return the result list
    * @throws Exception the exception
    */
   private ResultList<Mapping> findMappingsHelper(final List<Mapset> mapsets, final String query,
     final Integer offset, final Integer limit, final String sort, final Boolean ascending,
-    final Boolean active, final Boolean leaf) throws Exception {
+    final Boolean active) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
     final String mapsetClause = "("
@@ -2786,9 +2847,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         StringUtility.composeQuery("AND", query, mapsetClause), offset, limit, sort, ascending);
     if (active != null && active) {
       searchParams.setActive(true);
-    }
-    if (leaf != null && leaf) {
-      searchParams.setLeaf(true);
     }
 
     // Bail if no mapsets
@@ -2825,6 +2883,58 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   }
 
   /**
+   * Find members helper.
+   *
+   * @param subsets the subsets
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @return the result list
+   * @throws Exception the exception
+   */
+  private ResultList<SubsetMember> findMembersHelper(final List<Subset> subsets, final String query,
+    final Integer offset, final Integer limit, final String sort, final Boolean ascending,
+    final Boolean active) throws Exception {
+
+    // We are not using multiple indexes, so we instead have to add constraints
+    final String subsetClause = "("
+        + String.join(" OR ",
+            subsets.stream()
+                .map(m -> "(" + StringUtility.composeQuery("AND",
+                    "subset.abbreviation:" + StringUtility.escapeQuery(m.getAbbreviation()),
+                    "subset.publisher:\"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
+                    "subset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
+                .toList())
+        + ")";
+    final SearchParameters searchParams = new SearchParameters(
+        StringUtility.composeQuery("AND", query, subsetClause), offset, limit, sort, ascending);
+    if (active != null && active) {
+      searchParams.setActive(true);
+    }
+
+    // Bail if no subsets
+    // if (ModelUtility.isEmpty(subsets)) {
+    // return new ResultList<SubsetMember>();
+    // }
+
+    final ResultList<SubsetMember> list = searchService.find(searchParams, SubsetMember.class);
+
+    // for (final SubsetMember member : list.getItems()) {
+    // member.cleanForApi();
+    // TerminologyUtility.populateConcept(member, ip, single, searchService);
+    // }
+
+    // Restore the original query for the response
+    searchParams.setQuery(query);
+    list.setParameters(searchParams);
+    return list;
+
+  }
+
+  /**
    * Terminology has tree positions. Throw exception if not.
    *
    * @param terminology the terminology
@@ -2844,20 +2954,33 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * Lookup subsets.
    *
    * @param subset the subset
+   * @param allowBlank the allow blank
    * @return the subset
    * @throws Exception the exception
    */
-  private List<Subset> lookupSubsets(final String subset) throws Exception {
+  private List<Subset> lookupSubsets(final String subset, final boolean allowBlank)
+    throws Exception {
 
-    final List<Subset> subsets = lookupSubsetMap().values().stream()
-        .filter(m -> m.getId().equals(subset) || m.getAbbreviation().equals(subset)).toList();
-    if (subsets.isEmpty()) {
+    if (!allowBlank && StringUtility.isEmpty(subset)) {
       throw new RestException(false, 417, "Expectation failed",
-          "Unable to find subset = " + subset);
+          "Subset parameter should not be blank");
     }
 
-    return subsets;
-
+    final Map<String, Subset> map = lookupSubsetMap();
+    // Find subsets
+    final Set<String> subsets = new HashSet<>();
+    if (subset != null) {
+      for (final String value : subset.split(",")) {
+        subsets.add(value);
+      }
+    }
+    final List<Subset> list = map.values().stream().filter(m -> (allowBlank && subsets.isEmpty())
+        || subsets.contains(m.getId()) || subsets.contains(m.getAbbreviation())).toList();
+    if (!allowBlank && list.isEmpty()) {
+      throw new RestException(false, 417, "Expectation failed",
+          "Unable to find any matching subset = " + subset);
+    }
+    return list;
   }
 
   /**

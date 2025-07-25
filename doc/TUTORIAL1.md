@@ -119,7 +119,15 @@ curl -X POST http://localhost:8080/fhir/r5/ConceptMap \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
   -d '@src/main/resources/data/ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json' | jq
 ```
-  
+
+#### Load the SNOMEDCT_US EXTENSION value set
+
+```
+curl -X POST http://localhost:8080/fhir/r5/ValueSet \
+  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
+  -d '@src/main/resources/data/ValueSet-snomedct_us-extension-sandbox-20240301-r5.json' | jq
+```
+
 After running the commands above, the running server should be loaded with the
 specified data.  The entire runtime for this is about 1 min.
 
@@ -138,7 +146,7 @@ basic function. Alternatively, you can
 The following code block has a number of curl commands that test a few of the terminology API endpoints of the server to demonstrate basic function.
 
 ```
-# Find terminologies
+# Find terminologies (e.g. code systems)
 curl http://localhost:8080/terminology | jq
 
 # Get a SNOMEDCT concept by code
@@ -156,7 +164,7 @@ curl "http://localhost:8080/concept?terminology=SNOMEDCT&expression=%3C%3C128927
 # Perform a SNOMEDCT search with a query and an ECL expression
 curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=gastrointestinal&expression=%3C%3C128927009&include=minimal" | jq
 
-# Find mapsets
+# Find mapsets (e.g. concept maps)
 curl http://localhost:8080/mapset | jq
 
 # Find mappings across all mapsets
@@ -165,9 +173,20 @@ curl http://localhost:8080/mapping | jq
 # Find mapset mappings
 curl http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping | jq
 
-# Find mappings in a particular mapset for a particular "from" SNOMEDCT code
-curl "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:12345" | jq
+# Find mappings in a particular mapset for a particular "from" code
+curl "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:300862005" | jq
 
+# Find subsets (e.g. value sets)
+curl http://localhost:8080/subset | jq
+
+# Find members across all subsets - XXX
+curl http://localhost:8080/members | jq
+
+# Find subset members
+curl http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member | jq
+
+# Find members in a particular subset for a particular code
+curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=code:721111000124107" | jq
 
 ```
 

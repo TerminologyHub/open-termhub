@@ -392,7 +392,24 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @throws Exception the exception
    */
   public ResponseEntity<ResultListMapping> findMappings(String mapset, String query, Integer offset,
-    Integer limit, String sort, Boolean ascending, Boolean active, Boolean leaf) throws Exception;
+    Integer limit, String sort, Boolean ascending, Boolean active) throws Exception;
+
+  /**
+   * Find members.
+   *
+   * @param subset the subset
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @param leaf the leaf
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<ResultListSubsetMember> findMembers(String subset, String query,
+    Integer offset, Integer limit, String sort, Boolean ascending, Boolean active) throws Exception;
 
   /**
    * Find mapset.
@@ -409,8 +426,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @throws Exception the exception
    */
   public ResponseEntity<ResultListMapping> findMapsetMappings(String mapset, String query,
-    Integer offset, Integer limit, String sort, Boolean ascending, Boolean active, Boolean leaf)
-    throws Exception;
+    Integer offset, Integer limit, String sort, Boolean ascending, Boolean active) throws Exception;
 
   /**
    * Find concept mappings.
