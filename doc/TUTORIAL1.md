@@ -72,13 +72,6 @@ Use one of the options above to ensure the server is running and then run the
 following curl commands which will load the data from FHIR R5 CodeSystem and ConceptMap
 resources.
 
-#### Load Sandbox SNOMEDCT
-
-```
-curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
-  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-snomedct-sandbox-20240101-r5.json' | jq
-```
 
 #### Load Sandbox SNOMEDCT_US
 
@@ -147,43 +140,48 @@ The following code block has a number of curl commands that test a few of the te
 
 ```
 # Find terminologies (e.g. code systems)
-curl http://localhost:8080/terminology | jq
+curl "http://localhost:8080/terminology" | jq
+
+# Find terminology metadata
+id=`curl "http://localhost:8080/terminology" | jq -r '.items[].id'`
+curl "http://localhost:8080/terminology/$id/metadata" | jq
+
 
 # Get a SNOMEDCT concept by code
-curl http://localhost:8080/concept/SNOMEDCT/107907001 | jq
+curl "http://localhost:8080/concept/SNOMEDCT_US/107907001" | jq
 
 # Perform a SNOMEDCT search with a word query
-curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=diabetes&include=minimal" | jq
+curl "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal" | jq
 
 # Perform a SNOMEDCT search with a code query
-curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=73211009&include=minimal" | jq
+curl "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=73211009&include=minimal" | jq
 
 # Perform a SNOMEDCT search with just an ECL expression
-curl "http://localhost:8080/concept?terminology=SNOMEDCT&expression=%3C%3C128927009&include=minimal" | jq
+curl "http://localhost:8080/concept?terminology=SNOMEDCT_US&expression=%3C%3C128927009&include=minimal" | jq
 
 # Perform a SNOMEDCT search with a query and an ECL expression
-curl "http://localhost:8080/concept?terminology=SNOMEDCT&query=gastrointestinal&expression=%3C%3C128927009&include=minimal" | jq
+curl "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=%3C%3C128927009&include=minimal" | jq
 
 # Find mapsets (e.g. concept maps)
-curl http://localhost:8080/mapset | jq
+curl "http://localhost:8080/mapset" | jq
 
 # Find mappings across all mapsets
-curl http://localhost:8080/mapping | jq
+curl "http://localhost:8080/mapping" | jq
 
 # Find mapset mappings
-curl http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping | jq
+curl "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping" | jq
 
 # Find mappings in a particular mapset for a particular "from" code
 curl "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:300862005" | jq
 
 # Find subsets (e.g. value sets)
-curl http://localhost:8080/subset | jq
+curl "http://localhost:8080/subset" | jq
 
 # Find members across all subsets - XXX
-curl http://localhost:8080/members | jq
+curl "http://localhost:8080/member" | jq
 
 # Find subset members
-curl http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member | jq
+curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member" | jq
 
 # Find members in a particular subset for a particular code
 curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=code:721111000124107" | jq
@@ -199,30 +197,29 @@ The following code block has a number of curl commands that test a few of the FH
 curl 'http://localhost:8080/fhir/r4/CodeSystem' | jq
 
 # Perform a SNOMEDCT CodeSystem $lookup for a code
-
-curl http://localhost:8080/fhir/r4/CodeSystem/$lookup?system=...&code= | jq
-
-# Find implied ValueSets for CodeSystems
-
-curl 'http://localhost:8080/fhir/r4/ValueSet'
-
-# Perform a SNOMEDCT search via a ValueSet $expand with a filter
-
-curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=' | jq
-
-# Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
-
-curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=' | jq
+curl 'http://localhost:8080/fhir/r4/CodeSystem/$lookup?system=http://snomed.info/sct&code=73211009' | jq
 
 # Find ConceptMaps
-
 curl 'http://localhost:8080/fhir/r4/ConceptMap' | jq
 
-# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
+# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code - XXX
+curl 'http://localhost:8080/fhir/r4/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&code=300862005' | jq
 
-curl 'http://localhost:8080/fhir/r4/ConceptMap/$translate' | jq
+# Find implied ValueSets for CodeSystems and explicit value sets
+curl 'http://localhost:8080/fhir/r4/ValueSet'
 
-TODO: need to do SNOMEDCT and SNOMEDCT_US
+# Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
+curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs' | jq
+
+# Perform an $expand operation on an explicit value set
+curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter
+curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes' | jq
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
+curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
+
 ```
 
 ### Testing the FHIR R5 API
@@ -230,20 +227,8 @@ TODO: need to do SNOMEDCT and SNOMEDCT_US
 The following code block has a number of curl commands that test a few of the FHIR R5 API endpoints of the server to demonstrate basic function.
 
 ```
-# Find CodeSystems
-curl -X POST http://localhost:8080/fhir/r5/CodeSystem | jq
 
-# Perform a SNOMEDCT CodeSystem $lookup for a code
 
-# Find implied ValueSets for CodeSystems
-
-# Perform a SNOMEDCT search via a ValueSet $expand with a filter
-
-# Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
-
-# Find ConceptMaps
-
-# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
 ```
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**

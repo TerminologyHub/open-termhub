@@ -69,6 +69,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class FhirUtilityR5 {
 
   /** The logger. */
+  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
 
   /**
@@ -824,8 +825,8 @@ public final class FhirUtilityR5 {
       cs.setCount(terminology.getConceptCt().intValue());
     }
 
-    logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
-        cs.getName(), cs.getVersion());
+    // logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
+    // cs.getName(), cs.getVersion());
 
     return cs;
   }
@@ -844,11 +845,10 @@ public final class FhirUtilityR5 {
     }
 
     final ConceptMap cm = new ConceptMap();
-    final Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
 
     // Debug logging for Mapset data
-    logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
-        mapset.getFromTerminology(), mapset.getToTerminology());
+    // logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
+    // mapset.getFromTerminology(), mapset.getToTerminology());
 
     // Set other fields
     cm.setUrl(mapset.getAttributes().get("fhirUri"));
@@ -868,26 +868,26 @@ public final class FhirUtilityR5 {
     // Set source and target scopes from fromTerminology and toTerminology
     if (mapset.getFromTerminology() != null) {
       cm.setSourceScope(new UriType(mapset.getFromTerminology()));
-      logger.info("Set sourceScope from fromTerminology: {}", mapset.getFromTerminology());
+      // logger.info("Set sourceScope from fromTerminology: {}", mapset.getFromTerminology());
     } else if (mapset.getAttributes().containsKey("sourceScopeUri")) {
       cm.setSourceScope(new UriType(mapset.getAttributes().get("sourceScopeUri")));
-      logger.info("Set sourceScope from attributes: {}",
-          mapset.getAttributes().get("sourceScopeUri"));
+      // logger.info("Set sourceScope from attributes: {}",
+      // mapset.getAttributes().get("sourceScopeUri"));
     }
 
     if (mapset.getToTerminology() != null) {
       cm.setTargetScope(new UriType(mapset.getToTerminology()));
-      logger.info("Set targetScope from toTerminology: {}", mapset.getToTerminology());
+      // logger.info("Set targetScope from toTerminology: {}", mapset.getToTerminology());
     } else if (mapset.getAttributes().containsKey("targetScopeUri")) {
       cm.setTargetScope(new UriType(mapset.getAttributes().get("targetScopeUri")));
-      logger.info("Set targetScope from attributes: {}",
-          mapset.getAttributes().get("targetScopeUri"));
+      // logger.info("Set targetScope from attributes: {}",
+      // mapset.getAttributes().get("targetScopeUri"));
     }
 
     // Debug final state
-    logger.info("Converted ConceptMap: id={}, sourceScope={}, targetScope={}", cm.getId(),
-        cm.getSourceScope() != null ? ((UriType) cm.getSourceScope()).getValue() : "null",
-        cm.getTargetScope() != null ? ((UriType) cm.getTargetScope()).getValue() : "null");
+    // logger.info("Converted ConceptMap: id={}, sourceScope={}, targetScope={}", cm.getId(),
+    // cm.getSourceScope() != null ? ((UriType) cm.getSourceScope()).getValue() : "null",
+    // cm.getTargetScope() != null ? ((UriType) cm.getTargetScope()).getValue() : "null");
 
     return cm;
   }

@@ -873,7 +873,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
       // Handler applied, send null handler below
-      final ResultList<Concept> list = findHelper(tlist, query2, expression, offset, maxLimit, sort,
+      final ResultList<Concept> list = findConceptsHelper(tlist, query2, expression, offset, maxLimit, sort,
           ascending, active, leaf, ip);
 
       return new ResponseEntity<>(new ResultListConcept(list), new HttpHeaders(), HttpStatus.OK);
@@ -1042,7 +1042,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
         final int useLimit = limit == null ? 1 : (limit > 10 ? 10 : limit);
         final ResultList<Concept> result =
-            findHelper(tlist, query2, expression, 0, useLimit, null, null, active, leaf, ip);
+            findConceptsHelper(tlist, query2, expression, 0, useLimit, null, null, active, leaf, ip);
         result.getParameters().setQuery(query2);
         result.getParameters().setExpression(expression);
 
@@ -1085,7 +1085,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * @return the result list
    * @throws Exception the exception
    */
-  private ResultList<Concept> findHelper(final List<Terminology> terminologies, final String query,
+  private ResultList<Concept> findConceptsHelper(final List<Terminology> terminologies, final String query,
     final String expression, final Integer offset, final Integer limit, final String sort,
     final Boolean ascending, final Boolean active, final Boolean leaf, final IncludeParam ip)
     throws Exception {

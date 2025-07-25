@@ -23,6 +23,7 @@ import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.MapsetRef;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
@@ -102,6 +103,7 @@ public final class ConceptMapLoaderUtil {
           fromConcept.setCode(sourceCode);
           fromConcept.setName(sourceName);
           fromConcept.setTerminology(mapset.getFromTerminology());
+          fromConcept.setPublisher(mapset.getFromPublisher());
           fromConcept.setVersion(mapset.getFromVersion());
 
           for (final JsonNode targetNode : elementNode.path("target")) {
@@ -120,6 +122,7 @@ public final class ConceptMapLoaderUtil {
             }
             toConcept.setName(targetNode.get("display").asText());
             toConcept.setTerminology(mapset.getToTerminology());
+            toConcept.setPublisher(mapset.getToPublisher());
             toConcept.setVersion(mapset.getToVersion());
             mapping.setTo(toConcept);
 
@@ -228,35 +231,47 @@ public final class ConceptMapLoaderUtil {
     mapset.setVersion(version);
     mapset.setReleaseDate(root.path("date").asText().substring(0, 10));
 
-    String fromTerminology = "";
-    String toTerminology = "";
+    String fromTerminology = null;
     if (root.has("sourceScopeUri")) {
-      fromTerminology = root.path("sourceScopeUri").asText();
+      fromTerminology = root.path("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
     } else if (root.has("group") && (root.get("group").isArray())) {
       fromTerminology = root.path("group").get(0).path("source").asText();
     }
+    if (fromTerminology == null) {
+      throw new Exception("Unable to determine information about the map source");
+    }
+    final TerminologyRef fromRef = TerminologyUtility.getTerminology(service, fromTerminology);
+    mapset.setFromTerminology(fromRef.getAbbreviation());
+    mapset.setFromPublisher(fromRef.getPublisher());
+    mapset.setFromVersion(fromRef.getVersion());
 
+    String toTerminology = null;
     if (root.has("targetScopeUri")) {
-      toTerminology = root.path("targetScopeUri").asText();
+      toTerminology = root.path("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
     } else if (root.has("group") && (root.get("group").isArray())) {
       toTerminology = root.path("group").get(0).path("target").asText();
     }
-    mapset.setFromTerminology(fromTerminology);
-    mapset.setToTerminology(toTerminology);
+    if (toTerminology == null) {
+      throw new Exception("Unable to determine information about the map target");
+    }
+    final TerminologyRef toRef = TerminologyUtility.getTerminology(service, toTerminology);
+    mapset.setToTerminology(toRef.getAbbreviation());
+    mapset.setToPublisher(toRef.getPublisher());
+    mapset.setToVersion(toRef.getVersion());
 
     // Store the full FHIR version string in attributes
-    mapset.getAttributes().put("fhirVersion", version);
     mapset.setCode(mapset.getId());
 
     // Store the original URIs in attributes
+    mapset.setUri(root.path("url").asText());
     mapset.getAttributes().put("fhirUri", root.path("url").asText());
     mapset.getAttributes().put("sourceScopeUri", fromTerminology);
     mapset.getAttributes().put("targetScopeUri", toTerminology);
 
-    LOGGER.info("  terminology URIs: source={}, target={}", mapset.getFromTerminology(),
-        mapset.getToTerminology());
+    // LOGGER.info(" terminology URIs: source={}, target={}", mapset.getFromTerminology(),
+    // mapset.getToTerminology());
 
-    LOGGER.info("ConceptMapLoaderUtil: mapset: {}", mapset);
+    // LOGGER.info("ConceptMapLoaderUtil: mapset: {}", mapset);
     service.add(Mapset.class, mapset);
     return mapset;
   }

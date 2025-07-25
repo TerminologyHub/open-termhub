@@ -43,796 +43,775 @@ import com.wci.termhub.service.EntityRepositoryService;
  */
 public final class CodeSystemLoaderUtil {
 
-    /** The logger. */
-    private static final Logger LOGGER = LoggerFactory.getLogger(CodeSystemLoaderUtil.class);
+  /** The logger. */
+  private static final Logger LOGGER = LoggerFactory.getLogger(CodeSystemLoaderUtil.class);
 
-    /** The Constant BATCH_SIZE. */
-    private static final int DEFAULT_BATCH_SIZE = 10000;
+  /** The Constant BATCH_SIZE. */
+  private static final int DEFAULT_BATCH_SIZE = 10000;
 
-    /**
-     * Instantiates a new code system loader util.
-     */
-    private CodeSystemLoaderUtil() {
-        // Prevent instantiation
-    }
+  /**
+   * Instantiates a new code system loader util.
+   */
+  private CodeSystemLoaderUtil() {
+    // Prevent instantiation
+  }
 
-    /**
-     * Load concepts from CodeSystem format JSON.
-     *
-     * @param service the service
-     * @param content the content
-     * @param computeTreePositions whether to compute tree positions
-     * @return the string
-     * @throws Exception the exception
-     */
-    public static String loadCodeSystem(final EntityRepositoryService service, final String content,
-        final boolean computeTreePositions) throws Exception {
+  /**
+   * Load concepts from CodeSystem format JSON.
+   *
+   * @param service the service
+   * @param content the content
+   * @param computeTreePositions whether to compute tree positions
+   * @return the string
+   * @throws Exception the exception
+   */
+  public static String loadCodeSystem(final EntityRepositoryService service, final String content,
+    final boolean computeTreePositions) throws Exception {
 
-        return indexCodeSystem(service, content, -1, computeTreePositions);
-    }
+    return indexCodeSystem(service, content, -1, computeTreePositions);
+  }
 
-    /**
-     * Index concepts from CodeSystem format JSON.
-     *
-     * @param service the service
-     * @param content the content
-     * @param limit the limit
-     * @param computeTreePositions whether to compute tree positions
-     * @return the string
-     * @throws Exception the exception
-     */
-    private static String indexCodeSystem(final EntityRepositoryService service,
-        final String content, final int limit, final boolean computeTreePositions)
-        throws Exception {
+  /**
+   * Index concepts from CodeSystem format JSON.
+   *
+   * @param service the service
+   * @param content the content
+   * @param limit the limit
+   * @param computeTreePositions whether to compute tree positions
+   * @return the string
+   * @throws Exception the exception
+   */
+  private static String indexCodeSystem(final EntityRepositoryService service, final String content,
+    final int limit, final boolean computeTreePositions) throws Exception {
 
-        LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
-        final long startTime = System.currentTimeMillis();
-        final List<ConceptRelationship> relationshipBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
-        final List<Term> termBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
-        final String id;
-        final Set<Concept> conceptCache = new HashSet<>();
-        final TerminologyCache terminologyCache = new TerminologyCache();
+    LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
+    final long startTime = System.currentTimeMillis();
+    final List<ConceptRelationship> relationshipBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
+    final List<Term> termBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
+    final String id;
+    final Set<Concept> conceptCache = new HashSet<>();
+    final TerminologyCache terminologyCache = new TerminologyCache();
 
-        try {
+    try {
 
-            // Read the entire file as a JSON object
-            final JsonNode root = ThreadLocalMapper.get().readTree(content);
-            Terminology terminology = getTerminology(service, root);
+      // Read the entire file as a JSON object
+      final JsonNode root = ThreadLocalMapper.get().readTree(content);
+      Terminology terminology = getTerminology(service, root);
 
-            if (terminology != null) {
-                throw new Exception(
-                        "Can not create multiple CodeSystem resources with CodeSystem.url "
-                                + terminology.getUri() + " and CodeSystem.version "
-                                + terminology.getVersion()
-                                + ", already have one with resource ID: CodeSystem/"
-                                + terminology.getId());
-            }
+      if (terminology != null) {
+        throw new Exception("Can not create multiple CodeSystem resources with CodeSystem.url "
+            + terminology.getUri() + " and CodeSystem.version " + terminology.getVersion()
+            + ", already have one with resource ID: CodeSystem/" + terminology.getId());
+      }
 
-            // Create the terminology
-            terminology = createTerminology(service, root, computeTreePositions);
-            id = terminology.getId();
+      // Create the terminology
+      terminology = createTerminology(service, root, computeTreePositions);
+      id = terminology.getId();
 
-            // Extract metadata from root
-            final List<Metadata> metadataList = createMetadata(root);
-            if (metadataList != null && !metadataList.isEmpty()) {
-                for (final Metadata metadata : metadataList) {
-                    service.add(Metadata.class, metadata);
-                }
-            }
-
-            if (metadataList == null) {
-                throw new Exception("Unexpected null metadata list");
-            }
-
-            // Process concepts array
-            final JsonNode concepts = root.path("concept");
-            int conceptCount = 0;
-            int relationshipCount = 0;
-            int termCount = 0;
-
-            for (final JsonNode conceptNode : concepts) {
-                if (limit != -1 && conceptCount >= limit) {
-                    break;
-                }
-
-                final Concept concept = createConcept(conceptNode, terminology);
-                final String conceptCode = concept.getCode();
-
-                // Process relationships
-                final JsonNode relationships = conceptNode.path("property");
-                for (final JsonNode propertyNode : relationships) {
-
-                    final String propertyType =
-                            propertyNode.has("code") ? propertyNode.path("code").asText() : "";
-
-                    if (!Arrays.asList("parent", "relationship").contains(propertyType)) {
-                        continue;
-                    }
-
-                    if ("parent".equals(propertyType)) {
-                        final ConceptRelationship relationship = createRelationship(propertyNode,
-                                concept, terminology, terminologyCache);
-                        relationshipBatch.add(relationship);
-                        relationshipCount++;
-                        concept.getRelationships().add(relationship);
-
-                        // Track parent-child relationship using thread-safe collections
-                        final JsonNode valueCoding = propertyNode.path("valueCoding");
-                        if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-                            final String parentCode = valueCoding.path("code").asText();
-                            terminologyCache.addParChd(parentCode, conceptCode);
-                        }
-
-                        if (relationshipBatch.size() == DEFAULT_BATCH_SIZE) {
-                            service.addBulk(ConceptRelationship.class,
-                                    new ArrayList<>(relationshipBatch));
-                            relationshipBatch.clear();
-                            LOGGER.info("  loaded relationships count: {}", relationshipCount);
-                        }
-
-                        // Safely get the valueCoding and its code
-                        if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-                            concept.getEclClauses().add(propertyNode.path("code").asText() + "="
-                                    + valueCoding.path("code").asText());
-                        } else {
-                            LOGGER.debug(
-                                    "    Missing valueCoding or code for parent relationship in concept: {}",
-                                    concept.getCode());
-                        }
-                    }
-
-                    if ("relationship".equals(propertyType)) {
-                        final JsonNode extensionNode = propertyNode.path("extension");
-                        for (final JsonNode extension : extensionNode) {
-                            // Add null checks for valueCoding nodes
-                            final JsonNode extensionValueCoding = extension.path("valueCoding");
-                            final JsonNode propertyValueCoding = propertyNode.path("valueCoding");
-
-                            // Only proceed if both valueCoding nodes are present and have
-                            // code fields
-                            if (!extensionValueCoding.isMissingNode()
-                                    && !propertyValueCoding.isMissingNode()
-                                    && extensionValueCoding.has("code")
-                                    && propertyValueCoding.has("code")) {
-                                concept.getEclClauses()
-                                        .add(extensionValueCoding.path("code").asText() + "="
-                                                + propertyValueCoding.path("code").asText());
-                            } else {
-                                LOGGER.debug(
-                                        "    Skipping relationship due to missing valueCoding or code for concept: {}",
-                                        concept.getCode());
-                            }
-                        }
-                    }
-                }
-
-                // Process terms
-                for (final Term term : concept.getTerms()) {
-                    termBatch.add(term);
-                    termCount++;
-                    if (termBatch.size() == DEFAULT_BATCH_SIZE) {
-                        service.addBulk(Term.class, new ArrayList<>(termBatch));
-                        termBatch.clear();
-                        LOGGER.info("  loaded terms count: {}", termCount);
-                    }
-                }
-
-                // Add concept to batch
-                terminologyCache.addConcept(concept);
-                conceptCache.add(concept);
-                conceptCount++;
-                if (conceptCache.size() == DEFAULT_BATCH_SIZE) {
-                    LOGGER.info("  processed concept count: {}", conceptCount);
-                }
-            } // end concepts loop
-
-            if (!relationshipBatch.isEmpty()) {
-                service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
-            }
-            if (!termBatch.isEmpty()) {
-                service.addBulk(Term.class, new ArrayList<>(termBatch));
-            }
-            LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}, time: {}",
-                    conceptCount, relationshipCount, termCount,
-                    (System.currentTimeMillis() - startTime));
-
-            LOGGER.info("  begin compute for ancestors");
-            if (terminology.getAttributes() != null
-                    && terminology.getAttributes()
-                            .containsKey(Terminology.Attributes.hierarchical.property())
-                    && Boolean.parseBoolean(terminology.getAttributes()
-                            .get(Terminology.Attributes.hierarchical.property()))) {
-                for (final Concept concept : conceptCache) {
-                    final Set<String> ancestors = terminologyCache.getAncestors(concept.getCode());
-                    // get the conceptRef for each ancestor
-                    if (ancestors != null && !ancestors.isEmpty()) {
-                        for (final String ancestorCode : ancestors) {
-                            final ConceptRef ancestorRef =
-                                    terminologyCache.getOrCreateConceptRef(ancestorCode, concept);
-                            concept.getAncestors().add(ancestorRef);
-                        }
-                    }
-                }
-            }
-            LOGGER.info("  finish compute for ancestors");
-
-            conceptCount = 0;
-            final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
-            for (final Concept concept : conceptCache) {
-                conceptBatch.add(concept);
-                conceptCount++;
-                if (conceptBatch.size() >= DEFAULT_BATCH_SIZE) {
-                    LOGGER.info("  loaded concept count: {}", conceptCount);
-                    service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
-                    conceptBatch.clear();
-                }
-            }
-
-            if (!conceptBatch.isEmpty()) {
-                LOGGER.info("  loaded concept count: {}", conceptCount);
-                service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
-                conceptBatch.clear();
-            }
-
-            // compute tree positions if required
-            if (computeTreePositions) {
-                computeConceptTreePositions(service, terminology);
-            }
-
-            LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
-
-            return id;
-
-        } catch (final Exception e) {
-            LOGGER.error("Error indexing code system.", e);
-            throw e;
+      // Extract metadata from root
+      final List<Metadata> metadataList = createMetadata(root);
+      if (metadataList != null && !metadataList.isEmpty()) {
+        for (final Metadata metadata : metadataList) {
+          service.add(Metadata.class, metadata);
         }
-    }
+      }
 
-    /**
-     * Gets the terminology.
-     *
-     * @param service the service
-     * @param root the root
-     * @return the terminology
-     * @throws Exception the exception
-     */
-    private static Terminology getTerminology(final EntityRepositoryService service,
-        final JsonNode root) throws Exception {
+      if (metadataList == null) {
+        throw new Exception("Unexpected null metadata list");
+      }
 
-        final String abbreviation = root.path("title").asText();
-        final String publisher = root.path("publisher").asText();
-        final String version = root.path("version").asText();
+      // Process concepts array
+      final JsonNode concepts = root.path("concept");
+      int conceptCount = 0;
+      int relationshipCount = 0;
+      int termCount = 0;
 
-        final SearchParameters searchParams = new SearchParameters();
-        searchParams.setQuery(
-                TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
-        final ResultList<Terminology> terminology = service.find(searchParams, Terminology.class);
-
-        return (terminology.getItems().isEmpty()) ? null : terminology.getItems().get(0);
-    }
-
-    /**
-     * Creates the terminology.
-     *
-     * @param service the service
-     * @param root the root
-     * @param computeTreePositions the compute tree positions
-     * @return the terminology
-     * @throws Exception the exception
-     */
-    private static Terminology createTerminology(final EntityRepositoryService service,
-        final JsonNode root, final boolean computeTreePositions) throws Exception {
-
-        // Validate that this is a CodeSystem resource
-        if (!root.has("resourceType") || !"CodeSystem".equals(root.get("resourceType").asText())) {
-            throw new IllegalArgumentException("Invalid resource type - expected CodeSystem");
+      for (final JsonNode conceptNode : concepts) {
+        if (limit != -1 && conceptCount >= limit) {
+          break;
         }
 
-        final Terminology terminology = new Terminology();
-        final String id = root.path("id").asText();
-        if (isNotBlank(id)) {
-            terminology.setId(id);
-        } else {
-            final String uuid = UUID.randomUUID().toString();
-            terminology.setId(uuid);
-            LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
-        }
-        terminology.setName(root.path("name").asText());
-        terminology.setAbbreviation(root.path("title").asText());
-        terminology.setPublisher(root.path("publisher").asText());
-        terminology.setVersion(root.path("version").asText());
-        terminology.setReleaseDate(root.path("date").asText().substring(0, 10));
-        terminology.setUri(root.path("url").asText());
-        terminology.setFamily("SNOMED");
-        terminology.setConceptCt(root.path("count").asLong(0));
+        final Concept concept = createConcept(conceptNode, terminology);
+        final String conceptCode = concept.getCode();
 
-        // Set terminology attributes
-        final Map<String, String> attributes = new HashMap<>();
-        final JsonNode properties = root.path("property");
-        for (final JsonNode property : properties) {
-            final String uri = property.path("uri").asText();
-            // [ https:, , terminologyhub.com, model, terminology, attributes,
-            // autocomplete ]
-            if (uri == null || uri.isEmpty() || !uri.contains("terminology/attributes")) {
-                LOGGER.warn("Skipping property with missing or empty URI: {}", property);
-                continue;
-            }
-            attributes.put(property.path("code").asText(), property.path("description").asText());
-        }
-        attributes.put("fhirVersion", root.path("version").asText());
-        attributes.put(Terminology.Attributes.treePositions.property(),
-                Boolean.toString(computeTreePositions));
-        terminology.setAttributes(attributes);
+        // Process relationships
+        final JsonNode relationships = conceptNode.path("property");
+        for (final JsonNode propertyNode : relationships) {
 
-        LOGGER.info("CodeSystemLoaderUtil: terminology: {}", terminology);
-        service.add(Terminology.class, terminology);
-        return terminology;
-    }
+          final String propertyType =
+              propertyNode.has("code") ? propertyNode.path("code").asText() : "";
 
-    /**
-     * Creates the metadata.
-     *
-     * @param root the root
-     * @return the metadata
-     */
-    private static List<Metadata> createMetadata(final JsonNode root) {
+          if (!Arrays.asList("parent", "relationship").contains(propertyType)) {
+            continue;
+          }
 
-        final List<Metadata> metadataList = new ArrayList<>();
+          if ("parent".equals(propertyType)) {
+            final ConceptRelationship relationship =
+                createRelationship(propertyNode, concept, terminology, terminologyCache);
+            relationshipBatch.add(relationship);
+            relationshipCount++;
+            concept.getRelationships().add(relationship);
 
-        final String publisher = root.path("publisher").asText();
-        final String terminology = root.path("title").asText();
-        final String version = root.path("version").asText();
-
-        final JsonNode properties = root.path("property");
-        for (final JsonNode property : properties) {
-
-            final String uri = property.path("uri").asText();
-            final String[] uriParts = FieldedStringTokenizer.split(uri, "/");
-
-            final String modelType = uriParts[uriParts.length - 2];
-
-            if (uriParts.length < 3 || "terminology".equals(modelType)) {
-                continue;
+            // Track parent-child relationship using thread-safe collections
+            final JsonNode valueCoding = propertyNode.path("valueCoding");
+            if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
+              final String parentCode = valueCoding.path("code").asText();
+              terminologyCache.addParChd(parentCode, conceptCode);
             }
 
-            final String code = property.path("code").asText();
-            final String description = property.path("description").asText();
-            final String fieldType = uriParts[uriParts.length - 1];
-
-            // Map 'attributes' model type to 'concept' as a fallback
-            String mappedModelType = modelType;
-            if ("attributes".equals(modelType)) {
-                mappedModelType = "concept";
-                LOGGER.info(
-                        "Mapped 'attributes' model type to 'concept' for metadata: code={}, name={}",
-                        code, description);
+            if (relationshipBatch.size() == DEFAULT_BATCH_SIZE) {
+              service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
+              relationshipBatch.clear();
+              LOGGER.info("  loaded relationships count: {}", relationshipCount);
             }
 
-            try {
-
-                final Metadata metadata = new Metadata();
-                metadata.setId(UUID.randomUUID().toString());
-                metadata.setCode(code);
-                metadata.setName(description);
-                metadata.setActive(true);
-                metadata.setPublisher(publisher);
-                metadata.setTerminology(terminology);
-                metadata.setVersion(version);
-
-                metadata.setModel(MetaModel.Model.valueOf(mappedModelType));
-                metadata.setField(MetaModel.Field.valueOf(fieldType));
-                metadataList.add(metadata);
-
-            } catch (final IllegalArgumentException e) {
-                LOGGER.warn(
-                        "Skipping metadata due to invalid model or field type: model={}, field={}, code={}, name={}",
-                        mappedModelType, fieldType, code, description);
-            }
-        }
-
-        return metadataList;
-    }
-
-    /**
-     * Creates the concept.
-     *
-     * @param conceptNode the concept node
-     * @param terminology the terminology
-     * @return the concept
-     * @throws Exception the exception
-     */
-    private static Concept createConcept(final JsonNode conceptNode, final Terminology terminology)
-        throws Exception {
-
-        final Concept concept = new Concept();
-
-        final String id = conceptNode.has("id") ? conceptNode.path("id").asText()
-                : UUID.randomUUID().toString();
-
-        concept.setId(id);
-        concept.setCode(conceptNode.path("code").asText());
-        concept.setTerminology(terminology.getAbbreviation());
-        concept.setVersion(terminology.getVersion());
-        concept.setPublisher(terminology.getPublisher());
-        concept.setLeaf(true); // Default to true unless children found
-        concept.setName(conceptNode.path("display").asText());
-
-        // Handle terminology-specific concept attributes
-        if (terminology.getAbbreviation().contains("SNOMEDCT")) {
-
-            if (conceptNode.has("definition")) {
-                final List<Definition> definitions =
-                        createDefinitions(conceptNode.path("definition").asText(), terminology);
-                if (definitions != null && !definitions.isEmpty()) {
-                    concept.getDefinitions().addAll(definitions);
-                }
-            }
-
-            // Set concept ID if different from code
-            final String conceptId = conceptNode.path("conceptId").asText(null);
-            if (conceptId != null && !conceptId.equals(concept.getCode())) {
-                concept.getAttributes().put("conceptId", conceptId);
-            }
-
-            // Process designations (terms)
-            final JsonNode designations = conceptNode.path("designation");
-            for (final JsonNode designation : designations) {
-                final Term term = new Term();
-                term.setId(UUID.randomUUID().toString());
-                term.setName(designation.path("value").asText());
-
-                // Safely set term type with null checks
-                if (designation.has("use") && designation.path("use").has("code")) {
-                    term.setType(designation.path("use").path("code").asText());
-                } else {
-                    // Default to PT (Preferred Term) if no type is specified
-                    term.setType("PT");
-                    LOGGER.warn(
-                            "Missing term type for designation, defaulting to PT for concept: {}",
-                            concept.getCode());
-                }
-
-                term.setTerminology(terminology.getAbbreviation());
-                term.setVersion(terminology.getVersion());
-                term.setPublisher(terminology.getPublisher());
-                term.setCode(concept.getCode());
-                term.setConceptId(concept.getCode());
-
-                // Set language/locale
-                final String language = designation.path("language").asText();
-                term.getLocaleMap().put(language, "HT".equals(term.getType()));
-
-                // Set component ID if available
-                final String componentId = designation.path("id").asText(null);
-                if (componentId != null) {
-                    term.setComponentId(componentId);
-                }
-
-                concept.getTerms().add(term);
-
-                // Use first HT designation as concept name
-                if (concept.getName() == null && "HT".equals(term.getType())) {
-                    concept.setName(term.getName());
-                }
-            }
-
-        } else if ("LNC".equals(terminology.getAbbreviation())) {
-            // Handle LOINC specific concept attributes
-            final JsonNode designations = conceptNode.path("designation");
-            for (final JsonNode designation : designations) {
-                final Term term = new Term();
-                term.setId(UUID.randomUUID().toString());
-                term.setName(designation.path("value").asText());
-
-                // Safely set term type with null checks
-                if (designation.has("use") && designation.path("use").has("code")) {
-                    term.setType(designation.path("use").path("code").asText());
-                } else {
-                    // Default to PT (Preferred Term) if no type is specified
-                    term.setType("PT");
-                    LOGGER.warn(
-                            "Missing term type for LOINC designation, defaulting to PT for concept: {}",
-                            concept.getCode());
-                }
-
-                term.setTerminology(terminology.getAbbreviation());
-                term.setVersion(terminology.getVersion());
-                term.setPublisher(terminology.getPublisher());
-                term.setCode(concept.getCode());
-                term.setConceptId(concept.getCode());
-
-                // Set language/locale
-                final String language = designation.path("language").asText();
-                term.getLocaleMap().put(language, "LPDN".equals(term.getType()));
-
-                concept.getTerms().add(term);
-
-                // Use LPDN (LOINC parts display name) as concept name
-                if ("LPDN".equals(term.getType())) {
-                    concept.setName(term.getName());
-                }
-            }
-
-        } else if ("ICD10CM".equals(terminology.getAbbreviation())) {
-            // Handle ICD-10-CM specific concept attributes
-            final JsonNode designations = conceptNode.path("designation");
-            for (final JsonNode designation : designations) {
-                final Term term = new Term();
-                term.setId(UUID.randomUUID().toString());
-                term.setName(designation.path("value").asText());
-
-                // Safely set term type with null checks
-                if (designation.has("use") && designation.path("use").has("code")) {
-                    term.setType(designation.path("use").path("code").asText());
-                } else {
-                    // Default to PT (Preferred Term) if no type is specified
-                    term.setType("PT");
-                    LOGGER.warn(
-                            "Missing term type for ICD-10-CM designation, defaulting to PT for concept: {}",
-                            concept.getCode());
-                }
-
-                term.setTerminology(terminology.getAbbreviation());
-                term.setVersion(terminology.getVersion());
-                term.setPublisher(terminology.getPublisher());
-                term.setCode(concept.getCode());
-                term.setConceptId(concept.getCode());
-
-                // Set language/locale
-                final String language = designation.path("language").asText();
-                term.getLocaleMap().put(language, "HT".equals(term.getType()));
-
-                concept.getTerms().add(term);
-
-                // Use HT (Hierarchical term) as concept name
-                if ("HT".equals(term.getType())) {
-                    concept.setName(term.getName());
-                }
-            }
-
-            // Add ICD-10-CM specific attributes
-            final JsonNode properties = conceptNode.path("property");
-            for (final JsonNode property : properties) {
-                final String code = property.path("code").asText();
-                String value = null;
-
-                if (property.has("valueString")) {
-                    value = property.path("valueString").asText();
-                } else if (property.has("valueBoolean")) {
-                    value = property.path("valueBoolean").asText();
-                }
-
-                if ("EXCLUDES1".equals(code) || "USE_ADDITIONAL".equals(code)
-                        || "ORDER_NO".equals(code) || "NOTE".equals(code)) {
-                    concept.getAttributes().put(code, value);
-                } else if ("semanticType".equals(code)) {
-                    concept.getSemanticTypes().add(value);
-                }
-            }
-        } else if ("RXNORM".equals(terminology.getAbbreviation())) {
-            // Handle RXNORM specific concept attributes
-            final JsonNode designations = conceptNode.path("designation");
-            for (final JsonNode designation : designations) {
-                final Term term = new Term();
-                term.setId(UUID.randomUUID().toString());
-                term.setName(designation.path("value").asText());
-
-                // Safely set term type with null checks
-                if (designation.has("use") && designation.path("use").has("code")) {
-                    term.setType(designation.path("use").path("code").asText());
-                } else {
-                    // Default to PT (Preferred Term) if no type is specified
-                    term.setType("PT");
-                    LOGGER.warn(
-                            "Missing term type for RXNORM designation, defaulting to PT for concept: {}",
-                            concept.getCode());
-                }
-
-                term.setTerminology(terminology.getAbbreviation());
-                term.setVersion(terminology.getVersion());
-                term.setPublisher(terminology.getPublisher());
-                term.setCode(concept.getCode());
-                term.setConceptId(concept.getCode());
-
-                // Set language/locale
-                final String language = designation.path("language").asText();
-                term.getLocaleMap().put(language, "PT".equals(term.getType()));
-
-                concept.getTerms().add(term);
-
-                // Use first PT designation as concept name
-                if (concept.getName() == null && "PT".equals(term.getType())) {
-                    concept.setName(term.getName());
-                }
-            }
-        }
-
-        // Process common properties
-        final JsonNode properties = conceptNode.path("property");
-        for (final JsonNode property : properties) {
-            final String code = property.path("code").asText();
-            String value = null;
-
-            if (property.has("valueString")) {
-                value = property.path("valueString").asText();
-            } else if (property.has("valueBoolean")) {
-                value = property.path("valueBoolean").asText();
-            }
-
-            if ("semanticType".equals(code)) {
-                concept.getSemanticTypes().add(value);
-            } else if (!"parent".equals(code)) {
-                concept.getAttributes().put(code, value);
-            }
-
-        }
-
-        return concept;
-    }
-
-    /**
-     * Creates a relationship between concepts.
-     *
-     * @param relationshipNode the relationship JSON node
-     * @param fromConcept the source concept
-     * @param terminology the terminology
-     * @param terminologyCache the terminology cache
-     * @return the concept relationship
-     */
-    private static ConceptRelationship createRelationship(final JsonNode relationshipNode,
-        final Concept fromConcept, final Terminology terminology,
-        final TerminologyCache terminologyCache) {
-
-        final ConceptRelationship relationship = new ConceptRelationship();
-        relationship.setId(UUID.randomUUID().toString());
-        relationship.setTerminology(terminology.getAbbreviation());
-        relationship.setVersion(terminology.getVersion());
-        relationship.setPublisher(terminology.getPublisher());
-
-        // Get relationship type and additional type from extensions
-        String type = "other";
-        String additionalType = null;
-        String group = null;
-
-        // Handle different terminology formats
-        if (terminology.getAbbreviation().contains("SNOMEDCT")) {
-            // Process SNOMED CT style extensions
-            final JsonNode extensions = relationshipNode.path("extension");
-            if (!extensions.isMissingNode()) {
-                for (final JsonNode extension : extensions) {
-                    final String url = extension.path("url").asText();
-                    if (url.endsWith("/additionalType")) {
-                        final JsonNode valueCoding = extension.path("valueCoding");
-                        additionalType = valueCoding.path("code").asText();
-                        LOGGER.debug("Found additionalType: {}", additionalType);
-                    } else if (url.endsWith("/group")) {
-                        group = extension.path("valueString").asText();
-                    }
-                }
-            }
-
-            // Set relationship type based on code
-            final String code = relationshipNode.path("code").asText();
-            LOGGER.debug("Processing SNOMED CT relationship with code: {}", code);
-
-            if ("parent".equalsIgnoreCase(code)) {
-                type = "parent";
-                additionalType = "ISA";
-                LOGGER.debug("Set type to ISA for parent relationship");
+            // Safely get the valueCoding and its code
+            if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
+              concept.getEclClauses().add(
+                  propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
             } else {
-                type = "relationship";
+              LOGGER.debug("    Missing valueCoding or code for parent relationship in concept: {}",
+                  concept.getCode());
             }
+          }
 
-        } else if (terminology.getAbbreviation().contains("LNC")) {
-            // Handle LOINC relationships
-            final String code = relationshipNode.path("code").asText();
-            if ("parent".equalsIgnoreCase(code)) {
-                type = "parent";
-                additionalType = "ISA";
-            } else if ("relationship".equals(code)) {
-                type = "relationship";
-                // Get additionalType from extension
-                final JsonNode extensions = relationshipNode.path("extension");
-                if (!extensions.isMissingNode()) {
-                    for (final JsonNode extension : extensions) {
-                        final String url = extension.path("url").asText();
-                        if (url.endsWith("/additionalType")) {
-                            final JsonNode valueCoding = extension.path("valueCoding");
-                            additionalType = valueCoding.path("code").asText();
-                        }
-                    }
-                }
+          if ("relationship".equals(propertyType)) {
+            final JsonNode extensionNode = propertyNode.path("extension");
+            for (final JsonNode extension : extensionNode) {
+              // Add null checks for valueCoding nodes
+              final JsonNode extensionValueCoding = extension.path("valueCoding");
+              final JsonNode propertyValueCoding = propertyNode.path("valueCoding");
+
+              // Only proceed if both valueCoding nodes are present and have
+              // code fields
+              if (!extensionValueCoding.isMissingNode() && !propertyValueCoding.isMissingNode()
+                  && extensionValueCoding.has("code") && propertyValueCoding.has("code")) {
+                concept.getEclClauses().add(extensionValueCoding.path("code").asText() + "="
+                    + propertyValueCoding.path("code").asText());
+              } else {
+                LOGGER.debug(
+                    "    Skipping relationship due to missing valueCoding or code for concept: {}",
+                    concept.getCode());
+              }
             }
-        } else if (terminology.getAbbreviation().contains("ICD10CM")) {
-            // Handle ICD-10-CM relationships
-            final String code = relationshipNode.path("code").asText();
-            if ("parent".equals(code)) {
-                type = "parent";
-                additionalType = "ISA";
-            }
+          }
         }
 
-        relationship.setType(type);
-        relationship.setAdditionalType(additionalType);
-
-        final ConceptRef fromRef =
-                terminologyCache.getOrCreateConceptRef(fromConcept.getCode(), fromConcept);
-        relationship.setFrom(fromRef);
-
-        // Set target concept reference from valueCoding
-        final JsonNode valueCoding = relationshipNode.path("valueCoding");
-        if (!valueCoding.isMissingNode()) {
-            final ConceptRef toRef =
-                    terminologyCache.getOrCreateConceptRef(valueCoding.path("code").asText(),
-                            valueCoding.path("display").asText(), terminology);
-            relationship.setTo(toRef);
+        // Process terms
+        for (final Term term : concept.getTerms()) {
+          termBatch.add(term);
+          termCount++;
+          if (termBatch.size() == DEFAULT_BATCH_SIZE) {
+            service.addBulk(Term.class, new ArrayList<>(termBatch));
+            termBatch.clear();
+            LOGGER.info("  loaded terms count: {}", termCount);
+          }
         }
 
-        // Set additional attributes
-        relationship.setHierarchical("parent".equals(type) || "ISA".equals(additionalType));
-        relationship.setHistorical(false);
-        relationship.setAsserted(true);
-        relationship.setDefining(relationshipNode.path("defining").asBoolean(false));
-
-        // Set group if found
-        if (group != null) {
-            relationship.setGroup(group);
+        // Add concept to batch
+        terminologyCache.addConcept(concept);
+        conceptCache.add(concept);
+        conceptCount++;
+        if (conceptCache.size() == DEFAULT_BATCH_SIZE) {
+          LOGGER.info("  processed concept count: {}", conceptCount);
         }
+      } // end concepts loop
 
-        return relationship;
+      if (!relationshipBatch.isEmpty()) {
+        service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
+      }
+      if (!termBatch.isEmpty()) {
+        service.addBulk(Term.class, new ArrayList<>(termBatch));
+      }
+      LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}, time: {}",
+          conceptCount, relationshipCount, termCount, (System.currentTimeMillis() - startTime));
+
+      LOGGER.info("  begin compute for ancestors");
+      if (terminology.getAttributes() != null
+          && terminology.getAttributes().containsKey(Terminology.Attributes.hierarchical.property())
+          && Boolean.parseBoolean(
+              terminology.getAttributes().get(Terminology.Attributes.hierarchical.property()))) {
+        for (final Concept concept : conceptCache) {
+          final Set<String> ancestors = terminologyCache.getAncestors(concept.getCode());
+          // get the conceptRef for each ancestor
+          if (ancestors != null && !ancestors.isEmpty()) {
+            for (final String ancestorCode : ancestors) {
+              final ConceptRef ancestorRef =
+                  terminologyCache.getOrCreateConceptRef(ancestorCode, concept);
+              concept.getAncestors().add(ancestorRef);
+            }
+          }
+        }
+      }
+      LOGGER.info("  finish compute for ancestors");
+
+      conceptCount = 0;
+      final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
+      for (final Concept concept : conceptCache) {
+        conceptBatch.add(concept);
+        conceptCount++;
+        if (conceptBatch.size() >= DEFAULT_BATCH_SIZE) {
+          LOGGER.info("  loaded concept count: {}", conceptCount);
+          service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
+          conceptBatch.clear();
+        }
+      }
+
+      if (!conceptBatch.isEmpty()) {
+        LOGGER.info("  loaded concept count: {}", conceptCount);
+        service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
+        conceptBatch.clear();
+      }
+
+      // compute tree positions if required
+      if (computeTreePositions) {
+        computeConceptTreePositions(service, terminology);
+      }
+
+      LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
+
+      return id;
+
+    } catch (final Exception e) {
+      LOGGER.error("Error indexing code system.", e);
+      throw e;
+    }
+  }
+
+  /**
+   * Gets the terminology.
+   *
+   * @param service the service
+   * @param root the root
+   * @return the terminology
+   * @throws Exception the exception
+   */
+  private static Terminology getTerminology(final EntityRepositoryService service,
+    final JsonNode root) throws Exception {
+
+    final String abbreviation = root.path("title").asText();
+    final String publisher = root.path("publisher").asText();
+    final String version = root.path("version").asText();
+
+    final SearchParameters searchParams = new SearchParameters();
+    searchParams
+        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
+    final ResultList<Terminology> terminology = service.find(searchParams, Terminology.class);
+
+    return (terminology.getItems().isEmpty()) ? null : terminology.getItems().get(0);
+  }
+
+  /**
+   * Creates the terminology.
+   *
+   * @param service the service
+   * @param root the root
+   * @param computeTreePositions the compute tree positions
+   * @return the terminology
+   * @throws Exception the exception
+   */
+  private static Terminology createTerminology(final EntityRepositoryService service,
+    final JsonNode root, final boolean computeTreePositions) throws Exception {
+
+    // Validate that this is a CodeSystem resource
+    if (!root.has("resourceType") || !"CodeSystem".equals(root.get("resourceType").asText())) {
+      throw new IllegalArgumentException("Invalid resource type - expected CodeSystem");
     }
 
-    /**
-     * Compute concept tree positions.
-     *
-     * @param service the service
-     * @param terminology the terminology
-     * @throws Exception the exception
-     */
-    private static void computeConceptTreePositions(final EntityRepositoryService service,
-        final Terminology terminology) throws Exception {
+    final Terminology terminology = new Terminology();
+    final String id = root.path("id").asText();
+    if (isNotBlank(id)) {
+      terminology.setId(id);
+    } else {
+      final String uuid = UUID.randomUUID().toString();
+      terminology.setId(uuid);
+      LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
+    }
+    terminology.setName(root.path("name").asText());
+    terminology.setAbbreviation(root.path("title").asText());
+    terminology.setPublisher(root.path("publisher").asText());
+    terminology.setVersion(root.path("version").asText());
+    terminology.setReleaseDate(root.path("date").asText().substring(0, 10));
+    terminology.setUri(root.path("url").asText());
+    terminology.setFamily("SNOMED");
+    terminology.setConceptCt(root.path("count").asLong(0));
 
-        LOGGER.info(
-                "Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
-                terminology.getAbbreviation(), terminology.getPublisher(),
-                terminology.getVersion());
+    // Set terminology attributes
+    final Map<String, String> attributes = new HashMap<>();
+    final JsonNode properties = root.path("property");
+    for (final JsonNode property : properties) {
+      final String uri = property.path("uri").asText();
+      // [ https:, , terminologyhub.com, model, terminology, attributes,
+      // autocomplete ]
+      if (uri == null || uri.isEmpty() || !uri.contains("terminology/attributes")) {
+        LOGGER.warn("Skipping property with missing or empty URI: {}", property);
+        continue;
+      }
+      attributes.put(property.path("code").asText(), property.path("description").asText());
+    }
+    attributes.put("fhirVersion", root.path("version").asText());
+    attributes.put(Terminology.Attributes.treePositions.property(),
+        Boolean.toString(computeTreePositions));
+    terminology.setAttributes(attributes);
 
-        final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
-        treepos.setTerminology(terminology.getAbbreviation());
-        treepos.setPublisher(terminology.getPublisher());
-        treepos.setVersion(terminology.getVersion());
-        treepos.checkPreconditions();
-        treepos.compute();
+    LOGGER.info("CodeSystemLoaderUtil: terminology: {}", terminology);
+    service.add(Terminology.class, terminology);
+    return terminology;
+  }
 
+  /**
+   * Creates the metadata.
+   *
+   * @param root the root
+   * @return the metadata
+   */
+  private static List<Metadata> createMetadata(final JsonNode root) {
+
+    final List<Metadata> metadataList = new ArrayList<>();
+
+    final String publisher = root.path("publisher").asText();
+    final String terminology = root.path("title").asText();
+    final String version = root.path("version").asText();
+
+    final JsonNode properties = root.path("property");
+    for (final JsonNode property : properties) {
+
+      // {"code":"morphologic abnormality",
+      // "uri":"https://terminologyhub.com/model/concept/semanticType/
+      // MorphologicAbnormality","type":"string"}
+
+      final String uri = property.path("uri").asText();
+      final String[] uriParts = FieldedStringTokenizer.split(uri, "/");
+
+      // e.g. modelType is "concept"
+      final String modelType = uriParts[uriParts.length - 3];
+
+      // AVoid creating metadata for "terminology" things
+      if ("terminology".equals(modelType)) {
+        continue;
+      }
+
+      final String code = property.path("code").asText();
+      final String description = property.path("description").asText();
+      final String fieldType = uriParts[uriParts.length - 2];
+
+      try {
+
+        final Metadata metadata = new Metadata();
+        metadata.setId(UUID.randomUUID().toString());
+        metadata.setCode(code);
+        metadata.setName(description);
+        metadata.setActive(true);
+        metadata.setPublisher(publisher);
+        metadata.setTerminology(terminology);
+        metadata.setVersion(version);
+        metadata.setModel(MetaModel.Model.valueOf(modelType));
+        metadata.setField(MetaModel.Field.valueOf(fieldType));
+        metadataList.add(metadata);
+
+      } catch (final IllegalArgumentException e) {
+        LOGGER.warn(
+            "Skipping metadata due to invalid model or field type: model={}, field={}, code={}, name={}",
+            modelType, fieldType, code, description);
+      }
     }
 
-    /**
-     * Creates the definition.
-     *
-     * @param definition the definition
-     * @param terminology the terminology
-     * @return the list
-     */
-    private static List<Definition> createDefinitions(final String definition,
-        final Terminology terminology) {
+    return metadataList;
+  }
 
-        final List<Definition> definitions = new ArrayList<>();
+  /**
+   * Creates the concept.
+   *
+   * @param conceptNode the concept node
+   * @param terminology the terminology
+   * @return the concept
+   * @throws Exception the exception
+   */
+  private static Concept createConcept(final JsonNode conceptNode, final Terminology terminology)
+    throws Exception {
 
-        final String[] definitionArray = definition.split("\\n");
-        if (definitionArray != null && definitionArray.length > 0) {
-            for (int i = 0; i < definitionArray.length; i++) {
-                if (isNotBlank(definitionArray[i])) {
-                    final Definition def = new Definition();
-                    def.setId(UUID.randomUUID().toString());
-                    def.setDefinition(definitionArray[i].trim());
-                    def.setTerminology(terminology.getAbbreviation());
-                    def.setVersion(terminology.getVersion());
-                    def.setPublisher(terminology.getPublisher());
-                    definitions.add(def);
-                }
-            }
+    final Concept concept = new Concept();
+
+    final String id =
+        conceptNode.has("id") ? conceptNode.path("id").asText() : UUID.randomUUID().toString();
+
+    concept.setId(id);
+    concept.setCode(conceptNode.path("code").asText());
+    concept.setTerminology(terminology.getAbbreviation());
+    concept.setVersion(terminology.getVersion());
+    concept.setPublisher(terminology.getPublisher());
+    concept.setLeaf(true); // Default to true unless children found
+    concept.setName(conceptNode.path("display").asText());
+
+    // Handle terminology-specific concept attributes
+    if (terminology.getAbbreviation().contains("SNOMEDCT")) {
+
+      if (conceptNode.has("definition")) {
+        final List<Definition> definitions =
+            createDefinitions(conceptNode.path("definition").asText(), terminology);
+        if (definitions != null && !definitions.isEmpty()) {
+          concept.getDefinitions().addAll(definitions);
         }
-        return definitions;
+      }
+
+      // Set concept ID if different from code
+      final String conceptId = conceptNode.path("conceptId").asText(null);
+      if (conceptId != null && !conceptId.equals(concept.getCode())) {
+        concept.getAttributes().put("conceptId", conceptId);
+      }
+
+      // Process designations (terms)
+      final JsonNode designations = conceptNode.path("designation");
+      for (final JsonNode designation : designations) {
+        final Term term = new Term();
+        term.setId(UUID.randomUUID().toString());
+        term.setName(designation.path("value").asText());
+
+        // Safely set term type with null checks
+        if (designation.has("use") && designation.path("use").has("code")) {
+          term.setType(designation.path("use").path("code").asText());
+        } else {
+          // Default to PT (Preferred Term) if no type is specified
+          term.setType("PT");
+          LOGGER.warn("Missing term type for designation, defaulting to PT for concept: {}",
+              concept.getCode());
+        }
+
+        term.setTerminology(terminology.getAbbreviation());
+        term.setVersion(terminology.getVersion());
+        term.setPublisher(terminology.getPublisher());
+        term.setCode(concept.getCode());
+        term.setConceptId(concept.getCode());
+
+        // Set language/locale
+        final String language = designation.path("language").asText();
+        term.getLocaleMap().put(language, "HT".equals(term.getType()));
+
+        // Set component ID if available
+        final String componentId = designation.path("id").asText(null);
+        if (componentId != null) {
+          term.setComponentId(componentId);
+        }
+
+        concept.getTerms().add(term);
+
+        // Use first HT designation as concept name
+        if (concept.getName() == null && "HT".equals(term.getType())) {
+          concept.setName(term.getName());
+        }
+      }
+
+    } else if ("LNC".equals(terminology.getAbbreviation())) {
+      // Handle LOINC specific concept attributes
+      final JsonNode designations = conceptNode.path("designation");
+      for (final JsonNode designation : designations) {
+        final Term term = new Term();
+        term.setId(UUID.randomUUID().toString());
+        term.setName(designation.path("value").asText());
+
+        // Safely set term type with null checks
+        if (designation.has("use") && designation.path("use").has("code")) {
+          term.setType(designation.path("use").path("code").asText());
+        } else {
+          // Default to PT (Preferred Term) if no type is specified
+          term.setType("PT");
+          LOGGER.warn("Missing term type for LOINC designation, defaulting to PT for concept: {}",
+              concept.getCode());
+        }
+
+        term.setTerminology(terminology.getAbbreviation());
+        term.setVersion(terminology.getVersion());
+        term.setPublisher(terminology.getPublisher());
+        term.setCode(concept.getCode());
+        term.setConceptId(concept.getCode());
+
+        // Set language/locale
+        final String language = designation.path("language").asText();
+        term.getLocaleMap().put(language, "LPDN".equals(term.getType()));
+
+        concept.getTerms().add(term);
+
+        // Use LPDN (LOINC parts display name) as concept name
+        if ("LPDN".equals(term.getType())) {
+          concept.setName(term.getName());
+        }
+      }
+
+    } else if ("ICD10CM".equals(terminology.getAbbreviation())) {
+      // Handle ICD-10-CM specific concept attributes
+      final JsonNode designations = conceptNode.path("designation");
+      for (final JsonNode designation : designations) {
+        final Term term = new Term();
+        term.setId(UUID.randomUUID().toString());
+        term.setName(designation.path("value").asText());
+
+        // Safely set term type with null checks
+        if (designation.has("use") && designation.path("use").has("code")) {
+          term.setType(designation.path("use").path("code").asText());
+        } else {
+          // Default to PT (Preferred Term) if no type is specified
+          term.setType("PT");
+          LOGGER.warn(
+              "Missing term type for ICD-10-CM designation, defaulting to PT for concept: {}",
+              concept.getCode());
+        }
+
+        term.setTerminology(terminology.getAbbreviation());
+        term.setVersion(terminology.getVersion());
+        term.setPublisher(terminology.getPublisher());
+        term.setCode(concept.getCode());
+        term.setConceptId(concept.getCode());
+
+        // Set language/locale
+        final String language = designation.path("language").asText();
+        term.getLocaleMap().put(language, "HT".equals(term.getType()));
+
+        concept.getTerms().add(term);
+
+        // Use HT (Hierarchical term) as concept name
+        if ("HT".equals(term.getType())) {
+          concept.setName(term.getName());
+        }
+      }
+
+      // Add ICD-10-CM specific attributes
+      final JsonNode properties = conceptNode.path("property");
+      for (final JsonNode property : properties) {
+        final String code = property.path("code").asText();
+        String value = null;
+
+        if (property.has("valueString")) {
+          value = property.path("valueString").asText();
+        } else if (property.has("valueBoolean")) {
+          value = property.path("valueBoolean").asText();
+        }
+
+        if ("EXCLUDES1".equals(code) || "USE_ADDITIONAL".equals(code) || "ORDER_NO".equals(code)
+            || "NOTE".equals(code)) {
+          concept.getAttributes().put(code, value);
+        } else if ("semanticType".equals(code)) {
+          concept.getSemanticTypes().add(value);
+        }
+      }
+    } else if ("RXNORM".equals(terminology.getAbbreviation())) {
+      // Handle RXNORM specific concept attributes
+      final JsonNode designations = conceptNode.path("designation");
+      for (final JsonNode designation : designations) {
+        final Term term = new Term();
+        term.setId(UUID.randomUUID().toString());
+        term.setName(designation.path("value").asText());
+
+        // Safely set term type with null checks
+        if (designation.has("use") && designation.path("use").has("code")) {
+          term.setType(designation.path("use").path("code").asText());
+        } else {
+          // Default to PT (Preferred Term) if no type is specified
+          term.setType("PT");
+          LOGGER.warn("Missing term type for RXNORM designation, defaulting to PT for concept: {}",
+              concept.getCode());
+        }
+
+        term.setTerminology(terminology.getAbbreviation());
+        term.setVersion(terminology.getVersion());
+        term.setPublisher(terminology.getPublisher());
+        term.setCode(concept.getCode());
+        term.setConceptId(concept.getCode());
+
+        // Set language/locale
+        final String language = designation.path("language").asText();
+        term.getLocaleMap().put(language, "PT".equals(term.getType()));
+
+        concept.getTerms().add(term);
+
+        // Use first PT designation as concept name
+        if (concept.getName() == null && "PT".equals(term.getType())) {
+          concept.setName(term.getName());
+        }
+      }
     }
+
+    // Process common properties
+    final JsonNode properties = conceptNode.path("property");
+    for (final JsonNode property : properties) {
+      final String code = property.path("code").asText();
+      String value = null;
+
+      if (property.has("valueString")) {
+        value = property.path("valueString").asText();
+      } else if (property.has("valueBoolean")) {
+        value = property.path("valueBoolean").asText();
+      }
+
+      if ("semanticType".equals(code)) {
+        concept.getSemanticTypes().add(value);
+      } else if (!"parent".equals(code)) {
+        concept.getAttributes().put(code, value);
+      }
+
+    }
+
+    return concept;
+  }
+
+  /**
+   * Creates a relationship between concepts.
+   *
+   * @param relationshipNode the relationship JSON node
+   * @param fromConcept the source concept
+   * @param terminology the terminology
+   * @param terminologyCache the terminology cache
+   * @return the concept relationship
+   */
+  private static ConceptRelationship createRelationship(final JsonNode relationshipNode,
+    final Concept fromConcept, final Terminology terminology,
+    final TerminologyCache terminologyCache) {
+
+    final ConceptRelationship relationship = new ConceptRelationship();
+    relationship.setId(UUID.randomUUID().toString());
+    relationship.setTerminology(terminology.getAbbreviation());
+    relationship.setVersion(terminology.getVersion());
+    relationship.setPublisher(terminology.getPublisher());
+
+    // Get relationship type and additional type from extensions
+    String type = "other";
+    String additionalType = null;
+    String group = null;
+
+    // Handle different terminology formats
+    if (terminology.getAbbreviation().contains("SNOMEDCT")) {
+      // Process SNOMED CT style extensions
+      final JsonNode extensions = relationshipNode.path("extension");
+      if (!extensions.isMissingNode()) {
+        for (final JsonNode extension : extensions) {
+          final String url = extension.path("url").asText();
+          if (url.endsWith("/additionalType")) {
+            final JsonNode valueCoding = extension.path("valueCoding");
+            additionalType = valueCoding.path("code").asText();
+            LOGGER.debug("Found additionalType: {}", additionalType);
+          } else if (url.endsWith("/group")) {
+            group = extension.path("valueString").asText();
+          }
+        }
+      }
+
+      // Set relationship type based on code
+      final String code = relationshipNode.path("code").asText();
+      LOGGER.debug("Processing SNOMED CT relationship with code: {}", code);
+
+      if ("parent".equalsIgnoreCase(code)) {
+        type = "parent";
+        additionalType = "ISA";
+        LOGGER.debug("Set type to ISA for parent relationship");
+      } else {
+        type = "relationship";
+      }
+
+    } else if (terminology.getAbbreviation().contains("LNC")) {
+      // Handle LOINC relationships
+      final String code = relationshipNode.path("code").asText();
+      if ("parent".equalsIgnoreCase(code)) {
+        type = "parent";
+        additionalType = "ISA";
+      } else if ("relationship".equals(code)) {
+        type = "relationship";
+        // Get additionalType from extension
+        final JsonNode extensions = relationshipNode.path("extension");
+        if (!extensions.isMissingNode()) {
+          for (final JsonNode extension : extensions) {
+            final String url = extension.path("url").asText();
+            if (url.endsWith("/additionalType")) {
+              final JsonNode valueCoding = extension.path("valueCoding");
+              additionalType = valueCoding.path("code").asText();
+            }
+          }
+        }
+      }
+    } else if (terminology.getAbbreviation().contains("ICD10CM")) {
+      // Handle ICD-10-CM relationships
+      final String code = relationshipNode.path("code").asText();
+      if ("parent".equals(code)) {
+        type = "parent";
+        additionalType = "ISA";
+      }
+    }
+
+    relationship.setType(type);
+    relationship.setAdditionalType(additionalType);
+
+    final ConceptRef fromRef =
+        terminologyCache.getOrCreateConceptRef(fromConcept.getCode(), fromConcept);
+    relationship.setFrom(fromRef);
+
+    // Set target concept reference from valueCoding
+    final JsonNode valueCoding = relationshipNode.path("valueCoding");
+    if (!valueCoding.isMissingNode()) {
+      final ConceptRef toRef = terminologyCache.getOrCreateConceptRef(
+          valueCoding.path("code").asText(), valueCoding.path("display").asText(), terminology);
+      relationship.setTo(toRef);
+    }
+
+    // Set additional attributes
+    relationship.setHierarchical("parent".equals(type) || "ISA".equals(additionalType));
+    relationship.setHistorical(false);
+    relationship.setAsserted(true);
+    relationship.setDefining(relationshipNode.path("defining").asBoolean(false));
+
+    // Set group if found
+    if (group != null) {
+      relationship.setGroup(group);
+    }
+
+    return relationship;
+  }
+
+  /**
+   * Compute concept tree positions.
+   *
+   * @param service the service
+   * @param terminology the terminology
+   * @throws Exception the exception
+   */
+  private static void computeConceptTreePositions(final EntityRepositoryService service,
+    final Terminology terminology) throws Exception {
+
+    LOGGER.info("Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
+        terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion());
+
+    final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
+    treepos.setTerminology(terminology.getAbbreviation());
+    treepos.setPublisher(terminology.getPublisher());
+    treepos.setVersion(terminology.getVersion());
+    treepos.checkPreconditions();
+    treepos.compute();
+
+  }
+
+  /**
+   * Creates the definition.
+   *
+   * @param definition the definition
+   * @param terminology the terminology
+   * @return the list
+   */
+  private static List<Definition> createDefinitions(final String definition,
+    final Terminology terminology) {
+
+    final List<Definition> definitions = new ArrayList<>();
+
+    final String[] definitionArray = definition.split("\\n");
+    if (definitionArray != null && definitionArray.length > 0) {
+      for (int i = 0; i < definitionArray.length; i++) {
+        if (isNotBlank(definitionArray[i])) {
+          final Definition def = new Definition();
+          def.setId(UUID.randomUUID().toString());
+          def.setDefinition(definitionArray[i].trim());
+          def.setTerminology(terminology.getAbbreviation());
+          def.setVersion(terminology.getVersion());
+          def.setPublisher(terminology.getPublisher());
+          definitions.add(def);
+        }
+      }
+    }
+    return definitions;
+  }
 }

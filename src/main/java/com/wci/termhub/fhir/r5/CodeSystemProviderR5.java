@@ -125,7 +125,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
   /**
    * Find code systems.
-   *
+   * 
    * <pre>
    * Parameters for all resources
    *   used: _id
@@ -154,6 +154,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @param publisher the publisher
    * @param title the title
    * @param url the url
+   * @param system the system
    * @param version the version
    * @param count the count
    * @param offset the offset
@@ -170,6 +171,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     @OptionalParam(name = "publisher") final StringParam publisher,
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
+    @OptionalParam(name = "system") final UriParam system,
     @OptionalParam(name = "version") final StringParam version,
     @Description(shortDefinition = "Number of entries to return")
     @OptionalParam(name = "_count") final NumberParam count,
@@ -179,6 +181,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     try {
 
       FhirUtilityR5.notSupportedSearchParams(request);
+      FhirUtilityR5.mutuallyExclusive("url", url, "system", system);
 
       final List<CodeSystem> list = new ArrayList<>();
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
@@ -194,8 +197,8 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
         // Skip non-matching
         if ((id != null && !id.getValue().equals(cs.getId()))
-            || (url != null && !url.getValue().equals(cs.getUrl()))) {
-          logger.debug("  SKIP id/url mismatch = {}", cs.getUrl());
+            || (url != null && !url.getValue().equals(cs.getUrl()))
+            || (system != null && !system.getValue().equals(cs.getUrl()))) {
           continue;
         }
         if (date != null && !FhirUtility.compareDate(date, cs.getDate())) {

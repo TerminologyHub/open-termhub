@@ -67,6 +67,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class FhirUtilityR4 {
 
   /** The logger. */
+  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
 
   /**
@@ -808,8 +809,8 @@ public final class FhirUtilityR4 {
       cs.setCopyright(copyright);
     }
 
-    logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
-        cs.getName(), cs.getVersion());
+    // logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
+    // cs.getName(), cs.getVersion());
 
     return cs;
   }
@@ -829,8 +830,8 @@ public final class FhirUtilityR4 {
     final ConceptMap cm = new ConceptMap();
 
     // Debug logging for Mapset data
-    logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
-        mapset.getFromTerminology(), mapset.getToTerminology());
+    // logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
+    // mapset.getFromTerminology(), mapset.getToTerminology());
 
     cm.setUrl(mapset.getAttributes().get("fhirUri"));
     if (mapset.getReleaseDate() != null) {
@@ -848,20 +849,20 @@ public final class FhirUtilityR4 {
     // Set source and target scopes from fromTerminology and toTerminology
     if (mapset.getFromTerminology() != null) {
       cm.setSource(new UriType(mapset.getFromTerminology()));
-      logger.info("Set sourceScope from fromTerminology: {}", mapset.getFromTerminology());
+      // logger.info("Set sourceScope from fromTerminology: {}", mapset.getFromTerminology());
     } else if (mapset.getAttributes().containsKey("sourceScopeUri")) {
       cm.setSource(new UriType(mapset.getAttributes().get("sourceScopeUri")));
-      logger.info("Set sourceScope from attributes: {}",
-          mapset.getAttributes().get("sourceScopeUri"));
+      // logger.info("Set sourceScope from attributes: {}",
+      // mapset.getAttributes().get("sourceScopeUri"));
     }
 
     if (mapset.getToTerminology() != null) {
       cm.setTarget(new UriType(mapset.getToTerminology()));
-      logger.info("Set targetScope from toTerminology: {}", mapset.getToTerminology());
+      // logger.info("Set targetScope from toTerminology: {}", mapset.getToTerminology());
     } else if (mapset.getAttributes().containsKey("targetScopeUri")) {
       cm.setTarget(new UriType(mapset.getAttributes().get("targetScopeUri")));
-      logger.info("Set targetScope from attributes: {}",
-          mapset.getAttributes().get("targetScopeUri"));
+      // logger.info("Set targetScope from attributes: {}",
+      // mapset.getAttributes().get("targetScopeUri"));
     }
     return cm;
   }

@@ -387,7 +387,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @param sort the sort
    * @param ascending the ascending
    * @param active the active
-   * @param leaf the leaf
    * @return the response entity
    * @throws Exception the exception
    */
@@ -404,7 +403,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @param sort the sort
    * @param ascending the ascending
    * @param active the active
-   * @param leaf the leaf
    * @return the response entity
    * @throws Exception the exception
    */
@@ -421,7 +419,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @param sort the sort
    * @param ascending the ascending
    * @param active the active
-   * @param leaf the leaf
    * @return the response entity
    * @throws Exception the exception
    */

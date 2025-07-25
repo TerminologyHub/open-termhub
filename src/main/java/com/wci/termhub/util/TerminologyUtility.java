@@ -47,6 +47,7 @@ import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
+import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
@@ -65,6 +66,46 @@ public final class TerminologyUtility {
    */
   private TerminologyUtility() {
     // n/a
+  }
+
+  /**
+   * Takes a value like "http://snomed.info/sct", or "SNOMEDCT_US" and it returns an object with
+   * abbreviation, publisher, version, and uri set. It attempts to align with currently installed
+   * terminologies and if unable returns default values.
+   *
+   * @param searchService the search service
+   * @param value the value
+   * @return the terminology
+   * @throws Exception the exception
+   */
+  public static TerminologyRef getTerminology(final EntityRepositoryService searchService,
+    final String value) throws Exception {
+
+    TerminologyRef ref = new TerminologyRef();
+    final String query = StringUtility.composeQuery("AND",
+        StringUtility.composeQuery("OR",
+            "abbreviation: \"" + StringUtility.escapeQuery(value) + "\"",
+            "uri: \"" + StringUtility.escapeQuery(value) + "\""));
+
+    final ResultList<Terminology> list =
+        searchService.find(new SearchParameters(query, null, null, null, null), Terminology.class);
+    // NO matches
+    if (list.getItems().isEmpty()) {
+      ref.setAbbreviation(value);
+      ref.setUri(value);
+      ref.setPublisher("unknown");
+      ref.setVersion("unknown");
+    }
+    // pick first
+    else {
+      final Terminology terminology = list.getItems().get(0);
+      ref.setAbbreviation(terminology.getAbbreviation());
+      ref.setUri(terminology.getUri());
+      ref.setPublisher(terminology.getPublisher());
+      ref.setVersion(terminology.getVersion());
+    }
+
+    return ref;
   }
 
   /**
@@ -153,6 +194,22 @@ public final class TerminologyUtility {
 
     return StringUtility.composeQuery("AND",
         "abbreviation: \"" + StringUtility.escapeQuery(abbreviation) + "\"",
+        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
+        "version: \"" + StringUtility.escapeQuery(version) + "\"");
+  }
+
+  /**
+   * Gets the terminology uri query.
+   *
+   * @param uri the uri
+   * @param publisher the publisher
+   * @param version the version
+   * @return the terminology uri query
+   */
+  public static String getTerminologyUriQuery(final String uri, final String publisher,
+    final String version) {
+
+    return StringUtility.composeQuery("AND", "uri: \"" + StringUtility.escapeQuery(uri) + "\"",
         "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
         "version: \"" + StringUtility.escapeQuery(version) + "\"");
   }
