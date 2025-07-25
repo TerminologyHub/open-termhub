@@ -32,9 +32,6 @@ import jakarta.servlet.ServletException;
  */
 public class HapiR4RestfulServlet extends RestfulServer {
 
-  /** The Constant serialVersionUID. */
-  private static final long serialVersionUID = -8760493251815507812L;
-
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(HapiR4RestfulServlet.class);
 

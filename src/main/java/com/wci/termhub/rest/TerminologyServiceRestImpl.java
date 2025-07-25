@@ -399,7 +399,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.DELETE)
   @Operation(summary = "Delete terminology",
-      description = "Delete a terminology and concepts, relationships and tree positions for the specified terminology id",
+      description = "Delete a terminology and concepts, relationships and "
+          + "tree positions for the specified terminology id",
       tags = {
           "terminology"
       })

@@ -28,6 +28,11 @@
         <span class="version" th:text="${SERVER_NAME}"></span>
       </h1>
     </div>
+    <div class="banner2">FHIR API documentation for the interacting
+      with code systems, value sets, and concept maps.</div>
+    <div class="banner2">
+        For more information on cloud Termhub, visit <a href="https://www.terminologyhub.com">https://www.terminologyhub.com</a>
+    </div>
     <div class="banner2">
       <div>
         <div class="banner2_key">FHIR Server Base URL</div>
@@ -47,12 +52,12 @@
           [[${FHIR_VERSION}]] ([[${FHIR_VERSION_CODENAME}]])
         </div>
       </div>
+      <div th:if="${COPYRIGHT} != null">
+        <div class="banner2_key">Copyright</div>
+        <div class="banner2_value">[[${COPYRIGHT}]]</div>
+      </div>				
     </div>
-    <div
-      class="bannerCopyright"
-      th:if="${COPYRIGHT_HTML} != null"
-      th:utext="${COPYRIGHT_HTML}"
-    ></div>
+    <!-- 
     <div class="banner3" th:if="${USE_RESOURCE_PAGES}">
       <div class="pageButtons" id="pageButtons">
         <a
@@ -70,6 +75,7 @@
         </a>
       </div>
     </div>
+     -->
     <div id="swagger-ui"></div>
 
     <script src="./swagger-ui-bundle.js" charset="UTF-8"></script>
@@ -78,7 +84,7 @@
       window.onload = function () {
         // Begin Swagger UI call region
         const ui = SwaggerUIBundle({
-          url: "[[${OPENAPI_DOCS} + '?page=' + ${PAGE}]]",
+          url: "[[${OPENAPI_DOCS}]]", // '?page=' + ${PAGE}]]",
           dom_id: "#swagger-ui",
           deepLinking: true,
           presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],

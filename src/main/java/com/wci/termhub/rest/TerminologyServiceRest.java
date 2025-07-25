@@ -494,7 +494,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
   /**
    * Delete. DELETE /terminology/{id} tag=terminology
    *
-   * @param terminologyStr the terminology str
+   * @param id the id
    * @return the response entity
    * @throws Exception the exception
    */

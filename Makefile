@@ -15,7 +15,7 @@ DOCKER_INT_REGISTRY      := wcinformatics
 clean: ## Clean build artifacts. Override for your project
 	./gradlew clean
 
-build: ## Build the library without tests
+build: clean ## Build the library without tests
 	./gradlew build -x test -x spotbugsMain -x spotbugsTest -x javadoc
 
 scan: ## scan for vulnerabilities in dependencies

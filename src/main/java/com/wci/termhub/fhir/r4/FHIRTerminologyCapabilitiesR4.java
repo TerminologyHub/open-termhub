@@ -72,8 +72,8 @@ public class FHIRTerminologyCapabilitiesR4 extends TerminologyCapabilities
         "The Open Termhub Terminology Capability Statement provides a summary of the Open Termhub API's"
             + " capabilities.");
     setKind(CapabilityStatementKind.CAPABILITY);
-    setSoftware(
-        new TerminologyCapabilitiesSoftwareComponent().setName("OPEN TERMHUB").setVersion(version));
+    setSoftware(new TerminologyCapabilitiesSoftwareComponent()
+        .setName("Open Termhub R4 FHIR Terminology Server").setVersion(version));
     this.setExperimental(true);
     this.setPublisher("TERMHUB");
     final Meta meta = new Meta();

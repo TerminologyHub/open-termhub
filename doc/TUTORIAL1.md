@@ -19,8 +19,7 @@ One option is to just build the code and run the server locally and use an INDEX
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
-make build
-make run
+make build run
 ```
 
 ### Option 2: build/run with docker
@@ -54,9 +53,9 @@ docker run -d --rm --name open-termhub \
 ## View API Documentation
 
 All three of the above options will yield a running server and you should now you should be able to access the Swagger UI pages:
-* Swagger [http://localhost:8080/swagger-ui/index.html](https://localhost:8080/swagger-ui/index.html)
-* FHIR R4 Swagger [http://localhost:8080/fhir/r4/swagger-ui/index.html](https://localhost:8080/fhir/r4/swagger-ui/index.html)
-* FHIR R5 Swagger [http://localhost:8080/fhir/r5/swagger-ui/index.html](https://localhost:8080/fhir/r5/swagger-ui/index.html)
+* Swagger [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+* FHIR R4 Swagger [http://localhost:8080/fhir/r4/swagger-ui/index.html](http://localhost:8080/fhir/r4/swagger-ui/index.html)
+* FHIR R5 Swagger [http://localhost:8080/fhir/r5/swagger-ui/index.html](http://localhost:8080/fhir/r5/swagger-ui/index.html)
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
 

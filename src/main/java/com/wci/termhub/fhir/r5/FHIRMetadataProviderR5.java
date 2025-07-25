@@ -140,7 +140,8 @@ public class FHIRMetadataProviderR5 extends ServerCapabilityStatementProvider {
             String.valueOf(PropertyUtility.getProperties().get("server.version"));
         capabilityStatement
             .setSoftware(new CapabilityStatement.CapabilityStatementSoftwareComponent()
-                .setName("OPEN TERMHUB").setVersion(version).setReleaseDate(new Date()));
+                .setName("Open Termhub R5 FHIR Terminology Server").setVersion(version)
+                .setReleaseDate(new Date()));
 
         capabilityStatement.setUrl("https://www.terminologyhub.com/fhir/5/metadata");
         capabilityStatement.setVersion(version);

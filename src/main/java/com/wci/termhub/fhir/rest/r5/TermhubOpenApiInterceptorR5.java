@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -120,8 +121,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Termhub Api interceptor to fix header, inject header auth token. Borrowed
- * from OpenApiInterceptor and modified.
+ * Termhub Api interceptor to fix header, inject header auth token. Borrowed from OpenApiInterceptor
+ * and modified.
  */
 public class TermhubOpenApiInterceptorR5 {
 
@@ -413,9 +414,8 @@ public class TermhubOpenApiInterceptorR5 {
   }
 
   /**
-   * If supplied, this field can be used to provide additional CSS text that
-   * should be loaded by the swagger-ui page. The contents should be raw CSS
-   * text, e.g. <code>
+   * If supplied, this field can be used to provide additional CSS text that should be loaded by the
+   * swagger-ui page. The contents should be raw CSS text, e.g. <code>
    * BODY { font-size: 1.1em; }
    * </code>
    *
@@ -426,9 +426,8 @@ public class TermhubOpenApiInterceptorR5 {
   }
 
   /**
-   * If supplied, this field can be used to provide additional CSS text that
-   * should be loaded by the swagger-ui page. The contents should be raw CSS
-   * text, e.g. <code>
+   * If supplied, this field can be used to provide additional CSS text that should be loaded by the
+   * swagger-ui page. The contents should be raw CSS text, e.g. <code>
    * BODY { font-size: 1.1em; }
    * </code>
    *
@@ -470,7 +469,8 @@ public class TermhubOpenApiInterceptorR5 {
     context.setVariable("OPENAPI_DOCS", baseUrl + "/api-docs");
     context.setVariable("FHIR_VERSION", cs.getFhirVersion().toCode());
     context.setVariable("ADDITIONAL_CSS_TEXT", getCssText());
-    context.setVariable("USE_RESOURCE_PAGES", isUseResourcePages());
+    context.setVariable("USE_RESOURCE_PAGES", "false");
+    context.setVariable("COPYRIGHT", "\u00A9 " + Year.now().getValue() + " TermHub");
     context.setVariable("FHIR_VERSION_CODENAME",
         FhirVersionEnum.forVersionString(cs.getFhirVersion().toCode()).name());
 
@@ -901,6 +901,7 @@ public class TermhubOpenApiInterceptorR5 {
    * @param theResourceType the the resource type
    * @param theOperation the the operation
    */
+  @SuppressWarnings("null")
   private void addFhirOperation(final FhirContext theFhirContext, final OpenAPI theOpenApi,
     final ServletRequestDetails theRequestDetails,
     final IServerConformanceProvider<?> theCapabilitiesProvider, final Paths thePaths,
@@ -934,8 +935,9 @@ public class TermhubOpenApiInterceptorR5 {
             populateOperation(theFhirContext, theOpenApi, theResourceType, operationDefinition,
                 operation, true);
             operation.setSummary(operationDefinition.getCode());
-            operation.setSummary(StringUtility.unCamelCase(theResourceType)
-                + " operation to perform " + operationDefinition.getCode());
+            operation.setSummary(
+                (theResourceType != null ? StringUtility.unCamelCase(theResourceType) : "")
+                    + " operation to perform " + operationDefinition.getCode());
           }
           if (operationDefinition.getInstance()) {
             final Operation operation = getPathItem(thePaths,
@@ -945,8 +947,9 @@ public class TermhubOpenApiInterceptorR5 {
             populateOperation(theFhirContext, theOpenApi, theResourceType, operationDefinition,
                 operation, true);
             operation.setSummary(operationDefinition.getCode());
-            operation.setSummary(StringUtility.unCamelCase(theResourceType)
-                + " operation to perform " + operationDefinition.getCode());
+            operation.setSummary(
+                (theResourceType != null ? StringUtility.unCamelCase(theResourceType) : "")
+                    + " operation to perform " + operationDefinition.getCode());
           }
         } else {
           if (operationDefinition.getSystem()) {
@@ -955,8 +958,9 @@ public class TermhubOpenApiInterceptorR5 {
             populateOperation(theFhirContext, theOpenApi, null, operationDefinition, operation,
                 true);
             operation.setSummary(operationDefinition.getCode());
-            operation.setSummary(StringUtility.unCamelCase(theResourceType)
-                + " operation to perform " + operationDefinition.getCode());
+            operation.setSummary(
+                (theResourceType != null ? StringUtility.unCamelCase(theResourceType) : "")
+                    + " operation to perform " + operationDefinition.getCode());
           }
         }
       }
