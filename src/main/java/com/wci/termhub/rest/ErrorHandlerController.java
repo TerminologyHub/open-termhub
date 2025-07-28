@@ -11,7 +11,6 @@ package com.wci.termhub.rest;
 
 import java.util.Map;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
@@ -40,121 +39,117 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/error")
 public class ErrorHandlerController implements ErrorController {
 
-    /** Logger. */
-    @SuppressWarnings("unused")
-    private static Logger logger = LoggerFactory.getLogger(ErrorHandlerController.class);
+  /** Logger. */
+  @SuppressWarnings("unused")
+  private static Logger logger = LoggerFactory.getLogger(ErrorHandlerController.class);
 
-    /** The error attributes. */
-    private final ErrorAttributes errorAttributes;
+  /** The error attributes. */
+  private final ErrorAttributes errorAttributes;
 
-    /**
-     * Basic error controller.
-     *
-     * @param errorAttributes the error attributes
-     */
-    public ErrorHandlerController(final ErrorAttributes errorAttributes) {
-        this.errorAttributes = errorAttributes;
+  /**
+   * Basic error controller.
+   *
+   * @param errorAttributes the error attributes
+   */
+  public ErrorHandlerController(final ErrorAttributes errorAttributes) {
+    this.errorAttributes = errorAttributes;
+  }
+
+  /**
+   * Handle error.
+   *
+   * @param request the request
+   * @return the string
+   */
+  @RequestMapping(produces = MediaType.TEXT_HTML_VALUE)
+  @ResponseBody
+  public String handleErrorHtml(final HttpServletRequest request) {
+    final Integer statusCode = (Integer) request.getAttribute("jakarta.servlet.error.status_code");
+    final Map<String, Object> body = getErrorAttributes(request, false);
+    String ppBody = null;
+    try {
+      ppBody = ThreadLocalMapper.get().writerWithDefaultPrettyPrinter().writeValueAsString(body);
+    } catch (final Exception e) {
+      ppBody = body.toString().replaceAll("<", "&lt;");
     }
 
-    /**
-     * Handle error.
-     *
-     * @param request the request
-     * @return the string
-     */
-    @RequestMapping(produces = MediaType.TEXT_HTML_VALUE)
-    @ResponseBody
-    public String handleErrorHtml(final HttpServletRequest request) {
-        final Integer statusCode =
-                (Integer) request.getAttribute("jakarta.servlet.error.status_code");
-        final Map<String, Object> body = getErrorAttributes(request, false);
-        String ppBody = null;
-        try {
-            ppBody = ThreadLocalMapper.get().writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(body);
-        } catch (final Exception e) {
-            ppBody = body.toString().replaceAll("<", "&lt;");
-        }
+    return String.format("<html><body><h2>Error Page</h2><div>Something unexpected went wrong, "
+        + "Please contact <a href=\"mailto:support-termhub@westcoastinformatics.com\">"
+        + "support-termhub@westcoastinformatics.com</a>."
+        + "</div><div>Status code: <b>%s</b></div>"
+        + "<div>Message: <pre>%s</pre></div><body></html>", statusCode, ppBody);
+  }
 
-        return String.format("<html><body><h2>Error Page</h2><div>Something unexpected went wrong, "
-                + "Please contact <a href=\"mailto:support-termhub@westcoastinformatics.com\">"
-                + "support-termhub@westcoastinformatics.com</a>."
-                + "</div><div>Status code: <b>%s</b></div>"
-                + "<div>Message: <pre>%s</pre></div><body></html>", statusCode, ppBody);
+  /**
+   * Handle error json.
+   *
+   * @param request the request
+   * @return the response entity
+   */
+  @RequestMapping()
+  @ResponseBody
+  public ResponseEntity<Map<String, Object>> handleErrorJson(final HttpServletRequest request) {
+    final HttpStatus status = getStatus(request);
+    if (status == HttpStatus.NO_CONTENT) {
+      return new ResponseEntity<>(status);
+    }
+    final Map<String, Object> body = getErrorAttributes(request, false);
+    body.put("status", status.value() + "");
+    body.put("error", status.getReasonPhrase());
+    return new ResponseEntity<>(body, status);
+  }
+
+  /**
+   * Returns the status.
+   *
+   * @param request the request
+   * @return the status
+   */
+  protected HttpStatus getStatus(final HttpServletRequest request) {
+    final Integer statusCode = (Integer) request.getAttribute("jakarta.servlet.error.status_code");
+    if (statusCode == null) {
+      return HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+    try {
+      return HttpStatus.valueOf(statusCode);
+    } catch (final Exception ex) {
+      return HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+  }
+
+  /**
+   * Returns the error attributes.
+   *
+   * @param request the request
+   * @param includeStackTrace the include stack trace
+   * @return the error attributes
+   */
+  protected Map<String, Object> getErrorAttributes(final HttpServletRequest request,
+    final boolean includeStackTrace) {
+    final WebRequest webRequest = new ServletWebRequest(request);
+    final Map<String, Object> body = errorAttributes.getErrorAttributes(webRequest,
+        ErrorAttributeOptions.of(Include.STACK_TRACE));
+
+    final Throwable error = errorAttributes.getError(webRequest);
+    // To pass an error through, use ResponseStatusException
+    if (error instanceof RestException) {
+      body.put("error", ((RestException) error).getError().getError());
+      body.put("message", ((RestException) error).getError().getMessage());
+    } else {
+      body.put("message", error == null ? "No message" : error.getMessage());
     }
 
-    /**
-     * Handle error json.
-     *
-     * @param request the request
-     * @return the response entity
-     */
-    @RequestMapping()
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> handleErrorJson(final HttpServletRequest request) {
-        final HttpStatus status = getStatus(request);
-        if (status == HttpStatus.NO_CONTENT) {
-            return new ResponseEntity<>(status);
-        }
-        final Map<String, Object> body = getErrorAttributes(request, false);
-        return new ResponseEntity<>(body, status);
-    }
+    body.remove("trace");
+    return body;
+  }
 
-    /**
-     * Returns the status.
-     *
-     * @param request the request
-     * @return the status
-     */
-    protected HttpStatus getStatus(final HttpServletRequest request) {
-        final Integer statusCode =
-                (Integer) request.getAttribute("jakarta.servlet.error.status_code");
-        if (statusCode == null) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        try {
-            return HttpStatus.valueOf(statusCode);
-        } catch (final Exception ex) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-    }
-
-    /**
-     * Returns the error attributes.
-     *
-     * @param request the request
-     * @param includeStackTrace the include stack trace
-     * @return the error attributes
-     */
-    protected Map<String, Object> getErrorAttributes(final HttpServletRequest request,
-        final boolean includeStackTrace) {
-        final WebRequest webRequest = new ServletWebRequest(request);
-        final Map<String, Object> body = errorAttributes.getErrorAttributes(webRequest,
-                ErrorAttributeOptions.of(Include.STACK_TRACE));
-        if (body.containsKey("message")) {
-            try {
-                final String message = body.get("message").toString();
-                final StringBuilder sb = new StringBuilder();
-                for (final String line : message.split("\\n")) {
-                    sb.append(StringEscapeUtils.escapeHtml4(line));
-                    sb.append("\n");
-                }
-                // remove the trailing \n
-                body.put("message", sb.toString().replaceFirst("\\n$", ""));
-            } catch (final Exception e) {
-                body.put("message", body.get("message").toString().replaceAll("<", "&lt;"));
-            }
-        }
-        return body;
-    }
-
-    /**
-     * Gets the error path.
-     *
-     * @return the error path
-     */
-    public String getErrorPath() {
-        return "/error";
-    }
+  /**
+   * Gets the error path.
+   *
+   * @return the error path
+   */
+  public String getErrorPath() {
+    return "/error";
+  }
 
 }

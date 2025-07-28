@@ -668,13 +668,11 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Terminology term = lookupTerminology(terminology);
 
       // find with code, term, pub, version
-      final String query = StringUtility.composeQuery("AND",
-          TerminologyUtility.getTerminologyQuery(term.getAbbreviation(), term.getPublisher(),
-              term.getVersion()),
-
-          "code:" + StringUtility.escapeQuery(code)
-
-      );
+      final String query =
+          StringUtility.composeQuery(
+              "AND", TerminologyUtility.getTerminologyQuery(term.getAbbreviation(),
+                  term.getPublisher(), term.getVersion()),
+              "code:" + StringUtility.escapeQuery(code));
 
       // then do a find on the query
       final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
@@ -873,8 +871,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
       // Handler applied, send null handler below
-      final ResultList<Concept> list = findConceptsHelper(tlist, query2, expression, offset, maxLimit, sort,
-          ascending, active, leaf, ip);
+      final ResultList<Concept> list = findConceptsHelper(tlist, query2, expression, offset,
+          maxLimit, sort, ascending, active, leaf, ip);
 
       return new ResponseEntity<>(new ResultListConcept(list), new HttpHeaders(), HttpStatus.OK);
 
@@ -1041,8 +1039,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
         final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
         final int useLimit = limit == null ? 1 : (limit > 10 ? 10 : limit);
-        final ResultList<Concept> result =
-            findConceptsHelper(tlist, query2, expression, 0, useLimit, null, null, active, leaf, ip);
+        final ResultList<Concept> result = findConceptsHelper(tlist, query2, expression, 0,
+            useLimit, null, null, active, leaf, ip);
         result.getParameters().setQuery(query2);
         result.getParameters().setExpression(expression);
 
@@ -1085,10 +1083,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * @return the result list
    * @throws Exception the exception
    */
-  private ResultList<Concept> findConceptsHelper(final List<Terminology> terminologies, final String query,
-    final String expression, final Integer offset, final Integer limit, final String sort,
-    final Boolean ascending, final Boolean active, final Boolean leaf, final IncludeParam ip)
-    throws Exception {
+  private ResultList<Concept> findConceptsHelper(final List<Terminology> terminologies,
+    final String query, final String expression, final Integer offset, final Integer limit,
+    final String sort, final Boolean ascending, final Boolean active, final Boolean leaf,
+    final IncludeParam ip) throws Exception {
 
     // Check for a single terminology
     final Terminology single = terminologies.isEmpty() ? null : terminologies.get(0);
@@ -1097,7 +1095,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       throw new RestException(false, 417, "Expecation failed",
           "Expression parameter can only be used in " + "conjunction with a single terminology");
     }
-    final Query keywordQuery = LuceneQueryBuilder.parse(query, Concept.class);
+    final Query keywordQuery =
+        LuceneQueryBuilder.parse(StringUtility.isEmpty(query) ? "*:*" : query, Concept.class);
     final Query expressionQuery = TerminologyUtility.getExpressionQuery(expression);
     final Query booleanQuery = getAndQuery(keywordQuery, expressionQuery);
     final SearchParameters searchParams =
@@ -2471,9 +2470,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
       // Limit to loaded mapsets
-      final SearchParameters searchParams =
-          new SearchParameters("*:*" + ((query == null || query.isEmpty()) ? "" : " AND " + query),
-              offset, maxLimit, sort, ascending);
+      final SearchParameters searchParams = new SearchParameters(
+          StringUtility.isEmpty(query) ? "*:*" : query, offset, maxLimit, sort, ascending);
       final ResultList<Mapset> list = searchService.find(searchParams, Mapset.class);
       list.setParameters(searchParams);
       list.getItems().forEach(t -> t.cleanForApi());
@@ -2527,9 +2525,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
       // Limit to loaded mapsets
-      final SearchParameters searchParams =
-          new SearchParameters("*:*" + ((query == null || query.isEmpty()) ? "" : " AND " + query),
-              offset, maxLimit, sort, ascending);
+      final SearchParameters searchParams = new SearchParameters(
+          StringUtility.isEmpty(query) ? "*:*" : query, offset, maxLimit, sort, ascending);
       final ResultList<Subset> list = searchService.find(searchParams, Subset.class);
       list.setParameters(searchParams);
       list.getItems().forEach(t -> t.cleanForApi());
@@ -2834,7 +2831,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Boolean active) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
-    final String mapsetClause = "("
+    final String mapsetClause = ModelUtility.isEmpty(mapsets) ? null : "("
         + String.join(" OR ",
             mapsets.stream()
                 .map(m -> "(" + StringUtility.composeQuery("AND",
@@ -2843,16 +2840,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
                     "mapset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
                 .toList())
         + ")";
-    final SearchParameters searchParams = new SearchParameters(
-        StringUtility.composeQuery("AND", query, mapsetClause), offset, limit, sort, ascending);
+    final SearchParameters searchParams = new SearchParameters(StringUtility.composeQuery("AND",
+        StringUtility.isEmpty(query) ? "*:*" : query, mapsetClause), offset, limit, sort,
+        ascending);
     if (active != null && active) {
       searchParams.setActive(true);
     }
-
-    // Bail if no mapsets
-    // if (ModelUtility.isEmpty(mapsets)) {
-    // return new ResultList<Mapping>();
-    // }
 
     final ResultList<Mapping> list = searchService.find(searchParams, Mapping.class);
 
@@ -2900,7 +2893,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Boolean active) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
-    final String subsetClause = "("
+    final String subsetClause = ModelUtility.isEmpty(subsets) ? null : "("
         + String.join(" OR ",
             subsets.stream()
                 .map(m -> "(" + StringUtility.composeQuery("AND",
@@ -2909,16 +2902,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
                     "subset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
                 .toList())
         + ")";
-    final SearchParameters searchParams = new SearchParameters(
-        StringUtility.composeQuery("AND", query, subsetClause), offset, limit, sort, ascending);
+    final SearchParameters searchParams = new SearchParameters(StringUtility.composeQuery("AND",
+        StringUtility.isEmpty(query) ? "*:*" : query, subsetClause), offset, limit, sort,
+        ascending);
     if (active != null && active) {
       searchParams.setActive(true);
     }
-
-    // Bail if no subsets
-    // if (ModelUtility.isEmpty(subsets)) {
-    // return new ResultList<SubsetMember>();
-    // }
 
     final ResultList<SubsetMember> list = searchService.find(searchParams, SubsetMember.class);
 
@@ -3032,27 +3021,22 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     // We are not using multiple indexes, so we instead have to add constraints
     final String subsetClause =
-        "(" + String.join(" OR ",
-            subsets.stream()
-                .map(m -> "("
+        ModelUtility.isEmpty(subsets) ? null
+            : "(" + String.join(" OR ",
+                subsets.stream().map(m -> "("
                     + StringUtility.composeQuery("AND",
                         "subset.abbreviation: \"" + StringUtility.escapeQuery(m.getAbbreviation())
                             + "\"",
                         "subset.publisher: \"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
                         "subset.version: \"" + StringUtility.escapeQuery(m.getVersion()) + "\"")
-                    + ")")
-                .toList())
-            + ")";
-    final SearchParameters searchParams = new SearchParameters(
-        StringUtility.composeQuery("AND", query, subsetClause), offset, limit, sort, ascending);
+                    + ")").toList())
+                + ")";
+    final SearchParameters searchParams = new SearchParameters(StringUtility.composeQuery("AND",
+        StringUtility.isEmpty(query) ? "*:*" : query, subsetClause), offset, limit, sort,
+        ascending);
 
     if (active != null && active) {
       searchParams.setActive(true);
-    }
-
-    // Bail if no subsets
-    if (ModelUtility.isEmpty(subsets)) {
-      return new ResultList<>();
     }
 
     final ResultList<SubsetMember> list = searchService.find(searchParams, SubsetMember.class);
