@@ -16,18 +16,11 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
 
@@ -39,12 +32,8 @@ import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 /**
  * The Class ValueSetProviderR4UnitTest.
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestInstance(Lifecycle.PER_CLASS)
-@ActiveProfiles("test-r4")
-public class ValueSetProviderR4UnitTest {
+public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** The Constant LOGGER. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetProviderR4UnitTest.class);

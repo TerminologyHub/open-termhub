@@ -14,27 +14,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 
-import com.wci.termhub.Application;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
- * Unit tests for concept relationship functionality with FHIR Code System files.
+ * Unit tests for concept relationship functionality with FHIR Code System
+ * files.
  */
-@TestInstance(Lifecycle.PER_CLASS)
-@SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-test.properties")
-public class ConceptRelationshipCodeSystemUnitTest {
+public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyServerTest {
 
   /** The logger. */
   private static final Logger LOGGER =

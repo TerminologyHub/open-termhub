@@ -199,33 +199,11 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
-      logger.info("Searching for concept maps with parameters:");
-      logger.info("  sourceSystem={}", sourceSystem != null ? sourceSystem.getValue() : "null");
-      logger.info("  sourceScopeUri={}",
-          sourceScopeUri != null ? sourceScopeUri.getValue() : "null");
-      logger.info("  targetSystem={}", targetSystem != null ? targetSystem.getValue() : "null");
-      logger.info("  targetScopeUri={}",
-          targetScopeUri != null ? targetScopeUri.getValue() : "null");
-      logger.info("  version={}", version != null ? version.getValue() : "null");
 
       FhirUtilityR5.notSupportedSearchParams(request);
 
       // Get all mapsets and then restrict
       final List<ConceptMap> candidates = findCandidates();
-      logger.info("Found {} candidate concept maps", candidates.size());
-
-      // Debug each candidate
-      for (final ConceptMap cm : candidates) {
-        logger.info("Candidate ConceptMap:");
-        logger.info("  id={}", cm.getId());
-        logger.info("  url={}", cm.getUrl());
-        logger.info("  version={}", cm.getVersion());
-        logger.info("  sourceScope={}",
-            cm.getSourceScope() != null ? ((UriType) cm.getSourceScope()).getValue() : "null");
-        logger.info("  targetScope={}",
-            cm.getTargetScope() != null ? ((UriType) cm.getTargetScope()).getValue() : "null");
-      }
-
       final List<ConceptMap> list = new ArrayList<>();
       for (final ConceptMap cm : candidates) {
         // Skip non-matching

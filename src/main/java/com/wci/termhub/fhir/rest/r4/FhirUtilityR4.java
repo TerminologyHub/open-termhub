@@ -837,7 +837,8 @@ public final class FhirUtilityR4 {
     if (mapset.getReleaseDate() != null) {
       cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(mapset.getReleaseDate()));
     }
-    cm.setVersion(mapset.getAttributes().get("fhirVersion"));
+    cm.setVersion(mapset.getAttributes().containsKey("fhirVersion")
+        ? mapset.getAttributes().get("fhirVersion") : mapset.getVersion());
     cm.setId(mapset.getId());
     cm.setName(mapset.getName());
     cm.setTitle(mapset.getAbbreviation());

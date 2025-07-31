@@ -41,7 +41,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 @SpringBootTest(classes = Application.class)
 @TestPropertySource(locations = "classpath:application-test.properties")
 @TestMethodOrder(OrderAnnotation.class)
-public class EntityServiceImplUnitTest extends BaseUnitTest {
+public class EntityServiceImplUnitTest extends AbstractClassTest {
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(EntityServiceImplUnitTest.class);

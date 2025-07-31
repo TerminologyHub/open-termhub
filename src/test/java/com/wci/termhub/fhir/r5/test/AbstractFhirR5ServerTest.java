@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.test;
+package com.wci.termhub.fhir.r5.test;
 
 import java.util.List;
 
@@ -19,10 +19,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.test.AbstractServerTest;
 import com.wci.termhub.util.PropertyUtility;
 
 /**
@@ -31,16 +31,18 @@ import com.wci.termhub.util.PropertyUtility;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestPropertySource(locations = "classpath:application-test.properties")
-public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
+public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private final Logger logger = LoggerFactory.getLogger(AbstractTerminologyServerTest.class);
+  private final Logger logger = LoggerFactory.getLogger(AbstractFhirR5ServerTest.class);
 
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
+
+  /** The index directory. */
+  protected static final String INDEX_DIRECTORY = "build/index/lucene-index-r5";
 
   /** List of FHIR Code System files to load. */
   private static final List<String> CODE_SYSTEM_FILES =
@@ -66,15 +68,14 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
    */
   @BeforeAll
   public void setupData() throws Exception {
+    PropertyUtility.setProperty("lucene.index.directory", INDEX_DIRECTORY);
     if (setupOnce) {
       return;
     }
-    final String indexDirectory = PropertyUtility.getProperty("lucene.index.directory");
-    clearAndCreateIndexDirectories(searchService, indexDirectory);
-    loadCodeSystems(searchService, CODE_SYSTEM_FILES, true);
+    clearAndCreateIndexDirectories(searchService, INDEX_DIRECTORY);
+    loadCodeSystems(searchService, CODE_SYSTEM_FILES, false);
     loadConceptMaps(searchService, CONCEPT_MAP_FILES);
     loadValueSets(searchService, VALUE_SET_FILES);
     setupOnce = true;
   }
-
 }

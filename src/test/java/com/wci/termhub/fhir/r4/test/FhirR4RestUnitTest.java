@@ -14,14 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
@@ -38,57 +34,38 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.fhir.r5.test.FhirR5RestUnitTest;
-import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.CodeSystemLoaderUtil;
-import com.wci.termhub.util.ConceptMapLoaderUtil;
-import com.wci.termhub.util.ModelUtility;
-import com.wci.termhub.util.PropertyUtility;
-import com.wci.termhub.util.SubsetLoaderUtil;
 import com.wci.termhub.util.ThreadLocalMapper;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
 /**
- * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4 endpoints, CodeSystem,
- * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set id's
+ * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4
+ * endpoints, CodeSystem, ValueSet, and ConceptMap. All passed ids MUST be
+ * lowercase, so they match our internally set id's
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestInstance(Lifecycle.PER_CLASS)
-@TestPropertySource(locations = "classpath:application-test-r4.properties")
 @TestMethodOrder(OrderAnnotation.class)
-public class FhirR4RestUnitTest {
+public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(FhirR4RestUnitTest.class);
@@ -126,19 +103,6 @@ public class FhirR4RestUnitTest {
   @Autowired
   private EntityRepositoryService searchService;
 
-  /** List of FHIR Code System files to load. */
-  private static final List<String> CODE_SYSTEM_FILES =
-      List.of("CodeSystem-snomedct_us-sandbox-20240301-r4.json",
-          "CodeSystem-snomedct-sandbox-20240101-r4.json", "CodeSystem-lnc-sandbox-277-r4.json",
-          "CodeSystem-icd10cm-sandbox-2023-r4.json", "CodeSystem-rxnorm-sandbox-04012024-r4.json");
-
-  /** List of FHIR Code System files to load. */
-  private static final String VALUE_SET_FILES = "ValueSet-snomedct_us-model-nlm-20240301-r4.json";
-
-  /** List of FHIR ConceptMap files to load. */
-  private static final String CONCEPT_MAP_FILES =
-      "ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r4.json";
-
   /**
    * Sets the up once.
    *
@@ -146,12 +110,6 @@ public class FhirR4RestUnitTest {
    */
   @BeforeAll
   public void setUpOnce() throws Exception {
-
-    clearAndCreateIndexes();
-    loadTestTerminologies();
-    loadTestConceptMaps();
-    loadTestValueSets();
-
     parser = FhirContext.forR4().newJsonParser();
 
   }
@@ -1213,121 +1171,6 @@ public class FhirR4RestUnitTest {
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
     mapsets = searchService.find(params, Mapset.class);
     assertEquals(0, mapsets.getTotal());
-  }
-
-  /**
-   * Clear and create indexes.
-   *
-   * @throws Exception the exception
-   */
-  private void clearAndCreateIndexes() throws Exception {
-    // Use File instead of Path to avoid colon issues in directory paths
-    final String indexDirPath =
-        PropertyUtility.getProperties().getProperty("lucene.index.directory");
-
-    // Delete all indexes for a fresh start
-    LOGGER.info("Deleting existing indexes from directory: {}", indexDirPath);
-    final File indexDir = new File(indexDirPath);
-    LOGGER.info("Does this exist? {}", indexDir.exists());
-
-    if (indexDir.exists()) {
-      FileUtils.deleteDirectory(indexDir);
-    }
-
-    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
-    for (final Class<? extends HasId> clazz : indexedObjects) {
-      searchService.deleteIndex(clazz);
-      searchService.createIndex(clazz);
-    }
-  }
-
-  /**
-   * Load terminology.
-   *
-   * @throws Exception the exception
-   */
-  private void loadTestTerminologies() throws Exception {
-
-    for (final String codeSystemFile : CODE_SYSTEM_FILES) {
-      try {
-        final ClassPathResource resource = new ClassPathResource("data/" + codeSystemFile,
-            FhirR5RestUnitTest.class.getClassLoader());
-        if (!resource.exists()) {
-          throw new FileNotFoundException("Could not find resource: data/" + codeSystemFile);
-        }
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-        LOGGER.info("Loading code system from classpath resource: data/{}", codeSystemFile);
-        assertNotNull(CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, true));
-
-      } catch (final Exception e) {
-        LOGGER.error("Error loading code system file: {}", codeSystemFile, e);
-        throw e;
-      }
-    }
-  }
-
-  /**
-   * Load concept map.
-   *
-   * @throws Exception the exception
-   */
-  private void loadTestConceptMaps() throws Exception {
-
-    try {
-      final ClassPathResource resource = new ClassPathResource("data/" + CONCEPT_MAP_FILES,
-          FhirR4RestUnitTest.class.getClassLoader());
-
-      if (!resource.exists()) {
-        throw new FileNotFoundException("Could not find resource: data/" + CONCEPT_MAP_FILES);
-      }
-
-      LOGGER.info("Loading concept map from classpath resource: data/{}", CONCEPT_MAP_FILES);
-      // Verify the file is a ConceptMap
-      @SuppressWarnings("resource")
-      final JsonNode root = objectMapper.readTree(resource.getInputStream());
-      if (!"ConceptMap".equals(root.path("resourceType").asText())) {
-        throw new IllegalArgumentException("Invalid resource type - expected ConceptMap");
-      }
-
-      final String content = FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-      ConceptMapLoaderUtil.loadConceptMap(searchService, content);
-
-    } catch (final Exception e) {
-      LOGGER.error("Error loading concept map file: {}", CONCEPT_MAP_FILES, e);
-      throw e;
-    }
-
-    LOGGER.info("Finished loading concept maps");
-  }
-
-  /**
-   * Load value set.
-   *
-   * @throws Exception the exception
-   */
-  private void loadTestValueSets() throws Exception {
-
-    try {
-      final ClassPathResource resource = new ClassPathResource("data/" + VALUE_SET_FILES,
-          FhirR4RestUnitTest.class.getClassLoader());
-
-      if (!resource.exists()) {
-        throw new FileNotFoundException("Could not find resource: data/" + VALUE_SET_FILES);
-      }
-
-      final String fileContent =
-          FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
-      LOGGER.info("Loading value sets from classpath resource: data/{}", VALUE_SET_FILES);
-      assertNotNull(SubsetLoaderUtil.loadSubset(searchService, fileContent, false));
-
-    } catch (final Exception e) {
-      LOGGER.error("Error loading value set file: {}", VALUE_SET_FILES, e);
-      throw e;
-    }
-
-    LOGGER.info("Finished loading value sets");
   }
 
 }
