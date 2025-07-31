@@ -72,7 +72,7 @@ import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
-import com.wci.termhub.util.SubsetLoaderUtil;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 import com.wci.termhub.util.ThreadLocalMapper;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -1320,7 +1320,7 @@ public class FhirR4RestUnitTest {
           FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
       LOGGER.info("Loading value sets from classpath resource: data/{}", VALUE_SET_FILES);
-      assertNotNull(SubsetLoaderUtil.loadSubset(searchService, fileContent, false));
+      assertNotNull(ValueSetLoaderUtil.loadSubset(searchService, fileContent, false));
 
     } catch (final Exception e) {
       LOGGER.error("Error loading value set file: {}", VALUE_SET_FILES, e);

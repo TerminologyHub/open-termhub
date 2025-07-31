@@ -33,21 +33,20 @@ import ca.uhn.fhir.parser.IParser;
 /**
  * The Class SubsetLoaderUtil.
  */
-public final class SubsetLoaderUtil {
+public final class ValueSetLoaderUtil {
 
   /** The Constant logger. */
-  private static final Logger LOGGER = LoggerFactory.getLogger(SubsetLoaderUtil.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetLoaderUtil.class);
 
   /**
    * Instantiates a new subset loader util.
    */
-  private SubsetLoaderUtil() {
+  private ValueSetLoaderUtil() {
     // Utility class
   }
 
   /**
-   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
-   * and persists.
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember, and persists.
    * @param service the repository service
    * @param json the ValueSet JSON
    * @param isR5 true for R5, false for R4
@@ -98,7 +97,19 @@ public final class SubsetLoaderUtil {
       id = java.util.UUID.randomUUID().toString();
     }
     subset.setId(id);
-    subset.setCode(null);
+
+    // Use the identifier as the code, otherwise use the id
+    // NOTE: termhub generated files will have a single id
+    // with a system matching this value.
+    for (final org.hl7.fhir.r4.model.Identifier identifier : valueSet.getIdentifier()) {
+      if ("https://terminologyhub.com/model/subset/code".equals(identifier.getSystem())) {
+        subset.setCode(identifier.getValue());
+      }
+    }
+    if (StringUtility.isEmpty(subset.getCode())) {
+      subset.setCode(subset.getId());
+    }
+
     subset.setDescription(valueSet.getDescription());
     subset.setName(valueSet.getName());
     subset.setLoaded(true);
@@ -243,7 +254,18 @@ public final class SubsetLoaderUtil {
       id = java.util.UUID.randomUUID().toString();
     }
     subset.setId(id);
-    subset.setCode(null);
+    // Use the identifier as the code, otherwise use the id
+    // NOTE: termhub generated files will have a single id
+    // with a system matching this value.
+    for (final org.hl7.fhir.r5.model.Identifier identifier : valueSet.getIdentifier()) {
+      if ("https://terminologyhub.com/model/subset/code".equals(identifier.getSystem())) {
+        subset.setCode(identifier.getValue());
+      }
+    }
+    if (StringUtility.isEmpty(subset.getCode())) {
+      subset.setCode(subset.getId());
+    }
+
     subset.setDescription(valueSet.getDescription());
     subset.setName(valueSet.getName());
     subset.setLoaded(true);

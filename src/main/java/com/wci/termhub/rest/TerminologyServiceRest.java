@@ -28,6 +28,7 @@ import com.wci.termhub.model.ResultListSubsetMember;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
 import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Terminology;
 
 /**
@@ -435,6 +436,15 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<List<Mapping>> getConceptMappings(String conceptId) throws Exception;
 
   /**
+   * Gets the concept members.
+   *
+   * @param conceptId the concept id
+   * @return the concept members
+   * @throws Exception the exception
+   */
+  public ResponseEntity<List<SubsetMember>> getConceptMembers(String conceptId) throws Exception;
+
+  /**
    * Gets the concept inverse mappings.
    *
    * @param conceptId the concept id
@@ -452,6 +462,17 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @throws Exception the exception
    */
   public ResponseEntity<List<Mapping>> getConceptMappings(String terminology, String code)
+    throws Exception;
+
+  /**
+   * Gets the concept members.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @return the concept members
+   * @throws Exception the exception
+   */
+  public ResponseEntity<List<SubsetMember>> getConceptMembers(String terminology, String code)
     throws Exception;
 
   /**

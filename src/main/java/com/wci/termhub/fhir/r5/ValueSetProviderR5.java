@@ -59,7 +59,7 @@ import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.StringUtility;
-import com.wci.termhub.util.SubsetLoaderUtil;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 import com.wci.termhub.util.TerminologyUtility;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -127,7 +127,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
         memberParams.getFilters().put("subset.code", subset.getCode());
         final List<SubsetMember> members =
             searchService.findAll(memberParams, SubsetMember.class).getItems();
-        return SubsetLoaderUtil.toR5ValueSet(subset, members);
+        return ValueSetLoaderUtil.toR5ValueSet(subset, members);
       }
       throw FhirUtilityR5.exception(
           "Value set not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
@@ -266,7 +266,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
         memberParams.setOffset(pageOffset);
         final List<SubsetMember> members =
             searchService.findAll(memberParams, SubsetMember.class).getItems();
-        final ValueSet set = SubsetLoaderUtil.toR5ValueSet(subset, members);
+        final ValueSet set = ValueSetLoaderUtil.toR5ValueSet(subset, members);
         // Apply the same filtering as above
         if ((id != null && !id.getValue().equals(set.getId()))
             || (url != null && !url.getValue().equals(set.getUrl()))) {
@@ -585,7 +585,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
     if (valueSet == null) {
       throw FhirUtilityR5.exception("Missing valueSet parameter", IssueType.INVALID, 400);
     }
-    final String subsetId = SubsetLoaderUtil.loadSubset(searchService,
+    final String subsetId = ValueSetLoaderUtil.loadSubset(searchService,
         FhirContext.forR5().newJsonParser().encodeResourceToString(valueSet), true);
     final Parameters out = new Parameters();
     out.addParameter().setName("subsetId").setValue(new StringType(subsetId));
@@ -604,7 +604,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
     try {
 
-      final String subsetId = SubsetLoaderUtil.loadSubset(searchService,
+      final String subsetId = ValueSetLoaderUtil.loadSubset(searchService,
           FhirContext.forR5().newJsonParser().encodeResourceToString(valueSet), true);
 
       valueSet.getCompose().getInclude().clear();

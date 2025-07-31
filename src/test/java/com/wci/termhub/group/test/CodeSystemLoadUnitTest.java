@@ -45,7 +45,7 @@ import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
-import com.wci.termhub.util.SubsetLoaderUtil;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 /**
  * Test class for loading FHIR Code System files.
@@ -164,7 +164,7 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
             FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
         LOGGER.info("Loading value set from classpath resource: data/{}", valueSetFile);
-        SubsetLoaderUtil.loadSubset(searchService, fileContent, true);
+        ValueSetLoaderUtil.loadSubset(searchService, fileContent, true);
 
       } catch (final Exception e) {
         LOGGER.error("Error loading value set file: {}", valueSetFile, e);

@@ -2250,6 +2250,67 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   /* see superclass */
   @Override
+  @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/members", method = RequestMethod.GET)
+  @Operation(summary = "Get subset members from concept by id",
+      description = "Gets subset members from the specified concept", tags = {
+          "concept by id"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Subset members from the concept matching specified id in specified project",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = SubsetMember.class)))),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true)
+  })
+  public ResponseEntity<List<SubsetMember>> getConceptMembers(
+    @PathVariable("conceptId") final String conceptId) throws Exception {
+
+    try {
+      final IncludeParam ip = new IncludeParam("minimal");
+
+      // Get the concept
+      final String query = "id:" + StringUtility.escapeQuery(conceptId);
+
+      // then do a find on the query
+      // don't use 'get' because it doesn't work with include param fields
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
+          new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+
+      if (results.getTotal() == 0) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.OK);
+      }
+      if (results.getTotal() > 1) {
+        throw new RestException(false, 417, "Expecation failed",
+            "Too many matching concepts for id = " + conceptId);
+      }
+
+      final Concept concept = results.getItems().get(0);
+
+      // Find members
+      final List<Subset> subsets = lookupSubsets(null, true);
+      final List<SubsetMember> members = findMembersHelper(subsets,
+          StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(concept.getCode()),
+              "terminology:" + concept.getTerminology(), "publisher: \"" + concept.getPublisher(),
+              "version:" + concept.getVersion()) + "\"",
+          0, 10000, null, null, true).getItems();
+
+      // Return the object
+      return new ResponseEntity<>(members, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get concept members = " + conceptId);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
   @RequestMapping(value = "/concept/{terminology}/{code}/mapping", method = RequestMethod.GET)
   @Operation(summary = "Get mappings from concept by terminology and code",
       description = "Gets mappings from the concept with the specified terminology and code.",
@@ -2393,6 +2454,81 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     } catch (final Exception e) {
       handleException(e, "trying to get concept mappings for = " + code);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/concept/{terminology}/{code}/members", method = RequestMethod.GET)
+  @Operation(summary = "Get members from concept by terminology and code",
+      description = "Gets members from the concept with the specified terminology and code.",
+      tags = {
+          "concept by code"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Members from the concept matching specified terminology and code",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = SubsetMember.class)))),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "terminology",
+          description = "Terminology id or abbreviation." + " e.g. \"uuid1\" or \"ICD10CM\".",
+          required = true),
+      @Parameter(name = "code",
+          description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"",
+          required = true)
+  })
+  public ResponseEntity<List<SubsetMember>> getConceptMembers(
+    @PathVariable("terminology") final String terminology, @PathVariable("code") final String code)
+    throws Exception {
+
+    try {
+
+      final IncludeParam ip = new IncludeParam("minimal");
+      final Terminology term = lookupTerminology(terminology);
+
+      // find with code, term, pub, version
+      final String query =
+          StringUtility.composeQuery(
+              "AND", TerminologyUtility.getTerminologyQuery(term.getAbbreviation(),
+                  term.getPublisher(), term.getVersion()),
+              "code:" + StringUtility.escapeQuery(code));
+
+      // then do a find on the query
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
+          new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+
+      if (results.getTotal() == 0) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.OK);
+      }
+      if (results.getTotal() > 1) {
+        throw new RestException(false, 417, "Expecation failed",
+            "Too many matching concepts for terminology/code = " + terminology + ", " + code);
+      }
+
+      final Concept concept = results.getItems().get(0);
+
+      // Find subpings
+      final List<Subset> subsets = lookupSubsets(null, true);
+      final List<SubsetMember> members = findMembersHelper(subsets,
+          StringUtility.composeQuery("AND",
+              "from.code:" + StringUtility.escapeQuery(concept.getCode()),
+              "from.terminology:" + concept.getTerminology(),
+              "from.publisher: \"" + concept.getPublisher()) + "\"",
+          0, 10000, null, null, true).getItems();
+
+      // Return the object
+      return new ResponseEntity<>(members, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get concept members for = " + code);
       return null;
     }
   }

@@ -36,7 +36,7 @@ import com.wci.termhub.model.HasId;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
-import com.wci.termhub.util.SubsetLoaderUtil;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 /**
  * Test class for loading FHIR R4 Value Set files.
@@ -97,7 +97,7 @@ public class ValueSetLoadR4UnitTest {
             FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
         LOGGER.info("Loading value sets from classpath resource: data/{}", valueSetFile);
-        assertNotNull(SubsetLoaderUtil.loadSubset(searchService, fileContent, false));
+        assertNotNull(ValueSetLoaderUtil.loadSubset(searchService, fileContent, false));
 
       } catch (final Exception e) {
         LOGGER.error("Error loading value set file: {}", valueSetFile, e);
@@ -127,7 +127,7 @@ public class ValueSetLoadR4UnitTest {
 
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
-          SubsetLoaderUtil.loadSubset(searchService, fileContent, false);
+          ValueSetLoaderUtil.loadSubset(searchService, fileContent, false);
         });
 
       } catch (final Exception e) {
