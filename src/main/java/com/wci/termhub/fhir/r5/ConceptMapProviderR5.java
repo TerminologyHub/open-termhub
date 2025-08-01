@@ -215,8 +215,6 @@ public class ConceptMapProviderR5 implements IResourceProvider {
 
       // Get all mapsets and then restrict
       final List<ConceptMap> candidates = findCandidates();
-      logger.debug("Found {} candidate concept maps", candidates.size());
-
       final List<ConceptMap> list = new ArrayList<>();
       for (final ConceptMap cm : candidates) {
         // Skip non-matching
