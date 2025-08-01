@@ -249,57 +249,81 @@ public class ConceptMapProviderR4 implements IResourceProvider {
         }
         if (identifier != null
             && !FhirUtility.compareString(identifier, cm.getIdentifier().getValue())) {
-          logger.info("  SKIP identifier mismatch = {}", cm.getIdentifier().getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP identifier mismatch = {}", cm.getIdentifier().getValue());
+          }
           continue;
         }
         if (date != null && !FhirUtility.compareDateRange(date, cm.getDate())) {
-          logger.info("  SKIP date mismatch = {}", cm.getDate());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP date mismatch = {}", cm.getDate());
+          }
           continue;
         }
         if (description != null && !FhirUtility.compareString(description, cm.getDescription())) {
-          logger.info("  SKIP description mismatch = {}", cm.getDescription());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP description mismatch = {}", cm.getDescription());
+          }
           continue;
         }
         if (name != null && !FhirUtility.compareString(name, cm.getName())) {
-          logger.info("  SKIP name mismatch = {}", cm.getName());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP name mismatch = {}", cm.getName());
+          }
           continue;
         }
         if (publisher != null && !FhirUtility.compareString(publisher, cm.getPublisher())) {
-          logger.info("  SKIP publisher mismatch = {}", cm.getPublisher());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP publisher mismatch = {}", cm.getPublisher());
+          }
           continue;
         }
         if (title != null && !FhirUtility.compareString(title, cm.getTitle())) {
-          logger.info("  SKIP title mismatch = {}", cm.getTitle());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP title mismatch = {}", cm.getTitle());
+          }
           continue;
         }
         if (version != null && !FhirUtility.compareString(version, cm.getVersion())) {
-          logger.info("  SKIP version mismatch = {}", cm.getVersion());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP version mismatch = {}", cm.getVersion());
+          }
           continue;
         }
 
-        logger.debug(" sourceSystem = {}, targetSystem = {}", cm.getSource(), cm.getTarget());
+        if (logger.isDebugEnabled()) {
+          logger.debug(" sourceSystem = {}, targetSystem = {}", cm.getSource(), cm.getTarget());
+        }
 
         if (sourceSystem != null && (cm.getSourceUriType() == null
             || cm.getSourceUriType().getValue() == null || !cm.getSourceUriType().getValue()
                 .replace("?fhir_vs", "").equals(sourceSystem.getValue()))) {
-          logger.info("  SKIP sourceSystem mismatch = {}, {}", sourceSystem.getValue(),
-              cm.getSourceUriType() != null ? cm.getSourceUriType().getValue() : "null");
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP sourceSystem mismatch = {}, {}", sourceSystem.getValue(),
+                cm.getSourceUriType() != null ? cm.getSourceUriType().getValue() : "null");
+          }
           continue;
         }
         if (targetSystem != null && (cm.getTargetUriType() == null
             || cm.getTargetUriType().getValue() == null || !cm.getTargetUriType().getValue()
                 .replace("?fhir_vs", "").equals(targetSystem.getValue()))) {
-          logger.info("  SKIP targetSystem mismatch = {}, {}", targetSystem.getValue(),
-              cm.getTargetUriType() != null ? cm.getTargetUriType().getValue() : "null");
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP targetSystem mismatch = {}, {}", targetSystem.getValue(),
+                cm.getTargetUriType() != null ? cm.getTargetUriType().getValue() : "null");
+          }
           continue;
         }
 
         if (sourceCode != null && !mapsetsMatchingSourceCodes.contains(sourceCode.getValue())) {
-          logger.info("  SKIP source-code not found = {}", sourceCode.getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP source-code not found = {}", sourceCode.getValue());
+          }
           continue;
         }
         if (targetCode != null && !mapsetsMatchingTargetCodes.contains(targetCode.getValue())) {
-          logger.info("  SKIP target-code not found = {}", targetCode.getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP target-code not found = {}", targetCode.getValue());
+          }
           continue;
         }
         list.add(cm);
@@ -398,23 +422,31 @@ public class ConceptMapProviderR4 implements IResourceProvider {
         }
 
         if (conceptMapVersion != null && !conceptMapVersion.getValue().equals(cm.getVersion())) {
-          logger.info("  SKIP concept map version mismatch = {}", cm.getVersion());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP concept map version mismatch = {}", cm.getVersion());
+          }
           continue;
         }
         if (source != null && !source.getValue().equals(cm.getSourceUriType().getValue())) {
-          logger.info("  SKIP source mismatch = {}, {}", source.getValue(),
-              cm.getSourceUriType().getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP source mismatch = {}, {}", source.getValue(),
+                cm.getSourceUriType().getValue());
+          }
           continue;
         }
         if (target != null && !target.getValue().equals(cm.getTargetUriType().getValue())) {
-          logger.info("  SKIP target mismatch = {}, {}", target.getValue(),
-              cm.getTargetUriType().getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP target mismatch = {}, {}", target.getValue(),
+                cm.getTargetUriType().getValue());
+          }
           continue;
         }
         if (targetSystem != null
             && !cm.getTargetUriType().getValue().startsWith(targetSystem.getValue())) {
-          logger.info("  SKIP targetSystem mismatch = {}, {}", targetSystem.getValue(),
-              cm.getTargetUriType().getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP targetSystem mismatch = {}, {}", targetSystem.getValue(),
+                cm.getTargetUriType().getValue());
+          }
           continue;
         }
         return translateHelper(ModelUtility.asList(cm), terminology, codeStr,
@@ -510,23 +542,31 @@ public class ConceptMapProviderR4 implements IResourceProvider {
           continue;
         }
         if (conceptMapVersion != null && !conceptMapVersion.getValue().equals(cm.getVersion())) {
-          logger.info("  SKIP concept map version mismatch = {}", cm.getVersion());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP concept map version mismatch = {}", cm.getVersion());
+          }
           continue;
         }
         if (source != null && !source.getValue().equals(cm.getSourceUriType().getValue())) {
-          logger.info("  SKIP source mismatch = " + source.getValue() + ", "
-              + cm.getSourceUriType().getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP source mismatch = " + source.getValue() + ", "
+                + cm.getSourceUriType().getValue());
+          }
           continue;
         }
         if (target != null && !target.getValue().equals(cm.getTargetUriType().getValue())) {
-          logger.info("  SKIP target mismatch = " + target.getValue() + ", "
-              + cm.getTargetUriType().getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP target mismatch = " + target.getValue() + ", "
+                + cm.getTargetUriType().getValue());
+          }
           continue;
         }
         if (targetSystem != null
             && !cm.getTargetUriType().getValue().startsWith(targetSystem.getValue())) {
-          logger.info("  SKIP targetSystem mismatch = " + targetSystem.getValue() + ", "
-              + cm.getTargetUriType().getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP targetSystem mismatch = " + targetSystem.getValue() + ", "
+                + cm.getTargetUriType().getValue());
+          }
           continue;
         }
 
@@ -576,6 +616,8 @@ public class ConceptMapProviderR4 implements IResourceProvider {
             HttpServletResponse.SC_BAD_REQUEST);
       }
 
+      logger.info("Delete concept map with ID: {}", id.getIdPart());
+
       final Mapset mapset = searchService.get(id.getIdPart(), Mapset.class);
       if (mapset == null) {
         throw FhirUtilityR4.exception("Concept map not found = " + id.getIdPart(),
@@ -594,11 +636,6 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     }
   }
 
-  /**
-   * Gets the resource type.
-   *
-   * @return the resource type
-   */
   /* see superclass */
   @Override
   public Class<ConceptMap> getResourceType() {
@@ -693,7 +730,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
           "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
           "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 1000, null, null);
       final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
-      logger.info("XXX = " + mappings.size() + ", " + params);
+
       if (!mappings.isEmpty()) {
         for (final Mapping mapping : mappings) {
           final ParametersParameterComponent match = new ParametersParameterComponent();
@@ -764,6 +801,8 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     throws Exception {
     try {
 
+      logger.info("Create concept map {}", conceptMap.getTitle());
+
       // Extract source and target from group if not set at root level
       if ((conceptMap.getSource() == null || conceptMap.getTarget() == null)
           && !conceptMap.getGroup().isEmpty()) {
@@ -790,8 +829,10 @@ public class ConceptMapProviderR4 implements IResourceProvider {
             HttpServletResponse.SC_BAD_REQUEST);
       }
 
-      logger.debug("Create ConceptMap with source: {} and target:{}", conceptMap.getSource(),
-          conceptMap.getTarget());
+      if (logger.isDebugEnabled()) {
+        logger.debug("Create ConceptMap with source: {} and target:{}", conceptMap.getSource(),
+            conceptMap.getTarget());
+      }
 
       // Convert CodeSystem to JSON
       final String content = FhirContext.forR4().newJsonParser().encodeResourceToString(conceptMap);

@@ -124,6 +124,7 @@ public class Terminology extends TerminologyRef implements HasAttributes {
 
   /** The uri (for downloading terminology artifacts). */
   @Transient
+  @Field(type = FieldType.Keyword)
   private String uri;
 
   /** The attributes. */
@@ -268,14 +269,12 @@ public class Terminology extends TerminologyRef implements HasAttributes {
     return k1.compareTo(k2);
   }
 
-
   /* see superclass */
   @Override
   @Schema(description = "Unique identifier", requiredMode = RequiredMode.REQUIRED, format = "uuid")
   public String getId() {
     return super.getId();
   }
-
 
   /* see superclass */
   @Override
@@ -284,13 +283,11 @@ public class Terminology extends TerminologyRef implements HasAttributes {
     return releaseDate;
   }
 
- 
   /* see superclass */
   @Override
   public void setReleaseDate(final String releaseDate) {
     this.releaseDate = releaseDate;
   }
-
 
   /* see superclass */
   @Override
@@ -301,7 +298,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
     }
     return attributes;
   }
-
 
   /* see superclass */
   @Override

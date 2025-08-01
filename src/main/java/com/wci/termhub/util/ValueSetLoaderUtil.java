@@ -25,6 +25,7 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.SubsetRef;
+import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -113,29 +114,23 @@ public final class ValueSetLoaderUtil {
     subset.setDescription(valueSet.getDescription());
     subset.setName(valueSet.getName());
     subset.setLoaded(true);
-    // Set abbreviation from title if present, otherwise leave null
-    if (valueSet.hasTitle() && valueSet.getTitle() != null && !valueSet.getTitle().isEmpty()) {
-      subset.setAbbreviation(valueSet.getTitle());
-    }
-    // Set fromPublisher from publisher
-    if (valueSet.hasPublisher() && valueSet.getPublisher() != null
-        && !valueSet.getPublisher().isEmpty()) {
-      subset.setFromPublisher(valueSet.getPublisher());
-      subset.setPublisher(valueSet.getPublisher());
-    }
-    // Set fromVersion from version
-    if (valueSet.hasVersion() && valueSet.getVersion() != null
-        && !valueSet.getVersion().isEmpty()) {
-      subset.setFromVersion(valueSet.getVersion());
-      subset.setVersion(valueSet.getVersion());
-    }
+
+    subset.setAbbreviation(valueSet.getTitle());
+    subset.setPublisher(valueSet.getPublisher());
+    subset.setVersion(valueSet.getVersion());
+
     // Set fromTerminology from first compose.include.system if present
     if (valueSet.hasCompose() && valueSet.getCompose().hasInclude()
         && !valueSet.getCompose().getInclude().isEmpty()) {
-      final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent inc =
+      final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent include =
           valueSet.getCompose().getIncludeFirstRep();
-      if (inc.hasSystem() && inc.getSystem() != null && !inc.getSystem().isEmpty()) {
-        subset.setFromTerminology(inc.getSystem());
+      if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
+
+        final TerminologyRef fromRef =
+            TerminologyUtility.getTerminology(service, include.getSystem());
+        subset.setFromTerminology(fromRef.getAbbreviation());
+        subset.setFromPublisher(fromRef.getPublisher());
+        subset.setFromVersion(fromRef.getVersion());
       }
     }
 

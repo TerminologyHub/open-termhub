@@ -844,7 +844,10 @@ public final class FhirUtilityR4 {
     cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
     cm.setCopyright(mapset.getAttributes().get("copyright"));
-    cm.setIdentifier(new Identifier().setValue(mapset.getCode()));
+    if (mapset.getCode() != null) {
+      cm.setIdentifier(new Identifier().setSystem("https://terminologyhub.com/model/mapset/code")
+          .setValue(mapset.getCode()));
+    }
 
     // Set source and target scopes from fromTerminology and toTerminology
     if (mapset.getFromTerminology() != null) {

@@ -2625,7 +2625,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @RequestMapping(value = "/subset", method = RequestMethod.GET)
   @Operation(summary = "Find subsets", description = "Finds subsets matching specified criteria.",
       tags = {
-          "mapset"
+          "subset"
       })
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Result list of matching subsets"),
@@ -2660,7 +2660,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      // Limit to loaded mapsets
+      // Limit to loaded subsets
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.isEmpty(query) ? "*:*" : query, offset, maxLimit, sort, ascending);
       final ResultList<Subset> list = searchService.find(searchParams, Subset.class);
