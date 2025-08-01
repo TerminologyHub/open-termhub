@@ -272,7 +272,6 @@ public final class ConceptMapLoaderUtil {
 
     // Store the original URIs in attributes
     mapset.setUri(root.path("url").asText());
-    mapset.getAttributes().put("fhirUri", root.path("url").asText());
     mapset.getAttributes().put("sourceScopeUri", fromTerminology);
     mapset.getAttributes().put("targetScopeUri", toTerminology);
 

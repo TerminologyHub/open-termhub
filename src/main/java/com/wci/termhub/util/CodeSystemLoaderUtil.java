@@ -327,13 +327,17 @@ public final class CodeSystemLoaderUtil {
       terminology.setId(uuid);
       LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
     }
+    terminology.setUri(root.path("url").asText());
     terminology.setName(root.path("name").asText());
     terminology.setAbbreviation(root.path("title").asText());
     terminology.setPublisher(root.path("publisher").asText());
     terminology.setVersion(root.path("version").asText());
+    // For SNOMED, set the terminology version to just the base version at the end of the URL
+    if (terminology.getUri().contains("snomed") && terminology.getVersion().contains("/")) {
+      terminology.setVersion(terminology.getVersion().replaceFirst(".*/", ""));
+    }
     terminology.setReleaseDate(root.path("date").asText().substring(0, 10));
-    terminology.setUri(root.path("url").asText());
-    terminology.setFamily("SNOMED");
+    terminology.setFamily(terminology.getAbbreviation());
     terminology.setConceptCt(root.path("count").asLong(0));
 
     // Set terminology attributes

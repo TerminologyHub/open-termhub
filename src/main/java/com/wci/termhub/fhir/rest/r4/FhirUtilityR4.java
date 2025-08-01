@@ -743,7 +743,7 @@ public final class FhirUtilityR4 {
     // }
     final Parameters parameters = new Parameters();
     parameters.addParameter("outcome", outcome);
-    parameters.addParameter("system", terminology.getAttributes().get("fhirUri"));
+    parameters.addParameter("system", terminology.getUri());
     parameters.addParameter("version", terminology.getAttributes().get("fhirVersion"));
     return parameters;
   }
@@ -758,8 +758,6 @@ public final class FhirUtilityR4 {
   public static CodeSystem toR4(final Terminology terminology) throws Exception {
     final CodeSystem cs = new CodeSystem();
 
-    // cs.setUrl(terminology.getAttributes().get("fhirUri"));
-    // fhirUri is not in the json data files. setting to id for now
     cs.setUrl(terminology.getUri());
 
     cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
@@ -833,7 +831,7 @@ public final class FhirUtilityR4 {
     // logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
     // mapset.getFromTerminology(), mapset.getToTerminology());
 
-    cm.setUrl(mapset.getAttributes().get("fhirUri"));
+    cm.setUrl(mapset.getUri());
     if (mapset.getReleaseDate() != null) {
       cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(mapset.getReleaseDate()));
     }

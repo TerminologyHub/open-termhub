@@ -87,7 +87,6 @@ public final class TerminologyUtility {
             "abbreviation:\"" + StringUtility.escapeQuery(value) + "\"",
             "uri:\"" + StringUtility.escapeQuery(value) + "\""));
 
-    logger.info("XXX query = " + query);
     final ResultList<Terminology> list =
         searchService.find(new SearchParameters(query, null, null, null, null), Terminology.class);
     // NO matches

@@ -776,7 +776,7 @@ public final class FhirUtilityR5 {
     // }
     final Parameters parameters = new Parameters();
     parameters.addParameter("outcome", outcome);
-    parameters.addParameter("system", terminology.getAttributes().get("fhirUri"));
+    parameters.addParameter("system", terminology.getUri());
     parameters.addParameter("version", terminology.getAttributes().get("fhirVersion"));
     return parameters;
   }
@@ -791,8 +791,6 @@ public final class FhirUtilityR5 {
   public static CodeSystem toR5(final Terminology terminology) throws Exception {
     final CodeSystem cs = new CodeSystem();
 
-    // cs.setUrl(terminology.getAttributes().get("fhirUri"));
-    // fhirUri is not in the json data files. setting to id for now
     cs.setUrl(terminology.getUri());
 
     cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
@@ -851,7 +849,7 @@ public final class FhirUtilityR5 {
     // mapset.getFromTerminology(), mapset.getToTerminology());
 
     // Set other fields
-    cm.setUrl(mapset.getAttributes().get("fhirUri"));
+    cm.setUrl(mapset.getUri());
     // Use the stored FHIR version if available, otherwise use the regular
     // version
     cm.setVersion(mapset.getAttributes().containsKey("fhirVersion")

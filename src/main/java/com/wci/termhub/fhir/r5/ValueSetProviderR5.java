@@ -124,6 +124,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       if (subset != null && "ValueSet".equals(subset.getCategory())) {
         // Fetch members
         final SearchParameters memberParams = new SearchParameters();
+        memberParams.setLimit(1000);
         memberParams.getFilters().put("subset.code", subset.getCode());
         final List<SubsetMember> members =
             searchService.findAll(memberParams, SubsetMember.class).getItems();
@@ -825,9 +826,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
             .setValue(new StringType(version.getValue())));
       }
       for (final Concept concept : list.getItems()) {
-        final ValueSetExpansionContainsComponent code = new ValueSetExpansionContainsComponent()
-            .setSystem(terminology.getAttributes().get("fhirUri")).setCode(concept.getCode())
-            .setDisplay(concept.getName());
+        final ValueSetExpansionContainsComponent code =
+            new ValueSetExpansionContainsComponent().setSystem(terminology.getUri())
+                .setCode(concept.getCode()).setDisplay(concept.getName());
         if (languages != null) {
           // "language": "en",
           // "use": {

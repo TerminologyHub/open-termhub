@@ -193,23 +193,6 @@ public final class FhirUtility {
   }
 
   /**
-   * Gets the terminology.
-   *
-   * @param searchService the search service
-   * @param terminology the terminology
-   * @param publisher the publisher
-   * @param version the version
-   * @return the terminology
-   * @throws Exception the exception
-   */
-  public static String getCodeSystemUri(final EntityRepositoryService searchService,
-    final String terminology, final String publisher, final String version) throws Exception {
-
-    final Terminology t = getTerminology(searchService, terminology, publisher, version);
-    return t == null ? null : t.getAttributes().get("fhirUri");
-  }
-
-  /**
    * Gets the code system uri.
    *
    * @param searchService the search service
@@ -221,7 +204,7 @@ public final class FhirUtility {
     final ConceptRef concept) throws Exception {
     final Terminology t = getTerminology(searchService, concept.getTerminology(),
         concept.getPublisher(), concept.getVersion());
-    return t == null ? null : t.getAttributes().get("fhirUri");
+    return t == null ? null : t.getUri();
   }
 
   /**

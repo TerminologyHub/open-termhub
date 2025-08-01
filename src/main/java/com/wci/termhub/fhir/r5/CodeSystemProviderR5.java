@@ -747,15 +747,15 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final Concept conceptA = TerminologyUtility.getConcept(searchService, terminology, codeA);
     if (conceptA == null) {
       throw FhirUtilityR5.exception(
-          String.format("Code does not exist for code system =" + codeA + ","
-              + terminology.getAttributes().get("fhirUri")),
+          String
+              .format("Code does not exist for code system =" + codeA + "," + terminology.getUri()),
           OperationOutcome.IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
     final Concept conceptB = TerminologyUtility.getConcept(searchService, terminology, codeB);
     if (conceptB == null) {
       throw FhirUtilityR5.exception(
-          String.format("Code does not exist for code system =" + codeB + ","
-              + terminology.getAttributes().get("fhirUri")),
+          String
+              .format("Code does not exist for code system =" + codeB + "," + terminology.getUri()),
           OperationOutcome.IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
 

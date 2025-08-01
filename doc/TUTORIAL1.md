@@ -143,9 +143,8 @@ The following code block has a number of curl commands that test a few of the te
 curl "http://localhost:8080/terminology" | jq
 
 # Find terminology metadata
-id=`curl "http://localhost:8080/terminology" | jq -r '.items[].id'`
+id=`curl "http://localhost:8080/terminology" | jq -r '.items[0].id'`
 curl "http://localhost:8080/terminology/$id/metadata" | jq
-
 
 # Get a SNOMEDCT concept by code
 curl "http://localhost:8080/concept/SNOMEDCT_US/107907001" | jq

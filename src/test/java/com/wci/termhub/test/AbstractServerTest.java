@@ -27,8 +27,8 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
-import com.wci.termhub.util.SubsetLoaderUtil;
 import com.wci.termhub.util.ThreadLocalMapper;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 /**
  * Abstract superclass for source code tests.
@@ -36,7 +36,6 @@ import com.wci.termhub.util.ThreadLocalMapper;
 public abstract class AbstractServerTest extends BaseUnitTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private final Logger logger = LoggerFactory.getLogger(AbstractServerTest.class);
 
   /**
@@ -164,7 +163,7 @@ public abstract class AbstractServerTest extends BaseUnitTest {
             FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
 
         logger.info("Loading value sets from classpath resource: data/{}", valueSetFile);
-        assertNotNull(SubsetLoaderUtil.loadSubset(searchService, fileContent, true));
+        assertNotNull(ValueSetLoaderUtil.loadSubset(searchService, fileContent, true));
 
       } catch (final Exception e) {
         logger.error("Error loading value set file: {}", valueSetFile, e);
