@@ -226,20 +226,6 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       final List<ConceptMap> candidates = findCandidates();
       logger.debug("Found {} candidate concept maps", candidates.size());
 
-      // Debug each candidate
-      if (logger.isDebugEnabled()) {
-        for (final ConceptMap cm : candidates) {
-          logger.debug("Candidate ConceptMap:");
-          logger.debug("  id={}", cm.getId());
-          logger.debug("  url={}", cm.getUrl());
-          logger.debug("  version={}", cm.getVersion());
-          logger.debug("  sourceScope={}",
-              cm.getSourceScope() != null ? ((UriType) cm.getSourceScope()).getValue() : "null");
-          logger.debug("  targetScope={}",
-              cm.getTargetScope() != null ? ((UriType) cm.getTargetScope()).getValue() : "null");
-        }
-      }
-
       final List<ConceptMap> list = new ArrayList<>();
       for (final ConceptMap cm : candidates) {
         // Skip non-matching
