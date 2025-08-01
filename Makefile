@@ -53,14 +53,17 @@ rundebug: ## Run the server in debug mode
 
 docker: ## Build the docker image and tag with version and latest
 	docker buildx build --platform linux/amd64,linux/arm64 --no-cache-filter=gradle-build -t $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) . 
-	docker tag $(DOCKER_INT_REGISTRY)/$(SERVICE):latest $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	docker tag $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
 	@echo APP_VERSION=$(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 
 release: ## publish to dockerhub
 	@echo $(DISPLAY_BOLD)"Publishing container to $(DOCKER_INT_REGISTRY) registry"$(DISPLAY_RESET)
-	@echo $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	@echo $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
 	docker -D push --platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
 	docker -D push --platform linux/arm64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
+	@echo $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	docker -D push --platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	docker -D push --platform linux/arm64 $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 
 version:
 	@echo $(APP_VERSION)
