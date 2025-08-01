@@ -210,16 +210,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
-      if (logger.isDebugEnabled()) {
-        logger.debug("Searching for concept maps with parameters:");
-        logger.debug("  sourceSystem={}", sourceSystem != null ? sourceSystem.getValue() : "null");
-        logger.debug("  sourceScopeUri={}",
-            sourceScopeUri != null ? sourceScopeUri.getValue() : "null");
-        logger.debug("  targetSystem={}", targetSystem != null ? targetSystem.getValue() : "null");
-        logger.debug("  targetScopeUri={}",
-            targetScopeUri != null ? targetScopeUri.getValue() : "null");
-        logger.debug("  version={}", version != null ? version.getValue() : "null");
-      }
+
       FhirUtilityR5.notSupportedSearchParams(request);
 
       // Get all mapsets and then restrict
