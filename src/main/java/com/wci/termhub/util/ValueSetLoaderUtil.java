@@ -176,17 +176,8 @@ public final class ValueSetLoaderUtil {
     LOGGER.info("VALUE SET LOADED: {}", subset);
     LOGGER.info("LOADING SUBSET MEMBERS");
 
-    final SubsetRef subsetRef = new SubsetRef();
-    subsetRef.setCode(subset.getCode());
-    subsetRef.setName(subset.getName());
-    subsetRef.setFromPublisher(subset.getFromPublisher());
-    subsetRef.setFromVersion(subset.getFromVersion());
-    subsetRef.setFromTerminology(subset.getFromTerminology());
-    subsetRef.setLoaded(true);
-    subsetRef.setAbbreviation(subset.getAbbreviation());
-    subsetRef.setVersion(subset.getVersion());
-    subsetRef.setPublisher(subset.getPublisher());
-
+    final SubsetRef subsetRef = new SubsetRef(subset.getCode(), subset.getAbbreviation(),
+        subset.getPublisher(), subset.getVersion());
     final List<SubsetMember> members = new ArrayList<>();
     subsetRef.setCode(subset.getCode());
     // Compose.include
@@ -330,16 +321,8 @@ public final class ValueSetLoaderUtil {
     LOGGER.info("VALUE SET LOADED: {}", subset);
     LOGGER.info("LOADING SUBSET MEMBERS");
 
-    final SubsetRef subsetRef = new SubsetRef();
-    subsetRef.setCode(subset.getCode());
-    subsetRef.setName(subset.getName());
-    subsetRef.setFromPublisher(subset.getFromPublisher());
-    subsetRef.setFromVersion(subset.getFromVersion());
-    subsetRef.setFromTerminology(subset.getFromTerminology());
-    subsetRef.setLoaded(true);
-    subsetRef.setAbbreviation(subset.getAbbreviation());
-    subsetRef.setVersion(subset.getVersion());
-    subsetRef.setPublisher(subset.getPublisher());
+    final SubsetRef subsetRef = new SubsetRef(subset.getCode(), subset.getAbbreviation(),
+        subset.getPublisher(), subset.getVersion());
 
     final List<SubsetMember> members = new ArrayList<>();
     subsetRef.setCode(subset.getCode());

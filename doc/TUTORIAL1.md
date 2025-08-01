@@ -205,7 +205,7 @@ curl 'http://localhost:8080/fhir/r4/ConceptMap' | jq
 curl 'http://localhost:8080/fhir/r4/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&code=300862005' | jq
 
 # Find implied ValueSets for CodeSystems and explicit value sets
-curl 'http://localhost:8080/fhir/r4/ValueSet'
+curl 'http://localhost:8080/fhir/r4/ValueSet' | jq
 
 # Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
 curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs' | jq
@@ -226,7 +226,32 @@ curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?
 The following code block has a number of curl commands that test a few of the FHIR R5 API endpoints of the server to demonstrate basic function.
 
 ```
+# Find CodeSystems
+curl 'http://localhost:8080/fhir/r5/CodeSystem' | jq
 
+# Perform a SNOMEDCT CodeSystem $lookup for a code
+curl 'http://localhost:8080/fhir/r5/CodeSystem/$lookup?system=http://snomed.info/sct&code=73211009' | jq
+
+# Find ConceptMaps
+curl 'http://localhost:8080/fhir/r5/ConceptMap' | jq
+
+# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code - XXX
+curl 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&code=300862005' | jq
+
+# Find implied ValueSets for CodeSystems and explicit value sets
+curl 'http://localhost:8080/fhir/r5/ValueSet' | jq
+
+# Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
+curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs' | jq
+
+# Perform an $expand operation on an explicit value set
+curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter
+curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes' | jq
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
+curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
 
 ```
 

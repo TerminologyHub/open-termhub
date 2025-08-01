@@ -111,7 +111,9 @@ public final class ConceptMapLoaderUtil {
             // Create mapping
             final Mapping mapping = new Mapping();
             mapping.setId(UUID.randomUUID().toString());
-            mapping.setMapset(new MapsetRef(mapset));
+
+            mapping.setMapset(new MapsetRef(mapset.getCode(), mapset.getAbbreviation(),
+                mapset.getPublisher(), mapset.getVersion()));
 
             mapping.setFrom(fromConcept);
 

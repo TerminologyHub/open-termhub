@@ -53,6 +53,24 @@ public class SubsetRef extends TerminologyRef {
   /**
    * Instantiates a new subset ref.
    *
+   * @param code the code
+   * @param abbreviation the abbreviation
+   * @param publisher the publisher
+   * @param version the version
+   */
+  public SubsetRef(final String code, final String abbreviation, final String publisher,
+      final String version) {
+    setCode(code);
+    setAbbreviation(abbreviation);
+    setPublisher(publisher);
+    setVersion(version);
+    setActive(null);
+    setLocal(null);
+  }
+
+  /**
+   * Instantiates a new subset ref.
+   *
    * @param other the other
    */
   public SubsetRef(final SubsetRef other) {
