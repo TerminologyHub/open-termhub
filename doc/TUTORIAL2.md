@@ -30,7 +30,7 @@ the other option is to build the docker image and run as a container with an IND
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 make docker
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" \
+docker run -d --rm --name open-termhub \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
@@ -42,7 +42,7 @@ The final option is to run the latest published public docker image as a contain
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" \
+docker run -d --rm --name open-termhub \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 

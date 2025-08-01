@@ -1,6 +1,5 @@
 name: Tests CI
 
-
 on:
   push:
     branches: [ "main", "develop" ]

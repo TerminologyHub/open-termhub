@@ -162,8 +162,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   }
 
   /**
-   * Instantiates a {@link TerminologyServiceRestImpl} from the specified
-   * parameters. For testing.
+   * Instantiates a {@link TerminologyServiceRestImpl} from the specified parameters. For testing.
    *
    * @param request the request
    * @throws Exception the exception
@@ -357,6 +356,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   }
 
   /* see superclass */
+  /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.PATCH,
       consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -399,7 +399,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.DELETE)
   @Operation(summary = "Delete terminology",
-      description = "Delete a terminology and concepts, relationships and tree positions for the specified terminology id",
+      description = "Delete a terminology and concepts, relationships and "
+          + "tree positions for the specified terminology id",
       tags = {
           "terminology"
       })
@@ -572,11 +573,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @Parameters({
       @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
       @Parameter(name = "include",
-          description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
+          description = "Indicator of how much data to return. "
+              + "Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions "
-              + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
+              + "subsets, terms, treePositions " + "<a href='https://github.com/TerminologyHub/"
+              + "termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
   })
@@ -606,12 +608,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       }
 
       final Concept concept = results.getItems().get(0);
-
       concept.cleanForApi();
 
       // Get requested addendums to the concept
       final Terminology terminology = getTerminology(map, concept);
 
+      // Handle include parameter
+      IncludeParam.applyInclude(concept, ip);
       TerminologyUtility.populateConcept(concept, ip, terminology, searchService);
 
       // Return the object
@@ -646,11 +649,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"",
           required = true),
       @Parameter(name = "include",
-          description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
+          description = "Indicator of how much data to return. "
+              + "Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions "
-              + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
+              + "subsets, terms, treePositions " + "<a href='https://github.com/TerminologyHub/"
+              + "termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
   })
@@ -664,13 +668,11 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Terminology term = lookupTerminology(terminology);
 
       // find with code, term, pub, version
-      final String query = StringUtility.composeQuery("AND",
-          TerminologyUtility.getTerminologyQuery(term.getAbbreviation(), term.getPublisher(),
-              term.getVersion()),
-
-          "code:" + StringUtility.escapeQuery(code)
-
-      );
+      final String query =
+          StringUtility.composeQuery(
+              "AND", TerminologyUtility.getTerminologyQuery(term.getAbbreviation(),
+                  term.getPublisher(), term.getVersion()),
+              "code:" + StringUtility.escapeQuery(code));
 
       // then do a find on the query
       final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
@@ -688,6 +690,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Concept concept = results.getItems().get(0);
       concept.cleanForApi();
 
+      // Handle include parameter
+      IncludeParam.applyInclude(concept, ip);
       TerminologyUtility.populateConcept(concept, ip, term, searchService);
 
       // Return the object
@@ -718,14 +722,16 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Terminology id or abbreviation." + " e.g. \"uuid1\" or \"ICD10CM\".",
           required = true),
       @Parameter(name = "codes",
-          description = "Comma-separated list of terminology codes, e.g. \"1119,1149\" or \"64572001,22298006 \"",
+          description = "Comma-separated list of terminology codes, "
+              + "e.g. \"1119,1149\" or \"64572001,22298006 \"",
           required = true),
       @Parameter(name = "include",
-          description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
+          description = "Indicator of how much data to return. "
+              + "Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions "
-              + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
+              + "subsets, terms, treePositions " + "<a href='https://github.com/TerminologyHub/"
+              + "termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
   })
@@ -797,15 +803,19 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   })
   @Parameters({
       @Parameter(name = "terminology",
-          description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
+          description = "Comma-separated list of terminology ids or "
+              + "abbreviations (or null for all terminologies)."
               + " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".",
           required = false),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
-      @Parameter(name = "expression", description = "ECL-style expression"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/EXPRESSION.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
+      @Parameter(name = "expression",
+          description = "ECL-style expression" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/EXPRESSION.md\">"
+              + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
@@ -818,19 +828,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + " <code>null</code> for unspecified",
           required = false, schema = @Schema(implementation = Boolean.class)),
       @Parameter(name = "active",
-          description = "<code>true</code> for active concepts only, <code>false</code> for inactive concepts only,"
-              + " <code>null</code> for both",
+          description = "<code>true</code> for active concepts only, "
+              + "<code>false</code> for inactive concepts only," + " <code>null</code> for both",
           required = false, schema = @Schema(implementation = Boolean.class)),
       @Parameter(name = "leaf",
           description = "<code>true</code> for leaf nodes only, <code>false</code> for non-leaf nodes,"
               + " <code>null</code> for either",
           required = false, schema = @Schema(implementation = Boolean.class)),
       @Parameter(name = "include",
-          description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
+          description = "Indicator of how much data to return. "
+              + "Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions "
-              + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
+              + "subsets, terms, treePositions " + "<a href='https://github.com/TerminologyHub/"
+              + "termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
   })
@@ -845,9 +856,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "active", required = false) final Boolean active,
     @RequestParam(name = "leaf", required = false) final Boolean leaf,
     @RequestParam(value = "include", required = false) final String include,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
 
@@ -861,8 +871,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
       // Handler applied, send null handler below
-      final ResultList<Concept> list = findHelper(tlist, query2, expression, offset, maxLimit, sort,
-          ascending, active, leaf, ip);
+      final ResultList<Concept> list = findConceptsHelper(tlist, query2, expression, offset,
+          maxLimit, sort, ascending, active, leaf, ip);
 
       return new ResponseEntity<>(new ResultListConcept(list), new HttpHeaders(), HttpStatus.OK);
 
@@ -890,12 +900,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   })
   @Parameters({
       @Parameter(name = "terminology",
-          description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
+          description = "Comma-separated list of terminology ids or "
+              + "abbreviations (or null for all terminologies)."
               + " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".",
           required = false),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
@@ -920,9 +932,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "active", required = false) final Boolean active,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
 
@@ -971,28 +982,32 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   })
   @Parameters({
       @Parameter(name = "terminology",
-          description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
+          description = "Comma-separated list of terminology ids or "
+              + "abbreviations (or null for all terminologies)."
               + " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".",
           required = false),
-      @Parameter(name = "expression", description = "ECL-style expression"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/EXPRESSION.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "expression",
+          description = "ECL-style expression" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/EXPRESSION.md\">"
+              + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "limit", description = "Limit of results to return, max is 10",
           required = false, schema = @Schema(implementation = Integer.class), example = "1"),
       @Parameter(name = "active",
-          description = "<code>true</code> for active concepts only, <code>false</code> for inactive concepts only,"
-              + " <code>null</code> for both",
+          description = "<code>true</code> for active concepts only, "
+              + "<code>false</code> for inactive concepts only," + " <code>null</code> for both",
           required = false, schema = @Schema(implementation = Boolean.class)),
       @Parameter(name = "leaf",
-          description = "<code>true</code> for leaf nodes only, <code>false</code> for non-leaf nodes,"
-              + " <code>null</code> for either",
+          description = "<code>true</code> for leaf nodes only, "
+              + "<code>false</code> for non-leaf nodes," + " <code>null</code> for either",
           required = false, schema = @Schema(implementation = Boolean.class)),
       @Parameter(name = "include",
-          description = "Indicator of how much data to return. Comma-separated list of any of the following values: "
+          description = "Indicator of how much data to return. "
+              + "Comma-separated list of any of the following values: "
               + "minimal, summary, full, axioms, attributes, children, definitions, descendants, "
               + "highlights, inverseRelationships, mapsets, parents, relationships, semanticTypes, "
-              + "subsets, terms, treePositions "
-              + "<a href='https://github.com/TerminologyHub/termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
+              + "subsets, terms, treePositions " + "<a href='https://github.com/TerminologyHub/"
+              + "termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false)
   })
@@ -1008,16 +1023,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "active", required = false) final Boolean active,
     @RequestParam(name = "leaf", required = false) final Boolean leaf,
     @RequestParam(value = "include", required = false) final String include,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler,
-    @org.springframework.web.bind.annotation.RequestBody(required = false) @Parameter(
-        hidden = true) final String queries)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler,
+    @org.springframework.web.bind.annotation.RequestBody(required = false)
+    @Parameter(hidden = true) final String queries) throws Exception {
 
     try {
 
       final IncludeParam ip = new IncludeParam(include == null ? "semanticTypes" : include);
-      final List<Terminology> tlist = lookupTerminologies(terminology);
+      final List<Terminology> tlist = lookupTerminologies(terminology, false);
       final String[] array = ModelUtility.nvl(queries, "").split("\n");
 
       final List<ResultListConcept> list = new ArrayList<>();
@@ -1025,8 +1039,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
         final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
         final int useLimit = limit == null ? 1 : (limit > 10 ? 10 : limit);
-        final ResultList<Concept> result =
-            findHelper(tlist, query2, expression, 0, useLimit, null, null, active, leaf, ip);
+        final ResultList<Concept> result = findConceptsHelper(tlist, query2, expression, 0,
+            useLimit, null, null, active, leaf, ip);
         result.getParameters().setQuery(query2);
         result.getParameters().setExpression(expression);
 
@@ -1069,10 +1083,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * @return the result list
    * @throws Exception the exception
    */
-  private ResultList<Concept> findHelper(final List<Terminology> terminologies, final String query,
-    final String expression, final Integer offset, final Integer limit, final String sort,
-    final Boolean ascending, final Boolean active, final Boolean leaf, final IncludeParam ip)
-    throws Exception {
+  private ResultList<Concept> findConceptsHelper(final List<Terminology> terminologies,
+    final String query, final String expression, final Integer offset, final Integer limit,
+    final String sort, final Boolean ascending, final Boolean active, final Boolean leaf,
+    final IncludeParam ip) throws Exception {
 
     // Check for a single terminology
     final Terminology single = terminologies.isEmpty() ? null : terminologies.get(0);
@@ -1081,7 +1095,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       throw new RestException(false, 417, "Expecation failed",
           "Expression parameter can only be used in " + "conjunction with a single terminology");
     }
-    final Query keywordQuery = LuceneQueryBuilder.parse(query, Concept.class);
+    final Query keywordQuery =
+        LuceneQueryBuilder.parse(StringUtility.isEmpty(query) ? "*:*" : query, Concept.class);
     final Query expressionQuery = TerminologyUtility.getExpressionQuery(expression);
     final Query booleanQuery = getAndQuery(keywordQuery, expressionQuery);
     final SearchParameters searchParams =
@@ -1093,8 +1108,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       searchParams.setLeaf(true);
     }
 
-    logger.info("findHelper: query = " + query + ", expression = " + expression
-        + ", searchParams = " + searchParams);
+    logger.debug(
+        "   query = " + query + ", expression = " + expression + ", params = " + searchParams);
 
     final ResultList<Concept> list = searchService.findFields(searchParams,
         new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class,
@@ -1102,6 +1117,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     for (final Concept concept : list.getItems()) {
       concept.cleanForApi();
+      // Handle include parameter
+      IncludeParam.applyInclude(concept, ip);
       TerminologyUtility.populateConcept(concept, ip, single, searchService);
     }
 
@@ -1128,9 +1145,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           content = @Content())
   })
   @Parameters({
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
@@ -1191,9 +1209,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   })
   @Parameters({
       @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
@@ -1213,9 +1232,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
 
@@ -1268,9 +1286,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "code",
           description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"",
           required = true),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
@@ -1291,9 +1310,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
 
@@ -1336,9 +1354,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   })
   @Parameters({
       @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
@@ -1358,9 +1377,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
 
@@ -1416,9 +1434,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "code",
           description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"",
           required = true),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
@@ -1439,9 +1458,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
 
@@ -1484,9 +1502,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   })
   @Parameters({
       @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
@@ -1506,9 +1525,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
 
@@ -1575,9 +1593,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "code",
           description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"",
           required = true),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
@@ -1597,9 +1616,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
       // validate terminology - throw exception if not found
@@ -1652,9 +1670,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   })
   @Parameters({
       @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
@@ -1675,9 +1694,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
 
@@ -1759,9 +1777,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "code",
           description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"",
           required = true),
-      @Parameter(name = "query", description = "Search text"
-          + " (<a href=\"https://github.com/terminologyhub/termhub-in-5-minutes/blob/master/doc/SEARCH.md\">"
-          + "See here for more info</a>)", required = false),
+      @Parameter(name = "query",
+          description = "Search text" + " (<a href=\"https://github.com/terminologyhub/"
+              + "termhub-in-5-minutes/blob/master/doc/SEARCH.md\">" + "See here for more info</a>)",
+          required = false),
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
@@ -1782,9 +1801,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
     @RequestParam(name = "sort", required = false) final String sort,
-    @RequestParam(name = "handler",
-        required = false) @Parameter(hidden = true) final String handler)
-    throws Exception {
+    @RequestParam(name = "handler", required = false)
+    @Parameter(hidden = true) final String handler) throws Exception {
 
     try {
 
@@ -1919,7 +1937,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   })
   @Parameters({
       @Parameter(name = "mapset",
-          description = "Comma-separated list of mapset ids or abbreviations (or null for all mapsets)."
+          description = "Comma-separated list of mapset ids or "
+              + "abbreviations (or null for all mapsets)."
               + " e.g. \"uuid1,uuid2\", \"SNOMEDCT_US-ICD10CM,CVX-NDC\".",
           required = false),
       @Parameter(name = "query", description = "Search text", required = false),
@@ -1935,12 +1954,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + " <code>null</code> for unspecified",
           required = false, schema = @Schema(implementation = Boolean.class)),
       @Parameter(name = "active",
-          description = "<code>true</code> for active mappings only, <code>false</code> for inactive mappings only,"
-              + " <code>null</code> for both",
-          required = false, schema = @Schema(implementation = Boolean.class)),
-      @Parameter(name = "leaf",
-          description = "<code>true</code> for leaf nodes only, <code>false</code> for non-leaf nodes,"
-              + " <code>null</code> for either",
+          description = "<code>true</code> for active mappings only, "
+              + "<code>false</code> for inactive mappings only," + " <code>null</code> for both",
           required = false, schema = @Schema(implementation = Boolean.class)),
   })
   public ResponseEntity<ResultListMapping> findMappings(
@@ -1950,8 +1965,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
-    @RequestParam(name = "active", required = false) final Boolean active,
-    @RequestParam(name = "leaf", required = false) final Boolean leaf) throws Exception {
+    @RequestParam(name = "active", required = false) final Boolean active) throws Exception {
 
     try {
 
@@ -1964,12 +1978,80 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Handler applied, send null handler below
       final ResultList<Mapping> list =
-          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active, leaf);
+          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active);
 
       return new ResponseEntity<>(new ResultListMapping(list), new HttpHeaders(), HttpStatus.OK);
 
     } catch (final Exception e) {
       handleException(e, "trying to find mappings");
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/member", method = RequestMethod.GET)
+  @Operation(summary = "Find members across all subsets",
+      description = "Finds member matching specified search criteria.", tags = {
+          "subset"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Result list of matching subpings"),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "subset",
+          description = "Comma-separated list of subset ids or "
+              + "abbreviations (or null for all subsets)."
+              + " e.g. \"uuid1,uuid2\", \"SNOMEDCT_US-EXTENSION\".",
+          required = false),
+      @Parameter(name = "query", description = "Search text", required = false),
+      @Parameter(name = "offset", description = "Start index for search results", required = false,
+          schema = @Schema(implementation = Integer.class), example = "0"),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+      @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "ascending",
+          description = "<code>true</code> for ascending, <code>false</code> for descending,"
+              + " <code>null</code> for unspecified",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+      @Parameter(name = "active",
+          description = "<code>true</code> for active members only, "
+              + "<code>false</code> for inactive members only," + " <code>null</code> for both",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+  })
+  public ResponseEntity<ResultListSubsetMember> findMembers(
+    @RequestParam(name = "mapset", required = false) final String mapset,
+    @RequestParam(name = "query", required = false) final String query,
+    @RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
+    @RequestParam(name = "sort", required = false) final String sort,
+    @RequestParam(name = "ascending", required = false) final Boolean ascending,
+    @RequestParam(name = "active", required = false) final Boolean active) throws Exception {
+
+    try {
+
+      // Allow subset to be blank here
+      final List<Subset> subsets = lookupSubsets(mapset, true);
+
+      // Build a query from the handler and use it in findHelper
+      // limit return objects to 1000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+
+      // Handler applied, send null handler below
+      final ResultList<SubsetMember> list =
+          findMembersHelper(subsets, query, offset, maxLimit, sort, ascending, active);
+
+      return new ResponseEntity<>(new ResultListSubsetMember(list), new HttpHeaders(),
+          HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to find subpings");
       return null;
     }
   }
@@ -2005,12 +2087,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + " <code>null</code> for unspecified",
           required = false, schema = @Schema(implementation = Boolean.class)),
       @Parameter(name = "active",
-          description = "<code>true</code> for active mappings only, <code>false</code> for inactive mappings only,"
-              + " <code>null</code> for both",
+          description = "<code>true</code> for active mappings only, "
+              + "<code>false</code> for inactive mappings only," + " <code>null</code> for both",
           required = false, schema = @Schema(implementation = Boolean.class)),
       @Parameter(name = "leaf",
-          description = "<code>true</code> for leaf nodes only, <code>false</code> for non-leaf nodes,"
-              + " <code>null</code> for either",
+          description = "<code>true</code> for leaf nodes only, "
+              + "<code>false</code> for non-leaf nodes," + " <code>null</code> for either",
           required = false, schema = @Schema(implementation = Boolean.class)),
   })
   public ResponseEntity<ResultListMapping> findMapsetMappings(
@@ -2020,8 +2102,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
     @RequestParam(name = "sort", required = false) final String sort,
     @RequestParam(name = "ascending", required = false) final Boolean ascending,
-    @RequestParam(name = "active", required = false) final Boolean active,
-    @RequestParam(name = "leaf", required = false) final Boolean leaf) throws Exception {
+    @RequestParam(name = "active", required = false) final Boolean active) throws Exception {
 
     try {
 
@@ -2034,7 +2115,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Handler applied, send null handler below
       final ResultList<Mapping> list =
-          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active, leaf);
+          findMappingsHelper(mapsets, query, offset, maxLimit, sort, ascending, active);
 
       return new ResponseEntity<>(new ResultListMapping(list), new HttpHeaders(), HttpStatus.OK);
 
@@ -2096,7 +2177,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "from.terminology:" + concept.getTerminology(),
               "from.publisher: \"" + concept.getPublisher()) + "\"",
-          0, 10000, null, null, true, null).getItems();
+          0, 10000, null, null, true).getItems();
 
       // Return the object
       return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
@@ -2156,13 +2237,74 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
               "to.terminology:" + concept.getTerminology(),
               "to.publisher: \"" + concept.getPublisher()) + "\"",
-          0, 10000, null, null, true, null).getItems();
+          0, 10000, null, null, true).getItems();
 
       // Return the object
       return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
 
     } catch (final Exception e) {
       handleException(e, "trying to get concept mappings = " + conceptId);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/concept/{conceptId:[a-f0-9].*}/members", method = RequestMethod.GET)
+  @Operation(summary = "Get subset members from concept by id",
+      description = "Gets subset members from the specified concept", tags = {
+          "concept by id"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Subset members from the concept matching specified id in specified project",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = SubsetMember.class)))),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "conceptId", description = "concept id, e.g. \"uuid\"", required = true)
+  })
+  public ResponseEntity<List<SubsetMember>> getConceptMembers(
+    @PathVariable("conceptId") final String conceptId) throws Exception {
+
+    try {
+      final IncludeParam ip = new IncludeParam("minimal");
+
+      // Get the concept
+      final String query = "id:" + StringUtility.escapeQuery(conceptId);
+
+      // then do a find on the query
+      // don't use 'get' because it doesn't work with include param fields
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
+          new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+
+      if (results.getTotal() == 0) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.OK);
+      }
+      if (results.getTotal() > 1) {
+        throw new RestException(false, 417, "Expecation failed",
+            "Too many matching concepts for id = " + conceptId);
+      }
+
+      final Concept concept = results.getItems().get(0);
+
+      // Find members
+      final List<Subset> subsets = lookupSubsets(null, true);
+      final List<SubsetMember> members = findMembersHelper(subsets,
+          StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(concept.getCode()),
+              "terminology:" + concept.getTerminology(), "publisher: \"" + concept.getPublisher(),
+              "version:" + concept.getVersion()) + "\"",
+          0, 10000, null, null, true).getItems();
+
+      // Return the object
+      return new ResponseEntity<>(members, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get concept members = " + conceptId);
       return null;
     }
   }
@@ -2231,7 +2373,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "from.terminology:" + concept.getTerminology(),
               "from.publisher: \"" + concept.getPublisher()) + "\"",
-          0, 10000, null, null, true, null).getItems();
+          0, 10000, null, null, true).getItems();
 
       // Return the object
       return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
@@ -2305,13 +2447,88 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
               "to.terminology:" + concept.getTerminology(),
               "to.publisher: \"" + concept.getPublisher()) + "\"",
-          0, 10000, null, null, true, null).getItems();
+          0, 10000, null, null, true).getItems();
 
       // Return the object
       return new ResponseEntity<>(mappings, new HttpHeaders(), HttpStatus.OK);
 
     } catch (final Exception e) {
       handleException(e, "trying to get concept mappings for = " + code);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/concept/{terminology}/{code}/members", method = RequestMethod.GET)
+  @Operation(summary = "Get members from concept by terminology and code",
+      description = "Gets members from the concept with the specified terminology and code.",
+      tags = {
+          "concept by code"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200",
+          description = "Members from the concept matching specified terminology and code",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = SubsetMember.class)))),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "terminology",
+          description = "Terminology id or abbreviation." + " e.g. \"uuid1\" or \"ICD10CM\".",
+          required = true),
+      @Parameter(name = "code",
+          description = "Terminology code, e.g. \"1119\", \"8867-4\", or \"64572001\"",
+          required = true)
+  })
+  public ResponseEntity<List<SubsetMember>> getConceptMembers(
+    @PathVariable("terminology") final String terminology, @PathVariable("code") final String code)
+    throws Exception {
+
+    try {
+
+      final IncludeParam ip = new IncludeParam("minimal");
+      final Terminology term = lookupTerminology(terminology);
+
+      // find with code, term, pub, version
+      final String query =
+          StringUtility.composeQuery(
+              "AND", TerminologyUtility.getTerminologyQuery(term.getAbbreviation(),
+                  term.getPublisher(), term.getVersion()),
+              "code:" + StringUtility.escapeQuery(code));
+
+      // then do a find on the query
+      final SearchParameters searchParams = new SearchParameters(query, null, 2, null, null);
+      final ResultList<Concept> results = searchService.findFields(searchParams,
+          new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
+
+      if (results.getTotal() == 0) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.OK);
+      }
+      if (results.getTotal() > 1) {
+        throw new RestException(false, 417, "Expecation failed",
+            "Too many matching concepts for terminology/code = " + terminology + ", " + code);
+      }
+
+      final Concept concept = results.getItems().get(0);
+
+      // Find subpings
+      final List<Subset> subsets = lookupSubsets(null, true);
+      final List<SubsetMember> members = findMembersHelper(subsets,
+          StringUtility.composeQuery("AND",
+              "from.code:" + StringUtility.escapeQuery(concept.getCode()),
+              "from.terminology:" + concept.getTerminology(),
+              "from.publisher: \"" + concept.getPublisher()) + "\"",
+          0, 10000, null, null, true).getItems();
+
+      // Return the object
+      return new ResponseEntity<>(members, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get concept members for = " + code);
       return null;
     }
   }
@@ -2389,9 +2606,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
       // Limit to loaded mapsets
-      final SearchParameters searchParams =
-          new SearchParameters("*:*" + ((query == null || query.isEmpty()) ? "" : " AND " + query),
-              offset, maxLimit, sort, ascending);
+      final SearchParameters searchParams = new SearchParameters(
+          StringUtility.isEmpty(query) ? "*:*" : query, offset, maxLimit, sort, ascending);
       final ResultList<Mapset> list = searchService.find(searchParams, Mapset.class);
       list.setParameters(searchParams);
       list.getItems().forEach(t -> t.cleanForApi());
@@ -2407,37 +2623,56 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /* see superclass */
   @Override
   @RequestMapping(value = "/subset", method = RequestMethod.GET)
-  @Operation(summary = "Get subsets", description = "Gets subset objects.", tags = {
-      "subset"
-  })
+  @Operation(summary = "Find subsets", description = "Finds subsets matching specified criteria.",
+      tags = {
+          "subset"
+      })
   @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "Result list of subsets"),
-      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
-      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
-      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "200", description = "Result list of matching subsets"),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
       @ApiResponse(responseCode = "500", description = "Internal server error",
           content = @Content())
   })
-  public ResponseEntity<ResultListSubset> getSubsets() throws Exception {
+  @Parameters({
+      @Parameter(name = "query", description = "Search text", required = false,
+          schema = @Schema(implementation = String.class)),
+      @Parameter(name = "offset", description = "Start index for search results", required = false,
+          schema = @Schema(implementation = Integer.class), example = "0"),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+      @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "ascending",
+          description = "<code>true</code> for ascending, <code>false</code> for descending,"
+              + " <code>null</code> for unspecified",
+          required = false, schema = @Schema(implementation = Boolean.class))
+  })
+  public ResponseEntity<ResultListSubset> findSubsets(
+    @RequestParam(name = "query", required = false) final String query,
+    @RequestParam(name = "offset", required = false, defaultValue = "0") final Integer offset,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit,
+    @RequestParam(name = "sort", required = false) final String sort,
+    @RequestParam(name = "ascending", required = false) final Boolean ascending) throws Exception {
 
     try {
 
-      final List<Subset> subsets =
-          lookupSubsetMap().values().stream().sorted(Comparator.comparing(Subset::getReleaseDate,
-              Comparator.nullsFirst(Comparator.naturalOrder()))).toList();
+      // limit return objects to 1000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      final ResultListSubset resultListSubset = new ResultListSubset();
-      resultListSubset.getItems().addAll(subsets);
-      resultListSubset.setTotal(resultListSubset.getItems().size());
+      // Limit to loaded subsets
+      final SearchParameters searchParams = new SearchParameters(
+          StringUtility.isEmpty(query) ? "*:*" : query, offset, maxLimit, sort, ascending);
+      final ResultList<Subset> list = searchService.find(searchParams, Subset.class);
+      list.setParameters(searchParams);
+      list.getItems().forEach(t -> t.cleanForApi());
 
-      // Return the object
-      return new ResponseEntity<>(resultListSubset, new HttpHeaders(), HttpStatus.OK);
+      return new ResponseEntity<>(new ResultListSubset(list), new HttpHeaders(), HttpStatus.OK);
 
     } catch (final Exception e) {
-      handleException(e, "trying to get subsets");
+      handleException(e, "trying to find subsets");
       return null;
     }
-
   }
 
   /* see superclass */
@@ -2525,7 +2760,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     try {
 
       // Allow subset to be blank here
-      final List<Subset> subsets = lookupSubsets(subsetId);
+      final List<Subset> subsets = lookupSubsets(subsetId, false);
 
       // Build a query from the handler and use it in findHelper
       // limit return objects to 1000 regardless of user request
@@ -2580,7 +2815,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    */
   private Terminology lookupTerminology(final String terminology) throws Exception {
 
-    final List<Terminology> terminologies = lookupTerminologyMap().values().stream()
+    final List<Terminology> terminologies = lookupTerminologies(terminology, false).stream()
         .filter(t -> t.getId().equals(terminology) || t.getAbbreviation().equals(terminology))
         .toList();
     if (terminologies.isEmpty()) {
@@ -2594,17 +2829,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
     return terminologies.get(0);
 
-  }
-
-  /**
-   * Lookup terminologies.
-   *
-   * @param terminology the terminology
-   * @return the list
-   * @throws Exception the exception
-   */
-  private List<Terminology> lookupTerminologies(final String terminology) throws Exception {
-    return lookupTerminologies(terminology, false);
   }
 
   /**
@@ -2735,36 +2959,28 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * @param sort the sort
    * @param ascending the ascending
    * @param active the active
-   * @param leaf the leaf
    * @return the result list
    * @throws Exception the exception
    */
   private ResultList<Mapping> findMappingsHelper(final List<Mapset> mapsets, final String query,
     final Integer offset, final Integer limit, final String sort, final Boolean ascending,
-    final Boolean active, final Boolean leaf) throws Exception {
+    final Boolean active) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
-    final String mapsetClause = "("
+    final String mapsetClause = ModelUtility.isEmpty(mapsets) ? null : "("
         + String.join(" OR ",
             mapsets.stream()
                 .map(m -> "(" + StringUtility.composeQuery("AND",
                     "mapset.abbreviation:" + StringUtility.escapeQuery(m.getAbbreviation()),
-                    "mapset.publisher: \"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
+                    "mapset.publisher:\"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
                     "mapset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
                 .toList())
         + ")";
-    final SearchParameters searchParams = new SearchParameters(
-        StringUtility.composeQuery("AND", query, mapsetClause), offset, limit, sort, ascending);
+    final SearchParameters searchParams = new SearchParameters(StringUtility.composeQuery("AND",
+        StringUtility.isEmpty(query) ? "*:*" : query, mapsetClause), offset, limit, sort,
+        ascending);
     if (active != null && active) {
       searchParams.setActive(true);
-    }
-    if (leaf != null && leaf) {
-      searchParams.setLeaf(true);
-    }
-
-    // Bail if no mapsets
-    if (ModelUtility.isEmpty(mapsets)) {
-      return new ResultList<Mapping>();
     }
 
     final ResultList<Mapping> list = searchService.find(searchParams, Mapping.class);
@@ -2796,6 +3012,54 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   }
 
   /**
+   * Find members helper.
+   *
+   * @param subsets the subsets
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @return the result list
+   * @throws Exception the exception
+   */
+  private ResultList<SubsetMember> findMembersHelper(final List<Subset> subsets, final String query,
+    final Integer offset, final Integer limit, final String sort, final Boolean ascending,
+    final Boolean active) throws Exception {
+
+    // We are not using multiple indexes, so we instead have to add constraints
+    final String subsetClause = ModelUtility.isEmpty(subsets) ? null : "("
+        + String.join(" OR ",
+            subsets.stream()
+                .map(m -> "(" + StringUtility.composeQuery("AND",
+                    "subset.abbreviation:" + StringUtility.escapeQuery(m.getAbbreviation()),
+                    "subset.publisher:\"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
+                    "subset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
+                .toList())
+        + ")";
+    final SearchParameters searchParams = new SearchParameters(StringUtility.composeQuery("AND",
+        StringUtility.isEmpty(query) ? "*:*" : query, subsetClause), offset, limit, sort,
+        ascending);
+    if (active != null && active) {
+      searchParams.setActive(true);
+    }
+
+    final ResultList<SubsetMember> list = searchService.find(searchParams, SubsetMember.class);
+
+    // for (final SubsetMember member : list.getItems()) {
+    // member.cleanForApi();
+    // TerminologyUtility.populateConcept(member, ip, single, searchService);
+    // }
+
+    // Restore the original query for the response
+    searchParams.setQuery(query);
+    list.setParameters(searchParams);
+    return list;
+
+  }
+
+  /**
    * Terminology has tree positions. Throw exception if not.
    *
    * @param terminology the terminology
@@ -2815,44 +3079,33 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
    * Lookup subsets.
    *
    * @param subset the subset
+   * @param allowBlank the allow blank
    * @return the subset
    * @throws Exception the exception
    */
-  private Subset lookupSubset(final String subset) throws Exception {
+  private List<Subset> lookupSubsets(final String subset, final boolean allowBlank)
+    throws Exception {
 
-    final List<Subset> subsets = lookupSubsetMap().values().stream()
-        .filter(m -> m.getId().equals(subset) || m.getAbbreviation().equals(subset)).toList();
-    if (subsets.isEmpty()) {
+    if (!allowBlank && StringUtility.isEmpty(subset)) {
       throw new RestException(false, 417, "Expectation failed",
-          "Unable to find subset = " + subset);
+          "Subset parameter should not be blank");
     }
 
-    if (subsets.size() > 1) {
-      throw new RestException(false, 417, "Expectation failed",
-          "Too many subsets found = " + subset);
+    final Map<String, Subset> map = lookupSubsetMap();
+    // Find subsets
+    final Set<String> subsets = new HashSet<>();
+    if (subset != null) {
+      for (final String value : subset.split(",")) {
+        subsets.add(value);
+      }
     }
-    return subsets.get(0);
-
-  }
-
-  /**
-   * Lookup subsets.
-   *
-   * @param subset the subset
-   * @return the subset
-   * @throws Exception the exception
-   */
-  private List<Subset> lookupSubsets(final String subset) throws Exception {
-
-    final List<Subset> subsets = lookupSubsetMap().values().stream()
-        .filter(m -> m.getId().equals(subset) || m.getAbbreviation().equals(subset)).toList();
-    if (subsets.isEmpty()) {
+    final List<Subset> list = map.values().stream().filter(m -> (allowBlank && subsets.isEmpty())
+        || subsets.contains(m.getId()) || subsets.contains(m.getAbbreviation())).toList();
+    if (!allowBlank && list.isEmpty()) {
       throw new RestException(false, 417, "Expectation failed",
-          "Unable to find subset = " + subset);
+          "Unable to find any matching subset = " + subset);
     }
-
-    return subsets;
-
+    return list;
   }
 
   /**
@@ -2904,27 +3157,22 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     // We are not using multiple indexes, so we instead have to add constraints
     final String subsetClause =
-        "(" + String.join(" OR ",
-            subsets.stream()
-                .map(m -> "("
+        ModelUtility.isEmpty(subsets) ? null
+            : "(" + String.join(" OR ",
+                subsets.stream().map(m -> "("
                     + StringUtility.composeQuery("AND",
                         "subset.abbreviation: \"" + StringUtility.escapeQuery(m.getAbbreviation())
                             + "\"",
                         "subset.publisher: \"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
                         "subset.version: \"" + StringUtility.escapeQuery(m.getVersion()) + "\"")
-                    + ")")
-                .toList())
-            + ")";
-    final SearchParameters searchParams = new SearchParameters(
-        StringUtility.composeQuery("AND", query, subsetClause), offset, limit, sort, ascending);
+                    + ")").toList())
+                + ")";
+    final SearchParameters searchParams = new SearchParameters(StringUtility.composeQuery("AND",
+        StringUtility.isEmpty(query) ? "*:*" : query, subsetClause), offset, limit, sort,
+        ascending);
 
     if (active != null && active) {
       searchParams.setActive(true);
-    }
-
-    // Bail if no subsets
-    if (ModelUtility.isEmpty(subsets)) {
-      return new ResultList<>();
     }
 
     final ResultList<SubsetMember> list = searchService.find(searchParams, SubsetMember.class);

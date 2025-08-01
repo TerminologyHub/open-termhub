@@ -24,11 +24,11 @@ The following environment variables can be used to configure the application:
 
 ## Data Persistence
 
-The application uses Lucene for fast searching of terminology data. By default, indexes are stored in `/tmp/opentermhub/index`. To persist these indexes between container restarts:
+The application uses Lucene for fast searching of terminology data. By default, indexes are stored in `/index`. To persist these indexes between container restarts:
 
 ```bash
 docker run --rm --name open-termhub -p 8080:8080 \
-  -v /path/to/your/data:/tmp/opentermhub/index \
+  -v /path/to/index/folder:/index \
   wcinformatics/open-termhub:latest
 ```
 
@@ -47,7 +47,7 @@ services:
       - ENABLE_POST_LOAD_COMPUTATIONS=true # Optional: default is false
       - TERMHUB_TOKEN=${TERMHUB_TOKEN}     # Optional: only required if using Terminology Syndication from www.terminologyhub.com
     volumes:
-      - ./data:/tmp/opentermhub/index      # Optional: index store location
+      - ./data:/index      # Optional: index store location
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s

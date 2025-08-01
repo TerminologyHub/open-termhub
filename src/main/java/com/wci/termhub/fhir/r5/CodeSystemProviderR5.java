@@ -98,15 +98,21 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
-      logger.info("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
+      if (logger.isDebugEnabled()) {
+        logger.debug("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
+      }
 
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
         final CodeSystem cs = FhirUtilityR5.toR5(terminology);
-        logger.info("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
+        if (logger.isDebugEnabled()) {
+          logger.debug("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
+        }
 
         // Skip non-matching - comparing just the ID parts
         if (id != null && id.getIdPart().equals(cs.getId())) {
-          logger.info("Found matching code system: {}", cs.getTitle());
+          if (logger.isDebugEnabled()) {
+            logger.debug("Found matching code system: {}", cs.getTitle());
+          }
           return cs;
         }
       }
@@ -125,7 +131,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
   /**
    * Find code systems.
-   *
+   * 
    * <pre>
    * Parameters for all resources
    *   used: _id
@@ -154,6 +160,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @param publisher the publisher
    * @param title the title
    * @param url the url
+   * @param system the system
    * @param version the version
    * @param count the count
    * @param offset the offset
@@ -170,6 +177,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     @OptionalParam(name = "publisher") final StringParam publisher,
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
+    @OptionalParam(name = "system") final UriParam system,
     @OptionalParam(name = "version") final StringParam version,
     @Description(shortDefinition = "Number of entries to return")
     @OptionalParam(name = "_count") final NumberParam count,
@@ -179,6 +187,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     try {
 
       FhirUtilityR5.notSupportedSearchParams(request);
+      FhirUtilityR5.mutuallyExclusive("url", url, "system", system);
 
       final List<CodeSystem> list = new ArrayList<>();
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
@@ -194,36 +203,50 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
         // Skip non-matching
         if ((id != null && !id.getValue().equals(cs.getId()))
-            || (url != null && !url.getValue().equals(cs.getUrl()))) {
-          logger.debug("  SKIP id/url mismatch = {}", cs.getUrl());
+            || (url != null && !url.getValue().equals(cs.getUrl()))
+            || (system != null && !system.getValue().equals(cs.getUrl()))) {
           continue;
         }
         if (date != null && !FhirUtility.compareDate(date, cs.getDate())) {
-          logger.debug("  SKIP date mismatch = {}", cs.getDate());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP date mismatch = {}", cs.getDate());
+          }
           continue;
         }
         if (description != null && !FhirUtility.compareString(description, cs.getDescription())) {
-          logger.debug("  SKIP description mismatch = {}", cs.getDescription());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP description mismatch = {}", cs.getDescription());
+          }
           continue;
         }
         if (name != null && !FhirUtility.compareString(name, cs.getName())) {
-          logger.debug("  SKIP name mismatch = {}", cs.getName());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP name mismatch = {}", cs.getName());
+          }
           continue;
         }
         if (publisher != null && !FhirUtility.compareString(publisher, cs.getPublisher())) {
-          logger.debug("  SKIP publisher mismatch = {}", cs.getPublisher());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP publisher mismatch = {}", cs.getPublisher());
+          }
           continue;
         }
         if (title != null && !FhirUtility.compareString(title, cs.getTitle())) {
-          logger.debug("  SKIP title mismatch = {}", cs.getTitle());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP title mismatch = {}", cs.getTitle());
+          }
           continue;
         }
         if (version != null && !FhirUtility.compareString(version, cs.getVersion())) {
-          logger.debug("  SKIP version mismatch = {}", cs.getVersion());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP version mismatch = {}", cs.getVersion());
+          }
           continue;
         }
         if (code != null && !mapsetsMatchingCodes.contains(code.getValue())) {
-          logger.debug("  SKIP code not found = {}", code.getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP code not found = {}", code.getValue());
+          }
           continue;
         }
 
@@ -724,15 +747,15 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final Concept conceptA = TerminologyUtility.getConcept(searchService, terminology, codeA);
     if (conceptA == null) {
       throw FhirUtilityR5.exception(
-          String.format("Code does not exist for code system =" + codeA + ","
-              + terminology.getAttributes().get("fhirUri")),
+          String
+              .format("Code does not exist for code system =" + codeA + "," + terminology.getUri()),
           OperationOutcome.IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
     final Concept conceptB = TerminologyUtility.getConcept(searchService, terminology, codeB);
     if (conceptB == null) {
       throw FhirUtilityR5.exception(
-          String.format("Code does not exist for code system =" + codeB + ","
-              + terminology.getAttributes().get("fhirUri")),
+          String
+              .format("Code does not exist for code system =" + codeB + "," + terminology.getUri()),
           OperationOutcome.IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
 

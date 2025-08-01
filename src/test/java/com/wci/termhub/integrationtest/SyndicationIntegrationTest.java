@@ -17,7 +17,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.junit.jupiter.api.Test;
@@ -36,9 +35,9 @@ import com.wci.termhub.util.FileUtility;
 /**
  * The Class SyndicationIntegrationTest.
  *
- * This test requires TERMHUB_TOKEN to have a valid JWT token for the
- * syndication service. It will download a sample syndication feed, verify there
- * are contents. Loading terminologies is covered in other tests.
+ * This test requires TERMHUB_TOKEN to have a valid JWT token for the syndication service. It will
+ * download a sample syndication feed, verify there are contents. Loading terminologies is covered
+ * in other tests.
  *
  */
 @SpringBootTest(classes = Application.class)
@@ -121,8 +120,7 @@ public class SyndicationIntegrationTest {
    */
   private boolean isValidZipFile(final String filePath) {
     try (final ZipInputStream zis = new ZipInputStream(new FileInputStream(filePath))) {
-      ZipEntry entry;
-      while ((entry = zis.getNextEntry()) != null) {
+      while ((zis.getNextEntry()) != null) {
         // Just verify we can read entries
         zis.closeEntry();
       }

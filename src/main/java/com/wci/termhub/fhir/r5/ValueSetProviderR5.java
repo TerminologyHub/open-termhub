@@ -59,8 +59,8 @@ import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.StringUtility;
-import com.wci.termhub.util.SubsetLoaderUtil;
 import com.wci.termhub.util.TerminologyUtility;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
@@ -107,6 +107,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the value set
    * @throws Exception the exception
    */
+  @SuppressWarnings("null")
   @Read
   public ValueSet getValueSet(final HttpServletRequest request, final ServletRequestDetails details,
     @IdParam final IdType id) throws Exception {
@@ -123,10 +124,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
       if (subset != null && "ValueSet".equals(subset.getCategory())) {
         // Fetch members
         final SearchParameters memberParams = new SearchParameters();
+        memberParams.setLimit(1000);
         memberParams.getFilters().put("subset.code", subset.getCode());
         final List<SubsetMember> members =
             searchService.findAll(memberParams, SubsetMember.class).getItems();
-        return SubsetLoaderUtil.toR5ValueSet(subset, members);
+        return ValueSetLoaderUtil.toR5ValueSet(subset, members);
       }
       throw FhirUtilityR5.exception(
           "Value set not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
@@ -192,11 +194,10 @@ public class ValueSetProviderR5 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
-        name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
-        name = "_offset") final NumberParam offset)
-    throws Exception {
+    @Description(shortDefinition = "Number of entries to return")
+    @OptionalParam(name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page")
+    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
 
@@ -215,36 +216,50 @@ public class ValueSetProviderR5 implements IResourceProvider {
         }
 
         if (date != null && !FhirUtility.compareDate(date, set.getDate())) {
-          logger.info("  SKIP date mismatch {}", set.getDate());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP date mismatch {}", set.getDate());
+          }
           continue;
         }
         if (description != null && !FhirUtility.compareString(description, set.getDescription())) {
-          logger.info("  SKIP description mismatch {}", set.getDescription());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP description mismatch {}", set.getDescription());
+          }
           continue;
         }
         // TODO: identifier (e.g. for refests that have URIs but also concept
         // ids)
         if (name != null && !FhirUtility.compareString(name, set.getName())) {
-          logger.info("  SKIP name mismatch {}", set.getName());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP name mismatch {}", set.getName());
+          }
           continue;
         }
         if (publisher != null && !FhirUtility.compareString(publisher, set.getPublisher())) {
-          logger.info("  SKIP publisher mismatch {}", set.getPublisher());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP publisher mismatch {}", set.getPublisher());
+          }
           continue;
         }
         if (title != null && !FhirUtility.compareString(title, set.getTitle())) {
-          logger.info("  SKIP title mismatch {}", set.getTitle());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP title mismatch {}", set.getTitle());
+          }
           continue;
         }
         if (version != null && !FhirUtility.compareString(version, set.getVersion())) {
-          logger.info("  SKIP version mismatch {}", set.getVersion());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP version mismatch {}", set.getVersion());
+          }
           continue;
         }
 
         if (code != null
             && TerminologyUtility.getConcept(searchService, terminology, code.getValue()) == null) {
-          logger.info("  SKIP code mismatch {}",
-              terminology.getAbbreviation() + " " + code.getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP code mismatch {}",
+                terminology.getAbbreviation() + " " + code.getValue());
+          }
           continue;
         }
 
@@ -264,36 +279,49 @@ public class ValueSetProviderR5 implements IResourceProvider {
         final int pageOffset = (offset != null) ? offset.getValue().intValue() : 0;
         memberParams.setLimit(pageSize);
         memberParams.setOffset(pageOffset);
-        final List<SubsetMember> members =
-            searchService.findAll(memberParams, SubsetMember.class).getItems();
-        final ValueSet set = SubsetLoaderUtil.toR5ValueSet(subset, members);
+        // final List<SubsetMember> members =
+        // searchService.findAll(memberParams, SubsetMember.class).getItems();
+        final ValueSet set =
+            ValueSetLoaderUtil.toR5ValueSet(subset, new ArrayList<SubsetMember>(0));
         // Apply the same filtering as above
         if ((id != null && !id.getValue().equals(set.getId()))
             || (url != null && !url.getValue().equals(set.getUrl()))) {
           continue;
         }
         if (date != null && !FhirUtility.compareDate(date, set.getDate())) {
-          logger.info("  SKIP date mismatch {}", set.getDate());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP date mismatch {}", set.getDate());
+          }
           continue;
         }
         if (description != null && !FhirUtility.compareString(description, set.getDescription())) {
-          logger.info("  SKIP description mismatch {}", set.getDescription());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP description mismatch {}", set.getDescription());
+          }
           continue;
         }
         if (name != null && !FhirUtility.compareString(name, set.getName())) {
-          logger.info("  SKIP name mismatch {}", set.getName());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP name mismatch {}", set.getName());
+          }
           continue;
         }
         if (publisher != null && !FhirUtility.compareString(publisher, set.getPublisher())) {
-          logger.info("  SKIP publisher mismatch {}", set.getPublisher());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP publisher mismatch {}", set.getPublisher());
+          }
           continue;
         }
         if (title != null && !FhirUtility.compareString(title, set.getTitle())) {
-          logger.info("  SKIP title mismatch {}", set.getTitle());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP title mismatch {}", set.getTitle());
+          }
           continue;
         }
         if (version != null && !FhirUtility.compareString(version, set.getVersion())) {
-          logger.info("  SKIP version mismatch {}", set.getVersion());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP version mismatch {}", set.getVersion());
+          }
           continue;
         }
         // No code filter for loaded sets
@@ -571,9 +599,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
   }
 
   /**
-   * Loads a ValueSet from a FHIR R5 ValueSet resource and persists it as a
-   * Subset and SubsetMembers. Example usage: POST /ValueSet/$load with a FHIR
-   * R5 ValueSet resource in the body.
+   * Loads a ValueSet from a FHIR R5 ValueSet resource and persists it as a Subset and
+   * SubsetMembers. Example usage: POST /ValueSet/$load with a FHIR R5 ValueSet resource in the
+   * body.
    *
    * @param valueSet the FHIR R5 ValueSet resource
    * @return Parameters resource with the new Subset code
@@ -585,7 +613,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
     if (valueSet == null) {
       throw FhirUtilityR5.exception("Missing valueSet parameter", IssueType.INVALID, 400);
     }
-    final String subsetId = SubsetLoaderUtil.loadSubset(searchService,
+    final String subsetId = ValueSetLoaderUtil.loadSubset(searchService,
         FhirContext.forR5().newJsonParser().encodeResourceToString(valueSet), true);
     final Parameters out = new Parameters();
     out.addParameter().setName("subsetId").setValue(new StringType(subsetId));
@@ -603,8 +631,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
   public MethodOutcome createValueSet(@ResourceParam final ValueSet valueSet) throws Exception {
 
     try {
+      logger.info("Create value set {}", valueSet.getTitle());
 
-      final String subsetId = SubsetLoaderUtil.loadSubset(searchService,
+      final String subsetId = ValueSetLoaderUtil.loadSubset(searchService,
           FhirContext.forR5().newJsonParser().encodeResourceToString(valueSet), true);
 
       valueSet.getCompose().getInclude().clear();
@@ -650,6 +679,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
         throw FhirUtilityR5.exception("Value Set ID required for delete", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
       }
+
+      logger.info("Delete value set with ID: {}", id.getIdPart());
 
       // Check if it's an implicit code system ValueSet (these cannot be
       // deleted)
@@ -747,7 +778,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
       }
 
       if (version != null && !version.getValue().equals(vs.getVersion())) {
-        logger.info("  SKIP version mismatch = {}", vs.getVersion());
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP version mismatch = {}", vs.getVersion());
+        }
         continue;
       }
 
@@ -793,9 +826,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
             .setValue(new StringType(version.getValue())));
       }
       for (final Concept concept : list.getItems()) {
-        final ValueSetExpansionContainsComponent code = new ValueSetExpansionContainsComponent()
-            .setSystem(terminology.getAttributes().get("fhirUri")).setCode(concept.getCode())
-            .setDisplay(concept.getName());
+        final ValueSetExpansionContainsComponent code =
+            new ValueSetExpansionContainsComponent().setSystem(terminology.getUri())
+                .setCode(concept.getCode()).setDisplay(concept.getName());
         if (languages != null) {
           // "language": "en",
           // "use": {
@@ -866,7 +899,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
       }
 
       if (version != null && !version.getValue().equals(vs.getVersion())) {
-        logger.info("  SKIP version mismatch {}", vs.getVersion());
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP version mismatch {}", vs.getVersion());
+        }
         continue;
       }
 

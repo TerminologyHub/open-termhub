@@ -14,24 +14,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.apache.lucene.search.Query;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.ecl.EclToLuceneConverter;
-import com.wci.termhub.test.AbstractTest;
+import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
  * Unit testing for ECL to lucene syntax.
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-public class EclToLuceneConverterTest extends AbstractTest {
+public class EclToLuceneConverterTest extends AbstractTerminologyServerTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private final Logger logger = LoggerFactory.getLogger(EclToLuceneConverterTest.class);
 
   /**

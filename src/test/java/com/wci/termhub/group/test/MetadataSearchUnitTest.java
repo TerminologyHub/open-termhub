@@ -15,22 +15,17 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 
-import com.wci.termhub.Application;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.BaseUnitTest;
+import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
  * The Class MetadataSearchUnitTest.
  */
-@SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-test.properties")
-public class MetadataSearchUnitTest extends BaseUnitTest {
+public class MetadataSearchUnitTest extends AbstractTerminologyServerTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(MetadataSearchUnitTest.class);
@@ -68,7 +63,7 @@ public class MetadataSearchUnitTest extends BaseUnitTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(2, metadata.getItems().size());
+    assertEquals(14, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -88,7 +83,7 @@ public class MetadataSearchUnitTest extends BaseUnitTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(2, metadata.getItems().size());
+    assertEquals(93, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -108,7 +103,7 @@ public class MetadataSearchUnitTest extends BaseUnitTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(1, metadata.getItems().size());
+    assertEquals(78, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -128,7 +123,7 @@ public class MetadataSearchUnitTest extends BaseUnitTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(1, metadata.getItems().size());
+    assertEquals(54, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -148,7 +143,7 @@ public class MetadataSearchUnitTest extends BaseUnitTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(1, metadata.getItems().size());
+    assertEquals(50, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());

@@ -235,7 +235,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
       final LuceneDataAccess luceneData = new LuceneDataAccess();
       final ResultList<T> result = luceneData.find(clazz, searchParameters, searchQuery);
 
-      LOGGER.debug("      result count = {} (total={})", result.getItems().size(),
+      LOGGER.info("      result count = {} (total={})", result.getItems().size(),
           result.getTotal());
       if (fromIndex != 0) {
         // Handle non-aligned paging (e.g fromRecord=6, pageSize=10)
@@ -439,7 +439,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
     final String queryString =
         escapeFlag ? QueryBuilder.findBuilder(builders, handler).buildEscapedQuery(params)
             : QueryBuilder.findBuilder(builders, handler).buildQuery(params);
-    LOGGER.debug("    query [{}] offset={}, limit={}, {} {}", queryString, params.getOffset(),
+    LOGGER.info("    query [{}] offset={}, limit={}, {} {}", queryString, params.getOffset(),
         params.getLimit(), clazz.getSimpleName(), handler);
     final Query query = LuceneQueryBuilder.parse(queryString, clazz);
     return query;

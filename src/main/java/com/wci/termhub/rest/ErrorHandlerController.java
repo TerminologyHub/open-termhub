@@ -11,7 +11,6 @@ package com.wci.termhub.rest;
 
 import java.util.Map;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
@@ -27,14 +26,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.util.ThreadLocalMapper;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * Handler for errors when accessing API thru browser. This handles the /error
- * path.
+ * Handler for errors when accessing API thru browser. This handles the /error path.
  */
 @Controller
 @Hidden
@@ -70,7 +68,7 @@ public class ErrorHandlerController implements ErrorController {
     final Map<String, Object> body = getErrorAttributes(request, false);
     String ppBody = null;
     try {
-      ppBody = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(body);
+      ppBody = ThreadLocalMapper.get().writerWithDefaultPrettyPrinter().writeValueAsString(body);
     } catch (final Exception e) {
       ppBody = body.toString().replaceAll("<", "&lt;");
     }
@@ -96,6 +94,8 @@ public class ErrorHandlerController implements ErrorController {
       return new ResponseEntity<>(status);
     }
     final Map<String, Object> body = getErrorAttributes(request, false);
+    body.put("status", status.value() + "");
+    body.put("error", status.getReasonPhrase());
     return new ResponseEntity<>(body, status);
   }
 
@@ -129,20 +129,17 @@ public class ErrorHandlerController implements ErrorController {
     final WebRequest webRequest = new ServletWebRequest(request);
     final Map<String, Object> body = errorAttributes.getErrorAttributes(webRequest,
         ErrorAttributeOptions.of(Include.STACK_TRACE));
-    if (body.containsKey("message")) {
-      try {
-        final String message = body.get("message").toString();
-        final StringBuilder sb = new StringBuilder();
-        for (final String line : message.split("\\n")) {
-          sb.append(StringEscapeUtils.escapeHtml4(line));
-          sb.append("\n");
-        }
-        // remove the trailing \n
-        body.put("message", sb.toString().replaceFirst("\\n$", ""));
-      } catch (final Exception e) {
-        body.put("message", body.get("message").toString().replaceAll("<", "&lt;"));
-      }
+
+    final Throwable error = errorAttributes.getError(webRequest);
+    // To pass an error through, use ResponseStatusException
+    if (error instanceof RestException) {
+      body.put("error", ((RestException) error).getError().getError());
+      body.put("message", ((RestException) error).getError().getMessage());
+    } else {
+      body.put("message", error == null ? "No message" : error.getMessage());
     }
+
+    body.remove("trace");
     return body;
   }
 

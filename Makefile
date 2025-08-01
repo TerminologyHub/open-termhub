@@ -8,10 +8,6 @@ INTERACTIVE := $(shell [ -t 0 ] && echo 1)
 
 # Most applications have their own method of maintaining a version number.
 APP_VERSION              := $(shell echo `grep "version = " build.gradle | cut -d\= -f 2`)
-GIT_VERSION              ?= $(shell echo `git describe --match=NeVeRmAtCh --always --dirty`)
-GIT_COMMIT               ?= $(shell echo `git log | grep -m1 -oE '[^ ]+$'`)
-GIT_COMMITTED_AT         ?= $(shell echo `git log -1 --format=%ct`)
-GIT_BRANCH               ?= $(shell echo `git branch --show-current`)
 DOCKER_INT_REGISTRY      := wcinformatics
 
 .PHONY: build
@@ -19,7 +15,7 @@ DOCKER_INT_REGISTRY      := wcinformatics
 clean: ## Clean build artifacts. Override for your project
 	./gradlew clean
 
-build: ## Build the library without tests
+build: clean ## Build the library without tests
 	./gradlew build -x test -x spotbugsMain -x spotbugsTest -x javadoc
 
 scan: ## scan for vulnerabilities in dependencies
@@ -29,6 +25,10 @@ scan: ## scan for vulnerabilities in dependencies
 	grep CRITICAL report.html
 	/bin/rm -rf gradle.lockfile
 	
+scandocker:
+	trivy image $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
+	grep CRITICAL report.html
+
 fullscan: ## scan for vulnerabilities in dependencies
 	/bin/rm -rf gradle/dependency-locks
 	./gradlew dependencies --write-locks
@@ -36,13 +36,13 @@ fullscan: ## scan for vulnerabilities in dependencies
 	grep CRITICAL report.html
 	/bin/rm -rf gradle.lockfile
 
-test: ## Run all tests
+test: clean ## Run all tests
 	./gradlew test spotbugsMain spotbugsTest
 
-test-r4: ## Run R4 tests only
+test-r4: clean ## Run R4 tests only
 	./gradlew testR4
 
-test-r5: ## Run R5 tests only
+test-r5: clean ## Run R5 tests only
 	./gradlew testR5
 
 run: ## Run the server
@@ -52,16 +52,15 @@ rundebug: ## Run the server in debug mode
 	./gradlew bootRun --debug-jvm
 
 docker: ## Build the docker image and tag with version and latest
-	@echo APP_VERSION=$(APP_VERSION)
-	@echo REGISTRY=$(DOCKER_INT_REGISTRY)
-	@echo SERVICE=$(SERVICE)
-	docker build --no-cache-filter=gradle-build -t $(SERVICE) .
-	docker tag $(SERVICE) $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
-	docker tag $(SERVICE) $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
+	docker buildx build --platform linux/amd64,linux/arm64 --no-cache-filter=gradle-build -t $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) . 
+	docker tag $(DOCKER_INT_REGISTRY)/$(SERVICE):latest $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	@echo APP_VERSION=$(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 
-scandocker:
-	trivy image $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
-	grep CRITICAL report.html
+release: ## publish to dockerhub
+	@echo $(DISPLAY_BOLD)"Publishing container to $(DOCKER_INT_REGISTRY) registry"$(DISPLAY_RESET)
+	@echo $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	docker -D push --platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
+	docker -D push --platform linux/arm64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
 
 version:
 	@echo $(APP_VERSION)

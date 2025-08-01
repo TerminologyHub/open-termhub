@@ -155,15 +155,9 @@ dependencyManagement {
 // ./gradlew clean test
 test {
     useJUnitPlatform()
-    systemProperty 'spring.profiles.active', 'test'
-    exclude '**/r4/**'
-    exclude '**/r5/**'
-    exclude '**/group/**'
-    exclude '**/rest/**'
     exclude '**/integrationtest/**'
-
     testLogging {
-        events "passed", "skipped", "failed"
+        events "skipped", "failed"
         exceptionFormat "full"
     }
 }
@@ -171,10 +165,9 @@ test {
 // ./gradlew clean testR4
 task testR4(type: Test) {
     useJUnitPlatform()
-    systemProperty 'spring.profiles.active', 'test-r4'
     include '**/r4/**'
     testLogging {
-        events "passed", "skipped", "failed"
+        events "skipped", "failed"
         exceptionFormat "full"
     }
 }
@@ -182,33 +175,11 @@ task testR4(type: Test) {
 // ./gradlew clean testR5
 task testR5(type: Test) {
     useJUnitPlatform()
-    systemProperty 'spring.profiles.active', 'test-r5'
     include '**/r5/**'
     testLogging {
-        events "passed", "skipped", "failed"
+        events "skipped", "failed"
         exceptionFormat "full"
     }
-
-}
-
-// Run AllTestsSuite separately
-task testSuite(type: Test) {
-    useJUnitPlatform()
-    systemProperty 'spring.profiles.active', 'test'
-    filter {
-        includeTestsMatching "com.wci.termhub.test.AllTestsSuite"
-    }
-    testLogging {
-        events "passed","skipped", "failed"
-        exceptionFormat "full"
-    }
-}
-
-// Add a composite task to run both test suites in order
-task allTests {
-    dependsOn testSuite
-    dependsOn test
-    tasks.findByName('test').mustRunAfter 'testSuite'
 }
 
 // use "gradle licenseFormatMain/Test" to automatically generate headers

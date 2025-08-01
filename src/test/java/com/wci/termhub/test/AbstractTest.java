@@ -18,7 +18,7 @@ import com.wci.termhub.util.PropertyUtility;
 /**
  * Abstract superclass for source code tests.
  */
-public class AbstractTest {
+public abstract class AbstractTest {
 
   /** The logger. */
   @SuppressWarnings("unused")

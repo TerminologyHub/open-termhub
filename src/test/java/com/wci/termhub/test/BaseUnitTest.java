@@ -11,7 +11,6 @@ package com.wci.termhub.test;
 
 import java.util.Collection;
 
-import com.wci.termhub.util.PropertyUtility;
 import com.wci.termhub.util.StringUtility;
 
 /**
@@ -19,9 +18,6 @@ import com.wci.termhub.util.StringUtility;
  */
 public abstract class BaseUnitTest {
 
-  /** The Constant INDEX_DIRECTORY. */
-  protected static final String INDEX_DIRECTORY =
-      PropertyUtility.getProperties().getProperty("lucene.index.directory");
 
   /**
    * Gets the size.

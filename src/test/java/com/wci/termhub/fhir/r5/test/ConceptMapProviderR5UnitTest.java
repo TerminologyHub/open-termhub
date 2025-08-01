@@ -22,18 +22,11 @@ import org.hl7.fhir.r5.model.UriType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.fhir.r5.ConceptMapProviderR5;
 
@@ -44,12 +37,8 @@ import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 /**
  * The Class ConceptMapProviderR5UnitTest.
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestInstance(Lifecycle.PER_CLASS)
-@ActiveProfiles("test-r5")
-public class ConceptMapProviderR5UnitTest {
+public class ConceptMapProviderR5UnitTest extends AbstractFhirR5ServerTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapProviderR5UnitTest.class);
@@ -261,12 +250,16 @@ public class ConceptMapProviderR5UnitTest {
         null, // NumberParam count
         null); // NumberParam offset
 
+    // Log bundle contents for debugging
     logBundleContents(bundle, "testFindConceptMapsByVersion");
 
-    assertNotNull(bundle);
-    assertTrue(!bundle.getEntry().isEmpty());
-    assertTrue(bundle.getEntry().stream()
-        .allMatch(e -> VERSION.equals(((ConceptMap) e.getResource()).getVersion())));
+    // Then
+    assertNotNull(bundle, "Bundle should not be null");
+    assertTrue(!bundle.getEntry().isEmpty(), "Bundle should have entries");
+    assertTrue(
+        bundle.getEntry().stream()
+            .allMatch(e -> VERSION.equals(((ConceptMap) e.getResource()).getVersion())),
+        "All entries should have matching version");
   }
 
   /**

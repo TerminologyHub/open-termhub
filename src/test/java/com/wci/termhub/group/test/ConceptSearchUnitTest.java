@@ -15,22 +15,17 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 
-import com.wci.termhub.Application;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.BaseUnitTest;
+import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
  * The Class ConceptSearchUnitTest.
  */
-@SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-test.properties")
-public class ConceptSearchUnitTest extends BaseUnitTest {
+public class ConceptSearchUnitTest extends AbstractTerminologyServerTest {
 
   /** The logger. */
   @SuppressWarnings("unused")

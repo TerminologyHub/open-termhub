@@ -65,6 +65,24 @@ public class MapsetRef extends TerminologyRef {
   /**
    * Instantiates a new mapset ref.
    *
+   * @param code the code
+   * @param abbreviation the abbreviation
+   * @param publisher the publisher
+   * @param version the version
+   */
+  public MapsetRef(final String code, final String abbreviation, final String publisher,
+      final String version) {
+    setCode(code);
+    setAbbreviation(abbreviation);
+    setPublisher(publisher);
+    setVersion(version);
+    setActive(null);
+    setLocal(null);
+  }
+
+  /**
+   * Instantiates a new mapset ref.
+   *
    * @param other the other
    */
   public MapsetRef(final MapsetRef other) {

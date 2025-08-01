@@ -17,13 +17,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.MapsetRef;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
@@ -33,9 +33,6 @@ public final class ConceptMapLoaderUtil {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapLoaderUtil.class);
-
-  /** The object mapper. */
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   /**
    * Instantiates a new concept map loader.
@@ -78,7 +75,7 @@ public final class ConceptMapLoaderUtil {
     try {
 
       // Read the entire file as a JSON object
-      final JsonNode root = OBJECT_MAPPER.readTree(conceptMap);
+      final JsonNode root = ThreadLocalMapper.get().readTree(conceptMap);
 
       Mapset mapset = getMapset(service, root);
       if (mapset != null) {
@@ -106,6 +103,7 @@ public final class ConceptMapLoaderUtil {
           fromConcept.setCode(sourceCode);
           fromConcept.setName(sourceName);
           fromConcept.setTerminology(mapset.getFromTerminology());
+          fromConcept.setPublisher(mapset.getFromPublisher());
           fromConcept.setVersion(mapset.getFromVersion());
 
           for (final JsonNode targetNode : elementNode.path("target")) {
@@ -113,7 +111,9 @@ public final class ConceptMapLoaderUtil {
             // Create mapping
             final Mapping mapping = new Mapping();
             mapping.setId(UUID.randomUUID().toString());
-            mapping.setMapset(new MapsetRef(mapset));
+
+            mapping.setMapset(new MapsetRef(mapset.getCode(), mapset.getAbbreviation(),
+                mapset.getPublisher(), mapset.getVersion()));
 
             mapping.setFrom(fromConcept);
 
@@ -124,6 +124,7 @@ public final class ConceptMapLoaderUtil {
             }
             toConcept.setName(targetNode.get("display").asText());
             toConcept.setTerminology(mapset.getToTerminology());
+            toConcept.setPublisher(mapset.getToPublisher());
             toConcept.setVersion(mapset.getToVersion());
             mapping.setTo(toConcept);
 
@@ -232,35 +233,54 @@ public final class ConceptMapLoaderUtil {
     mapset.setVersion(version);
     mapset.setReleaseDate(root.path("date").asText().substring(0, 10));
 
-    String fromTerminology = "";
-    String toTerminology = "";
+    String fromTerminology = null;
     if (root.has("sourceScopeUri")) {
-      fromTerminology = root.path("sourceScopeUri").asText();
+      fromTerminology = root.path("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
     } else if (root.has("group") && (root.get("group").isArray())) {
       fromTerminology = root.path("group").get(0).path("source").asText();
     }
+    if (fromTerminology == null) {
+      throw new Exception("Unable to determine information about the map source");
+    }
+    final TerminologyRef fromRef = TerminologyUtility.getTerminology(service, fromTerminology);
+    mapset.setFromTerminology(fromRef.getAbbreviation());
+    mapset.setFromPublisher(fromRef.getPublisher());
+    mapset.setFromVersion(fromRef.getVersion());
 
+    String toTerminology = null;
     if (root.has("targetScopeUri")) {
-      toTerminology = root.path("targetScopeUri").asText();
+      toTerminology = root.path("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
     } else if (root.has("group") && (root.get("group").isArray())) {
       toTerminology = root.path("group").get(0).path("target").asText();
     }
-    mapset.setFromTerminology(fromTerminology);
-    mapset.setToTerminology(toTerminology);
+    if (toTerminology == null) {
+      throw new Exception("Unable to determine information about the map target");
+    }
+    final TerminologyRef toRef = TerminologyUtility.getTerminology(service, toTerminology);
+    mapset.setToTerminology(toRef.getAbbreviation());
+    mapset.setToPublisher(toRef.getPublisher());
+    mapset.setToVersion(toRef.getVersion());
 
-    // Store the full FHIR version string in attributes
-    mapset.getAttributes().put("fhirVersion", version);
-    mapset.setCode(mapset.getId());
+    // Use the identifier as the code, otherwise use the id
+    // NOTE: termhub generated files will have a single id
+    // with a system matching this value.
+    if ("https://terminologyhub.com/model/mapset/code"
+        .equals(root.path("identifier").get(0).path("system").asText())) {
+      mapset.setCode(root.path("identifier").get(0).path("value").asText());
+    }
+    if (StringUtility.isEmpty(mapset.getCode())) {
+      mapset.setCode(mapset.getId());
+    }
 
     // Store the original URIs in attributes
-    mapset.getAttributes().put("fhirUri", root.path("url").asText());
+    mapset.setUri(root.path("url").asText());
     mapset.getAttributes().put("sourceScopeUri", fromTerminology);
     mapset.getAttributes().put("targetScopeUri", toTerminology);
 
-    LOGGER.info("  terminology URIs: source={}, target={}", mapset.getFromTerminology(),
-        mapset.getToTerminology());
+    // LOGGER.info(" terminology URIs: source={}, target={}", mapset.getFromTerminology(),
+    // mapset.getToTerminology());
 
-    LOGGER.info("ConceptMapLoaderUtil: mapset: {}", mapset);
+    // LOGGER.info("ConceptMapLoaderUtil: mapset: {}", mapset);
     service.add(Mapset.class, mapset);
     return mapset;
   }

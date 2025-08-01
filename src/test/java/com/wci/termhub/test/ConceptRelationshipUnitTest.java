@@ -20,30 +20,24 @@ import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.Application;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.FileUtility;
+import com.wci.termhub.util.ThreadLocalMapper;
 
 /**
  * Tests for ConceptRelationship.
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-test.properties")
 @TestMethodOrder(OrderAnnotation.class)
-public class ConceptRelationshipUnitTest extends BaseUnitTest {
+public class ConceptRelationshipUnitTest extends AbstractClassTest {
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(ConceptRelationshipUnitTest.class);
@@ -120,11 +114,11 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
   public void createIndex() throws Exception {
 
     logger.info("Creating index for Concept Relationship");
-    searchService.createIndex(ConceptRelationship.class);
-
-    // test if directory exists
     final File indexFile = new File(INDEX_DIRECTORY, INDEX_NAME);
-    assertTrue(indexFile.exists());
+    FileUtility.deleteDirectoryRecursively(indexFile.toPath());
+    searchService.createIndex(ConceptRelationship.class);
+    assertTrue(indexFile.exists(),
+        "Index directory does not exist: " + indexFile.getAbsolutePath());
   }
 
   /**
@@ -136,7 +130,7 @@ public class ConceptRelationshipUnitTest extends BaseUnitTest {
   @Order(2)
   public void testAddConceptRelationship() throws Exception {
 
-    final ObjectMapper objectMapper = new ObjectMapper();
+    final ObjectMapper objectMapper = ThreadLocalMapper.get();
     final JsonNode rootNode = objectMapper.readTree(CONCEPT_RELATIONSHIP_JSON);
     final JsonNode conceptRelNode = rootNode.get("_source");
 

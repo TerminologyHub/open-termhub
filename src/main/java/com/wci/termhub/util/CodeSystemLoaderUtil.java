@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.algo.TerminologyCache;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.model.Concept;
@@ -49,9 +48,6 @@ public final class CodeSystemLoaderUtil {
 
   /** The Constant BATCH_SIZE. */
   private static final int DEFAULT_BATCH_SIZE = 10000;
-
-  /** The object mapper. */
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   /**
    * Instantiates a new code system loader util.
@@ -99,7 +95,7 @@ public final class CodeSystemLoaderUtil {
     try {
 
       // Read the entire file as a JSON object
-      final JsonNode root = OBJECT_MAPPER.readTree(content);
+      final JsonNode root = ThreadLocalMapper.get().readTree(content);
       Terminology terminology = getTerminology(service, root);
 
       if (terminology != null) {
@@ -331,13 +327,17 @@ public final class CodeSystemLoaderUtil {
       terminology.setId(uuid);
       LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
     }
+    terminology.setUri(root.path("url").asText());
     terminology.setName(root.path("name").asText());
     terminology.setAbbreviation(root.path("title").asText());
     terminology.setPublisher(root.path("publisher").asText());
     terminology.setVersion(root.path("version").asText());
+    // For SNOMED, set the terminology version to just the base version at the end of the URL
+    if (terminology.getUri().contains("snomed") && terminology.getVersion().contains("/")) {
+      terminology.setVersion(terminology.getVersion().replaceFirst(".*/", ""));
+    }
     terminology.setReleaseDate(root.path("date").asText().substring(0, 10));
-    terminology.setUri(root.path("url").asText());
-    terminology.setFamily("SNOMED");
+    terminology.setFamily(terminology.getAbbreviation());
     terminology.setConceptCt(root.path("count").asLong(0));
 
     // Set terminology attributes
@@ -348,7 +348,6 @@ public final class CodeSystemLoaderUtil {
       // [ https:, , terminologyhub.com, model, terminology, attributes,
       // autocomplete ]
       if (uri == null || uri.isEmpty() || !uri.contains("terminology/attributes")) {
-        LOGGER.warn("Skipping property with missing or empty URI: {}", property);
         continue;
       }
       attributes.put(property.path("code").asText(), property.path("description").asText());
@@ -380,26 +379,24 @@ public final class CodeSystemLoaderUtil {
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
 
+      // {"code":"morphologic abnormality",
+      // "uri":"https://terminologyhub.com/model/concept/semanticType/
+      // MorphologicAbnormality","type":"string"}
+
       final String uri = property.path("uri").asText();
       final String[] uriParts = FieldedStringTokenizer.split(uri, "/");
 
-      final String modelType = uriParts[uriParts.length - 2];
+      // e.g. modelType is "concept"
+      final String modelType = uriParts[uriParts.length - 3];
 
-      if (uriParts.length < 3 || "terminology".equals(modelType)) {
+      // AVoid creating metadata for "terminology" things
+      if ("terminology".equals(modelType)) {
         continue;
       }
 
       final String code = property.path("code").asText();
       final String description = property.path("description").asText();
-      final String fieldType = uriParts[uriParts.length - 1];
-
-      // Map 'attributes' model type to 'concept' as a fallback
-      String mappedModelType = modelType;
-      if ("attributes".equals(modelType)) {
-        mappedModelType = "concept";
-        LOGGER.info("Mapped 'attributes' model type to 'concept' for metadata: code={}, name={}",
-            code, description);
-      }
+      final String fieldType = uriParts[uriParts.length - 2];
 
       try {
 
@@ -411,15 +408,14 @@ public final class CodeSystemLoaderUtil {
         metadata.setPublisher(publisher);
         metadata.setTerminology(terminology);
         metadata.setVersion(version);
-
-        metadata.setModel(MetaModel.Model.valueOf(mappedModelType));
+        metadata.setModel(MetaModel.Model.valueOf(modelType));
         metadata.setField(MetaModel.Field.valueOf(fieldType));
         metadataList.add(metadata);
 
       } catch (final IllegalArgumentException e) {
         LOGGER.warn(
             "Skipping metadata due to invalid model or field type: model={}, field={}, code={}, name={}",
-            mappedModelType, fieldType, code, description);
+            modelType, fieldType, code, description);
       }
     }
 

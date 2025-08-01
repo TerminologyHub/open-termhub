@@ -67,6 +67,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class FhirUtilityR4 {
 
   /** The logger. */
+  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
 
   /**
@@ -742,7 +743,7 @@ public final class FhirUtilityR4 {
     // }
     final Parameters parameters = new Parameters();
     parameters.addParameter("outcome", outcome);
-    parameters.addParameter("system", terminology.getAttributes().get("fhirUri"));
+    parameters.addParameter("system", terminology.getUri());
     parameters.addParameter("version", terminology.getAttributes().get("fhirVersion"));
     return parameters;
   }
@@ -757,8 +758,6 @@ public final class FhirUtilityR4 {
   public static CodeSystem toR4(final Terminology terminology) throws Exception {
     final CodeSystem cs = new CodeSystem();
 
-    // cs.setUrl(terminology.getAttributes().get("fhirUri"));
-    // fhirUri is not in the json data files. setting to id for now
     cs.setUrl(terminology.getUri());
 
     cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
@@ -808,8 +807,8 @@ public final class FhirUtilityR4 {
       cs.setCopyright(copyright);
     }
 
-    logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
-        cs.getName(), cs.getVersion());
+    // logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
+    // cs.getName(), cs.getVersion());
 
     return cs;
   }
@@ -829,39 +828,43 @@ public final class FhirUtilityR4 {
     final ConceptMap cm = new ConceptMap();
 
     // Debug logging for Mapset data
-    logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
-        mapset.getFromTerminology(), mapset.getToTerminology());
+    // logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
+    // mapset.getFromTerminology(), mapset.getToTerminology());
 
-    cm.setUrl(mapset.getAttributes().get("fhirUri"));
+    cm.setUrl(mapset.getUri());
     if (mapset.getReleaseDate() != null) {
       cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(mapset.getReleaseDate()));
     }
-    cm.setVersion(mapset.getAttributes().get("fhirVersion"));
+    cm.setVersion(mapset.getAttributes().containsKey("fhirVersion")
+        ? mapset.getAttributes().get("fhirVersion") : mapset.getVersion());
     cm.setId(mapset.getId());
     cm.setName(mapset.getName());
     cm.setTitle(mapset.getAbbreviation());
     cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
     cm.setCopyright(mapset.getAttributes().get("copyright"));
-    cm.setIdentifier(new Identifier().setValue(mapset.getCode()));
+    if (mapset.getCode() != null) {
+      cm.setIdentifier(new Identifier().setSystem("https://terminologyhub.com/model/mapset/code")
+          .setValue(mapset.getCode()));
+    }
 
     // Set source and target scopes from fromTerminology and toTerminology
     if (mapset.getFromTerminology() != null) {
       cm.setSource(new UriType(mapset.getFromTerminology()));
-      logger.info("Set sourceScope from fromTerminology: {}", mapset.getFromTerminology());
+      // logger.info("Set sourceScope from fromTerminology: {}", mapset.getFromTerminology());
     } else if (mapset.getAttributes().containsKey("sourceScopeUri")) {
       cm.setSource(new UriType(mapset.getAttributes().get("sourceScopeUri")));
-      logger.info("Set sourceScope from attributes: {}",
-          mapset.getAttributes().get("sourceScopeUri"));
+      // logger.info("Set sourceScope from attributes: {}",
+      // mapset.getAttributes().get("sourceScopeUri"));
     }
 
     if (mapset.getToTerminology() != null) {
       cm.setTarget(new UriType(mapset.getToTerminology()));
-      logger.info("Set targetScope from toTerminology: {}", mapset.getToTerminology());
+      // logger.info("Set targetScope from toTerminology: {}", mapset.getToTerminology());
     } else if (mapset.getAttributes().containsKey("targetScopeUri")) {
       cm.setTarget(new UriType(mapset.getAttributes().get("targetScopeUri")));
-      logger.info("Set targetScope from attributes: {}",
-          mapset.getAttributes().get("targetScopeUri"));
+      // logger.info("Set targetScope from attributes: {}",
+      // mapset.getAttributes().get("targetScopeUri"));
     }
     return cm;
   }

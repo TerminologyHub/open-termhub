@@ -24,6 +24,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -47,6 +48,7 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.util.IndexUtility;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.util.ThreadLocalMapper;
 
 /**
  * Lucene data access manager.
@@ -223,8 +225,8 @@ public class LuceneDataAccess {
               for (final java.lang.reflect.Field subClassField : refClass.getDeclaredFields()) {
 
                 subClassField.setAccessible(true);
-                final List<IndexableField> indexableFieldsList =
-                    IndexUtility.getIndexableFields(refEntity, subClassField, field.getName(), false);
+                final List<IndexableField> indexableFieldsList = IndexUtility
+                    .getIndexableFields(refEntity, subClassField, field.getName(), false);
                 for (final IndexableField indexableField : indexableFieldsList) {
                   document.add(indexableField);
                 }
@@ -374,9 +376,12 @@ public class LuceneDataAccess {
     if (sp.getAscending() == null) {
       sp.setAscending(true);
     }
-
-    return find(clazz, sp, sp.getLuceneQuery() != null ? sp.getLuceneQuery()
-        : LuceneQueryBuilder.parse(sp.getQuery(), clazz));
+    try {
+      return find(clazz, sp, sp.getLuceneQuery() != null ? sp.getLuceneQuery()
+          : LuceneQueryBuilder.parse(sp.getQuery(), clazz));
+    } catch (ParseException e) {
+      throw new Exception("Unable to parse query = " + sp.getQuery(), e);
+    }
   }
 
   /**
@@ -413,35 +418,44 @@ public class LuceneDataAccess {
           ? IndexUtility.getDefaultSortOrder(clazz)
           : IndexUtility.getSortOrder(searchParameters, clazz);
 
-      LOGGER.debug("Search Parameters ({}): {}", clazz.getCanonicalName(), searchParameters);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Search Parameters ({}): {}", clazz.getCanonicalName(), searchParameters);
+      }
       final int start = searchParameters.getOffset();
       final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-      LOGGER.debug("Search Parameters: start:{}, end:{}", start, end);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Search Parameters: start:{}, end:{}", start, end);
+      }
 
       final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
           : searcher.search(queryBuilder, end);
-      LOGGER.debug("Query topDocs: {}", topDocs.totalHits.value);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Query topDocs: {}", topDocs.totalHits.value);
+      }
 
       final ResultList<T> results = new ResultList<>();
-      final ObjectMapper mapper = new ObjectMapper();
+      final ObjectMapper mapper = ThreadLocalMapper.get();
       for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
 
         final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
-        LOGGER.debug("Score: {}", scoreDoc.score);
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Score: {}", scoreDoc.score);
+        }
         // fix deprecated:
         // final Document doc = searcher.doc(scoreDoc.doc);
         final Document doc = searcher.storedFields().document(scoreDoc.doc);
         final String jsonEntityString = doc.get("entity");
         final T obj = mapper.readValue(jsonEntityString, clazz);
-        LOGGER.debug("search result: {}", obj);
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("search result: {}", obj);
+        }
         results.getItems().add(obj);
       }
       results.setTotal(results.getItems().size());
       return results;
 
     } catch (final Exception e) {
-      LOGGER.error("Error: {}", e.getMessage(), e);
       throw e;
     } finally {
       if (searcher != null && searcher.getIndexReader() != null) {
