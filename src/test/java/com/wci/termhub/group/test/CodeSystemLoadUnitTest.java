@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -27,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.Application;
@@ -37,8 +41,11 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.test.BaseUnitTest;
+import com.wci.termhub.util.CodeSystemLoaderUtil;
+import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 /**
  * Test class for loading FHIR Code System files.
@@ -100,6 +107,82 @@ public class CodeSystemLoadUnitTest extends BaseUnitTest {
       searchService.deleteIndex(clazz);
       searchService.createIndex(clazz);
     }
+
+    // Load each code system by reading directly from the classpath
+    for (final String codeSystemFile : CODE_SYSTEM_FILES) {
+      try {
+        final Resource resource = new ClassPathResource("data/" + codeSystemFile,
+            CodeSystemLoadUnitTest.class.getClassLoader());
+
+        if (!resource.exists()) {
+          throw new FileNotFoundException("Could not find resource: data/" + codeSystemFile);
+        }
+
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
+        LOGGER.info("Loading code system from classpath resource: data/{}", codeSystemFile);
+        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, true);
+
+      } catch (final Exception e) {
+        LOGGER.error("Error loading code system file: {}", codeSystemFile, e);
+        throw e;
+      }
+    }
+
+    for (final String conceptMapFile : CONCEPT_MAP_FILES) {
+      try {
+        final Resource resource = new ClassPathResource("data/" + conceptMapFile,
+            CodeSystemLoadUnitTest.class.getClassLoader());
+
+        if (!resource.exists()) {
+          throw new FileNotFoundException("Could not find resource: data/" + conceptMapFile);
+        }
+
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
+        LOGGER.info("Loading concept map from classpath resource: data/{}", conceptMapFile);
+        ConceptMapLoaderUtil.loadConceptMap(searchService, fileContent);
+
+      } catch (final Exception e) {
+        LOGGER.error("Error loading concept map file: {}", conceptMapFile, e);
+        throw e;
+      }
+    }
+
+    for (final String valueSetFile : VALUE_SET_FILES) {
+      try {
+        final Resource resource = new ClassPathResource("data/" + valueSetFile,
+            CodeSystemLoadUnitTest.class.getClassLoader());
+
+        if (!resource.exists()) {
+          throw new FileNotFoundException("Could not find resource: data/" + valueSetFile);
+        }
+
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
+        LOGGER.info("Loading value set from classpath resource: data/{}", valueSetFile);
+        ValueSetLoaderUtil.loadSubset(searchService, fileContent, true);
+
+      } catch (final Exception e) {
+        LOGGER.error("Error loading value set file: {}", valueSetFile, e);
+        throw e;
+      }
+    }
+
+    LOGGER.info("Finished loading code systems");
+  }
+
+  /**
+   * Basic test to ensure setup was successful.
+   */
+  @Test
+  public void testCodeSystemsLoaded() {
+    // This test simply verifies that the setup completed without errors
+    assertTrue(true, "Code systems were loaded without errors");
+  }
 
   /**
    * Test verify data loading.
