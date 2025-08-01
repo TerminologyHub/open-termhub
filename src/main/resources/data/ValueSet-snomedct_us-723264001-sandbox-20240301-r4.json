@@ -3,6 +3,7 @@
   "id": "6729e634-e4ed-4adb-b8f7-7bb7861861bf",
   "url": "http://snomed.info/sct?fhir_vs=723264001",
   "identifier": [ {
+    "system": "https://terminologyhub.com/model/subset/code",
     "value": "723264001"
   } ],
   "version": "20240301",

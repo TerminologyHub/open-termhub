@@ -259,10 +259,16 @@ public final class ConceptMapLoaderUtil {
     mapset.setToPublisher(toRef.getPublisher());
     mapset.setToVersion(toRef.getVersion());
 
-    // Store the full FHIR version string in attributes
-    // TODO: we need to check "identifiers" to find a "https://terminologyhub.com/fhir/mapset/code"
-    // identifier which can be used to set the code here.
-    mapset.setCode(mapset.getId());
+    // Use the identifier as the code, otherwise use the id
+    // NOTE: termhub generated files will have a single id
+    // with a system matching this value.
+    if ("https://terminologyhub.com/model/mapset/code"
+        .equals(root.path("identifier").get(0).path("system").asText())) {
+      mapset.setCode(root.path("identifier").get(0).path("value").asText());
+    }
+    if (StringUtility.isEmpty(mapset.getCode())) {
+      mapset.setCode(mapset.getId());
+    }
 
     // Store the original URIs in attributes
     mapset.setUri(root.path("url").asText());

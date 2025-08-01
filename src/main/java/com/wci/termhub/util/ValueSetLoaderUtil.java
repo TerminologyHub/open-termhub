@@ -25,6 +25,7 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.SubsetRef;
+import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -33,21 +34,20 @@ import ca.uhn.fhir.parser.IParser;
 /**
  * The Class SubsetLoaderUtil.
  */
-public final class SubsetLoaderUtil {
+public final class ValueSetLoaderUtil {
 
   /** The Constant logger. */
-  private static final Logger LOGGER = LoggerFactory.getLogger(SubsetLoaderUtil.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetLoaderUtil.class);
 
   /**
    * Instantiates a new subset loader util.
    */
-  private SubsetLoaderUtil() {
+  private ValueSetLoaderUtil() {
     // Utility class
   }
 
   /**
-   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
-   * and persists.
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember, and persists.
    * @param service the repository service
    * @param json the ValueSet JSON
    * @param isR5 true for R5, false for R4
@@ -98,33 +98,39 @@ public final class SubsetLoaderUtil {
       id = java.util.UUID.randomUUID().toString();
     }
     subset.setId(id);
-    subset.setCode(null);
+
+    // Use the identifier as the code, otherwise use the id
+    // NOTE: termhub generated files will have a single id
+    // with a system matching this value.
+    for (final org.hl7.fhir.r4.model.Identifier identifier : valueSet.getIdentifier()) {
+      if ("https://terminologyhub.com/model/subset/code".equals(identifier.getSystem())) {
+        subset.setCode(identifier.getValue());
+      }
+    }
+    if (StringUtility.isEmpty(subset.getCode())) {
+      subset.setCode(subset.getId());
+    }
+
     subset.setDescription(valueSet.getDescription());
     subset.setName(valueSet.getName());
     subset.setLoaded(true);
-    // Set abbreviation from title if present, otherwise leave null
-    if (valueSet.hasTitle() && valueSet.getTitle() != null && !valueSet.getTitle().isEmpty()) {
-      subset.setAbbreviation(valueSet.getTitle());
-    }
-    // Set fromPublisher from publisher
-    if (valueSet.hasPublisher() && valueSet.getPublisher() != null
-        && !valueSet.getPublisher().isEmpty()) {
-      subset.setFromPublisher(valueSet.getPublisher());
-      subset.setPublisher(valueSet.getPublisher());
-    }
-    // Set fromVersion from version
-    if (valueSet.hasVersion() && valueSet.getVersion() != null
-        && !valueSet.getVersion().isEmpty()) {
-      subset.setFromVersion(valueSet.getVersion());
-      subset.setVersion(valueSet.getVersion());
-    }
+
+    subset.setAbbreviation(valueSet.getTitle());
+    subset.setPublisher(valueSet.getPublisher());
+    subset.setVersion(valueSet.getVersion());
+
     // Set fromTerminology from first compose.include.system if present
     if (valueSet.hasCompose() && valueSet.getCompose().hasInclude()
         && !valueSet.getCompose().getInclude().isEmpty()) {
-      final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent inc =
+      final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent include =
           valueSet.getCompose().getIncludeFirstRep();
-      if (inc.hasSystem() && inc.getSystem() != null && !inc.getSystem().isEmpty()) {
-        subset.setFromTerminology(inc.getSystem());
+      if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
+
+        final TerminologyRef fromRef =
+            TerminologyUtility.getTerminology(service, include.getSystem());
+        subset.setFromTerminology(fromRef.getAbbreviation());
+        subset.setFromPublisher(fromRef.getPublisher());
+        subset.setFromVersion(fromRef.getVersion());
       }
     }
 
@@ -243,7 +249,18 @@ public final class SubsetLoaderUtil {
       id = java.util.UUID.randomUUID().toString();
     }
     subset.setId(id);
-    subset.setCode(null);
+    // Use the identifier as the code, otherwise use the id
+    // NOTE: termhub generated files will have a single id
+    // with a system matching this value.
+    for (final org.hl7.fhir.r5.model.Identifier identifier : valueSet.getIdentifier()) {
+      if ("https://terminologyhub.com/model/subset/code".equals(identifier.getSystem())) {
+        subset.setCode(identifier.getValue());
+      }
+    }
+    if (StringUtility.isEmpty(subset.getCode())) {
+      subset.setCode(subset.getId());
+    }
+
     subset.setDescription(valueSet.getDescription());
     subset.setName(valueSet.getName());
     subset.setLoaded(true);

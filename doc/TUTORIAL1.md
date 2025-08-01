@@ -16,7 +16,7 @@ Instructions on using data local to this project to get Open Termhub up and runn
 One option is to just build the code and run the server locally and use an INDEX_DIR environment variable to specify the directory where Lucene indexes should live (make sure this directory exists)
 
 ```
-# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
+# On Windows use export INDEX_DIR=c:/temp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run

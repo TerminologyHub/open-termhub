@@ -23,7 +23,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.SubsetLoaderUtil;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 /**
  * Test class for loading FHIR R4 Value Set files.
@@ -59,7 +59,7 @@ public class ValueSetLoadR5UnitTest extends AbstractFhirR5ServerTest {
 
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
-          SubsetLoaderUtil.loadSubset(searchService, fileContent, false);
+          ValueSetLoaderUtil.loadSubset(searchService, fileContent, false);
         });
 
       } catch (final Exception e) {

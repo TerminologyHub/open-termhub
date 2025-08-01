@@ -94,6 +94,7 @@ public final class TerminologyUtility {
     if (list.getItems().isEmpty()) {
       ref.setAbbreviation(value);
       ref.setUri(value);
+      // This happens if you do not load the terminology first
       ref.setPublisher("unknown");
       ref.setVersion("unknown");
     }

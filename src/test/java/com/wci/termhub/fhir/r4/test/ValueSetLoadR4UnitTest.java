@@ -23,7 +23,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.SubsetLoaderUtil;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 /**
  * Test class for loading FHIR R4 Value Set files.
@@ -40,7 +40,7 @@ public class ValueSetLoadR4UnitTest extends AbstractFhirR4ServerTest {
   private static final List<String> VALUE_SET_FILES =
       List.of("ValueSet-snomedct_us-model-nlm-20240301-r4.json");
 
-   /**
+  /**
    * Test reload value set.
    *
    * @throws Exception the exception
@@ -59,7 +59,7 @@ public class ValueSetLoadR4UnitTest extends AbstractFhirR4ServerTest {
 
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
-          SubsetLoaderUtil.loadSubset(searchService, fileContent, false);
+          ValueSetLoaderUtil.loadSubset(searchService, fileContent, false);
         });
 
       } catch (final Exception e) {
