@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
@@ -69,13 +70,18 @@ public final class ConceptMapLoaderUtil {
   private static Mapset indexConceptMap(final EntityRepositoryService service,
     final String conceptMap, final int batchSize, final int limit) throws Exception {
 
-    LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
     final long startTime = System.currentTimeMillis();
 
     try {
 
       // Read the entire file as a JSON object
       final JsonNode root = ThreadLocalMapper.get().readTree(conceptMap);
+
+      LOGGER.info("Indexing ConceptMap {}: ", root.path("title"));
+
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
+      }
 
       Mapset mapset = getMapset(service, root);
       if (mapset != null) {
@@ -99,14 +105,27 @@ public final class ConceptMapLoaderUtil {
           final String sourceName = elementNode.get("display").asText();
 
           // Set source concept
-          final ConceptRef fromConcept = new ConceptRef();
-          fromConcept.setCode(sourceCode);
-          fromConcept.setName(sourceName);
-          fromConcept.setTerminology(mapset.getFromTerminology());
-          fromConcept.setPublisher(mapset.getFromPublisher());
-          fromConcept.setVersion(mapset.getFromVersion());
+          final Concept existingFromConcept =
+              TerminologyUtility.getConcept(service, mapset.getFromTerminology(),
+                  mapset.getFromPublisher(), mapset.getFromVersion(), sourceCode);
+          ConceptRef fromConcept = null;
+          if (existingFromConcept == null) {
+            fromConcept = new ConceptRef();
+            fromConcept.setCode(sourceCode);
+            fromConcept.setName(sourceName);
+            fromConcept.setTerminology(mapset.getFromTerminology());
+            fromConcept.setPublisher(mapset.getFromPublisher());
+            fromConcept.setVersion(mapset.getFromVersion());
+          } else {
+            fromConcept = new Concept(existingFromConcept);
+          }
 
           for (final JsonNode targetNode : elementNode.path("target")) {
+
+            final String targetCode =
+                targetNode.has("code") ? targetNode.get("code").asText() : null;
+            final String targetName = targetNode.has("display") ? targetNode.get("display").asText()
+                : "Unable to determine name";
 
             // Create mapping
             final Mapping mapping = new Mapping();
@@ -118,14 +137,21 @@ public final class ConceptMapLoaderUtil {
             mapping.setFrom(fromConcept);
 
             // Set target concept
-            final ConceptRef toConcept = new ConceptRef();
-            if (targetNode.has("code")) {
-              toConcept.setCode(targetNode.get("code").asText());
+            final Concept existingToConcept = (targetCode == null || targetCode.equals("NOCODE"))
+                ? null : TerminologyUtility.getConcept(service, mapset.getToTerminology(),
+                    mapset.getToPublisher(), mapset.getToVersion(), targetCode);
+
+            ConceptRef toConcept = null;
+            if (existingToConcept == null) {
+              toConcept = new ConceptRef();
+              toConcept.setCode(targetCode);
+              toConcept.setName(targetName);
+              toConcept.setTerminology(mapset.getToTerminology());
+              toConcept.setPublisher(mapset.getToPublisher());
+              toConcept.setVersion(mapset.getToVersion());
+            } else {
+              toConcept = new ConceptRef(existingToConcept);
             }
-            toConcept.setName(targetNode.get("display").asText());
-            toConcept.setTerminology(mapset.getToTerminology());
-            toConcept.setPublisher(mapset.getToPublisher());
-            toConcept.setVersion(mapset.getToVersion());
             mapping.setTo(toConcept);
 
             if (targetNode.has("equivalence")) {
@@ -157,7 +183,9 @@ public final class ConceptMapLoaderUtil {
               LOGGER.info("  count: {}", ct);
             }
             // Too much info
-            LOGGER.debug("    Created mapping: {}", mapping);
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("    Created mapping: {}", mapping);
+            }
           }
         }
       }
@@ -168,7 +196,7 @@ public final class ConceptMapLoaderUtil {
       return mapset;
 
     } catch (final Exception e) {
-      LOGGER.error("Error loading concept map: {}", conceptMap, e);
+      LOGGER.error("Error indexing concept map", e);
       throw e;
     }
   }

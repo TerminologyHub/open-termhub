@@ -409,8 +409,10 @@ public class LuceneDataAccess {
 
       final BooleanQuery queryBuilder =
           new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
-
-      LOGGER.debug("Query: {}", queryBuilder);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("  query = {}", queryBuilder);
+      }
+      LOGGER.debug("XXX  query = {}", queryBuilder);
 
       searcher = new IndexSearcher(reader);
 

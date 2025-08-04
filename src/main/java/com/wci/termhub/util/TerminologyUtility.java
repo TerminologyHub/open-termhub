@@ -89,6 +89,7 @@ public final class TerminologyUtility {
 
     final ResultList<Terminology> list =
         searchService.find(new SearchParameters(query, null, null, null, null), Terminology.class);
+
     // NO matches
     if (list.getItems().isEmpty()) {
       ref.setAbbreviation(value);
@@ -244,13 +245,15 @@ public final class TerminologyUtility {
   public static Concept getConcept(final EntityRepositoryService searchService,
     final String terminology, final String publisher, final String version, final String code)
     throws Exception {
-    final SearchParameters nameParams = new SearchParameters(2, 0);
+    final SearchParameters params = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
-    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
+    params.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
         + StringUtility.escapeQuery(t) + " AND publisher:\"" + StringUtility.escapeQuery(publisher)
         + "\" AND version:" + StringUtility.escapeQuery(version));
 
-    final ResultList<Concept> list = searchService.find(nameParams, Concept.class);
+    final ResultList<Concept> list = searchService.find(params, Concept.class);
+    logger.info("XXX query  = " + list.getTotal() + ", " + params.getQuery());
+
     if (list.getItems().isEmpty()) {
       return null;
     }

@@ -84,7 +84,6 @@ public final class CodeSystemLoaderUtil {
   private static String indexCodeSystem(final EntityRepositoryService service, final String content,
     final int limit, final boolean computeTreePositions) throws Exception {
 
-    LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
     final long startTime = System.currentTimeMillis();
     final List<ConceptRelationship> relationshipBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
     final List<Term> termBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
@@ -96,6 +95,12 @@ public final class CodeSystemLoaderUtil {
 
       // Read the entire file as a JSON object
       final JsonNode root = ThreadLocalMapper.get().readTree(content);
+
+      LOGGER.info("Indexing CodeSystem {}: ", root.path("title"));
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
+      }
+
       Terminology terminology = getTerminology(service, root);
 
       if (terminology != null) {
@@ -109,7 +114,7 @@ public final class CodeSystemLoaderUtil {
       id = terminology.getId();
 
       // Extract metadata from root
-      final List<Metadata> metadataList = createMetadata(root);
+      final List<Metadata> metadataList = createMetadata(terminology, root);
       if (metadataList != null && !metadataList.isEmpty()) {
         for (final Metadata metadata : metadataList) {
           service.add(Metadata.class, metadata);
@@ -170,8 +175,11 @@ public final class CodeSystemLoaderUtil {
               concept.getEclClauses().add(
                   propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
             } else {
-              LOGGER.debug("    Missing valueCoding or code for parent relationship in concept: {}",
-                  concept.getCode());
+              if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                    "    Missing valueCoding or code for parent relationship in concept: {}",
+                    concept.getCode());
+              }
             }
           }
 
@@ -189,9 +197,11 @@ public final class CodeSystemLoaderUtil {
                 concept.getEclClauses().add(extensionValueCoding.path("code").asText() + "="
                     + propertyValueCoding.path("code").asText());
               } else {
-                LOGGER.debug(
-                    "    Skipping relationship due to missing valueCoding or code for concept: {}",
-                    concept.getCode());
+                if (LOGGER.isDebugEnabled()) {
+                  LOGGER.debug(
+                      "    Skipping relationship due to missing valueCoding or code for concept: {}",
+                      concept.getCode());
+                }
               }
             }
           }
@@ -319,6 +329,7 @@ public final class CodeSystemLoaderUtil {
     }
 
     final Terminology terminology = new Terminology();
+    // The HAPI Plan server @Create method blanks the identifier on sending a code system in
     final String id = root.path("id").asText();
     if (isNotBlank(id)) {
       terminology.setId(id);
@@ -368,13 +379,12 @@ public final class CodeSystemLoaderUtil {
    * @param root the root
    * @return the metadata
    */
-  private static List<Metadata> createMetadata(final JsonNode root) {
+  private static List<Metadata> createMetadata(final Terminology terminology, final JsonNode root) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Create metadata");
+    }
 
     final List<Metadata> metadataList = new ArrayList<>();
-
-    final String publisher = root.path("publisher").asText();
-    final String terminology = root.path("title").asText();
-    final String version = root.path("version").asText();
 
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
@@ -389,7 +399,7 @@ public final class CodeSystemLoaderUtil {
       // e.g. modelType is "concept"
       final String modelType = uriParts[uriParts.length - 3];
 
-      // AVoid creating metadata for "terminology" things
+      // Avoid creating metadata for "terminology" things
       if ("terminology".equals(modelType)) {
         continue;
       }
@@ -405,12 +415,15 @@ public final class CodeSystemLoaderUtil {
         metadata.setCode(code);
         metadata.setName(description);
         metadata.setActive(true);
-        metadata.setPublisher(publisher);
-        metadata.setTerminology(terminology);
-        metadata.setVersion(version);
+        metadata.setPublisher(terminology.getPublisher());
+        metadata.setTerminology(terminology.getAbbreviation());
+        metadata.setVersion(terminology.getVersion());
         metadata.setModel(MetaModel.Model.valueOf(modelType));
         metadata.setField(MetaModel.Field.valueOf(fieldType));
         metadataList.add(metadata);
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("  ADD metadata = {}", metadata.toString());
+        }
 
       } catch (final IllegalArgumentException e) {
         LOGGER.warn(
@@ -690,7 +703,9 @@ public final class CodeSystemLoaderUtil {
           if (url.endsWith("/additionalType")) {
             final JsonNode valueCoding = extension.path("valueCoding");
             additionalType = valueCoding.path("code").asText();
-            LOGGER.debug("Found additionalType: {}", additionalType);
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("Found additionalType: {}", additionalType);
+            }
           } else if (url.endsWith("/group")) {
             group = extension.path("valueString").asText();
           }
@@ -699,12 +714,16 @@ public final class CodeSystemLoaderUtil {
 
       // Set relationship type based on code
       final String code = relationshipNode.path("code").asText();
-      LOGGER.debug("Processing SNOMED CT relationship with code: {}", code);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Processing SNOMED CT relationship with code: {}", code);
+      }
 
       if ("parent".equalsIgnoreCase(code)) {
         type = "parent";
         additionalType = "ISA";
-        LOGGER.debug("Set type to ISA for parent relationship");
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Set type to ISA for parent relationship");
+        }
       } else {
         type = "relationship";
       }

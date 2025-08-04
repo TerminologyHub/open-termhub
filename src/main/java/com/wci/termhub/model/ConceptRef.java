@@ -88,6 +88,24 @@ public class ConceptRef extends AbstractHasModified
   }
 
   /**
+   * Instantiates a new concept ref.
+   *
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
+   * @param code the code
+   * @param name the name
+   */
+  public ConceptRef(final String terminology, final String publisher, final String version,
+      final String code, final String name) {
+    this.code = code;
+    this.name = name;
+    this.terminology = terminology;
+    this.publisher = publisher;
+    this.version = version;
+  }
+
+  /**
    * Instantiates a {@link ConceptRef} from the specified parameters.
    *
    * @param other the other
