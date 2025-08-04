@@ -89,13 +89,17 @@ public class ErrorHandlerController implements ErrorController {
   @RequestMapping()
   @ResponseBody
   public ResponseEntity<Map<String, Object>> handleErrorJson(final HttpServletRequest request) {
-    final HttpStatus status = getStatus(request);
+    HttpStatus status = getStatus(request);
     if (status == HttpStatus.NO_CONTENT) {
       return new ResponseEntity<>(status);
     }
     final Map<String, Object> body = getErrorAttributes(request, false);
-    body.put("status", status.value() + "");
-    body.put("error", status.getReasonPhrase());
+    if (!body.containsKey("status")) {
+      body.put("status", status.value() + "");
+      body.put("error", status.getReasonPhrase());
+    } else {
+      status = HttpStatus.valueOf(Integer.parseInt(body.get("status").toString()));
+    }
     return new ResponseEntity<>(body, status);
   }
 
@@ -135,6 +139,7 @@ public class ErrorHandlerController implements ErrorController {
     if (error instanceof RestException) {
       body.put("error", ((RestException) error).getError().getError());
       body.put("message", ((RestException) error).getError().getMessage());
+      body.put("status", ((RestException) error).getError().getStatus() + "");
     } else {
       body.put("message", error == null ? "No message" : error.getMessage());
     }
