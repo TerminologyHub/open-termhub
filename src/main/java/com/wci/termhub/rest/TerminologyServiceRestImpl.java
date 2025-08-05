@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
@@ -218,7 +217,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
         // Delete data
         if ("delete".equals(task)) {
-          logger.debug("Delete all data - drop and recreate indexes");
+          if (logger.isDebugEnabled()) {
+            logger.debug("Delete all data - drop and recreate indexes");
+          }
 
           // Drop and recreate all indexes
           for (final Class<? extends HasId> clazz : Application.getManagedObjects()) {
@@ -542,8 +543,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
-      final SearchParameters searchParams = new SearchParameters(
-          ((query == null || query.isEmpty()) ? "*:*" : query), offset, maxLimit, sort, ascending);
+      final SearchParameters searchParams =
+          new SearchParameters(query, offset, maxLimit, sort, ascending);
       final ResultList<Terminology> list = searchService.find(searchParams, Terminology.class);
       list.setParameters(searchParams);
       list.getItems().forEach(t -> t.cleanForApi());
@@ -845,7 +846,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
   })
-  public ResponseEntity<ResultListConcept> findConcepts(
+  public ResponseEntity<ResultListConcept> findTerminologyConcepts(
     @RequestParam(value = "terminology", required = false) final String terminology,
     @RequestParam(name = "query", required = false) final String query,
     @RequestParam(name = "expression", required = false) final String expression,
@@ -1095,10 +1096,18 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       throw new RestException(false, 417, "Expecation failed",
           "Expression parameter can only be used in " + "conjunction with a single terminology");
     }
-    final Query keywordQuery =
-        LuceneQueryBuilder.parse(StringUtility.isEmpty(query) ? "*:*" : query, Concept.class);
+
+    // Ensure we lookup all terminologies
+    final List<String> terminologyClauses = new ArrayList<>();
+    for (final Terminology terminology : terminologies) {
+      terminologyClauses.add(TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+          terminology.getPublisher(), terminology.getVersion()));
+    }
+    final String terminologyQueryStr = StringUtility.composeQuery("OR", terminologyClauses);
+    final Query terminologyQuery = LuceneQueryBuilder.parse(terminologyQueryStr, Concept.class);
+    final Query keywordQuery = LuceneQueryBuilder.parse(query, Concept.class);
     final Query expressionQuery = TerminologyUtility.getExpressionQuery(expression);
-    final Query booleanQuery = getAndQuery(keywordQuery, expressionQuery);
+    final Query booleanQuery = getAndQuery(terminologyQuery, keywordQuery, expressionQuery);
     final SearchParameters searchParams =
         new SearchParameters(booleanQuery, offset, limit, sort, ascending);
     if (active != null && active) {
@@ -1108,12 +1117,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       searchParams.setLeaf(true);
     }
 
-    logger.debug(
-        "   query = " + query + ", expression = " + expression + ", params = " + searchParams);
+    if (logger.isDebugEnabled()) {
+      logger.debug(
+          "   query = " + query + ", expression = " + expression + ", params = " + searchParams);
+    }
 
     final ResultList<Concept> list = searchService.findFields(searchParams,
-        new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class,
-        terminologies.stream().map(t -> t.getAbbreviation()).collect(Collectors.toSet()));
+        new ArrayList<String>(Arrays.asList(ip.getIncludedFields())), Concept.class);
 
     for (final Concept concept : list.getItems()) {
       concept.cleanForApi();
@@ -2967,7 +2977,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Boolean active) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
-    final String mapsetClause = ModelUtility.isEmpty(mapsets) ? null : "("
+    final String mapsetQueryStr = ModelUtility.isEmpty(mapsets) ? null : "("
         + String.join(" OR ",
             mapsets.stream()
                 .map(m -> "(" + StringUtility.composeQuery("AND",
@@ -2976,9 +2986,16 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
                     "mapset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
                 .toList())
         + ")";
-    final SearchParameters searchParams = new SearchParameters(StringUtility.composeQuery("AND",
-        StringUtility.isEmpty(query) ? "*:*" : query, mapsetClause), offset, limit, sort,
-        ascending);
+
+    final Query mapsetQuery =
+        mapsetQueryStr == null ? null : LuceneQueryBuilder.parse(mapsetQueryStr, Mapping.class);
+    final String query2 = QueryBuilder.findBuilder(builders, null).buildQuery(query);
+    final Query keywordQuery =
+        StringUtility.isEmpty(query) ? null : LuceneQueryBuilder.parse(query2, Mapping.class);
+    final Query booleanQuery = getAndQuery(mapsetQuery, keywordQuery);
+    final SearchParameters searchParams =
+        new SearchParameters(booleanQuery, offset, limit, sort, ascending);
+
     if (active != null && active) {
       searchParams.setActive(true);
     }
@@ -3005,7 +3022,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     });
 
     // Restore the original query for the response
-    searchParams.setQuery(query);
+    searchParams.setQuery(query2);
     list.setParameters(searchParams);
     return list;
 
@@ -3029,7 +3046,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Boolean active) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
-    final String subsetClause = ModelUtility.isEmpty(subsets) ? null : "("
+    final String subsetQueryStr = ModelUtility.isEmpty(subsets) ? null : "("
         + String.join(" OR ",
             subsets.stream()
                 .map(m -> "(" + StringUtility.composeQuery("AND",
@@ -3038,9 +3055,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
                     "subset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
                 .toList())
         + ")";
-    final SearchParameters searchParams = new SearchParameters(StringUtility.composeQuery("AND",
-        StringUtility.isEmpty(query) ? "*:*" : query, subsetClause), offset, limit, sort,
-        ascending);
+
+    final Query subsetQuery = subsetQueryStr == null ? null
+        : LuceneQueryBuilder.parse(subsetQueryStr, SubsetMember.class);
+    final String query2 = QueryBuilder.findBuilder(builders, null).buildQuery(query);
+    final Query keywordQuery = LuceneQueryBuilder.parse(query2, SubsetMember.class);
+    final Query booleanQuery = getAndQuery(subsetQuery, keywordQuery);
+    final SearchParameters searchParams =
+        new SearchParameters(booleanQuery, offset, limit, sort, ascending);
+
     if (active != null && active) {
       searchParams.setActive(true);
     }
@@ -3053,7 +3076,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     // }
 
     // Restore the original query for the response
-    searchParams.setQuery(query);
+    searchParams.setQuery(query2);
     list.setParameters(searchParams);
     return list;
 

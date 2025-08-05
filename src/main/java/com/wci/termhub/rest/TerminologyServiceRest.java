@@ -142,7 +142,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @return the response entity
    * @throws Exception the exception
    */
-  public ResponseEntity<ResultListConcept> findConcepts(String terminology, String query,
+  public ResponseEntity<ResultListConcept> findTerminologyConcepts(String terminology, String query,
     String expression, Integer offset, Integer limit, String sort, Boolean ascending,
     Boolean active, Boolean leaf, String include, String handler) throws Exception;
 

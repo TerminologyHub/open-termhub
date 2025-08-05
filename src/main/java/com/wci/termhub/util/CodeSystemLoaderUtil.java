@@ -376,6 +376,7 @@ public final class CodeSystemLoaderUtil {
   /**
    * Creates the metadata.
    *
+   * @param terminology the terminology
    * @param root the root
    * @return the metadata
    */

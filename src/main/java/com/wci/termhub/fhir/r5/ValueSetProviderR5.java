@@ -807,7 +807,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // }
       final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
       final Query browserQuery = LuceneQueryBuilder.parse(
-          new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()),
+          new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
           Concept.class);
       final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
       final SearchParameters params =

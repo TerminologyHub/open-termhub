@@ -801,7 +801,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // } ]
       // }
       final Query browserQuery = LuceneQueryBuilder.parse(
-          new BrowserQueryBuilder().buildQuery(filter == null ? "*:*" : filter.getValue()),
+          new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
           Concept.class);
       final Query expression = getExpressionQuery(terminology, vs.getUrl());
 

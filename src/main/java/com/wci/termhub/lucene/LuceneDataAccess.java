@@ -48,6 +48,7 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.util.IndexUtility;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.ThreadLocalMapper;
 
 /**
@@ -81,7 +82,9 @@ public class LuceneDataAccess {
     // Create only if the index does not exist
     final File indexDir = new File(indexRootDirectory, clazz.getCanonicalName());
     if (indexDir.exists()) {
-      LOGGER.debug("Index already exists: {}", indexDir.getAbsolutePath());
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Index already exists: {}", indexDir.getAbsolutePath());
+      }
       return;
     }
 
@@ -170,7 +173,9 @@ public class LuceneDataAccess {
     Class<?> currentClass = entity.getClass();
 
     while (currentClass != null) {
-      LOGGER.debug("Add: Current class: {}", currentClass.getName());
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Add: Current class: {}", currentClass.getName());
+      }
 
       for (final java.lang.reflect.Field field : currentClass.getDeclaredFields()) {
 
@@ -181,8 +186,10 @@ public class LuceneDataAccess {
         }
 
         final Field annotation = field.getAnnotation(Field.class);
-        LOGGER.debug("Field: {}, value: {}, annotation: {}", field.getName(), fieldValue,
-            annotation);
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Field: {}, value: {}, annotation: {}", field.getName(), fieldValue,
+              annotation);
+        }
 
         if (annotation != null) {
 
@@ -198,7 +205,9 @@ public class LuceneDataAccess {
                 document.add(indexableField);
               }
             } else {
-              LOGGER.debug("Add: field instance of NOT Object OR Collection");
+              if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Add: field instance of NOT Object OR Collection");
+              }
               final List<IndexableField> indexableFieldsList = IndexUtility
                   .getIndexableFields(entity, field, null, fieldValue instanceof Collection);
               for (final IndexableField indexableField : indexableFieldsList) {
@@ -208,7 +217,9 @@ public class LuceneDataAccess {
 
           } else if (fieldType == FieldType.Object && fieldValue instanceof Collection) {
 
-            LOGGER.debug("Add: object field instance of Collection");
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("Add: object field instance of Collection");
+            }
             final Collection<?> collection = (Collection<?>) fieldValue;
             final List<IndexableField> indexableFieldsList =
                 IndexUtility.getIndexableFields(collection, field);
@@ -218,7 +229,9 @@ public class LuceneDataAccess {
 
           } else if (fieldType == FieldType.Object && fieldValue instanceof BaseModel) {
 
-            LOGGER.debug("Add: object field instance of BaseModel");
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("Add: object field instance of BaseModel");
+            }
             final Object refEntity = fieldValue;
             Class<?> refClass = refEntity.getClass();
             while (refClass != null) {
@@ -238,7 +251,9 @@ public class LuceneDataAccess {
 
         } else {
 
-          LOGGER.debug("Add: object field instance of MultiField");
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Add: object field instance of MultiField");
+          }
           final List<IndexableField> indexableFieldsList =
               IndexUtility.getIndexableFields(entity, field, null, false);
           for (final IndexableField indexableField : indexableFieldsList) {
@@ -250,7 +265,9 @@ public class LuceneDataAccess {
       currentClass = currentClass.getSuperclass();
     }
 
-    LOGGER.debug("Adding document: {}", document);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Adding document: {}", document);
+    }
     return document;
   }
 
@@ -273,7 +290,9 @@ public class LuceneDataAccess {
     try (final StandardAnalyzer analyzer = new StandardAnalyzer()) {
       final IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
-      LOGGER.debug("Removing id: {} for index:{}", id, indexDirectory);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Removing id: {} for index:{}", id, indexDirectory);
+      }
 
       final File indexDir = new File(indexRootDirectory, indexDirectory);
       if (!indexDir.exists()) {
@@ -324,7 +343,9 @@ public class LuceneDataAccess {
           final IndexWriter writer = new IndexWriter(fsDirectory, config)) {
 
         for (final String id : ids) {
-          LOGGER.debug("Removing id: {} for index:{}", id, indexDirectory);
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Removing id: {} for index:{}", id, indexDirectory);
+          }
 
           query = new TermQuery(new Term("id", id));
           final BooleanQuery booleanQuery =
@@ -357,7 +378,7 @@ public class LuceneDataAccess {
     final SearchParameters sp =
         (searchParameters != null) ? searchParameters : new SearchParameters();
 
-    if (sp.getQuery() == null) {
+    if (StringUtility.isEmpty(sp.getQuery())) {
       sp.setQuery("*:*");
     }
 
@@ -400,8 +421,10 @@ public class LuceneDataAccess {
 
     IndexSearcher searcher = null;
 
-    LOGGER.debug("indexRootDirectory is {}; index is {}", indexRootDirectory,
-        clazz.getCanonicalName());
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("indexRootDirectory is {}; index is {}", indexRootDirectory,
+          clazz.getCanonicalName());
+    }
 
     final File indexDir = new File(indexRootDirectory, clazz.getCanonicalName());
     try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
@@ -412,7 +435,6 @@ public class LuceneDataAccess {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("  query = {}", queryBuilder);
       }
-      LOGGER.debug("XXX  query = {}", queryBuilder);
 
       searcher = new IndexSearcher(reader);
 

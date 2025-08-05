@@ -10,9 +10,12 @@
 package com.wci.termhub.lucene;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -26,6 +29,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.MultiField;
 
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.HasId;
 import com.wci.termhub.util.ModelUtility;
 
 /**
@@ -56,15 +60,19 @@ public final class LuceneQueryBuilder {
    */
   public static Query parse(final String queryText, final Class<?> modelClass)
     throws ParseException {
-    logger.debug("  parse query: {} for class {}", queryText,
-        modelClass != null ? modelClass.getSimpleName() : "null");
+    if (logger.isDebugEnabled()) {
+      logger.debug("  parse query: {} for class {}", queryText,
+          modelClass != null ? modelClass.getSimpleName() : "null");
+    }
     final boolean isFieldedQuery = queryText != null && queryText.matches(".*\\w+:.*");
 
     if (isFieldedQuery) {
       try (final KeywordAnalyzer analyzer = new KeywordAnalyzer();) {
         final QueryParser queryParser = new QueryParser("", analyzer);
         final Query query = queryParser.parse(queryText);
-        logger.debug("  Parsed Query: {}", query);
+        if (logger.isDebugEnabled()) {
+          logger.debug("  Parsed Query: {}", query);
+        }
         return query;
       }
     } else {
@@ -74,7 +82,10 @@ public final class LuceneQueryBuilder {
         final MultiFieldQueryParser multiFieldQueryParser =
             new MultiFieldQueryParser(fields, analyzer);
         final Query query = multiFieldQueryParser.parse(queryText);
-        logger.debug("  Parsed Query (multi-field): {}", query);
+        if (logger.isDebugEnabled()) {
+          logger.debug("  Parsed Query (multi-field): {}", query);
+        }
+        logger.info("XXX4  Parsed Query (multi-field): {}", query);
         return query;
       }
     }
@@ -92,7 +103,7 @@ public final class LuceneQueryBuilder {
       return SEARCHABLE_FIELDS_CACHE.get(modelClass);
     }
     final List<Field> allFields = ModelUtility.getAllFields(modelClass);
-    final List<String> fieldNames = allFields.stream().filter(f -> {
+    final List<String> fieldNames = new ArrayList<>(allFields.stream().filter(f -> {
       // Check for String or List<String>
       final Class<?> type = f.getType();
       final boolean isString = type.equals(String.class);
@@ -104,7 +115,29 @@ public final class LuceneQueryBuilder {
       final boolean isTextField = esField != null && esField.type() == FieldType.Text;
       final boolean isMultiField = multiField != null;
       return isString || isListString || isTextField || isMultiField;
-    }).map(Field::getName).toList();
+    }).map(Field::getName).toList());
+    final List<String> subFieldNames = new ArrayList<>();
+    for (final Field f : allFields) {
+      final org.springframework.data.elasticsearch.annotations.Field esField =
+          f.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
+      if (esField != null && esField.type() == FieldType.Object) {
+        // Handle HasId objects
+        if (HasId.class.isAssignableFrom(f.getType())) {
+          subFieldNames.addAll(Arrays.asList(getSearchableFields(f.getType())).stream()
+              .map(s -> f.getName() + "." + s).collect(Collectors.toList()));
+
+        } else if (HasId.class.isAssignableFrom(f.getGenericType().getClass())) {
+          subFieldNames.addAll(Arrays.asList(getSearchableFields(f.getGenericType().getClass()))
+              .stream().map(s -> f.getName() + "." + s).collect(Collectors.toList()));
+
+        }
+        // Handle other fields just as regular fields
+        else {
+          subFieldNames.add(f.getName());
+        }
+      }
+    }
+    fieldNames.addAll(subFieldNames);
     final String[] result = fieldNames.toArray(new String[0]);
     SEARCHABLE_FIELDS_CACHE.put(modelClass, result);
     return result;

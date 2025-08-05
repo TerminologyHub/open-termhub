@@ -82,7 +82,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
   /* see superclass */
   @Override
   public String buildEscapedQuery(final String query) {
-    return (StringUtils.isEmpty(query) || query.equals("*")) ? "*"
+    return (StringUtils.isEmpty(query) || query.equals("*:*") || query.equals("*")) ? "*"
         : "\"" + StringUtility.escapeQuery(query) + "\"";
   }
 
@@ -91,8 +91,8 @@ public class BrowserQueryBuilder implements QueryBuilder {
   public String buildQuery(final String query) {
     final StringBuilder sb = new StringBuilder();
     // Use * for empty query
-    if (StringUtility.isEmpty(query) || query.equals("*")) {
-      sb.append("*");
+    if (StringUtility.isEmpty(query) || query.equals("*:*") || query.equals("*")) {
+      sb.append("*:*");
     }
     // Fielded queries should be left alone
     else if (query.matches(".*[a-zA-Z]+[a-z]\\:.*")) {

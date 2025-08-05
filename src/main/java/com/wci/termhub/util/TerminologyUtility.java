@@ -252,7 +252,6 @@ public final class TerminologyUtility {
         + "\" AND version:" + StringUtility.escapeQuery(version));
 
     final ResultList<Concept> list = searchService.find(params, Concept.class);
-    logger.info("XXX query  = " + list.getTotal() + ", " + params.getQuery());
 
     if (list.getItems().isEmpty()) {
       return null;

@@ -385,23 +385,17 @@ public final class IndexUtility {
   /**
    * Gets the and query.
    *
-   * @param query1 the query 1
-   * @param query2 the query 2
+   * @param queries the queries
    * @return the and query
    */
-  public static Query getAndQuery(final Query query1, final Query query2) {
-    if (query1 == null && query2 == null) {
-      return null;
-    }
-    if (query1 == null) {
-      return query2;
-    }
-    if (query2 == null) {
-      return query1;
-    }
+  public static Query getAndQuery(final Query... queries) {
     final BooleanQuery.Builder builder = new BooleanQuery.Builder();
-    builder.add(query1, BooleanClause.Occur.MUST);
-    builder.add(query2, BooleanClause.Occur.MUST);
+    for (final Query query : queries) {
+      if (query == null) {
+        continue;
+      }
+      builder.add(query, BooleanClause.Occur.MUST);
+    }
     return builder.build();
   }
 }

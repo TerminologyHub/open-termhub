@@ -11,7 +11,6 @@ package com.wci.termhub.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.search.Query;
 
@@ -171,21 +170,6 @@ public interface EntityRepositoryService {
    */
   public <T extends HasId> ResultList<T> findFields(final SearchParameters params,
     final List<String> fields, final Class<T> clazz) throws Exception;
-
-  /**
-   * Find fields.
-   *
-   * @param <T> the generic type
-   * @param params the params
-   * @param fields the fields
-   * @param clazz the clazz
-   * @param terminologies the terminologies
-   * @return the result list
-   * @throws Exception the exception
-   */
-  public <T extends HasId> ResultList<T> findFields(final SearchParameters params,
-    final List<String> fields, final Class<T> clazz, final Set<String> terminologies)
-    throws Exception;
 
   /**
    * Find all with fields.
