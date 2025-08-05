@@ -85,7 +85,6 @@ public final class LuceneQueryBuilder {
         if (logger.isDebugEnabled()) {
           logger.debug("  Parsed Query (multi-field): {}", query);
         }
-        logger.info("XXX4  Parsed Query (multi-field): {}", query);
         return query;
       }
     }

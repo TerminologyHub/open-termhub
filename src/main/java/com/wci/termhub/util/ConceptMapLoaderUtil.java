@@ -145,7 +145,8 @@ public final class ConceptMapLoaderUtil {
             if (existingToConcept == null) {
               toConcept = new ConceptRef();
               toConcept.setCode(targetCode);
-              toConcept.setName(targetName);
+              toConcept.setName(
+                  targetCode != null && targetCode.equals("NOCODE") ? "No target" : targetName);
               toConcept.setTerminology(mapset.getToTerminology());
               toConcept.setPublisher(mapset.getToPublisher());
               toConcept.setVersion(mapset.getToVersion());

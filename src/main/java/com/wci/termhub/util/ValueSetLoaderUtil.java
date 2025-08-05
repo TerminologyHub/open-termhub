@@ -10,7 +10,9 @@
 package com.wci.termhub.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.hl7.fhir.r5.model.Enumerations;
 import org.hl7.fhir.r5.model.ValueSet;
@@ -20,6 +22,7 @@ import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
@@ -186,12 +189,32 @@ public final class ValueSetLoaderUtil {
       if (valueSet.hasCompose()) {
         for (final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent inc : valueSet.getCompose()
             .getInclude()) {
+
+          if (inc.getSystem() == null) {
+            throw new Exception("Unable to determine system of value set");
+          }
+
+          final TerminologyRef ref = TerminologyUtility.getTerminology(service, inc.getSystem());
+
           for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : inc
               .getConcept()) {
+
+            if (c.getCode() == null) {
+              LOGGER.warn("Value set includes component reference without a code = " + c);
+              continue;
+            }
+
+            final Concept existingConcept = TerminologyUtility.getConcept(service,
+                ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+
             final SubsetMember m = new SubsetMember();
             m.setId(java.util.UUID.randomUUID().toString());
+            m.setTerminology(ref.getAbbreviation());
+            m.setPublisher(ref.getPublisher());
+            m.setVersion(ref.getVersion());
             m.setCode(c.getCode());
-            m.setName(c.getDisplay());
+            m.setName(
+                existingConcept == null ? "Unable to determine name" : existingConcept.getName());
             m.setSubset(subsetRef);
             members.add(m);
           }
@@ -199,12 +222,37 @@ public final class ValueSetLoaderUtil {
       }
       // Expansion.contains
       if (valueSet.hasExpansion()) {
+
+        final Map<String, TerminologyRef> map = new HashMap<>();
+
         for (final org.hl7.fhir.r4.model.ValueSet.ValueSetExpansionContainsComponent c : valueSet
             .getExpansion().getContains()) {
+
+          if (c.getSystem() == null) {
+            LOGGER.warn("Value set includes expansion entry without a system = " + c);
+            continue;
+          }
+          if (c.getCode() == null) {
+            LOGGER.warn("Value set includes expansion entry without a code = " + c);
+            continue;
+          }
+
+          if (!map.containsKey(c.getSystem())) {
+            map.put(c.getSystem(), TerminologyUtility.getTerminology(service, c.getSystem()));
+          }
+          final TerminologyRef ref = map.get(c.getSystem());
+
+          final Concept existingConcept = TerminologyUtility.getConcept(service,
+              ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+
           final SubsetMember m = new SubsetMember();
           m.setId(java.util.UUID.randomUUID().toString());
+          m.setTerminology(ref.getAbbreviation());
+          m.setPublisher(ref.getPublisher());
+          m.setVersion(ref.getVersion());
           m.setCode(c.getCode());
-          m.setName(c.getDisplay());
+          m.setName(
+              existingConcept == null ? "Unable to determine name" : existingConcept.getName());
           m.setSubset(subsetRef);
           members.add(m);
         }
@@ -338,12 +386,31 @@ public final class ValueSetLoaderUtil {
       if (valueSet.hasCompose()) {
         for (final org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent inc : valueSet.getCompose()
             .getInclude()) {
+
+          if (inc.getSystem() == null) {
+            throw new Exception("Unable to determine system of value set");
+          }
+
+          final TerminologyRef ref = TerminologyUtility.getTerminology(service, inc.getSystem());
+
           for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : inc
               .getConcept()) {
+            if (c.getCode() == null) {
+              LOGGER.warn("Value set includes component reference without a code = " + c);
+              continue;
+            }
+
+            final Concept existingConcept = TerminologyUtility.getConcept(service,
+                ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+
             final SubsetMember m = new SubsetMember();
             m.setId(java.util.UUID.randomUUID().toString());
+            m.setTerminology(ref.getAbbreviation());
+            m.setPublisher(ref.getPublisher());
+            m.setVersion(ref.getVersion());
             m.setCode(c.getCode());
-            m.setName(c.getDisplay());
+            m.setName(
+                existingConcept == null ? "Unable to determine name" : existingConcept.getName());
             m.setSubset(subsetRef);
             members.add(m);
           }
@@ -351,12 +418,37 @@ public final class ValueSetLoaderUtil {
       }
       // Expansion.contains
       if (valueSet.hasExpansion()) {
+
+        final Map<String, TerminologyRef> map = new HashMap<>();
+
         for (final org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent c : valueSet
             .getExpansion().getContains()) {
+
+          if (c.getSystem() == null) {
+            LOGGER.warn("Value set includes expansion entry without a system = " + c);
+            continue;
+          }
+          if (c.getCode() == null) {
+            LOGGER.warn("Value set includes expansion entry without a code = " + c);
+            continue;
+          }
+
+          if (!map.containsKey(c.getSystem())) {
+            map.put(c.getSystem(), TerminologyUtility.getTerminology(service, c.getSystem()));
+          }
+          final TerminologyRef ref = map.get(c.getSystem());
+
+          final Concept existingConcept = TerminologyUtility.getConcept(service,
+              ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+
           final SubsetMember m = new SubsetMember();
           m.setId(java.util.UUID.randomUUID().toString());
+          m.setTerminology(ref.getAbbreviation());
+          m.setPublisher(ref.getPublisher());
+          m.setVersion(ref.getVersion());
           m.setCode(c.getCode());
-          m.setName(c.getDisplay());
+          m.setName(
+              existingConcept == null ? "Unable to determine name" : existingConcept.getName());
           m.setSubset(subsetRef);
           members.add(m);
         }

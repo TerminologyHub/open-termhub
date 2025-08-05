@@ -476,7 +476,7 @@ public class LuceneDataAccess {
         }
         results.getItems().add(obj);
       }
-      results.setTotal(results.getItems().size());
+      results.setTotal(topDocs.totalHits.value);
       return results;
 
     } catch (final Exception e) {
