@@ -88,13 +88,19 @@ public final class FhirUtility {
     params.setQuery("*:*");
     params.setLimit(100);
 
-    logger.info("Looking up terminologies with query: {}", params.getQuery());
+    if (logger.isDebugEnabled()) {
+      logger.debug("Looking up terminologies with query: {}", params.getQuery());
+    }
     final ResultList<Terminology> terminologies = service.find(params, Terminology.class);
-    logger.info("Found {} terminologies", terminologies.getItems().size());
+    if (logger.isDebugEnabled()) {
+      logger.debug("Found {} terminologies", terminologies.getItems().size());
+    }
 
     for (final Terminology term : terminologies.getItems()) {
-      logger.info("Found terminology: {} ({}), version: {}, publisher: {}", term.getName(),
-          term.getAbbreviation(), term.getVersion(), term.getPublisher());
+      if (logger.isDebugEnabled()) {
+        logger.debug("Found terminology: {} ({}), version: {}, publisher: {}", term.getName(),
+            term.getAbbreviation(), term.getVersion(), term.getPublisher());
+      }
     }
 
     return terminologies.getItems();
@@ -757,9 +763,13 @@ public final class FhirUtility {
       mapsets = results.getItems();
 
       // HOW MANY?
-      logger.info("Found {} mapsets", mapsets.size());
+      if (logger.isDebugEnabled()) {
+        logger.debug("Found {} mapsets", mapsets.size());
+      }
       for (final Mapset mapset : mapsets) {
-        logger.info("Mapset: {}", mapset);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Mapset: {}", mapset);
+        }
       }
 
       // then sort the results (just use the natural terminology sort order)

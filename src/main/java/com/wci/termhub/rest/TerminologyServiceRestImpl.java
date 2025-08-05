@@ -1894,8 +1894,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam("version") final String version) throws Exception {
 
     try {
-      logger.info("Computing tree positions for terminology = {}, publisher = {}, version = {}",
-          terminology, publisher, version);
 
       // Look up the terminology to make sure it exists
       final Terminology term =
@@ -2778,7 +2776,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Handler applied, send null handler below
       final ResultList<SubsetMember> list =
-          findSubsetMembersHelper(subsets, query, offset, maxLimit, sort, ascending, active);
+          findMembersHelper(subsets, query, offset, maxLimit, sort, ascending, active);
 
       return new ResponseEntity<>(new ResultListSubsetMember(list), new HttpHeaders(),
           HttpStatus.OK);
@@ -3049,10 +3047,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final String subsetQueryStr = ModelUtility.isEmpty(subsets) ? null : "("
         + String.join(" OR ",
             subsets.stream()
-                .map(m -> "(" + StringUtility.composeQuery("AND",
-                    "subset.abbreviation:" + StringUtility.escapeQuery(m.getAbbreviation()),
-                    "subset.publisher:\"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
-                    "subset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
+                .map(s -> "(" + StringUtility.composeQuery("AND",
+                    "subset.abbreviation:" + StringUtility.escapeQuery(s.getAbbreviation()),
+                    "subset.publisher:\"" + StringUtility.escapeQuery(s.getPublisher()) + "\"",
+                    "subset.version:" + StringUtility.escapeQuery(s.getVersion())) + ")")
                 .toList())
         + ")";
 
@@ -3157,53 +3155,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       subsetCache.put(query, indexMap);
     }
     return indexMap;
-  }
-
-  /**
-   * Find subset members helper.
-   *
-   * @param subsets the subsets
-   * @param query the query
-   * @param offset the offset
-   * @param limit the limit
-   * @param sort the sort
-   * @param ascending the ascending
-   * @param active the active
-   * @return the result list
-   * @throws Exception the exception
-   */
-  private ResultList<SubsetMember> findSubsetMembersHelper(final List<Subset> subsets,
-    final String query, final Integer offset, final Integer limit, final String sort,
-    final Boolean ascending, final Boolean active) throws Exception {
-
-    logger.info("find subset members for subsets: {}", subsets);
-
-    // We are not using multiple indexes, so we instead have to add constraints
-    final String subsetClause =
-        ModelUtility.isEmpty(subsets) ? null
-            : "(" + String.join(" OR ",
-                subsets.stream().map(m -> "("
-                    + StringUtility.composeQuery("AND",
-                        "subset.abbreviation: \"" + StringUtility.escapeQuery(m.getAbbreviation())
-                            + "\"",
-                        "subset.publisher: \"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
-                        "subset.version: \"" + StringUtility.escapeQuery(m.getVersion()) + "\"")
-                    + ")").toList())
-                + ")";
-    final SearchParameters searchParams = new SearchParameters(StringUtility.composeQuery("AND",
-        StringUtility.isEmpty(query) ? "*:*" : query, subsetClause), offset, limit, sort,
-        ascending);
-
-    if (active != null && active) {
-      searchParams.setActive(true);
-    }
-
-    final ResultList<SubsetMember> list = searchService.find(searchParams, SubsetMember.class);
-    // Restore the original query for the response
-    searchParams.setQuery(query);
-    list.setParameters(searchParams);
-    return list;
-
   }
 
 }

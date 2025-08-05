@@ -805,7 +805,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // "designations": [...]
       // } ]
       // }
-      final Query expressionQuery = getExpressionQuery(terminology, vs.getUrl());
+      final Query expressionQuery =
+          getExpressionQuery(terminology, url == null ? null : url.getValue());
       final Query browserQuery = LuceneQueryBuilder.parse(
           new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
           Concept.class);
@@ -815,12 +816,15 @@ public class ValueSetProviderR5 implements IResourceProvider {
       if (activeOnly) {
         params.setActive(activeOnly);
       }
-      final ResultList<Concept> list = searchService.find(params, Concept.class, null);
+      final ResultList<Concept> list = searchService.find(params, Concept.class);
       final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
       expansion.setId(UUID.randomUUID().toString());
       expansion.setTimestamp(new Date());
       expansion.setTotal((int) list.getTotal());
       expansion.setOffset(offset);
+      // set count
+      expansion.addParameter(new ValueSetExpansionParameterComponent().setName("count")
+          .setValue(new IntegerType(count)));
       if (version != null) {
         expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
             .setValue(new StringType(version.getValue())));

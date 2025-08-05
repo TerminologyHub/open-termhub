@@ -19,8 +19,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
@@ -803,24 +801,24 @@ public class ValueSetProviderR4 implements IResourceProvider {
       final Query browserQuery = LuceneQueryBuilder.parse(
           new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
           Concept.class);
-      final Query expression = getExpressionQuery(terminology, vs.getUrl());
-
-      final Query valueSetQuery = expression != null
-          ? new BooleanQuery.Builder().add(browserQuery, BooleanClause.Occur.MUST)
-              .add(expression, BooleanClause.Occur.MUST).build()
-          : browserQuery;
+      final Query expressionQuery =
+          getExpressionQuery(terminology, url == null ? null : url.getValue());
+      final Query booleanQuery = getAndQuery(browserQuery, expressionQuery);
 
       final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
-      final SearchParameters params = new SearchParameters(valueSetQuery, offset, ct, null, null);
+      final SearchParameters params = new SearchParameters(booleanQuery, offset, ct, null, null);
       if (activeOnly) {
         params.setActive(activeOnly);
       }
-      final ResultList<Concept> list = searchService.find(params, Concept.class, null);
+      final ResultList<Concept> list = searchService.find(params, Concept.class);
       final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
       expansion.setId(UUID.randomUUID().toString());
       expansion.setTimestamp(new Date());
       expansion.setTotal((int) list.getTotal());
       expansion.setOffset(offset);
+      // set count
+      expansion.addParameter(new ValueSetExpansionParameterComponent().setName("count")
+          .setValue(new IntegerType(count)));
       if (version != null) {
         expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
             .setValue(new StringType(version.getValue())));

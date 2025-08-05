@@ -78,7 +78,7 @@ resources.
 ```
 curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-snomedctus-sandbox-20240301-r5.json' | jq
+  -d '@src/main/resources/data/CodeSystem-snomedct_us-sandbox-20240301-r5.json' | jq
 ```
 
 #### Load Sandbox RXNORM
@@ -171,6 +171,7 @@ curl "http://localhost:8080/mapping" | jq
 curl "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping" | jq
 
 # Find mappings in a particular mapset for a particular "from" code
+curl "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005" | jq
 curl "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:300862005" | jq
 
 # Find subsets (e.g. value sets)
@@ -183,6 +184,7 @@ curl "http://localhost:8080/member" | jq
 curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member" | jq
 
 # Find members in a particular subset for a particular code
+curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=721111000124107" | jq
 curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=code:721111000124107" | jq
 
 ```
@@ -201,7 +203,7 @@ curl 'http://localhost:8080/fhir/r4/CodeSystem/$lookup?system=http://snomed.info
 # Find ConceptMaps
 curl 'http://localhost:8080/fhir/r4/ConceptMap' | jq
 
-# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code - XXX
+# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
 curl 'http://localhost:8080/fhir/r4/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&code=300862005' | jq
 
 # Find implied ValueSets for CodeSystems and explicit value sets
@@ -218,7 +220,6 @@ curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
 curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
-
 ```
 
 ### Testing the FHIR R5 API
@@ -235,8 +236,8 @@ curl 'http://localhost:8080/fhir/r5/CodeSystem/$lookup?system=http://snomed.info
 # Find ConceptMaps
 curl 'http://localhost:8080/fhir/r5/ConceptMap' | jq
 
-# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code - XXX
-curl 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&code=300862005' | jq
+# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
+curl 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&sourceSystem=http://snomed.info/sct&sourceCode=300862005' | jq
 
 # Find implied ValueSets for CodeSystems and explicit value sets
 curl 'http://localhost:8080/fhir/r5/ValueSet' | jq
@@ -252,7 +253,6 @@ curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
 curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
-
 ```
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**

@@ -73,6 +73,7 @@ public final class LuceneQueryBuilder {
         if (logger.isDebugEnabled()) {
           logger.debug("  Parsed Query: {}", query);
         }
+        // logger.info("X X X Parsed Query: {}", query);
         return query;
       }
     } else {
@@ -85,6 +86,7 @@ public final class LuceneQueryBuilder {
         if (logger.isDebugEnabled()) {
           logger.debug("  Parsed Query (multi-field): {}", query);
         }
+        // logger.info("X X X Parsed Query (multi-field): {}", query);
         return query;
       }
     }
