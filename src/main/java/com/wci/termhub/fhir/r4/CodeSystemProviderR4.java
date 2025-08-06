@@ -87,7 +87,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
   private EnablePostLoadComputations enablePostLoadComputations;
 
   /** The Constant context. */
-  private static final FhirContext context = FhirContext.forR4();
+  private static FhirContext context = FhirContext.forR4();
 
   /**
    * Gets the code system.

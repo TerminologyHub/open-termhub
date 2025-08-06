@@ -108,7 +108,7 @@ curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
   -d '@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json' | jq
 ```
 
-#### Load the SNOMEDCT_US to ICD10CM concept maps
+#### Load the SNOMEDCT_US to ICD10CM concept maps 
 
 ```
 curl -X POST http://localhost:8080/fhir/r5/ConceptMap \
@@ -189,8 +189,8 @@ curl "http://localhost:8080/member" | jq
 curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member" | jq
 
 # Find members in a particular subset for a particular code
-curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=721111000124107" | jq
-curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=code:721111000124107" | jq
+curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes" | jq
+curl "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=name:diabetes" | jq
 
 ```
 
@@ -213,16 +213,22 @@ curl 'http://localhost:8080/fhir/r4/ConceptMap/$translate?url=http://snomed.info
 
 # Find implied ValueSets for CodeSystems and explicit value sets
 curl 'http://localhost:8080/fhir/r4/ValueSet' | jq
+curl 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs' | jq
+curl 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
+
+# Get a value set by id (pick the first one)
+id=`curl 'http://localhost:8080/fhir/r4/ValueSet' | jq -r '.entry[0].resource.id'`
+curl "http://localhost:8080/fhir/r4/ValueSet/$id" | jq
 
 # Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
 curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs' | jq
-curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
 
 # Perform an $expand operation on an explicit value set
 curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter
 curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes' | jq
+curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108&filter=diabetes' | jq
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
 curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
@@ -247,6 +253,12 @@ curl 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info
 
 # Find implied ValueSets for CodeSystems and explicit value sets
 curl 'http://localhost:8080/fhir/r5/ValueSet' | jq
+curl 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs' | jq
+curl 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
+
+# Get a value set by id (pick the first one)
+id=`curl 'http://localhost:8080/fhir/r5/ValueSet' | jq -r '.entry[0].resource.id'`
+curl "http://localhost:8080/fhir/r5/ValueSet/$id" | jq
 
 # Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
 curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs' | jq
@@ -256,6 +268,7 @@ curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter
 curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes' | jq
+curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108&filter=diabetes' | jq
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
 curl 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq

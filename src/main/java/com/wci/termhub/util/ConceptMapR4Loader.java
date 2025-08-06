@@ -32,7 +32,7 @@ public final class ConceptMapR4Loader {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapR4Loader.class);
 
   /** The FHIR context. */
-  private static final FhirContext FHIR_CONTEXT = FhirContext.forR4();
+  private static FhirContext context = FhirContext.forR4();
 
   /**
    * Instantiates a new concept map R4 loader.
@@ -75,7 +75,7 @@ public final class ConceptMapR4Loader {
 
       // Parse JSON to FHIR ConceptMap
       final String json = br.lines().reduce("", String::concat);
-      final IParser parser = FHIR_CONTEXT.newJsonParser();
+      final IParser parser = context.newJsonParser();
       final ConceptMap conceptMap = parser.parseResource(ConceptMap.class, json);
 
       // Set source and target URIs from first group

@@ -739,6 +739,7 @@ public final class FhirUtilityR5 {
    */
   public static ValueSet toR5ValueSet(final Terminology terminology, final boolean metaFlag)
     throws Exception {
+
     final CodeSystem cs = FhirUtilityR5.toR5(terminology);
     final ValueSet set = new ValueSet();
     set.setId(cs.getId() + "_entire");
@@ -748,16 +749,18 @@ public final class FhirUtilityR5 {
     set.setTitle(cs.getTitle() + "-ENTIRE");
     set.setStatus(PublicationStatus.ACTIVE);
     set.setDescription("Value set representing the entire contents of this code system");
-    set.setCopyright(terminology.getAttributes().get("copyright"));
     set.setDate(cs.getDate());
     set.setPublisher(cs.getPublisher());
+    set.setCopyright(cs.getCopyright());
 
     // Add "from" info for members
     if (metaFlag) {
       set.setMeta(new Meta().addTag("fromTerminology", terminology.getAbbreviation(), null)
           .addTag("fromPublisher", terminology.getPublisher(), null)
-          .addTag("fromVersion", terminology.getVersion(), null));
+          .addTag("fromVersion", terminology.getVersion(), null)
+          .addTag("includesUri", terminology.getUri(), null));
     }
+
     return set;
   }
 
@@ -768,13 +771,18 @@ public final class FhirUtilityR5 {
    * @param members the members
    * @param metaFlag the meta flag
    * @return the value set
+   * @throws Exception the exception
    */
   public static ValueSet toR5ValueSet(final Subset subset, final List<SubsetMember> members,
-    final boolean metaFlag) {
+    final boolean metaFlag) throws Exception {
 
     final ValueSet valueSet = new ValueSet();
-    final String id = subset.getId() != null ? subset.getId() : subset.getCode();
-    valueSet.setId(id);
+    valueSet.setId(subset.getId());
+    valueSet.setUrl(subset.getUri());
+    valueSet.setPublisher(subset.getPublisher());
+    valueSet.setVersion(subset.getVersion());
+    valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(subset.getReleaseDate()));
+
     valueSet.setName(subset.getName());
     // Set title from abbreviation if present, else fallback to name
     if (subset.getAbbreviation() != null && !subset.getAbbreviation().isEmpty()) {
@@ -783,47 +791,24 @@ public final class FhirUtilityR5 {
       valueSet.setTitle(subset.getName());
     }
     valueSet.setDescription(subset.getDescription());
-    valueSet.setVersion(subset.getFromVersion());
-    valueSet.setStatus(Enumerations.PublicationStatus.ACTIVE);
-    valueSet.setPublisher(subset.getFromPublisher());
-    // Set url from attributes if present, else fallback
-    final String url = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirUrl.name()) : null;
-    if (url != null && !url.isEmpty()) {
-      valueSet.setUrl(url);
-    }
-    // Set date from attributes if present, else fallback
-    final String dateStr = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirDate.name()) : null;
-    if (dateStr != null && !dateStr.isEmpty()) {
-      try {
-        valueSet.setDate(new org.hl7.fhir.r5.model.DateTimeType(dateStr).getValue());
-      } catch (final Exception e) {
-        valueSet.setDate(new java.util.Date());
-      }
-    } else {
-      valueSet.setDate(new java.util.Date());
-    }
+    valueSet.setStatus(PublicationStatus.ACTIVE);
+
     // Set experimental from attributes if present, else fallback
     final String experimentalStr = subset.getAttributes() != null
         ? subset.getAttributes().get(Subset.Attributes.fhirExperimental.name()) : null;
     if (experimentalStr != null) {
       valueSet.setExperimental(Boolean.parseBoolean(experimentalStr));
     }
+
     // Set identifier from attributes if present, else fallback
-    final String identifierValue = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirIdentifier.name()) : null;
-    if (identifierValue != null && !identifierValue.isEmpty()) {
-      valueSet.addIdentifier().setValue(identifierValue)
-          .setSystem("https://terminologyhub.com/model/subset/code");
-    }
+    valueSet.addIdentifier().setValue(subset.getCode())
+        .setSystem("https://terminologyhub.com/model/subset/code");
+
     // Compose/include
     final ValueSetComposeComponent compose = new ValueSetComposeComponent();
     final ConceptSetComponent include = new ConceptSetComponent();
-    // Use terminology as system if available
-    if (subset.getTerminology() != null) {
-      include.setSystem(subset.getTerminology());
-    }
+
+    include.setSystem(subset.getAttributes().get("fhirIncludesUri"));
     if (members != null) {
       for (final SubsetMember member : members) {
         if (member.getCode() == null
@@ -847,8 +832,10 @@ public final class FhirUtilityR5 {
     if (metaFlag) {
       valueSet.setMeta(new Meta().addTag("fromTerminology", subset.getFromTerminology(), null)
           .addTag("fromPublisher", subset.getFromPublisher(), null)
-          .addTag("fromVersion", subset.getFromVersion(), null));
+          .addTag("fromVersion", subset.getFromVersion(), null)
+          .addTag("includesUri", subset.getAttributes().get("fhirIncludesUri"), null));
     }
+
     return valueSet;
   }
 

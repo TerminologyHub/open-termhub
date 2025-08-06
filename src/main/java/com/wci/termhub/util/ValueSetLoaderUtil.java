@@ -38,10 +38,10 @@ public final class ValueSetLoaderUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetLoaderUtil.class);
 
   /** The Constant contextR4. */
-  private static final FhirContext contextR4 = FhirContext.forR4();
+  private static FhirContext contextR4 = FhirContext.forR4();
 
   /** The Constant contextR5. */
-  private static final FhirContext contextR5 = FhirContext.forR5();
+  private static FhirContext contextR5 = FhirContext.forR5();
 
   /**
    * Instantiates a new subset loader util.
@@ -138,11 +138,13 @@ public final class ValueSetLoaderUtil {
             valueSet.getCompose().getIncludeFirstRep();
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
-          final TerminologyRef fromRef =
-              TerminologyUtility.getTerminology(service, include.getSystem());
+          final TerminologyRef fromRef = TerminologyUtility.getTerminology(service,
+              include.getSystem(), valueSet.getVersion());
           subset.setFromTerminology(fromRef.getAbbreviation());
           subset.setFromPublisher(fromRef.getPublisher());
           subset.setFromVersion(fromRef.getVersion());
+          // Save the URI that goes with the from stuff.
+          subset.getAttributes().put("fhirIncludesUri", fromRef.getUri());
         }
       }
 
@@ -172,7 +174,7 @@ public final class ValueSetLoaderUtil {
           }
 
           final TerminologyRef ref =
-              TerminologyUtility.getTerminology(service, includes.getSystem());
+              TerminologyUtility.getTerminology(service, includes.getSystem(), subset.getVersion());
 
           for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
@@ -216,7 +218,7 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            map.put(c.getSystem(), TerminologyUtility.getTerminology(service, c.getSystem()));
+            map.put(c.getSystem(), TerminologyUtility.getTerminology(service, c.getSystem(),subset.getVersion()));
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -314,7 +316,7 @@ public final class ValueSetLoaderUtil {
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
           final TerminologyRef fromRef =
-              TerminologyUtility.getTerminology(service, include.getSystem());
+              TerminologyUtility.getTerminology(service, include.getSystem(), subset.getVersion());
           subset.setFromTerminology(fromRef.getAbbreviation());
           subset.setFromPublisher(fromRef.getPublisher());
           subset.setFromVersion(fromRef.getVersion());
@@ -347,7 +349,7 @@ public final class ValueSetLoaderUtil {
           }
 
           final TerminologyRef ref =
-              TerminologyUtility.getTerminology(service, includes.getSystem());
+              TerminologyUtility.getTerminology(service, includes.getSystem(),subset.getVersion());
 
           for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
@@ -391,7 +393,7 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            map.put(c.getSystem(), TerminologyUtility.getTerminology(service, c.getSystem()));
+            map.put(c.getSystem(), TerminologyUtility.getTerminology(service, c.getSystem(),subset.getVersion()));
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -440,8 +442,8 @@ public final class ValueSetLoaderUtil {
     final String title, final String version, final String publisher) throws Exception {
 
     LOGGER.info(
-        "Checking if ValueSet exists with abbreviation={}, fromVersion={}, fromPublisher={}", title,
-        version, publisher);
+        "  Checking if ValueSet exists with abbreviation={}, fromVersion={}, fromPublisher={}",
+        title, version, publisher);
 
     final SearchParameters params = new SearchParameters();
     params.setQuery("abbreviation:" + StringUtility.escapeQuery(title) + " AND version: \""

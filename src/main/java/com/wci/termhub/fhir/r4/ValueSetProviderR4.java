@@ -98,7 +98,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
   private EntityRepositoryService searchService;
 
   /** The Constant context. */
-  private static final FhirContext context = FhirContext.forR4();
+  private static FhirContext context = FhirContext.forR4();
 
   /**
    * Gets the value set.
@@ -118,19 +118,20 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // 1. Check implicit ValueSets
       final ValueSet vs = findPossibleValueSets(false, id, null, null).stream()
           .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
-      if (vs != null) {
+      // If a terminology subset, simply return
+      if (vs != null && vs.getId().endsWith("_entire")) {
         return vs;
       }
       // 2. Check explicit subsets and load first 100 members
       final Subset subset = searchService.get(id.getIdPart(), Subset.class);
       if (subset != null) {
-        // Fetch members
-        final SearchParameters memberParams = new SearchParameters();
-        memberParams.setLimit(100);
-        memberParams.getFilters().put("subset.code", subset.getCode());
-        final List<SubsetMember> members =
-            searchService.findAll(memberParams, SubsetMember.class).getItems();
-        final ValueSet valueSet = FhirUtilityR4.toR4ValueSet(subset, members, false);
+        // // Fetch members
+        // final SearchParameters memberParams = new SearchParameters();
+        // memberParams.setLimit(100);
+        // memberParams.getFilters().put("subset.code", subset.getCode());
+        // final List<SubsetMember> members =
+        // searchService.findAll(memberParams, SubsetMember.class).getItems();
+        final ValueSet valueSet = FhirUtilityR4.toR4ValueSet(subset, new ArrayList<>(0), false);
         return valueSet;
       }
       throw FhirUtilityR4.exception(
@@ -676,10 +677,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
         new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
         Concept.class);
     final Query expressionQuery = getExpressionQuery(url == null ? null : url.getValue());
-    logger.info("XXX1 tq = " + terminologyQuery);
-    logger.info("XXX1 sq = " + subsetQuery);
-    logger.info("XXX1 bq = " + filterQuery);
-    logger.info("XXX1 eq = " + expressionQuery);
     final Query booleanQuery =
         getAndQuery(terminologyQuery, subsetQuery, filterQuery, expressionQuery);
     final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
@@ -856,6 +853,19 @@ public class ValueSetProviderR4 implements IResourceProvider {
   }
 
   /**
+   * Gets the base url.
+   *
+   * @param url the url
+   * @return the base url
+   */
+  private String getBaseUrl(final String url) {
+    if (url == null) {
+      return null;
+    }
+    return url.replaceFirst("=(ecl|isa|refset)/.+", "");
+  }
+
+  /**
    * Gets the resource type.
    *
    * @return the resource type
@@ -878,7 +888,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
    */
   public List<ValueSet> findPossibleValueSets(final boolean metaFlag, final IdType id,
     final UriType url, final StringType version) throws Exception {
-    final TokenParam idParam = id == null ? null : new TokenParam(id.getValue());
+    final TokenParam idParam = id == null ? null : new TokenParam(id.getIdPart());
     final UriParam urlParam = url == null ? null : new UriParam(url.getValue());
     final StringParam versionParam = version == null ? null : new StringParam(version.getValue());
     return findPossibleValueSets(metaFlag, idParam, null, null, null, null, null, null, null,
@@ -915,7 +925,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       // Skip non-matching
       if ((id != null && !id.getValue().equals(vs.getId()))
-          || (url != null && !url.getValue().equals(vs.getUrl()))) {
+          || (url != null && !getBaseUrl(url.getValue()).equals(vs.getUrl()))) {
         continue;
       }
 

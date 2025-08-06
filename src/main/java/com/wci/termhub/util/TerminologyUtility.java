@@ -79,7 +79,7 @@ public final class TerminologyUtility {
    * @throws Exception the exception
    */
   public static TerminologyRef getTerminology(final EntityRepositoryService searchService,
-    final String value) throws Exception {
+    final String value, final String matchString) throws Exception {
 
     TerminologyRef ref = new TerminologyRef();
     final String query = StringUtility.composeQuery("AND",
@@ -98,9 +98,36 @@ public final class TerminologyUtility {
       ref.setPublisher("unknown");
       ref.setVersion("unknown");
     }
-    // pick first
-    else {
+    if (list.getItems().size() == 1) {
       final Terminology terminology = list.getItems().get(0);
+      ref.setAbbreviation(terminology.getAbbreviation());
+      ref.setUri(terminology.getUri());
+      ref.setPublisher(terminology.getPublisher());
+      ref.setVersion(terminology.getVersion());
+    }
+    // pick first that matches matchString
+    else {
+      // Try matching version first
+      Terminology terminology = list.getItems().stream()
+          .filter(t -> t.getVersion().equals(matchString)).findFirst().orElse(null);
+      // if none match, pick the first one
+      if (terminology == null) {
+        terminology = list.getItems().stream().filter(t -> t.toString().contains(matchString))
+            .findFirst().orElse(null);
+
+        if (terminology == null) {
+          terminology = list.getItems().get(0);
+        } else {
+          if (logger.isDebugEnabled()) {
+            logger.debug("  found match on terminology string = " + matchString);
+          }
+
+        }
+      } else {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  found match on version = " + matchString);
+        }
+      }
       ref.setAbbreviation(terminology.getAbbreviation());
       ref.setUri(terminology.getUri());
       ref.setPublisher(terminology.getPublisher());

@@ -271,7 +271,8 @@ public final class ConceptMapLoaderUtil {
     if (fromTerminology == null) {
       throw new Exception("Unable to determine information about the map source");
     }
-    final TerminologyRef fromRef = TerminologyUtility.getTerminology(service, fromTerminology);
+    final TerminologyRef fromRef =
+        TerminologyUtility.getTerminology(service, fromTerminology, version);
     mapset.setFromTerminology(fromRef.getAbbreviation());
     mapset.setFromPublisher(fromRef.getPublisher());
     mapset.setFromVersion(fromRef.getVersion());
@@ -288,7 +289,7 @@ public final class ConceptMapLoaderUtil {
     if (toTerminology == null) {
       throw new Exception("Unable to determine information about the map target");
     }
-    final TerminologyRef toRef = TerminologyUtility.getTerminology(service, toTerminology);
+    final TerminologyRef toRef = TerminologyUtility.getTerminology(service, toTerminology, version);
     mapset.setToTerminology(toRef.getAbbreviation());
     mapset.setToPublisher(toRef.getPublisher());
     mapset.setToVersion(toRef.getVersion());

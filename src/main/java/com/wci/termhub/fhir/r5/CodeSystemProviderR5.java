@@ -85,7 +85,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   private EnablePostLoadComputations enablePostLoadComputations;
 
   /** The Constant context. */
-  private static final FhirContext context = FhirContext.forR5();
+  private static FhirContext context = FhirContext.forR5();
 
   /**
    * Gets the code system.

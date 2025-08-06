@@ -98,7 +98,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
   private EntityRepositoryService searchService;
 
   /** The Constant context. */
-  private static final FhirContext context = FhirContext.forR5();
+  private static FhirContext context = FhirContext.forR5();
 
   /**
    * Gets the value set.
@@ -115,22 +115,24 @@ public class ValueSetProviderR5 implements IResourceProvider {
     @IdParam final IdType id) throws Exception {
 
     try {
-      // 1. Check implicit code system ValueSets
-      final ValueSet set = getImplicitCodeSystemValueSets().stream()
+      // 1. Check implicit ValueSets
+      final ValueSet vs = findPossibleValueSets(false, id, null, null).stream()
           .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
-      if (set != null) {
-        return set;
+      // If a terminology subset, simply return
+      if (vs != null && vs.getId().endsWith("_entire")) {
+        return vs;
       }
-      // 2. Check loaded ValueSets (Subset)
+      // 2. Check explicit subsets and load first 100 members
       final Subset subset = searchService.get(id.getIdPart(), Subset.class);
-      if (subset != null && "ValueSet".equals(subset.getCategory())) {
-        // Fetch members
-        final SearchParameters memberParams = new SearchParameters();
-        memberParams.setLimit(1000);
-        memberParams.getFilters().put("subset.code", subset.getCode());
-        final List<SubsetMember> members =
-            searchService.findAll(memberParams, SubsetMember.class).getItems();
-        return FhirUtilityR5.toR5ValueSet(subset, members, false);
+      if (subset != null) {
+        // // Fetch members
+        // final SearchParameters memberParams = new SearchParameters();
+        // memberParams.setLimit(100);
+        // memberParams.getFilters().put("subset.code", subset.getCode());
+        // final List<SubsetMember> members =
+        // searchService.findAll(memberParams, SubsetMember.class).getItems();
+        final ValueSet valueSet = FhirUtilityR5.toR5ValueSet(subset, new ArrayList<>(0), false);
+        return valueSet;
       }
       throw FhirUtilityR5.exception(
           "Value set not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
@@ -205,8 +207,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
       FhirUtilityR5.notSupportedSearchParams(request);
 
       // Get possible value sets
-      final List<ValueSet> list = findPossibleValueSets(id, code, date, description, identifier,
-          name, publisher, title, url, version);
+      final List<ValueSet> list = findPossibleValueSets(false, id, code, date, description,
+          identifier, name, publisher, title, url, version);
 
       return FhirUtilityR5.makeBundle(request, list, count, offset);
 
@@ -559,9 +561,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
       // Check if it's an implicit code system ValueSet (these cannot be
       // deleted)
-      final ValueSet implicitSet = getImplicitCodeSystemValueSets().stream()
-          .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
-      if (implicitSet != null) {
+      final ValueSet valueSet =
+          findPossibleValueSets(false, id, null, null).stream().findFirst().orElse(null);
+      if (valueSet != null && valueSet.getId().endsWith("_entire")) {
         throw FhirUtilityR5.exception(
             "Cannot delete implicit value set for code system = " + id.getIdPart(),
             IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
@@ -570,8 +572,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // Check if it's a loaded ValueSet (Subset)
       final Subset subset = searchService.get(id.getIdPart(), Subset.class);
       if (subset == null || !"ValueSet".equals(subset.getCategory())) {
-        throw FhirUtilityR5.exception("Value set not found = " + id.getIdPart(), IssueType.NOTFOUND,
-            HttpServletResponse.SC_NOT_FOUND);
+        throw FhirUtilityR5.exception("Value set not found for id = " + id.getIdPart(),
+            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
 
       TerminologyUtility.removeSubset(searchService, subset.getId());
@@ -584,36 +586,6 @@ public class ValueSetProviderR5 implements IResourceProvider {
       throw FhirUtilityR5.exception("Failed to delete value set: " + e.getMessage(),
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /**
-   * Gets the implicit code system value sets.
-   *
-   * @return the implicit code system value sets
-   * @throws Exception the exception
-   */
-  private List<ValueSet> getImplicitCodeSystemValueSets() throws Exception {
-    final List<ValueSet> list = new ArrayList<>();
-
-    for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-      final ValueSet set = FhirUtilityR5.toR5ValueSet(terminology, false);
-      list.add(set);
-    }
-
-    return list;
-  }
-
-  /**
-   * Gets the implicit code system value set.
-   *
-   * @param terminology the terminology
-   * @return the implicit code system value set
-   * @throws Exception the exception
-   */
-  private ValueSet getImplicitCodeSystemValueSet(final Terminology terminology) throws Exception {
-
-    return FhirUtilityR5.toR5ValueSet(terminology, false);
-
   }
 
   /**
@@ -635,7 +607,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
     final Set<String> languages) throws Exception {
     // Look up implicit value sets for code systems
 
-    final List<ValueSet> valueSets = findPossibleValueSets(id, url, version);
+    final List<ValueSet> valueSets = findPossibleValueSets(true, id, url, version);
 
     // Expect a single value set
     if (valueSets.isEmpty()) {
@@ -673,38 +645,38 @@ public class ValueSetProviderR5 implements IResourceProvider {
     // } ]
     // }
 
-    // If terminology-based, set a terminology query
-    final boolean terminologyFlag = vs.getUrl().endsWith("?fhir_vs");
+    // If terminology-based, set a terminology query (only things we create have ids ending in
+    // "_entire"
+    final boolean terminologyFlag = vs.getId().endsWith("_entire");
+    final String fromTerminology = vs.getMeta().getTag().stream()
+        .filter(c -> c.getSystem().equals("fromTerminology")).findFirst().get().getCode();
+    final String fromPublisher = vs.getMeta().getTag().stream()
+        .filter(c -> c.getSystem().equals("fromPublisher")).findFirst().get().getCode();
+    final String fromVersion = vs.getMeta().getTag().stream()
+        .filter(c -> c.getSystem().equals("fromVersion")).findFirst().get().getCode();
+    final Terminology terminology = TerminologyUtility.getTerminology(searchService,
+        fromTerminology, fromPublisher, fromVersion);
 
-    // TODO: this works for things we create, but otherwise we need to save this.
-    final String terminologyUri = vs.getUrl().replaceFirst("\\?fhir_vs.*", "");
+    // Use meta flags to get the terminology of the concepts
+    final Query terminologyQuery = LuceneQueryBuilder.parse(
+        TerminologyUtility.getTerminologyQuery(fromTerminology, fromPublisher, fromVersion),
+        Concept.class);
 
-    final Query terminologyQuery = terminologyFlag
-        ? LuceneQueryBuilder.parse(TerminologyUtility.getTerminologyUriQuery(vs.getUrl(),
-            vs.getPublisher(), vs.getVersion()), Concept.class)
-        : LuceneQueryBuilder.parse(
-            TerminologyUtility.getTerminologyUriQuery(vs.getUrl().replaceFirst("\\?fhir_vs.*", ""),
-                vs.getPublisher(), vs.getVersion()),
-            Concept.class);
-
-    final Query subsetQuery = !terminologyFlag ? LuceneQueryBuilder.parse(
-        StringUtility.composeQuery("OR",
-            searchService
-                .find(
-                    new SearchParameters(TerminologyUtility.getTerminologyUriQuery(vs.getUrl(),
-                        vs.getPublisher(), vs.getVersion()), 0, 1000000, null, null),
-                    SubsetMember.class)
-                .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
-                .toList()),
-        Concept.class) : null;
+    final Query subsetQuery =
+        !terminologyFlag ? LuceneQueryBuilder.parse(
+            StringUtility.composeQuery("OR",
+                searchService
+                    .find(
+                        new SearchParameters(TerminologyUtility.getTerminologyQuery(fromTerminology,
+                            fromPublisher, fromVersion), 0, 1000000, null, null),
+                        SubsetMember.class)
+                    .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
+                    .toList()),
+            Concept.class) : null;
     final Query filterQuery = LuceneQueryBuilder.parse(
         new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
         Concept.class);
     final Query expressionQuery = getExpressionQuery(url == null ? null : url.getValue());
-    logger.info("XXX1 tq = " + terminologyQuery);
-    logger.info("XXX1 sq = " + subsetQuery);
-    logger.info("XXX1 bq = " + filterQuery);
-    logger.info("XXX1 eq = " + expressionQuery);
     final Query booleanQuery =
         getAndQuery(terminologyQuery, subsetQuery, filterQuery, expressionQuery);
     final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
@@ -727,7 +699,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
     }
     for (final Concept concept : list.getItems()) {
       final ValueSetExpansionContainsComponent code = new ValueSetExpansionContainsComponent()
-          .setSystem(terminologyUri).setCode(concept.getCode()).setDisplay(concept.getName());
+          .setSystem(terminology.getUri()).setCode(concept.getCode()).setDisplay(concept.getName());
       if (languages != null) {
         // "language": "en",
         // "use": {
@@ -759,6 +731,10 @@ public class ValueSetProviderR5 implements IResourceProvider {
       expansion.addContains(code);
     }
     vs.setExpansion(expansion);
+
+    // Clear meta
+    vs.setMeta(null);
+
     return vs;
   }
 
@@ -777,7 +753,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
     final StringType version, final String code, final StringType display) throws Exception {
     // Look up implicit value sets for code systems
     for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-      final ValueSet vs = getImplicitCodeSystemValueSet(terminology);
+      final ValueSet vs = FhirUtilityR5.toR5ValueSet(terminology, false);
 
       // Skip non-matching
       if ((id != null && !id.getIdPart().equals(vs.getId()))
@@ -877,6 +853,19 @@ public class ValueSetProviderR5 implements IResourceProvider {
   }
 
   /**
+   * Gets the base url.
+   *
+   * @param url the url
+   * @return the base url
+   */
+  private String getBaseUrl(final String url) {
+    if (url == null) {
+      return null;
+    }
+    return url.replaceFirst("=(ecl|isa|refset)/.+", "");
+  }
+
+  /**
    * Gets the resource type.
    *
    * @return the resource type
@@ -890,24 +879,26 @@ public class ValueSetProviderR5 implements IResourceProvider {
   /**
    * Find possible value sets.
    *
+   * @param metaFlag the meta flag
    * @param id the id
    * @param url the url
    * @param version the version
    * @return the list
    * @throws Exception the exception
    */
-  public List<ValueSet> findPossibleValueSets(final IdType id, final UriType url,
-    final StringType version) throws Exception {
-    final TokenParam idParam = id == null ? null : new TokenParam(id.getValue());
+  public List<ValueSet> findPossibleValueSets(final boolean metaFlag, final IdType id,
+    final UriType url, final StringType version) throws Exception {
+    final TokenParam idParam = id == null ? null : new TokenParam(id.getIdPart());
     final UriParam urlParam = url == null ? null : new UriParam(url.getValue());
     final StringParam versionParam = version == null ? null : new StringParam(version.getValue());
-    return findPossibleValueSets(idParam, null, null, null, null, null, null, null, urlParam,
-        versionParam);
+    return findPossibleValueSets(metaFlag, idParam, null, null, null, null, null, null, null,
+        urlParam, versionParam);
   }
 
   /**
    * Find possible value sets.
    *
+   * @param metaFlag the meta flag
    * @param id the id
    * @param code the code
    * @param date the date
@@ -921,56 +912,56 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the list
    * @throws Exception the exception
    */
-  public List<ValueSet> findPossibleValueSets(final TokenParam id, final TokenParam code,
-    final DateRangeParam date, final StringParam description, final TokenParam identifier,
-    final StringParam name, final StringParam publisher, final StringParam title,
-    final UriParam url, final StringParam version) throws Exception {
+  public List<ValueSet> findPossibleValueSets(final boolean metaFlag, final TokenParam id,
+    final TokenParam code, final DateRangeParam date, final StringParam description,
+    final TokenParam identifier, final StringParam name, final StringParam publisher,
+    final StringParam title, final UriParam url, final StringParam version) throws Exception {
 
     final List<ValueSet> list = new ArrayList<>();
     // For now (until we have real value sets)
     // Look up implicit value sets for code systems
     for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-      final ValueSet set = getImplicitCodeSystemValueSet(terminology);
+      final ValueSet vs = FhirUtilityR5.toR5ValueSet(terminology, metaFlag);
 
       // Skip non-matching
-      if ((id != null && !id.getValue().equals(set.getId()))
-          || (url != null && !url.getValue().equals(set.getUrl()))) {
+      if ((id != null && !id.getValue().equals(vs.getId()))
+          || (url != null && !getBaseUrl(url.getValue()).equals(vs.getUrl()))) {
         continue;
       }
 
-      if (date != null && !FhirUtility.compareDate(date, set.getDate())) {
+      if (date != null && !FhirUtility.compareDate(date, vs.getDate())) {
         if (logger.isDebugEnabled()) {
-          logger.debug("  SKIP date mismatch = {}", set.getDate());
+          logger.debug("  SKIP date mismatch = {}", vs.getDate());
         }
         continue;
       }
-      if (description != null && !FhirUtility.compareString(description, set.getDescription())) {
+      if (description != null && !FhirUtility.compareString(description, vs.getDescription())) {
         if (logger.isDebugEnabled()) {
-          logger.debug("  SKIP description mismatch = {}", set.getDescription());
+          logger.debug("  SKIP description mismatch = {}", vs.getDescription());
         }
         continue;
       }
-      if (name != null && !FhirUtility.compareString(name, set.getName())) {
+      if (name != null && !FhirUtility.compareString(name, vs.getName())) {
         if (logger.isDebugEnabled()) {
-          logger.debug("  SKIP name mismatch = {}", set.getName());
+          logger.debug("  SKIP name mismatch = {}", vs.getName());
         }
         continue;
       }
-      if (publisher != null && !FhirUtility.compareString(publisher, set.getPublisher())) {
+      if (publisher != null && !FhirUtility.compareString(publisher, vs.getPublisher())) {
         if (logger.isDebugEnabled()) {
-          logger.debug("  SKIP publisher mismatch = {}", set.getPublisher());
+          logger.debug("  SKIP publisher mismatch = {}", vs.getPublisher());
         }
         continue;
       }
-      if (title != null && !FhirUtility.compareString(title, set.getTitle())) {
+      if (title != null && !FhirUtility.compareString(title, vs.getTitle())) {
         if (logger.isDebugEnabled()) {
-          logger.debug("  SKIP title mismatch = {}", set.getTitle());
+          logger.debug("  SKIP title mismatch = {}", vs.getTitle());
         }
         continue;
       }
-      if (version != null && !FhirUtility.compareString(version, set.getVersion())) {
+      if (version != null && !FhirUtility.compareString(version, vs.getVersion())) {
         if (logger.isDebugEnabled()) {
-          logger.debug("  SKIP version mismatch = {}", set.getVersion());
+          logger.debug("  SKIP version mismatch = {}", vs.getVersion());
         }
         continue;
       }
@@ -984,7 +975,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
         continue;
       }
 
-      list.add(set);
+      list.add(vs);
     }
 
     // --- Add loaded ValueSets (Subset/SubsetMember) ---
@@ -1001,7 +992,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // final List<SubsetMember> members =
       // searchService.findAll(memberParams, SubsetMember.class).getItems();
       final ValueSet set =
-          FhirUtilityR5.toR5ValueSet(subset, new ArrayList<SubsetMember>(0), false);
+          FhirUtilityR5.toR5ValueSet(subset, new ArrayList<SubsetMember>(0), metaFlag);
       // Apply the same filtering as above
       if ((id != null && !id.getValue().equals(set.getId()))
           || (url != null && !url.getValue().equals(set.getUrl()))) {

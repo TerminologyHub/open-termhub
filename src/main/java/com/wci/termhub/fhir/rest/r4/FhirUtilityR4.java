@@ -718,14 +718,14 @@ public final class FhirUtilityR4 {
     set.setDescription("Value set representing the entire contents of this code system");
     set.setDate(cs.getDate());
     set.setPublisher(cs.getPublisher());
-    set.setMeta(new Meta());
     set.setCopyright(cs.getCopyright());
 
     // Add "from" info for members
     if (metaFlag) {
       set.setMeta(new Meta().addTag("fromTerminology", terminology.getAbbreviation(), null)
           .addTag("fromPublisher", terminology.getPublisher(), null)
-          .addTag("fromVersion", terminology.getVersion(), null));
+          .addTag("fromVersion", terminology.getVersion(), null)
+          .addTag("includesUri", terminology.getUri(), null));
     }
 
     return set;
@@ -740,10 +740,10 @@ public final class FhirUtilityR4 {
    * @return the FHIR R4 ValueSet
    * @throws Exception the exception
    */
-  public static org.hl7.fhir.r4.model.ValueSet toR4ValueSet(final Subset subset,
-    final List<SubsetMember> members, final boolean metaFlag) throws Exception {
+  public static ValueSet toR4ValueSet(final Subset subset, final List<SubsetMember> members,
+    final boolean metaFlag) throws Exception {
 
-    final org.hl7.fhir.r4.model.ValueSet valueSet = new org.hl7.fhir.r4.model.ValueSet();
+    final ValueSet valueSet = new ValueSet();
     valueSet.setId(subset.getId());
     valueSet.setUrl(subset.getUri());
     valueSet.setPublisher(subset.getPublisher());
@@ -775,10 +775,7 @@ public final class FhirUtilityR4 {
     final ValueSetComposeComponent compose = new ValueSetComposeComponent();
     final ConceptSetComponent include = new ConceptSetComponent();
 
-    // Use terminology as system if available
-    if (subset.getTerminology() != null) {
-      include.setSystem(subset.getTerminology());
-    }
+    include.setSystem(subset.getAttributes().get("fhirIncludesUri"));
     if (members != null) {
       for (final SubsetMember member : members) {
         if (member.getCode() == null
@@ -802,7 +799,8 @@ public final class FhirUtilityR4 {
     if (metaFlag) {
       valueSet.setMeta(new Meta().addTag("fromTerminology", subset.getFromTerminology(), null)
           .addTag("fromPublisher", subset.getFromPublisher(), null)
-          .addTag("fromVersion", subset.getFromVersion(), null));
+          .addTag("fromVersion", subset.getFromVersion(), null)
+          .addTag("includesUri", subset.getAttributes().get("fhirIncludesUri"), null));
     }
 
     return valueSet;

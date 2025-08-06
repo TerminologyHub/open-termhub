@@ -82,7 +82,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
   private EntityRepositoryService searchService;
 
   /** The Constant context. */
-  private static final FhirContext context = FhirContext.forR4();
+  private static FhirContext context = FhirContext.forR4();
 
   /**
    * Gets the concept map.
