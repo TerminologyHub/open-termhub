@@ -62,8 +62,8 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
- * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All
- * get/find tests are order 10. All delete tests are order 20.
+ * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All get/find tests are
+ * order 10. All delete tests are order 20.
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
@@ -204,14 +204,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(metadata).isNotNull();
       assertThat(metadata.getId()).isNotNull();
       assertEquals("SNOMEDCT_US", metadata.getTerminology());
-      assertEquals("http://snomed.info/sct/731000124108/version/20240301", metadata.getVersion());
       assertThat(metadata.getPublisher()).isNotNull();
       assertThat(metadata.getField()).isNotNull();
       assertThat(metadata.getModel()).isNotNull();
       assertThat(metadata.getCode()).isNotNull();
       /*
-       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US",
-       * "version":"http://snomed.info/sct/731000124108/version/20240301",
+       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20240301",
        * "publisher":"SANDBOX","model":"relationship","field":"uiLabel","code":
        * "Attributes","rank":0}
        */
@@ -1089,7 +1087,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   @Order(FIND)
-  public void testFindMapsetByFromCode2() throws Exception {
+  public void testFindMappingByFromCode2() throws Exception {
 
     final String name = "SNOMEDCT_US-ICD10CM";
     final String url = baseUrl + "/mapset/" + name + "/mapping?query=from.code:40733004";

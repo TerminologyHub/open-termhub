@@ -84,6 +84,9 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   @Autowired
   private EnablePostLoadComputations enablePostLoadComputations;
 
+  /** The Constant context. */
+  private static final FhirContext context = FhirContext.forR5();
+
   /**
    * Gets the code system.
    *
@@ -796,7 +799,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
           codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
 
       // Convert CodeSystem to JSON string
-      final String content = FhirContext.forR5().newJsonParser().encodeResourceToString(codeSystem);
+      final String content = context.newJsonParser().encodeResourceToString(codeSystem);
       final int conceptCount = codeSystem.getConcept().size();
       codeSystem.getConcept().clear();
       codeSystem.setConcept(null);

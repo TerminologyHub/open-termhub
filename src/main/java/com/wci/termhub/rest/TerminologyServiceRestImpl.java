@@ -1865,29 +1865,31 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /* see superclass */
   @Override
   @RequestMapping(value = "/concept/{terminology}/trees", method = RequestMethod.POST)
-  @Operation(summary = "Compute concept tree positions by terminology, publisher and version",
-      description = "Computes concept tree positions for the specified terminology, publisher and version. "
-          + "This is useful when tree positions were not computed during initial load "
-          + "(ENABLE_POST_LOAD_COMPUTATIONS=false).",
-      tags = {
-          "concept"
-      })
-  @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "Tree positions computed successfully"),
-      @ApiResponse(responseCode = "404", description = "Terminology not found",
-          content = @Content()),
-      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
-      @ApiResponse(responseCode = "500", description = "Internal server error",
-          content = @Content())
-  })
-  @Parameters({
-      @Parameter(name = "terminology",
-          description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\".", required = true),
-      @Parameter(name = "publisher", description = "Terminology publisher. e.g. \"SANDBOX\".",
-          required = true),
-      @Parameter(name = "version", description = "Terminology version. e.g. \"20240301\".",
-          required = true)
-  })
+  @Hidden
+  // @Operation(summary = "Compute concept tree positions by terminology, publisher and version",
+  // description = "Computes concept tree positions for the specified terminology, publisher and
+  // version. "
+  // + "This is useful when tree positions were not computed during initial load "
+  // + "(ENABLE_POST_LOAD_COMPUTATIONS=false).",
+  // tags = {
+  // "concept"
+  // })
+  // @ApiResponses({
+  // @ApiResponse(responseCode = "200", description = "Tree positions computed successfully"),
+  // @ApiResponse(responseCode = "404", description = "Terminology not found",
+  // content = @Content()),
+  // @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+  // @ApiResponse(responseCode = "500", description = "Internal server error",
+  // content = @Content())
+  // })
+  // @Parameters({
+  // @Parameter(name = "terminology",
+  // description = "Terminology abbreviation. e.g. \"SNOMEDCT_US\".", required = true),
+  // @Parameter(name = "publisher", description = "Terminology publisher. e.g. \"SANDBOX\".",
+  // required = true),
+  // @Parameter(name = "version", description = "Terminology version. e.g. \"20240301\".",
+  // required = true)
+  // })
   public ResponseEntity<String> computeTreePositions(
     @PathVariable("terminology") final String terminology,
     @RequestParam("publisher") final String publisher,

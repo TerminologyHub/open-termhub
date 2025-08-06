@@ -76,6 +76,9 @@ public class ConceptMapProviderR5 implements IResourceProvider {
   @Autowired
   private EntityRepositoryService searchService;
 
+  /** The Constant context. */
+  private static final FhirContext context = FhirContext.forR5();
+
   /**
    * Gets the concept map.
    *
@@ -800,7 +803,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       }
 
       // Convert CodeSystem to JSON
-      final String content = FhirContext.forR5().newJsonParser().encodeResourceToString(conceptMap);
+      final String content = context.newJsonParser().encodeResourceToString(conceptMap);
 
       final Mapset mapset = ConceptMapLoaderUtil.loadConceptMap(searchService, content);
 

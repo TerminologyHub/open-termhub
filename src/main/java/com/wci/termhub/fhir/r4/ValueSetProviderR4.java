@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import org.apache.lucene.search.Query;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
@@ -98,6 +97,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
   @Autowired
   private EntityRepositoryService searchService;
 
+  /** The Constant context. */
+  private static final FhirContext context = FhirContext.forR4();
+
   /**
    * Gets the value set.
    *
@@ -113,22 +115,23 @@ public class ValueSetProviderR4 implements IResourceProvider {
     @IdParam final IdType id) throws Exception {
 
     try {
-      // 1. Check implicit code system ValueSets
-      final ValueSet set = getImplicitCodeSystemValueSets().stream()
+      // 1. Check implicit ValueSets
+      final ValueSet vs = findPossibleValueSets(false, id, null, null).stream()
           .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
-      if (set != null) {
-        return set;
+      if (vs != null) {
+        return vs;
       }
-      // 2. Check loaded ValueSets (Subset)
+      // 2. Check explicit subsets and load first 100 members
       final Subset subset = searchService.get(id.getIdPart(), Subset.class);
-      if (subset != null && "ValueSet".equals(subset.getCategory())) {
+      if (subset != null) {
         // Fetch members
         final SearchParameters memberParams = new SearchParameters();
-        memberParams.setLimit(1000);
+        memberParams.setLimit(100);
         memberParams.getFilters().put("subset.code", subset.getCode());
         final List<SubsetMember> members =
             searchService.findAll(memberParams, SubsetMember.class).getItems();
-        return ValueSetLoaderUtil.toR4ValueSet(subset, members);
+        final ValueSet valueSet = FhirUtilityR4.toR4ValueSet(subset, members, false);
+        return valueSet;
       }
       throw FhirUtilityR4.exception(
           "Value set not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
@@ -202,128 +205,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       FhirUtilityR4.notSupportedSearchParams(request);
 
-      final List<ValueSet> list = new ArrayList<>();
-      // For now (until we have real value sets)
-      // Look up implicit value sets for code systems
-      for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-        final ValueSet set = getImplicitCodeSystemValueSet(terminology);
-
-        // Skip non-matching
-        if ((id != null && !id.getValue().equals(set.getId()))
-            || (url != null && !url.getValue().equals(set.getUrl()))) {
-          continue;
-        }
-
-        if (date != null && !FhirUtility.compareDate(date, set.getDate())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP date mismatch = {}", set.getDate());
-          }
-          continue;
-        }
-        if (description != null && !FhirUtility.compareString(description, set.getDescription())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP description mismatch = {}", set.getDescription());
-          }
-          continue;
-        }
-        if (name != null && !FhirUtility.compareString(name, set.getName())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP name mismatch = {}", set.getName());
-          }
-          continue;
-        }
-        if (publisher != null && !FhirUtility.compareString(publisher, set.getPublisher())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP publisher mismatch = {}", set.getPublisher());
-          }
-          continue;
-        }
-        if (title != null && !FhirUtility.compareString(title, set.getTitle())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP title mismatch = {}", set.getTitle());
-          }
-          continue;
-        }
-        if (version != null && !FhirUtility.compareString(version, set.getVersion())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP version mismatch = {}", set.getVersion());
-          }
-          continue;
-        }
-
-        if (code != null
-            && TerminologyUtility.getConcept(searchService, terminology, code.getValue()) == null) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP code mismatch = {}",
-                terminology.getAbbreviation() + " " + code.getValue());
-          }
-          continue;
-        }
-
-        list.add(set);
-      }
-
-      // --- Add loaded ValueSets (Subset/SubsetMember) ---
-      // Find all Subset where category = "ValueSet"
-      final SearchParameters subsetParams = new SearchParameters();
-      subsetParams.getFilters().put("category", "ValueSet");
-      final List<Subset> subsets = searchService.findAll(subsetParams, Subset.class).getItems();
-      for (final Subset subset : subsets) {
-        // Fetch SubsetMembers for this subset
-        final SearchParameters memberParams = new SearchParameters();
-        memberParams.getFilters().put("subset.code", subset.getCode());
-        final int pageSize = (count != null) ? count.getValue().intValue() : 10;
-        final int pageOffset = (offset != null) ? offset.getValue().intValue() : 0;
-        memberParams.setLimit(pageSize);
-        memberParams.setOffset(pageOffset);
-        // final List<SubsetMember> members =
-        // searchService.findAll(memberParams, SubsetMember.class).getItems();
-        final ValueSet set =
-            ValueSetLoaderUtil.toR4ValueSet(subset, new ArrayList<SubsetMember>(0));
-        // Apply the same filtering as above
-        if ((id != null && !id.getValue().equals(set.getId()))
-            || (url != null && !url.getValue().equals(set.getUrl()))) {
-          continue;
-        }
-        if (date != null && !FhirUtility.compareDate(date, set.getDate())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP date mismatch = {}", set.getDate());
-          }
-          continue;
-        }
-        if (description != null && !FhirUtility.compareString(description, set.getDescription())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP description mismatch = {}", set.getDescription());
-          }
-          continue;
-        }
-        if (name != null && !FhirUtility.compareString(name, set.getName())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP name mismatch = {}", set.getName());
-          }
-          continue;
-        }
-        if (publisher != null && !FhirUtility.compareString(publisher, set.getPublisher())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP publisher mismatch = {}", set.getPublisher());
-          }
-          continue;
-        }
-        if (title != null && !FhirUtility.compareString(title, set.getTitle())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP title mismatch = {}", set.getTitle());
-          }
-          continue;
-        }
-        if (version != null && !FhirUtility.compareString(version, set.getVersion())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP version mismatch = {}", set.getVersion());
-          }
-          continue;
-        }
-        // No code filter for loaded sets
-        list.add(set);
-      }
+      // Get possible value sets
+      final List<ValueSet> list = findPossibleValueSets(false, id, code, date, description,
+          identifier, name, publisher, title, url, version);
 
       return FhirUtilityR4.makeBundle(request, list, count, offset);
 
@@ -424,9 +308,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
    */
   @Operation(name = JpaConstants.OPERATION_EXPAND, idempotent = true)
   public ValueSet expandInstance(final HttpServletRequest request,
-    final ServletRequestDetails details, @IdParam final IdType id, // @ResourceParam
-    // String
-    // rawBody,
+    final ServletRequestDetails details, @IdParam final IdType id,
     @OperationParam(name = "valueSet", min = 0, max = 1) final ValueSet valueSet,
     @OperationParam(name = "url", min = 0, max = 1, typeName = "uri") final UriType url,
     @OperationParam(name = "valueSetVersion", min = 0, max = 1,
@@ -609,7 +491,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       throw FhirUtilityR4.exception("Missing valueSet parameter", IssueType.INVALID, 400);
     }
     final String subsetId = ValueSetLoaderUtil.loadSubset(searchService,
-        FhirContext.forR4().newJsonParser().encodeResourceToString(valueSet), false);
+        context.newJsonParser().encodeResourceToString(valueSet), false);
     final Parameters out = new Parameters();
     out.addParameter().setName("subsetId").setValue(new StringType(subsetId));
     return out;
@@ -629,7 +511,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       logger.info("Create value set {}", valueSet.getTitle());
 
       final String subsetId = ValueSetLoaderUtil.loadSubset(searchService,
-          FhirContext.forR4().newJsonParser().encodeResourceToString(valueSet), true);
+          context.newJsonParser().encodeResourceToString(valueSet), true);
 
       valueSet.getCompose().getInclude().clear();
       valueSet.getCompose().getExclude().clear();
@@ -678,9 +560,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       // Check if it's an implicit code system ValueSet (these cannot be
       // deleted)
-      final ValueSet implicitSet = getImplicitCodeSystemValueSets().stream()
-          .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
-      if (implicitSet != null) {
+      final ValueSet valueSet =
+          findPossibleValueSets(false, id, null, null).stream().findFirst().orElse(null);
+      if (valueSet != null && valueSet.getId().endsWith("_entire")) {
         throw FhirUtilityR4.exception(
             "Cannot delete implicit value set for code system = " + id.getIdPart(),
             IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
@@ -689,8 +571,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // Check if it's a loaded ValueSet (Subset)
       final Subset subset = searchService.get(id.getIdPart(), Subset.class);
       if (subset == null || !"ValueSet".equals(subset.getCategory())) {
-        throw FhirUtilityR4.exception("Value set not found = " + id.getIdPart(), IssueType.NOTFOUND,
-            HttpServletResponse.SC_NOT_FOUND);
+        throw FhirUtilityR4.exception("Value set not found for id = " + id.getIdPart(),
+            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
 
       TerminologyUtility.removeSubset(searchService, subset.getId());
@@ -703,37 +585,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
       throw FhirUtilityR4.exception("Failed to delete value set: " + e.getMessage(),
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /**
-   * Gets the implicit code system value sets.
-   *
-   * @return the implicit code system value sets
-   * @throws Exception the exception
-   */
-  private List<ValueSet> getImplicitCodeSystemValueSets() throws Exception {
-    final List<ValueSet> list = new ArrayList<>();
-
-    for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-      final CodeSystem cs = FhirUtilityR4.toR4(terminology);
-      final ValueSet set = FhirUtilityR4.toR4ValueSet(cs);
-      list.add(set);
-    }
-
-    return list;
-  }
-
-  /**
-   * Gets the implicit code system value set.
-   *
-   * @param terminology the terminology
-   * @return the implicit code system value set
-   * @throws Exception the exception
-   */
-  private ValueSet getImplicitCodeSystemValueSet(final Terminology terminology) throws Exception {
-
-    return FhirUtilityR4.toR4ValueSet(FhirUtilityR4.toR4(terminology));
-
   }
 
   /**
@@ -754,113 +605,140 @@ public class ValueSetProviderR4 implements IResourceProvider {
     final StringType filter, final int offset, final int count, final boolean activeOnly,
     final Set<String> languages) throws Exception {
     // Look up implicit value sets for code systems
-    for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-      final ValueSet vs = getImplicitCodeSystemValueSet(terminology);
 
-      // Skip non-matching
-      if ((id != null && !id.getIdPart().equals(vs.getId()))
-          || (url != null && !url.getValue().equals(vs.getUrl())
-              && !url.getValue().startsWith(vs.getUrl() + "="))) {
+    final List<ValueSet> valueSets = findPossibleValueSets(true, id, url, version);
 
-        // for SNOMED, check whether the url matches the terminology FHIR
-        // version
-        if ((url == null) || (!url.getValue().equals(terminology.getAttributes().get("fhirVersion"))
-            && !url.getValue().startsWith(terminology.getAttributes().get("fhirVersion") + "="))) {
-          continue;
-        }
-      }
+    // Expect a single value set
+    if (valueSets.isEmpty()) {
+      throw FhirUtilityR4.exception("Failed to find matching value set",
+          OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+    }
+    // TODO: this is possible if there is a value set across multiple terminologies
+    if (valueSets.size() > 1) {
+      throw FhirUtilityR4.exception("Too many matching value sets found",
+          OperationOutcome.IssueType.MULTIPLEMATCHES, HttpServletResponse.SC_EXPECTATION_FAILED);
 
-      if (version != null && !version.getValue().equals(vs.getVersion())) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("  SKIP version mismatch = {}", vs.getVersion());
-        }
-        continue;
-      }
+    }
 
-      // Perform the expansion
-      // "expansion": {
-      // "id": "e604febb-3736-4256-8a11-7bc25261f616",
-      // "timestamp": "2023-12-13T01:30:44+00:00",
-      // "total": 1412,
-      // "offset": 0,
-      // "parameter": [ {
-      // "name": "version",
-      // "valueUri":
-      // "http://snomed.info/sct|http://snomed.info/sct/900000000000207008/version/20231201"
-      // }, {
-      // "name": "displayLanguage",
-      // "valueString": "en-US,en;q=0.9"
-      // } ],
-      // "contains": [ {
-      // "system": "http://snomed.info/sct",
-      // "code": "16224591000119103",
-      // "display": "Allergy to honey bee venom",
-      // "designations": [...]
-      // } ]
-      // }
-      final Query browserQuery = LuceneQueryBuilder.parse(
-          new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
-          Concept.class);
-      final Query expressionQuery =
-          getExpressionQuery(terminology, url == null ? null : url.getValue());
-      final Query booleanQuery = getAndQuery(browserQuery, expressionQuery);
+    final ValueSet vs = valueSets.get(0);
 
-      final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
-      final SearchParameters params = new SearchParameters(booleanQuery, offset, ct, null, null);
-      if (activeOnly) {
-        params.setActive(activeOnly);
-      }
-      final ResultList<Concept> list = searchService.find(params, Concept.class);
-      final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
-      expansion.setId(UUID.randomUUID().toString());
-      expansion.setTimestamp(new Date());
-      expansion.setTotal((int) list.getTotal());
-      expansion.setOffset(offset);
-      // set count
-      expansion.addParameter(new ValueSetExpansionParameterComponent().setName("count")
-          .setValue(new IntegerType(count)));
-      if (version != null) {
-        expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
-            .setValue(new StringType(version.getValue())));
-      }
-      for (final Concept concept : list.getItems()) {
-        final ValueSetExpansionContainsComponent code =
-            new ValueSetExpansionContainsComponent().setSystem(terminology.getUri())
-                .setCode(concept.getCode()).setDisplay(concept.getName());
-        if (languages != null) {
-          // "language": "en",
-          // "use": {
-          // "system":
-          // "http://terminology.hl7.org/CodeSystem/designation-usage",
-          // "code": "display"
-          // },
-          // "value": "Chronic nontraumatic intracranial subdural hematoma"
-          for (final Term term : concept.getTerms()) {
+    // Perform the expansion
+    // "expansion": {
+    // "id": "e604febb-3736-4256-8a11-7bc25261f616",
+    // "timestamp": "2023-12-13T01:30:44+00:00",
+    // "total": 1412,
+    // "offset": 0,
+    // "parameter": [ {
+    // "name": "version",
+    // "valueUri":
+    // "http://snomed.info/sct|http://snomed.info/sct/900000000000207008/version/20231201"
+    // }, {
+    // "name": "displayLanguage",
+    // "valueString": "en-US,en;q=0.9"
+    // } ],
+    // "contains": [ {
+    // "system": "http://snomed.info/sct",
+    // "code": "16224591000119103",
+    // "display": "Allergy to honey bee venom",
+    // "designations": [...]
+    // } ]
+    // }
 
-            if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
+    // If terminology-based, set a terminology query (only things we create have ids ending in
+    // "_entire"
+    final boolean terminologyFlag = vs.getId().endsWith("_entire");
+    final String fromTerminology = vs.getMeta().getTag().stream()
+        .filter(c -> c.getSystem().equals("fromTerminology")).findFirst().get().getCode();
+    final String fromPublisher = vs.getMeta().getTag().stream()
+        .filter(c -> c.getSystem().equals("fromPublisher")).findFirst().get().getCode();
+    final String fromVersion = vs.getMeta().getTag().stream()
+        .filter(c -> c.getSystem().equals("fromVersion")).findFirst().get().getCode();
+    final Terminology terminology = TerminologyUtility.getTerminology(searchService,
+        fromTerminology, fromPublisher, fromVersion);
 
-              final Map<String, String> displayMap =
-                  FhirUtility.getDisplayMap(searchService, terminology);
-              final Coding coding = new Coding();
-              if (displayMap.containsKey(term.getType())) {
-                coding.setCode(term.getType());
-                coding.setDisplay(displayMap.get(term.getType()));
-              } else {
-                coding.setCode(term.getType());
-              }
-              code.addDesignation(new ConceptReferenceDesignationComponent()
-                  .setLanguage(
-                      Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
-                  .setUse(coding).setValue(term.getName()));
+    // Use meta flags to get the terminology of the concepts
+    final Query terminologyQuery = LuceneQueryBuilder.parse(
+        TerminologyUtility.getTerminologyQuery(fromTerminology, fromPublisher, fromVersion),
+        Concept.class);
+
+    final Query subsetQuery =
+        !terminologyFlag ? LuceneQueryBuilder.parse(
+            StringUtility.composeQuery("OR",
+                searchService
+                    .find(
+                        new SearchParameters(TerminologyUtility.getTerminologyQuery(fromTerminology,
+                            fromPublisher, fromVersion), 0, 1000000, null, null),
+                        SubsetMember.class)
+                    .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
+                    .toList()),
+            Concept.class) : null;
+    final Query filterQuery = LuceneQueryBuilder.parse(
+        new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
+        Concept.class);
+    final Query expressionQuery = getExpressionQuery(url == null ? null : url.getValue());
+    logger.info("XXX1 tq = " + terminologyQuery);
+    logger.info("XXX1 sq = " + subsetQuery);
+    logger.info("XXX1 bq = " + filterQuery);
+    logger.info("XXX1 eq = " + expressionQuery);
+    final Query booleanQuery =
+        getAndQuery(terminologyQuery, subsetQuery, filterQuery, expressionQuery);
+    final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
+    final SearchParameters params = new SearchParameters(booleanQuery, offset, ct, null, null);
+    if (activeOnly) {
+      params.setActive(activeOnly);
+    }
+    final ResultList<Concept> list = searchService.find(params, Concept.class);
+    final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
+    expansion.setId(UUID.randomUUID().toString());
+    expansion.setTimestamp(new Date());
+    expansion.setTotal((int) list.getTotal());
+    expansion.setOffset(offset);
+    // set count
+    expansion.addParameter(
+        new ValueSetExpansionParameterComponent().setName("count").setValue(new IntegerType(ct)));
+    if (version != null) {
+      expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
+          .setValue(new StringType(version.getValue())));
+    }
+    for (final Concept concept : list.getItems()) {
+      final ValueSetExpansionContainsComponent code = new ValueSetExpansionContainsComponent()
+          .setSystem(terminology.getUri()).setCode(concept.getCode()).setDisplay(concept.getName());
+      if (languages != null) {
+        // "language": "en",
+        // "use": {
+        // "system":
+        // "http://terminology.hl7.org/CodeSystem/designation-usage",
+        // "code": "display"
+        // },
+        // "value": "Chronic nontraumatic intracranial subdural hematoma"
+        for (final Term term : concept.getTerms()) {
+
+          if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
+
+            final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService,
+                concept.getTerminology(), concept.getPublisher(), concept.getVersion());
+            final Coding coding = new Coding();
+            if (displayMap.containsKey(term.getType())) {
+              coding.setCode(term.getType());
+              coding.setDisplay(displayMap.get(term.getType()));
+            } else {
+              coding.setCode(term.getType());
             }
+            code.addDesignation(new ConceptReferenceDesignationComponent()
+                .setLanguage(
+                    Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
+                .setUse(coding).setValue(term.getName()));
           }
         }
-        expansion.addContains(code);
       }
-      vs.setExpansion(expansion);
-      return vs;
+      expansion.addContains(code);
     }
-    return null;
+    vs.setExpansion(expansion);
+
+    // Clear meta
+    vs.setMeta(null);
+
+    return vs;
   }
 
   /**
@@ -878,7 +756,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
     final StringType version, final String code, final StringType display) throws Exception {
     // Look up implicit value sets for code systems
     for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-      final ValueSet vs = getImplicitCodeSystemValueSet(terminology);
+      final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, false);
 
       // Skip non-matching
       if ((id != null && !id.getIdPart().equals(vs.getId()))
@@ -912,7 +790,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // display 'abc' did not match any designations."
       final Query codeQuery = LuceneQueryBuilder
           .parse("code:\"" + StringUtility.escapeQuery(code) + "\"", Concept.class);
-      final Query expression = getExpressionQuery(terminology, vs.getUrl());
+      final Query expression = getExpressionQuery(vs.getUrl());
       final Query booleanQuery = getAndQuery(codeQuery, expression);
       final List<Concept> list = searchService.findAll(null, booleanQuery, Concept.class);
       final Parameters parameters = new Parameters();
@@ -947,13 +825,11 @@ public class ValueSetProviderR4 implements IResourceProvider {
   /**
    * Gets the expression.
    *
-   * @param terminology the terminology
    * @param url the url
    * @return the expression
    * @throws Exception the exception
    */
-  private Query getExpressionQuery(final Terminology terminology, final String url)
-    throws Exception {
+  private Query getExpressionQuery(final String url) throws Exception {
     final String part = url.replaceFirst(".*fhir_vs", "");
     String expression = null;
     if (part.startsWith("=")) {
@@ -989,4 +865,171 @@ public class ValueSetProviderR4 implements IResourceProvider {
   public Class<ValueSet> getResourceType() {
     return ValueSet.class;
   }
+
+  /**
+   * Find possible value sets.
+   *
+   * @param metaFlag the meta flag
+   * @param id the id
+   * @param url the url
+   * @param version the version
+   * @return the list
+   * @throws Exception the exception
+   */
+  public List<ValueSet> findPossibleValueSets(final boolean metaFlag, final IdType id,
+    final UriType url, final StringType version) throws Exception {
+    final TokenParam idParam = id == null ? null : new TokenParam(id.getValue());
+    final UriParam urlParam = url == null ? null : new UriParam(url.getValue());
+    final StringParam versionParam = version == null ? null : new StringParam(version.getValue());
+    return findPossibleValueSets(metaFlag, idParam, null, null, null, null, null, null, null,
+        urlParam, versionParam);
+  }
+
+  /**
+   * Find possible value sets.
+   *
+   * @param metaFlag the meta flag
+   * @param id the id
+   * @param code the code
+   * @param date the date
+   * @param description the description
+   * @param identifier the identifier
+   * @param name the name
+   * @param publisher the publisher
+   * @param title the title
+   * @param url the url
+   * @param version the version
+   * @return the list
+   * @throws Exception the exception
+   */
+  public List<ValueSet> findPossibleValueSets(final boolean metaFlag, final TokenParam id,
+    final TokenParam code, final DateRangeParam date, final StringParam description,
+    final TokenParam identifier, final StringParam name, final StringParam publisher,
+    final StringParam title, final UriParam url, final StringParam version) throws Exception {
+
+    final List<ValueSet> list = new ArrayList<>();
+    // For now (until we have real value sets)
+    // Look up implicit value sets for code systems
+    for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
+      final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, metaFlag);
+
+      // Skip non-matching
+      if ((id != null && !id.getValue().equals(vs.getId()))
+          || (url != null && !url.getValue().equals(vs.getUrl()))) {
+        continue;
+      }
+
+      if (date != null && !FhirUtility.compareDate(date, vs.getDate())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP date mismatch = {}", vs.getDate());
+        }
+        continue;
+      }
+      if (description != null && !FhirUtility.compareString(description, vs.getDescription())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP description mismatch = {}", vs.getDescription());
+        }
+        continue;
+      }
+      if (name != null && !FhirUtility.compareString(name, vs.getName())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP name mismatch = {}", vs.getName());
+        }
+        continue;
+      }
+      if (publisher != null && !FhirUtility.compareString(publisher, vs.getPublisher())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP publisher mismatch = {}", vs.getPublisher());
+        }
+        continue;
+      }
+      if (title != null && !FhirUtility.compareString(title, vs.getTitle())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP title mismatch = {}", vs.getTitle());
+        }
+        continue;
+      }
+      if (version != null && !FhirUtility.compareString(version, vs.getVersion())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP version mismatch = {}", vs.getVersion());
+        }
+        continue;
+      }
+
+      if (code != null
+          && TerminologyUtility.getConcept(searchService, terminology, code.getValue()) == null) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP code mismatch = {}",
+              terminology.getAbbreviation() + " " + code.getValue());
+        }
+        continue;
+      }
+
+      list.add(vs);
+    }
+
+    // --- Add loaded ValueSets (Subset/SubsetMember) ---
+    // Find all Subset where category = "ValueSet"
+    final SearchParameters subsetParams = new SearchParameters();
+    subsetParams.getFilters().put("category", "ValueSet");
+    final List<Subset> subsets = searchService.findAll(subsetParams, Subset.class).getItems();
+    for (final Subset subset : subsets) {
+      // Fetch SubsetMembers for this subset
+      final SearchParameters memberParams = new SearchParameters();
+      memberParams.getFilters().put("subset.code", subset.getCode());
+      memberParams.setLimit(1000000);
+      memberParams.setOffset(0);
+      // final List<SubsetMember> members =
+      // searchService.findAll(memberParams, SubsetMember.class).getItems();
+      final ValueSet set =
+          FhirUtilityR4.toR4ValueSet(subset, new ArrayList<SubsetMember>(0), metaFlag);
+      // Apply the same filtering as above
+      if ((id != null && !id.getValue().equals(set.getId()))
+          || (url != null && !url.getValue().equals(set.getUrl()))) {
+        continue;
+      }
+      if (date != null && !FhirUtility.compareDate(date, set.getDate())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP date mismatch = {}", set.getDate());
+        }
+        continue;
+      }
+      if (description != null && !FhirUtility.compareString(description, set.getDescription())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP description mismatch = {}", set.getDescription());
+        }
+        continue;
+      }
+      if (name != null && !FhirUtility.compareString(name, set.getName())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP name mismatch = {}", set.getName());
+        }
+        continue;
+      }
+      if (publisher != null && !FhirUtility.compareString(publisher, set.getPublisher())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP publisher mismatch = {}", set.getPublisher());
+        }
+        continue;
+      }
+      if (title != null && !FhirUtility.compareString(title, set.getTitle())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP title mismatch = {}", set.getTitle());
+        }
+        continue;
+      }
+      if (version != null && !FhirUtility.compareString(version, set.getVersion())) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  SKIP version mismatch = {}", set.getVersion());
+        }
+        continue;
+      }
+      // No code filter for loaded sets
+      list.add(set);
+    }
+
+    return list;
+
+  }
+
 }

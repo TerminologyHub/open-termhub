@@ -14,11 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.r5.model.Enumerations;
-import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
-import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
-import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +37,12 @@ public final class ValueSetLoaderUtil {
   /** The Constant logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetLoaderUtil.class);
 
+  /** The Constant contextR4. */
+  private static final FhirContext contextR4 = FhirContext.forR4();
+
+  /** The Constant contextR5. */
+  private static final FhirContext contextR5 = FhirContext.forR5();
+
   /**
    * Instantiates a new subset loader util.
    */
@@ -63,12 +64,12 @@ public final class ValueSetLoaderUtil {
     LOGGER.info("Loading Subset from JSON, isR5={}", isR5);
 
     if (!isR5) {
-      final IParser parser = FhirContext.forR4().newJsonParser();
+      final IParser parser = contextR4.newJsonParser();
       final org.hl7.fhir.r4.model.ValueSet vs =
           parser.parseResource(org.hl7.fhir.r4.model.ValueSet.class, json);
       return indexValueSetR4(service, vs);
     }
-    final IParser parser = FhirContext.forR5().newJsonParser();
+    final IParser parser = contextR5.newJsonParser();
     final org.hl7.fhir.r5.model.ValueSet vs =
         parser.parseResource(org.hl7.fhir.r5.model.ValueSet.class, json);
     return indexValueSetR5(service, vs);
@@ -86,6 +87,7 @@ public final class ValueSetLoaderUtil {
     final org.hl7.fhir.r4.model.ValueSet valueSet) throws Exception {
 
     LOGGER.info("Indexing ValueSet R4: {}", valueSet.getTitle());
+    final long startTime = System.currentTimeMillis();
 
     try {
 
@@ -103,6 +105,7 @@ public final class ValueSetLoaderUtil {
         id = java.util.UUID.randomUUID().toString();
       }
       subset.setId(id);
+      subset.setUri(valueSet.getUrl());
 
       // Use the identifier as the code, otherwise use the id
       // NOTE: termhub generated files will have a single id
@@ -114,6 +117,10 @@ public final class ValueSetLoaderUtil {
       }
       if (StringUtility.isEmpty(subset.getCode())) {
         subset.setCode(subset.getId());
+      }
+
+      if (valueSet.hasDate()) {
+        subset.setReleaseDate(DateUtility.DATE_YYYY_MM_DD_DASH.format(valueSet.getDate()));
       }
 
       subset.setDescription(valueSet.getDescription());
@@ -139,22 +146,6 @@ public final class ValueSetLoaderUtil {
         }
       }
 
-      // Store url and date in attributes if present
-      if (valueSet.hasUrl() && valueSet.getUrl() != null && !valueSet.getUrl().isEmpty()) {
-        if (subset.getAttributes() == null) {
-          subset.setAttributes(new java.util.HashMap<>());
-        }
-        subset.getAttributes().put(Subset.Attributes.fhirUrl.name(), valueSet.getUrl());
-      }
-      if (valueSet.hasDate() && valueSet.getDate() != null) {
-        final String dateStr = valueSet.getDateElement().asStringValue();
-        if (dateStr != null && !dateStr.isEmpty()) {
-          if (subset.getAttributes() == null) {
-            subset.setAttributes(new java.util.HashMap<>());
-          }
-          subset.getAttributes().put(Subset.Attributes.fhirDate.name(), dateStr);
-        }
-      }
       // Store experimental and identifier in attributes if present
       if (valueSet.hasExperimental()) {
         if (subset.getAttributes() == null) {
@@ -163,23 +154,9 @@ public final class ValueSetLoaderUtil {
         subset.getAttributes().put(Subset.Attributes.fhirExperimental.name(),
             Boolean.toString(valueSet.getExperimental()));
       }
-      if (valueSet.hasIdentifier() && valueSet.getIdentifier() != null
-          && !valueSet.getIdentifier().isEmpty()) {
-        if (subset.getAttributes() == null) {
-          subset.setAttributes(new java.util.HashMap<>());
-        }
-        // Store only the first identifier value for simplicity
-        final String identifierValue = valueSet.getIdentifierFirstRep().getValue();
-        if (identifierValue != null && !identifierValue.isEmpty()) {
-          subset.getAttributes().put(Subset.Attributes.fhirIdentifier.name(), identifierValue);
-        }
-      }
 
-      subset.setCategory("ValueSet");
+      // subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
-
-      LOGGER.info("VALUE SET LOADED: {}", subset);
-      LOGGER.info("LOADING SUBSET MEMBERS");
 
       final SubsetRef subsetRef = new SubsetRef(subset.getCode(), subset.getAbbreviation(),
           subset.getPublisher(), subset.getVersion());
@@ -187,20 +164,21 @@ public final class ValueSetLoaderUtil {
       subsetRef.setCode(subset.getCode());
       // Compose.include
       if (valueSet.hasCompose()) {
-        for (final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent inc : valueSet.getCompose()
-            .getInclude()) {
+        for (final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent includes : valueSet
+            .getCompose().getInclude()) {
 
-          if (inc.getSystem() == null) {
+          if (includes.getSystem() == null) {
             throw new Exception("Unable to determine system of value set");
           }
 
-          final TerminologyRef ref = TerminologyUtility.getTerminology(service, inc.getSystem());
+          final TerminologyRef ref =
+              TerminologyUtility.getTerminology(service, includes.getSystem());
 
-          for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : inc
+          for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
 
             if (c.getCode() == null) {
-              LOGGER.warn("Value set includes component reference without a code = " + c);
+              LOGGER.warn("    Value set includes component reference without a code = " + c);
               continue;
             }
 
@@ -229,11 +207,11 @@ public final class ValueSetLoaderUtil {
             .getExpansion().getContains()) {
 
           if (c.getSystem() == null) {
-            LOGGER.warn("Value set includes expansion entry without a system = " + c);
+            LOGGER.warn("    Value set includes expansion entry without a system = " + c);
             continue;
           }
           if (c.getCode() == null) {
-            LOGGER.warn("Value set includes expansion entry without a code = " + c);
+            LOGGER.warn("    Value set includes expansion entry without a code = " + c);
             continue;
           }
 
@@ -255,11 +233,15 @@ public final class ValueSetLoaderUtil {
               existingConcept == null ? "Unable to determine name" : existingConcept.getName());
           m.setSubset(subsetRef);
           members.add(m);
+
         }
       }
       if (!members.isEmpty()) {
         service.addBulk(SubsetMember.class, new ArrayList<>(members));
       }
+
+      LOGGER.info("  member count: {}", members.size());
+      LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       return subset.getId();
     } catch (final Exception e) {
@@ -279,9 +261,11 @@ public final class ValueSetLoaderUtil {
   private static String indexValueSetR5(final EntityRepositoryService service,
     final org.hl7.fhir.r5.model.ValueSet valueSet) throws Exception {
 
-    LOGGER.info("Indexing ValueSet R4: {}", valueSet.getTitle());
+    LOGGER.info("Indexing ValueSet R5: {}", valueSet.getTitle());
+    final long startTime = System.currentTimeMillis();
 
     try {
+
       // throw exception if this value set was already loaded
       if (doesValueSetExist(service, valueSet.getTitle(), valueSet.getVersion(),
           valueSet.getPublisher())) {
@@ -296,6 +280,8 @@ public final class ValueSetLoaderUtil {
         id = java.util.UUID.randomUUID().toString();
       }
       subset.setId(id);
+      subset.setUri(valueSet.getUrl());
+
       // Use the identifier as the code, otherwise use the id
       // NOTE: termhub generated files will have a single id
       // with a system matching this value.
@@ -308,50 +294,33 @@ public final class ValueSetLoaderUtil {
         subset.setCode(subset.getId());
       }
 
+      if (valueSet.hasDate()) {
+        subset.setReleaseDate(DateUtility.DATE_YYYY_MM_DD_DASH.format(valueSet.getDate()));
+      }
+
       subset.setDescription(valueSet.getDescription());
       subset.setName(valueSet.getName());
       subset.setLoaded(true);
-      // Set abbreviation from title if present, otherwise leave null
-      if (valueSet.hasTitle() && valueSet.getTitle() != null && !valueSet.getTitle().isEmpty()) {
-        subset.setAbbreviation(valueSet.getTitle());
-      }
-      // Set fromPublisher from publisher
-      if (valueSet.hasPublisher() && valueSet.getPublisher() != null
-          && !valueSet.getPublisher().isEmpty()) {
-        subset.setFromPublisher(valueSet.getPublisher());
-        subset.setPublisher(valueSet.getPublisher());
-      }
-      // Set fromVersion from version
-      if (valueSet.hasVersion() && valueSet.getVersion() != null
-          && !valueSet.getVersion().isEmpty()) {
-        subset.setFromVersion(valueSet.getVersion());
-        subset.setVersion(valueSet.getVersion());
-      }
+
+      subset.setAbbreviation(valueSet.getTitle());
+      subset.setPublisher(valueSet.getPublisher());
+      subset.setVersion(valueSet.getVersion());
+
       // Set fromTerminology from first compose.include.system if present
       if (valueSet.hasCompose() && valueSet.getCompose().hasInclude()
           && !valueSet.getCompose().getInclude().isEmpty()) {
-        final org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent inc =
+        final org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent include =
             valueSet.getCompose().getIncludeFirstRep();
-        if (inc.hasSystem() && inc.getSystem() != null && !inc.getSystem().isEmpty()) {
-          subset.setFromTerminology(inc.getSystem());
+        if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
+
+          final TerminologyRef fromRef =
+              TerminologyUtility.getTerminology(service, include.getSystem());
+          subset.setFromTerminology(fromRef.getAbbreviation());
+          subset.setFromPublisher(fromRef.getPublisher());
+          subset.setFromVersion(fromRef.getVersion());
         }
       }
-      // Store url and date in attributes if present
-      if (valueSet.hasUrl() && valueSet.getUrl() != null && !valueSet.getUrl().isEmpty()) {
-        if (subset.getAttributes() == null) {
-          subset.setAttributes(new java.util.HashMap<>());
-        }
-        subset.getAttributes().put(Subset.Attributes.fhirUrl.name(), valueSet.getUrl());
-      }
-      if (valueSet.hasDate() && valueSet.getDate() != null) {
-        final String dateStr = valueSet.getDateElement().asStringValue();
-        if (dateStr != null && !dateStr.isEmpty()) {
-          if (subset.getAttributes() == null) {
-            subset.setAttributes(new java.util.HashMap<>());
-          }
-          subset.getAttributes().put(Subset.Attributes.fhirDate.name(), dateStr);
-        }
-      }
+
       // Store experimental and identifier in attributes if present
       if (valueSet.hasExperimental()) {
         if (subset.getAttributes() == null) {
@@ -360,43 +329,31 @@ public final class ValueSetLoaderUtil {
         subset.getAttributes().put(Subset.Attributes.fhirExperimental.name(),
             Boolean.toString(valueSet.getExperimental()));
       }
-      if (valueSet.hasIdentifier() && valueSet.getIdentifier() != null
-          && !valueSet.getIdentifier().isEmpty()) {
-        if (subset.getAttributes() == null) {
-          subset.setAttributes(new java.util.HashMap<>());
-        }
-        // Store only the first identifier value for simplicity
-        final String identifierValue = valueSet.getIdentifierFirstRep().getValue();
-        if (identifierValue != null && !identifierValue.isEmpty()) {
-          subset.getAttributes().put(Subset.Attributes.fhirIdentifier.name(), identifierValue);
-        }
-      }
-      subset.setCategory("ValueSet");
-      service.add(Subset.class, subset);
 
-      LOGGER.info("VALUE SET LOADED: {}", subset);
-      LOGGER.info("LOADING SUBSET MEMBERS");
+      // subset.setCategory("ValueSet");
+      service.add(Subset.class, subset);
 
       final SubsetRef subsetRef = new SubsetRef(subset.getCode(), subset.getAbbreviation(),
           subset.getPublisher(), subset.getVersion());
-
       final List<SubsetMember> members = new ArrayList<>();
       subsetRef.setCode(subset.getCode());
       // Compose.include
       if (valueSet.hasCompose()) {
-        for (final org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent inc : valueSet.getCompose()
-            .getInclude()) {
+        for (final org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent includes : valueSet
+            .getCompose().getInclude()) {
 
-          if (inc.getSystem() == null) {
+          if (includes.getSystem() == null) {
             throw new Exception("Unable to determine system of value set");
           }
 
-          final TerminologyRef ref = TerminologyUtility.getTerminology(service, inc.getSystem());
+          final TerminologyRef ref =
+              TerminologyUtility.getTerminology(service, includes.getSystem());
 
-          for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : inc
+          for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
+
             if (c.getCode() == null) {
-              LOGGER.warn("Value set includes component reference without a code = " + c);
+              LOGGER.warn("    Value set includes component reference without a code = " + c);
               continue;
             }
 
@@ -425,11 +382,11 @@ public final class ValueSetLoaderUtil {
             .getExpansion().getContains()) {
 
           if (c.getSystem() == null) {
-            LOGGER.warn("Value set includes expansion entry without a system = " + c);
+            LOGGER.warn("    Value set includes expansion entry without a system = " + c);
             continue;
           }
           if (c.getCode() == null) {
-            LOGGER.warn("Value set includes expansion entry without a code = " + c);
+            LOGGER.warn("    Value set includes expansion entry without a code = " + c);
             continue;
           }
 
@@ -451,11 +408,15 @@ public final class ValueSetLoaderUtil {
               existingConcept == null ? "Unable to determine name" : existingConcept.getName());
           m.setSubset(subsetRef);
           members.add(m);
+
         }
       }
       if (!members.isEmpty()) {
         service.addBulk(SubsetMember.class, new ArrayList<>(members));
       }
+
+      LOGGER.info("  member count: {}", members.size());
+      LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       return subset.getId();
     } catch (final Exception e) {
@@ -463,167 +424,6 @@ public final class ValueSetLoaderUtil {
       throw e;
     }
 
-  }
-
-  /**
-   * Converts a Subset and its SubsetMembers to a FHIR R5 ValueSet.
-   * @param subset the Subset
-   * @param members the SubsetMembers
-   * @return the FHIR R5 ValueSet
-   */
-  public static ValueSet toR5ValueSet(final Subset subset, final List<SubsetMember> members) {
-
-    final ValueSet valueSet = new ValueSet();
-    final String id = subset.getId() != null ? subset.getId() : subset.getCode();
-    valueSet.setId(id);
-    valueSet.setName(subset.getName());
-    // Set title from abbreviation if present, else fallback to name
-    if (subset.getAbbreviation() != null && !subset.getAbbreviation().isEmpty()) {
-      valueSet.setTitle(subset.getAbbreviation());
-    } else {
-      valueSet.setTitle(subset.getName());
-    }
-    valueSet.setDescription(subset.getDescription());
-    valueSet.setVersion(subset.getFromVersion());
-    valueSet.setStatus(Enumerations.PublicationStatus.ACTIVE);
-    valueSet.setPublisher(subset.getFromPublisher());
-    // Set url from attributes if present, else fallback
-    final String url = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirUrl.name()) : null;
-    if (url != null && !url.isEmpty()) {
-      valueSet.setUrl(url);
-    }
-    // Set date from attributes if present, else fallback
-    final String dateStr = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirDate.name()) : null;
-    if (dateStr != null && !dateStr.isEmpty()) {
-      try {
-        valueSet.setDate(new org.hl7.fhir.r5.model.DateTimeType(dateStr).getValue());
-      } catch (final Exception e) {
-        valueSet.setDate(new java.util.Date());
-      }
-    } else {
-      valueSet.setDate(new java.util.Date());
-    }
-    // Set experimental from attributes if present, else fallback
-    final String experimentalStr = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirExperimental.name()) : null;
-    if (experimentalStr != null) {
-      valueSet.setExperimental(Boolean.parseBoolean(experimentalStr));
-    }
-    // Set identifier from attributes if present, else fallback
-    final String identifierValue = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirIdentifier.name()) : null;
-    if (identifierValue != null && !identifierValue.isEmpty()) {
-      valueSet.addIdentifier().setValue(identifierValue);
-    }
-    // Compose/include
-    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
-    final ConceptSetComponent include = new ConceptSetComponent();
-    // Use terminology as system if available
-    if (subset.getTerminology() != null) {
-      include.setSystem(subset.getTerminology());
-    }
-    for (final SubsetMember member : members) {
-      if (member.getCode() == null || (member.getCodeActive() != null && !member.getCodeActive())) {
-        continue;
-      }
-      final ConceptReferenceComponent concept = new ConceptReferenceComponent();
-      concept.setCode(member.getCode());
-      if (member.getName() != null) {
-        concept.setDisplay(member.getName());
-      }
-      include.addConcept(concept);
-    }
-    if (!include.getConcept().isEmpty()) {
-      compose.addInclude(include);
-      valueSet.setCompose(compose);
-    }
-    return valueSet;
-  }
-
-  /**
-   * Converts a Subset and its SubsetMembers to a FHIR R4 ValueSet.
-   * @param subset the Subset
-   * @param members the SubsetMembers
-   * @return the FHIR R4 ValueSet
-   */
-  public static org.hl7.fhir.r4.model.ValueSet toR4ValueSet(final Subset subset,
-    final List<SubsetMember> members) {
-
-    final org.hl7.fhir.r4.model.ValueSet valueSet = new org.hl7.fhir.r4.model.ValueSet();
-    final String id = subset.getId() != null ? subset.getId() : subset.getCode();
-    valueSet.setId(id);
-    valueSet.setName(subset.getName());
-    // Set title from abbreviation if present, else fallback to name
-    if (subset.getAbbreviation() != null && !subset.getAbbreviation().isEmpty()) {
-      valueSet.setTitle(subset.getAbbreviation());
-    } else {
-      valueSet.setTitle(subset.getName());
-    }
-    valueSet.setDescription(subset.getDescription());
-    valueSet.setVersion(subset.getFromVersion());
-    valueSet.setStatus(org.hl7.fhir.r4.model.Enumerations.PublicationStatus.ACTIVE);
-
-    valueSet.setPublisher(subset.getFromPublisher());
-    // Set url from attributes if present, else fallback
-    final String url = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirUrl.name()) : null;
-    if (url != null && !url.isEmpty()) {
-      valueSet.setUrl(url);
-    }
-    // Set date from attributes if present, else fallback
-    final String dateStr = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirDate.name()) : null;
-    if (dateStr != null && !dateStr.isEmpty()) {
-      try {
-        valueSet.setDate(new org.hl7.fhir.r4.model.DateTimeType(dateStr).getValue());
-      } catch (final Exception e) {
-        valueSet.setDate(new java.util.Date());
-      }
-    } else {
-      valueSet.setDate(new java.util.Date());
-    }
-
-    // Set experimental from attributes if present, else fallback
-    final String experimentalStr = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirExperimental.name()) : null;
-    if (experimentalStr != null) {
-      valueSet.setExperimental(Boolean.parseBoolean(experimentalStr));
-    }
-    // Set identifier from attributes if present, else fallback
-    final String identifierValue = subset.getAttributes() != null
-        ? subset.getAttributes().get(Subset.Attributes.fhirIdentifier.name()) : null;
-    if (identifierValue != null && !identifierValue.isEmpty()) {
-      valueSet.addIdentifier().setValue(identifierValue);
-    }
-    // Compose/include
-    final org.hl7.fhir.r4.model.ValueSet.ValueSetComposeComponent compose =
-        new org.hl7.fhir.r4.model.ValueSet.ValueSetComposeComponent();
-    final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent include =
-        new org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent();
-
-    // Use terminology as system if available
-    if (subset.getTerminology() != null) {
-      include.setSystem(subset.getTerminology());
-    }
-    for (final SubsetMember member : members) {
-      if (member.getCode() == null || (member.getCodeActive() != null && !member.getCodeActive())) {
-        continue;
-      }
-      final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent concept =
-          new org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent();
-      concept.setCode(member.getCode());
-      if (member.getName() != null) {
-        concept.setDisplay(member.getName());
-      }
-      include.addConcept(concept);
-    }
-    if (!include.getConcept().isEmpty()) {
-      compose.addInclude(include);
-      valueSet.setCompose(compose);
-    }
-    return valueSet;
   }
 
   /**

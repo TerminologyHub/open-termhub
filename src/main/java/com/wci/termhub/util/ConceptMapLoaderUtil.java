@@ -92,10 +92,8 @@ public final class ConceptMapLoaderUtil {
 
       mapset = createMapset(service, root);
 
-      final int mapsetCount = 0;
-      final int mappingCount = 0;
+      int mappingCount = 0;
 
-      int ct = 0;
       // process concept map array
       final JsonNode groupArray = root.path("group");
       for (final JsonNode groupNode : groupArray) {
@@ -180,8 +178,8 @@ public final class ConceptMapLoaderUtil {
 
             // Save mapping
             service.add(Mapping.class, mapping);
-            if (++ct % 5000 == 0) {
-              LOGGER.info("  count: {}", ct);
+            if (++mappingCount % 5000 == 0) {
+              LOGGER.info("  count: {}", mappingCount);
             }
             // Too much info
             if (LOGGER.isDebugEnabled()) {
@@ -191,7 +189,7 @@ public final class ConceptMapLoaderUtil {
         }
       }
 
-      LOGGER.info("  final counts - mapsets: {}, mappings: {}", mapsetCount, mappingCount);
+      LOGGER.info("  final counts - mapsets: {}, mappings: {}", 1, mappingCount);
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       return mapset;
@@ -265,6 +263,8 @@ public final class ConceptMapLoaderUtil {
     String fromTerminology = null;
     if (root.has("sourceScopeUri")) {
       fromTerminology = root.path("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
+    } else if (root.has("sourceUri")) {
+      fromTerminology = root.path("sourceUri").asText();
     } else if (root.has("group") && (root.get("group").isArray())) {
       fromTerminology = root.path("group").get(0).path("source").asText();
     }
@@ -275,10 +275,13 @@ public final class ConceptMapLoaderUtil {
     mapset.setFromTerminology(fromRef.getAbbreviation());
     mapset.setFromPublisher(fromRef.getPublisher());
     mapset.setFromVersion(fromRef.getVersion());
+    mapset.getAttributes().put("fhirSourceUri", fromRef.getUri());
 
     String toTerminology = null;
     if (root.has("targetScopeUri")) {
       toTerminology = root.path("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
+    } else if (root.has("targetUri")) {
+      fromTerminology = root.path("targetUri").asText();
     } else if (root.has("group") && (root.get("group").isArray())) {
       toTerminology = root.path("group").get(0).path("target").asText();
     }
@@ -289,6 +292,7 @@ public final class ConceptMapLoaderUtil {
     mapset.setToTerminology(toRef.getAbbreviation());
     mapset.setToPublisher(toRef.getPublisher());
     mapset.setToVersion(toRef.getVersion());
+    mapset.getAttributes().put("fhirTargetUri", toRef.getUri());
 
     // Use the identifier as the code, otherwise use the id
     // NOTE: termhub generated files will have a single id
@@ -303,8 +307,6 @@ public final class ConceptMapLoaderUtil {
 
     // Store the original URIs in attributes
     mapset.setUri(root.path("url").asText());
-    mapset.getAttributes().put("sourceScopeUri", fromTerminology);
-    mapset.getAttributes().put("targetScopeUri", toTerminology);
 
     // LOGGER.info(" terminology URIs: source={}, target={}", mapset.getFromTerminology(),
     // mapset.getToTerminology());

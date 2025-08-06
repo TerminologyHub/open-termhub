@@ -1339,4 +1339,5 @@ public final class TerminologyUtility {
     }
     searchService.remove(id, Subset.class);
   }
+
 }

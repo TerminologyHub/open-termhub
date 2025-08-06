@@ -18,6 +18,7 @@ One option is to just build the code and run the server locally and use an INDEX
 ```
 # On Windows use export INDEX_DIR=c:/temp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
+export ENABLE_POST_LOAD_COMPUTATIONS=true
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run
 ```
@@ -32,6 +33,7 @@ export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 make docker
 docker run -d --rm --name open-termhub \
+  -e ENABLE_POST_LOAD_COMPUTATIONS=true \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
@@ -44,6 +46,7 @@ The final option is to run the latest published public docker image as a contain
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
+  -e ENABLE_POST_LOAD_COMPUTATIONS=true \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
@@ -148,6 +151,8 @@ curl "http://localhost:8080/terminology/$id/metadata" | jq
 
 # Get a SNOMEDCT concept by code
 curl "http://localhost:8080/concept/SNOMEDCT_US/107907001" | jq
+curl "http://localhost:8080/concept/SNOMEDCT_US/107907001/relationships" | jq
+curl "http://localhost:8080/concept/SNOMEDCT_US/107907001/trees" | jq
 
 # Perform a SNOMEDCT search with a word query
 curl "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal" | jq
@@ -177,7 +182,7 @@ curl "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:3
 # Find subsets (e.g. value sets)
 curl "http://localhost:8080/subset" | jq
 
-# Find members across all subsets - XXX
+# Find members across all subsets
 curl "http://localhost:8080/member" | jq
 
 # Find subset members
@@ -211,6 +216,7 @@ curl 'http://localhost:8080/fhir/r4/ValueSet' | jq
 
 # Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
 curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs' | jq
+curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
 
 # Perform an $expand operation on an explicit value set
 curl 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108' | jq

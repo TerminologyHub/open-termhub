@@ -672,6 +672,38 @@ public final class FhirUtility {
   }
 
   /**
+   * Gets the display map.
+   *
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
+   * @return the display map
+   * @throws Exception the exception
+   */
+  public static Map<String, String> getDisplayMap(final EntityRepositoryService searchService,
+    final String terminology, final String publisher, final String version) throws Exception {
+
+    final String key = terminology + publisher + version;
+
+    // Lazy initialize for the terminology
+    if (displayMap.containsKey(key)) {
+      return displayMap.get(key);
+    }
+
+    // we need the query to avoid duplicate keys in the map
+    final Map<String, String> map = new HashMap<>();
+    for (final Metadata metadata : searchService.findAll(
+        "active:true AND ((model:concept AND field:attribute) OR "
+            + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))",
+        null, Metadata.class).stream().collect(Collectors.toList())) {
+      map.put(metadata.getCode(), metadata.getName());
+    }
+    displayMap.put(key, map);
+    return map;
+  }
+
+  /**
    * Gets the normal form.
    *
    * @param concept the concept

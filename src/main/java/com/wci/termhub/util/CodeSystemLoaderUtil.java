@@ -167,7 +167,7 @@ public final class CodeSystemLoaderUtil {
             if (relationshipBatch.size() == DEFAULT_BATCH_SIZE) {
               service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
               relationshipBatch.clear();
-              LOGGER.info("  loaded relationships count: {}", relationshipCount);
+              LOGGER.info("  relationships count: {}", relationshipCount);
             }
 
             // Safely get the valueCoding and its code
@@ -214,7 +214,7 @@ public final class CodeSystemLoaderUtil {
           if (termBatch.size() == DEFAULT_BATCH_SIZE) {
             service.addBulk(Term.class, new ArrayList<>(termBatch));
             termBatch.clear();
-            LOGGER.info("  loaded terms count: {}", termCount);
+            LOGGER.info("  terms count: {}", termCount);
           }
         }
 
@@ -223,7 +223,7 @@ public final class CodeSystemLoaderUtil {
         conceptCache.add(concept);
         conceptCount++;
         if (conceptCache.size() == DEFAULT_BATCH_SIZE) {
-          LOGGER.info("  processed concept count: {}", conceptCount);
+          LOGGER.info("  concept count: {}", conceptCount);
         }
       } // end concepts loop
 
@@ -261,14 +261,14 @@ public final class CodeSystemLoaderUtil {
         conceptBatch.add(concept);
         conceptCount++;
         if (conceptBatch.size() >= DEFAULT_BATCH_SIZE) {
-          LOGGER.info("  loaded concept count: {}", conceptCount);
+          LOGGER.info("  count: {}", conceptCount);
           service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
           conceptBatch.clear();
         }
       }
 
       if (!conceptBatch.isEmpty()) {
-        LOGGER.info("  loaded concept count: {}", conceptCount);
+        LOGGER.info("  count: {}", conceptCount);
         service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
         conceptBatch.clear();
       }
@@ -277,7 +277,6 @@ public final class CodeSystemLoaderUtil {
       if (computeTreePositions) {
         computeConceptTreePositions(service, terminology);
       }
-
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       return id;
@@ -368,7 +367,9 @@ public final class CodeSystemLoaderUtil {
         Boolean.toString(computeTreePositions));
     terminology.setAttributes(attributes);
 
-    LOGGER.info("CodeSystemLoaderUtil: terminology: {}", terminology);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("CodeSystemLoaderUtil: terminology: {}", terminology);
+    }
     service.add(Terminology.class, terminology);
     return terminology;
   }
@@ -797,7 +798,8 @@ public final class CodeSystemLoaderUtil {
   private static void computeConceptTreePositions(final EntityRepositoryService service,
     final Terminology terminology) throws Exception {
 
-    LOGGER.info("Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
+    LOGGER.info(
+        "  Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
         terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion());
 
     final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
