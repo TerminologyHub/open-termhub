@@ -38,7 +38,7 @@ public class ValueSetLoadR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** List of FHIR Code System files to load. */
   private static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-model-nlm-20240301-r4.json");
+      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r4.json");
 
   /**
    * Test reload value set.

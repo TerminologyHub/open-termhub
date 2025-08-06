@@ -119,7 +119,7 @@ public class MetadataSearchUnitTest extends AbstractTerminologyServerTest {
   public void testFindMetadataByTerminologySnomedCtUs() throws Exception {
 
     final String terminology = "SNOMEDCT_US";
-    final String version = "http://snomed.info/sct/731000124108/version/20240301";
+    final String version = "20240301";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
@@ -139,7 +139,7 @@ public class MetadataSearchUnitTest extends AbstractTerminologyServerTest {
   public void testFindMetadataByTerminologySnomedCt() throws Exception {
 
     final String terminology = "SNOMEDCT";
-    final String version = "http://snomed.info/sct/900000000000207008/version/20240101";
+    final String version = "20240101";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);

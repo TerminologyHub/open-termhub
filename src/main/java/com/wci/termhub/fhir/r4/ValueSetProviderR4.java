@@ -827,6 +827,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @throws Exception the exception
    */
   private Query getExpressionQuery(final String url) throws Exception {
+    if (url == null) {
+      return null;
+    }
     final String part = url.replaceFirst(".*fhir_vs", "");
     String expression = null;
     if (part.startsWith("=")) {

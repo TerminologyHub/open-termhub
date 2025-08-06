@@ -49,8 +49,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
   private ServletRequestDetails details;
 
   /** The Constant TEST_VALUESET_URL. */
-  private static final String TEST_VALUESET_URL =
-      "http://snomed.info/sct?fhir_vs=900000000000012004";
+  private static final String TEST_VALUESET_URL = "http://snomed.info/sct?fhir_vs=731000124108";
 
   /**
    * Setup.
@@ -105,12 +104,12 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
    */
   @Test
   public void testFindValueSetByName() throws Exception {
-    final StringParam name = new StringParam("SNOMEDCT model concepts");
+    final StringParam name = new StringParam("SNOMEDCT_US extension concepts");
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         name, null, null, null, null, null, null);
     assertNotNull(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
-        && "SNOMEDCT model concepts".equals(((ValueSet) e.getResource()).getName())));
+        && "SNOMEDCT_US extension concepts".equals(((ValueSet) e.getResource()).getName())));
   }
 
   /**

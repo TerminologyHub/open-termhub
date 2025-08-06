@@ -49,8 +49,7 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
   private ServletRequestDetails details;
 
   /** The Constant TEST_VALUESET_URL. */
-  private static final String TEST_VALUESET_URL =
-      "http://snomed.info/sct?fhir_vs=900000000000012004";
+  private static final String TEST_VALUESET_URL = "http://snomed.info/sct?fhir_vs=731000124108";
 
   /**
    * Setup.
