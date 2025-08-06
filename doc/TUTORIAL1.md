@@ -1,8 +1,7 @@
 # Step-by-step instructions with Sandbox data
 Instructions on using data local to this project to get Open Termhub up and running within 5 minutes.
 
-[Tutorial Training Video](https://youtu.be/Vto42DIMw2U)
-
+[Tutorial Training Video (TBD)](TBD)
 
 ## Prerequisites/Setup
 * Java 17+
