@@ -173,8 +173,8 @@ public class LuceneDataAccess {
     Class<?> currentClass = entity.getClass();
 
     while (currentClass != null) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Add: Current class: {}", currentClass.getName());
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("Add: Current class: {}", currentClass.getName());
       }
 
       for (final java.lang.reflect.Field field : currentClass.getDeclaredFields()) {
@@ -186,8 +186,8 @@ public class LuceneDataAccess {
         }
 
         final Field annotation = field.getAnnotation(Field.class);
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Field: {}, value: {}, annotation: {}", field.getName(), fieldValue,
+        if (LOGGER.isTraceEnabled()) {
+          LOGGER.trace("Field: {}, value: {}, annotation: {}", field.getName(), fieldValue,
               annotation);
         }
 
@@ -205,8 +205,8 @@ public class LuceneDataAccess {
                 document.add(indexableField);
               }
             } else {
-              if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Add: field instance of NOT Object OR Collection");
+              if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Add: field instance of NOT Object OR Collection");
               }
               final List<IndexableField> indexableFieldsList = IndexUtility
                   .getIndexableFields(entity, field, null, fieldValue instanceof Collection);
@@ -217,8 +217,8 @@ public class LuceneDataAccess {
 
           } else if (fieldType == FieldType.Object && fieldValue instanceof Collection) {
 
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Add: object field instance of Collection");
+            if (LOGGER.isTraceEnabled()) {
+              LOGGER.trace("Add: object field instance of Collection");
             }
             final Collection<?> collection = (Collection<?>) fieldValue;
             final List<IndexableField> indexableFieldsList =
@@ -229,8 +229,8 @@ public class LuceneDataAccess {
 
           } else if (fieldType == FieldType.Object && fieldValue instanceof BaseModel) {
 
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Add: object field instance of BaseModel");
+            if (LOGGER.isTraceEnabled()) {
+              LOGGER.trace("Add: object field instance of BaseModel");
             }
             final Object refEntity = fieldValue;
             Class<?> refClass = refEntity.getClass();
@@ -251,8 +251,8 @@ public class LuceneDataAccess {
 
         } else {
 
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Add: object field instance of MultiField");
+          if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Add: object field instance of MultiField");
           }
           final List<IndexableField> indexableFieldsList =
               IndexUtility.getIndexableFields(entity, field, null, false);
@@ -421,8 +421,8 @@ public class LuceneDataAccess {
 
     IndexSearcher searcher = null;
 
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("indexRootDirectory is {}; index is {}", indexRootDirectory,
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("indexRootDirectory is {}; index is {}", indexRootDirectory,
           clazz.getCanonicalName());
     }
 
@@ -432,8 +432,8 @@ public class LuceneDataAccess {
 
       final BooleanQuery queryBuilder =
           new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("  query = {}", queryBuilder);
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("  query = {}", queryBuilder);
       }
 
       searcher = new IndexSearcher(reader);
@@ -442,20 +442,20 @@ public class LuceneDataAccess {
           ? IndexUtility.getDefaultSortOrder(clazz)
           : IndexUtility.getSortOrder(searchParameters, clazz);
 
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Search Parameters ({}): {}", clazz.getCanonicalName(), searchParameters);
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("Search Parameters ({}): {}", clazz.getCanonicalName(), searchParameters);
       }
       final int start = searchParameters.getOffset();
       final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Search Parameters: start:{}, end:{}", start, end);
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("Search Parameters: start:{}, end:{}", start, end);
       }
 
       final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
           : searcher.search(queryBuilder, end);
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Query topDocs: {}", topDocs.totalHits.value);
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("Query topDocs: {}", topDocs.totalHits.value);
       }
 
       final ResultList<T> results = new ResultList<>();
@@ -463,16 +463,16 @@ public class LuceneDataAccess {
       for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
 
         final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Score: {}", scoreDoc.score);
+        if (LOGGER.isTraceEnabled()) {
+          LOGGER.trace("Score: {}", scoreDoc.score);
         }
         // fix deprecated:
         // final Document doc = searcher.doc(scoreDoc.doc);
         final Document doc = searcher.storedFields().document(scoreDoc.doc);
         final String jsonEntityString = doc.get("entity");
         final T obj = mapper.readValue(jsonEntityString, clazz);
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("search result: {}", obj);
+        if (LOGGER.isTraceEnabled()) {
+          LOGGER.trace("search result: {}", obj);
         }
         results.getItems().add(obj);
       }
