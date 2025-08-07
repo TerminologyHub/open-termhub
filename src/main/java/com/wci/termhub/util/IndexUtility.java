@@ -71,7 +71,9 @@ public final class IndexUtility {
 
     final List<IndexableField> indexableFields = new ArrayList<>();
 
-    logger.debug("Add: object field instance of Collection");
+    if (logger.isTraceEnabled()) {
+      logger.trace("Add: object field instance of Collection");
+    }    
 
     for (final Object item : collection) {
       if (item instanceof final String value) {
@@ -86,19 +88,25 @@ public final class IndexUtility {
 
         // get all the fields of the object
         // Concatenate similar fields from the object into a single field
-        logger.debug("Add: item: {}", item);
-        logger.debug("Add: field: {}", field);
-        logger.debug("Add: item class: {}", item.getClass().getSimpleName());
+        if (logger.isTraceEnabled()) {
+          logger.trace("Add: item: {}", item);
+          logger.trace("Add: field: {}", field);
+          logger.trace("Add: item class: {}", item.getClass().getSimpleName());
+        }
 
         // loop through all the fields of the object
         Class<?> innerClass = item.getClass();
         while (innerClass != null) {
 
-          logger.debug("Add: Inner class: {}", innerClass.getName());
+          if (logger.isTraceEnabled()) {
+            logger.trace("Add: Inner class: {}", innerClass.getName());
+          }
           for (final java.lang.reflect.Field subField : innerClass.getDeclaredFields()) {
 
-            logger.debug("Add: Inner class sub field: {}, type: {}", subField.getName(),
-                subField.getType());
+            if (logger.isTraceEnabled()) {
+              logger.trace("Add: Inner class sub field: {}, type: {}", subField.getName(),
+                  subField.getType());
+            }
 
             final List<IndexableField> indexableFieldsList =
                 IndexUtility.getIndexableFields(item, subField, field.getName(), true);
@@ -126,8 +134,10 @@ public final class IndexUtility {
     final java.lang.reflect.Field field, final String indexNamePrefix, final boolean isCollection)
     throws IllegalAccessException {
 
-    logger.debug("indexableFields: field: {}, indexNamePrefix: {}", field.getName(),
-        indexNamePrefix);
+    if (logger.isTraceEnabled()) {
+      logger.trace("indexableFields: field: {}, indexNamePrefix: {}", field.getName(),
+          indexNamePrefix);
+    }
 
     final List<IndexableField> indexableFields = new ArrayList<>();
     field.setAccessible(true);
@@ -271,7 +281,9 @@ public final class IndexUtility {
 
     }
 
-    logger.debug("indexableFields: {}", indexableFields);
+    if (logger.isTraceEnabled()) {
+      logger.trace("indexableFields: {}", indexableFields);
+    }
 
     return indexableFields;
   }
