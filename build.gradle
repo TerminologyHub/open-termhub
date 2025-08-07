@@ -159,6 +159,10 @@ test {
     testLogging {
         events "skipped", "failed"
         exceptionFormat "full"
+        showStandardStreams = true
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
     }
 }
 
@@ -169,6 +173,10 @@ task testR4(type: Test) {
     testLogging {
         events "skipped", "failed"
         exceptionFormat "full"
+        showStandardStreams = true
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
     }
 }
 
@@ -179,6 +187,10 @@ task testR5(type: Test) {
     testLogging {
         events "skipped", "failed"
         exceptionFormat "full"
+        showStandardStreams = true
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
     }
 }
 
