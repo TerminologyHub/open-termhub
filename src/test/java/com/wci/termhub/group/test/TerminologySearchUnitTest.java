@@ -124,7 +124,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyServerTest {
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("SNOMEDCT_US", terminology.getAbbreviation());
     assertEquals("Mini version of SNOMEDCT_US For testing purposes", terminology.getName());
-    assertEquals("http://snomed.info/sct/731000124108/version/20240301", terminology.getVersion());
+    assertEquals("20240301", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 
@@ -143,8 +143,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyServerTest {
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("SNOMEDCT", terminology.getAbbreviation());
     assertEquals("Mini version of SNOMEDCT For testing purposes", terminology.getName());
-    assertEquals("http://snomed.info/sct/900000000000207008/version/20240101",
-        terminology.getVersion());
+    assertEquals("20240101", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 

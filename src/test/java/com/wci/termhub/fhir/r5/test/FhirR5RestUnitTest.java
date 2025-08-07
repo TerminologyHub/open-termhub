@@ -868,8 +868,10 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(1)
   public void testValueSetExpand() throws Exception {
+
     // Arrange
-    final String expandParams = "/$expand?url=2023&count=50";
+    final String expandParams =
+        "/$expand?url=http://www.nlm.nih.gov/research/umls/rxnorm?fhir_vs&count=50";
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + expandParams;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -886,7 +888,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertNotNull(valueSet.getExpansion(), "Expansion should not be null");
     assertNotNull(valueSet.getExpansion().getId(), "Expansion ID should not be null");
     assertNotNull(valueSet.getExpansion().getTimestamp(), "Expansion timestamp should not be null");
-    assertEquals(50, valueSet.getExpansion().getTotal());
+    assertEquals(816, valueSet.getExpansion().getTotal());
     assertEquals(0, valueSet.getExpansion().getOffset(), "Offset should be 0");
 
     // Verify expansion contains
@@ -940,12 +942,18 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertNotNull(valueSet.getExpansion(), "Expansion should not be null");
     assertNotNull(valueSet.getExpansion().getId(), "Expansion ID should not be null");
     assertNotNull(valueSet.getExpansion().getTimestamp(), "Expansion timestamp should not be null");
-    assertEquals(count, valueSet.getExpansion().getTotal());
+
+    // The total should represent all available concepts, not the count
+    // parameter
+    assertEquals(434, valueSet.getExpansion().getTotal(),
+        "Total should be 434 but is " + valueSet.getExpansion().getTotal());
     assertEquals(0, valueSet.getExpansion().getOffset(), "Offset should be 0");
 
-    // Verify expansion contains
+    // Verify expansion contains - should have at most 'count' items
     assertNotNull(valueSet.getExpansion().getContains(), "Contains should not be null");
     assertFalse(valueSet.getExpansion().getContains().isEmpty(), "Contains should not be empty");
+    assertTrue(valueSet.getExpansion().getContains().size() <= count,
+        "Contains size should be <= count: " + valueSet.getExpansion().getContains().size());
 
     // Verify first entry in contains
     final ValueSet.ValueSetExpansionContainsComponent firstEntry =

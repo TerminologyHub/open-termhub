@@ -1343,6 +1343,8 @@ public final class TerminologyUtility {
   public static void removeSubset(final EntityRepositoryService searchService, final String id)
     throws Exception {
 
+    logger.info("AAAAAAAAAAAAAA Removing subset: {}", id);
+
     // find the subset/value set
     final Subset subset = searchService.get(id, Subset.class);
     if (subset == null) {

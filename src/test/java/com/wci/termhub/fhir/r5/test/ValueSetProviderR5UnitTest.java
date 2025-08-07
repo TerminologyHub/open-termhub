@@ -104,12 +104,12 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
    */
   @Test
   public void testFindValueSetByName() throws Exception {
-    final StringParam name = new StringParam("SNOMEDCT model concepts");
+    final StringParam name = new StringParam("SNOMEDCT_US extension concepts");
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         name, null, null, null, null, null, null);
     assertNotNull(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
-        && "SNOMEDCT model concepts".equals(((ValueSet) e.getResource()).getName())));
+        && "SNOMEDCT_US extension concepts".equals(((ValueSet) e.getResource()).getName())));
   }
 
   /**

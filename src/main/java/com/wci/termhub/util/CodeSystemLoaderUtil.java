@@ -101,7 +101,10 @@ public final class CodeSystemLoaderUtil {
         LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
       }
 
-      Terminology terminology = getTerminology(service, root);
+      final String abbreviation = root.path("title").asText();
+      final String publisher = root.path("publisher").asText();
+      String version = root.path("version").asText();
+      Terminology terminology = getTerminology(service, abbreviation, publisher, version);
 
       if (terminology != null) {
         throw new Exception("Can not create multiple CodeSystem resources with CodeSystem.url "
@@ -291,20 +294,25 @@ public final class CodeSystemLoaderUtil {
    * Gets the terminology.
    *
    * @param service the service
-   * @param root the root
+   * @param abbreviation the abbreviation
+   * @param publisher the publisher
+   * @param version the version
    * @return the terminology
    * @throws Exception the exception
    */
   private static Terminology getTerminology(final EntityRepositoryService service,
-    final JsonNode root) throws Exception {
+    final String abbreviation, final String publisher, final String version) throws Exception {
 
-    final String abbreviation = root.path("title").asText();
-    final String publisher = root.path("publisher").asText();
-    final String version = root.path("version").asText();
+    String versionToLookup = version;
+    // For SNOMED, set the terminology version to just the base version at the
+    // end of the URL
+    if (abbreviation.contains("SNOMED") && version.contains("/")) {
+      versionToLookup = version.replaceFirst(".*/", "");
+    }
 
     final SearchParameters searchParams = new SearchParameters();
-    searchParams
-        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
+    searchParams.setQuery(
+        TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, versionToLookup));
     final ResultList<Terminology> terminology = service.find(searchParams, Terminology.class);
 
     return (terminology.getItems().isEmpty()) ? null : terminology.getItems().get(0);

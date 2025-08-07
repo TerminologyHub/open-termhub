@@ -571,9 +571,17 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       // Check if it's a loaded ValueSet (Subset)
       final Subset subset = searchService.get(id.getIdPart(), Subset.class);
-      if (subset == null || !"ValueSet".equals(subset.getCategory())) {
+      if (subset == null) {
         throw FhirUtilityR4.exception("Value set not found for id = " + id.getIdPart(),
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+      }
+
+      // Allow deletion of any subset that is not an implicit value set
+      // (implicit value sets end with "_entire")
+      if (subset.getId().endsWith("_entire")) {
+        throw FhirUtilityR4.exception(
+            "Cannot delete implicit value set for code system = " + id.getIdPart(),
+            IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
       }
 
       TerminologyUtility.removeSubset(searchService, subset.getId());
