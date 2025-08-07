@@ -106,19 +106,19 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
   private Set<String> labels;
 
   /** The children. */
-  @Field(type = FieldType.Object, enabled = false)
+  @Field(type = FieldType.Object)
   private List<ConceptRef> children;
 
   /** The parents. */
-  @Field(type = FieldType.Object, enabled = false)
+  @Field(type = FieldType.Object)
   private List<ConceptRef> parents;
 
   /** The descendants. */
-  @Field(type = FieldType.Object, enabled = false)
+  @Field(type = FieldType.Object)
   private List<ConceptRef> descendants;
 
   /** The ancestors. */
-  @Field(type = FieldType.Object, enabled = false)
+  @Field(type = FieldType.Object)
   private List<ConceptRef> ancestors;
 
   /** The subsets. */
