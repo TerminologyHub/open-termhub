@@ -337,6 +337,7 @@ public final class CodeSystemLoaderUtil {
       terminology.setId(uuid);
       LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
     }
+    terminology.setActive(true);
     terminology.setUri(root.path("url").asText());
     terminology.setName(root.path("name").asText());
     terminology.setAbbreviation(root.path("title").asText());
@@ -454,6 +455,7 @@ public final class CodeSystemLoaderUtil {
         conceptNode.has("id") ? conceptNode.path("id").asText() : UUID.randomUUID().toString();
 
     concept.setId(id);
+    concept.setActive(true);
     concept.setCode(conceptNode.path("code").asText());
     concept.setTerminology(terminology.getAbbreviation());
     concept.setVersion(terminology.getVersion());
@@ -483,6 +485,7 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode designation : designations) {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
+        term.setActive(true);
         term.setName(designation.path("value").asText());
 
         // Safely set term type with null checks
@@ -525,6 +528,7 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode designation : designations) {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
+        term.setActive(true);
         term.setName(designation.path("value").asText());
 
         // Safely set term type with null checks
@@ -561,6 +565,7 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode designation : designations) {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
+        term.setActive(true);
         term.setName(designation.path("value").asText());
 
         // Safely set term type with null checks
@@ -617,6 +622,7 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode designation : designations) {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
+        term.setActive(true);
         term.setName(designation.path("value").asText());
 
         // Safely set term type with null checks
@@ -686,6 +692,7 @@ public final class CodeSystemLoaderUtil {
 
     final ConceptRelationship relationship = new ConceptRelationship();
     relationship.setId(UUID.randomUUID().toString());
+    relationship.setActive(true);
     relationship.setTerminology(terminology.getAbbreviation());
     relationship.setVersion(terminology.getVersion());
     relationship.setPublisher(terminology.getPublisher());
@@ -829,6 +836,7 @@ public final class CodeSystemLoaderUtil {
         if (isNotBlank(definitionArray[i])) {
           final Definition def = new Definition();
           def.setId(UUID.randomUUID().toString());
+          def.setActive(true);
           def.setDefinition(definitionArray[i].trim());
           def.setTerminology(terminology.getAbbreviation());
           def.setVersion(terminology.getVersion());

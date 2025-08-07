@@ -75,6 +75,7 @@ public final class TerminologyUtility {
    *
    * @param searchService the search service
    * @param value the value
+   * @param matchString the match string
    * @return the terminology
    * @throws Exception the exception
    */

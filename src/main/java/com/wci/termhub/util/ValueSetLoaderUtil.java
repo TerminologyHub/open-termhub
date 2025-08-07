@@ -105,6 +105,7 @@ public final class ValueSetLoaderUtil {
         id = java.util.UUID.randomUUID().toString();
       }
       subset.setId(id);
+      subset.setActive(true);
       subset.setUri(valueSet.getUrl());
 
       // Use the identifier as the code, otherwise use the id
@@ -189,6 +190,7 @@ public final class ValueSetLoaderUtil {
 
             final SubsetMember m = new SubsetMember();
             m.setId(java.util.UUID.randomUUID().toString());
+            m.setActive(true);
             m.setTerminology(ref.getAbbreviation());
             m.setPublisher(ref.getPublisher());
             m.setVersion(ref.getVersion());
@@ -197,6 +199,12 @@ public final class ValueSetLoaderUtil {
                 existingConcept == null ? "Unable to determine name" : existingConcept.getName());
             m.setSubset(subsetRef);
             members.add(m);
+
+            // Add subsetRef to the concept corresponding to this
+            if (existingConcept != null) {
+              existingConcept.getSubsets().add(subsetRef);
+              service.update(Concept.class, existingConcept.getId(), existingConcept);
+            }
           }
         }
       }
@@ -218,7 +226,8 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            map.put(c.getSystem(), TerminologyUtility.getTerminology(service, c.getSystem(),subset.getVersion()));
+            map.put(c.getSystem(),
+                TerminologyUtility.getTerminology(service, c.getSystem(), subset.getVersion()));
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -227,6 +236,7 @@ public final class ValueSetLoaderUtil {
 
           final SubsetMember m = new SubsetMember();
           m.setId(java.util.UUID.randomUUID().toString());
+          m.setActive(true);
           m.setTerminology(ref.getAbbreviation());
           m.setPublisher(ref.getPublisher());
           m.setVersion(ref.getVersion());
@@ -235,6 +245,12 @@ public final class ValueSetLoaderUtil {
               existingConcept == null ? "Unable to determine name" : existingConcept.getName());
           m.setSubset(subsetRef);
           members.add(m);
+
+          // Add subsetRef to the concept corresponding to this
+          if (existingConcept != null) {
+            existingConcept.getSubsets().add(subsetRef);
+            service.update(Concept.class, existingConcept.getId(), existingConcept);
+          }
 
         }
       }
@@ -282,6 +298,7 @@ public final class ValueSetLoaderUtil {
         id = java.util.UUID.randomUUID().toString();
       }
       subset.setId(id);
+      subset.setActive(true);
       subset.setUri(valueSet.getUrl());
 
       // Use the identifier as the code, otherwise use the id
@@ -349,7 +366,7 @@ public final class ValueSetLoaderUtil {
           }
 
           final TerminologyRef ref =
-              TerminologyUtility.getTerminology(service, includes.getSystem(),subset.getVersion());
+              TerminologyUtility.getTerminology(service, includes.getSystem(), subset.getVersion());
 
           for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
@@ -364,6 +381,7 @@ public final class ValueSetLoaderUtil {
 
             final SubsetMember m = new SubsetMember();
             m.setId(java.util.UUID.randomUUID().toString());
+            m.setActive(true);
             m.setTerminology(ref.getAbbreviation());
             m.setPublisher(ref.getPublisher());
             m.setVersion(ref.getVersion());
@@ -372,6 +390,13 @@ public final class ValueSetLoaderUtil {
                 existingConcept == null ? "Unable to determine name" : existingConcept.getName());
             m.setSubset(subsetRef);
             members.add(m);
+
+            // Add subsetRef to the concept corresponding to this
+            if (existingConcept != null) {
+              existingConcept.getSubsets().add(subsetRef);
+              service.update(Concept.class, existingConcept.getId(), existingConcept);
+            }
+
           }
         }
       }
@@ -393,7 +418,8 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            map.put(c.getSystem(), TerminologyUtility.getTerminology(service, c.getSystem(),subset.getVersion()));
+            map.put(c.getSystem(),
+                TerminologyUtility.getTerminology(service, c.getSystem(), subset.getVersion()));
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -402,6 +428,7 @@ public final class ValueSetLoaderUtil {
 
           final SubsetMember m = new SubsetMember();
           m.setId(java.util.UUID.randomUUID().toString());
+          m.setActive(true);
           m.setTerminology(ref.getAbbreviation());
           m.setPublisher(ref.getPublisher());
           m.setVersion(ref.getVersion());
@@ -410,6 +437,12 @@ public final class ValueSetLoaderUtil {
               existingConcept == null ? "Unable to determine name" : existingConcept.getName());
           m.setSubset(subsetRef);
           members.add(m);
+
+          // Add subsetRef to the concept corresponding to this
+          if (existingConcept != null) {
+            existingConcept.getSubsets().add(subsetRef);
+            service.update(Concept.class, existingConcept.getId(), existingConcept);
+          }
 
         }
       }

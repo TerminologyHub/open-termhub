@@ -62,8 +62,8 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
   private String stemName;
 
   /**
-   * The terms. (aka atoms, descriptions, names, synonyms, etc). Ignore the
-   * ngram indexed field here.
+   * The terms. (aka atoms, descriptions, names, synonyms, etc). Ignore the ngram indexed field
+   * here.
    */
   @Field(type = FieldType.Object, ignoreFields = {
       "name.ngram"
@@ -120,6 +120,10 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
   /** The ancestors. */
   @Field(type = FieldType.Object, enabled = false)
   private List<ConceptRef> ancestors;
+
+  /** The subsets. */
+  @Field(type = FieldType.Object)
+  private List<SubsetRef> subsets;
 
   // The following fields are here for returning a concept object
   // from the API with an include parameter. But the data lives
@@ -178,6 +182,7 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
       children = new ArrayList<>(concept.getChildren());
       descendants = new ArrayList<>(concept.getDescendants());
       ancestors = new ArrayList<>(concept.getAncestors());
+      subsets = new ArrayList<>(concept.getSubsets());
 
       // Additional fields
       relationships = new ArrayList<>(concept.getRelationships());
@@ -440,6 +445,8 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
     children = new ArrayList<>(0);
     descendants = new ArrayList<>(0);
     ancestors = new ArrayList<>(0);
+    subsets = new ArrayList<>(0);
+
     relationships = new ArrayList<>(0);
     inverseRelationships = new ArrayList<>(0);
     treePositions = new ArrayList<>(0);
@@ -545,6 +552,28 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
    */
   public void setAncestors(final List<ConceptRef> ancestors) {
     this.ancestors = ancestors;
+  }
+
+  /**
+   * Gets the subsets.
+   *
+   * @return the subsets
+   */
+  @Schema(description = "Subsets the concept is a part of from the same terminology loader")
+  public List<SubsetRef> getSubsets() {
+    if (subsets == null) {
+      subsets = new ArrayList<>();
+    }
+    return subsets;
+  }
+
+  /**
+   * Sets the subset.
+   *
+   * @param subsets the new subset
+   */
+  public void setSubsets(final List<SubsetRef> subsets) {
+    this.subsets = subsets;
   }
 
   /**

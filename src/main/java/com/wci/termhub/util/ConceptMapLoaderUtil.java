@@ -128,7 +128,7 @@ public final class ConceptMapLoaderUtil {
             // Create mapping
             final Mapping mapping = new Mapping();
             mapping.setId(UUID.randomUUID().toString());
-
+            mapping.setActive(true);
             mapping.setMapset(new MapsetRef(mapset.getCode(), mapset.getAbbreviation(),
                 mapset.getPublisher(), mapset.getVersion()));
 
@@ -250,7 +250,7 @@ public final class ConceptMapLoaderUtil {
       mapset.setId(uuid);
       LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
     }
-
+    mapset.setActive(true);
     mapset.setName(root.path("name").asText());
     mapset.setActive(root.path("active").asBoolean(true));
     mapset.setAbbreviation(root.path("title").asText());
