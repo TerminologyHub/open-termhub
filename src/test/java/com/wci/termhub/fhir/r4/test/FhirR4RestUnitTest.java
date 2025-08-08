@@ -763,7 +763,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         data.getEntry().stream().map(Bundle.BundleEntryComponent::getResource).toList();
 
     // Assert bundle has expected number of entries
-    assertEquals(6, valueSets.size(), "Should have 6 ValueSet entries");
+    final int expectedCount = CODE_SYSTEM_FILES.size() + VALUE_SET_FILES.size();
+    assertEquals(expectedCount, valueSets.size(),
+        "Should have " + expectedCount + " ValueSet entries, found " + valueSets.size());
 
     // Test each ValueSet entry
     for (final Resource resource : valueSets) {
@@ -1120,7 +1122,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     ResultList<Subset> subsets = searchService.find(params, Subset.class);
     for (final Subset s : subsets.getItems()) {
       LOGGER.info("Subset: {} - {}", s.getName(), s.getVersion());
-      testId = s.getId();
+      if ("Lateralizable body structure reference set".equals(s.getName())) {
+        testId = s.getId();
+      }
     }
 
     assertNotNull(testId);
@@ -1138,7 +1142,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
     subsets = searchService.find(params, Subset.class);
-    assertEquals(0, subsets.getTotal());
+    assertEquals(1, subsets.getTotal());
   }
 
   /**

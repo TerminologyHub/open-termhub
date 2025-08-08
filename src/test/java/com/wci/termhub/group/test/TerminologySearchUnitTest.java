@@ -22,13 +22,13 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
+import com.wci.termhub.test.AbstractTerminologyTest;
 import com.wci.termhub.util.StringUtility;
 
 /**
  * The Class TerminologySearchUnitTest.
  */
-public class TerminologySearchUnitTest extends AbstractTerminologyServerTest {
+public class TerminologySearchUnitTest extends AbstractTerminologyTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(TerminologySearchUnitTest.class);

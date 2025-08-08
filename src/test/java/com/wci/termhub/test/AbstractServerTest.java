@@ -70,6 +70,29 @@ public abstract class AbstractServerTest extends BaseUnitTest {
   }
 
   /**
+   * Clear all indexes for cleanup.
+   *
+   * @param searchService the search service
+   * @param indexDirectory the index directory
+   * @throws Exception the exception
+   */
+  protected void clearIndexes(final EntityRepositoryService searchService,
+    final String indexDirectory) throws Exception {
+
+    logger.info("Clearing indexes from directory: {}", indexDirectory);
+    final File indexDir = new File(indexDirectory);
+
+    if (indexDir.exists()) {
+      FileUtils.deleteDirectory(indexDir);
+    }
+
+    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
+    for (final Class<? extends HasId> clazz : indexedObjects) {
+      searchService.deleteIndex(clazz);
+    }
+  }
+
+  /**
    * Load code systems.
    *
    * @param searchService the search service

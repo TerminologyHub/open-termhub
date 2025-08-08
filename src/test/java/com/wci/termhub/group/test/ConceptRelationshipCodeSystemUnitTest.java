@@ -22,13 +22,13 @@ import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
+import com.wci.termhub.test.AbstractTerminologyTest;
 
 /**
  * Unit tests for concept relationship functionality with FHIR Code System
  * files.
  */
-public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyServerTest {
+public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTest {
 
   /** The logger. */
   private static final Logger LOGGER =

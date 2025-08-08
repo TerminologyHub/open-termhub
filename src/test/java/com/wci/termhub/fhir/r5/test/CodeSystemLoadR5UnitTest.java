@@ -54,7 +54,6 @@ public class CodeSystemLoadR5UnitTest extends AbstractFhirR5ServerTest {
     // Should throw an exception if the code system is already loaded
     for (final String codeSystemFile : CODE_SYSTEM_FILES) {
       try {
-        // Read file from classpath directly using Spring's resource mechanism
         final Resource resource = new ClassPathResource("data/" + codeSystemFile,
             CodeSystemLoadR4UnitTest.class.getClassLoader());
 

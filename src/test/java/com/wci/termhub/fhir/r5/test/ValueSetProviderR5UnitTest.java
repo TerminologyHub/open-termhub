@@ -10,8 +10,13 @@
 package com.wci.termhub.fhir.r5.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,9 +25,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.wci.termhub.fhir.r5.ValueSetProviderR5;
+import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
@@ -38,6 +47,10 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
   /** The Constant LOGGER. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetProviderR5UnitTest.class);
 
+  /** The search service. */
+  @Autowired
+  private EntityRepositoryService searchService;
+
   /** The provider. */
   @Autowired
   private ValueSetProviderR5 provider;
@@ -47,6 +60,10 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
 
   /** The details. */
   private ServletRequestDetails details;
+
+  /** List of FHIR Code System files to load. */
+  private static final List<String> VALUE_SET_FILES =
+      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json");
 
   /** The Constant TEST_VALUESET_URL. */
   private static final String TEST_VALUESET_URL = "http://snomed.info/sct?fhir_vs=731000124108";
@@ -148,6 +165,34 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
     assertNotNull(vsBundle);
     assertTrue(vsBundle.getEntry().stream()
         .anyMatch(e -> e.getResource() instanceof ValueSet && id.equals(e.getResource().getId())));
+  }
+
+  /**
+   * Test reload value set.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testReloadvalueSet() throws Exception {
+    // Should throw an exception if the code system is already loaded
+    for (final String valueSetFile : VALUE_SET_FILES) {
+      try {
+        final Resource resource = new ClassPathResource("data/" + valueSetFile,
+            ValueSetProviderR5UnitTest.class.getClassLoader());
+
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
+        assertThrows(Exception.class, () -> {
+          LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
+          ValueSetLoaderUtil.loadSubset(searchService, fileContent, false);
+        });
+
+      } catch (final Exception e) {
+        LOGGER.error("Error reloading value set file: {}", valueSetFile, e);
+        throw e;
+      }
+    }
   }
 
 }
