@@ -282,7 +282,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertEquals("SNOMEDCT_US", codeSystem.getTitle());
     assertEquals(PublicationStatus.ACTIVE, codeSystem.getStatus());
     assertFalse(codeSystem.getExperimental());
-    assertEquals("2024-03-01T08:00:00Z", codeSystem.getDate().toInstant().toString());
+    assertEquals("2024-03-01T00:00:00Z", codeSystem.getDate().toInstant().toString());
     assertEquals("SANDBOX", codeSystem.getPublisher());
     assertEquals(CodeSystemHierarchyMeaning.ISA, codeSystem.getHierarchyMeaning());
     assertFalse(codeSystem.getCompositional());

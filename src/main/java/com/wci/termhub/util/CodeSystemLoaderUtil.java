@@ -355,7 +355,9 @@ public final class CodeSystemLoaderUtil {
     if (terminology.getUri().contains("snomed") && terminology.getVersion().contains("/")) {
       terminology.setVersion(terminology.getVersion().replaceFirst(".*/", ""));
     }
-    terminology.setReleaseDate(root.path("date").asText().substring(0, 10));
+    // Store the full date string with timezone information
+    final String fullDateString = root.path("date").asText();
+    terminology.setReleaseDate(fullDateString);
     terminology.setFamily(terminology.getAbbreviation());
     terminology.setConceptCt(root.path("count").asLong(0));
 
