@@ -134,7 +134,7 @@ specified data.  The entire runtime for this is about 1 min.
 Now that we have data loaded, we can try a several curl commands to demonstrate
 basic function. Alternatively, you can
 
-[![Run in Postman](https://run.pstmn.io/button.svg)](postman-open-termhub.json).
+[![Run in Postman](https://run.pstmn.io/button.svg)](postman-open-termhub-tutorial1.json).
 
 ### Testing the Terminology API
 
@@ -210,7 +210,7 @@ curl -s 'http://localhost:8080/fhir/r4/ConceptMap' | jq
 # Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
 curl -s 'http://localhost:8080/fhir/r4/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&code=300862005' | jq
 
-# Find implied ValueSets for CodeSystems and explicit value sets
+# Find implied ValueSets for CodeSystem and explicit value set
 curl -s 'http://localhost:8080/fhir/r4/ValueSet' | jq
 curl -s 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs' | jq
 curl -s 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq

@@ -73,7 +73,7 @@ public final class IndexUtility {
 
     if (logger.isTraceEnabled()) {
       logger.trace("Add: object field instance of Collection");
-    }    
+    }
 
     for (final Object item : collection) {
       if (item instanceof final String value) {
