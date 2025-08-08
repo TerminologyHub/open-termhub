@@ -51,7 +51,6 @@ public class ConceptMapLoadR4UnitTest extends AbstractFhirR4ServerTest {
     // Should throw an exception if the code system is already loaded
     for (final String conceptMapFile : CONCEPT_MAP_FILES) {
       try {
-        // Read file from classpath directly using Spring's resource mechanism
         final Resource resource = new ClassPathResource("data/" + conceptMapFile,
             CodeSystemLoadR4UnitTest.class.getClassLoader());
 

@@ -23,13 +23,13 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
+import com.wci.termhub.test.AbstractTerminologyTest;
 import com.wci.termhub.util.StringUtility;
 
 /**
- * Unit tests for terminology search functionality with FHIR Code System files.
+ * Test class for terminology code system operations.
  */
-public class TerminologyCodeSystemUnitTest extends AbstractTerminologyServerTest {
+public class TerminologyCodeSystemUnitTest extends AbstractTerminologyTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(TerminologyCodeSystemUnitTest.class);
@@ -107,8 +107,7 @@ public class TerminologyCodeSystemUnitTest extends AbstractTerminologyServerTest
   @Test
   public void testFindTerminologyByVersion() throws Exception {
     final SearchParameters params = new SearchParameters();
-    params.setQuery("version:"
-        + StringUtility.escapeQuery("http://snomed.info/sct/731000124108/version/20240301"));
+    params.setQuery("version:" + StringUtility.escapeQuery("20240301"));
 
     final ResultList<Terminology> results = searchService.find(params, Terminology.class);
 

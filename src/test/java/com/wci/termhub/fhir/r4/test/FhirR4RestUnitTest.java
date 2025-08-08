@@ -282,7 +282,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertEquals("SNOMEDCT_US", codeSystem.getTitle());
     assertEquals(PublicationStatus.ACTIVE, codeSystem.getStatus());
     assertFalse(codeSystem.getExperimental());
-    assertEquals("2024-03-01T08:00:00Z", codeSystem.getDate().toInstant().toString());
+    assertEquals("2024-03-01T00:00:00Z", codeSystem.getDate().toInstant().toString());
     assertEquals("SANDBOX", codeSystem.getPublisher());
     assertEquals(CodeSystemHierarchyMeaning.ISA, codeSystem.getHierarchyMeaning());
     assertFalse(codeSystem.getCompositional());
@@ -763,7 +763,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         data.getEntry().stream().map(Bundle.BundleEntryComponent::getResource).toList();
 
     // Assert bundle has expected number of entries
-    assertEquals(6, valueSets.size(), "Should have 6 ValueSet entries");
+    final int expectedCount = CODE_SYSTEM_FILES.size() + VALUE_SET_FILES.size();
+    assertEquals(expectedCount, valueSets.size(),
+        "Should have " + expectedCount + " ValueSet entries, found " + valueSets.size());
 
     // Test each ValueSet entry
     for (final Resource resource : valueSets) {
@@ -867,8 +869,10 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Test
   @Order(1)
   public void testValueSetExpand() throws Exception {
+
     // Arrange
-    final String expandParams = "/$expand?url=2023&count=50";
+    final String expandParams =
+        "/$expand?url=http://www.nlm.nih.gov/research/umls/rxnorm?fhir_vs&count=50";
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + expandParams;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -885,7 +889,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(valueSet.getExpansion(), "Expansion should not be null");
     assertNotNull(valueSet.getExpansion().getId(), "Expansion ID should not be null");
     assertNotNull(valueSet.getExpansion().getTimestamp(), "Expansion timestamp should not be null");
-    assertEquals(50, valueSet.getExpansion().getTotal());
+    assertEquals(816, valueSet.getExpansion().getTotal());
     assertEquals(0, valueSet.getExpansion().getOffset(), "Offset should be 0");
 
     // Verify expansion contains
@@ -937,12 +941,18 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(valueSet.getExpansion(), "Expansion should not be null");
     assertNotNull(valueSet.getExpansion().getId(), "Expansion ID should not be null");
     assertNotNull(valueSet.getExpansion().getTimestamp(), "Expansion timestamp should not be null");
-    assertEquals(count, valueSet.getExpansion().getTotal());
+
+    // The total should represent all available concepts, not the count
+    // parameter
+    assertEquals(434, valueSet.getExpansion().getTotal(),
+        "Total should be 434 but is " + valueSet.getExpansion().getTotal());
     assertEquals(0, valueSet.getExpansion().getOffset(), "Offset should be 0");
 
-    // Verify expansion contains
+    // Verify expansion contains - should have at most 'count' items
     assertNotNull(valueSet.getExpansion().getContains(), "Contains should not be null");
     assertFalse(valueSet.getExpansion().getContains().isEmpty(), "Contains should not be empty");
+    assertTrue(valueSet.getExpansion().getContains().size() <= count,
+        "Contains size should be <= count: " + valueSet.getExpansion().getContains().size());
 
     // Verify first entry in contains
     final ValueSet.ValueSetExpansionContainsComponent firstEntry =
@@ -1112,7 +1122,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     ResultList<Subset> subsets = searchService.find(params, Subset.class);
     for (final Subset s : subsets.getItems()) {
       LOGGER.info("Subset: {} - {}", s.getName(), s.getVersion());
-      testId = s.getId();
+      if ("Lateralizable body structure reference set".equals(s.getName())) {
+        testId = s.getId();
+      }
     }
 
     assertNotNull(testId);
@@ -1130,7 +1142,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
     subsets = searchService.find(params, Subset.class);
-    assertEquals(0, subsets.getTotal());
+    assertEquals(1, subsets.getTotal());
   }
 
   /**

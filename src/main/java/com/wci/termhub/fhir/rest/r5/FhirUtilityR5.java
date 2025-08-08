@@ -781,7 +781,15 @@ public final class FhirUtilityR5 {
     valueSet.setUrl(subset.getUri());
     valueSet.setPublisher(subset.getPublisher());
     valueSet.setVersion(subset.getVersion());
-    valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(subset.getReleaseDate()));
+    // Parse the full date string with timezone information
+    final String releaseDate = subset.getReleaseDate();
+    if (releaseDate != null && releaseDate.contains("T")) {
+      // Full ISO 8601 date string with timezone
+      valueSet.setDate(Date.from(java.time.Instant.parse(releaseDate)));
+    } else {
+      // Fallback to date-only format
+      valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+    }
 
     valueSet.setName(subset.getName());
     // Set title from abbreviation if present, else fallback to name
@@ -883,7 +891,15 @@ public final class FhirUtilityR5 {
 
     cs.setUrl(terminology.getUri());
 
-    cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
+    // Parse the full date string with timezone information
+    final String releaseDate = terminology.getReleaseDate();
+    if (releaseDate != null && releaseDate.contains("T")) {
+      // Full ISO 8601 date string with timezone
+      cs.setDate(Date.from(java.time.Instant.parse(releaseDate)));
+    } else {
+      // Fallback to date-only format
+      cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+    }
     String version = terminology.getAttributes().get("fhirVersion");
     if (version == null) {
       version = terminology.getVersion();

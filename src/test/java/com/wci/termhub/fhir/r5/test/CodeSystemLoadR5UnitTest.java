@@ -54,7 +54,6 @@ public class CodeSystemLoadR5UnitTest extends AbstractFhirR5ServerTest {
     // Should throw an exception if the code system is already loaded
     for (final String codeSystemFile : CODE_SYSTEM_FILES) {
       try {
-        // Read file from classpath directly using Spring's resource mechanism
         final Resource resource = new ClassPathResource("data/" + codeSystemFile,
             CodeSystemLoadR4UnitTest.class.getClassLoader());
 
@@ -65,7 +64,8 @@ public class CodeSystemLoadR5UnitTest extends AbstractFhirR5ServerTest {
           logger.info("Attempt reload of code system from classpath resource: data/{}",
               codeSystemFile);
           CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, false);
-        });
+        }, "Expected exception when reloading code system that is already loaded: "
+            + codeSystemFile);
 
       } catch (final Exception e) {
         logger.error("Error reloading code system file: {}", codeSystemFile, e);

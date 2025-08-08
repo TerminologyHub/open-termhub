@@ -158,7 +158,7 @@ public final class ValueSetLoaderUtil {
             Boolean.toString(valueSet.getExperimental()));
       }
 
-      // subset.setCategory("ValueSet");
+      subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
 
       final SubsetRef subsetRef = new SubsetRef(subset.getCode(), subset.getAbbreviation(),
@@ -349,7 +349,7 @@ public final class ValueSetLoaderUtil {
             Boolean.toString(valueSet.getExperimental()));
       }
 
-      // subset.setCategory("ValueSet");
+      subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
 
       final SubsetRef subsetRef = new SubsetRef(subset.getCode(), subset.getAbbreviation(),

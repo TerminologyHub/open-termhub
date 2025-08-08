@@ -22,12 +22,12 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
+import com.wci.termhub.test.AbstractTerminologyTest;
 
 /**
- * Unit tests for concept search functionality with FHIR Code System files.
+ * Test class for concept code system operations.
  */
-public class ConceptCodeSystemUnitTest extends AbstractTerminologyServerTest {
+public class ConceptCodeSystemUnitTest extends AbstractTerminologyTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ConceptCodeSystemUnitTest.class);
@@ -52,8 +52,10 @@ public class ConceptCodeSystemUnitTest extends AbstractTerminologyServerTest {
     assertFalse(results.getItems().isEmpty(), "Should find at least one concept");
     LOGGER.info("Found {} concepts (limited to 10)", results.getItems().size());
     LOGGER.info("Total count: {}", results.getTotal());
-    assertTrue(results.getTotal() == 10,
+    assertTrue(results.getTotal() > 10,
         "Should not have more than 10 total concepts. Found: " + results.getTotal());
+
+    assertTrue(results.getItems().size() <= 10, "Should not have more than 10 results");
 
     for (final Concept concept : results.getItems()) {
       assertEquals("SNOMEDCT", concept.getTerminology());

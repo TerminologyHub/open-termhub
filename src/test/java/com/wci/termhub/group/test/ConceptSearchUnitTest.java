@@ -20,12 +20,12 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
+import com.wci.termhub.test.AbstractTerminologyTest;
 
 /**
- * The Class ConceptSearchUnitTest.
+ * Test class for concept search functionality.
  */
-public class ConceptSearchUnitTest extends AbstractTerminologyServerTest {
+public class ConceptSearchUnitTest extends AbstractTerminologyTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
@@ -97,8 +97,8 @@ public class ConceptSearchUnitTest extends AbstractTerminologyServerTest {
   @Test
   public void testFindConceptSnomedCtUs() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
-        "http://snomed.info/sct/731000124108/version/20240301", "384719006", null);
+    final TermQueryComposer termQuery =
+        new TermQueryComposer("SNOMEDCT_US", "20240301", "384719006", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Concept> concept = searchService.find(SEARCH_PARAMETERS, Concept.class);
     assertEquals(1, concept.getItems().size());
@@ -115,8 +115,8 @@ public class ConceptSearchUnitTest extends AbstractTerminologyServerTest {
   @Test
   public void testFindConceptSnomedCt() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT",
-        "http://snomed.info/sct/900000000000207008/version/20240101", "277302009", null);
+    final TermQueryComposer termQuery =
+        new TermQueryComposer("SNOMEDCT", "20240101", "277302009", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Concept> concept = searchService.find(SEARCH_PARAMETERS, Concept.class);
     assertEquals(1, concept.getItems().size());

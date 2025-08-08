@@ -32,6 +32,7 @@ import com.wci.termhub.util.PropertyUtility;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestPropertySource(locations = "classpath:application-test.properties")
+// @TestMethodOrder(OrderAnnotation.class)
 public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
 
   /** The logger. */
@@ -41,6 +42,9 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
+
+  /** The index directory. */
+  protected static final String INDEX_DIRECTORY = "build/index/lucene-rest";
 
   /** List of FHIR Code System files to load. */
   private static final List<String> CODE_SYSTEM_FILES =
@@ -66,11 +70,11 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
    */
   @BeforeAll
   public void setupData() throws Exception {
+    PropertyUtility.setProperty("lucene.index.directory", INDEX_DIRECTORY);
     if (setupOnce) {
       return;
     }
-    final String indexDirectory = PropertyUtility.getProperty("lucene.index.directory");
-    clearAndCreateIndexDirectories(searchService, indexDirectory);
+    clearAndCreateIndexDirectories(searchService, INDEX_DIRECTORY);
     loadCodeSystems(searchService, CODE_SYSTEM_FILES, true);
     loadConceptMaps(searchService, CONCEPT_MAP_FILES);
     loadValueSets(searchService, VALUE_SET_FILES);

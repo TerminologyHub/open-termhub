@@ -25,12 +25,12 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
+import com.wci.termhub.test.AbstractTerminologyTest;
 
 /**
  * The Class TermSearchUnitTest.
  */
-public class TermSearchUnitTest extends AbstractTerminologyServerTest {
+public class TermSearchUnitTest extends AbstractTerminologyTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(TermSearchUnitTest.class);
@@ -108,8 +108,8 @@ public class TermSearchUnitTest extends AbstractTerminologyServerTest {
   @Test
   public void testFindConceptSnomedCtUs() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
-        "http://snomed.info/sct/731000124108/version/20240301", "384719006", null);
+    final TermQueryComposer termQuery =
+        new TermQueryComposer("SNOMEDCT_US", "20240301", "384719006", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Term> terms = searchService.find(SEARCH_PARAMETERS, Term.class);
     assertEquals(2, terms.getItems().size());
@@ -129,8 +129,8 @@ public class TermSearchUnitTest extends AbstractTerminologyServerTest {
   @Test
   public void testFindConceptSnomedCt() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT",
-        "http://snomed.info/sct/900000000000207008/version/20240101", "277302009", null);
+    final TermQueryComposer termQuery =
+        new TermQueryComposer("SNOMEDCT", "20240101", "277302009", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Term> terms = searchService.find(SEARCH_PARAMETERS, Term.class);
     assertEquals(2, terms.getItems().size());
@@ -152,7 +152,7 @@ public class TermSearchUnitTest extends AbstractTerminologyServerTest {
 
     final String term = "Procedure on gastrointestinal tract";
     final String terminology = "SNOMEDCT_US";
-    final String version = "http://snomed.info/sct/731000124108/version/20240301";
+    final String version = "20240301";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, term);
     final SearchParameters sp = new SearchParameters(termQuery.getQuery(), 100, 0);
 
@@ -180,7 +180,7 @@ public class TermSearchUnitTest extends AbstractTerminologyServerTest {
 
     final String term = "heart";
     final String terminology = "SNOMEDCT_US";
-    final String version = "http://snomed.info/sct/731000124108/version/20240301";
+    final String version = "20240301";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, term);
 
     final SearchParameters sp = new SearchParameters(termQuery.getQuery(), 10, 0);
