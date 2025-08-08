@@ -18,7 +18,10 @@ import org.springframework.web.client.RestTemplate;
  * The app configuration.
  */
 @Configuration
-@ComponentScan(basePackages = "com.wci.termhub")
+@ComponentScan(basePackages = {
+    "com.wci.termhub.algo", "com.wci.termhub.fhir", "com.wci.termhub.handler",
+    "com.wci.termhub.loader", "com.wci.termhub.lucene", "com.wci.termhub.util"
+})
 public class AppConfig {
 
   /**

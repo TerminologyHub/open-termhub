@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Transient;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 
 /**
  * Represents an explicit collection of mappings from one terminology to another.
@@ -75,6 +75,10 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 
   }
 
+  /** The license. */
+  @Field(type = FieldType.Keyword)
+  private String license;
+
   /** The terminology. */
   @Field(type = FieldType.Keyword)
   private String terminology;
@@ -82,11 +86,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
   /** The description. */
   @Field(type = FieldType.Object, enabled = false)
   private String description;
-
-  /** The release date formatted as yyyy-MM-dd. */
-  @Transient
-  @Field(type = FieldType.Keyword)
-  private String releaseDate;
 
   /** The attributes. */
   @Field(type = FieldType.Object)
@@ -132,11 +131,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
     populateFrom(other);
   }
 
-  /**
-   * Populate from.
-   *
-   * @param other the other
-   */
   /* see superclass */
   @Override
   public void populateFrom(final TerminologyRef other) {
@@ -144,21 +138,14 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
 
     if (other instanceof Mapset) {
       final Mapset mapset = (Mapset) other;
-
       description = mapset.getDescription();
-      releaseDate = mapset.getReleaseDate();
-
+      license = mapset.getLicense();
       terminology = mapset.getTerminology();
       attributes = new HashMap<>(mapset.getAttributes());
       statistics = new HashMap<>(mapset.getStatistics());
     }
   }
 
-  /**
-   * Patch from.
-   *
-   * @param other the other
-   */
   /* see superclass */
   @Override
   public void patchFrom(final TerminologyRef other) {
@@ -168,8 +155,8 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
       if (mapset.getDescription() != null) {
         description = mapset.getDescription();
       }
-      if (mapset.getReleaseDate() != null) {
-        releaseDate = mapset.getReleaseDate();
+      if (mapset.getLicense() != null) {
+        license = mapset.getLicense();
       }
       if (mapset.getTerminology() != null) {
         terminology = mapset.getTerminology();
@@ -184,14 +171,9 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
     }
   }
 
-  /**
-   * Gets the id.
-   *
-   * @return the id
-   */
   /* see superclass */
   @Override
-  @Schema(description = "Unique identifier", required = true, format = "uuid")
+  @Schema(description = "Unique identifier", requiredMode = RequiredMode.REQUIRED, format = "uuid")
   public String getId() {
     return super.getId();
   }
@@ -215,30 +197,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
     this.description = description;
   }
 
-  /**
-   * Returns the release date.
-   *
-   * @return the release date
-   */
-  @Schema(description = "YYYY-MM-DD rendering of the release date")
-  public String getReleaseDate() {
-    return releaseDate;
-  }
-
-  /**
-   * Sets the release date.
-   *
-   * @param releaseDate the release date
-   */
-  public void setReleaseDate(final String releaseDate) {
-    this.releaseDate = releaseDate;
-  }
-
-  /**
-   * Gets the attributes.
-   *
-   * @return the attributes
-   */
   /* see superclass */
   @Override
   public Map<String, String> getAttributes() {
@@ -248,11 +206,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
     return attributes;
   }
 
-  /**
-   * Sets the attributes.
-   *
-   * @param attributes the attributes
-   */
   /* see superclass */
   @Override
   public void setAttributes(final Map<String, String> attributes) {
@@ -281,30 +234,35 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
   }
 
   /**
-   * Gets the terminology.
+   * Gets the license.
    *
-   * @return the terminology
+   * @return the license
    */
+  public String getLicense() {
+    return license;
+  }
+
+  /**
+   * Sets the license.
+   *
+   * @param license the new license
+   */
+  public void setLicense(final String license) {
+    this.license = license;
+  }
+
   /* see superclass */
   @Override
   public String getTerminology() {
     return terminology;
   }
 
-  /**
-   * Sets the terminology.
-   *
-   * @param terminology the new terminology
-   */
   /* see superclass */
   @Override
   public void setTerminology(final String terminology) {
     this.terminology = terminology;
   }
 
-  /**
-   * Minimize.
-   */
   /* see superclass */
   @Override
   public void minimize() {
@@ -312,11 +270,12 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
     cleanForApi();
   }
 
-  /**
-   * Hash code.
-   *
-   * @return the int
-   */
+  /* see superclass */
+  @Override
+  public void cleanForApi() {
+    // empty
+  }
+
   /* see superclass */
   @Override
   public int hashCode() {
@@ -326,12 +285,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
     return result;
   }
 
-  /**
-   * Equals.
-   *
-   * @param obj the obj
-   * @return true, if successful
-   */
   /* see superclass */
   @Override
   public boolean equals(final Object obj) {
@@ -345,12 +298,6 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
     return Objects.equals(getId(), other.getId());
   }
 
-  /**
-   * Compare to.
-   *
-   * @param other the other
-   * @return the int
-   */
   /* see superclass */
   @Override
   public int compareTo(final TerminologyRef other) {

@@ -49,15 +49,15 @@ public abstract class AbstractHasModified extends AbstractHasId implements HasMo
   @Field(type = FieldType.Keyword)
   private String modifiedBy;
 
-  /** The local. */
+  /** The local - do not default to false. */
   @Column(nullable = false)
   @Field(type = FieldType.Boolean)
-  private Boolean local = false;
+  private Boolean local;
 
-  /** The active. */
+  /** The active - do not default to true. */
   @Column(nullable = false)
   @Field(type = FieldType.Boolean)
-  private Boolean active = true;
+  private Boolean active;
 
   /**
    * Instantiates an empty {@link AbstractHasModified}.

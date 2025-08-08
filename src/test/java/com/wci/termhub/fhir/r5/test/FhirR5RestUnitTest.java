@@ -14,14 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
@@ -35,29 +31,29 @@ import org.hl7.fhir.r5.model.ResourceType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.model.HasId;
+import com.wci.termhub.model.Mapset;
+import com.wci.termhub.model.ResultList;
+import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.CodeSystemLoaderUtil;
-import com.wci.termhub.util.ModelUtility;
-import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.util.ThreadLocalMapper;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -67,14 +63,11 @@ import ca.uhn.fhir.parser.IParser;
  * endpoints, CodeSystem, ValueSet, and ConceptMap. All passed ids MUST be
  * lowercase, so they match our internally set id's
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestInstance(Lifecycle.PER_CLASS)
-@TestPropertySource(locations = "classpath:application-test-r5.properties")
-public class FhirR5RestUnitTest {
+@TestMethodOrder(OrderAnnotation.class)
+public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
-  /** The logger. */
+  /** The LOGGER. */
   private static final Logger LOGGER = LoggerFactory.getLogger(FhirR5RestUnitTest.class);
 
   /** The port. */
@@ -85,9 +78,6 @@ public class FhirR5RestUnitTest {
   @Autowired
   private TestRestTemplate restTemplate;
 
-  /** The object mapper. */
-  private ObjectMapper objectMapper;
-
   /** local host prefix. */
   private static final String LOCALHOST = "http://localhost:";
 
@@ -97,21 +87,21 @@ public class FhirR5RestUnitTest {
   /** Fhir url paths. */
   private static final String FHIR_CODESYSTEM = "/fhir/r5/CodeSystem";
 
+  /** The Constant FHIR_CONCEPTMAP. */
+  private static final String FHIR_CONCEPTMAP = "/fhir/r5/ConceptMap";
+
   /** The fhir VS path. */
   private static final String FHIR_VALUESET = "/fhir/r5/ValueSet";
 
   /** The parser. */
   private static IParser parser;
 
+  /** The object mapper. */
+  private ObjectMapper objectMapper = null;
+
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
-
-  /** List of FHIR Code System files to load. */
-  private static final List<String> CODE_SYSTEM_FILES =
-      List.of("CodeSystem-snomedctus-sandbox-20240301-r5.json",
-          "CodeSystem-snomedct-sandbox-20240101-r5.json", "CodeSystem-lnc-sandbox-277-r5.json",
-          "CodeSystem-icd10cm-sandbox-2023-r5.json", "CodeSystem-rxnorm-sandbox-04012024-r5.json");
 
   /**
    * Sets the up once.
@@ -120,56 +110,17 @@ public class FhirR5RestUnitTest {
    */
   @BeforeAll
   public void setUpOnce() throws Exception {
+
     // Instantiate parser
     parser = FhirContext.forR5().newJsonParser();
 
-    // Get index directory from properties
-    final String indexDirPath =
-        PropertyUtility.getProperties().getProperty("lucene.index.directory");
-    LOGGER.info("Using index directory: {}", indexDirPath);
-
-    // Delete all indexes for a fresh start
-    final File indexDir = new File(indexDirPath);
-    if (indexDir.exists()) {
-      LOGGER.info("Deleting existing indexes from directory: {}", indexDirPath);
-      FileUtils.deleteDirectory(indexDir);
-    }
-
-    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
-    for (final Class<? extends HasId> clazz : indexedObjects) {
-      searchService.deleteIndex(clazz);
-      searchService.createIndex(clazz);
-    }
-
-    // Load each code system
-    for (final String codeSystemFile : CODE_SYSTEM_FILES) {
-      try {
-        // Read file from classpath
-        final ClassPathResource resource = new ClassPathResource("data/" + codeSystemFile,
-            FhirR5RestUnitTest.class.getClassLoader());
-
-        if (!resource.exists()) {
-          throw new FileNotFoundException("Could not find resource: data/" + codeSystemFile);
-        }
-
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
-        LOGGER.info("Loading code system from file: {}", codeSystemFile);
-        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent);
-
-      } catch (final Exception e) {
-        LOGGER.error("Error loading code system file: {}", codeSystemFile, e);
-        throw e;
-      }
-    }
   }
 
   /** Sets the up. */
   @BeforeEach
   public void setUp() {
     // The object mapper
-    objectMapper = new ObjectMapper();
+    objectMapper = ThreadLocalMapper.get();
     JacksonTester.initFields(this, objectMapper);
   }
 
@@ -179,6 +130,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testMetadata() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + FHIR_METADATA;
@@ -204,6 +156,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testCodeSystemSearch() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM;
@@ -223,7 +176,7 @@ public class FhirR5RestUnitTest {
     assertNotNull(data.getMeta().getLastUpdated());
     assertFalse(data.getLink().isEmpty());
     assertEquals(LinkRelationTypes.SELF, data.getLink().get(0).getRelation());
-    assertTrue(data.getLink().get(0).getUrl().endsWith("/fhir/r5/CodeSystem"));
+    assertTrue(data.getLink().get(0).getUrl().endsWith(FHIR_CODESYSTEM));
 
     // Verify expected code systems
     // missing rxnorm files
@@ -275,6 +228,7 @@ public class FhirR5RestUnitTest {
    * Test code system search by url.
    */
   @Test
+  @Order(1)
   public void testCodeSystemSearchByUrl() {
 
     // Arrange
@@ -310,9 +264,10 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testCodeSystemById() throws Exception {
     // Arrange
-    final String csId = "a1d1e426-26a6-4326-b18b-c54c154079b5";
+    final String csId = "340c926f-9ad6-4f1b-b230-dc4ca14575ab";
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -339,7 +294,7 @@ public class FhirR5RestUnitTest {
     assertEquals(CodeSystemHierarchyMeaning.ISA, codeSystem.getHierarchyMeaning());
     assertFalse(codeSystem.getCompositional());
     assertEquals("fragment", codeSystem.getContent().toString().toLowerCase());
-    assertEquals(440, codeSystem.getCount());
+    assertEquals(456, codeSystem.getCount());
   }
 
   /**
@@ -348,6 +303,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testCodeSystemSearchOperation() throws Exception {
     // Arrange
     final String searchParams = "/_search?title=SNOMEDCT&_count=50";
@@ -380,6 +336,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testCodeSystemValidateCode() throws Exception {
     // Arrange
     final String code = "385487005";
@@ -436,6 +393,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testCodeSystemValidateCodeById() throws Exception {
     // Arrange
     final String csId = "177f2263-fe04-4f1f-b0e6-9b351ab8baa9";
@@ -464,6 +422,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testCodeSystemSubsumes() throws Exception {
     // Arrange
     final String codeA = "73211009";
@@ -495,6 +454,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testCodeSystemSubsumesById() throws Exception {
     // Arrange
     final String csId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b";
@@ -522,6 +482,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testCodeSystemLookup() throws Exception {
     // Arrange
     final String code = "73211009";
@@ -606,6 +567,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testCodeSystemLookupById() throws Exception {
     // Arrange
     final String system = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b";
@@ -690,6 +652,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testValueSetSearch() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + FHIR_VALUESET;
@@ -726,6 +689,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testValueSetById() throws Exception {
     // Arrange
     final String vsId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b_entire";
@@ -756,6 +720,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testValueSetSearchOperation() throws Exception {
     // Arrange
     final String searchParams = "/_search?title=SNOMEDCT&_count=50";
@@ -787,6 +752,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception exception
    */
   @Test
+  @Order(1)
   public void testValueSetRead() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + FHIR_VALUESET;
@@ -798,7 +764,7 @@ public class FhirR5RestUnitTest {
         data.getEntry().stream().map(Bundle.BundleEntryComponent::getResource).toList();
 
     // Assert bundle has expected number of entries
-    assertEquals(5, valueSets.size(), "Should have 5 ValueSet entries");
+    assertEquals(6, valueSets.size(), "Should have 6 ValueSet entries");
 
     // Test each ValueSet entry
     for (final Resource resource : valueSets) {
@@ -834,6 +800,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testValueSetValidateCode() throws Exception {
     // Arrange
     final String code = "73211009";
@@ -866,6 +833,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testValueSetValidateCodeById() throws Exception {
     // Arrange
     final String vsId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b_entire";
@@ -898,6 +866,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testValueSetExpand() throws Exception {
     // Arrange
     final String expandParams = "/$expand?url=2023&count=50";
@@ -937,6 +906,7 @@ public class FhirR5RestUnitTest {
    * @throws Exception the exception
    */
   @Test
+  @Order(1)
   public void testValueSetExpandById() throws Exception {
     // Arrange
     final String vsId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b_entire";
@@ -986,6 +956,224 @@ public class FhirR5RestUnitTest {
     // match");
     // assertEquals("chlorpropamide / metformin", firstEntry.getDisplay(),
     // "First entry display should match");
+  }
+
+  /**
+   * Test delete code system.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(10)
+  public void testDeleteNonExistentCodeSystem() throws Exception {
+
+    LOGGER.info("Testing delete NonExistent CodeSystem endpoint");
+    final String testId = "test-codesystem-delete";
+    final String deleteUrl = LOCALHOST + port + FHIR_CODESYSTEM + "/" + testId;
+    final ResponseEntity<String> response =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    LOGGER.info("Delete non-existent CodeSystem returned 404 as expected");
+  }
+
+  /**
+   * Test delete value set.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(11)
+  public void testDeleteNonExistentValueSet() throws Exception {
+
+    LOGGER.info("Testing delete NonExistent ValueSet endpoint");
+    final String testId = "test-valueset-delete";
+    final String deleteUrl = LOCALHOST + port + FHIR_VALUESET + "/" + testId;
+    final ResponseEntity<String> response =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    LOGGER.info("Delete non-existent ValueSet returned 404 as expected");
+  }
+
+  /**
+   * Test delete concept map.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(12)
+  public void testDeleteNonExistentConceptMap() throws Exception {
+
+    LOGGER.info("Testing delete NonExistent ConceptMap endpoint");
+    final String testId = "test-conceptmap-delete";
+    final String deleteUrl = LOCALHOST + port + FHIR_CONCEPTMAP + "/" + testId;
+    final ResponseEntity<String> response =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    LOGGER.info("Delete non-existent ConceptMap returned 404 as expected");
+  }
+
+  /**
+   * Test delete implicit value set (should not be allowed).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(13)
+  public void testDeleteImplicitValueSet() throws Exception {
+
+    LOGGER.info("Testing delete implicit ValueSet (should not be allowed)");
+
+    // Get Id of loaded terminology
+    String id = "";
+    final SearchParameters params = new SearchParameters();
+    params.setQuery("*:*");
+    params.setLimit(100);
+
+    // list terminologies to verify the LNC terminology is loaded
+    final ResultList<Terminology> terminologies = searchService.find(params, Terminology.class);
+    for (final Terminology t : terminologies.getItems()) {
+      LOGGER.info("Terminology: {} - {}", t.getName(), t.getVersion());
+      id = t.getId();
+    }
+
+    // Try to delete an implicit value set -
+    // Should return 405 Method Not Allowed
+    final String testId = id + "_entire";
+    final String deleteUrl = LOCALHOST + port + FHIR_VALUESET + "/" + testId;
+    final ResponseEntity<String> response =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+
+    // Should return 405 Method Not Allowed for implicit value sets
+    assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
+    LOGGER.info("Delete implicit ValueSet returned 405 as expected");
+  }
+
+  /**
+   * Test delete code system.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(14)
+  public void testDeleteCodeSystem() throws Exception {
+    LOGGER.info("Testing delete CodeSystem endpoint");
+
+    // Get Id of loaded terminology
+    String testId = "";
+    final SearchParameters params = new SearchParameters();
+    params.setQuery("*:*");
+    params.setLimit(100);
+
+    ResultList<Terminology> terminologies = searchService.find(params, Terminology.class);
+    for (final Terminology t : terminologies.getItems()) {
+      LOGGER.info("Terminology: {} - {}", t.getName(), t.getVersion());
+      testId = t.getId();
+    }
+
+    assertNotNull(testId);
+
+    // Try to delete the code system
+    final String deleteUrl = LOCALHOST + port + FHIR_CODESYSTEM + "/" + testId;
+    LOGGER.info("Delete codes system URL {}", deleteUrl);
+    final ResponseEntity<String> response =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+
+    // Verify the code system is deleted by attempting to delete it again
+    final ResponseEntity<String> response2 =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
+    terminologies = searchService.find(params, Terminology.class);
+
+    assertNotNull(terminologies);
+    // assert testId not in terminologies
+    final String finalTestId = testId;
+    assertTrue(terminologies.getItems().stream().noneMatch(t -> t.getId().equals(finalTestId)),
+        "Deleted terminology should not be found");
+  }
+
+  /**
+   * Test delete value set.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(15)
+  public void testDeleteValueSet() throws Exception {
+    LOGGER.info("Testing delete ValueSet endpoint");
+
+    // Get Id of loaded terminology
+    String testId = "";
+    final SearchParameters params = new SearchParameters();
+    params.setQuery("*:*");
+    params.setLimit(100);
+
+    ResultList<Subset> subsets = searchService.find(params, Subset.class);
+    for (final Subset s : subsets.getItems()) {
+      LOGGER.info("Subset: {} - {}", s.getName(), s.getVersion());
+      testId = s.getId();
+    }
+
+    assertNotNull(testId);
+
+    // Try to delete the value set
+    final String deleteUrl = LOCALHOST + port + FHIR_VALUESET + "/" + testId;
+    LOGGER.info("Delete value set URL {}", deleteUrl);
+    final ResponseEntity<String> response =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+
+    // Verify the value set is deleted by attempting to delete it again
+    final ResponseEntity<String> response2 =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
+    subsets = searchService.find(params, Subset.class);
+    assertEquals(0, subsets.getTotal());
+  }
+
+  /**
+   * Test delete concept map.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(16)
+  public void testDeleteConceptMap() throws Exception {
+    LOGGER.info("Testing delete ConceptMap endpoint");
+
+    // Get Id of loaded terminology
+    String testId = "";
+    final SearchParameters params = new SearchParameters();
+    params.setQuery("*:*");
+    params.setLimit(100);
+
+    ResultList<Mapset> mapsets = searchService.find(params, Mapset.class);
+    for (final Mapset m : mapsets.getItems()) {
+      LOGGER.info("Terminology: {} - {}", m.getName(), m.getVersion());
+      testId = m.getId();
+    }
+
+    assertNotNull(testId);
+
+    // Try to delete the concept map
+    final String deleteUrl = LOCALHOST + port + FHIR_CONCEPTMAP + "/" + testId;
+    LOGGER.info("Delete concept map URL {}", deleteUrl);
+    final ResponseEntity<String> response =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+
+    // Verify the concept map is deleted by attempting to delete it again
+    final ResponseEntity<String> response2 =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
+    mapsets = searchService.find(params, Mapset.class);
+    assertEquals(0, mapsets.getTotal());
   }
 
 }

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.persistence.Transient;
 
 /**
@@ -29,8 +30,7 @@ import jakarta.persistence.Transient;
  */
 @JsonInclude(Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TerminologyRef extends AbstractHasModified // extends
-    // AbstractHasJsonData
+public class TerminologyRef extends AbstractHasModified
     implements HasName, HasMinimize, Copyable<TerminologyRef>, Comparable<TerminologyRef> {
 
   /** The abbreviation. */
@@ -51,9 +51,17 @@ public class TerminologyRef extends AbstractHasModified // extends
   private String version;
 
   /** The publisher - e.g. "TERMHUB", "NLM", "SNOMED" */
-  @Transient
   @Field(type = FieldType.Keyword)
   private String publisher;
+
+  /** The release date. */
+  @Transient
+  @Field(type = FieldType.Keyword)
+  private String releaseDate;
+
+  /** The uri (for downloading terminology artifacts). */
+  @Transient
+  private String uri;
 
   /** The latest flag. */
   @Transient
@@ -111,6 +119,9 @@ public class TerminologyRef extends AbstractHasModified // extends
     latest = other.getLatest();
     loaded = other.getLoaded();
     publisher = other.getPublisher();
+    releaseDate = other.getReleaseDate();
+    uri = other.getUri();
+
   }
 
   /**
@@ -139,28 +150,24 @@ public class TerminologyRef extends AbstractHasModified // extends
     if (other.getPublisher() != null) {
       publisher = other.getPublisher();
     }
+    if (other.getReleaseDate() != null) {
+      releaseDate = other.getReleaseDate();
+    }
+    if (other.getUri() != null) {
+      uri = other.getUri();
+    }
   }
 
-  /**
-   * Compare to.
-   *
-   * @param other the other
-   * @return the int
-   */
   /* see superclass */
   @Override
   public int compareTo(final TerminologyRef other) {
     return getAbbreviation().compareTo(other.getAbbreviation());
   }
 
-  /**
-   * Gets the id.
-   *
-   * @return the id
-   */
   /* see superclass */
   @Override
-  @Schema(description = "Unique identifier", required = false, format = "uuid")
+  @Schema(description = "Unique identifier", requiredMode = RequiredMode.NOT_REQUIRED,
+      format = "uuid")
   public String getId() {
     return super.getId();
   }
@@ -175,22 +182,12 @@ public class TerminologyRef extends AbstractHasModified // extends
     return abbreviation;
   }
 
-  /**
-   * Gets the name.
-   *
-   * @return the name
-   */
   /* see superclass */
   @Override
   public String getName() {
     return name;
   }
 
-  /**
-   * Sets the name.
-   *
-   * @param name the new name
-   */
   /* see superclass */
   @Override
   public void setName(final String name) {
@@ -283,11 +280,45 @@ public class TerminologyRef extends AbstractHasModified // extends
   }
 
   /**
-   * Hash code.
+   * Returns the release date.
    *
-   * @return the int
+   * @return the release date
    */
+  @Schema(description = "YYYY-MM-DD rendering of the release date")
+  public String getReleaseDate() {
+    return releaseDate;
+  }
+
+  /**
+   * Sets the release date.
+   *
+   * @param releaseDate the release date
+   */
+  public void setReleaseDate(final String releaseDate) {
+    this.releaseDate = releaseDate;
+  }
+
+  /**
+   * Gets the uri.
+   *
+   * @return the uri
+   */
+  @Schema(description = "Uri for downloading the terminology")
+  public String getUri() {
+    return uri;
+  }
+
+  /**
+   * Sets the uri.
+   *
+   * @param uri the new uri
+   */
+  public void setUri(final String uri) {
+    this.uri = uri;
+  }
+
   /* see superclass */
+
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -296,12 +327,6 @@ public class TerminologyRef extends AbstractHasModified // extends
     return result;
   }
 
-  /**
-   * Equals.
-   *
-   * @param obj the obj
-   * @return true, if successful
-   */
   /* see superclass */
   @Override
   public boolean equals(final Object obj) {
@@ -317,9 +342,7 @@ public class TerminologyRef extends AbstractHasModified // extends
         && Objects.equals(publisher, other.publisher) && Objects.equals(version, other.version);
   }
 
-  /**
-   * Minimize.
-   */
+
   /* see superclass */
   @Override
   public void minimize() {
@@ -337,12 +360,10 @@ public class TerminologyRef extends AbstractHasModified // extends
     }
   }
 
-  /**
-   * Clean for api.
-   */
   /* see superclass */
   @Override
   public void cleanForApi() {
     //
   }
+
 }

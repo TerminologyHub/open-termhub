@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 
 /**
  * Represents a reference to a concept with minimal information.
@@ -84,6 +85,24 @@ public class ConceptRef extends AbstractHasModified
   public ConceptRef(final String code, final String name) {
     this.code = code;
     this.name = name;
+  }
+
+  /**
+   * Instantiates a new concept ref.
+   *
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
+   * @param code the code
+   * @param name the name
+   */
+  public ConceptRef(final String terminology, final String publisher, final String version,
+      final String code, final String name) {
+    this.code = code;
+    this.name = name;
+    this.terminology = terminology;
+    this.publisher = publisher;
+    this.version = version;
   }
 
   /**
@@ -172,7 +191,8 @@ public class ConceptRef extends AbstractHasModified
    */
   /* see superclass */
   @Override
-  @Schema(description = "Unique identifier", required = false, format = "uuid")
+  @Schema(description = "Unique identifier", requiredMode = RequiredMode.NOT_REQUIRED,
+      format = "uuid")
   public String getId() {
     return super.getId();
   }
@@ -184,7 +204,7 @@ public class ConceptRef extends AbstractHasModified
    */
   /* see superclass */
   @Override
-  @Schema(description = "Concept name", required = false)
+  @Schema(description = "Concept name", requiredMode = RequiredMode.NOT_REQUIRED)
   public String getName() {
     return name;
   }
@@ -206,7 +226,7 @@ public class ConceptRef extends AbstractHasModified
    * @return the terminology
    */
   @Override
-  @Schema(description = "Terminology abbreviation", required = false)
+  @Schema(description = "Terminology abbreviation", requiredMode = RequiredMode.NOT_REQUIRED)
   public String getTerminology() {
     return terminology;
   }
@@ -227,7 +247,7 @@ public class ConceptRef extends AbstractHasModified
    * @return the version
    */
   @Override
-  @Schema(description = "Terminology version", required = false)
+  @Schema(description = "Terminology version", requiredMode = RequiredMode.NOT_REQUIRED)
   public String getVersion() {
     return version;
   }
@@ -248,7 +268,7 @@ public class ConceptRef extends AbstractHasModified
    * @return the publisher
    */
   @Override
-  @Schema(description = "Terminology publisher", required = false)
+  @Schema(description = "Terminology publisher", requiredMode = RequiredMode.NOT_REQUIRED)
   public String getPublisher() {
     return publisher;
   }
@@ -269,7 +289,7 @@ public class ConceptRef extends AbstractHasModified
    * @return the historical
    */
   @Schema(description = "Historical relationship type (only used for concept descendants)",
-      required = false)
+      requiredMode = RequiredMode.NOT_REQUIRED)
   public String getHistorical() {
     return historical;
   }

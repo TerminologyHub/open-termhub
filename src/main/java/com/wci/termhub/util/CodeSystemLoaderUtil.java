@@ -14,15 +14,17 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.algo.TerminologyCache;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
@@ -44,14 +46,8 @@ public final class CodeSystemLoaderUtil {
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeSystemLoaderUtil.class);
 
-  /** The terminologies cache. */
-  private static TimerCache<Concept> conceptCache = new TimerCache<>(1000, 10000);
-
-  /** The key delimiter. */
-  private static final String KEY_DELIMITER = "|";
-
-  /** The object mapper. */
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  /** The Constant BATCH_SIZE. */
+  private static final int DEFAULT_BATCH_SIZE = 10000;
 
   /**
    * Instantiates a new code system loader util.
@@ -65,13 +61,14 @@ public final class CodeSystemLoaderUtil {
    *
    * @param service the service
    * @param content the content
+   * @param computeTreePositions whether to compute tree positions
    * @return the string
    * @throws Exception the exception
    */
-  public static String loadCodeSystem(final EntityRepositoryService service, final String content)
-    throws Exception {
+  public static String loadCodeSystem(final EntityRepositoryService service, final String content,
+    final boolean computeTreePositions) throws Exception {
 
-    return indexCodeSystem(service, content, 1000, -1);
+    return indexCodeSystem(service, content, -1, computeTreePositions);
   }
 
   /**
@@ -79,25 +76,31 @@ public final class CodeSystemLoaderUtil {
    *
    * @param service the service
    * @param content the content
-   * @param batchSize the batch size
    * @param limit the limit
+   * @param computeTreePositions whether to compute tree positions
    * @return the string
    * @throws Exception the exception
    */
   private static String indexCodeSystem(final EntityRepositoryService service, final String content,
-    final int batchSize, final int limit) throws Exception {
+    final int limit, final boolean computeTreePositions) throws Exception {
 
-    LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
     final long startTime = System.currentTimeMillis();
-    final List<Concept> conceptBatch = new ArrayList<>(batchSize);
-    final List<ConceptRelationship> relationshipBatch = new ArrayList<>(batchSize);
-    final List<Term> termBatch = new ArrayList<>(batchSize);
+    final List<ConceptRelationship> relationshipBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
+    final List<Term> termBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
     final String id;
+    final Set<Concept> conceptCache = new HashSet<>();
+    final TerminologyCache terminologyCache = new TerminologyCache();
 
     try {
 
       // Read the entire file as a JSON object
-      final JsonNode root = OBJECT_MAPPER.readTree(content);
+      final JsonNode root = ThreadLocalMapper.get().readTree(content);
+
+      LOGGER.info("Indexing CodeSystem {}: ", root.path("title"));
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
+      }
+
       Terminology terminology = getTerminology(service, root);
 
       if (terminology != null) {
@@ -107,15 +110,19 @@ public final class CodeSystemLoaderUtil {
       }
 
       // Create the terminology
-      terminology = createTerminology(service, root);
+      terminology = createTerminology(service, root, computeTreePositions);
       id = terminology.getId();
 
       // Extract metadata from root
-      final List<Metadata> metadataList = createMetadata(root);
+      final List<Metadata> metadataList = createMetadata(terminology, root);
       if (metadataList != null && !metadataList.isEmpty()) {
         for (final Metadata metadata : metadataList) {
           service.add(Metadata.class, metadata);
         }
+      }
+
+      if (metadataList == null) {
+        throw new Exception("Unexpected null metadata list");
       }
 
       // Process concepts array
@@ -130,6 +137,7 @@ public final class CodeSystemLoaderUtil {
         }
 
         final Concept concept = createConcept(conceptNode, terminology);
+        final String conceptCode = concept.getCode();
 
         // Process relationships
         final JsonNode relationships = conceptNode.path("property");
@@ -144,26 +152,35 @@ public final class CodeSystemLoaderUtil {
 
           if ("parent".equals(propertyType)) {
             final ConceptRelationship relationship =
-                createRelationship(propertyNode, concept, terminology);
+                createRelationship(propertyNode, concept, terminology, terminologyCache);
             relationshipBatch.add(relationship);
+            relationshipCount++;
             concept.getRelationships().add(relationship);
 
-            if (relationshipBatch.size() == batchSize) {
+            // Track parent-child relationship using thread-safe collections
+            final JsonNode valueCoding = propertyNode.path("valueCoding");
+            if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
+              final String parentCode = valueCoding.path("code").asText();
+              terminologyCache.addParChd(parentCode, conceptCode);
+            }
+
+            if (relationshipBatch.size() == DEFAULT_BATCH_SIZE) {
               service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
               relationshipBatch.clear();
-              LOGGER.info("  processed relationships count: {}", relationshipCount);
+              LOGGER.info("  relationships count: {}", relationshipCount);
             }
 
             // Safely get the valueCoding and its code
-            final JsonNode valueCoding = propertyNode.path("valueCoding");
             if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
               concept.getEclClauses().add(
                   propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
             } else {
-              LOGGER.warn("    Missing valueCoding or code for parent relationship in concept: {}",
-                  concept.getCode());
+              if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                    "    Missing valueCoding or code for parent relationship in concept: {}",
+                    concept.getCode());
+              }
             }
-            relationshipCount++;
           }
 
           if ("relationship".equals(propertyType)) {
@@ -180,9 +197,11 @@ public final class CodeSystemLoaderUtil {
                 concept.getEclClauses().add(extensionValueCoding.path("code").asText() + "="
                     + propertyValueCoding.path("code").asText());
               } else {
-                LOGGER.warn(
-                    "    Skipping relationship due to missing valueCoding or code for concept: {}",
-                    concept.getCode());
+                if (LOGGER.isDebugEnabled()) {
+                  LOGGER.debug(
+                      "    Skipping relationship due to missing valueCoding or code for concept: {}",
+                      concept.getCode());
+                }
               }
             }
           }
@@ -191,48 +210,73 @@ public final class CodeSystemLoaderUtil {
         // Process terms
         for (final Term term : concept.getTerms()) {
           termBatch.add(term);
-          if (termBatch.size() == batchSize) {
+          termCount++;
+          if (termBatch.size() == DEFAULT_BATCH_SIZE) {
             service.addBulk(Term.class, new ArrayList<>(termBatch));
             termBatch.clear();
-            LOGGER.info("  processed terms count: {}", termCount);
+            LOGGER.info("  terms count: {}", termCount);
           }
-          termCount++;
         }
 
         // Add concept to batch
-        conceptBatch.add(concept);
-        final String conceptKey = getConceptCacheKey(concept);
-        conceptCache.put(conceptKey, concept);
-        if (conceptBatch.size() == batchSize) {
-          service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
-          SystemReportUtility.logMemory();
-          conceptBatch.clear();
-          LOGGER.info("  processed concepts count: {}", conceptCount);
-        }
+        terminologyCache.addConcept(concept);
+        conceptCache.add(concept);
         conceptCount++;
-      }
+        if (conceptCache.size() == DEFAULT_BATCH_SIZE) {
+          LOGGER.info("  concept count: {}", conceptCount);
+        }
+      } // end concepts loop
 
-      // Add remaining batches
-      if (!conceptBatch.isEmpty()) {
-        service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
-      }
       if (!relationshipBatch.isEmpty()) {
         service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
       }
       if (!termBatch.isEmpty()) {
         service.addBulk(Term.class, new ArrayList<>(termBatch));
       }
+      LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}, time: {}",
+          conceptCount, relationshipCount, termCount, (System.currentTimeMillis() - startTime));
 
-      if (metadataList == null) {
-        throw new Exception("Unexpected null metadata list");
+      LOGGER.info("  begin compute for ancestors");
+      if (terminology.getAttributes() != null
+          && terminology.getAttributes().containsKey(Terminology.Attributes.hierarchical.property())
+          && Boolean.parseBoolean(
+              terminology.getAttributes().get(Terminology.Attributes.hierarchical.property()))) {
+        for (final Concept concept : conceptCache) {
+          final Set<String> ancestors = terminologyCache.getAncestors(concept.getCode());
+          // get the conceptRef for each ancestor
+          if (ancestors != null && !ancestors.isEmpty()) {
+            for (final String ancestorCode : ancestors) {
+              final ConceptRef ancestorRef =
+                  terminologyCache.getOrCreateConceptRef(ancestorCode, concept);
+              concept.getAncestors().add(ancestorRef);
+            }
+          }
+        }
+      }
+      LOGGER.info("  finish compute for ancestors");
+
+      conceptCount = 0;
+      final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
+      for (final Concept concept : conceptCache) {
+        conceptBatch.add(concept);
+        conceptCount++;
+        if (conceptBatch.size() >= DEFAULT_BATCH_SIZE) {
+          LOGGER.info("  count: {}", conceptCount);
+          service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
+          conceptBatch.clear();
+        }
       }
 
-      // compute tree positions
-      computeConceptTreePositions(service, metadataList.get(0).getTerminology(),
-          metadataList.get(0).getPublisher(), metadataList.get(0).getVersion());
+      if (!conceptBatch.isEmpty()) {
+        LOGGER.info("  count: {}", conceptCount);
+        service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
+        conceptBatch.clear();
+      }
 
-      LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}", conceptCount,
-          relationshipCount, termCount);
+      // compute tree positions if required
+      if (computeTreePositions) {
+        computeConceptTreePositions(service, terminology);
+      }
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       return id;
@@ -259,9 +303,8 @@ public final class CodeSystemLoaderUtil {
     final String version = root.path("version").asText();
 
     final SearchParameters searchParams = new SearchParameters();
-    searchParams.setQuery("abbreviation: " + StringUtility.escapeQuery(abbreviation)
-        + " publisher: \"" + StringUtility.escapeQuery(publisher) + "\" AND version: '"
-        + StringUtility.escapeQuery(version) + "'");
+    searchParams
+        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
     final ResultList<Terminology> terminology = service.find(searchParams, Terminology.class);
 
     return (terminology.getItems().isEmpty()) ? null : terminology.getItems().get(0);
@@ -272,11 +315,12 @@ public final class CodeSystemLoaderUtil {
    *
    * @param service the service
    * @param root the root
+   * @param computeTreePositions the compute tree positions
    * @return the terminology
    * @throws Exception the exception
    */
   private static Terminology createTerminology(final EntityRepositoryService service,
-    final JsonNode root) throws Exception {
+    final JsonNode root, final boolean computeTreePositions) throws Exception {
 
     // Validate that this is a CodeSystem resource
     if (!root.has("resourceType") || !"CodeSystem".equals(root.get("resourceType").asText())) {
@@ -284,6 +328,7 @@ public final class CodeSystemLoaderUtil {
     }
 
     final Terminology terminology = new Terminology();
+    // The HAPI Plan server @Create method blanks the identifier on sending a code system in
     final String id = root.path("id").asText();
     if (isNotBlank(id)) {
       terminology.setId(id);
@@ -292,13 +337,18 @@ public final class CodeSystemLoaderUtil {
       terminology.setId(uuid);
       LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
     }
+    terminology.setActive(true);
+    terminology.setUri(root.path("url").asText());
     terminology.setName(root.path("name").asText());
     terminology.setAbbreviation(root.path("title").asText());
     terminology.setPublisher(root.path("publisher").asText());
     terminology.setVersion(root.path("version").asText());
+    // For SNOMED, set the terminology version to just the base version at the end of the URL
+    if (terminology.getUri().contains("snomed") && terminology.getVersion().contains("/")) {
+      terminology.setVersion(terminology.getVersion().replaceFirst(".*/", ""));
+    }
     terminology.setReleaseDate(root.path("date").asText().substring(0, 10));
-    terminology.setUri(root.path("url").asText());
-    terminology.setFamily("SNOMED");
+    terminology.setFamily(terminology.getAbbreviation());
     terminology.setConceptCt(root.path("count").asLong(0));
 
     // Set terminology attributes
@@ -306,17 +356,21 @@ public final class CodeSystemLoaderUtil {
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
       final String uri = property.path("uri").asText();
-      final String[] uriParts = FieldedStringTokenizer.split(uri, "/");
-      if (uriParts.length < 3 || !"terminology".equals(uriParts[uriParts.length - 2])
-          || !"attributes".equals(uriParts[uriParts.length - 1])) {
+      // [ https:, , terminologyhub.com, model, terminology, attributes,
+      // autocomplete ]
+      if (uri == null || uri.isEmpty() || !uri.contains("terminology/attributes")) {
         continue;
       }
       attributes.put(property.path("code").asText(), property.path("description").asText());
     }
     attributes.put("fhirVersion", root.path("version").asText());
+    attributes.put(Terminology.Attributes.treePositions.property(),
+        Boolean.toString(computeTreePositions));
     terminology.setAttributes(attributes);
 
-    LOGGER.info("CodeSystemLoaderUtil: terminology: {}", terminology);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("CodeSystemLoaderUtil: terminology: {}", terminology);
+    }
     service.add(Terminology.class, terminology);
     return terminology;
   }
@@ -324,58 +378,60 @@ public final class CodeSystemLoaderUtil {
   /**
    * Creates the metadata.
    *
+   * @param terminology the terminology
    * @param root the root
    * @return the metadata
    */
-  private static List<Metadata> createMetadata(final JsonNode root) {
+  private static List<Metadata> createMetadata(final Terminology terminology, final JsonNode root) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Create metadata");
+    }
 
     final List<Metadata> metadataList = new ArrayList<>();
-
-    final String publisher = root.path("publisher").asText();
-    final String terminology = root.path("title").asText();
-    final String version = root.path("version").asText();
 
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
 
+      // {"code":"morphologic abnormality",
+      // "uri":"https://terminologyhub.com/model/concept/semanticType/
+      // MorphologicAbnormality","type":"string"}
+
       final String uri = property.path("uri").asText();
       final String[] uriParts = FieldedStringTokenizer.split(uri, "/");
 
-      final String modelType = uriParts[uriParts.length - 2];
+      // e.g. modelType is "concept"
+      final String modelType = uriParts[uriParts.length - 3];
 
-      if (uriParts.length < 3 || "terminology".equals(modelType)) {
+      // Avoid creating metadata for "terminology" things
+      if ("terminology".equals(modelType)) {
         continue;
       }
 
       final String code = property.path("code").asText();
       final String description = property.path("description").asText();
-
-      final Metadata metadata = new Metadata();
-      metadata.setId(UUID.randomUUID().toString());
-      metadata.setCode(code);
-      metadata.setName(description);
-      metadata.setActive(true);
-      metadata.setPublisher(publisher);
-      metadata.setTerminology(terminology);
-      metadata.setVersion(version);
-      final String fieldType = uriParts[uriParts.length - 1];
-
-      // Map 'attributes' model type to 'concept' as a fallback
-      String mappedModelType = modelType;
-      if ("attributes".equals(modelType)) {
-        mappedModelType = "concept";
-        LOGGER.info("Mapped 'attributes' model type to 'concept' for metadata: code={}, name={}",
-            code, description);
-      }
+      final String fieldType = uriParts[uriParts.length - 2];
 
       try {
-        metadata.setModel(MetaModel.Model.valueOf(mappedModelType));
+
+        final Metadata metadata = new Metadata();
+        metadata.setId(UUID.randomUUID().toString());
+        metadata.setCode(code);
+        metadata.setName(description);
+        metadata.setActive(true);
+        metadata.setPublisher(terminology.getPublisher());
+        metadata.setTerminology(terminology.getAbbreviation());
+        metadata.setVersion(terminology.getVersion());
+        metadata.setModel(MetaModel.Model.valueOf(modelType));
         metadata.setField(MetaModel.Field.valueOf(fieldType));
         metadataList.add(metadata);
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("  ADD metadata = {}", metadata.toString());
+        }
+
       } catch (final IllegalArgumentException e) {
         LOGGER.warn(
             "Skipping metadata due to invalid model or field type: model={}, field={}, code={}, name={}",
-            mappedModelType, fieldType, code, description);
+            modelType, fieldType, code, description);
       }
     }
 
@@ -399,6 +455,7 @@ public final class CodeSystemLoaderUtil {
         conceptNode.has("id") ? conceptNode.path("id").asText() : UUID.randomUUID().toString();
 
     concept.setId(id);
+    concept.setActive(true);
     concept.setCode(conceptNode.path("code").asText());
     concept.setTerminology(terminology.getAbbreviation());
     concept.setVersion(terminology.getVersion());
@@ -428,6 +485,7 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode designation : designations) {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
+        term.setActive(true);
         term.setName(designation.path("value").asText());
 
         // Safely set term type with null checks
@@ -470,6 +528,7 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode designation : designations) {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
+        term.setActive(true);
         term.setName(designation.path("value").asText());
 
         // Safely set term type with null checks
@@ -506,6 +565,7 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode designation : designations) {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
+        term.setActive(true);
         term.setName(designation.path("value").asText());
 
         // Safely set term type with null checks
@@ -562,6 +622,7 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode designation : designations) {
         final Term term = new Term();
         term.setId(UUID.randomUUID().toString());
+        term.setActive(true);
         term.setName(designation.path("value").asText());
 
         // Safely set term type with null checks
@@ -622,13 +683,16 @@ public final class CodeSystemLoaderUtil {
    * @param relationshipNode the relationship JSON node
    * @param fromConcept the source concept
    * @param terminology the terminology
+   * @param terminologyCache the terminology cache
    * @return the concept relationship
    */
   private static ConceptRelationship createRelationship(final JsonNode relationshipNode,
-    final Concept fromConcept, final Terminology terminology) {
+    final Concept fromConcept, final Terminology terminology,
+    final TerminologyCache terminologyCache) {
 
     final ConceptRelationship relationship = new ConceptRelationship();
     relationship.setId(UUID.randomUUID().toString());
+    relationship.setActive(true);
     relationship.setTerminology(terminology.getAbbreviation());
     relationship.setVersion(terminology.getVersion());
     relationship.setPublisher(terminology.getPublisher());
@@ -648,7 +712,9 @@ public final class CodeSystemLoaderUtil {
           if (url.endsWith("/additionalType")) {
             final JsonNode valueCoding = extension.path("valueCoding");
             additionalType = valueCoding.path("code").asText();
-            LOGGER.info("Found additionalType: {}", additionalType);
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug("Found additionalType: {}", additionalType);
+            }
           } else if (url.endsWith("/group")) {
             group = extension.path("valueString").asText();
           }
@@ -657,12 +723,16 @@ public final class CodeSystemLoaderUtil {
 
       // Set relationship type based on code
       final String code = relationshipNode.path("code").asText();
-      LOGGER.info("Processing SNOMED CT relationship with code: {}", code);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Processing SNOMED CT relationship with code: {}", code);
+      }
 
-      if ("parent".equals(code)) {
+      if ("parent".equalsIgnoreCase(code)) {
         type = "parent";
         additionalType = "ISA";
-        LOGGER.info("Set type to ISA for parent relationship");
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Set type to ISA for parent relationship");
+        }
       } else {
         type = "relationship";
       }
@@ -670,7 +740,7 @@ public final class CodeSystemLoaderUtil {
     } else if (terminology.getAbbreviation().contains("LNC")) {
       // Handle LOINC relationships
       final String code = relationshipNode.path("code").asText();
-      if ("parent".equals(code)) {
+      if ("parent".equalsIgnoreCase(code)) {
         type = "parent";
         additionalType = "ISA";
       } else if ("relationship".equals(code)) {
@@ -699,25 +769,15 @@ public final class CodeSystemLoaderUtil {
     relationship.setType(type);
     relationship.setAdditionalType(additionalType);
 
-    // Create a ConceptRef for the from concept to avoid circular references
-    final ConceptRef fromRef = new ConceptRef();
-    fromRef.setId(fromConcept.getId());
-    fromRef.setCode(fromConcept.getCode());
-    fromRef.setName(fromConcept.getName());
-    fromRef.setTerminology(terminology.getAbbreviation());
-    fromRef.setVersion(terminology.getVersion());
-    fromRef.setPublisher(terminology.getPublisher());
+    final ConceptRef fromRef =
+        terminologyCache.getOrCreateConceptRef(fromConcept.getCode(), fromConcept);
     relationship.setFrom(fromRef);
 
     // Set target concept reference from valueCoding
     final JsonNode valueCoding = relationshipNode.path("valueCoding");
     if (!valueCoding.isMissingNode()) {
-      final ConceptRef toRef = new ConceptRef();
-      toRef.setCode(valueCoding.path("code").asText());
-      toRef.setName(valueCoding.path("display").asText());
-      toRef.setTerminology(terminology.getAbbreviation());
-      toRef.setVersion(terminology.getVersion());
-      toRef.setPublisher(terminology.getPublisher());
+      final ConceptRef toRef = terminologyCache.getOrCreateConceptRef(
+          valueCoding.path("code").asText(), valueCoding.path("display").asText(), terminology);
       relationship.setTo(toRef);
     }
 
@@ -733,6 +793,29 @@ public final class CodeSystemLoaderUtil {
     }
 
     return relationship;
+  }
+
+  /**
+   * Compute concept tree positions.
+   *
+   * @param service the service
+   * @param terminology the terminology
+   * @throws Exception the exception
+   */
+  private static void computeConceptTreePositions(final EntityRepositoryService service,
+    final Terminology terminology) throws Exception {
+
+    LOGGER.info(
+        "  Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
+        terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion());
+
+    final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
+    treepos.setTerminology(terminology.getAbbreviation());
+    treepos.setPublisher(terminology.getPublisher());
+    treepos.setVersion(terminology.getVersion());
+    treepos.checkPreconditions();
+    treepos.compute();
+
   }
 
   /**
@@ -753,6 +836,7 @@ public final class CodeSystemLoaderUtil {
         if (isNotBlank(definitionArray[i])) {
           final Definition def = new Definition();
           def.setId(UUID.randomUUID().toString());
+          def.setActive(true);
           def.setDefinition(definitionArray[i].trim());
           def.setTerminology(terminology.getAbbreviation());
           def.setVersion(terminology.getVersion());
@@ -762,45 +846,5 @@ public final class CodeSystemLoaderUtil {
       }
     }
     return definitions;
-
   }
-
-  /**
-   * Gets the concept cache key.
-   *
-   * @param concept the concept
-   * @return the concept cache key
-   */
-  private static String getConceptCacheKey(final Concept concept) {
-    if (concept == null) {
-      return null;
-    }
-    return concept.getPublisher() + KEY_DELIMITER + concept.getTerminology() + KEY_DELIMITER
-        + concept.getVersion() + KEY_DELIMITER + concept.getCode();
-  }
-
-  /**
-   * Compute concept tree positions.
-   *
-   * @param service the service
-   * @param terminologyName the terminology name
-   * @param publisher the publisher
-   * @param version the version
-   * @throws Exception the exception
-   */
-  private static void computeConceptTreePositions(final EntityRepositoryService service,
-    final String terminologyName, final String publisher, final String version) throws Exception {
-
-    LOGGER.info("Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
-        terminologyName, publisher, version);
-
-    final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
-    treepos.setTerminology(terminologyName);
-    treepos.setPublisher(publisher);
-    treepos.setVersion(version);
-    treepos.checkPreconditions();
-    treepos.compute();
-
-  }
-
 }

@@ -20,18 +20,11 @@ import org.hl7.fhir.r4.model.ConceptMap;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.fhir.r4.ConceptMapProviderR4;
 
@@ -42,12 +35,8 @@ import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 /**
  * The Class ConceptMapProviderR4UnitTest.
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestInstance(Lifecycle.PER_CLASS)
-@ActiveProfiles("test-r4")
-public class ConceptMapProviderR4UnitTest {
+public class ConceptMapProviderR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapProviderR4UnitTest.class);
@@ -119,8 +108,9 @@ public class ConceptMapProviderR4UnitTest {
   @Test
   public void testFindConceptMaps() throws Exception {
     // Test finding all concept maps
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // DateRangeParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -157,8 +147,9 @@ public class ConceptMapProviderR4UnitTest {
     final StringParam title = new StringParam("SNOMEDCT_US-ICD10CM");
 
     // When
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // DateRangeParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -194,8 +185,9 @@ public class ConceptMapProviderR4UnitTest {
     final StringParam publisher = new StringParam("SANDBOX");
 
     // When
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // DateRangeParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -248,8 +240,9 @@ public class ConceptMapProviderR4UnitTest {
     final StringParam version = new StringParam(VERSION);
 
     // When
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // DateRangeParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -288,8 +281,9 @@ public class ConceptMapProviderR4UnitTest {
     final UriParam sourceSystem = new UriParam(TEST_MAP_URL);
 
     // When
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // DateRangeParam date
         null, // StringParam description
         null, // StringParam identifier
@@ -329,8 +323,9 @@ public class ConceptMapProviderR4UnitTest {
     final UriParam targetSystem = new UriParam(TEST_MAP_TARGET);
 
     // When
-    final Bundle bundle = provider.findConceptMaps(request, details, null, // TokenParam
-                                                                           // id
+    final Bundle bundle = provider.findConceptMaps(request, details,
+
+        null, // TokenParam id
         null, // DateRangeParam date
         null, // StringParam description
         null, // StringParam identifier

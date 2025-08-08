@@ -23,8 +23,12 @@ import com.wci.termhub.model.ResultListConceptTreePosition;
 import com.wci.termhub.model.ResultListMapping;
 import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
+import com.wci.termhub.model.ResultListSubset;
+import com.wci.termhub.model.ResultListSubsetMember;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Terminology;
 
 /**
@@ -71,15 +75,6 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Delete. DELETE /terminology/{id} tag=terminology
-   *
-   * @param terminologyStr the terminology str
-   * @return the response entity
-   * @throws Exception the exception
-   */
-  public ResponseEntity<Void> deleteTerminology(String terminologyStr) throws Exception;
-
-  /**
    * Find terminologies. GET /terminology tag=terminology
    *
    * @param query the query
@@ -104,8 +99,8 @@ public interface TerminologyServiceRest extends RootServiceRest {
   public ResponseEntity<Concept> getConcept(String conceptId, String include) throws Exception;
 
   /**
-   * Gets the concept for the specified terminology and code. This call assumes that the project has
-   * only a single terminology/publisher/version configured, otherwise it will return a 409. GET
+   * Gets the concept for the specified terminology and code. This call assumes only a single
+   * terminology/publisher/version configured, otherwise it will return a 409. GET
    * /concept/{terminology}/{code} tag=concept by code
    *
    * @param terminology the terminology
@@ -147,7 +142,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @return the response entity
    * @throws Exception the exception
    */
-  public ResponseEntity<ResultListConcept> findConcepts(String terminology, String query,
+  public ResponseEntity<ResultListConcept> findTerminologyConcepts(String terminology, String query,
     String expression, Integer offset, Integer limit, String sort, Boolean ascending,
     Boolean active, Boolean leaf, String include, String handler) throws Exception;
 
@@ -187,7 +182,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Find metadata across project terminologies. GET /metadata tag=metadata
+   * Find metadata across terminologies. GET /metadata tag=metadata
    *
    * @param query the query
    * @param offset the offset
@@ -218,9 +213,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Find concept relationships. This call assumes that the project has only a single
-   * terminology/publisher/version configured, otherwise it will return a 409. GET
-   * /concept/{terminology}/{code}/relationships tag=concept by code
+   * Find concept relationships. This call assumes that only a single terminology/publisher/version
+   * configured, otherwise it will return a 409. GET /concept/{terminology}/{code}/relationships
+   * tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -255,7 +250,7 @@ public interface TerminologyServiceRest extends RootServiceRest {
     String handler) throws Exception;
 
   /**
-   * Find concept inverse relationships. This call assumes that the project has only a single
+   * Find concept inverse relationships. This call assumes that only a single
    * terminology/publisher/version configured, otherwise it will return a 409. GET
    * /concept/{terminology}/{code}/inverseRelationships tag=concept by code
    *
@@ -292,9 +287,9 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Find concept tree positions. This call assumes that the project has only a single
-   * terminology/publisher/version configured, otherwise it will return a 409. GET
-   * /concept/{terminology}/{code}/treepos tag=concept by code
+   * Find concept tree positions. This call assumes that only a single terminology/publisher/version
+   * configured, otherwise it will return a 409. GET /concept/{terminology}/{code}/treepos
+   * tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -329,9 +324,21 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
-   * Find concept tree positions. This call assumes that the project has only a single
-   * terminology/publisher/version configured, otherwise it will return a 409. GET
-   * /concept/{terminology}/{code}/treepos/children tag=concept by code
+   * Compute tree positions. POST /concept/{terminology}/trees tag=concept
+   *
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<String> computeTreePositions(String terminology, String publisher,
+    final String version) throws Exception;
+
+  /**
+   * Find concept tree positions. This call assumes that only a single terminology/publisher/version
+   * configured, otherwise it will return a 409. GET /concept/{terminology}/{code}/treepos/children
+   * tag=concept by code
    *
    * @param terminology the terminology
    * @param code the code
@@ -381,12 +388,27 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @param sort the sort
    * @param ascending the ascending
    * @param active the active
-   * @param leaf the leaf
    * @return the response entity
    * @throws Exception the exception
    */
   public ResponseEntity<ResultListMapping> findMappings(String mapset, String query, Integer offset,
-    Integer limit, String sort, Boolean ascending, Boolean active, Boolean leaf) throws Exception;
+    Integer limit, String sort, Boolean ascending, Boolean active) throws Exception;
+
+  /**
+   * Find members.
+   *
+   * @param subset the subset
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<ResultListSubsetMember> findMembers(String subset, String query,
+    Integer offset, Integer limit, String sort, Boolean ascending, Boolean active) throws Exception;
 
   /**
    * Find mapset.
@@ -398,13 +420,11 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @param sort the sort
    * @param ascending the ascending
    * @param active the active
-   * @param leaf the leaf
    * @return the response entity
    * @throws Exception the exception
    */
   public ResponseEntity<ResultListMapping> findMapsetMappings(String mapset, String query,
-    Integer offset, Integer limit, String sort, Boolean ascending, Boolean active, Boolean leaf)
-    throws Exception;
+    Integer offset, Integer limit, String sort, Boolean ascending, Boolean active) throws Exception;
 
   /**
    * Find concept mappings.
@@ -414,6 +434,15 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @throws Exception the exception
    */
   public ResponseEntity<List<Mapping>> getConceptMappings(String conceptId) throws Exception;
+
+  /**
+   * Gets the concept members.
+   *
+   * @param conceptId the concept id
+   * @return the concept members
+   * @throws Exception the exception
+   */
+  public ResponseEntity<List<SubsetMember>> getConceptMembers(String conceptId) throws Exception;
 
   /**
    * Gets the concept inverse mappings.
@@ -436,6 +465,17 @@ public interface TerminologyServiceRest extends RootServiceRest {
     throws Exception;
 
   /**
+   * Gets the concept members.
+   *
+   * @param terminology the terminology
+   * @param code the code
+   * @return the concept members
+   * @throws Exception the exception
+   */
+  public ResponseEntity<List<SubsetMember>> getConceptMembers(String terminology, String code)
+    throws Exception;
+
+  /**
    * Gets the concept inverse mappings.
    *
    * @param terminology the terminology
@@ -445,5 +485,71 @@ public interface TerminologyServiceRest extends RootServiceRest {
    */
   public ResponseEntity<List<Mapping>> getConceptInverseMappings(String terminology, String code)
     throws Exception;
+
+  /**
+   * Gets the subset.
+   *
+   * @param id the id
+   * @return the subset
+   * @throws Exception the exception
+   */
+  public ResponseEntity<Subset> getSubset(String id) throws Exception;
+
+  /**
+   * Find subsets.
+   *
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<ResultListSubset> findSubsets(String query, Integer offset, Integer limit,
+    String sort, Boolean ascending) throws Exception;
+
+  /**
+   * Find subset members.
+   *
+   * @param subset the subset
+   * @param query the query
+   * @param offset the offset
+   * @param limit the limit
+   * @param sort the sort
+   * @param ascending the ascending
+   * @param active the active
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<ResultListSubsetMember> findSubsetMembers(String subset, String query,
+    Integer offset, Integer limit, String sort, Boolean ascending, Boolean active) throws Exception;
+
+  /**
+   * Delete. DELETE /terminology/{id} tag=terminology
+   *
+   * @param id the id
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<Void> deleteTerminology(String id) throws Exception;
+
+  /**
+   * Delete. DELETE /mapset/{id} tag=mapset
+   *
+   * @param id the id
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<Void> deleteMapset(String id) throws Exception;
+
+  /**
+   * Delete. DELETE /subset/{id} tag=subset
+   *
+   * @param id the id
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<Void> deleteSubset(String id) throws Exception;
 
 }

@@ -1,0 +1,410 @@
+{
+  "resourceType": "ValueSet",
+  "id": "e1db453f-07f2-4c9a-a740-6395f7dea053",
+  "url": "http://snomed.info/sct?fhir_vs=900000000000012004",
+  "identifier": [ {
+    "system": "https://terminologyhub.com/model/subset/code",
+    "value": "900000000000012004"
+  } ],
+  "version": "20240301",
+  "name": "SNOMEDCT model concepts",
+  "title": "SNOMEDCT_US-MODEL",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-03-01T00:00:00+00:00",
+  "publisher": "SANDBOX",
+  "description": "SNOMED CT model component",
+  "compose": {
+    "include": [ {
+      "system": "http://snomed.info/sct",
+      "concept": [ {
+        "code": "106237007",
+        "display": "Linkage concept"
+      }, {
+        "code": "116676008",
+        "display": "Associated morphology"
+      }, {
+        "code": "116680003",
+        "display": "Is a"
+      }, {
+        "code": "1187636009",
+        "display": "Simple map to SNOMED CT"
+      }, {
+        "code": "1193546000",
+        "display": "Map source to map target correlation"
+      }, {
+        "code": "1193552004",
+        "display": "Map source to map target correlation not specified"
+      }, {
+        "code": "123005000",
+        "display": "Part of"
+      }, {
+        "code": "246061005",
+        "display": "Attribute"
+      }, {
+        "code": "246075003",
+        "display": "Causative agent"
+      }, {
+        "code": "260686004",
+        "display": "Method"
+      }, {
+        "code": "363698007",
+        "display": "Finding site"
+      }, {
+        "code": "363699004",
+        "display": "Direct device"
+      }, {
+        "code": "363700003",
+        "display": "Direct morphology"
+      }, {
+        "code": "363702006",
+        "display": "Has focus"
+      }, {
+        "code": "363703001",
+        "display": "Has intent"
+      }, {
+        "code": "363704007",
+        "display": "Procedure site"
+      }, {
+        "code": "363713009",
+        "display": "Has interpretation"
+      }, {
+        "code": "363714003",
+        "display": "Interprets"
+      }, {
+        "code": "370135005",
+        "display": "Pathological process"
+      }, {
+        "code": "405813007",
+        "display": "Procedure site - Direct"
+      }, {
+        "code": "405815000",
+        "display": "Procedure device"
+      }, {
+        "code": "405816004",
+        "display": "Procedure morphology"
+      }, {
+        "code": "410662002",
+        "display": "Concept model attribute"
+      }, {
+        "code": "424226004",
+        "display": "Using device"
+      }, {
+        "code": "446608001",
+        "display": "SNOMED CT to ICD-O simple map"
+      }, {
+        "code": "446609009",
+        "display": "Simple type reference set"
+      }, {
+        "code": "447247004",
+        "display": "SNOMED CT source code to target map code correlation value"
+      }, {
+        "code": "447250001",
+        "display": "Complex map from SNOMED CT"
+      }, {
+        "code": "447561005",
+        "display": "SNOMED CT source code to target map code correlation not specified"
+      }, {
+        "code": "447562003",
+        "display": "SNOMED CT to ICD-10 extended map"
+      }, {
+        "code": "447634004",
+        "display": "ICD-10 map category value"
+      }, {
+        "code": "449080006",
+        "display": "SNOMED CT to ICD-10 rule-based mapping module"
+      }, {
+        "code": "449608002",
+        "display": "Referenced component"
+      }, {
+        "code": "47429007",
+        "display": "Associated with"
+      }, {
+        "code": "609330002",
+        "display": "Map category value"
+      }, {
+        "code": "609331003",
+        "display": "Extended map from SNOMED CT"
+      }, {
+        "code": "723264001",
+        "display": "Lateralizable body structure reference set"
+      }, {
+        "code": "723277005",
+        "display": "Nonconformance to editorial policy component"
+      }, {
+        "code": "723278000",
+        "display": "Not semantically equivalent component"
+      }, {
+        "code": "733928003",
+        "display": "All or part of"
+      }, {
+        "code": "734138000",
+        "display": "Anatomy structure and entire association reference set"
+      }, {
+        "code": "734139008",
+        "display": "Anatomy structure and part association reference set"
+      }, {
+        "code": "762705008",
+        "display": "Concept model object attribute"
+      }, {
+        "code": "774081006",
+        "display": "Proper part of"
+      }, {
+        "code": "836358009",
+        "display": "Has device intended site"
+      }, {
+        "code": "900000000000003001",
+        "display": "Fully specified name"
+      }, {
+        "code": "900000000000006009",
+        "display": "Defining relationship"
+      }, {
+        "code": "900000000000011006",
+        "display": "Inferred relationship"
+      }, {
+        "code": "900000000000012004",
+        "display": "SNOMED CT model component"
+      }, {
+        "code": "900000000000013009",
+        "display": "Synonym"
+      }, {
+        "code": "900000000000017005",
+        "display": "Case sensitive"
+      }, {
+        "code": "900000000000020002",
+        "display": "Initial character case insensitive"
+      }, {
+        "code": "900000000000073002",
+        "display": "Defined"
+      }, {
+        "code": "900000000000074008",
+        "display": "Primitive"
+      }, {
+        "code": "900000000000207008",
+        "display": "SNOMED CT core"
+      }, {
+        "code": "900000000000227009",
+        "display": "Additional relationship"
+      }, {
+        "code": "900000000000441003",
+        "display": "SNOMED CT Model Component"
+      }, {
+        "code": "900000000000442005",
+        "display": "Core metadata concept"
+      }, {
+        "code": "900000000000443000",
+        "display": "Module"
+      }, {
+        "code": "900000000000444006",
+        "display": "Definition status"
+      }, {
+        "code": "900000000000445007",
+        "display": "IHTSDO maintained module"
+      }, {
+        "code": "900000000000446008",
+        "display": "Description type"
+      }, {
+        "code": "900000000000447004",
+        "display": "Case significance"
+      }, {
+        "code": "900000000000448009",
+        "display": "Case insensitive"
+      }, {
+        "code": "900000000000449001",
+        "display": "Characteristic type"
+      }, {
+        "code": "900000000000450001",
+        "display": "Modifier"
+      }, {
+        "code": "900000000000451002",
+        "display": "Some"
+      }, {
+        "code": "900000000000454005",
+        "display": "Foundation metadata concept"
+      }, {
+        "code": "900000000000455006",
+        "display": "Reference set"
+      }, {
+        "code": "900000000000456007",
+        "display": "Reference set descriptor"
+      }, {
+        "code": "900000000000457003",
+        "display": "Reference set attribute"
+      }, {
+        "code": "900000000000458008",
+        "display": "Attribute description"
+      }, {
+        "code": "900000000000459000",
+        "display": "Attribute type"
+      }, {
+        "code": "900000000000460005",
+        "display": "Component type"
+      }, {
+        "code": "900000000000461009",
+        "display": "Concept type component"
+      }, {
+        "code": "900000000000462002",
+        "display": "Description type component"
+      }, {
+        "code": "900000000000465000",
+        "display": "String"
+      }, {
+        "code": "900000000000466004",
+        "display": "Text"
+      }, {
+        "code": "900000000000475002",
+        "display": "Time"
+      }, {
+        "code": "900000000000476001",
+        "display": "Integer"
+      }, {
+        "code": "900000000000478000",
+        "display": "Unsigned integer"
+      }, {
+        "code": "900000000000479008",
+        "display": "Attribute order"
+      }, {
+        "code": "900000000000480006",
+        "display": "Attribute value type"
+      }, {
+        "code": "900000000000481005",
+        "display": "Concept inactivation value"
+      }, {
+        "code": "900000000000483008",
+        "display": "Outdated"
+      }, {
+        "code": "900000000000484002",
+        "display": "Ambiguous"
+      }, {
+        "code": "900000000000485001",
+        "display": "Erroneous"
+      }, {
+        "code": "900000000000486000",
+        "display": "Limited"
+      }, {
+        "code": "900000000000489007",
+        "display": "Concept inactivation indicator reference set"
+      }, {
+        "code": "900000000000490003",
+        "display": "Description inactivation indicator reference set"
+      }, {
+        "code": "900000000000491004",
+        "display": "Attribute value"
+      }, {
+        "code": "900000000000493001",
+        "display": "Description inactivation value"
+      }, {
+        "code": "900000000000494007",
+        "display": "Inappropriate"
+      }, {
+        "code": "900000000000495008",
+        "display": "Concept non-current"
+      }, {
+        "code": "900000000000496009",
+        "display": "Simple map from SNOMED CT"
+      }, {
+        "code": "900000000000497000",
+        "display": "CTV3 to SNOMED CT simple map"
+      }, {
+        "code": "900000000000499002",
+        "display": "Scheme value"
+      }, {
+        "code": "900000000000500006",
+        "display": "Map source"
+      }, {
+        "code": "900000000000501005",
+        "display": "Map group"
+      }, {
+        "code": "900000000000502003",
+        "display": "Map priority"
+      }, {
+        "code": "900000000000503008",
+        "display": "Map rule"
+      }, {
+        "code": "900000000000504002",
+        "display": "Map advice"
+      }, {
+        "code": "900000000000505001",
+        "display": "Map target"
+      }, {
+        "code": "900000000000506000",
+        "display": "Language type"
+      }, {
+        "code": "900000000000507009",
+        "display": "English"
+      }, {
+        "code": "900000000000508004",
+        "display": "GB English"
+      }, {
+        "code": "900000000000509007",
+        "display": "US English"
+      }, {
+        "code": "900000000000510002",
+        "display": "Description in dialect"
+      }, {
+        "code": "900000000000511003",
+        "display": "Acceptability"
+      }, {
+        "code": "900000000000521006",
+        "display": "Association type"
+      }, {
+        "code": "900000000000522004",
+        "display": "Historical association"
+      }, {
+        "code": "900000000000523009",
+        "display": "POSSIBLY EQUIVALENT TO association reference set"
+      }, {
+        "code": "900000000000526001",
+        "display": "REPLACED BY association reference set"
+      }, {
+        "code": "900000000000531004",
+        "display": "REFERS TO concept association reference set"
+      }, {
+        "code": "900000000000532006",
+        "display": "Association source component"
+      }, {
+        "code": "900000000000533001",
+        "display": "Association target component"
+      }, {
+        "code": "900000000000534007",
+        "display": "Module dependency"
+      }, {
+        "code": "900000000000535008",
+        "display": "Dependency target"
+      }, {
+        "code": "900000000000536009",
+        "display": "Source effective time"
+      }, {
+        "code": "900000000000537000",
+        "display": "Target effective time"
+      }, {
+        "code": "900000000000538005",
+        "display": "Description format reference set"
+      }, {
+        "code": "900000000000539002",
+        "display": "Description format"
+      }, {
+        "code": "900000000000540000",
+        "display": "Plain text"
+      }, {
+        "code": "900000000000544009",
+        "display": "Description length"
+      }, {
+        "code": "900000000000545005",
+        "display": "Active value"
+      }, {
+        "code": "900000000000546006",
+        "display": "Inactive value"
+      }, {
+        "code": "900000000000548007",
+        "display": "Preferred"
+      }, {
+        "code": "900000000000549004",
+        "display": "Acceptable"
+      }, {
+        "code": "900000000000550004",
+        "display": "Definition"
+      } ]
+    } ]
+  }
+}

@@ -38,7 +38,6 @@ import com.wci.termhub.util.ModelUtility;
 public class TermUnitTest extends AbstractTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(TermUnitTest.class);
 
   /** The model object to test. */
@@ -154,9 +153,9 @@ public class TermUnitTest extends AbstractTest {
     final Term term = new Term();
     term.setName("This IS a test.");
     logger.info("term: {}", term);
-    assertTrue(term.toString().contains("\"normName\" : \"this is a test\""));
+    assertTrue(term.toString().contains("\"normName\":\"this is a test\""));
     final Term term2 = ModelUtility.fromJson(term.toString(), Term.class);
-    assertTrue(term2.toString().contains("\"stemName\" : \"this is a test\""));
+    assertTrue(term2.toString().contains("\"stemName\":\"this is a test\""));
   }
 
 }

@@ -26,23 +26,19 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.test.context.TestPropertySource;
 
-import com.wci.termhub.Application;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.FileUtility;
 
 /**
  * The Class TermUnitTest.
  */
-@SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-test.properties")
 @TestMethodOrder(OrderAnnotation.class)
-public class TermUnitTest extends BaseUnitTest {
+public class TermUnitTest extends AbstractClassTest {
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(TermUnitTest.class);
@@ -124,12 +120,11 @@ public class TermUnitTest extends BaseUnitTest {
    * Checks for document annotation.
    */
   @Test
-  @Order(2)
+  @Order(1)
   public void hasDocumentAnnotation() {
 
-    // check if the class has the Document annotation
-    // if not, throw an exception
-    // check if the clazz has annotation @Document
+    // check if the class has the @Document annotation if not, throw an
+    // exception
     final Class<?> clazz1 = Term.class;
     assertTrue(clazz1.isAnnotationPresent(Document.class));
   }
@@ -140,15 +135,15 @@ public class TermUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(3)
+  @Order(2)
   public void createIndex() throws Exception {
 
     logger.info("Creating index for Term");
-    searchService.createIndex(Term.class);
-
-    // assert directory exists
     final File indexFile = new File(INDEX_DIRECTORY, INDEX_NAME);
-    assertTrue(indexFile.exists());
+    FileUtility.deleteDirectoryRecursively(new File(INDEX_DIRECTORY).toPath());
+    searchService.createIndex(Term.class);
+    assertTrue(indexFile.exists(),
+        "Index directory does not exist: " + indexFile.getAbsolutePath());
   }
 
   /**
@@ -157,7 +152,7 @@ public class TermUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(4)
+  @Order(3)
   public void testAddTerm() throws Exception {
 
     logger.info("Creating objects");
@@ -172,7 +167,7 @@ public class TermUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(5)
+  @Order(4)
   public void testFind() throws Exception {
 
     ResultList<Term> foundTermsObjects = null;
@@ -254,7 +249,7 @@ public class TermUnitTest extends BaseUnitTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(6)
+  @Order(5)
   public void testRemove() throws Exception {
 
     logger.info("Deleting objects");

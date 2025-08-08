@@ -1,11 +1,12 @@
 # Step-by-step instructions with TermHub data
 Instructions on using data from a TermHub project to Open Termhub up and running within 5 minutes.
 
-[Tutorial Training Video](https://youtu.be/Vto42DIMw2U)
+[Tutorial Training Video (TBD)](TBD)
 
 ## Prerequisites/Setup
 * Java 17+
 * This tutorial assumes you have cloned this open-termhub repository.
+
 
 ## Build and run the server
 
@@ -14,11 +15,11 @@ Instructions on using data from a TermHub project to Open Termhub up and running
 One option is to just build the code and run the server locally and use an INDEX_DIR environment variable to specify the directory where Lucene indexes should live (make sure this directory exists)
 
 ```
-# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
+# On Windows use export INDEX_DIR=c:/temp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
+export ENABLE_POST_LOAD_COMPUTATIONS=true
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
-make build
-make run
+make build run
 ```
 
 ### Option 2: build/run with docker
@@ -30,7 +31,8 @@ the other option is to build the docker image and run as a container with an IND
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 make docker
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" \
+docker run -d --rm --name open-termhub \
+  -e ENABLE_POST_LOAD_COMPUTATIONS=true \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
@@ -42,7 +44,8 @@ The final option is to run the latest published public docker image as a contain
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
-docker run -d --rm --name open-termhub -e INDEX_DIR="/index" \
+docker run -d --rm --name open-termhub \
+  -e ENABLE_POST_LOAD_COMPUTATIONS=true \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
@@ -51,8 +54,10 @@ docker run -d --rm --name open-termhub -e INDEX_DIR="/index" \
 ## View API Documentation
 
 All three of the above options will yield a running server and you should now you should be able to access the Swagger UI pages:
-* [Swagger](https://localhost:8080/swagger-ui/index.html)
-* [FHIR R4 Swagger](https://localhost:8080/fhir/r4/swagger-ui/index.html)
+* Swagger [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+* FHIR R4 Swagger [http://localhost:8080/fhir/r4/swagger-ui/index.html](http://localhost:8080/fhir/r4/swagger-ui/index.html)
+* FHIR R5 Swagger [http://localhost:8080/fhir/r5/swagger-ui/index.html](http://localhost:8080/fhir/r5/swagger-ui/index.html)
+
 
 **[Back to top](#step-by-step-instructions-with-termhub-data)**
 
@@ -85,6 +90,8 @@ Steps
 * Click "Create project" - you can always get back to this project from your "dashboard" or from the project list on the "Projects" sidebar item.
 * Click the icon to download all terminologies in your project
 <need image>
+
+This is a work in progress and will be ready soon ...
 
 **[Back to top](#step-by-step-instructions-with-termhub-data)**
 

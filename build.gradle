@@ -1,6 +1,6 @@
 buildscript {
   ext {
-    springBootVersion = "3.3.11"
+    springBootVersion = "3.3.13"
   }
   repositories {
     mavenLocal()
@@ -91,7 +91,6 @@ dependencies {
   }
   
   implementation 'org.apache.commons:commons-text:1.12.0'
-  implementation 'org.apache.commons:commons-lang3:3.17.0'
   implementation 'org.apache.commons:commons-math3:3.6.1'
   
   implementation 'org.reflections:reflections:0.10.2'
@@ -156,73 +155,43 @@ dependencyManagement {
 // ./gradlew clean test
 test {
     useJUnitPlatform()
-    systemProperty 'spring.profiles.active', 'test'
-    exclude '**/r4/**'
-    exclude '**/r5/**'
-
-    // Exclude tests that are part of AllTestsSuite to prevent double execution
-    exclude '**/CodeSystemLoadUnitTest.class'
-    exclude '**/TerminologyCodeSystemUnitTest.class'
-    exclude '**/ConceptCodeSystemUnitTest.class'
-    exclude '**/ConceptRelationshipCodeSystemUnitTest.class'
-    exclude '**/ConceptTreePositionSearchUnitTest.class'
-    exclude '**/MetadataSearchUnitTest.class'
-    exclude '**/TerminologySearchUnitTest.class'
-    exclude '**/ConceptSearchUnitTest.class'
-    exclude '**/TermSearchUnitTest.class'
-    exclude '**/MultithreadedReadUnitTest.class'
-    exclude '**/EclToLuceneConverterTest.class'
-    exclude '**/EclNonSnomedTest.class'
-    exclude '**/TerminologyServiceRestImplUnitTest.class'
-    exclude '**/CleanupUnitTest.class'
-
+    exclude '**/integrationtest/**'
     testLogging {
-        events "passed", "skipped", "failed"
+        events "skipped", "failed"
         exceptionFormat "full"
+        showStandardStreams = true
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
     }
 }
 
 // ./gradlew clean testR4
 task testR4(type: Test) {
     useJUnitPlatform()
-    systemProperty 'spring.profiles.active', 'test-r4'
     include '**/r4/**'
     testLogging {
-        events "passed", "skipped", "failed"
+        events "skipped", "failed"
         exceptionFormat "full"
+        showStandardStreams = true
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
     }
 }
 
 // ./gradlew clean testR5
 task testR5(type: Test) {
     useJUnitPlatform()
-    systemProperty 'spring.profiles.active', 'test-r5'
     include '**/r5/**'
     testLogging {
-        events "passed", "skipped", "failed"
+        events "skipped", "failed"
         exceptionFormat "full"
+        showStandardStreams = true
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
     }
-
-}
-
-// Run AllTestsSuite separately
-task testSuite(type: Test) {
-    useJUnitPlatform()
-    systemProperty 'spring.profiles.active', 'test'
-    filter {
-        includeTestsMatching "com.wci.termhub.test.AllTestsSuite"
-    }
-    testLogging {
-        events "passed","skipped", "failed"
-        exceptionFormat "full"
-    }
-}
-
-// Add a composite task to run both test suites in order
-task allTests {
-    dependsOn testSuite
-    dependsOn test
-    tasks.findByName('test').mustRunAfter 'testSuite'
 }
 
 // use "gradle licenseFormatMain/Test" to automatically generate headers

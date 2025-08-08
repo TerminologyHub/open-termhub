@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -123,6 +124,7 @@ public class Terminology extends TerminologyRef implements HasAttributes {
 
   /** The uri (for downloading terminology artifacts). */
   @Transient
+  @Field(type = FieldType.Keyword)
   private String uri;
 
   /** The attributes. */
@@ -267,43 +269,27 @@ public class Terminology extends TerminologyRef implements HasAttributes {
     return k1.compareTo(k2);
   }
 
-  /**
-   * Gets the id.
-   *
-   * @return the id
-   */
   /* see superclass */
   @Override
-  @Schema(description = "Unique identifier", required = true, format = "uuid")
+  @Schema(description = "Unique identifier", requiredMode = RequiredMode.REQUIRED, format = "uuid")
   public String getId() {
     return super.getId();
   }
 
-  /**
-   * Returns the release date.
-   *
-   * @return the release date
-   */
+  /* see superclass */
+  @Override
   @Schema(description = "YYYY-MM-DD rendering of the release date")
   public String getReleaseDate() {
     return releaseDate;
   }
 
-  /**
-   * Sets the release date.
-   *
-   * @param releaseDate the release date
-   */
+  /* see superclass */
+  @Override
   public void setReleaseDate(final String releaseDate) {
     this.releaseDate = releaseDate;
   }
 
-  /**
-   * Here, we want to search a variety of different ways. Including: 1. Search by whether an
-   * attribute exists. 2. Search by whether an attribute has a particular value.
-   *
-   * @return the attributes
-   */
+  /* see superclass */
   @Override
   @Schema(description = "Key/value pairs associated with this object")
   public Map<String, String> getAttributes() {
@@ -313,11 +299,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
     return attributes;
   }
 
-  /**
-   * Sets the attributes.
-   *
-   * @param attributes the attributes
-   */
   /* see superclass */
   @Override
   public void setAttributes(final Map<String, String> attributes) {
@@ -381,21 +362,15 @@ public class Terminology extends TerminologyRef implements HasAttributes {
     this.family = family;
   }
 
-  /**
-   * Gets the uri.
-   *
-   * @return the uri
-   */
+  /* see superclass */
+  @Override
   @Schema(description = "Uri for downloading the terminology")
   public String getUri() {
     return uri;
   }
 
-  /**
-   * Sets the uri.
-   *
-   * @param uri the new uri
-   */
+  /* see superclass */
+  @Override
   public void setUri(final String uri) {
     this.uri = uri;
   }
@@ -478,9 +453,6 @@ public class Terminology extends TerminologyRef implements HasAttributes {
     this.statistics = statistics;
   }
 
-  /**
-   * Minimize.
-   */
   /* see superclass */
   @Override
   public void minimize() {

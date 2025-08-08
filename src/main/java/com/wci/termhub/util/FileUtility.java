@@ -64,6 +64,10 @@ public final class FileUtility {
    * @throws IOException Signals that an I/O exception has occurred.
    */
   public static void deleteDirectoryRecursively(final Path path) throws IOException {
+    if (!Files.exists(path)) {
+      return;
+    }
+
     Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)

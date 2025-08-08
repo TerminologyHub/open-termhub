@@ -33,13 +33,13 @@ import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
-import com.wci.termhub.model.PublisherInfo;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
+import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.TimerCache;
 
 import ca.uhn.fhir.rest.param.DateParam;
@@ -54,9 +54,6 @@ public final class FhirUtility {
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(FhirUtility.class);
-
-  /** The publisher info map. */
-  private static Map<String, PublisherInfo> publisherInfoMap = new HashMap<>();
 
   /** The terminologies cache. */
   private static TimerCache<List<Terminology>> terminologyCache = new TimerCache<>(1000, 10000);
@@ -91,13 +88,19 @@ public final class FhirUtility {
     params.setQuery("*:*");
     params.setLimit(100);
 
-    logger.info("Looking up terminologies with query: {}", params.getQuery());
+    if (logger.isDebugEnabled()) {
+      logger.debug("Looking up terminologies with query: {}", params.getQuery());
+    }
     final ResultList<Terminology> terminologies = service.find(params, Terminology.class);
-    logger.info("Found {} terminologies", terminologies.getItems().size());
+    if (logger.isDebugEnabled()) {
+      logger.debug("Found {} terminologies", terminologies.getItems().size());
+    }
 
     for (final Terminology term : terminologies.getItems()) {
-      logger.info("Found terminology: {} ({}), version: {}, publisher: {}", term.getName(),
-          term.getAbbreviation(), term.getVersion(), term.getPublisher());
+      if (logger.isDebugEnabled()) {
+        logger.debug("Found terminology: {} ({}), version: {}, publisher: {}", term.getName(),
+            term.getAbbreviation(), term.getVersion(), term.getPublisher());
+      }
     }
 
     return terminologies.getItems();
@@ -141,13 +144,10 @@ public final class FhirUtility {
     if (t != null) {
       return t.get(0);
     }
-    final ResultList<Terminology> tlist =
-        searchService
-            .find(
-                new SearchParameters("abbreviation:" + StringUtility.escapeQuery(terminology)
-                    + " AND publisher: \"" + StringUtility.escapeQuery(publisher)
-                    + "\" AND version:" + StringUtility.escapeQuery(version), 2, 0),
-                Terminology.class);
+    final ResultList<Terminology> tlist = searchService.find(
+        new SearchParameters(
+            TerminologyUtility.getTerminologyAbbrQuery(terminology, publisher, version), 2, 0),
+        Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
@@ -199,23 +199,6 @@ public final class FhirUtility {
   }
 
   /**
-   * Gets the terminology.
-   *
-   * @param searchService the search service
-   * @param terminology the terminology
-   * @param publisher the publisher
-   * @param version the version
-   * @return the terminology
-   * @throws Exception the exception
-   */
-  public static String getCodeSystemUri(final EntityRepositoryService searchService,
-    final String terminology, final String publisher, final String version) throws Exception {
-
-    final Terminology t = getTerminology(searchService, terminology, publisher, version);
-    return t == null ? null : t.getAttributes().get("fhirUri");
-  }
-
-  /**
    * Gets the code system uri.
    *
    * @param searchService the search service
@@ -227,7 +210,7 @@ public final class FhirUtility {
     final ConceptRef concept) throws Exception {
     final Terminology t = getTerminology(searchService, concept.getTerminology(),
         concept.getPublisher(), concept.getVersion());
-    return t == null ? null : t.getAttributes().get("fhirUri");
+    return t == null ? null : t.getUri();
   }
 
   /**
@@ -689,6 +672,38 @@ public final class FhirUtility {
   }
 
   /**
+   * Gets the display map.
+   *
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
+   * @return the display map
+   * @throws Exception the exception
+   */
+  public static Map<String, String> getDisplayMap(final EntityRepositoryService searchService,
+    final String terminology, final String publisher, final String version) throws Exception {
+
+    final String key = terminology + publisher + version;
+
+    // Lazy initialize for the terminology
+    if (displayMap.containsKey(key)) {
+      return displayMap.get(key);
+    }
+
+    // we need the query to avoid duplicate keys in the map
+    final Map<String, String> map = new HashMap<>();
+    for (final Metadata metadata : searchService.findAll(
+        "active:true AND ((model:concept AND field:attribute) OR "
+            + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))",
+        null, Metadata.class).stream().collect(Collectors.toList())) {
+      map.put(metadata.getCode(), metadata.getName());
+    }
+    displayMap.put(key, map);
+    return map;
+  }
+
+  /**
    * Gets the normal form.
    *
    * @param concept the concept
@@ -780,9 +795,13 @@ public final class FhirUtility {
       mapsets = results.getItems();
 
       // HOW MANY?
-      logger.info("Found {} mapsets", mapsets.size());
+      if (logger.isDebugEnabled()) {
+        logger.debug("Found {} mapsets", mapsets.size());
+      }
       for (final Mapset mapset : mapsets) {
-        logger.info("Mapset: {}", mapset);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Mapset: {}", mapset);
+        }
       }
 
       // then sort the results (just use the natural terminology sort order)

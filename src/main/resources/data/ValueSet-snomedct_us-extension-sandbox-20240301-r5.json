@@ -1,0 +1,35 @@
+{
+  "resourceType": "ValueSet",
+  "id": "dd01be90-f9dd-4531-abb4-810f2090ba17",
+  "url": "http://snomed.info/sct?fhir_vs=731000124108",
+  "identifier": [ {
+    "system": "https://terminologyhub.com/model/subset/code",
+    "value": "731000124108"
+  } ],
+  "version": "20240301",
+  "name": "SNOMEDCT_US extension concepts",
+  "title": "SNOMEDCT_US-EXTENSION",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-03-01T00:00:00+00:00",
+  "publisher": "SANDBOX",
+  "description": "US National Library of Medicine maintained module",
+  "compose": {
+    "include": [ {
+      "system": "http://snomed.info/sct",
+      "concept": [ {
+        "code": "5991000124107",
+        "display": "SNOMED CT to ICD-10-CM rule-based mapping module"
+      }, {
+        "code": "6011000124106",
+        "display": "ICD-10-CM complex map reference set"
+      }, {
+        "code": "721111000124107",
+        "display": "Diabetes mellitus type 1 stage 1"
+      }, {
+        "code": "731000124108",
+        "display": "US National Library of Medicine maintained module"
+      } ]
+    } ]
+  }
+}

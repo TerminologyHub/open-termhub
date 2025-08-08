@@ -12,7 +12,9 @@ package com.wci.termhub.rest.test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -20,46 +22,51 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.Application;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.HealthCheck;
+import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
+import com.wci.termhub.model.MapsetRef;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultListConcept;
 import com.wci.termhub.model.ResultListConceptRelationship;
 import com.wci.termhub.model.ResultListConceptTreePosition;
+import com.wci.termhub.model.ResultListMapping;
 import com.wci.termhub.model.ResultListMapset;
 import com.wci.termhub.model.ResultListMetadata;
+import com.wci.termhub.model.ResultListSubset;
+import com.wci.termhub.model.ResultListSubsetMember;
 import com.wci.termhub.model.ResultListTerm;
 import com.wci.termhub.model.ResultListTerminology;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetMember;
+import com.wci.termhub.model.SubsetRef;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
- * Unit tests foor TerminologyServiceRestImpl.
+ * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All get/find tests are
+ * order 10. All delete tests are order 20.
  */
-@SpringBootTest(classes = Application.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@TestPropertySource(locations = "classpath:application-test.properties")
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(OrderAnnotation.class)
 public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServerTest {
 
   /** The logger. */
@@ -77,6 +84,15 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Autowired
   private ObjectMapper objectMapper;
 
+  /** The Constant INITIAL. */
+  private static final int INITIAL = 1;
+
+  /** The Constant FIND. */
+  private static final int FIND = 10;
+
+  /** The Constant DELETE. */
+  private static final int DELETE = 20;
+
   /**
    * Sets the up.
    */
@@ -91,6 +107,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(INITIAL)
   public void testHealth() throws Exception {
 
     // Add a user through the API
@@ -111,6 +128,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetTerminologyIcd10Cm() throws Exception {
     final String id = "177f2263-fe04-4f1f-b0e6-9b351ab8baa9";
     final String url = baseUrl + "/terminology/" + id;
@@ -132,6 +150,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetTerminologyNonExistant() throws Exception {
     final String id = "177f2263-fe04-4f1f-b0e6-9b351abFAKE";
     final String url = baseUrl + "/terminology/" + id;
@@ -145,8 +164,9 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetTerminologySnomedCtUs() throws Exception {
-    final String id = "a1d1e426-26a6-4326-b18b-c54c154079b5";
+    final String id = "340c926f-9ad6-4f1b-b230-dc4ca14575ab";
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -166,8 +186,9 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
-    final String id = "a1d1e426-26a6-4326-b18b-c54c154079b5";
+    final String id = "340c926f-9ad6-4f1b-b230-dc4ca14575ab";
     final String url = baseUrl + "/terminology/" + id + "/metadata";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -181,11 +202,19 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertFalse(metadataList.isEmpty());
     for (final Metadata metadata : metadataList) {
       assertThat(metadata).isNotNull();
-      assertThat(metadata.getName()).isNotNull();
-      assertThat(metadata.getCode()).isNotNull();
-      assertThat(metadata.getModel()).isNotNull();
+      assertThat(metadata.getId()).isNotNull();
       assertEquals("SNOMEDCT_US", metadata.getTerminology());
-      assertEquals("http://snomed.info/sct/731000124108/version/20240301", metadata.getVersion());
+      assertThat(metadata.getPublisher()).isNotNull();
+      assertThat(metadata.getField()).isNotNull();
+      assertThat(metadata.getModel()).isNotNull();
+      assertThat(metadata.getCode()).isNotNull();
+      /*
+       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20240301",
+       * "publisher":"SANDBOX","model":"relationship","field":"uiLabel","code":
+       * "Attributes","rank":0}
+       */
+      // has no name
+      // assertThat(metadata.getName()).isNotNull();
     }
   }
 
@@ -194,8 +223,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  // Should be 404 but is 500
   @Test
+  @Order(FIND)
   public void testGetTerminologyMetaDataSnomedCtUsNotFound() throws Exception {
     final String id = "a1d1e426-26a6-4326-b18b-c54c1540FAKE";
     final String url = baseUrl + "/terminology/" + id + "/metadata";
@@ -209,6 +238,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetTerminologies() throws Exception {
     final String url = baseUrl + "/terminology";
     LOGGER.info("Testing url - {}", url);
@@ -218,7 +248,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListTerminology terminologyList =
         objectMapper.readValue(content, ResultListTerminology.class);
     assertThat(terminologyList).isNotNull();
-    assertThat(terminologyList.getTotal()).isGreaterThan(0);
+    assertThat(terminologyList.getTotal()).isPositive();
     for (final Terminology terminology : terminologyList.getItems()) {
       assertThat(terminology).isNotNull();
       assertThat(terminology.getId()).isNotNull();
@@ -235,6 +265,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetTerminologyWithQuery() throws Exception {
     final String url = baseUrl + "/terminology?query=abbreviation:SNOMEDCT_US";
     LOGGER.info("Testing url - {}", url);
@@ -244,7 +275,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListTerminology terminologyList =
         objectMapper.readValue(content, ResultListTerminology.class);
     assertThat(terminologyList).isNotNull();
-    assertThat(terminologyList.getTotal()).isGreaterThan(0);
+    assertThat(terminologyList.getTotal()).isPositive();
     for (final Terminology terminology : terminologyList.getItems()) {
       assertThat(terminology).isNotNull();
       assertThat(terminology.getId()).isNotNull();
@@ -258,6 +289,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetConceptById() throws Exception {
 
     // Lookup by code to get the id
@@ -296,6 +328,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetConceptByIdNotFound() throws Exception {
     final String id = "ef721e67-ebf5-4b50-a0b9-16d7aea7FAKE";
     final String url = baseUrl + "/concept/" + id;
@@ -313,6 +346,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetConceptByTerminologyAndCode() throws Exception {
     final String code = "E11";
     final String terminology = "ICD10CM";
@@ -346,6 +380,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetConceptByTerminologyAndCodeNotFound() throws Exception {
     final String code = "ZZZ";
     final String terminology = "ICD10CM";
@@ -363,6 +398,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testGetConceptCodes() throws Exception {
     final String terminology = "LNC";
     final List<String> codes = List.of("LP32519-8", "LP231645-5", "63904-7", "74291-6", "FAKE");
@@ -377,7 +413,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
           // n/a
         });
     assertThat(concepts).isNotNull();
-    assertThat(concepts.size()).isEqualTo(4);
+    assertEquals(4, concepts.size());
     for (final Concept concept : concepts) {
       assertThat(concept).isNotNull();
       assertThat(concept.getId()).isNotNull();
@@ -392,6 +428,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testFindConcepts() throws Exception {
     final String terminology = "RXNORM";
     final String query = "canagliflozin";
@@ -421,6 +458,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testFindConcepts2() throws Exception {
     final String terminology = "LNC";
     final String query = "cancer";
@@ -449,36 +487,31 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  // This is meant for ecl
-  // @Test
-  // public void testFindConceptsByAncestorCode() throws Exception {
-  // final String terminology = "LNC";
-  // final String query = "MTHU000003";
-  // final int limit = 15;
-  // final String url = baseUrl + "/concept?terminology=" + terminology +
-  // "&query=ancestors.code:"
-  // + query + "&limit=" + limit;
-  // LOGGER.info("Testing url - {}", url);
-  // final MvcResult result =
-  // mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
-  // final String content = result.getResponse().getContentAsString();
-  // LOGGER.info(" content = {}", content);
-  // assertThat(content).isNotNull();
-  // final ResultListConcept conceptList = objectMapper.readValue(content,
-  // ResultListConcept.class);
-  // assertThat(conceptList).isNotNull();
-  // // FAILING
-  // LOGGER.info(" conceptList.getTotal() = {}", conceptList.getTotal());
-  // assertFalse(conceptList.getItems().isEmpty());
-  // assertTrue(conceptList.getItems().size() <= limit);
-  // for (final Concept concept : conceptList.getItems()) {
-  // assertThat(concept).isNotNull();
-  // assertThat(concept.getId()).isNotNull();
-  // assertThat(concept.getTerminology()).isEqualTo(terminology);
-  // assertThat(concept.getAncestors()).anyMatch(ancestor ->
-  // ancestor.getCode().equals(query));
-  // }
-  // }
+  @Test
+  public void testFindConceptsByAncestorCode() throws Exception {
+    final String terminology = "LNC";
+    final String query = "MTHU000003";
+    final int limit = 15;
+    final String url = baseUrl + "/concept?terminology=" + terminology + "&query=ancestors.code:"
+        + query + "&limit=" + limit + "&include=ancestors";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
+    assertThat(conceptList).isNotNull();
+    LOGGER.info(" conceptList.getTotal() = {}", conceptList.getTotal());
+    assertFalse(conceptList.getItems().isEmpty());
+    assertTrue(conceptList.getItems().size() <= limit);
+    for (final Concept concept : conceptList.getItems()) {
+      assertThat(concept).isNotNull();
+      assertThat(concept.getId()).isNotNull();
+      assertThat(concept.getTerminology()).isEqualTo(terminology);
+      LOGGER.info(" XXX {}", concept.toString());
+      assertThat(concept.getAncestors()).anyMatch(ancestor -> ancestor.getCode().equals(query));
+    }
+  }
 
   /**
    * Test find terms.
@@ -486,6 +519,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testFindTerms() throws Exception {
     final String terminology = "RXNORM";
     final String query = "nirmatrelvir";
@@ -510,40 +544,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test autocomplete.
-   *
-   * @throws Exception the exception
-   */
-  // @Test // NOT IN CONTROLLER
-  public void testAutocomplete() throws Exception {
-    final String terminology = "RXNORM";
-    final String query = "nirmat";
-    final int limit = 10;
-    final String url = baseUrl + "/autocomplete?terminology=" + terminology + "&query=" + query
-        + "&limit=" + limit;
-    LOGGER.info("Testing url - {}", url);
-    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
-    final String content = result.getResponse().getContentAsString();
-    LOGGER.info(" content = {}", content);
-    assertThat(content).isNotNull();
-    final List<String> names = objectMapper.readValue(content, new TypeReference<List<String>>() {
-      // n/a
-    });
-    assertThat(names).isNotNull();
-    assertFalse(names.isEmpty());
-    assertThat(names.size()).isLessThanOrEqualTo(limit);
-    for (final String name : names) {
-      assertThat(name).isNotNull();
-      assertThat(name.toLowerCase()).contains(query.toLowerCase());
-    }
-  }
-
-  /**
    * Test concept bulk.
    *
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testConceptBulk() throws Exception {
     final String terminology = "LNC";
     final int limit = 12;
@@ -584,6 +590,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testFindMetadata() throws Exception {
     // GET /metadata
     final String terminology = "LNC";
@@ -604,9 +611,13 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       // can be null
       // assertThat(metadata.getCode()).isNotNull();
       assertThat(metadata.getTerminology()).isEqualTo(terminology);
-      assertThat(metadata.getModel()).isNotNull();
-      assertThat(metadata.getName()).isNotNull();
       assertThat(metadata.getVersion()).isNotNull();
+      assertThat(metadata.getModel()).isNotNull();
+      assertThat(metadata.getField()).isNotNull();
+      assertThat(metadata.getCode()).isNotNull();
+      // LNC "model":"term","field":"language","code":"ENG","rank":0
+      // has no name
+      // assertThat(metadata.getName()).isNotNull();
     }
   }
 
@@ -616,6 +627,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testFindConceptRelationships() throws Exception {
 
     final Concept testConcept = getConceptByCode("SNOMEDCT", "404684003");
@@ -650,6 +662,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testFindConceptRelationships2() throws Exception {
     // GET concept/{terminology}/{code}/relationships
     final String terminology = "SNOMEDCT_US";
@@ -682,6 +695,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testFindConceptInverseRelationships() throws Exception {
 
     final Concept testConcept = getConceptByCode("SNOMEDCT", "404684003");
@@ -716,6 +730,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   // GET concept/{terminology}/{code}/inverseRelationships
   @Test
+  @Order(FIND)
   public void testFindConceptInverseRelationships2() throws Exception {
 
     final String terminology = "SNOMEDCT_US";
@@ -751,6 +766,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   // GET /concept/{conceptId}/trees/children
   @Test
+  @Order(FIND)
   public void testFindTreePositionChildren() throws Exception {
 
     final Concept testConcept = getConceptByCode("SNOMEDCT", "138875005");
@@ -786,6 +802,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   // GET /concept/{terminology}/{code}/trees/children
   @Test
+  @Order(FIND)
   public void testFindTreePositionChildren2() throws Exception {
 
     final String terminology = "SNOMEDCT_US";
@@ -817,6 +834,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   // GET /concept/{conceptId}/trees
   // @Test
+  @Order(FIND)
   public void testFindTreePositions() throws Exception {
 
     final Concept testConcept = getConceptByCode("SNOMEDCT", "91723000");
@@ -848,9 +866,10 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   // GET /concept/{terminology}/{code}/trees
   // @Test
+  @Order(FIND)
   public void testFindTreePositions2() throws Exception {
     final String terminology = "SNOMEDCT_US";
-    final String code = "138875005";
+    final String code = "73211009";
     final String url = baseUrl + "/concept/" + terminology + "/" + code + "/trees";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -871,8 +890,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
   }
 
+  /**
+   * Test find mapsets.
+   *
+   * @throws Exception the exception
+   */
   // GET /mapset/
   @Test
+  @Order(FIND)
   public void testFindMapsets() throws Exception {
     final String url = baseUrl + "/mapset";
     LOGGER.info("Testing url - {}", url);
@@ -899,8 +924,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
   }
 
+  /**
+   * Test find mapsets with query.
+   *
+   * @throws Exception the exception
+   */
   // GET /mapset/
   @Test
+  @Order(FIND)
   public void testFindMapsetsWithQuery() throws Exception {
     final String query = "terminology=SNOMEDCT_US-ICD10CM&offset=0&limit=10";
     final String url = baseUrl + "/mapset?" + query;
@@ -933,6 +964,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   // GET /mapset/{id}
   @Test
+  @Order(FIND)
   public void testFindMapsetById() throws Exception {
 
     final String id = "2a545e12-04eb-48ee-b988-c17346b4e05f";
@@ -957,12 +989,164 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
+   * Test find mappings.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  void testFindMappings() throws Exception {
+
+    final String url = baseUrl + "/mapping";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
+    assertThat(mappingList.getItems().size()).isLessThanOrEqualTo(FIND);
+    for (final Mapping mapping : mappingList.getItems()) {
+      assertThat(mapping).isNotNull();
+      assertThat(mapping.getId()).isNotNull();
+      assertThat(mapping.getMapset()).isNotNull();
+      assertThat(mapping.getFrom()).isNotNull();
+      assertThat(mapping.getTo()).isNotNull();
+      // assertThat(mapping.getGroup()).isNotNull();
+      // assertThat(mapping.getPriority()).isNotNull();
+    }
+  }
+
+  /**
+   * Test find mapset by from code 1.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindMapsetByFromCode1() throws Exception {
+
+    final Mapset testMapset = getMapsetByAbbreviation("SNOMEDCT_US-ICD10CM");
+
+    final String id = testMapset.getId();
+    final String url = baseUrl + "/mapset/" + id + "/mapping?query=from.code:40733004";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping resultListMapping =
+        objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(resultListMapping).isNotNull();
+    assertThat(resultListMapping.getTotal()).isPositive();
+
+    for (final Mapping mapping : resultListMapping.getItems()) {
+
+      assertNotNull(mapping);
+
+      final MapsetRef mapsetRef = mapping.getMapset();
+      assertThat(mapsetRef).isNotNull();
+      assertEquals(mapsetRef.getId(), id);
+      assertEquals(mapsetRef.getAbbreviation(), "SNOMEDCT_US-ICD10CM");
+      assertNotNull(mapsetRef.getName());
+      assertNotNull(mapsetRef.getFromTerminology());
+      assertNotNull(mapsetRef.getToTerminology());
+      assertNotNull(mapsetRef.getVersion());
+      assertNotNull(mapsetRef.getPublisher());
+      assertNotNull(mapsetRef.getReleaseDate());
+
+      // mapping
+      assertNotNull(mapping.getId());
+      assertTrue(mapping.getActive());
+
+      // from
+      assertEquals(mapping.getFrom().getCode(), "40733004");
+      assertNotNull(mapping.getFrom().getName());
+      assertEquals(mapping.getFrom().getTerminology(), "http://snomed.info/sct");
+
+      // to
+      assertNotNull(mapping.getTo().getCode());
+      assertNotNull(mapping.getTo().getName());
+      assertEquals(mapping.getTo().getTerminology(), "http://hl7.org/fhir/sid/icd-10-cm");
+
+      // attributes
+      assertNotNull(mapping.getAttributes().get("advice"));
+      assertNotNull(mapping.getAttributes().get("rule"));
+      assertNotNull(mapping.getAttributes().get("priority"));
+      assertNotNull(mapping.getAttributes().get("group"));
+
+      assertNotNull(mapping.getType());
+    }
+  }
+
+  /**
+   * Test find mapset by from code 2.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindMappingByFromCode2() throws Exception {
+
+    final String name = "SNOMEDCT_US-ICD10CM";
+    final String url = baseUrl + "/mapset/" + name + "/mapping?query=from.code:40733004";
+
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping resultListMapping =
+        objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(resultListMapping).isNotNull();
+    assertThat(resultListMapping.getTotal()).isPositive();
+
+    for (final Mapping mapping : resultListMapping.getItems()) {
+
+      assertNotNull(mapping);
+
+      final MapsetRef mapsetRef = mapping.getMapset();
+      assertThat(mapsetRef).isNotNull();
+
+      assertEquals(mapsetRef.getAbbreviation(), name);
+      assertNotNull(mapsetRef.getName());
+      assertNotNull(mapsetRef.getFromTerminology());
+      assertNotNull(mapsetRef.getToTerminology());
+      assertNotNull(mapsetRef.getVersion());
+      assertNotNull(mapsetRef.getPublisher());
+      assertNotNull(mapsetRef.getReleaseDate());
+
+      // mapping
+      assertNotNull(mapping.getId());
+      assertTrue(mapping.getActive());
+
+      // from
+      assertEquals(mapping.getFrom().getCode(), "40733004");
+      assertNotNull(mapping.getFrom().getName());
+      assertEquals(mapping.getFrom().getTerminology(), "http://snomed.info/sct");
+
+      // to
+      assertNotNull(mapping.getTo().getCode());
+      assertNotNull(mapping.getTo().getName());
+      assertEquals(mapping.getTo().getTerminology(), "http://hl7.org/fhir/sid/icd-10-cm");
+
+      // attributes
+      assertNotNull(mapping.getAttributes().get("advice"));
+      assertNotNull(mapping.getAttributes().get("rule"));
+      assertNotNull(mapping.getAttributes().get("priority"));
+      assertNotNull(mapping.getAttributes().get("group"));
+
+      assertNotNull(mapping.getType());
+    }
+  }
+
+  /**
    * Test find mapset by id not found.
    *
    * @throws Exception the exception
    */
-  // @Test
-  // TODO - Should be 404 but is 500
+  @Test
   public void testFindMapsetByIdNotFound() throws Exception {
 
     final String id = "2a545e12-04eb-48ee-b988-c17346b4e05FAKE";
@@ -977,6 +1161,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   @Test
+  @Order(FIND)
   public void testConceptSearchWithExpression() throws Exception {
     final String terminology = "SNOMEDCT_US";
     final String expression = "<<128927009";
@@ -990,18 +1175,243 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
     assertThat(conceptList).isNotNull();
     assertFalse(conceptList.getItems().isEmpty());
+    assertThat(conceptList.getTotal()).isEqualTo(48);
+    boolean found = false;
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
       assertThat(concept.getTerminology()).isEqualTo(terminology);
-      if (!"128927009".equals(concept.getCode())) {
-        assertTrue(
-            concept.getAncestors().stream()
-                .anyMatch(ancestor -> "128927009".equals(ancestor.getCode())),
-            "Ancestor code should have 1 128927009 Concept: " + concept);
+      if ("128927009".equals(concept.getCode())) {
+        found = true;
       }
-
     }
+    assertTrue(found, "Ancestor code should have 1 128927009 Concept");
 
+  }
+
+  /**
+   * Test get subsets.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetSubsets() throws Exception {
+    final String url = baseUrl + "/subset";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListSubset subsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+          // n/a
+        });
+    assertThat(subsetList).isNotNull();
+    assertFalse(subsetList.getItems().isEmpty());
+    for (final Subset subset : subsetList.getItems()) {
+      assertThat(subset).isNotNull();
+      assertThat(subset.getId()).isNotNull();
+      assertThat(subset.getAbbreviation()).isNotNull();
+      assertThat(subset.getName()).isNotNull();
+      // assertThat(subset.getTerminology()).isNotNull();
+      assertThat(subset.getPublisher()).isNotNull();
+      assertThat(subset.getVersion()).isNotNull();
+    }
+  }
+
+  /**
+   * Test get subset by id.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetSubsetById() throws Exception {
+    // Get a subset dynamically to avoid hardcoded ID issues
+    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
+
+    final String url = baseUrl + "/subset/" + testSubset.getId();
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final Subset subset = objectMapper.readValue(content, Subset.class);
+    assertThat(subset).isNotNull();
+    assertEquals(testSubset.getId(), subset.getId());
+    assertEquals(testSubset.getAbbreviation(), subset.getAbbreviation());
+    assertEquals(testSubset.getName(), subset.getName());
+    assertEquals(testSubset.getPublisher(), subset.getPublisher());
+    assertEquals(testSubset.getVersion(), subset.getVersion());
+  }
+
+  /**
+   * Test get subset members.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetSubsetMembers() throws Exception {
+    // Get a subset dynamically to avoid hardcoded ID issues
+    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
+
+    final String subsetId = testSubset.getId();
+    final String url = baseUrl + "/subset/" + subsetId + "/member";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListSubsetMember subsetMemberList =
+        objectMapper.readValue(content, ResultListSubsetMember.class);
+    assertThat(subsetMemberList).isNotNull();
+    assertFalse(subsetMemberList.getItems().isEmpty());
+    for (final SubsetMember subsetMember : subsetMemberList.getItems()) {
+      assertThat(subsetMember).isNotNull();
+      assertThat(subsetMember.getId()).isNotNull();
+      assertThat(subsetMember.getCode()).isNotNull();
+      assertThat(subsetMember.getName()).isNotNull();
+      final SubsetRef subsetRef = subsetMember.getSubset();
+      assertThat(subsetRef).isNotNull();
+      assertThat(subsetRef.getAbbreviation()).isNotNull();
+      assertThat(subsetRef.getPublisher()).isNotNull();
+      assertThat(subsetRef.getVersion()).isNotNull();
+    }
+  }
+
+  /**
+   * Test get subset members by code.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetSubsetMembersByCode() throws Exception {
+    // Get a subset dynamically to avoid hardcoded ID issues
+    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
+
+    final String subsetId = testSubset.getId();
+    final String url = baseUrl + "/subset/" + subsetId + "/member";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListSubsetMember subsetMemberList =
+        objectMapper.readValue(content, ResultListSubsetMember.class);
+    assertThat(subsetMemberList).isNotNull();
+    assertFalse(subsetMemberList.getItems().isEmpty());
+    for (final SubsetMember subsetMember : subsetMemberList.getItems()) {
+      assertThat(subsetMember).isNotNull();
+      assertThat(subsetMember.getId()).isNotNull();
+      assertThat(subsetMember.getCode()).isNotNull();
+      assertThat(subsetMember.getName()).isNotNull();
+      final SubsetRef subsetRef = subsetMember.getSubset();
+      assertThat(subsetRef).isNotNull();
+      assertThat(subsetRef.getAbbreviation()).isNotNull();
+      assertThat(subsetRef.getPublisher()).isNotNull();
+      assertThat(subsetRef.getVersion()).isNotNull();
+    }
+  }
+
+  /**
+   * Test delete terminology.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(DELETE)
+  public void testDeleteTerminology() throws Exception {
+
+    // find a terminology that can be deleted
+    String url = baseUrl + "/terminology";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    final ResultListTerminology terminologyList =
+        objectMapper.readValue(content, ResultListTerminology.class);
+    assertThat(terminologyList).isNotNull();
+    assertThat(terminologyList.getTotal()).isPositive();
+    final Terminology terminologyToDelete = terminologyList.getItems().get(0);
+
+    // Now, delete the terminology
+    url = baseUrl + "/terminology/" + terminologyToDelete.getId();
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(delete(url)).andExpect(status().isAccepted()).andReturn();
+
+    // Verify the terminology has been deleted
+    url = baseUrl + "/terminology/" + terminologyToDelete.getId();
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
+
+  }
+
+  /**
+   * Test delete mapset.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(DELETE)
+  public void testDeleteMapset() throws Exception {
+
+    // find a mapset that can be deleted
+    String url = baseUrl + "/mapset";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
+    assertThat(mapsetList).isNotNull();
+    assertThat(mapsetList.getTotal()).isPositive();
+    final Mapset mapsetToDelete = mapsetList.getItems().get(0);
+
+    // Now, delete the mapset
+    url = baseUrl + "/mapset/" + mapsetToDelete.getId();
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(delete(url)).andExpect(status().isAccepted()).andReturn();
+
+    // Verify the mapset has been deleted
+    url = baseUrl + "/mapset/" + mapsetToDelete.getId();
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
+
+  }
+
+  /**
+   * Test delete subset.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(DELETE)
+  public void testDeleteSubset() throws Exception {
+
+    // find a subset that can be deleted
+    String url = baseUrl + "/subset";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    final ResultListSubset subsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+          // n/a
+        });
+    assertThat(subsetList).isNotNull();
+    assertThat(subsetList.getTotal()).isPositive();
+    final Subset subsetToDelete = subsetList.getItems().get(0);
+
+    // Now, delete the subset
+    url = baseUrl + "/subset/" + subsetToDelete.getId();
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(delete(url)).andExpect(status().isAccepted()).andReturn();
+
+    // Verify the subset has been deleted
+    url = baseUrl + "/subset/" + subsetToDelete.getId();
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
   }
 
   /**
@@ -1019,6 +1429,50 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     return objectMapper.readValue(content, Concept.class);
+  }
+
+  /**
+   * Gets the mapset by abbreviation.
+   *
+   * @param abbreviation the abbreviation
+   * @return the mapset by abbreviation
+   * @throws Exception the exception
+   */
+  private Mapset getMapsetByAbbreviation(final String abbreviation) throws Exception {
+    final String url = baseUrl + "/mapset";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    final ResultListMapset mapsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListMapset>() {
+          // n/a
+        });
+
+    return mapsetList.getItems().stream()
+        .filter(mapset -> abbreviation.equals(mapset.getAbbreviation())).findFirst().orElseThrow(
+            () -> new RuntimeException("Subset with abbreviation " + abbreviation + " not found"));
+  }
+
+  /**
+   * Gets the subset by abbreviation.
+   *
+   * @param abbreviation the abbreviation
+   * @return the subset by abbreviation
+   * @throws Exception the exception
+   */
+  private Subset getSubsetByAbbreviation(final String abbreviation) throws Exception {
+    final String url = baseUrl + "/subset";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    final ResultListSubset subsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+          // n/a
+        });
+
+    return subsetList.getItems().stream()
+        .filter(subset -> abbreviation.equals(subset.getAbbreviation())).findFirst().orElseThrow(
+            () -> new RuntimeException("Subset with abbreviation " + abbreviation + " not found"));
   }
 
 }

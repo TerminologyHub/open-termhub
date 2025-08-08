@@ -1,10 +1,8 @@
 # open-termhub
-Open source FHIR terminology server deployable as a docker container with
+Open source FHIR® terminology server deployable as a docker container with
 local sandbox terminology data provided for testing. This runtime
 container works seamlessly with terminology content provided by 
 [TermHub](https://www.terminologyhub.com) which has a large library of code systems, value sets, and concept mappings.
-
-[Tutorial Training Video](https://youtu.be/Vto42DIMw2U)
 
 ## Table of Contents
 

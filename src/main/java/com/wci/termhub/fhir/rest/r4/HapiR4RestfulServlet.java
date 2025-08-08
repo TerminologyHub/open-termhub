@@ -16,7 +16,8 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.wci.termhub.fhir.r4.CodeSystemProviderR4;
 import com.wci.termhub.fhir.r4.ConceptMapProviderR4;
-import com.wci.termhub.fhir.r4.FHIRTerminologyCapabilitiesProviderR4;
+import com.wci.termhub.fhir.r4.FHIRMetadataProviderR4;
+import com.wci.termhub.fhir.r4.FHIRTerminologyCapabilitiesR4;
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -30,9 +31,6 @@ import jakarta.servlet.ServletException;
  * The Hapi servlet itself.
  */
 public class HapiR4RestfulServlet extends RestfulServer {
-
-  /** The Constant serialVersionUID. */
-  private static final long serialVersionUID = -8760493251815507812L;
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(HapiR4RestfulServlet.class);
@@ -88,9 +86,12 @@ public class HapiR4RestfulServlet extends RestfulServer {
     setResourceProviders(applicationContext.getBean(CodeSystemProviderR4.class),
         applicationContext.getBean(ValueSetProviderR4.class),
         applicationContext.getBean(ConceptMapProviderR4.class));
-    // , applicationContext.getBean(TerminologyUploadProviderR4.class)
 
-    setServerConformanceProvider(new FHIRTerminologyCapabilitiesProviderR4(this));
+    final FHIRTerminologyCapabilitiesR4 terminologyCapabilitiesR4 =
+        applicationContext.getBean(FHIRTerminologyCapabilitiesR4.class);
+    final FHIRMetadataProviderR4 metadataProvider = new FHIRMetadataProviderR4(this);
+    metadataProvider.setTerminologyCapabilitiesR4(terminologyCapabilitiesR4);
+    setServerConformanceProvider(metadataProvider);
 
     // Register interceptors
     registerInterceptor(new TermhubOpenApiInterceptorR4());

@@ -31,10 +31,10 @@ public final class ConceptMapR5Loader {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapR5Loader.class);
 
   /** The FHIR context. */
-  private static final FhirContext FHIR_CONTEXT = FhirContext.forR5();
+  private static FhirContext context = FhirContext.forR5();
 
   /**
-   * Instantiates a new concept map R 5 loader.
+   * Instantiates a new concept map R5 loader.
    */
   private ConceptMapR5Loader() {
     // n/a
@@ -73,7 +73,7 @@ public final class ConceptMapR5Loader {
     try (final BufferedReader br = new BufferedReader(new FileReader(fullFileName))) {
       // Parse JSON to FHIR ConceptMap
       final String json = br.lines().reduce("", String::concat);
-      final IParser parser = FHIR_CONTEXT.newJsonParser();
+      final IParser parser = context.newJsonParser();
       final ConceptMap conceptMap = parser.parseResource(ConceptMap.class, json);
 
       // Create and save the ConceptMap using the provided provider instance

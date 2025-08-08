@@ -38,12 +38,16 @@ import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.IncludeParam;
+import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
+import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 
 /**
@@ -65,6 +69,76 @@ public final class TerminologyUtility {
   }
 
   /**
+   * Takes a value like "http://snomed.info/sct", or "SNOMEDCT_US" and it returns an object with
+   * abbreviation, publisher, version, and uri set. It attempts to align with currently installed
+   * terminologies and if unable returns default values.
+   *
+   * @param searchService the search service
+   * @param value the value
+   * @param matchString the match string
+   * @return the terminology
+   * @throws Exception the exception
+   */
+  public static TerminologyRef getTerminology(final EntityRepositoryService searchService,
+    final String value, final String matchString) throws Exception {
+
+    TerminologyRef ref = new TerminologyRef();
+    final String query = StringUtility.composeQuery("AND",
+        StringUtility.composeQuery("OR",
+            "abbreviation:\"" + StringUtility.escapeQuery(value) + "\"",
+            "uri:\"" + StringUtility.escapeQuery(value) + "\""));
+
+    final ResultList<Terminology> list =
+        searchService.find(new SearchParameters(query, null, null, null, null), Terminology.class);
+
+    // NO matches
+    if (list.getItems().isEmpty()) {
+      ref.setAbbreviation(value);
+      ref.setUri(value);
+      // This happens if you do not load the terminology first
+      ref.setPublisher("unknown");
+      ref.setVersion("unknown");
+    }
+    if (list.getItems().size() == 1) {
+      final Terminology terminology = list.getItems().get(0);
+      ref.setAbbreviation(terminology.getAbbreviation());
+      ref.setUri(terminology.getUri());
+      ref.setPublisher(terminology.getPublisher());
+      ref.setVersion(terminology.getVersion());
+    }
+    // pick first that matches matchString
+    else {
+      // Try matching version first
+      Terminology terminology = list.getItems().stream()
+          .filter(t -> t.getVersion().equals(matchString)).findFirst().orElse(null);
+      // if none match, pick the first one
+      if (terminology == null) {
+        terminology = list.getItems().stream().filter(t -> t.toString().contains(matchString))
+            .findFirst().orElse(null);
+
+        if (terminology == null) {
+          terminology = list.getItems().get(0);
+        } else {
+          if (logger.isDebugEnabled()) {
+            logger.debug("  found match on terminology string = " + matchString);
+          }
+
+        }
+      } else {
+        if (logger.isDebugEnabled()) {
+          logger.debug("  found match on version = " + matchString);
+        }
+      }
+      ref.setAbbreviation(terminology.getAbbreviation());
+      ref.setUri(terminology.getUri());
+      ref.setPublisher(terminology.getPublisher());
+      ref.setVersion(terminology.getVersion());
+    }
+
+    return ref;
+  }
+
+  /**
    * Gets the terminology.
    *
    * @param searchService the search service
@@ -77,13 +151,9 @@ public final class TerminologyUtility {
   public static Terminology getTerminology(final EntityRepositoryService searchService,
     final String terminology, final String publisher, final String version) throws Exception {
 
-    final ResultList<Terminology> tlist =
-        searchService
-            .find(
-                new SearchParameters("abbreviation:" + StringUtility.escapeQuery(terminology)
-                    + " AND publisher: \"" + StringUtility.escapeQuery(publisher)
-                    + "\" AND version:" + StringUtility.escapeQuery(version), 2, 0),
-                Terminology.class);
+    final ResultList<Terminology> tlist = searchService.find(
+        new SearchParameters(getTerminologyAbbrQuery(terminology, publisher, version), 2, 0),
+        Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
@@ -109,10 +179,9 @@ public final class TerminologyUtility {
   public static Mapset getMapset(final EntityRepositoryService searchService,
     final String abbreviation, final String publisher, final String version) throws Exception {
 
-    final ResultList<Mapset> tlist = searchService
-        .find(new SearchParameters("abbreviation:" + StringUtility.escapeQuery(abbreviation)
-            + " AND publisher: \"" + StringUtility.escapeQuery(publisher) + "\" AND version:"
-            + StringUtility.escapeQuery(version), 2, 0), Mapset.class);
+    final ResultList<Mapset> tlist = searchService.find(
+        new SearchParameters(getTerminologyAbbrQuery(abbreviation, publisher, version), 2, 0),
+        Mapset.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
@@ -123,6 +192,56 @@ public final class TerminologyUtility {
     }
 
     return tlist.getItems().get(0);
+  }
+
+  /**
+   * Gets the terminology query.
+   *
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
+   * @return the terminology query
+   */
+  public static String getTerminologyQuery(final String terminology, final String publisher,
+    final String version) {
+
+    return StringUtility.composeQuery("AND",
+        "terminology: \"" + StringUtility.escapeQuery(terminology) + "\"",
+        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
+        "version: \"" + StringUtility.escapeQuery(version) + "\"");
+  }
+
+  /**
+   * Gets the terminology query.
+   *
+   * @param abbreviation the abbreviation
+   * @param publisher the publisher
+   * @param version the version
+   * @return the terminology query
+   */
+  public static String getTerminologyAbbrQuery(final String abbreviation, final String publisher,
+    final String version) {
+
+    return StringUtility.composeQuery("AND",
+        "abbreviation: \"" + StringUtility.escapeQuery(abbreviation) + "\"",
+        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
+        "version: \"" + StringUtility.escapeQuery(version) + "\"");
+  }
+
+  /**
+   * Gets the terminology uri query.
+   *
+   * @param uri the uri
+   * @param publisher the publisher
+   * @param version the version
+   * @return the terminology uri query
+   */
+  public static String getTerminologyUriQuery(final String uri, final String publisher,
+    final String version) {
+
+    return StringUtility.composeQuery("AND", "uri: \"" + StringUtility.escapeQuery(uri) + "\"",
+        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
+        "version: \"" + StringUtility.escapeQuery(version) + "\"");
   }
 
   /**
@@ -154,13 +273,14 @@ public final class TerminologyUtility {
   public static Concept getConcept(final EntityRepositoryService searchService,
     final String terminology, final String publisher, final String version, final String code)
     throws Exception {
-    final SearchParameters nameParams = new SearchParameters(2, 0);
+    final SearchParameters params = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
-    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
+    params.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
         + StringUtility.escapeQuery(t) + " AND publisher:\"" + StringUtility.escapeQuery(publisher)
         + "\" AND version:" + StringUtility.escapeQuery(version));
 
-    final ResultList<Concept> list = searchService.find(nameParams, Concept.class);
+    final ResultList<Concept> list = searchService.find(params, Concept.class);
+
     if (list.getItems().isEmpty()) {
       return null;
     }
@@ -298,13 +418,19 @@ public final class TerminologyUtility {
     // Iterate over ancestor path
     for (final String code : fullAncPath.split("~")) {
       final StringBuilder finalQuery = new StringBuilder();
-      finalQuery.append("concept.code:" + QueryParserBase.escape(code)).append(" AND terminology:")
-          .append(StringUtility.escapeQuery(treePosition.getTerminology()))
-          .append(" AND publisher: \"")
-          .append(StringUtility.escapeQuery(treePosition.getPublisher())).append("\"")
-          .append(" AND version:").append(StringUtility.escapeQuery(treePosition.getVersion()))
-          .append(" AND ancestorPath:")
-          .append((partAncPath.isEmpty() ? "\"\"" : QueryParserBase.escape(partAncPath)));
+      finalQuery.append("concept.code:" + QueryParserBase.escape(code));
+      finalQuery.append(" AND terminology: \"")
+          .append(StringUtility.escapeQuery(treePosition.getTerminology())).append("\"");
+      finalQuery.append(" AND publisher: \"")
+          .append(StringUtility.escapeQuery(treePosition.getPublisher())).append("\"");
+      finalQuery.append(" AND version: \"")
+          .append(StringUtility.escapeQuery(treePosition.getVersion())).append("\"");
+      if (partAncPath.isEmpty()) {
+        finalQuery.append(" AND ancestorPath: \"\"");
+      } else {
+        finalQuery.append(" AND ancestorPath: \"").append(QueryParserBase.escape(partAncPath))
+            .append("\"");
+      }
 
       // No requirement for additional type to match in hierarchies
       // if (!StringUtility.isEmpty(treePosition.getAdditionalType())) {
@@ -734,7 +860,7 @@ public final class TerminologyUtility {
   public static String toDiagramModel(final Concept concept, final List<Metadata> metadata) {
 
     // concept
-    final ObjectMapper objectMapper = new ObjectMapper();
+    final ObjectMapper objectMapper = ThreadLocalMapper.get();
     final JsonNode rootNode = objectMapper.createObjectNode();
     final ObjectNode conceptNode = objectMapper.createObjectNode();
     conceptNode.put("conceptId", concept.getCode());
@@ -763,7 +889,7 @@ public final class TerminologyUtility {
    */
   private static ArrayNode createDescriptionsNode(final Concept concept) {
 
-    final ObjectMapper objectMapper = new ObjectMapper();
+    final ObjectMapper objectMapper = ThreadLocalMapper.get();
     final ArrayNode descArray = objectMapper.createArrayNode();
     for (final Term term : concept.getTerms()) {
       if (term.getActive()) {
@@ -786,7 +912,7 @@ public final class TerminologyUtility {
   private static ArrayNode createRelationshipsNode(final Concept concept,
     final List<Metadata> metadata) {
 
-    final ObjectMapper objectMapper = new ObjectMapper();
+    final ObjectMapper objectMapper = ThreadLocalMapper.get();
     final ArrayNode relArray = objectMapper.createArrayNode();
     for (final ConceptRelationship rel : concept.getRelationships().stream().sorted((a, b) -> {
       final String ha = "" + a.getHierarchical() + (a.getAdditionalType().equals("isa"));
@@ -1109,4 +1235,137 @@ public final class TerminologyUtility {
     }
     return closest;
   }
+
+  /**
+   * Removes the terminology and related concepts, relationships, etc.
+   *
+   * @param searchService the search service
+   * @param id the id
+   * @throws Exception the exception
+   */
+  public static void removeTerminology(final EntityRepositoryService searchService, final String id)
+    throws Exception {
+
+    final Terminology terminology = searchService.get(id, Terminology.class);
+    if (terminology == null) {
+      throw new Exception("Unable to find terminology with id = " + id);
+    }
+
+    final int batchSize = 5000;
+    final String query = getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), terminology.getVersion());
+    final SearchParameters params = new SearchParameters(query, 0, batchSize, null, null);
+
+    // delete terminology concepts in batches
+    int offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> conceptIds = searchService.findIds(params, Concept.class);
+      if (conceptIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(conceptIds.getItems(), Concept.class);
+      offset += batchSize;
+    }
+
+    // delete concept relationships in batches
+    offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> conceptRelIds =
+          searchService.findIds(params, ConceptRelationship.class);
+      if (conceptRelIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(conceptRelIds.getItems(), ConceptRelationship.class);
+      offset += batchSize;
+    }
+
+    // delete concept trees in batches
+    offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> conceptTreePositionIds =
+          searchService.findIds(params, ConceptTreePosition.class);
+      if (conceptTreePositionIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(conceptTreePositionIds.getItems(), ConceptTreePosition.class);
+      offset += batchSize;
+    }
+
+    // delete the terminology
+    searchService.remove(id, Terminology.class);
+
+  }
+
+  /**
+   * Removes the Mapset and related mappings.
+   *
+   * @param searchService the search service
+   * @param id the id
+   * @throws Exception the exception
+   */
+  public static void removeMapset(final EntityRepositoryService searchService, final String id)
+    throws Exception {
+
+    // find the mapset
+    final Mapset mapset = searchService.get(id, Mapset.class);
+    if (mapset == null) {
+      throw new Exception("Unable to find mapset with id = " + id);
+    }
+
+    final int batchSize = 5000;
+    final String query = getTerminologyAbbrQuery(mapset.getAbbreviation(), mapset.getPublisher(),
+        mapset.getVersion());
+    final SearchParameters params = new SearchParameters(query, null, batchSize, null, null);
+
+    int offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> mappingIds = searchService.findIds(params, Mapping.class);
+      if (mappingIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(mappingIds.getItems(), Mapping.class);
+      offset += batchSize;
+    }
+    searchService.remove(id, Mapset.class);
+  }
+
+  /**
+   * Removes the subset and related subset members.
+   *
+   * @param searchService the search service
+   * @param id the id
+   * @throws Exception the exception
+   */
+  public static void removeSubset(final EntityRepositoryService searchService, final String id)
+    throws Exception {
+
+    // find the subset/value set
+    final Subset subset = searchService.get(id, Subset.class);
+    if (subset == null) {
+      throw new Exception("Unable to find subset with id = " + id);
+    }
+
+    final int batchSize = 5000;
+    final String query = getTerminologyAbbrQuery(subset.getAbbreviation(), subset.getPublisher(),
+        subset.getVersion());
+    final SearchParameters params = new SearchParameters(query, null, batchSize, null, null);
+
+    // delete value set entries in batches
+    int offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> subsetMemberIds = searchService.findIds(params, SubsetMember.class);
+      if (subsetMemberIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(subsetMemberIds.getItems(), SubsetMember.class);
+      offset += batchSize;
+    }
+    searchService.remove(id, Subset.class);
+  }
+
 }

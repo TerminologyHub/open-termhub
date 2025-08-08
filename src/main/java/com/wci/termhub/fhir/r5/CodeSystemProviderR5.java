@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.wci.termhub.EnablePostLoadComputations;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -47,6 +48,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
+import ca.uhn.fhir.rest.annotation.Delete;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
@@ -78,6 +80,13 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   @Autowired
   private EntityRepositoryService searchService;
 
+  /** The enable post load computations. */
+  @Autowired
+  private EnablePostLoadComputations enablePostLoadComputations;
+
+  /** The Constant context. */
+  private static FhirContext context = FhirContext.forR5();
+
   /**
    * Gets the code system.
    *
@@ -92,15 +101,21 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
-      logger.info("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
+      if (logger.isDebugEnabled()) {
+        logger.debug("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
+      }
 
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
         final CodeSystem cs = FhirUtilityR5.toR5(terminology);
-        logger.info("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
+        if (logger.isDebugEnabled()) {
+          logger.debug("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
+        }
 
         // Skip non-matching - comparing just the ID parts
         if (id != null && id.getIdPart().equals(cs.getId())) {
-          logger.info("Found matching code system: {}", cs.getTitle());
+          if (logger.isDebugEnabled()) {
+            logger.debug("Found matching code system: {}", cs.getTitle());
+          }
           return cs;
         }
       }
@@ -119,7 +134,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
   /**
    * Find code systems.
-   *
+   * 
    * <pre>
    * Parameters for all resources
    *   used: _id
@@ -148,6 +163,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @param publisher the publisher
    * @param title the title
    * @param url the url
+   * @param system the system
    * @param version the version
    * @param count the count
    * @param offset the offset
@@ -164,6 +180,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     @OptionalParam(name = "publisher") final StringParam publisher,
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
+    @OptionalParam(name = "system") final UriParam system,
     @OptionalParam(name = "version") final StringParam version,
     @Description(shortDefinition = "Number of entries to return")
     @OptionalParam(name = "_count") final NumberParam count,
@@ -173,6 +190,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     try {
 
       FhirUtilityR5.notSupportedSearchParams(request);
+      FhirUtilityR5.mutuallyExclusive("url", url, "system", system);
 
       final List<CodeSystem> list = new ArrayList<>();
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
@@ -188,36 +206,50 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
         // Skip non-matching
         if ((id != null && !id.getValue().equals(cs.getId()))
-            || (url != null && !url.getValue().equals(cs.getUrl()))) {
-          logger.debug("  SKIP id/url mismatch = {}", cs.getUrl());
+            || (url != null && !url.getValue().equals(cs.getUrl()))
+            || (system != null && !system.getValue().equals(cs.getUrl()))) {
           continue;
         }
         if (date != null && !FhirUtility.compareDate(date, cs.getDate())) {
-          logger.debug("  SKIP date mismatch = {}", cs.getDate());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP date mismatch = {}", cs.getDate());
+          }
           continue;
         }
         if (description != null && !FhirUtility.compareString(description, cs.getDescription())) {
-          logger.debug("  SKIP description mismatch = {}", cs.getDescription());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP description mismatch = {}", cs.getDescription());
+          }
           continue;
         }
         if (name != null && !FhirUtility.compareString(name, cs.getName())) {
-          logger.debug("  SKIP name mismatch = {}", cs.getName());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP name mismatch = {}", cs.getName());
+          }
           continue;
         }
         if (publisher != null && !FhirUtility.compareString(publisher, cs.getPublisher())) {
-          logger.debug("  SKIP publisher mismatch = {}", cs.getPublisher());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP publisher mismatch = {}", cs.getPublisher());
+          }
           continue;
         }
         if (title != null && !FhirUtility.compareString(title, cs.getTitle())) {
-          logger.debug("  SKIP title mismatch = {}", cs.getTitle());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP title mismatch = {}", cs.getTitle());
+          }
           continue;
         }
         if (version != null && !FhirUtility.compareString(version, cs.getVersion())) {
-          logger.debug("  SKIP version mismatch = {}", cs.getVersion());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP version mismatch = {}", cs.getVersion());
+          }
           continue;
         }
         if (code != null && !mapsetsMatchingCodes.contains(code.getValue())) {
-          logger.debug("  SKIP code not found = {}", code.getValue());
+          if (logger.isDebugEnabled()) {
+            logger.debug("  SKIP code not found = {}", code.getValue());
+          }
           continue;
         }
 
@@ -718,15 +750,15 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     final Concept conceptA = TerminologyUtility.getConcept(searchService, terminology, codeA);
     if (conceptA == null) {
       throw FhirUtilityR5.exception(
-          String.format("Code does not exist for code system =" + codeA + ","
-              + terminology.getAttributes().get("fhirUri")),
+          String
+              .format("Code does not exist for code system =" + codeA + "," + terminology.getUri()),
           OperationOutcome.IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
     final Concept conceptB = TerminologyUtility.getConcept(searchService, terminology, codeB);
     if (conceptB == null) {
       throw FhirUtilityR5.exception(
-          String.format("Code does not exist for code system =" + codeB + ","
-              + terminology.getAttributes().get("fhirUri")),
+          String
+              .format("Code does not exist for code system =" + codeB + "," + terminology.getUri()),
           OperationOutcome.IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
 
@@ -767,13 +799,14 @@ public class CodeSystemProviderR5 implements IResourceProvider {
           codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
 
       // Convert CodeSystem to JSON string
-      final String content = FhirContext.forR5().newJsonParser().encodeResourceToString(codeSystem);
+      final String content = context.newJsonParser().encodeResourceToString(codeSystem);
       final int conceptCount = codeSystem.getConcept().size();
       codeSystem.getConcept().clear();
       codeSystem.setConcept(null);
 
       // Use existing loader utility
-      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content);
+      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content,
+          enablePostLoadComputations.isEnabled());
 
       // Return success
       final MethodOutcome outcome = new MethodOutcome();
@@ -794,10 +827,44 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   }
 
   /**
-   * Gets the resource type.
+   * Deletes the code system.
    *
-   * @return the resource type
+   * @param request the request
+   * @param details the details
+   * @param id the id
+   * @return the method outcome
+   * @throws Exception the exception
    */
+  @Delete
+  public MethodOutcome deleteCodeSystem(final HttpServletRequest request,
+    final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
+
+    try {
+      if (id == null || id.getIdPart() == null) {
+        throw FhirUtilityR5.exception("Code system ID required for delete", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+
+      logger.info("Delete code system with ID: {}", id.getIdPart());
+
+      final Terminology terminology = searchService.get(id.getIdPart(), Terminology.class);
+      if (terminology == null) {
+        throw FhirUtilityR5.exception("Code system not found = " + id.getIdPart(),
+            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+      }
+
+      TerminologyUtility.removeTerminology(searchService, terminology.getId());
+      return new MethodOutcome();
+
+    } catch (final FHIRServerResponseException e) {
+      throw e;
+    } catch (final Exception e) {
+      logger.error("Unexpected error deleting code system", e);
+      throw FhirUtilityR5.exception("Failed to delete code system: " + e.getMessage(),
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+  }
+
   /* see superclass */
   @Override
   public Class<CodeSystem> getResourceType() {

@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -22,24 +23,21 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.Application;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.FileUtility;
+import com.wci.termhub.util.ThreadLocalMapper;
 
 /**
  * The Class ConceptUnitTest.
  */
-@SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-test.properties")
 @TestMethodOrder(OrderAnnotation.class)
-public class ConceptUnitTest extends BaseUnitTest {
+public class ConceptUnitTest extends AbstractClassTest {
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(ConceptUnitTest.class);
@@ -257,10 +255,13 @@ public class ConceptUnitTest extends BaseUnitTest {
   @Test
   @Order(1)
   public void createIndex() throws Exception {
+
     logger.info("Creating index for Concept");
-    searchService.createIndex(Concept.class);
+    FileUtility.deleteDirectoryRecursively(Paths.get(INDEX_DIRECTORY));
     final File indexFile = new File(INDEX_DIRECTORY, INDEX_NAME);
-    assertTrue(indexFile.exists());
+    searchService.createIndex(Concept.class);
+    assertTrue(indexFile.exists(),
+        "Index directory does not exist: " + indexFile.getAbsolutePath());
   }
 
   /**
@@ -272,7 +273,7 @@ public class ConceptUnitTest extends BaseUnitTest {
   @Order(2)
   public void testAddConcept() throws Exception {
 
-    final ObjectMapper objectMapper = new ObjectMapper();
+    final ObjectMapper objectMapper = ThreadLocalMapper.get();
     final JsonNode rootNode = objectMapper.readTree(CONCEPT_JSON);
     final JsonNode conceptNode = rootNode.get("_source");
 

@@ -71,7 +71,9 @@ public final class IndexUtility {
 
     final List<IndexableField> indexableFields = new ArrayList<>();
 
-    logger.debug("Add: object field instance of Collection");
+    if (logger.isTraceEnabled()) {
+      logger.trace("Add: object field instance of Collection");
+    }    
 
     for (final Object item : collection) {
       if (item instanceof final String value) {
@@ -86,19 +88,25 @@ public final class IndexUtility {
 
         // get all the fields of the object
         // Concatenate similar fields from the object into a single field
-        logger.debug("Add: item: {}", item);
-        logger.debug("Add: field: {}", field);
-        logger.debug("Add: item class: {}", item.getClass().getSimpleName());
+        if (logger.isTraceEnabled()) {
+          logger.trace("Add: item: {}", item);
+          logger.trace("Add: field: {}", field);
+          logger.trace("Add: item class: {}", item.getClass().getSimpleName());
+        }
 
         // loop through all the fields of the object
         Class<?> innerClass = item.getClass();
         while (innerClass != null) {
 
-          logger.debug("Add: Inner class: {}", innerClass.getName());
+          if (logger.isTraceEnabled()) {
+            logger.trace("Add: Inner class: {}", innerClass.getName());
+          }
           for (final java.lang.reflect.Field subField : innerClass.getDeclaredFields()) {
 
-            logger.debug("Add: Inner class sub field: {}, type: {}", subField.getName(),
-                subField.getType());
+            if (logger.isTraceEnabled()) {
+              logger.trace("Add: Inner class sub field: {}, type: {}", subField.getName(),
+                  subField.getType());
+            }
 
             final List<IndexableField> indexableFieldsList =
                 IndexUtility.getIndexableFields(item, subField, field.getName(), true);
@@ -126,8 +134,10 @@ public final class IndexUtility {
     final java.lang.reflect.Field field, final String indexNamePrefix, final boolean isCollection)
     throws IllegalAccessException {
 
-    logger.debug("indexableFields: field: {}, indexNamePrefix: {}", field.getName(),
-        indexNamePrefix);
+    if (logger.isTraceEnabled()) {
+      logger.trace("indexableFields: field: {}, indexNamePrefix: {}", field.getName(),
+          indexNamePrefix);
+    }
 
     final List<IndexableField> indexableFields = new ArrayList<>();
     field.setAccessible(true);
@@ -271,7 +281,9 @@ public final class IndexUtility {
 
     }
 
-    logger.debug("indexableFields: {}", indexableFields);
+    if (logger.isTraceEnabled()) {
+      logger.trace("indexableFields: {}", indexableFields);
+    }
 
     return indexableFields;
   }
@@ -385,23 +397,17 @@ public final class IndexUtility {
   /**
    * Gets the and query.
    *
-   * @param query1 the query 1
-   * @param query2 the query 2
+   * @param queries the queries
    * @return the and query
    */
-  public static Query getAndQuery(final Query query1, final Query query2) {
-    if (query1 == null && query2 == null) {
-      return null;
-    }
-    if (query1 == null) {
-      return query2;
-    }
-    if (query2 == null) {
-      return query1;
-    }
+  public static Query getAndQuery(final Query... queries) {
     final BooleanQuery.Builder builder = new BooleanQuery.Builder();
-    builder.add(query1, BooleanClause.Occur.MUST);
-    builder.add(query2, BooleanClause.Occur.MUST);
+    for (final Query query : queries) {
+      if (query == null) {
+        continue;
+      }
+      builder.add(query, BooleanClause.Occur.MUST);
+    }
     return builder.build();
   }
 }

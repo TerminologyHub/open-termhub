@@ -41,6 +41,9 @@ import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.UriType;
 import org.hl7.fhir.r4.model.ValueSet;
+import org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent;
+import org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.r4.model.ValueSet.ValueSetComposeComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +54,8 @@ import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Definition;
 import com.wci.termhub.model.Mapset;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
@@ -67,6 +72,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public final class FhirUtilityR4 {
 
   /** The logger. */
+  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
 
   /**
@@ -491,7 +497,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * To R 4.
+   * To R4.
    *
    * @param codeSystem the code system
    * @param concept the concept
@@ -648,7 +654,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * To R 4.
+   * To R4.
    *
    * @param codeSystem the code system
    * @param concept the concept
@@ -691,14 +697,17 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * To R 4 value set.
+   * To R4 value set.
    *
-   * @param cs the code system
+   * @param terminology the terminology
+   * @param metaFlag the meta flag
    * @return the value set
    * @throws Exception the exception
    */
-  public static ValueSet toR4ValueSet(final CodeSystem cs) throws Exception {
+  public static ValueSet toR4ValueSet(final Terminology terminology, final boolean metaFlag)
+    throws Exception {
 
+    final CodeSystem cs = FhirUtilityR4.toR4(terminology);
     final ValueSet set = new ValueSet();
     set.setId(cs.getId() + "_entire");
     set.setUrl(cs.getUrl() + "?fhir_vs");
@@ -709,14 +718,96 @@ public final class FhirUtilityR4 {
     set.setDescription("Value set representing the entire contents of this code system");
     set.setDate(cs.getDate());
     set.setPublisher(cs.getPublisher());
-    set.setMeta(new Meta());
     set.setCopyright(cs.getCopyright());
+
+    // Add "from" info for members
+    if (metaFlag) {
+      set.setMeta(new Meta().addTag("fromTerminology", terminology.getAbbreviation(), null)
+          .addTag("fromPublisher", terminology.getPublisher(), null)
+          .addTag("fromVersion", terminology.getVersion(), null)
+          .addTag("includesUri", terminology.getUri(), null));
+    }
 
     return set;
   }
 
   /**
-   * To R 4 subsumes.
+   * Converts a Subset and its SubsetMembers to a FHIR R4 ValueSet.
+   *
+   * @param subset the Subset
+   * @param members the SubsetMembers
+   * @param metaFlag the meta flag
+   * @return the FHIR R4 ValueSet
+   * @throws Exception the exception
+   */
+  public static ValueSet toR4ValueSet(final Subset subset, final List<SubsetMember> members,
+    final boolean metaFlag) throws Exception {
+
+    final ValueSet valueSet = new ValueSet();
+    valueSet.setId(subset.getId());
+    valueSet.setUrl(subset.getUri());
+    valueSet.setPublisher(subset.getPublisher());
+    valueSet.setVersion(subset.getVersion());
+    valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(subset.getReleaseDate()));
+
+    valueSet.setName(subset.getName());
+    // Set title from abbreviation if present, else fallback to name
+    if (subset.getAbbreviation() != null && !subset.getAbbreviation().isEmpty()) {
+      valueSet.setTitle(subset.getAbbreviation());
+    } else {
+      valueSet.setTitle(subset.getName());
+    }
+    valueSet.setDescription(subset.getDescription());
+    valueSet.setStatus(org.hl7.fhir.r4.model.Enumerations.PublicationStatus.ACTIVE);
+
+    // Set experimental from attributes if present, else fallback
+    final String experimentalStr = subset.getAttributes() != null
+        ? subset.getAttributes().get(Subset.Attributes.fhirExperimental.name()) : null;
+    if (experimentalStr != null) {
+      valueSet.setExperimental(Boolean.parseBoolean(experimentalStr));
+    }
+
+    // Set identifier from attributes if present, else fallback
+    valueSet.addIdentifier().setValue(subset.getCode())
+        .setSystem("https://terminologyhub.com/model/subset/code");
+
+    // Compose/include
+    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
+    final ConceptSetComponent include = new ConceptSetComponent();
+
+    include.setSystem(subset.getAttributes().get("fhirIncludesUri"));
+    if (members != null) {
+      for (final SubsetMember member : members) {
+        if (member.getCode() == null
+            || (member.getCodeActive() != null && !member.getCodeActive())) {
+          continue;
+        }
+        final ConceptReferenceComponent concept = new ConceptReferenceComponent();
+        concept.setCode(member.getCode());
+        if (member.getName() != null) {
+          concept.setDisplay(member.getName());
+        }
+        include.addConcept(concept);
+      }
+    }
+    if (!include.getConcept().isEmpty()) {
+      compose.addInclude(include);
+      valueSet.setCompose(compose);
+    }
+
+    // Add "from" info for members
+    if (metaFlag) {
+      valueSet.setMeta(new Meta().addTag("fromTerminology", subset.getFromTerminology(), null)
+          .addTag("fromPublisher", subset.getFromPublisher(), null)
+          .addTag("fromVersion", subset.getFromVersion(), null)
+          .addTag("includesUri", subset.getAttributes().get("fhirIncludesUri"), null));
+    }
+
+    return valueSet;
+  }
+
+  /**
+   * To R4 subsumes.
    *
    * @param outcome the outcome
    * @param terminology the terminology
@@ -742,13 +833,13 @@ public final class FhirUtilityR4 {
     // }
     final Parameters parameters = new Parameters();
     parameters.addParameter("outcome", outcome);
-    parameters.addParameter("system", terminology.getAttributes().get("fhirUri"));
+    parameters.addParameter("system", terminology.getUri());
     parameters.addParameter("version", terminology.getAttributes().get("fhirVersion"));
     return parameters;
   }
 
   /**
-   * To R 4.
+   * To R4.
    *
    * @param terminology the terminology
    * @return the coding
@@ -757,8 +848,6 @@ public final class FhirUtilityR4 {
   public static CodeSystem toR4(final Terminology terminology) throws Exception {
     final CodeSystem cs = new CodeSystem();
 
-    // cs.setUrl(terminology.getAttributes().get("fhirUri"));
-    // fhirUri is not in the json data files. setting to id for now
     cs.setUrl(terminology.getUri());
 
     cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
@@ -808,14 +897,14 @@ public final class FhirUtilityR4 {
       cs.setCopyright(copyright);
     }
 
-    logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
-        cs.getName(), cs.getVersion());
+    // logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
+    // cs.getName(), cs.getVersion());
 
     return cs;
   }
 
   /**
-   * To R 4.
+   * To R4.
    *
    * @param mapset the mapset
    * @return the concept map
@@ -829,39 +918,33 @@ public final class FhirUtilityR4 {
     final ConceptMap cm = new ConceptMap();
 
     // Debug logging for Mapset data
-    logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
-        mapset.getFromTerminology(), mapset.getToTerminology());
+    // logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
+    // mapset.getFromTerminology(), mapset.getToTerminology());
 
-    cm.setUrl(mapset.getAttributes().get("fhirUri"));
+    cm.setUrl(mapset.getUri());
     if (mapset.getReleaseDate() != null) {
       cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(mapset.getReleaseDate()));
     }
-    cm.setVersion(mapset.getAttributes().get("fhirVersion"));
+    cm.setVersion(mapset.getAttributes().containsKey("fhirVersion")
+        ? mapset.getAttributes().get("fhirVersion") : mapset.getVersion());
     cm.setId(mapset.getId());
     cm.setName(mapset.getName());
     cm.setTitle(mapset.getAbbreviation());
-    cm.setPublisher(mapset.getPublisher()).getName();
+    cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
     cm.setCopyright(mapset.getAttributes().get("copyright"));
-    cm.setIdentifier(new Identifier().setValue(mapset.getCode()));
-
-    // Set source and target scopes from fromTerminology and toTerminology
-    if (mapset.getFromTerminology() != null) {
-      cm.setSource(new UriType(mapset.getFromTerminology()));
-      logger.info("Set sourceScope from fromTerminology: {}", mapset.getFromTerminology());
-    } else if (mapset.getAttributes().containsKey("sourceScopeUri")) {
-      cm.setSource(new UriType(mapset.getAttributes().get("sourceScopeUri")));
-      logger.info("Set sourceScope from attributes: {}",
-          mapset.getAttributes().get("sourceScopeUri"));
+    if (mapset.getCode() != null) {
+      cm.setIdentifier(new Identifier().setSystem("https://terminologyhub.com/model/mapset/code")
+          .setValue(mapset.getCode()));
     }
 
-    if (mapset.getToTerminology() != null) {
-      cm.setTarget(new UriType(mapset.getToTerminology()));
-      logger.info("Set targetScope from toTerminology: {}", mapset.getToTerminology());
-    } else if (mapset.getAttributes().containsKey("targetScopeUri")) {
-      cm.setTarget(new UriType(mapset.getAttributes().get("targetScopeUri")));
-      logger.info("Set targetScope from attributes: {}",
-          mapset.getAttributes().get("targetScopeUri"));
+    // Set source and target scopes from fromTerminology and toTerminology
+    if (mapset.getAttributes().containsKey("fhirSourceUri")) {
+      cm.setSource(new UriType(mapset.getAttributes().get("fhirSourceUri")));
+    }
+
+    if (mapset.getAttributes().containsKey("fhirTargetUri")) {
+      cm.setTarget(new UriType(mapset.getAttributes().get("fhirTargetUri")));
     }
     return cm;
   }

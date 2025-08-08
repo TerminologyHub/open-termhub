@@ -17,7 +17,6 @@ import com.wci.termhub.fhir.rest.r4.HapiR4RestfulServlet;
 import com.wci.termhub.fhir.rest.r5.HapiR5RestfulServlet;
 
 import ca.uhn.fhir.rest.api.EncodingEnum;
-import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
 
 /**
  * Servlet registration bean.
@@ -40,9 +39,6 @@ public class FHIRConfig {
     hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
     hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
 
-    final ResponseHighlighterInterceptor interceptor = new ResponseHighlighterInterceptor();
-    hapiServlet.registerInterceptor(interceptor);
-
     return servletRegistrationBean;
   }
 
@@ -57,14 +53,10 @@ public class FHIRConfig {
 
     final ServletRegistrationBean<HapiR5RestfulServlet> servletRegistrationBean =
         new ServletRegistrationBean<>(hapiServlet, "/fhir/r5/*");
-    hapiServlet.setServerName("Opeb Termhub R5 FHIR Terminology Server");
+    hapiServlet.setServerName("Open Termhub R5 FHIR Terminology Server");
     hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
     hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
 
-    final ResponseHighlighterInterceptor interceptor = new ResponseHighlighterInterceptor();
-    hapiServlet.registerInterceptor(interceptor);
-
     return servletRegistrationBean;
   }
-
 }
