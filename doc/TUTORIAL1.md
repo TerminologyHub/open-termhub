@@ -19,7 +19,7 @@ One option is to just build the code and run the server locally and use an INDEX
 export INDEX_DIR=/tmp/opentermhub/index
 export ENABLE_POST_LOAD_COMPUTATIONS=true
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
-make run
+make build run
 ```
 
 ### Option 2: build/run with docker
