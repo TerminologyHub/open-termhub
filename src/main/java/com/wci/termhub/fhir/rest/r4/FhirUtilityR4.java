@@ -748,7 +748,15 @@ public final class FhirUtilityR4 {
     valueSet.setUrl(subset.getUri());
     valueSet.setPublisher(subset.getPublisher());
     valueSet.setVersion(subset.getVersion());
-    valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(subset.getReleaseDate()));
+    // Parse the full date string with timezone information
+    final String releaseDate = subset.getReleaseDate();
+    if (releaseDate != null && releaseDate.contains("T")) {
+      // Full ISO 8601 date string with timezone
+      valueSet.setDate(Date.from(java.time.Instant.parse(releaseDate)));
+    } else {
+      // Fallback to date-only format
+      valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+    }
 
     valueSet.setName(subset.getName());
     // Set title from abbreviation if present, else fallback to name
@@ -850,7 +858,15 @@ public final class FhirUtilityR4 {
 
     cs.setUrl(terminology.getUri());
 
-    cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate()));
+    // Parse the full date string with timezone information
+    final String releaseDate = terminology.getReleaseDate();
+    if (releaseDate != null && releaseDate.contains("T")) {
+      // Full ISO 8601 date string with timezone
+      cs.setDate(Date.from(java.time.Instant.parse(releaseDate)));
+    } else {
+      // Fallback to date-only format
+      cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+    }
 
     // Set version - prefer fhirVersion attribute if available, otherwise use
     // terminology version
@@ -923,7 +939,14 @@ public final class FhirUtilityR4 {
 
     cm.setUrl(mapset.getUri());
     if (mapset.getReleaseDate() != null) {
-      cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(mapset.getReleaseDate()));
+      final String releaseDate = mapset.getReleaseDate();
+      if (releaseDate.contains("T")) {
+        // Full ISO 8601 date string with timezone
+        cm.setDate(Date.from(java.time.Instant.parse(releaseDate)));
+      } else {
+        // Fallback to date-only format
+        cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+      }
     }
     cm.setVersion(mapset.getAttributes().containsKey("fhirVersion")
         ? mapset.getAttributes().get("fhirVersion") : mapset.getVersion());

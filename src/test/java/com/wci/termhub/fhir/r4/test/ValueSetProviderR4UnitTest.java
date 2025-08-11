@@ -10,8 +10,13 @@
 package com.wci.termhub.fhir.r4.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,9 +25,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
+import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
@@ -37,6 +46,14 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** The Constant LOGGER. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetProviderR4UnitTest.class);
+
+  /** The search service. */
+  @Autowired
+  private EntityRepositoryService searchService;
+
+  /** List of FHIR Code System files to load. */
+  private static final List<String> VALUE_SET_FILES =
+      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r4.json");
 
   /** The provider. */
   @Autowired
@@ -68,8 +85,21 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
    */
   @Test
   public void testFindValueSets() throws Exception {
-    final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
-        null, null, null, null, null, null, null);
+    final Bundle bundle = provider.findValueSets(request, details,
+
+        null, // TokenParam id
+        null, // TokenParam code
+        null, // DateRangeParam date
+        null, // StringParam description
+        null, // TokenParam identifier
+        null, // StringParam name
+        null, // StringParam publisher
+        null, // StringParam title
+        null, // UriParam url
+        null, // StringParam version
+        null, // NumberParam count
+        null // NumberParam offset
+    );
     assertNotNull(bundle);
     bundle.getEntry().forEach(entry -> {
       if (entry.getResource() instanceof ValueSet) {
@@ -90,8 +120,21 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
   @Test
   public void testFindValueSetByUrl() throws Exception {
     final UriParam url = new UriParam(TEST_VALUESET_URL);
-    final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
-        null, null, null, url, null, null, null);
+    final Bundle bundle = provider.findValueSets(request, details,
+
+        null, // TokenParam id
+        null, // TokenParam code
+        null, // DateRangeParam date
+        null, // StringParam description
+        null, // TokenParam identifier
+        null, // StringParam name
+        null, // StringParam publisher
+        null, // StringParam title
+        url, // UriParam url
+        null, // StringParam version
+        null, // NumberParam count
+        null // NumberParam offset
+    );
     assertNotNull(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
         && TEST_VALUESET_URL.equals(((ValueSet) e.getResource()).getUrl())));
@@ -105,8 +148,21 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
   @Test
   public void testFindValueSetByName() throws Exception {
     final StringParam name = new StringParam("SNOMEDCT_US extension concepts");
-    final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
-        name, null, null, null, null, null, null);
+    final Bundle bundle = provider.findValueSets(request, details,
+
+        null, // TokenParam id
+        null, // TokenParam code
+        null, // DateRangeParam date
+        null, // StringParam description
+        null, // TokenParam identifier
+        name, // StringParam name
+        null, // StringParam publisher
+        null, // StringParam title
+        null, // UriParam url
+        null, // StringParam version
+        null, // NumberParam count
+        null // NumberParam offset
+    );
     assertNotNull(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
         && "SNOMEDCT_US extension concepts".equals(((ValueSet) e.getResource()).getName())));
@@ -120,8 +176,22 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
   @Test
   public void testFindValueSetByVersion() throws Exception {
     final StringParam version = new StringParam("20240301");
-    final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
-        null, null, null, null, version, null, null);
+    final Bundle bundle = provider.findValueSets(request, details,
+
+        null, // TokenParam id
+        null, // TokenParam code
+        null, // DateRangeParam date
+        null, // StringParam description
+        null, // TokenParam identifier
+        null, // StringParam name
+        null, // StringParam publisher
+        null, // StringParam title
+        null, // UriParam url
+        version, // StringParam version
+        null, // NumberParam count
+        null // NumberParam offset
+    );
+
     assertNotNull(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
         && "20240301".equals(((ValueSet) e.getResource()).getVersion())));
@@ -135,19 +205,74 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
   @Test
   public void testGetValueSetById() throws Exception {
     // Get all ValueSets and find the one with the test URL
-    final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
-        null, null, null, null, null, null, null);
+    final Bundle bundle = provider.findValueSets(request, details,
+
+        null, // TokenParam id
+        null, // TokenParam code
+        null, // DateRangeParam date
+        null, // StringParam description
+        null, // TokenParam identifier
+        null, // StringParam name
+        null, // StringParam publisher
+        null, // StringParam title
+        null, // UriParam url
+        null, // StringParam version
+        null, // NumberParam count
+        null // NumberParam offset
+    );
+
     assertNotNull(bundle);
     final ValueSet found = bundle.getEntry().stream()
         .filter(e -> e.getResource() instanceof ValueSet).map(e -> (ValueSet) e.getResource())
         .filter(vs -> TEST_VALUESET_URL.equals(vs.getUrl())).findFirst()
         .orElseThrow(() -> new AssertionError("Test ValueSet not found by URL"));
     final String id = found.getIdElement().getIdPart();
-    final Bundle vsBundle = provider.findValueSets(request, details, new TokenParam(id), null, null,
-        null, null, null, null, null, null, null, null, null);
+    final Bundle vsBundle = provider.findValueSets(request, details,
+
+        new TokenParam(id), // TokenParam id
+        null, // TokenParam code
+        null, // DateRangeParam date
+        null, // StringParam description
+        null, // TokenParam identifier
+        null, // StringParam name
+        null, // StringParam publisher
+        null, // StringParam title
+        null, // UriParam url
+        null, // StringParam version
+        null, // NumberParam count
+        null // NumberParam offset
+    );
     assertNotNull(vsBundle);
     assertTrue(vsBundle.getEntry().stream()
         .anyMatch(e -> e.getResource() instanceof ValueSet && id.equals(e.getResource().getId())));
+  }
+
+  /**
+   * Test reload value set.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testReloadValueSet() throws Exception {
+    // Should throw an exception if the code system is already loaded
+    for (final String valueSetFile : VALUE_SET_FILES) {
+      try {
+        final Resource resource = new ClassPathResource("data/" + valueSetFile,
+            ValueSetProviderR4UnitTest.class.getClassLoader());
+
+        final String fileContent =
+            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+
+        assertThrows(Exception.class, () -> {
+          LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
+          ValueSetLoaderUtil.loadSubset(searchService, fileContent, false);
+        });
+
+      } catch (final Exception e) {
+        LOGGER.error("Error reloading value set file: {}", valueSetFile, e);
+        throw e;
+      }
+    }
   }
 
 }

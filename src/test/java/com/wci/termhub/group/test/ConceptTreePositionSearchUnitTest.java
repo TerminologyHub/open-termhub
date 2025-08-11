@@ -22,13 +22,13 @@ import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
+import com.wci.termhub.test.AbstractTerminologyTest;
 import com.wci.termhub.util.StringUtility;
 
 /**
- * Tests for ConceptTreePosition search.
+ * Test class for concept tree position search functionality.
  */
-public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyServerTest {
+public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
 
   /** The logger. */
   private static final Logger LOGGER =
@@ -41,7 +41,6 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyServer
   @Autowired
   private EntityRepositoryService searchService;
 
-  // Just logs the concept tree positions
   /**
    * Test log all concept tree positions.
    *
@@ -101,8 +100,8 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyServer
   @Test
   public void testFindConcept() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
-        "http://snomed.info/sct/731000124108/version/20240301", "52988006", null);
+    final TermQueryComposer termQuery =
+        new TermQueryComposer("SNOMEDCT_US", "20240301", "52988006", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery() + " AND publisher:SANDBOX");
     LOGGER.info("testFindConcept Query: {}", SEARCH_PARAMETERS.getQuery());
     final ResultList<Concept> concepts = searchService.find(SEARCH_PARAMETERS, Concept.class);
@@ -117,8 +116,8 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyServer
   @Test
   public void testFindConceptTreePositions() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
-        "http://snomed.info/sct/731000124108/version/20240301", null, null);
+    final TermQueryComposer termQuery =
+        new TermQueryComposer("SNOMEDCT_US", "20240301", null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery() + " AND publisher:SANDBOX");
     LOGGER.info("testFindConceptTreePositions Query: {}", SEARCH_PARAMETERS.getQuery());
     final ResultList<ConceptTreePosition> conceptTreePositions =
@@ -142,8 +141,8 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyServer
   // @Test
   public void testFindConceptTreePositionsForCode() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
-        "http://snomed.info/sct/731000124108/version/20240301", null, null);
+    final TermQueryComposer termQuery =
+        new TermQueryComposer("SNOMEDCT_US", "20240301", null, null);
     SEARCH_PARAMETERS
         .setQuery(termQuery.getQuery() + " AND publisher:SANDBOX AND concept.code:52988006");
     LOGGER.info("testFindConceptTreePositionsForCode Query: {}", SEARCH_PARAMETERS.getQuery());
@@ -170,8 +169,8 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyServer
   @Test
   public void testFindConceptTreePositionsWithEmptyAncestor() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
-        "http://snomed.info/sct/731000124108/version/20240301", null, null);
+    final TermQueryComposer termQuery =
+        new TermQueryComposer("SNOMEDCT_US", "20240301", null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery() + " publisher:SANDBOX AND concept.code:52988006"
         + " AND ancestorPath:\"\"");
     LOGGER.info("testFindConceptTreePositionsWithEmptyAncestor Query: {}",
@@ -186,7 +185,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyServer
       assertEquals(termQuery.getVersion(), ctp.getVersion());
       assertEquals(termQuery.getVersion(), ctp.getVersion());
       assertEquals("SANDBOX", ctp.getPublisher());
-      assertEquals("http://snomed.info/sct/731000124108/version/20240301", ctp.getVersion());
+      assertEquals("20240301", ctp.getVersion());
       assertEquals(null, ctp.getAncestorPath());
     }
 
@@ -201,8 +200,8 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyServer
   public void testFindConceptTreePositionsWithAncestor() throws Exception {
 
     final String ancestorPath = "138875005~123037004~118956008~49755003";
-    final TermQueryComposer termQuery = new TermQueryComposer("SNOMEDCT_US",
-        "http://snomed.info/sct/731000124108/version/20240301", null, null);
+    final TermQueryComposer termQuery =
+        new TermQueryComposer("SNOMEDCT_US", "20240301", null, null);
     final String ancestorPathEscaped = StringUtility.escapeQuery(ancestorPath);
     SEARCH_PARAMETERS
         .setQuery(termQuery.getQuery() + " AND publisher:SANDBOX AND concept.code:52988006"
@@ -215,7 +214,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyServer
     for (final ConceptTreePosition ctp : conceptTreePositions.getItems()) {
       assertEquals("SNOMEDCT_US", ctp.getTerminology());
       assertEquals("SANDBOX", ctp.getPublisher());
-      assertEquals("http://snomed.info/sct/731000124108/version/20240301", ctp.getVersion());
+      assertEquals("20240301", ctp.getVersion());
       assertEquals(ancestorPath, ctp.getAncestorPath());
     }
 

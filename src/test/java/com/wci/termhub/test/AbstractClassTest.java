@@ -36,11 +36,19 @@ public abstract class AbstractClassTest extends BaseUnitTest {
   /** The index directory. */
   protected static final String INDEX_DIRECTORY = "build/index/lucene-index-class";
 
+  /** The setup once. */
+  private static boolean setupOnce = false;
+
   /**
    * Before all.
    */
   @BeforeAll
   public void beforeAll() {
     PropertyUtility.setProperty("lucene.index.directory", INDEX_DIRECTORY);
+    if (setupOnce) {
+      return;
+    }
+    setupOnce = true;
   }
+
 }
