@@ -35,3 +35,5 @@
 <<199745000 |Complication occurring during labor and delivery (disorder)|
 <<80113008 |Complication of the puerperium (disorder)|
 <<198609003 |Complication of pregnancy, childbirth and/or puerperium (disorder)| MINUS (<<27075004 | Venereal disease in mother complicating pregnancy, childbirth AND/OR puerperium | OR <<80113008 |Complication of the puerperium (disorder)| OR <<199745000 |Complication occurring during labor and delivery (disorder)|)
+^ 723264001
+^ 723264001 and << 1163348009

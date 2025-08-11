@@ -50,7 +50,7 @@ public class EclConverterTest {
 
   /** The index root directory. */
   private final String indexRootDirectory =
-      PropertyUtility.getProperties().getProperty("lucene.index.directory");
+      System.getProperty("lucene.index.directory");
 
   /** The lucene ecl data access. */
   private final LuceneEclDataAccess luceneEclDataAccess;

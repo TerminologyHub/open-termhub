@@ -357,6 +357,21 @@ public class ExpressionConstraintListener extends EclLogListener {
     isRefinment = false;
   }
 
+  @Override
+  public void exitEclfocusconcept(ECLParser.EclfocusconceptContext ctx) {
+    super.exitEclfocusconcept(ctx);
+    ParserRuleContext parent = ctx.getParent();
+    if (parent instanceof ECLParser.SubexpressionconstraintContext) {
+      for(ParseTree child : parent.children){
+        if(child instanceof ECLParser.MemberofContext){
+          Query memberOfQuery = new TermQuery(new Term("subsets.code", ctx.getText()));
+          queries.put(parent.getText(), memberOfQuery);
+          break;
+        }
+      }
+    }
+  }
+  
   /**
    * Handle expression.
    *
