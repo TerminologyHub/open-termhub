@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collections;
 import java.util.List;
 
+import com.wci.termhub.integrationtest.EclConverterTest;
 import org.apache.lucene.search.Query;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
