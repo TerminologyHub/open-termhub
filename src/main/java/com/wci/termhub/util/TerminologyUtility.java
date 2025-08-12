@@ -1226,7 +1226,16 @@ public final class TerminologyUtility {
     Date maxDate = null;
     Terminology closest = null;
     for (final Terminology terminology : list.getItems()) {
-      final Date date2 = DateUtility.DATE_YYYY_MM_DD_DASH.parse(terminology.getReleaseDate());
+      // Parse the full date string with timezone information
+      final String releaseDate = terminology.getReleaseDate();
+      final Date date2;
+      if (releaseDate != null && releaseDate.contains("T")) {
+        // Full ISO 8601 date string with timezone
+        date2 = Date.from(java.time.Instant.parse(releaseDate));
+      } else {
+        // Fallback to date-only format
+        date2 = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
+      }
       // If this is before AND no max or greater than max
       if (date2.compareTo(date) < 0 && (maxDate == null || date2.compareTo(maxDate) > 0)) {
         maxDate = date2;
@@ -1342,6 +1351,8 @@ public final class TerminologyUtility {
    */
   public static void removeSubset(final EntityRepositoryService searchService, final String id)
     throws Exception {
+
+    logger.info("Removing subset: {}", id);
 
     // find the subset/value set
     final Subset subset = searchService.get(id, Subset.class);
