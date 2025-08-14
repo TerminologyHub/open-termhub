@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.wci.termhub.ecl.EclToLuceneConverter;
 import com.wci.termhub.ecl.ExpressionConstraintListener;
-import com.wci.termhub.ecl.test.EclConverterTest;
+import com.wci.termhub.integrationtest.EclConverterTest;
 import com.wci.termhub.lucene.LuceneEclDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
