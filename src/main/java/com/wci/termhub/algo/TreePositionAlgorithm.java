@@ -337,67 +337,57 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       return descConceptCodes;
     }
 
+    // Only create tree position if we haven't seen this code before
     if (!seen.contains(code)) {
-      final ConceptTreePosition tpEmpty = new ConceptTreePosition();
-      setCommonFields(tpEmpty);
+      seen.add(code);
+
+      // Instantiate the tree position
+      final ConceptTreePosition tp = new ConceptTreePosition();
+      setCommonFields(tp);
       final ConceptRef ref = new ConceptRef();
       ref.setCode(code);
-      // ref.setName(cache.getConceptName(code));
-      ref.setTerminology(getTerminology());
-      ref.setPublisher(getPublisher());
-      // ref.setLeaf(cache.isLeaf(code));
-      tpEmpty.setConcept(ref);
-      tpEmpty.setAncestorPath("");
-      batch.add(tpEmpty);
-      seen.add(code);
-    }
+      // For now, don't worry about setting the name
+      ref.setName(null);
+      tp.setConcept(ref);
+      tp.setAncestorPath(ancestorPath);
+      tp.setTerminology(getTerminology());
 
-    // Instantiate the tree position
-    final ConceptTreePosition tp = new ConceptTreePosition();
-    setCommonFields(tp);
-    final ConceptRef ref = new ConceptRef();
-    ref.setCode(code);
-    // For now, don't worry about setting the name
-    ref.setName(null);
-    tp.setConcept(ref);
-    tp.setAncestorPath(ancestorPath);
-    tp.setTerminology(getTerminology());
+      // Lookup the additional type rel to the parent
+      tp.setAdditionalType(additionalTypeMap.get(code));
 
-    // Lookup the additional type rel to the parent
-    tp.setAdditionalType(additionalTypeMap.get(code));
+      // construct the ancestor path terminating at this concept
+      final String conceptPath = (ancestorPath.equals("") ? code : ancestorPath + "~" + code);
 
-    // construct the ancestor path terminating at this concept
-    final String conceptPath = (ancestorPath.equals("") ? code : ancestorPath + "~" + code);
+      // Gather descendants if this is not a leaf node
+      if (parChd.containsKey(code)) {
 
-    // Gather descendants if this is not a leaf node
-    if (parChd.containsKey(code)) {
+        descConceptCodes.addAll(parChd.get(code));
 
-      descConceptCodes.addAll(parChd.get(code));
+        // iterate over the child terminology codes this iteration is entirely
+        // local and depends on no managed objects
+        for (final String childConceptCode : parChd.get(code)) {
 
-      // iterate over the child terminology codes this iteration is entirely
-      // local and depends on no managed objects
-      for (final String childConceptCode : parChd.get(code)) {
-
-        // call helper function on child concept add the results to the local
-        // descendant set
-        final Set<String> desc = computeTreePositions(childConceptCode, conceptPath, parChd,
-            validationResult, startDate, multipleRoots, additionalTypeMap);
-        descConceptCodes.addAll(desc);
+          // call helper function on child concept add the results to the local
+          // descendant set
+          final Set<String> desc = computeTreePositions(childConceptCode, conceptPath, parChd,
+              validationResult, startDate, multipleRoots, additionalTypeMap);
+          descConceptCodes.addAll(desc);
+        }
       }
-    }
 
-    // set the children count
-    tp.setChildCt(parChd.containsKey(code) ? parChd.get(code).size() : 0);
-    batch.add(tp);
-    if ((batch.size() % BATCH_SIZE) == 0) {
-      searchService.addBulk(ConceptTreePosition.class, batch);
-      objectCt += batch.size();
-      batch.clear();
-    }
-    objectCt++;
+      // set the children count
+      tp.setChildCt(parChd.containsKey(code) ? parChd.get(code).size() : 0);
+      batch.add(tp);
+      if ((batch.size() % BATCH_SIZE) == 0) {
+        searchService.addBulk(ConceptTreePosition.class, batch);
+        objectCt += batch.size();
+        batch.clear();
+      }
+      objectCt++;
 
-    // check for cancel request
-    checkCancel();
+      // check for cancel request
+      checkCancel();
+    }
 
     // Check that this concept does not reference itself as a child
     if (descConceptCodes.contains(code)) {
