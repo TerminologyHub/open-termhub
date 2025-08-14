@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.ecl.test;
+package com.wci.termhub.integrationtest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.wci.termhub.ecl.test.SnomedEclResults;
 import org.apache.lucene.search.Query;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -32,7 +33,6 @@ import com.wci.termhub.ecl.EclToLuceneConverter;
 import com.wci.termhub.ecl.ExpressionConstraintListener;
 import com.wci.termhub.lucene.LuceneEclDataAccess;
 import com.wci.termhub.model.Concept;
-import com.wci.termhub.util.PropertyUtility;
 
 /**
  * Unit testing to for ECL to lucene syntax;.
@@ -50,7 +50,7 @@ public class EclConverterTest {
 
   /** The index root directory. */
   private final String indexRootDirectory =
-      PropertyUtility.getProperties().getProperty("lucene.index.directory");
+      System.getProperty("lucene.index.directory");
 
   /** The lucene ecl data access. */
   private final LuceneEclDataAccess luceneEclDataAccess;

@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.fhir.r5.test;
+package com.wci.termhub.test;
 
 import java.util.List;
 
@@ -19,10 +19,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractServerTest;
 import com.wci.termhub.util.PropertyUtility;
 
 /**
@@ -31,33 +31,33 @@ import com.wci.termhub.util.PropertyUtility;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
+@TestPropertySource(locations = "classpath:application-test.properties")
+public abstract class AbstractTerminologyTest extends AbstractServerTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
-  private final Logger logger = LoggerFactory.getLogger(AbstractFhirR5ServerTest.class);
+  private final Logger logger = LoggerFactory.getLogger(AbstractTerminologyTest.class);
 
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
 
   /** The index directory. */
-  protected static final String INDEX_DIRECTORY = "build/index/lucene-fhir-r5";
+  protected static final String INDEX_DIRECTORY = "build/index/lucene-test";
 
   /** List of FHIR Code System files to load. */
-  protected static final List<String> CODE_SYSTEM_FILES =
+  private static final List<String> CODE_SYSTEM_FILES =
       List.of("CodeSystem-snomedct_us-sandbox-20240301-r5.json",
           "CodeSystem-snomedct-sandbox-20240101-r5.json", "CodeSystem-lnc-sandbox-277-r5.json",
           "CodeSystem-icd10cm-sandbox-2023-r5.json", "CodeSystem-rxnorm-sandbox-04012024-r5.json");
 
   /** List of FHIR ConceptMap files to load. */
-  protected static final List<String> CONCEPT_MAP_FILES =
+  private static final List<String> CONCEPT_MAP_FILES =
       List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json");
 
   /** List of FHIR Code System files to load. */
-  protected static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json",
-      "ValueSet-snomedct_us-723264001-sandbox-20240301-r5.json");
+  private static final List<String> VALUE_SET_FILES =
+      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json");
 
   /** The setup once. */
   private static boolean setupOnce = false;
@@ -74,7 +74,7 @@ public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
       return;
     }
     clearAndCreateIndexDirectories(searchService, INDEX_DIRECTORY);
-    loadCodeSystems(searchService, CODE_SYSTEM_FILES, false);
+    loadCodeSystems(searchService, CODE_SYSTEM_FILES, true);
     loadConceptMaps(searchService, CONCEPT_MAP_FILES);
     loadValueSets(searchService, VALUE_SET_FILES);
     setupOnce = true;

@@ -1,0 +1,1039 @@
+{
+	"info": {
+		"_postman_id": "760bbd9f-bbe5-49b9-9c2d-d6f29e8e755b",
+		"name": "Open Termhub Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11076096"
+	},
+	"item": [
+		{
+			"name": "Terminology API",
+			"item": [
+				{
+					"name": "Find terminologies (e.g. code systems)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/terminology",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"terminology"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find terminology metadata",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/terminology/<set to an id from prior call>/metadata",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"terminology",
+								"<set to an id from prior call>",
+								"metadata"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get a SNOMEDCT concept by code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/concept/SNOMEDCT_US/107907001",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"concept",
+								"SNOMEDCT_US",
+								"107907001"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get SNOMEDCT concept relationships by code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/concept/SNOMEDCT_US/107907001/relationships",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"concept",
+								"SNOMEDCT_US",
+								"107907001",
+								"relationships"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get SNOMEDCT concept trees by code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/concept/SNOMEDCT_US/107907001/trees",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"concept",
+								"SNOMEDCT_US",
+								"107907001",
+								"trees"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search with a word query",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"concept"
+							],
+							"query": [
+								{
+									"key": "terminology",
+									"value": "SNOMEDCT_US"
+								},
+								{
+									"key": "query",
+									"value": "diabetes"
+								},
+								{
+									"key": "include",
+									"value": "minimal"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search with a code query",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/concept?terminology=SNOMEDCT_US&query=73211009&include=minimal",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"concept"
+							],
+							"query": [
+								{
+									"key": "terminology",
+									"value": "SNOMEDCT_US"
+								},
+								{
+									"key": "query",
+									"value": "73211009"
+								},
+								{
+									"key": "include",
+									"value": "minimal"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search with just an ECL expression",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/concept?terminology=SNOMEDCT_US&expression=%3C%3C128927009&include=minimal",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"concept"
+							],
+							"query": [
+								{
+									"key": "terminology",
+									"value": "SNOMEDCT_US"
+								},
+								{
+									"key": "expression",
+									"value": "%3C%3C128927009"
+								},
+								{
+									"key": "include",
+									"value": "minimal"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search with a query and an ECL expression",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=%3C%3C128927009&include=minimal",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"concept"
+							],
+							"query": [
+								{
+									"key": "terminology",
+									"value": "SNOMEDCT_US"
+								},
+								{
+									"key": "query",
+									"value": "gastrointestinal"
+								},
+								{
+									"key": "expression",
+									"value": "%3C%3C128927009"
+								},
+								{
+									"key": "include",
+									"value": "minimal"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find mapsets (e.g. concept maps)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/mapset",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"mapset"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find mappings across all mapsets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/mapping",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"mapping"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find mapset mappings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/mapset/SNOMEDCT_US-ICD10CM/mapping",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"mapset",
+								"SNOMEDCT_US-ICD10CM",
+								"mapping"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find mappings in a particular mapset for a particular \"from\" code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:300862005",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"mapset",
+								"SNOMEDCT_US-ICD10CM",
+								"mapping"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "from.code:300862005"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find subsets (e.g. value sets)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/subset",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"subset"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find members across all subsets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/member",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"member"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find subset members",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/subset/SNOMEDCT_US-EXTENSION/member",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"subset",
+								"SNOMEDCT_US-EXTENSION",
+								"member"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find members in a particular subset for a particular code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"subset",
+								"SNOMEDCT_US-EXTENSION",
+								"member"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "diabetes"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "FHIR R4 API",
+			"item": [
+				{
+					"name": "Find CodeSystems",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/CodeSystem",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"CodeSystem"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT CodeSystem $lookup for a code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/CodeSystem/$lookup?system=http://snomed.info/sct&code=73211009",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"CodeSystem",
+								"$lookup"
+							],
+							"query": [
+								{
+									"key": "system",
+									"value": "http://snomed.info/sct"
+								},
+								{
+									"key": "code",
+									"value": "73211009"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find ConceptMaps",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ConceptMap",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ConceptMap"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a ConceptMap $translate to find \"target\" codes for a SNOMEDCT code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&code=300862005",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ConceptMap",
+								"$translate"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_cm=6011000124106"
+								},
+								{
+									"key": "system",
+									"value": "http://snomed.info/sct"
+								},
+								{
+									"key": "code",
+									"value": "300862005"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find ValueSets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get a value set by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet/<set to an id from prior call>",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet",
+								"<set to an id from prior call>"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find implied ValueSets for CodeSystem",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find implied ValueSets for explicit value set",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs=731000124108"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform an $expand operation on the implicit ValueSet representing SNOMEDCT",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform an $expand operation on an explicit value set",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs=731000124108"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs"
+								},
+								{
+									"key": "filter",
+									"value": "diabetes"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r4",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009"
+								},
+								{
+									"key": "filter",
+									"value": "gastrointestinal"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "FHIR R5 API",
+			"item": [
+				{
+					"name": "Find CodeSystems",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/CodeSystem",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"CodeSystem"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT CodeSystem $lookup for a code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/CodeSystem/$lookup?system=http://snomed.info/sct&code=73211009",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"CodeSystem",
+								"$lookup"
+							],
+							"query": [
+								{
+									"key": "system",
+									"value": "http://snomed.info/sct"
+								},
+								{
+									"key": "code",
+									"value": "73211009"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find ConceptMaps",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ConceptMap",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ConceptMap"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a ConceptMap $translate to find \"target\" codes for a SNOMEDCT code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&sourceSystem=http://snomed.info/sct&sourceCode=300862005",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ConceptMap",
+								"$translate"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_cm=6011000124106"
+								},
+								{
+									"key": "sourceSystem",
+									"value": "http://snomed.info/sct"
+								},
+								{
+									"key": "sourceCode",
+									"value": "300862005"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find ValueSets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get a value set by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet/<set to an id from prior call>",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet",
+								"<set to an id from prior call>"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find implied ValueSets for CodeSystem",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find implied ValueSets for explicit value set",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs=731000124108"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform an $expand operation on the implicit ValueSet representing SNOMEDCT",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform an $expand operation on an explicit value set",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs=731000124108"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs"
+								},
+								{
+									"key": "filter",
+									"value": "diabetes"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_URL}}/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal",
+							"host": [
+								"{{API_URL}}"
+							],
+							"path": [
+								"fhir",
+								"r5",
+								"ValueSet",
+								"$expand"
+							],
+							"query": [
+								{
+									"key": "url",
+									"value": "http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009"
+								},
+								{
+									"key": "filter",
+									"value": "gastrointestinal"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "API_URL",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

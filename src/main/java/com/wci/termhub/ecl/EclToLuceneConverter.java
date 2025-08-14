@@ -42,6 +42,10 @@ public class EclToLuceneConverter {
       PropertyUtility.getProperties().getProperty("lucene.index.directory");
 
   public EclToLuceneConverter() {
+    if(indexRootDirectory == null || indexRootDirectory.isEmpty()) {
+      indexRootDirectory =
+          System.getProperty("lucene.index.directory");
+    }
     final String conceptIndex = indexRootDirectory + "/com.wci.termhub.model.Concept";
     final String conceptRelationshipIndex =
         indexRootDirectory + "/com.wci.termhub.model.ConceptRelationship";

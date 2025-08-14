@@ -22,13 +22,13 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
+import com.wci.termhub.test.AbstractTerminologyTest;
 import com.wci.termhub.util.StringUtility;
 
 /**
  * The Class TerminologySearchUnitTest.
  */
-public class TerminologySearchUnitTest extends AbstractTerminologyServerTest {
+public class TerminologySearchUnitTest extends AbstractTerminologyTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(TerminologySearchUnitTest.class);
@@ -124,7 +124,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyServerTest {
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("SNOMEDCT_US", terminology.getAbbreviation());
     assertEquals("Mini version of SNOMEDCT_US For testing purposes", terminology.getName());
-    assertEquals("http://snomed.info/sct/731000124108/version/20240301", terminology.getVersion());
+    assertEquals("20240301", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 
@@ -143,8 +143,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyServerTest {
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("SNOMEDCT", terminology.getAbbreviation());
     assertEquals("Mini version of SNOMEDCT For testing purposes", terminology.getName());
-    assertEquals("http://snomed.info/sct/900000000000207008/version/20240101",
-        terminology.getVersion());
+    assertEquals("20240101", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 

@@ -42,21 +42,22 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
   private EntityRepositoryService searchService;
 
   /** The index directory. */
-  protected static final String INDEX_DIRECTORY = "build/index/lucene-index-r4";
+  protected static final String INDEX_DIRECTORY = "build/index/lucene-fhir-r4";
 
   /** List of FHIR Code System files to load. */
-  private static final List<String> CODE_SYSTEM_FILES =
+  protected static final List<String> CODE_SYSTEM_FILES =
       List.of("CodeSystem-snomedct_us-sandbox-20240301-r4.json",
           "CodeSystem-snomedct-sandbox-20240101-r4.json", "CodeSystem-lnc-sandbox-277-r4.json",
           "CodeSystem-icd10cm-sandbox-2023-r4.json", "CodeSystem-rxnorm-sandbox-04012024-r4.json");
 
   /** List of FHIR ConceptMap files to load. */
-  private static final List<String> CONCEPT_MAP_FILES =
+  protected static final List<String> CONCEPT_MAP_FILES =
       List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r4.json");
 
   /** List of FHIR Code System files to load. */
-  private static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r4.json");
+  protected static final List<String> VALUE_SET_FILES =
+      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r4.json",
+      "ValueSet-snomedct_us-723264001-sandbox-20240301-r4.json");
 
   /** The setup once. */
   private static boolean setupOnce = false;
@@ -72,10 +73,15 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
     if (setupOnce) {
       return;
     }
-    clearAndCreateIndexDirectories(searchService, INDEX_DIRECTORY);
-    loadCodeSystems(searchService, CODE_SYSTEM_FILES, false);
-    loadConceptMaps(searchService, CONCEPT_MAP_FILES);
-    loadValueSets(searchService, VALUE_SET_FILES);
+    try {
+      clearAndCreateIndexDirectories(searchService, INDEX_DIRECTORY);
+      loadCodeSystems(searchService, CODE_SYSTEM_FILES, false);
+      loadConceptMaps(searchService, CONCEPT_MAP_FILES);
+      loadValueSets(searchService, VALUE_SET_FILES);
+    } catch (final Exception e) {
+      logger.error("Error setting up data: {}", e.getMessage(), e);
+      throw e;
+    }
     setupOnce = true;
   }
 

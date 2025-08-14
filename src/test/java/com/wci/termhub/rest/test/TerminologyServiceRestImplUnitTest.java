@@ -1025,7 +1025,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   @Order(FIND)
-  public void testFindMapsetByFromCode1() throws Exception {
+  public void testFindMapsetMappingsByFromCode1() throws Exception {
 
     final Mapset testMapset = getMapsetByAbbreviation("SNOMEDCT_US-ICD10CM");
 
@@ -1047,14 +1047,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
       final MapsetRef mapsetRef = mapping.getMapset();
       assertThat(mapsetRef).isNotNull();
-      assertEquals(mapsetRef.getId(), id);
-      assertEquals(mapsetRef.getAbbreviation(), "SNOMEDCT_US-ICD10CM");
-      assertNotNull(mapsetRef.getName());
-      assertNotNull(mapsetRef.getFromTerminology());
-      assertNotNull(mapsetRef.getToTerminology());
+      // NUNO assertNotNull(mapsetRef.getActive());
+      assertEquals("SNOMEDCT_US-ICD10CM", mapsetRef.getAbbreviation());
       assertNotNull(mapsetRef.getVersion());
       assertNotNull(mapsetRef.getPublisher());
-      assertNotNull(mapsetRef.getReleaseDate());
+      assertNotNull(mapsetRef.getCode());
 
       // mapping
       assertNotNull(mapping.getId());
@@ -1063,12 +1060,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       // from
       assertEquals(mapping.getFrom().getCode(), "40733004");
       assertNotNull(mapping.getFrom().getName());
-      assertEquals(mapping.getFrom().getTerminology(), "http://snomed.info/sct");
+      assertEquals("SNOMEDCT_US", mapping.getFrom().getTerminology());
 
       // to
       assertNotNull(mapping.getTo().getCode());
       assertNotNull(mapping.getTo().getName());
-      assertEquals(mapping.getTo().getTerminology(), "http://hl7.org/fhir/sid/icd-10-cm");
+      assertEquals("ICD10CM", mapping.getTo().getTerminology());
 
       // attributes
       assertNotNull(mapping.getAttributes().get("advice"));
@@ -1087,7 +1084,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   @Order(FIND)
-  public void testFindMappingByFromCode2() throws Exception {
+  public void testFindMapsetMappingsByFromCode2() throws Exception {
 
     final String name = "SNOMEDCT_US-ICD10CM";
     final String url = baseUrl + "/mapset/" + name + "/mapping?query=from.code:40733004";
@@ -1108,14 +1105,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
       final MapsetRef mapsetRef = mapping.getMapset();
       assertThat(mapsetRef).isNotNull();
-
-      assertEquals(mapsetRef.getAbbreviation(), name);
-      assertNotNull(mapsetRef.getName());
-      assertNotNull(mapsetRef.getFromTerminology());
-      assertNotNull(mapsetRef.getToTerminology());
+      // assertNotNull(mapsetRef.getActive());
+      assertEquals("SNOMEDCT_US-ICD10CM", mapsetRef.getAbbreviation());
       assertNotNull(mapsetRef.getVersion());
       assertNotNull(mapsetRef.getPublisher());
-      assertNotNull(mapsetRef.getReleaseDate());
+      assertNotNull(mapsetRef.getCode());
 
       // mapping
       assertNotNull(mapping.getId());
@@ -1124,12 +1118,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       // from
       assertEquals(mapping.getFrom().getCode(), "40733004");
       assertNotNull(mapping.getFrom().getName());
-      assertEquals(mapping.getFrom().getTerminology(), "http://snomed.info/sct");
+      assertEquals("SNOMEDCT_US", mapping.getFrom().getTerminology());
 
       // to
       assertNotNull(mapping.getTo().getCode());
       assertNotNull(mapping.getTo().getName());
-      assertEquals(mapping.getTo().getTerminology(), "http://hl7.org/fhir/sid/icd-10-cm");
+      assertEquals("ICD10CM", mapping.getTo().getTerminology());
 
       // attributes
       assertNotNull(mapping.getAttributes().get("advice"));
@@ -1228,7 +1222,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testGetSubsetById() throws Exception {
     // Get a subset dynamically to avoid hardcoded ID issues
-    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
+    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-EXTENSION");
 
     final String url = baseUrl + "/subset/" + testSubset.getId();
     LOGGER.info("Testing url - {}", url);
@@ -1254,7 +1248,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testGetSubsetMembers() throws Exception {
     // Get a subset dynamically to avoid hardcoded ID issues
-    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
+    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-EXTENSION");
 
     final String subsetId = testSubset.getId();
     final String url = baseUrl + "/subset/" + subsetId + "/member";
@@ -1289,7 +1283,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testGetSubsetMembersByCode() throws Exception {
     // Get a subset dynamically to avoid hardcoded ID issues
-    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-MODEL");
+    final Subset testSubset = getSubsetByAbbreviation("SNOMEDCT_US-EXTENSION");
 
     final String subsetId = testSubset.getId();
     final String url = baseUrl + "/subset/" + subsetId + "/member";
@@ -1464,7 +1458,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String url = baseUrl + "/subset";
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
-    LOGGER.info(" content = {}", content);
+    LOGGER.info(" subset content = {}", content);
     final ResultListSubset subsetList =
         objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
           // n/a
