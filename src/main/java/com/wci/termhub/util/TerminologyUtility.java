@@ -69,9 +69,10 @@ public final class TerminologyUtility {
   }
 
   /**
-   * Takes a value like "http://snomed.info/sct", or "SNOMEDCT_US" and it returns an object with
-   * abbreviation, publisher, version, and uri set. It attempts to align with currently installed
-   * terminologies and if unable returns default values.
+   * Takes a value like "http://snomed.info/sct", or "SNOMEDCT_US" and it
+   * returns an object with abbreviation, publisher, version, and uri set. It
+   * attempts to align with currently installed terminologies and if unable
+   * returns default values.
    *
    * @param searchService the search service
    * @param value the value
@@ -445,6 +446,11 @@ public final class TerminologyUtility {
         throw new Exception("Unable to find matching tree position for ancestor = " + finalQuery);
       }
       if (list.getItems().size() > 1) {
+
+        list.getItems().forEach(item -> {
+          logger.error("    NUNO - {}", item);
+        });
+
         throw new Exception("Too many matching tree positions for ancestor = " + finalQuery
             + ". Found " + list.getItems().size() + " matches.");
       }

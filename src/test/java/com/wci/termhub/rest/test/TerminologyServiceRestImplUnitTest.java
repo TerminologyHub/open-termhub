@@ -62,8 +62,8 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
- * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All get/find tests are
- * order 10. All delete tests are order 20.
+ * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All
+ * get/find tests are order 10. All delete tests are order 20.
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
@@ -209,7 +209,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(metadata.getModel()).isNotNull();
       assertThat(metadata.getCode()).isNotNull();
       /*
-       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20240301",
+       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US",
+       * "version":"20240301",
        * "publisher":"SANDBOX","model":"relationship","field":"uiLabel","code":
        * "Attributes","rank":0}
        */
@@ -833,11 +834,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   // GET /concept/{conceptId}/trees
-  // @Test
+  @Test
   @Order(FIND)
   public void testFindTreePositions() throws Exception {
 
-    final Concept testConcept = getConceptByCode("SNOMEDCT", "91723000");
+    final String terminology = "SNOMEDCT";
+    final Concept testConcept = getConceptByCode(terminology, "91723000");
 
     final String conceptId = testConcept.getId();
     final String url = baseUrl + "/concept/" + conceptId + "/trees";
@@ -853,7 +855,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
       assertThat(ctp.getId()).isNotNull();
-      assertThat(ctp.getTerminology()).contains("SNOMEDCT");
+      assertThat(ctp.getTerminology()).contains(terminology);
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
     }
@@ -865,9 +867,10 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    * @throws Exception the exception
    */
   // GET /concept/{terminology}/{code}/trees
-  // @Test
+  @Test
   @Order(FIND)
   public void testFindTreePositions2() throws Exception {
+
     final String terminology = "SNOMEDCT_US";
     final String code = "73211009";
     final String url = baseUrl + "/concept/" + terminology + "/" + code + "/trees";
@@ -884,7 +887,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
       assertThat(ctp.getId()).isNotNull();
-      assertThat(ctp.getTerminology()).contains("SNOMEDCT_US");
+      assertThat(ctp.getTerminology()).contains(terminology);
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
     }
