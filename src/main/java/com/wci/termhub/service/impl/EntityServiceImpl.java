@@ -79,7 +79,9 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOGGER.debug("    ADD {} entity to index {}", entity, clazz.getSimpleName());
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("    ADD {} entity to index {}", entity, clazz.getSimpleName());
+    }
     luceneData.add(entity);
   }
 
@@ -90,9 +92,12 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOGGER.debug("    ADD {} entities to index: {}", clazz.getSimpleName(), entity.size());
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("    ADD {} entities to index: {}", clazz.getSimpleName(), entity.size());
+    }
     luceneData.add(entity);
   }
+
 
   /* see superclass */
   @Override
@@ -101,9 +106,10 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-    LOGGER.debug("    UPDATE {} entity to index {}", entity, clazz.getSimpleName());
-    luceneData.remove(clazz, id);
-    luceneData.add(entity);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("    UPDATE {} entity to index {}", entity, clazz.getSimpleName());
+    }
+    luceneData.update(clazz, id, entity);
   }
 
   /* see superclass */
@@ -113,18 +119,25 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final LuceneDataAccess luceneData = new LuceneDataAccess();
-
-    for (final String id : entities.keySet()) {
-      final HasId entity = entities.get(id);
-      if (entity == null) {
-        LOGGER.warn("    UPDATE {} entity to index {} - entity is null", id, clazz.getSimpleName());
-        continue;
-      }
-      LOGGER.debug("    UPDATE {} entity to index {}", entity, clazz.getSimpleName());
-      luceneData.remove(clazz, id);
-      luceneData.add(entity);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("    UPDATE_BULK {} entities to index {}", entities.size(),
+          clazz.getSimpleName());
     }
+    luceneData.updateBulk(clazz, entities);
+  }
 
+  /* see superclass */
+  @Override
+  public void addField(final Class<? extends HasId> clazz, final String id, final HasId entity,
+    final String fieldName) throws Exception {
+
+    checkIfEntityHasDocumentAnnotation(clazz);
+    final LuceneDataAccess luceneData = new LuceneDataAccess();
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("    ADD_FIELD {} field to entity {} in index {}", fieldName, id,
+          clazz.getSimpleName());
+    }
+    luceneData.addField(clazz, id, entity, fieldName);
   }
 
   /* see superclass */

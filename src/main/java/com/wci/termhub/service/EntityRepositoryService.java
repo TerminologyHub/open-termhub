@@ -80,6 +80,18 @@ public interface EntityRepositoryService {
     throws Exception;
 
   /**
+   * Add a field to an existing entity document without full reindexing.
+   *
+   * @param clazz the clazz
+   * @param id the id
+   * @param entity the entity containing the field value
+   * @param fieldName the field name to add
+   * @throws Exception the exception
+   */
+  public void addField(final Class<? extends HasId> clazz, final String id, final HasId entity,
+    final String fieldName) throws Exception;
+
+  /**
    * Find by id.
    *
    * @param <T> the generic type
@@ -185,7 +197,8 @@ public interface EntityRepositoryService {
     final Class<T> clazz) throws Exception;
 
   /**
-   * Find all with fields. For each batch of results, send to the callback handler.
+   * Find all with fields. For each batch of results, send to the callback
+   * handler.
    *
    * @param <T> the generic type
    * @param query the query
