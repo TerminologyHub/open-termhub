@@ -43,6 +43,9 @@ public final class ValueSetLoaderUtil {
   /** The Constant contextR5. */
   private static FhirContext contextR5 = FhirContext.forR5();
 
+  /** The Constant JSON_SUBSET_CODE. */
+  private static final String JSON_SUBSET_CODE = "https://terminologyhub.com/model/subset/code";
+
   /**
    * Instantiates a new subset loader util.
    */
@@ -51,7 +54,8 @@ public final class ValueSetLoaderUtil {
   }
 
   /**
-   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember, and persists.
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
+   * and persists.
    * @param service the repository service
    * @param json the ValueSet JSON
    * @param isR5 true for R5, false for R4
@@ -112,7 +116,7 @@ public final class ValueSetLoaderUtil {
       // NOTE: termhub generated files will have a single id
       // with a system matching this value.
       for (final org.hl7.fhir.r4.model.Identifier identifier : valueSet.getIdentifier()) {
-        if ("https://terminologyhub.com/model/subset/code".equals(identifier.getSystem())) {
+        if (JSON_SUBSET_CODE.equals(identifier.getSystem())) {
           subset.setCode(identifier.getValue());
         }
       }
@@ -305,7 +309,7 @@ public final class ValueSetLoaderUtil {
       // NOTE: termhub generated files will have a single id
       // with a system matching this value.
       for (final org.hl7.fhir.r5.model.Identifier identifier : valueSet.getIdentifier()) {
-        if ("https://terminologyhub.com/model/subset/code".equals(identifier.getSystem())) {
+        if (JSON_SUBSET_CODE.equals(identifier.getSystem())) {
           subset.setCode(identifier.getValue());
         }
       }
@@ -412,10 +416,6 @@ public final class ValueSetLoaderUtil {
             LOGGER.warn("    Value set includes expansion entry without a system = " + c);
             continue;
           }
-          if (c.getCode() == null) {
-            LOGGER.warn("    Value set includes expansion entry without a code = " + c);
-            continue;
-          }
 
           if (!map.containsKey(c.getSystem())) {
             map.put(c.getSystem(),
@@ -426,22 +426,21 @@ public final class ValueSetLoaderUtil {
           final Concept existingConcept = TerminologyUtility.getConcept(service,
               ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
 
-          final SubsetMember m = new SubsetMember();
-          m.setId(java.util.UUID.randomUUID().toString());
-          m.setActive(true);
-          m.setTerminology(ref.getAbbreviation());
-          m.setPublisher(ref.getPublisher());
-          m.setVersion(ref.getVersion());
-          m.setCode(c.getCode());
-          m.setName(
+          final SubsetMember subsetMember = new SubsetMember();
+          subsetMember.setId(java.util.UUID.randomUUID().toString());
+          subsetMember.setActive(true);
+          subsetMember.setTerminology(ref.getAbbreviation());
+          subsetMember.setPublisher(ref.getPublisher());
+          subsetMember.setVersion(ref.getVersion());
+          subsetMember.setCode(c.getCode());
+          subsetMember.setName(
               existingConcept == null ? "Unable to determine name" : existingConcept.getName());
-          m.setSubset(subsetRef);
-          members.add(m);
+          subsetMember.setSubset(subsetRef);
+          members.add(subsetMember);
 
           // Add subsetRef to the concept corresponding to this
           if (existingConcept != null) {
-            existingConcept.getSubsets().add(subsetRef);
-            service.update(Concept.class, existingConcept.getId(), existingConcept);
+            service.addField(Concept.class, existingConcept.getId(), subsetRef, "subsets");
           }
 
         }
