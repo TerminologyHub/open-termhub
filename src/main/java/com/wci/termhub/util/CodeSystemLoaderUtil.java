@@ -139,74 +139,17 @@ public final class CodeSystemLoaderUtil {
         }
 
         final Concept concept = createConcept(conceptNode, terminology);
-        final String conceptCode = concept.getCode();
-
-        // Process relationships
         final JsonNode relationships = conceptNode.path("property");
-        for (final JsonNode propertyNode : relationships) {
+        final List<ConceptRelationship> conceptRelationships =
+            createRelationships(relationships, concept, terminology, terminologyCache);
+        relationshipBatch.addAll(conceptRelationships);
+        relationshipCount++;
+        concept.getRelationships().addAll(conceptRelationships);
 
-          final String propertyType =
-              propertyNode.has("code") ? propertyNode.path("code").asText() : "";
-
-          if (!Arrays.asList("parent", "relationship").contains(propertyType)) {
-            continue;
-          }
-
-          if ("parent".equals(propertyType)) {
-            final ConceptRelationship relationship =
-                createRelationship(propertyNode, concept, terminology, terminologyCache);
-            relationshipBatch.add(relationship);
-            relationshipCount++;
-            concept.getRelationships().add(relationship);
-
-            // Track parent-child relationship using thread-safe collections
-            final JsonNode valueCoding = propertyNode.path("valueCoding");
-            if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-              final String parentCode = valueCoding.path("code").asText();
-              terminologyCache.addParChd(parentCode, conceptCode);
-            }
-
-            if (relationshipBatch.size() == DEFAULT_BATCH_SIZE) {
-              service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
-              relationshipBatch.clear();
-              LOGGER.info("  relationships count: {}", relationshipCount);
-            }
-
-            // Safely get the valueCoding and its code
-            if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-              concept.getEclClauses().add(
-                  propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
-            } else {
-              if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(
-                    "    Missing valueCoding or code for parent relationship in concept: {}",
-                    concept.getCode());
-              }
-            }
-          }
-
-          if ("relationship".equals(propertyType)) {
-            final JsonNode extensionNode = propertyNode.path("extension");
-            for (final JsonNode extension : extensionNode) {
-              // Add null checks for valueCoding nodes
-              final JsonNode extensionValueCoding = extension.path("valueCoding");
-              final JsonNode propertyValueCoding = propertyNode.path("valueCoding");
-
-              // Only proceed if both valueCoding nodes are present and have
-              // code fields
-              if (!extensionValueCoding.isMissingNode() && !propertyValueCoding.isMissingNode()
-                  && extensionValueCoding.has("code") && propertyValueCoding.has("code")) {
-                concept.getEclClauses().add(extensionValueCoding.path("code").asText() + "="
-                    + propertyValueCoding.path("code").asText());
-              } else {
-                if (LOGGER.isDebugEnabled()) {
-                  LOGGER.debug(
-                      "    Skipping relationship due to missing valueCoding or code for concept: {}",
-                      concept.getCode());
-                }
-              }
-            }
-          }
+        if (relationshipBatch.size() == DEFAULT_BATCH_SIZE) {
+          service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
+          relationshipBatch.clear();
+          LOGGER.info("  relationships count: {}", relationshipCount);
         }
 
         // Process terms
@@ -507,6 +450,74 @@ public final class CodeSystemLoaderUtil {
   }
 
   /**
+   * Creates the relationships.
+   *
+   * @param relationshipArrayNode the relationship array node
+   * @param concept the concept
+   * @param terminology the terminology
+   * @param terminologyCache the terminology cache
+   * @return the list
+   * @throws Exception the exception
+   */
+  private static List<ConceptRelationship> createRelationships(final JsonNode relationshipArrayNode,
+    final Concept concept, final Terminology terminology, final TerminologyCache terminologyCache)
+    throws Exception {
+
+    final List<ConceptRelationship> relationships = new ArrayList<>();
+
+    // Process relationships
+    for (final JsonNode propertyNode : relationshipArrayNode) {
+
+      final String propertyType =
+          propertyNode.has("code") ? propertyNode.path("code").asText() : "";
+
+      if (!Arrays.asList("parent", "relationship").contains(propertyType)) {
+        continue;
+      }
+
+      if ("parent".equals(propertyType)) {
+        final ConceptRelationship relationship =
+            createRelationship(propertyNode, concept, terminology, terminologyCache, "parent");
+        // Track parent-child relationship using thread-safe collections
+        final JsonNode valueCoding = propertyNode.path("valueCoding");
+        if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
+          final String parentCode = valueCoding.path("code").asText();
+          terminologyCache.addParChd(parentCode, concept.getCode());
+        }
+
+        // Add ECL clause
+        if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
+          concept.getEclClauses().add(
+              propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
+        }
+
+        relationships.add(relationship);
+      }
+
+      if ("relationship".equals(propertyType)) {
+        final ConceptRelationship relationship =
+            createRelationship(propertyNode, concept, terminology, terminologyCache, "relationship");
+
+        // Process extensions for ECL clauses
+        final JsonNode extensionNode = propertyNode.path("extension");
+        for (final JsonNode extension : extensionNode) {
+          final JsonNode extensionValueCoding = extension.path("valueCoding");
+          final JsonNode propertyValueCoding = propertyNode.path("valueCoding");
+
+          if (!extensionValueCoding.isMissingNode() && !propertyValueCoding.isMissingNode()
+              && extensionValueCoding.has("code") && propertyValueCoding.has("code")) {
+            concept.getEclClauses().add(extensionValueCoding.path("code").asText() + "="
+                + propertyValueCoding.path("code").asText());
+          }
+        }
+
+        relationships.add(relationship);
+      }
+    }
+    return relationships;
+  }
+
+  /**
    * Creates the terms.
    *
    * @param terminology the terminology
@@ -593,17 +604,18 @@ public final class CodeSystemLoaderUtil {
   }
 
   /**
-   * Creates the relationship.
+   * Creates a relationship (either ISA or other).
    *
    * @param relationshipNode the relationship node
    * @param fromConcept the from concept
    * @param terminology the terminology
    * @param terminologyCache the terminology cache
+   * @param relationshipType the relationship type ("parent" or "relationship")
    * @return the concept relationship
    */
   private static ConceptRelationship createRelationship(final JsonNode relationshipNode,
     final Concept fromConcept, final Terminology terminology,
-    final TerminologyCache terminologyCache) {
+    final TerminologyCache terminologyCache, final String relationshipType) {
 
     final ConceptRelationship relationship = new ConceptRelationship();
     relationship.setId(UUID.randomUUID().toString());
@@ -612,31 +624,28 @@ public final class CodeSystemLoaderUtil {
     relationship.setVersion(terminology.getVersion());
     relationship.setPublisher(terminology.getPublisher());
 
-    final String code = relationshipNode.path("code").asText();
-    String type = "other";
-    String additionalType = "ISA";
-
-    if ("parent".equalsIgnoreCase(code)) {
-      type = "parent";
-      // additionalType = "ISA";
-    } else if ("relationship".equals(code)) {
-      type = "relationship";
+    if ("parent".equals(relationshipType)) {
+      relationship.setType("Is a");
+      relationship.setAdditionalType("116680003");
+      relationship.setHierarchical(true);
+    } else {
+      relationship.setType("other");
+      relationship.setAdditionalType("Is a");
+      relationship.setHierarchical(false);
     }
 
-    relationship.setType(type);
-    relationship.setAdditionalType(additionalType);
-
-    if (!"parent".equalsIgnoreCase(relationshipNode.path("code").asText())) {
-      final JsonNode extensions = relationshipNode.path("extension");
-      if (!extensions.isMissingNode()) {
-        for (final JsonNode extension : extensions) {
-          final String url = extension.path("url").asText();
-          if (url.endsWith("/additionalType")) {
-            final JsonNode valueCoding = extension.path("valueCoding");
+    // Process extensions to get additionalType and group
+    final JsonNode extensions = relationshipNode.path("extension");
+    if (!extensions.isMissingNode()) {
+      for (final JsonNode extension : extensions) {
+        final String url = extension.path("url").asText();
+        if (url.endsWith("/additionalType")) {
+          final JsonNode valueCoding = extension.path("valueCoding");
+          if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
             relationship.setAdditionalType(valueCoding.path("code").asText());
-          } else if (url.endsWith("/group")) {
-            relationship.setGroup(extension.path("valueString").asText());
           }
+        } else if (url.endsWith("/group")) {
+          relationship.setGroup(extension.path("valueString").asText());
         }
       }
     }
@@ -654,8 +663,6 @@ public final class CodeSystemLoaderUtil {
     }
 
     // Set additional attributes
-    relationship.setHierarchical(
-        "parent".equals(relationship.getType()) || "ISA".equals(relationship.getAdditionalType()));
     relationship.setHistorical(false);
     relationship.setAsserted(true);
     relationship.setDefining(relationshipNode.path("defining").asBoolean(false));
