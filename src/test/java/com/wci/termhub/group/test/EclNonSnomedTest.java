@@ -36,10 +36,6 @@ public class EclNonSnomedTest extends AbstractTerminologyServerTest {
   /** The logger. */
   private final Logger logger = LoggerFactory.getLogger(EclConverterTest.class);
 
-  /** The index root directory. */
-  private final String indexRootDirectory =
-      PropertyUtility.getProperties().getProperty("lucene.index.directory");
-
   /** The lucene ecl data access. */
   private final LuceneEclDataAccess luceneEclDataAccess;
 
@@ -47,10 +43,7 @@ public class EclNonSnomedTest extends AbstractTerminologyServerTest {
    * Instantiates a new ecl non snomed test.
    */
   public EclNonSnomedTest() {
-    final String conceptIndex = indexRootDirectory + "/com.wci.termhub.model.Concept";
-    final String conceptRelationshipIndex =
-        indexRootDirectory + "/com.wci.termhub.model.ConceptRelationship";
-    this.luceneEclDataAccess = new LuceneEclDataAccess(conceptIndex, conceptRelationshipIndex);
+    this.luceneEclDataAccess = new LuceneEclDataAccess();
   }
 
   /**

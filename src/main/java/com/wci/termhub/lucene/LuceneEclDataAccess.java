@@ -10,11 +10,13 @@
 package com.wci.termhub.lucene;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.wci.termhub.util.PropertyUtility;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -47,30 +49,14 @@ import com.wci.termhub.util.ThreadLocalMapper;
 public class LuceneEclDataAccess {
 
     /** The index directory. */
-    private final String indexDirectory;
+    private static String indexRootDirectory;
 
-    /** The relationship index directory. */
-    private String relationshipIndexDirectory;
+    public LuceneEclDataAccess() {
+        indexRootDirectory = PropertyUtility.getProperties().getProperty("lucene.index.directory");
 
-    /**
-     * Instantiates a new lucene ecl data access.
-     *
-     * @param indexDirectory the index directory
-     */
-    public LuceneEclDataAccess(final String indexDirectory) {
-        this.indexDirectory = indexDirectory;
-    }
-
-    /**
-     * Instantiates a new lucene ecl data access.
-     *
-     * @param indexDirectory the index directory
-     * @param relationshipIndexDirectory the relationship index directory
-     */
-    public LuceneEclDataAccess(final String indexDirectory,
-            final String relationshipIndexDirectory) {
-        this.indexDirectory = indexDirectory;
-        this.relationshipIndexDirectory = relationshipIndexDirectory;
+        if (indexRootDirectory == null || indexRootDirectory.isEmpty()) {
+            indexRootDirectory = System.getProperty("lucene.index.directory");
+        }
     }
 
     /**
@@ -86,9 +72,9 @@ public class LuceneEclDataAccess {
         final Query additionalTypeQuery2) throws IOException {
         Query additionalTypeQuery = additionalTypeQuery2;
         try (DirectoryReader reader =
-                DirectoryReader.open(FSDirectory.open(Paths.get(indexDirectory)));
+                DirectoryReader.open(FSDirectory.open(getIndexDirectory(Concept.class)));
                 DirectoryReader relationshipReader = DirectoryReader
-                        .open(FSDirectory.open(Paths.get(relationshipIndexDirectory)));
+                        .open(FSDirectory.open(getIndexDirectory(ConceptRelationship.class)));
                 final MultiReader multiReader = new MultiReader(reader, relationshipReader);) {
             final IndexSearcher searcher = new IndexSearcher(multiReader);
             Query conceptJoinFromQuery = null;
@@ -144,8 +130,8 @@ public class LuceneEclDataAccess {
      */
     public List<Concept> getConcepts(final Query query) {
         final List<Concept> concepts = new ArrayList<>();
-        try (final FSDirectory indexDir = FSDirectory.open(Paths.get(indexDirectory));
-                final FSDirectory relDir = FSDirectory.open(Paths.get(relationshipIndexDirectory));
+        try (final FSDirectory indexDir = FSDirectory.open(getIndexDirectory(Concept.class));
+                final FSDirectory relDir = FSDirectory.open(getIndexDirectory(ConceptRelationship.class));
                 DirectoryReader reader = DirectoryReader.open(indexDir);
                 DirectoryReader relationshipReader = DirectoryReader.open(relDir);
                 final MultiReader multiReader = new MultiReader(reader, relationshipReader);) {
@@ -357,5 +343,9 @@ public class LuceneEclDataAccess {
         concept.setDescendants(descendants);
         concept.setRelationships(relationships);
         return concept;
+    }
+
+    private static Path getIndexDirectory(Class clazz){
+        return Paths.get(indexRootDirectory, clazz.getCanonicalName());
     }
 }
