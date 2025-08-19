@@ -93,8 +93,6 @@ public class EclConverterTest extends AbstractTerminologyServerTest {
         logger.info("Working on line number:{}", lineNumber);
         logger.info("Testing Ecl expression:{}", expression);
         final List<String> luceneConcepts = handleExpressionWithLucene(expression);
-        luceneConcepts.forEach(System.out::println);
-        System.out.println("----------------------------");
         final SnomedEclResults expectedResult = expectedResults.get(expression);
         if (expectedResult != null) {
           assertEquals(expectedResult.getCount(), luceneConcepts.size());

@@ -15,5 +15,5 @@
 # match concepts for this relationship
 <<170499009: 363703001=*
 # member of a set expression
-# ^ 723264001 AND << 1163348009
+^ 731000124108
 << 123005000 {{ + HISTORY-MAX }}
