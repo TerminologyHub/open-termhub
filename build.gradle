@@ -156,9 +156,6 @@ dependencyManagement {
 test {
     useJUnitPlatform()
     exclude '**/integrationtest/**'
-    systemProperties(
-        'lucene.index.directory': '/Users/squareroot/temp/lucene-index-ecl-test',
-    )
     testLogging {
         events "skipped", "failed"
         exceptionFormat "full"
