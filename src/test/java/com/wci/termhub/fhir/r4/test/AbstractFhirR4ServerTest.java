@@ -34,7 +34,6 @@ import com.wci.termhub.util.PropertyUtility;
 public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private final Logger logger = LoggerFactory.getLogger(AbstractFhirR4ServerTest.class);
 
   /** The search service. */
@@ -57,7 +56,7 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
   /** List of FHIR Code System files to load. */
   protected static final List<String> VALUE_SET_FILES =
       List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r4.json",
-      "ValueSet-snomedct_us-723264001-sandbox-20240301-r4.json");
+          "ValueSet-snomedct_us-723264001-sandbox-20240301-r4.json");
 
   /** The setup once. */
   private static boolean setupOnce = false;

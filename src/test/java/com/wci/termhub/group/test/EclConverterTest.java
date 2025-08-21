@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.integrationtest;
+package com.wci.termhub.group.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -18,12 +18,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.wci.termhub.ecl.test.SnomedEclResults;
 import org.apache.lucene.search.Query;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,14 +28,15 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.wci.termhub.ecl.EclToLuceneConverter;
 import com.wci.termhub.ecl.ExpressionConstraintListener;
+import com.wci.termhub.ecl.test.SnomedEclResults;
 import com.wci.termhub.lucene.LuceneEclDataAccess;
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
  * Unit testing to for ECL to lucene syntax;.
  */
-@Disabled("The sandbox data does not have some of the concepts used in these tests.")
-public class EclConverterTest {
+public class EclConverterTest extends AbstractTerminologyServerTest {
 
   /**
    * The logger.
@@ -77,16 +75,13 @@ public class EclConverterTest {
   /**
    * Test ecl expressions from file.
    *
-   * @param file the file
    * @throws Exception the exception
    */
-  @ParameterizedTest
-  @ValueSource(strings = {
-      "/ecl/icd_11_scope_rules.txt", "/ecl/snomed_ecl_examples.txt",
-      "/ecl/asterisk_multiple_clauses.txt"
-  })
-  public void testEclExpressionsFromFile(final String file) throws Exception {
-    try (InputStream inputStream = this.getClass().getResourceAsStream(file);
+  @Test
+  public void testEclExpressionsFromFile() throws Exception {
+    try (
+        InputStream inputStream =
+            this.getClass().getResourceAsStream("/ecl/snapshot_ecl_expressions.txt");
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
       String expression;
       int lineNumber = 0;
@@ -97,7 +92,7 @@ public class EclConverterTest {
         }
         logger.info("Working on line number:{}", lineNumber);
         logger.info("Testing Ecl expression:{}", expression);
-        final List<String> luceneConcepts = handleExpressionWithElasticSearchWithLucene(expression);
+        final List<String> luceneConcepts = handleExpressionWithLucene(expression);
         final SnomedEclResults expectedResult = expectedResults.get(expression);
         if (expectedResult != null) {
           assertEquals(expectedResult.getCount(), luceneConcepts.size());
@@ -121,8 +116,7 @@ public class EclConverterTest {
    * @return the list
    * @throws Exception the exception
    */
-  private List<String> handleExpressionWithElasticSearchWithLucene(final String expression)
-    throws Exception {
+  private List<String> handleExpressionWithLucene(final String expression) throws Exception {
     final EclToLuceneConverter converter = new EclToLuceneConverter();
     logger.info("Running {}", expression);
     final String cleansedExpression =

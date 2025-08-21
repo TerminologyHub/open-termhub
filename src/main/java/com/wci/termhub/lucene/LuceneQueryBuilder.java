@@ -60,20 +60,16 @@ public final class LuceneQueryBuilder {
    */
   public static Query parse(final String queryText, final Class<?> modelClass)
     throws ParseException {
-    if (logger.isDebugEnabled()) {
-      logger.debug("  parse query: {} for class {}", queryText,
-          modelClass != null ? modelClass.getSimpleName() : "null");
-    }
-    final boolean isFieldedQuery = queryText != null && queryText.matches(".*\\w+:.*");
 
+    final boolean isFieldedQuery = queryText != null && queryText.matches(".*\\w+:.*");
     if (isFieldedQuery) {
       try (final KeywordAnalyzer analyzer = new KeywordAnalyzer();) {
         final QueryParser queryParser = new QueryParser("", analyzer);
         final Query query = queryParser.parse(queryText);
         if (logger.isDebugEnabled()) {
-          logger.debug("  Parsed Query: {}", query);
+          logger.debug("    parsed query: {} for class {}", query,
+              modelClass != null ? modelClass.getSimpleName() : "null");
         }
-        // logger.info("X X X Parsed Query: {}", query);
         return query;
       }
     } else {
@@ -84,9 +80,9 @@ public final class LuceneQueryBuilder {
             new MultiFieldQueryParser(fields, analyzer);
         final Query query = multiFieldQueryParser.parse(queryText);
         if (logger.isDebugEnabled()) {
-          logger.debug("  Parsed Query (multi-field): {}", query);
+          logger.debug("    parsed query (multi-field): {} for class {}", query,
+              modelClass != null ? modelClass.getSimpleName() : "null");
         }
-        // logger.info("X X X Parsed Query (multi-field): {}", query);
         return query;
       }
     }

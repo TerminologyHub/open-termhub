@@ -49,7 +49,7 @@ public class EclToLuceneConverter {
     final String conceptIndex = indexRootDirectory + "/com.wci.termhub.model.Concept";
     final String conceptRelationshipIndex =
         indexRootDirectory + "/com.wci.termhub.model.ConceptRelationship";
-    this.luceneEclDataAccess = new LuceneEclDataAccess(conceptIndex, conceptRelationshipIndex);
+    this.luceneEclDataAccess = new LuceneEclDataAccess();
   }
 
   /**

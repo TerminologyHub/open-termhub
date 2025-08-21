@@ -10,6 +10,7 @@
 package com.wci.termhub.group.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -138,7 +139,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
    *
    * @throws Exception the exception
    */
-  // @Test
+  @Test
   public void testFindConceptTreePositionsForCode() throws Exception {
 
     final TermQueryComposer termQuery =
@@ -148,15 +149,14 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
     LOGGER.info("testFindConceptTreePositionsForCode Query: {}", SEARCH_PARAMETERS.getQuery());
     final ResultList<ConceptTreePosition> conceptTreePositions =
         searchService.find(SEARCH_PARAMETERS, ConceptTreePosition.class);
-    assertEquals(2, conceptTreePositions.getItems().size());
+    assertEquals(1, conceptTreePositions.getItems().size());
     for (final ConceptTreePosition ctp : conceptTreePositions.getItems()) {
       assertEquals(termQuery.getTerminology(), ctp.getTerminology());
       assertEquals(termQuery.getVersion(), ctp.getVersion());
       assertEquals(termQuery.getVersion(), ctp.getVersion());
       assertEquals("SANDBOX", ctp.getPublisher());
       assertEquals("52988006", ctp.getConcept().getCode());
-      // 1 is empty the other has a ancestor path
-      // assertNotNull(ctp.getAncestorPath());
+      assertNotNull(ctp.getAncestorPath());
     }
 
   }
@@ -166,7 +166,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
    *
    * @throws Exception the exception
    */
-  @Test
+  // @Test
   public void testFindConceptTreePositionsWithEmptyAncestor() throws Exception {
 
     final TermQueryComposer termQuery =

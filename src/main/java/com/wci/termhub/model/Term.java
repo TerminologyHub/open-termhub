@@ -94,18 +94,6 @@ public class Term extends AbstractHasModified
   @Field(type = FieldType.Keyword)
   private String descriptorId;
 
-  /** The case sensitive. */
-  // @Field(type = FieldType.Boolean)
-  // private Boolean caseSensitive = false;
-
-  /** The order sensitive. */
-  // @Field(type = FieldType.Boolean)
-  // private Boolean orderSensitive = false;
-
-  /** The punctuation sensitive. */
-  // @Field(type = FieldType.Boolean)
-  // private Boolean punctuationSensitive = false;
-
   /** The locale. */
   @Field(type = FieldType.Object)
   private Map<String, Boolean> localeMap;
@@ -152,9 +140,6 @@ public class Term extends AbstractHasModified
     code = other.getCode();
     conceptId = other.getConceptId();
     descriptorId = other.getDescriptorId();
-    // caseSensitive = other.isCaseSensitive();
-    // orderSensitive = other.isOrderSensitive();
-    // punctuationSensitive = other.isPunctuationSensitive();
     localeMap = new HashMap<>(other.getLocaleMap());
     type = other.getType();
     attributes = new HashMap<>(other.getAttributes());
@@ -199,10 +184,6 @@ public class Term extends AbstractHasModified
     if (other.getDescriptorId() != null) {
       descriptorId = other.getDescriptorId();
     }
-
-    // caseSensitive = other.isCaseSensitive();
-    // orderSensitive = other.isOrderSensitive();
-    // punctuationSensitive = other.isPunctuationSensitive();
 
     if (!other.getLocaleMap().isEmpty()) {
       localeMap.putAll(other.getLocaleMap());
@@ -381,30 +362,6 @@ public class Term extends AbstractHasModified
   public void setDescriptorId(final String descriptorId) {
     this.descriptorId = descriptorId;
   }
-
-  // public boolean isCaseSensitive() {
-  // return caseSensitive;
-  // }
-
-  // public void setCaseSensitive(final boolean caseSensitive) {
-  // this.caseSensitive = caseSensitive;
-  // }
-
-  // public boolean isOrderSensitive() {
-  // return orderSensitive;
-  // }
-
-  // public void setOrderSensitive(final boolean orderSensitive) {
-  // this.orderSensitive = orderSensitive;
-  // }
-
-  // public boolean isPunctuationSensitive() {
-  // return punctuationSensitive;
-  // }
-
-  // public void setPunctuationSensitive(final boolean punctuationSensitive) {
-  // this.punctuationSensitive = punctuationSensitive;
-  // }
 
   /**
    * Compute single language.
