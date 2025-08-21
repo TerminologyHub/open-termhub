@@ -1,0 +1,19 @@
+# simple minus expression
+<<416939005 MINUS <<400177003
+# simple descendant or self expression
+<< 181294004
+# match all concepts with a specific attribute value
+* : 246075003=<<840533007
+# simple relationship expression
+<<34014006 : 246075003=<<49872002
+# complex minus expression
+<<64572001 MINUS (<<34014006 : 246075003=<<49872002)
+# complex minus expression with OR
+(<<34014006 : 246075003=<<49872002) MINUS (<<72431002 |Accidental poisoning| OR <<410061008 |Intentional poisoning| OR <<219186006 |Assault by poisoning|)
+# simple AND expression
+<<75934005 AND <414029004
+# match concepts for this relationship
+<<170499009: 363703001=*
+# member of a set expression
+^ 731000124108
+<< 123005000 {{ + HISTORY-MAX }}
