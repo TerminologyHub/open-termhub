@@ -272,10 +272,9 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Update an existing document efficiently by comparing fields and only
-   * updating changed ones. This method retrieves the existing entity, compares
-   * it with the new one, and updates only the fields that have actually
-   * changed, preserving schema consistency.
+   * Update an existing document efficiently by comparing fields and only updating changed ones.
+   * This method retrieves the existing entity, compares it with the new one, and updates only the
+   * fields that have actually changed, preserving schema consistency.
    *
    * @param clazz the clazz
    * @param id the id
@@ -347,9 +346,8 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Update multiple entities efficiently by comparing fields and only updating
-   * changed ones. This method processes each entity individually using the
-   * optimized update approach.
+   * Update multiple entities efficiently by comparing fields and only updating changed ones. This
+   * method processes each entity individually using the optimized update approach.
    *
    * @param clazz the clazz
    * @param entities the map of id to entity
@@ -439,9 +437,9 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Compare two entities and update only the fields that have changed. This
-   * method uses reflection to compare field values and updates the existing
-   * entity with new values from the updated entity.
+   * Compare two entities and update only the fields that have changed. This method uses reflection
+   * to compare field values and updates the existing entity with new values from the updated
+   * entity.
    *
    * @param existingEntity the existing entity to update
    * @param updatedEntity the entity containing the new values
@@ -704,9 +702,9 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Add a field to an existing document without full reindexing. This method
-   * retrieves the existing entity, updates it with the new field value, and
-   * then re-indexes it to ensure schema consistency.
+   * Add a field to an existing document without full reindexing. This method retrieves the existing
+   * entity, updates it with the new field value, and then re-indexes it to ensure schema
+   * consistency.
    *
    * @param clazz the clazz
    * @param id the id
@@ -848,6 +846,7 @@ public class LuceneDataAccess {
    * @return the index writer
    * @throws IOException on error
    */
+  @SuppressWarnings("resource")
   private IndexWriter createIndexWriter(final FSDirectory directory) throws IOException {
     return new IndexWriter(directory, new IndexWriterConfig(new StandardAnalyzer()));
   }

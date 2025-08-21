@@ -26,10 +26,9 @@ import com.wci.termhub.integrationtest.EclConverterTest;
 import com.wci.termhub.lucene.LuceneEclDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
-import com.wci.termhub.util.PropertyUtility;
 
 /**
- * The Class EclNonSnomedTest.
+ * EclNonSnomedTest.
  */
 public class EclNonSnomedTest extends AbstractTerminologyServerTest {
 

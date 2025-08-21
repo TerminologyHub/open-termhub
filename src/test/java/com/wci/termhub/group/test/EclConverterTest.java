@@ -9,22 +9,7 @@
  */
 package com.wci.termhub.group.test;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.wci.termhub.ecl.EclToLuceneConverter;
-import com.wci.termhub.ecl.ExpressionConstraintListener;
-import com.wci.termhub.ecl.test.SnomedEclResults;
-import com.wci.termhub.lucene.LuceneEclDataAccess;
-import com.wci.termhub.model.Concept;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
-import org.apache.lucene.search.Query;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -33,7 +18,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.lucene.search.Query;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.wci.termhub.ecl.EclToLuceneConverter;
+import com.wci.termhub.ecl.ExpressionConstraintListener;
+import com.wci.termhub.ecl.test.SnomedEclResults;
+import com.wci.termhub.lucene.LuceneEclDataAccess;
+import com.wci.termhub.model.Concept;
+import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
  * Unit testing to for ECL to lucene syntax;.
@@ -81,7 +79,9 @@ public class EclConverterTest extends AbstractTerminologyServerTest {
    */
   @Test
   public void testEclExpressionsFromFile() throws Exception {
-    try (InputStream inputStream = this.getClass().getResourceAsStream("/ecl/snapshot_ecl_expressions.txt");
+    try (
+        InputStream inputStream =
+            this.getClass().getResourceAsStream("/ecl/snapshot_ecl_expressions.txt");
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
       String expression;
       int lineNumber = 0;
@@ -116,8 +116,7 @@ public class EclConverterTest extends AbstractTerminologyServerTest {
    * @return the list
    * @throws Exception the exception
    */
-  private List<String> handleExpressionWithLucene(final String expression)
-    throws Exception {
+  private List<String> handleExpressionWithLucene(final String expression) throws Exception {
     final EclToLuceneConverter converter = new EclToLuceneConverter();
     logger.info("Running {}", expression);
     final String cleansedExpression =
