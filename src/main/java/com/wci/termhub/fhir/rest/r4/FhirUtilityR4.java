@@ -11,6 +11,7 @@ package com.wci.termhub.fhir.rest.r4;
 
 import static java.lang.String.format;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -28,6 +29,8 @@ import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.ConceptMap;
+import org.hl7.fhir.r4.model.ContactDetail;
+import org.hl7.fhir.r4.model.ContactPoint;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
@@ -37,6 +40,7 @@ import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.Questionnaire;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.UriType;
@@ -47,6 +51,7 @@ import org.hl7.fhir.r4.model.ValueSet.ValueSetComposeComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.wci.termhub.fhir.r4.AnswerOptionSequenceComparator;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
@@ -61,6 +66,7 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.DateUtility;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.TerminologyUtility;
 
 import ca.uhn.fhir.rest.param.NumberParam;
 import jakarta.servlet.http.HttpServletRequest;
@@ -752,7 +758,7 @@ public final class FhirUtilityR4 {
     final String releaseDate = subset.getReleaseDate();
     if (releaseDate != null && releaseDate.contains("T")) {
       // Full ISO 8601 date string with timezone
-      valueSet.setDate(Date.from(java.time.Instant.parse(releaseDate)));
+      valueSet.setDate(Date.from(Instant.parse(releaseDate)));
     } else {
       // Fallback to date-only format
       valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
@@ -766,7 +772,7 @@ public final class FhirUtilityR4 {
       valueSet.setTitle(subset.getName());
     }
     valueSet.setDescription(subset.getDescription());
-    valueSet.setStatus(org.hl7.fhir.r4.model.Enumerations.PublicationStatus.ACTIVE);
+    valueSet.setStatus(Enumerations.PublicationStatus.ACTIVE);
 
     // Set experimental from attributes if present, else fallback
     final String experimentalStr = subset.getAttributes() != null
@@ -862,7 +868,7 @@ public final class FhirUtilityR4 {
     final String releaseDate = terminology.getReleaseDate();
     if (releaseDate != null && releaseDate.contains("T")) {
       // Full ISO 8601 date string with timezone
-      cs.setDate(Date.from(java.time.Instant.parse(releaseDate)));
+      cs.setDate(Date.from(Instant.parse(releaseDate)));
     } else {
       // Fallback to date-only format
       cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
@@ -913,7 +919,8 @@ public final class FhirUtilityR4 {
       cs.setCopyright(copyright);
     }
 
-    // logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
+    // logger.info("Converted terminology to CodeSystem: id={}, name={},
+    // version={}", cs.getId(),
     // cs.getName(), cs.getVersion());
 
     return cs;
@@ -934,7 +941,8 @@ public final class FhirUtilityR4 {
     final ConceptMap cm = new ConceptMap();
 
     // Debug logging for Mapset data
-    // logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
+    // logger.info("Converting Mapset: id={}, fromTerminology={},
+    // toTerminology={}", mapset.getId(),
     // mapset.getFromTerminology(), mapset.getToTerminology());
 
     cm.setUrl(mapset.getUri());
@@ -942,7 +950,7 @@ public final class FhirUtilityR4 {
       final String releaseDate = mapset.getReleaseDate();
       if (releaseDate.contains("T")) {
         // Full ISO 8601 date string with timezone
-        cm.setDate(Date.from(java.time.Instant.parse(releaseDate)));
+        cm.setDate(Date.from(Instant.parse(releaseDate)));
       } else {
         // Fallback to date-only format
         cm.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
@@ -985,22 +993,23 @@ public final class FhirUtilityR4 {
   public static BundleLinkComponent getNextLink(final String uri, final NumberParam offset,
     final int offsetInt, final NumberParam count, final int countInt) {
     final int nextOffset = offsetInt + countInt;
-    String nextUri = uri;
-    if (!uri.contains("?")) {
-      nextUri = nextUri + "?";
-    }
-    if (offset != null) {
-      nextUri = nextUri.replaceFirst("_offset=\\d+", "_offset=" + nextOffset);
-    } else {
-      nextUri += (nextUri.endsWith("?") ? "" : "&") + "_offset=" + nextOffset;
-    }
-    if (count != null) {
-      nextUri = nextUri.replaceFirst("_count=\\d+", "_count=" + countInt);
-    } else {
-      nextUri += (nextUri.endsWith("?") ? "" : "&") + "_count=" + countInt;
-    }
+    return createPagingLink(uri, offset, offsetInt, count, countInt, nextOffset, "next");
+  }
 
-    return new BundleLinkComponent().setUrl(nextUri).setRelation("next");
+  /**
+   * Gets the previous link.
+   *
+   * @param uri the uri
+   * @param offset the offset
+   * @param offsetInt the offset int
+   * @param count the count
+   * @param countInt the count int
+   * @return the previous link
+   */
+  public static BundleLinkComponent getPreviousLink(final String uri, final NumberParam offset,
+    final int offsetInt, final NumberParam count, final int countInt) {
+    final int prevOffset = Math.max(0, offsetInt - countInt);
+    return createPagingLink(uri, offset, offsetInt, count, countInt, prevOffset, "previous");
   }
 
   /**
@@ -1015,27 +1024,435 @@ public final class FhirUtilityR4 {
   public static Bundle makeBundle(final HttpServletRequest request,
     final List<? extends Resource> list, final NumberParam count, final NumberParam offset) {
 
-    final int countInt = count == null ? 100 : count.getValue().intValue();
+    final int countInt = count == null ? 25 : count.getValue().intValue();
     final int offsetInt = offset == null ? 0 : offset.getValue().intValue();
     final String thisUrl = request.getQueryString() == null ? request.getRequestURL().toString()
         : request.getRequestURL().append('?').append(request.getQueryString()).toString();
+
     final Bundle bundle = new Bundle();
     bundle.setId(UUID.randomUUID().toString());
     bundle.setType(BundleType.SEARCHSET);
     bundle.setTotal(list.size());
+
+    // Add self link
     bundle.addLink(new BundleLinkComponent().setUrl(thisUrl).setRelation("self"));
-    if (offsetInt + countInt < list.size()) {
+
+    // Add previous link if not on first page
+    if (offsetInt > 0) {
+      bundle.addLink(FhirUtilityR4.getPreviousLink(thisUrl, offset, offsetInt, count, countInt));
+    }
+
+    // Add next link if there are more results
+    final boolean shouldAddNext = offsetInt + countInt < list.size();
+    if (shouldAddNext) {
       bundle.addLink(FhirUtilityR4.getNextLink(thisUrl, offset, offsetInt, count, countInt));
     }
-    for (int i = offsetInt; i < offsetInt + countInt; i++) {
-      if (i > list.size() - 1) {
-        break;
-      }
+
+    // Add entries for current page
+    for (int i = offsetInt; i < offsetInt + countInt && i < list.size(); i++) {
       final BundleEntryComponent component = new BundleEntryComponent();
       component.setResource(list.get(i));
       component.setFullUrl(request.getRequestURL() + "/" + list.get(i).getId());
       bundle.addEntry(component);
     }
+
     return bundle;
+  }
+
+  /**
+   * Converts a Terminology to a FHIR R4 Questionnaire.
+   *
+   * @param terminology the Terminology
+   * @param metaFlag the meta flag
+   * @return the FHIR R4 Questionnaire
+   * @throws Exception the exception
+   */
+  public static Questionnaire toR4Questionnaire(final Terminology terminology,
+    final boolean metaFlag) throws Exception {
+
+    final Questionnaire questionnaire = new Questionnaire();
+    questionnaire.setId(terminology.getId() + "_entire");
+    questionnaire.setUrl(terminology.getUri() + "?fhir_questionnaire");
+    questionnaire.setVersion(terminology.getVersion());
+    questionnaire.setName("Q " + terminology.getName());
+    questionnaire.setTitle(terminology.getAbbreviation() + "-ENTIRE");
+    questionnaire.setStatus(PublicationStatus.ACTIVE);
+    questionnaire
+        .setDescription("Questionnaire representing the entire contents of this code system");
+    questionnaire.setDate(terminology.getReleaseDate() != null
+        ? Date.from(Instant.parse(terminology.getReleaseDate())) : null);
+    questionnaire.setPublisher(terminology.getPublisher());
+
+    // Add "from" info for members
+    if (metaFlag) {
+      questionnaire
+          .setMeta(new Meta().addTag("fromTerminology", terminology.getAbbreviation(), null)
+              .addTag("fromPublisher", terminology.getPublisher(), null)
+              .addTag("fromVersion", terminology.getVersion(), null)
+              .addTag("includesUri", terminology.getUri(), null));
+    }
+
+    return questionnaire;
+  }
+
+  /**
+   * Converts a LOINC Concept to a FHIR R4 Questionnaire. This is the primary
+   * method for creating questionnaires from LOINC concepts.
+   *
+   * @param concept the LOINC Concept
+   * @param searchService the search service
+   * @return the FHIR R4 Questionnaire
+   * @throws Exception the exception
+   */
+  public static Questionnaire toR4Questionnaire(final Concept concept,
+    final EntityRepositoryService searchService) throws Exception {
+
+    final Questionnaire questionnaire = new Questionnaire();
+
+    // Set basic metadata
+    questionnaire.setId(concept.getCode());
+
+    // Build URL from terminology information
+    final String systemUri = getSystemUriFromTerminology(searchService, concept.getTerminology(),
+        concept.getPublisher(), concept.getVersion());
+    questionnaire.setUrl(systemUri + "/q/" + concept.getCode());
+
+    questionnaire.setName(concept.getName());
+    questionnaire.setTitle(concept.getName());
+    questionnaire.setStatus(PublicationStatus.DRAFT);
+
+    // Set description from definitions if available, or use name as fallback
+    String description = concept.getName();
+    if (concept.getDefinitions() != null && !concept.getDefinitions().isEmpty()) {
+      description = concept.getDefinitions().get(0).getDefinition();
+    }
+    questionnaire.setDescription(description);
+
+    // Set publisher from concept data
+    questionnaire.setPublisher(concept.getPublisher());
+
+    // Set subject type to Patient for most questionnaires
+    final List<CodeType> subjectTypes = new ArrayList<>();
+    subjectTypes.add(new CodeType("Patient"));
+    questionnaire.setSubjectType(subjectTypes);
+
+    // Add coding to questionnaire.code field using database information
+    final Coding coding = new Coding();
+    coding.setSystem(systemUri);
+    coding.setCode(concept.getCode());
+    coding.setDisplay(concept.getName());
+    questionnaire.addCode(coding);
+
+    // Add contact information using concept data
+    final ContactDetail contact = new ContactDetail();
+    contact.setName(concept.getPublisher());
+    final ContactPoint telecom = new ContactPoint();
+    telecom.setSystem(ContactPoint.ContactPointSystem.URL);
+    telecom.setValue(systemUri);
+    contact.addTelecom(telecom);
+    questionnaire.addContact(contact);
+
+    // Get copyright from concept attributes if available, otherwise use generic
+    String copyright = null;
+    if (concept.getAttributes() != null
+        && concept.getAttributes().containsKey("EXTERNAL_COPYRIGHT_NOTICE")) {
+      copyright = concept.getAttributes().get("EXTERNAL_COPYRIGHT_NOTICE");
+    }
+    questionnaire.setCopyright(copyright);
+
+    return questionnaire;
+  }
+
+  /**
+   * Populates a Questionnaire with questions and answers based on LOINC
+   * relationships. This method uses the concept's existing relationships to
+   * create questionnaire items.
+   *
+   * @param questionnaire the Questionnaire to populate
+   * @param searchService the search service for data access
+   * @throws Exception the exception
+   */
+  public static void populateQuestionnaire(final Questionnaire questionnaire,
+    final EntityRepositoryService searchService) throws Exception {
+
+    // Clear any existing items
+    questionnaire.getItem().clear();
+
+    // Extract LOINC code from questionnaire ID
+    final String loincCode = questionnaire.getId();
+    if (loincCode == null) {
+      return;
+    }
+
+    try {
+      // Get the concept for this questionnaire
+      final Concept concept = getConceptFromQuestionnaireId(loincCode, searchService);
+      if (concept == null) {
+        return;
+      }
+
+      final Terminology terminology = TerminologyUtility.getTerminology(searchService,
+          concept.getTerminology(), concept.getPublisher(), concept.getVersion());
+
+      // Create items from has_member relationships
+      final List<Questionnaire.QuestionnaireItemComponent> items = new ArrayList<>();
+      for (final ConceptRelationship relationship : concept.getRelationships()) {
+        if ("has_member".equals(relationship.getAdditionalType())) {
+          // Skip if this is the panel concept itself (same code as
+          // questionnaire)
+          if (relationship.getTo() != null && relationship.getTo().getCode() != null
+              && relationship.getTo().getCode().equals(loincCode)) {
+            continue;
+          }
+          final Questionnaire.QuestionnaireItemComponent item =
+              createQuestionnaireItemFromRelationship(relationship, searchService, terminology);
+          if (item != null) {
+            items.add(item);
+          }
+        }
+      }
+
+      // Sort items by their code.code field
+      items.sort((item1, item2) -> {
+        final String code1 = item1.getCode().isEmpty() ? "" : item1.getCode().get(0).getCode();
+        final String code2 = item2.getCode().isEmpty() ? "" : item2.getCode().get(0).getCode();
+        return code1.compareTo(code2);
+      });
+
+      // Add sorted items to questionnaire
+      for (final Questionnaire.QuestionnaireItemComponent item : items) {
+        questionnaire.addItem(item);
+      }
+
+    } catch (final Exception e) {
+      // Log error but don't fail the entire questionnaire
+      final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+      logger.error("Failed to populate questionnaire " + loincCode + " with questions", e);
+    }
+  }
+
+  /**
+   * Gets the concept for a questionnaire ID.
+   *
+   * @param loincCode the LOINC code
+   * @param searchService the search service
+   * @return the concept or null if not found
+   * @throws Exception the exception
+   */
+  private static Concept getConceptFromQuestionnaireId(final String loincCode,
+    final EntityRepositoryService searchService) throws Exception {
+
+    return TerminologyUtility.getConcept(searchService, "LOINC", "Regenstrief Institute", "2.78",
+        loincCode);
+  }
+
+  /**
+   * Creates a questionnaire item from a concept relationship.
+   *
+   * @param relationship the relationship
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @return the questionnaire item component
+   * @throws Exception the exception
+   */
+  private static Questionnaire.QuestionnaireItemComponent createQuestionnaireItemFromRelationship(
+    final ConceptRelationship relationship, final EntityRepositoryService searchService,
+    final Terminology terminology) throws Exception {
+
+    final Questionnaire.QuestionnaireItemComponent item =
+        new Questionnaire.QuestionnaireItemComponent();
+
+    // TODO: What is linkId supposed to be?
+    item.setLinkId(relationship.getId());
+
+    // Set text from the relationship's "to" concept name
+    if (relationship.getTo() != null) {
+      item.setText(relationship.getTo().getName());
+
+      // Add coding with the "to" concept's code and system
+      final Coding coding = new Coding();
+      coding.setSystem(terminology.getUri());
+      coding.setCode(relationship.getTo().getCode());
+      coding.setDisplay(relationship.getTo().getName());
+      item.addCode(coding);
+
+      // Find answer options for this question
+      final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
+          findAnswerOptionsForQuestion(relationship.getTo().getCode(), searchService, terminology);
+      for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
+        item.addAnswerOption(option);
+      }
+    }
+
+    // TODO: determine logic. Not included in json import example
+    if (item.getAnswerOption().isEmpty()) {
+      item.setType(Questionnaire.QuestionnaireItemType.DECIMAL);
+    } else {
+      item.setType(Questionnaire.QuestionnaireItemType.CHOICE);
+    }
+
+    // TODO: determine logic. Not included in json import example
+    item.setRepeats(false);
+    return item;
+  }
+
+  /**
+   * Finds answer options for a question via has_answers relationships. Follows
+   * LOINC structure: Question --has_answers--> LL Code <--parent-- LA Codes
+   *
+   * @param questionCode the question LOINC code
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @return list of answer option components
+   * @throws Exception the exception
+   */
+  private static List<Questionnaire.QuestionnaireItemAnswerOptionComponent> findAnswerOptionsForQuestion(
+    final String questionCode, final EntityRepositoryService searchService,
+    final Terminology terminology) throws Exception {
+
+    final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
+        new ArrayList<>();
+
+    try {
+      // Find has_answers relationships from the question to get LL codes
+      final String hasAnswersQuery =
+          "from.code:\"" + questionCode + "\" AND additionalType:\"has_answers\"";
+      final List<ConceptRelationship> hasAnswersRels =
+          searchService.findAll(hasAnswersQuery, null, ConceptRelationship.class);
+
+      for (final ConceptRelationship hasAnswersRel : hasAnswersRels) {
+        final String llCode = hasAnswersRel.getTo().getCode();
+        if (llCode != null) {
+          // Find parent relationships from LA codes to the LL code
+          final String parentQuery = "to.code:\"" + llCode + "\" AND type:\"Is a\"";
+          final List<ConceptRelationship> parentRels =
+              searchService.findAll(parentQuery, null, ConceptRelationship.class);
+
+          for (final ConceptRelationship parentRel : parentRels) {
+            final String laCode = parentRel.getFrom().getCode();
+            if (laCode != null && laCode.startsWith("LA")) {
+              try {
+                // Get the full Concept object to access attributes
+                final Concept laConcept =
+                    TerminologyUtility.getConcept(searchService, terminology.getAbbreviation(),
+                        terminology.getPublisher(), terminology.getVersion(), laCode);
+
+                if (laConcept != null) {
+                  // Create answer option component
+                  final Questionnaire.QuestionnaireItemAnswerOptionComponent option =
+                      new Questionnaire.QuestionnaireItemAnswerOptionComponent();
+
+                  // Set the value coding for the LA code
+                  final Coding valueCoding = new Coding();
+                  valueCoding.setSystem(terminology.getUri());
+                  valueCoding.setCode(laCode);
+                  valueCoding.setDisplay(laConcept.getName());
+                  option.setValue(valueCoding);
+
+                  // Store the concept for sorting by SequenceNumber
+                  option.setUserData("concept", laConcept);
+                  answerOptions.add(option);
+
+                  // Log successful concept retrieval for debugging
+                  final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+                  logger.debug("Successfully retrieved concept for LA code {}: {} (type: {})",
+                      laCode, laConcept.getName(), laConcept.getClass().getSimpleName());
+                } else {
+                  final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+                  logger.warn("TerminologyUtility.getConcept returned null for LA code: {}",
+                      laCode);
+                }
+              } catch (final Exception e) {
+                // Log error but continue with other options
+                final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+                logger.warn("Failed to get concept for LA code {}: {}", laCode, e.getMessage());
+              }
+            }
+          }
+        }
+      }
+
+      // Sort answer options by their SequenceNumber attribute for proper LOINC
+      // ordering
+      AnswerOptionSequenceComparator.sortAnswerOptions(answerOptions);
+
+      // Clean up stored concept data to avoid memory leaks
+      for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
+        option.setUserData("concept", null);
+      }
+
+    } catch (final Exception e) {
+      // Log error but don't fail the entire questionnaire
+      final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+      logger.warn("Failed to find answer options for question {}: {}", questionCode,
+          e.getMessage());
+    }
+
+    return answerOptions;
+  }
+
+  /**
+   * Gets the system URI for a terminology based on its abbreviation, publisher,
+   * and version. This method uses TerminologyUtility to get the actual URI from
+   * the database.
+   *
+   * @param searchService the search service
+   * @param terminology the terminology abbreviation
+   * @param publisher the publisher
+   * @param version the version
+   * @return the system URI
+   */
+  private static String getSystemUriFromTerminology(final EntityRepositoryService searchService,
+    final String terminology, final String publisher, final String version) {
+
+    try {
+      final Terminology term =
+          TerminologyUtility.getTerminology(searchService, terminology, publisher, version);
+      if (term != null && term.getUri() != null) {
+        return term.getUri();
+      }
+    } catch (final Exception e) {
+      logger.warn("Failed to get terminology URI from database for {}: {}", terminology,
+          e.getMessage());
+    }
+
+    return null;
+
+  }
+
+  /**
+   * Creates a paging link with the specified offset and relation.
+   *
+   * @param uri the base uri
+   * @param offset the offset parameter
+   * @param offsetInt the current offset value
+   * @param count the count parameter
+   * @param countInt the count value
+   * @param newOffset the new offset value to use
+   * @param relation the link relation ("next" or "previous")
+   * @return the bundle link component
+   */
+  private static BundleLinkComponent createPagingLink(final String uri, final NumberParam offset,
+    final int offsetInt, final NumberParam count, final int countInt, final int newOffset,
+    final String relation) {
+
+    String newUri = uri;
+    if (!uri.contains("?")) {
+      newUri = newUri + "?";
+    }
+
+    if (offset != null) {
+      newUri = newUri.replaceFirst("_offset=\\d+", "_offset=" + newOffset);
+    } else {
+      newUri += (newUri.endsWith("?") ? "" : "&") + "_offset=" + newOffset;
+    }
+
+    if (count != null) {
+      newUri = newUri.replaceFirst("_count=\\d+", "_count=" + countInt);
+    } else {
+      newUri += (newUri.endsWith("?") ? "" : "&") + "_count=" + countInt;
+    }
+
+    return new BundleLinkComponent().setUrl(newUri).setRelation(relation);
   }
 }

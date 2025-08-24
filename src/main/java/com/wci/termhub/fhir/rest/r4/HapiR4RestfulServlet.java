@@ -19,6 +19,7 @@ import com.wci.termhub.fhir.r4.ConceptMapProviderR4;
 import com.wci.termhub.fhir.r4.FHIRMetadataProviderR4;
 import com.wci.termhub.fhir.r4.FHIRTerminologyCapabilitiesR4;
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
+import com.wci.termhub.fhir.r4.QuestionnaireProviderR4;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;
@@ -85,7 +86,8 @@ public class HapiR4RestfulServlet extends RestfulServer {
     }
     setResourceProviders(applicationContext.getBean(CodeSystemProviderR4.class),
         applicationContext.getBean(ValueSetProviderR4.class),
-        applicationContext.getBean(ConceptMapProviderR4.class));
+        applicationContext.getBean(ConceptMapProviderR4.class),
+        applicationContext.getBean(QuestionnaireProviderR4.class));
 
     final FHIRTerminologyCapabilitiesR4 terminologyCapabilitiesR4 =
         applicationContext.getBean(FHIRTerminologyCapabilitiesR4.class);

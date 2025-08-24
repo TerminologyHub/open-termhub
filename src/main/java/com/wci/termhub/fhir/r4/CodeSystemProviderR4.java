@@ -701,8 +701,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
     final CodeType codeAParam, final CodeType codeBParam, final Coding codingA,
     final Coding codingB) throws Exception {
     // "The system parameter is required unless the operation is invoked on an
-    // instance of a
-    // code system resource."
+    // instance of a code system resource."
     // (https://www.hl7.org/fhir/codesystem-operation-subsumes.html)
     if (id == null && system == null) {
       throw FhirUtilityR4.exception(
