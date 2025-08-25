@@ -22,7 +22,7 @@ export ENABLE_POST_LOAD_COMPUTATIONS=true
 make build run
 ```
 
-### Option 3: run with latest public docker image
+### Option 2: run with latest public docker image
 
 The final option is to run the latest published public docker image as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists):
 
