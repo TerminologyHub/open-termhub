@@ -22,21 +22,7 @@ export ENABLE_POST_LOAD_COMPUTATIONS=true
 make build run
 ```
 
-### Option 2: build/run with docker
-
-the other option is to build the docker image and run as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists)
-
-```
-# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
-export INDEX_DIR=/tmp/opentermhub/index
-/bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
-make docker
-docker run -d --rm --name open-termhub \
-  -e ENABLE_POST_LOAD_COMPUTATIONS=true \
-  -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
-```
-
-### Option 3: run with public docker image
+### Option 2: run with latest public docker image
 
 The final option is to run the latest published public docker image as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists):
 
@@ -145,10 +131,10 @@ The following code block has a number of curl commands that test a few of the te
 curl -s "http://localhost:8080/terminology" | jq
 
 # Find terminology metadata
-id=`curl -s "http://localhost:8080/terminology" | jq -r '.items[0].id'`
+id=`curl -s "http://localhost:8080/terminology" | jq -r '.items[0].id' | perl -pe 's/\r//;'`
 curl -s "http://localhost:8080/terminology/$id/metadata" | jq
 
-# Get a SNOMEDCT concept by code
+# Get a SNOMEDCT concept, or relationships, or trees by code
 curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001" | jq
 curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001/relationships" | jq
 curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001/trees" | jq
@@ -191,6 +177,9 @@ curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member" | jq
 curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes" | jq
 curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=name:diabetes" | jq
 
+# Find concepts using an ECL Expression for this subset
+curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&expression=%5E731000124108&include=minimal" | jq
+
 ```
 
 ### Testing the FHIR R4 API
@@ -216,7 +205,7 @@ curl -s 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_
 curl -s 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
 
 # Get a value set by id (pick the first one)
-id=`curl -s 'http://localhost:8080/fhir/r4/ValueSet' | jq -r '.entry[0].resource.id'`
+id=`curl -s 'http://localhost:8080/fhir/r4/ValueSet' | jq -r '.entry[0].resource.id' | perl -pe 's/\r//;'`
 curl -s "http://localhost:8080/fhir/r4/ValueSet/$id" | jq
 
 # Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
@@ -256,7 +245,7 @@ curl -s 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_
 curl -s 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
 
 # Get a value set by id (pick the first one)
-id=`curl -s 'http://localhost:8080/fhir/r5/ValueSet' | jq -r '.entry[0].resource.id'`
+id=`curl -s 'http://localhost:8080/fhir/r5/ValueSet' | jq -r '.entry[0].resource.id' | perl -pe 's/\r//;'`
 curl -s "http://localhost:8080/fhir/r5/ValueSet/$id" | jq
 
 # Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
