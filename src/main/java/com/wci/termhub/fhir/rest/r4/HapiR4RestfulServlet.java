@@ -18,8 +18,8 @@ import com.wci.termhub.fhir.r4.CodeSystemProviderR4;
 import com.wci.termhub.fhir.r4.ConceptMapProviderR4;
 import com.wci.termhub.fhir.r4.FHIRMetadataProviderR4;
 import com.wci.termhub.fhir.r4.FHIRTerminologyCapabilitiesR4;
-import com.wci.termhub.fhir.r4.ValueSetProviderR4;
 import com.wci.termhub.fhir.r4.QuestionnaireProviderR4;
+import com.wci.termhub.fhir.r4.ValueSetProviderR4;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;

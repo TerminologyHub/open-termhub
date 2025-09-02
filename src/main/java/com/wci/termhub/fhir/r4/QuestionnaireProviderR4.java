@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationOutcome;
@@ -31,6 +32,7 @@ import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.TerminologyUtility;
 
@@ -51,7 +53,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * The Class QuestionnaireProviderR4.
+ * The Class QuestionnaireProviderR4. Prepared for a POC. Not fully tested or
+ * implemented.
  */
 @Component
 public class QuestionnaireProviderR4 implements IResourceProvider {
@@ -60,7 +63,14 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
   private static Logger logger = LoggerFactory.getLogger(QuestionnaireProviderR4.class);
 
   /** The Constant LOINC_SERVEY_INSTRUMENTS_CODE. */
+  // TODO: Is there a better way to identify questionnaires?
   private static final String LOINC_SERVEY_INSTRUMENTS_CODE = "LP29696-9";
+
+  /** The Constant LOINC_SYSTEM. */
+  private static final String LOINC_SYSTEM = "LOINC";
+
+  /** The Constant LOINC_PUBLISHER. */
+  private static final String LOINC_PUBLISHER = "Regenstrief Institute";
 
   /** The search service. */
   @Autowired
@@ -98,8 +108,10 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
           ? id.getIdPart().substring(id.getIdPart().indexOf("/") + 1) : id.getIdPart();
 
       // Find LOINC concept using TerminologyUtility
-      final Concept concept = TerminologyUtility.getConcept(searchService, "LOINC",
-          "Regenstrief Institute", "2.78", conceptCode);
+      final Terminology latestTerminologyVersion = TerminologyUtility
+          .getLatestTerminologyVersion(searchService, LOINC_SYSTEM, LOINC_PUBLISHER);
+      final Concept concept =
+          TerminologyUtility.getConcept(searchService, latestTerminologyVersion, conceptCode);
       if (concept == null) {
         throw FhirUtilityR4.exception(
             "Questionnaire not found = " + (id == null ? "null" : id.getIdPart()),
@@ -117,7 +129,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
       final Questionnaire questionnaire = FhirUtilityR4.toR4Questionnaire(concept, searchService);
 
       // Populate with questions and answers
-      FhirUtilityR4.populateQuestionnaire(questionnaire, searchService);
+      FhirUtilityR4.populateQuestionnaire(questionnaire, searchService, latestTerminologyVersion);
 
       return questionnaire;
 
@@ -379,60 +391,103 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
     final SearchParameters questionnaireParams = new SearchParameters();
     questionnaireParams.getFilters().put("attributes.PanelType", "Panel");
 
-    // If URL is provided, do a direct lookup by code
-    if (url != null) {
-      final String codeValue = extractCodeFromUrl(url.getValue());
-
-      if (codeValue != null) {
-        // Direct lookup by code - much simpler
-        try {
-          final Concept concept = TerminologyUtility.getConcept(searchService, "LOINC",
-              "Regenstrief Institute", "2.78", codeValue);
-
-          if (concept != null && isQuestionnaireConcept(concept)) {
-            final Questionnaire questionnaire =
-                FhirUtilityR4.toR4Questionnaire(concept, searchService);
-            // Populate full content for URL searches to match LOINC FHIR server
-            // behavior
-            FhirUtilityR4.populateQuestionnaire(questionnaire, searchService);
-            list.add(questionnaire);
-            return list;
-          } else {
-            return list;
-          }
-        } catch (final Exception e) {
-          logger.error("Error looking up concept by code: {}", e.getMessage());
-          return list;
-        }
-      } else {
-        return list;
-      }
+    String codeValue = (url != null) ? extractCodeFromUrl(url.getValue()) : null;
+    if (StringUtils.isBlank(codeValue) && id != null) {
+      codeValue = id.getValue();
     }
 
-    // If ID is provided, do a direct lookup
-    if (id != null) {
-      final String codeValue = id.getValue();
-
+    if (!StringUtils.isBlank(codeValue)) {
+      // if (codeValue != null) {
+      // Direct lookup by code - much simpler
       try {
-        final Concept concept = TerminologyUtility.getConcept(searchService, "LOINC",
-            "Regenstrief Institute", "2.78", codeValue);
+        final Terminology latestTerminologyVersion = TerminologyUtility
+            .getLatestTerminologyVersion(searchService, LOINC_SYSTEM, LOINC_PUBLISHER);
+        final Concept concept =
+            TerminologyUtility.getConcept(searchService, latestTerminologyVersion, codeValue);
 
         if (concept != null && isQuestionnaireConcept(concept)) {
           final Questionnaire questionnaire =
               FhirUtilityR4.toR4Questionnaire(concept, searchService);
-          // Populate full content for ID searches to match LOINC FHIR server
+          // Populate full content for URL searches to match LOINC FHIR server
           // behavior
-          FhirUtilityR4.populateQuestionnaire(questionnaire, searchService);
+          FhirUtilityR4.populateQuestionnaire(questionnaire, searchService,
+              latestTerminologyVersion);
           list.add(questionnaire);
-          return list; // Return immediately with single result
+          return list;
         } else {
-          return list; // Return empty list
+          return list;
         }
       } catch (final Exception e) {
         logger.error("Error looking up concept by code: {}", e.getMessage());
-        return list; // Return empty list on error
+        return list;
       }
+      // } else {
+      // return list;
+      // }
     }
+    //
+    // // If URL is provided, do a direct lookup by code
+    // if (url != null) {
+    // final String codeValue = extractCodeFromUrl(url.getValue());
+    //
+    // if (codeValue != null) {
+    // // Direct lookup by code - much simpler
+    // try {
+    // final Terminology latestTerminologyVersion =
+    // TerminologyUtility.getLatestTerminologyVersion(searchService,
+    // LOINC_SYSTEM, LOINC_PUBLISHER);
+    // final Concept concept = TerminologyUtility.getConcept(searchService,
+    // latestTerminologyVersion, codeValue);
+    //
+    // if (concept != null && isQuestionnaireConcept(concept)) {
+    // final Questionnaire questionnaire =
+    // FhirUtilityR4.toR4Questionnaire(concept, searchService);
+    // // Populate full content for URL searches to match LOINC FHIR server
+    // // behavior
+    // FhirUtilityR4.populateQuestionnaire(questionnaire, searchService,
+    // latestTerminologyVersion);
+    // list.add(questionnaire);
+    // return list;
+    // } else {
+    // return list;
+    // }
+    // } catch (final Exception e) {
+    // logger.error("Error looking up concept by code: {}", e.getMessage());
+    // return list;
+    // }
+    // } else {
+    // return list;
+    // }
+    // }
+    //
+    // // If ID is provided, do a direct lookup
+    // if (id != null) {
+    // final String codeValue = id.getValue();
+    //
+    // try {
+    // final Terminology latestTerminologyVersion =
+    // TerminologyUtility.getLatestTerminologyVersion(searchService,
+    // LOINC_SYSTEM, LOINC_PUBLISHER);
+    // final Concept concept = TerminologyUtility.getConcept(searchService,
+    // latestTerminologyVersion, codeValue);
+    //
+    // if (concept != null && isQuestionnaireConcept(concept)) {
+    // final Questionnaire questionnaire =
+    // FhirUtilityR4.toR4Questionnaire(concept, searchService);
+    // // Populate full content for ID searches to match LOINC FHIR server
+    // // behavior
+    // FhirUtilityR4.populateQuestionnaire(questionnaire, searchService,
+    // latestTerminologyVersion);
+    // list.add(questionnaire);
+    // return list; // Return immediately with single result
+    // } else {
+    // return list; // Return empty list
+    // }
+    // } catch (final Exception e) {
+    // logger.error("Error looking up concept by code: {}", e.getMessage());
+    // return list; // Return empty list on error
+    // }
+    // }
 
     // Add additional search filters if provided
     if (code != null) {
@@ -446,12 +501,6 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
     if (description != null) {
       questionnaireParams.getFilters().put("definitions.definition", description.getValue());
     }
-
-    // Note: identifier parameter is not used for code filtering to avoid
-    // conflicts
-    // if (identifier != null) {
-    // questionnaireParams.getFilters().put("code", identifier.getValue());
-    // }
 
     if (publisher != null) {
       questionnaireParams.getFilters().put("publisher", publisher.getValue());
@@ -485,15 +534,9 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
     }
 
     for (final Concept concept : concepts) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("Processing concept: {} (code: {})", concept.getName(), concept.getCode());
-      }
 
       // Verify this is a questionnaire concept
       if (!isQuestionnaireConcept(concept)) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("Concept {} is not a questionnaire concept", concept.getCode());
-        }
         continue;
       }
 
@@ -516,12 +559,6 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
         logger.debug("Questionnaire {} matched search criteria, adding to results",
             questionnaire.getId());
       }
-
-      // For general search results, don't populate with questions and answers
-      // to keep response size manageable
-      // Full population happens when retrieving individual questionnaires or
-      // searching by specific URL/ID
-      // FhirUtilityR4.populateQuestionnaire(questionnaire, searchService);
 
       list.add(questionnaire);
       if (logger.isDebugEnabled()) {

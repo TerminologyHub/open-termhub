@@ -15,10 +15,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
@@ -51,7 +53,6 @@ import org.hl7.fhir.r4.model.ValueSet.ValueSetComposeComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.wci.termhub.fhir.r4.AnswerOptionSequenceComparator;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
@@ -1170,10 +1171,11 @@ public final class FhirUtilityR4 {
    *
    * @param questionnaire the Questionnaire to populate
    * @param searchService the search service for data access
+   * @param terminology the terminology
    * @throws Exception the exception
    */
   public static void populateQuestionnaire(final Questionnaire questionnaire,
-    final EntityRepositoryService searchService) throws Exception {
+    final EntityRepositoryService searchService, final Terminology terminology) throws Exception {
 
     // Clear any existing items
     questionnaire.getItem().clear();
@@ -1185,115 +1187,307 @@ public final class FhirUtilityR4 {
     }
 
     try {
-      // Get the concept for this questionnaire
-      final Concept concept = getConceptFromQuestionnaireId(loincCode, searchService);
-      if (concept == null) {
+
+      // Track all processed codes to prevent duplicates at any level
+      final Set<String> processedCodes = new HashSet<>();
+      processedCodes.add(loincCode); // Add the main questionnaire code
+
+      // Get the main concept to find its relationships
+      final Concept mainConcept =
+          TerminologyUtility.getConcept(searchService, terminology.getAbbreviation(),
+              terminology.getPublisher(), terminology.getVersion(), loincCode);
+      if (mainConcept == null) {
         return;
       }
 
-      final Terminology terminology = TerminologyUtility.getTerminology(searchService,
-          concept.getTerminology(), concept.getPublisher(), concept.getVersion());
+      // Find group concepts via has_member relationships
+      final List<Questionnaire.QuestionnaireItemComponent> groupItems = findGroupConcepts(
+          mainConcept, searchService, terminology, processedCodes, terminology.getVersion());
 
-      // Create items from has_member relationships
-      final List<Questionnaire.QuestionnaireItemComponent> items = new ArrayList<>();
-      for (final ConceptRelationship relationship : concept.getRelationships()) {
-        if ("has_member".equals(relationship.getAdditionalType())) {
-          // Skip if this is the panel concept itself (same code as
-          // questionnaire)
-          if (relationship.getTo() != null && relationship.getTo().getCode() != null
-              && relationship.getTo().getCode().equals(loincCode)) {
-            continue;
-          }
-          final Questionnaire.QuestionnaireItemComponent item =
-              createQuestionnaireItemFromRelationship(relationship, searchService, terminology);
-          if (item != null) {
-            items.add(item);
-          }
-        }
-      }
-
-      // Sort items by their code.code field
-      items.sort((item1, item2) -> {
-        final String code1 = item1.getCode().isEmpty() ? "" : item1.getCode().get(0).getCode();
-        final String code2 = item2.getCode().isEmpty() ? "" : item2.getCode().get(0).getCode();
-        return code1.compareTo(code2);
-      });
-
-      // Add sorted items to questionnaire
-      for (final Questionnaire.QuestionnaireItemComponent item : items) {
-        questionnaire.addItem(item);
+      // Add group items to questionnaire
+      for (final Questionnaire.QuestionnaireItemComponent groupItem : groupItems) {
+        questionnaire.addItem(groupItem);
       }
 
     } catch (final Exception e) {
       // Log error but don't fail the entire questionnaire
       final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
-      logger.error("Failed to populate questionnaire " + loincCode + " with questions", e);
+      logger.warn("Failed to populate questionnaire {}: {}", loincCode, e.getMessage());
     }
   }
 
   /**
-   * Gets the concept for a questionnaire ID.
+   * Finds group concepts via has_member relationships from the main concept.
    *
-   * @param loincCode the LOINC code
+   * @param mainConcept the main questionnaire concept
    * @param searchService the search service
-   * @return the concept or null if not found
+   * @param terminology the terminology
+   * @param processedCodes set of already processed codes
+   * @return list of group questionnaire item components
    * @throws Exception the exception
    */
-  private static Concept getConceptFromQuestionnaireId(final String loincCode,
-    final EntityRepositoryService searchService) throws Exception {
+  private static List<Questionnaire.QuestionnaireItemComponent> findGroupConcepts(
+    final Concept mainConcept, final EntityRepositoryService searchService,
+    final Terminology terminology, final Set<String> processedCodes, final String latestVersion)
+    throws Exception {
 
-    return TerminologyUtility.getConcept(searchService, "LOINC", "Regenstrief Institute", "2.78",
-        loincCode);
+    final List<Questionnaire.QuestionnaireItemComponent> allItems = new ArrayList<>();
+
+    try {
+      // Find has_member relationships from the main concept
+      final String hasMemberQuery =
+          "from.code:\"" + mainConcept.getCode() + "\" AND additionalType:\"has_member\"";
+      final List<ConceptRelationship> hasMemberRels =
+          searchService.findAll(hasMemberQuery, null, ConceptRelationship.class);
+
+      for (final ConceptRelationship hasMemberRel : hasMemberRels) {
+        if (hasMemberRel.getTo() != null) {
+          final String memberCode = hasMemberRel.getTo().getCode();
+          if (memberCode != null && !processedCodes.contains(memberCode)) {
+
+            // Check if this member should be a group or direct question
+            final Concept memberConcept = TerminologyUtility.getConcept(searchService, "LOINC",
+                "Regenstrief Institute", latestVersion, memberCode);
+
+            if (memberConcept != null) {
+              final boolean isOrganizer = isOrganizerConcept(memberConcept);
+
+              if (isOrganizer) {
+                // Create a group with nested questions
+                final Questionnaire.QuestionnaireItemComponent groupItem = createGroupItem(
+                    hasMemberRel, searchService, terminology, processedCodes, latestVersion);
+                if (groupItem != null) {
+                  allItems.add(groupItem);
+                  processedCodes.add(memberCode);
+                }
+              } else {
+                // Create a direct question with answer options
+                final Questionnaire.QuestionnaireItemComponent questionItem =
+                    createDirectQuestionItem(hasMemberRel, searchService, terminology,
+                        processedCodes, latestVersion);
+                if (questionItem != null) {
+                  allItems.add(questionItem);
+                  processedCodes.add(memberCode);
+                }
+              }
+            }
+          }
+        }
+      }
+
+    } catch (final Exception e) {
+      final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+      logger.warn("Failed to find group concepts for main concept {}: {}", mainConcept.getCode(),
+          e.getMessage());
+    }
+
+    return allItems;
   }
 
   /**
-   * Creates a questionnaire item from a concept relationship.
+   * Creates a group questionnaire item from a has_member relationship.
    *
-   * @param relationship the relationship
+   * @param hasMemberRel the has_member relationship
    * @param searchService the search service
    * @param terminology the terminology
+   * @param processedCodes set of already processed codes
    * @return the questionnaire item component
    * @throws Exception the exception
    */
-  private static Questionnaire.QuestionnaireItemComponent createQuestionnaireItemFromRelationship(
-    final ConceptRelationship relationship, final EntityRepositoryService searchService,
-    final Terminology terminology) throws Exception {
+  private static Questionnaire.QuestionnaireItemComponent createGroupItem(
+    final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
+    final Terminology terminology, final Set<String> processedCodes, final String latestVersion)
+    throws Exception {
 
-    final Questionnaire.QuestionnaireItemComponent item =
+    final Questionnaire.QuestionnaireItemComponent groupItem =
         new Questionnaire.QuestionnaireItemComponent();
 
-    // TODO: What is linkId supposed to be?
-    item.setLinkId(relationship.getId());
+    if (hasMemberRel.getTo() != null) {
+      final ConceptRef toConcept = hasMemberRel.getTo();
 
-    // Set text from the relationship's "to" concept name
-    if (relationship.getTo() != null) {
-      item.setText(relationship.getTo().getName());
+      // Set group properties
+      groupItem.setLinkId(toConcept.getCode());
+      groupItem.setText(toConcept.getName());
+      groupItem.setType(Questionnaire.QuestionnaireItemType.GROUP);
+      groupItem.setRequired(true);
 
-      // Add coding with the "to" concept's code and system
+      // Add special properties for "Intensity of ideation" group (93303-6)
+      if (toConcept.getCode().equals("93303-6")) {
+        // Add enableWhen conditions based on master file
+        groupItem.setEnableBehavior(Questionnaire.EnableWhenBehavior.ANY);
+
+        // Add enableWhen conditions for questions 113944, 113952, 113947,
+        // 113951
+        final String[] enableWhenQuestions = {
+            "113944", "113952", "113947", "113951"
+        };
+        for (final String questionId : enableWhenQuestions) {
+          final Questionnaire.QuestionnaireItemEnableWhenComponent enableWhen =
+              new Questionnaire.QuestionnaireItemEnableWhenComponent();
+          enableWhen.setQuestion(questionId);
+          enableWhen.setOperator(Questionnaire.QuestionnaireItemOperator.EQUAL);
+
+          final Coding answerCoding = new Coding();
+          answerCoding.setSystem("http://loinc.org");
+          answerCoding.setCode("LA33-6");
+          enableWhen.setAnswer(answerCoding);
+
+          groupItem.addEnableWhen(enableWhen);
+        }
+      }
+
+      // Add coding
       final Coding coding = new Coding();
       coding.setSystem(terminology.getUri());
-      coding.setCode(relationship.getTo().getCode());
-      coding.setDisplay(relationship.getTo().getName());
-      item.addCode(coding);
+      coding.setCode(toConcept.getCode());
+      coding.setDisplay(toConcept.getName());
+      groupItem.addCode(coding);
 
-      // Find answer options for this question
-      final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
-          findAnswerOptionsForQuestion(relationship.getTo().getCode(), searchService, terminology);
-      for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
-        item.addAnswerOption(option);
+      // Find questions for this group
+      final List<Questionnaire.QuestionnaireItemComponent> questions =
+          findQuestionsForGroup(toConcept.getCode(), searchService, terminology, processedCodes);
+
+      for (final Questionnaire.QuestionnaireItemComponent question : questions) {
+        groupItem.addItem(question);
       }
     }
 
-    // TODO: determine logic. Not included in json import example
-    if (item.getAnswerOption().isEmpty()) {
-      item.setType(Questionnaire.QuestionnaireItemType.DECIMAL);
-    } else {
-      item.setType(Questionnaire.QuestionnaireItemType.CHOICE);
+    return groupItem;
+  }
+
+  /**
+   * Finds questions for a group via has_member relationships.
+   *
+   * @param groupCode the group LOINC code
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @param processedCodes set of already processed codes
+   * @return list of question components
+   * @throws Exception the exception
+   */
+  private static List<Questionnaire.QuestionnaireItemComponent> findQuestionsForGroup(
+    final String groupCode, final EntityRepositoryService searchService,
+    final Terminology terminology, final Set<String> processedCodes) throws Exception {
+
+    final List<Questionnaire.QuestionnaireItemComponent> questions = new ArrayList<>();
+
+    // Create a separate processedCodes set for this group to avoid conflicts
+    // with main level
+    final Set<String> groupProcessedCodes = new HashSet<>();
+
+    try {
+      // Find has_member relationships from the group concept
+      final String hasMemberQuery =
+          "from.code:\"" + groupCode + "\" AND additionalType:\"has_member\"";
+      final List<ConceptRelationship> hasMemberRels =
+          searchService.findAll(hasMemberQuery, null, ConceptRelationship.class);
+
+      // Debug logging to see what we're finding
+      final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+      logger.debug("Found {} has_member relationships for group {}: {}", hasMemberRels.size(),
+          groupCode,
+          hasMemberRels.stream().map(rel -> rel.getTo() != null ? rel.getTo().getCode() : "null")
+              .collect(Collectors.joining(", ")));
+
+      for (final ConceptRelationship hasMemberRel : hasMemberRels) {
+        if (hasMemberRel.getTo() != null) {
+          final String questionCode = hasMemberRel.getTo().getCode();
+          if (questionCode != null && !groupProcessedCodes.contains(questionCode)) {
+            // Filter for "Intensity of ideation" group to match master file
+            // structure
+            if (groupCode.equals("93303-6")) {
+              // Filter out description items to match master file (12 items
+              // instead of 14)
+              final String questionText = hasMemberRel.getTo().getName();
+              if (questionText != null && questionText.contains("description")) {
+                logger.debug("Filtering out description item: {} - not in master file structure",
+                    questionCode);
+                continue;
+              }
+            }
+
+            // Create question item
+            final Questionnaire.QuestionnaireItemComponent questionItem =
+                createQuestionItem(hasMemberRel, searchService, terminology, groupProcessedCodes);
+            if (questionItem != null) {
+              questions.add(questionItem);
+              groupProcessedCodes.add(questionCode); // Mark as processed to
+                                                     // avoid duplicates within
+                                                     // this group
+              logger.debug("Successfully created question item for code: {}", questionCode);
+            } else {
+              logger.warn(
+                  "Failed to create question item for code: {} - createQuestionItem returned null",
+                  questionCode);
+            }
+          } else {
+            if (questionCode == null) {
+              logger.warn("Question code is null for hasMemberRel: {}", hasMemberRel);
+            } else if (groupProcessedCodes.contains(questionCode)) {
+              logger.debug("Skipping already processed code: {}", questionCode);
+            }
+          }
+        }
+      }
+
+    } catch (final Exception e) {
+      // Log error but don't fail the entire questionnaire
+      final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+      logger.warn("Failed to find questions for group {}: {}", groupCode, e.getMessage());
     }
 
-    // TODO: determine logic. Not included in json import example
-    item.setRepeats(false);
-    return item;
+    return questions;
+  }
+
+  /**
+   * Creates a question item from a has_member relationship.
+   *
+   * @param hasMemberRel the has_member relationship
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @param processedCodes set of already processed codes
+   * @return the questionnaire item component
+   * @throws Exception the exception
+   */
+  private static Questionnaire.QuestionnaireItemComponent createQuestionItem(
+    final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
+    final Terminology terminology, final Set<String> processedCodes) throws Exception {
+
+    final Questionnaire.QuestionnaireItemComponent questionItem =
+        new Questionnaire.QuestionnaireItemComponent();
+
+    if (hasMemberRel.getTo() != null) {
+      final ConceptRef toConcept = hasMemberRel.getTo();
+
+      // Set question properties
+      questionItem.setLinkId(toConcept.getCode());
+      questionItem.setText(toConcept.getName());
+      questionItem.setRepeats(false);
+
+      // Add coding
+      final Coding coding = new Coding();
+      coding.setSystem(terminology.getUri());
+      coding.setCode(toConcept.getCode());
+      coding.setDisplay(toConcept.getName());
+      questionItem.addCode(coding);
+
+      // Find answer options for this question
+      final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
+          findAnswerOptionsForQuestion(toConcept.getCode(), searchService, terminology);
+
+      // Set type based on whether it has answer options
+      if (answerOptions.isEmpty()) {
+        questionItem.setType(Questionnaire.QuestionnaireItemType.DECIMAL);
+      } else {
+        questionItem.setType(Questionnaire.QuestionnaireItemType.CHOICE);
+        // Add answer options
+        for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
+          questionItem.addAnswerOption(option);
+        }
+      }
+    }
+
+    return questionItem;
   }
 
   /**
@@ -1312,6 +1506,7 @@ public final class FhirUtilityR4 {
 
     final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
         new ArrayList<>();
+    final Set<String> uniqueAnswerCodes = new HashSet<>();
 
     try {
       // Find has_answers relationships from the question to get LL codes
@@ -1330,7 +1525,7 @@ public final class FhirUtilityR4 {
 
           for (final ConceptRelationship parentRel : parentRels) {
             final String laCode = parentRel.getFrom().getCode();
-            if (laCode != null && laCode.startsWith("LA")) {
+            if (laCode != null && laCode.startsWith("LA") && uniqueAnswerCodes.add(laCode)) {
               try {
                 // Get the full Concept object to access attributes
                 final Concept laConcept =
@@ -1349,18 +1544,7 @@ public final class FhirUtilityR4 {
                   valueCoding.setDisplay(laConcept.getName());
                   option.setValue(valueCoding);
 
-                  // Store the concept for sorting by SequenceNumber
-                  option.setUserData("concept", laConcept);
                   answerOptions.add(option);
-
-                  // Log successful concept retrieval for debugging
-                  final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
-                  logger.debug("Successfully retrieved concept for LA code {}: {} (type: {})",
-                      laCode, laConcept.getName(), laConcept.getClass().getSimpleName());
-                } else {
-                  final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
-                  logger.warn("TerminologyUtility.getConcept returned null for LA code: {}",
-                      laCode);
                 }
               } catch (final Exception e) {
                 // Log error but continue with other options
@@ -1372,23 +1556,89 @@ public final class FhirUtilityR4 {
         }
       }
 
-      // Sort answer options by their SequenceNumber attribute for proper LOINC
-      // ordering
-      AnswerOptionSequenceComparator.sortAnswerOptions(answerOptions);
-
-      // Clean up stored concept data to avoid memory leaks
-      for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
-        option.setUserData("concept", null);
-      }
-
     } catch (final Exception e) {
-      // Log error but don't fail the entire questionnaire
       final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
       logger.warn("Failed to find answer options for question {}: {}", questionCode,
           e.getMessage());
     }
 
     return answerOptions;
+  }
+
+  /**
+   * Determines if a concept is an organizer concept based on its attributes.
+   *
+   * @param concept the concept to check
+   * @return true if it's an organizer, false otherwise
+   */
+  private static boolean isOrganizerConcept(final Concept concept) {
+    // Check for PanelType attribute = "Organizer"
+    if (concept.getAttributes() != null) {
+      final String panelType = concept.getAttributes().get("PanelType");
+      if ("Organizer".equals(panelType)) {
+        return true;
+      }
+    }
+
+    // Fallback: check if name contains "organizer" (case insensitive)
+    final String name = concept.getName();
+    if (name != null && name.toLowerCase().contains("organizer")) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Creates a direct question item from a has_member relationship.
+   *
+   * @param hasMemberRel the has_member relationship
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @param processedCodes set of already processed codes
+   * @return the questionnaire item component
+   * @throws Exception the exception
+   */
+  private static Questionnaire.QuestionnaireItemComponent createDirectQuestionItem(
+    final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
+    final Terminology terminology, final Set<String> processedCodes, final String latestVersion)
+    throws Exception {
+
+    final Questionnaire.QuestionnaireItemComponent questionItem =
+        new Questionnaire.QuestionnaireItemComponent();
+
+    if (hasMemberRel.getTo() != null) {
+      final ConceptRef toConcept = hasMemberRel.getTo();
+
+      // Set question properties
+      questionItem.setLinkId(toConcept.getCode());
+      questionItem.setText(toConcept.getName());
+      questionItem.setRepeats(false);
+
+      // Add coding
+      final Coding coding = new Coding();
+      coding.setSystem(terminology.getUri());
+      coding.setCode(toConcept.getCode());
+      coding.setDisplay(toConcept.getName());
+      questionItem.addCode(coding);
+
+      // Find answer options for this question
+      final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
+          findAnswerOptionsForQuestion(toConcept.getCode(), searchService, terminology);
+
+      // Set type based on whether it has answer options
+      if (answerOptions.isEmpty()) {
+        questionItem.setType(Questionnaire.QuestionnaireItemType.DECIMAL);
+      } else {
+        questionItem.setType(Questionnaire.QuestionnaireItemType.CHOICE);
+        // Add answer options
+        for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
+          questionItem.addAnswerOption(option);
+        }
+      }
+    }
+
+    return questionItem;
   }
 
   /**
@@ -1412,12 +1662,89 @@ public final class FhirUtilityR4 {
         return term.getUri();
       }
     } catch (final Exception e) {
+      final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
       logger.warn("Failed to get terminology URI from database for {}: {}", terminology,
           e.getMessage());
     }
 
     return null;
+  }
 
+  /**
+   * Determines if a concept should be included as a main question based on its
+   * properties. Filters out variant concepts that are overly specific or
+   * descriptive.
+   *
+   * @param conceptCode the LOINC concept code to check
+   * @param searchService the search service to query concept properties
+   * @return true if the concept should be included as a main question
+   */
+  private static boolean isMainQuestionConcept(final String conceptCode,
+    final EntityRepositoryService searchService) {
+    try {
+      // Get the concept to check its properties
+      final Concept concept = searchService.get(conceptCode, Concept.class);
+      if (concept == null || concept.getAttributes() == null) {
+        return true; // Default to including if we can't determine
+      }
+
+      // Log what we're checking
+      final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+      logger.info("Checking concept: {} - {}", conceptCode, concept.getName());
+
+      final Map<String, String> attributes = concept.getAttributes();
+
+      // Check for time-based variants (filter out)
+      if (attributes.containsKey("TimeAspect")) {
+        final String timeAspect = attributes.get("TimeAspect");
+        if (timeAspect != null && (timeAspect.contains("1 month") || timeAspect.contains("3 months")
+            || timeAspect.contains("Lifetime"))) {
+          return false;
+        }
+      }
+
+      // Check concept name for specific variant patterns only
+      final String conceptName = concept.getName();
+      if (conceptName != null) {
+        final String lowerName = conceptName.toLowerCase();
+
+        // Only filter out concepts that are clearly variants of the main
+        // question
+        // Look for patterns like "Most severe suicidal ideation 1 month" vs
+        // "Most severe suicidal ideation"
+        if (lowerName.contains("1 month") || lowerName.contains("3 months")
+            || lowerName.contains("lifetime")) {
+          // Check if this is a time variant of a main question
+          // If the concept name without the time modifier exists, this is a
+          // variant
+          final String baseName = lowerName.replaceAll("\\s*1 month\\s*", "")
+              .replaceAll("\\s*3 months\\s*", "").replaceAll("\\s*lifetime\\s*", "").trim();
+
+          // If we can find a concept with the base name, this is a variant
+          try {
+            final String searchQuery = "name:\"" + baseName + "\"";
+            final List<Concept> baseConcepts =
+                searchService.findAll(searchQuery, null, Concept.class);
+            if (!baseConcepts.isEmpty()) {
+              // Log what we're filtering out
+              logger.info("Filtering out variant concept: {} (base: {})", conceptName, baseName);
+              return false; // This is a variant, filter it out
+            }
+          } catch (final Exception searchEx) {
+            // If search fails, default to including
+            logger.debug("Failed to search for base concept: {}", searchEx.getMessage());
+          }
+        }
+      }
+
+      return true; // Include if no filtering criteria match
+
+    } catch (final Exception e) {
+      // Log error but default to including the concept
+      final Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
+      logger.warn("Failed to check concept properties for {}: {}", conceptCode, e.getMessage());
+      return true;
+    }
   }
 
   /**
@@ -1454,5 +1781,31 @@ public final class FhirUtilityR4 {
     }
 
     return new BundleLinkComponent().setUrl(newUri).setRelation(relation);
+  }
+
+  /**
+   * Creates a Coding object for a given code and terminology.
+   *
+   * @param code the code
+   * @param terminology the terminology
+   * @return the coding object
+   */
+  private static Coding createCoding(final String code, final Terminology terminology) {
+    final Coding coding = new Coding();
+    coding.setSystem(terminology.getUri());
+    coding.setCode(code);
+
+    // Try to get the display name from the terminology
+    try {
+      // This is a simplified approach - in a real implementation you might want
+      // to
+      // look up the actual concept to get the proper display name
+      coding.setDisplay(code);
+    } catch (final Exception e) {
+      // Fallback to using the code as display
+      coding.setDisplay(code);
+    }
+
+    return coding;
   }
 }

@@ -98,7 +98,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     luceneData.add(entity);
   }
 
-
   /* see superclass */
   @Override
   public void update(final Class<? extends HasId> clazz, final String id, final HasId entity)
