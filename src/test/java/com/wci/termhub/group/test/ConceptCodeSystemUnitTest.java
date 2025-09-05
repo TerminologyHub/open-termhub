@@ -90,7 +90,7 @@ public class ConceptCodeSystemUnitTest extends AbstractTerminologyTest {
   public void testFindConceptsByName() throws Exception {
     // Search for concepts with "diabetes" in their name
     final SearchParameters params = new SearchParameters();
-    params.setQuery("name: diabetes AND terminology: SNOMEDCT");
+    params.setQuery("name: diabetes AND terminology: SNOMEDCT_US");
     params.setLimit(10);
 
     final ResultList<Concept> results = searchService.find(params, Concept.class);

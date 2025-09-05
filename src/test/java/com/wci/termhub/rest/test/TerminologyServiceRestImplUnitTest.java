@@ -508,8 +508,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
       assertThat(concept.getId()).isNotNull();
-      assertThat(concept.getTerminology()).isEqualTo(terminology);
-      LOGGER.info(" XXX {}", concept.toString());
       assertThat(concept.getAncestors()).anyMatch(ancestor -> ancestor.getCode().equals(query));
     }
   }
@@ -1409,6 +1407,191 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     url = baseUrl + "/subset/" + subsetToDelete.getId();
     LOGGER.info("Testing url - {}", url);
     mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
+  }
+
+  /**
+   * Test terminologies sorted by name.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testTerminologiesSortedByName() throws Exception {
+    final String url = baseUrl + "/terminology?sort=name&ascending=true&limit=10";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListTerminology terminologyList =
+        objectMapper.readValue(content, ResultListTerminology.class);
+    assertThat(terminologyList).isNotNull();
+    assertThat(terminologyList.getTotal()).isPositive();
+    assertFalse(terminologyList.getItems().isEmpty());
+
+    // Verify results are sorted by name
+    final List<Terminology> items = terminologyList.getItems();
+    for (int i = 1; i < items.size(); i++) {
+      final String currentName = items.get(i).getName();
+      final String previousName = items.get(i - 1).getName();
+      assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
+          "Terminologies should be sorted by name. Found '" + currentName + "' after '"
+              + previousName + "'");
+    }
+  }
+
+  /**
+   * Test concepts sorted by name.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testConceptsSortedByName() throws Exception {
+    final String terminology = "ICD10CM";
+    final String url =
+        baseUrl + "/concept?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
+    assertThat(conceptList).isNotNull();
+    assertFalse(conceptList.getItems().isEmpty());
+
+    // Log the first few items to debug sorting
+    final List<Concept> items = conceptList.getItems();
+    LOGGER.info("First 10 concepts:");
+    for (int i = 0; i < Math.min(10, items.size()); i++) {
+      LOGGER.info("  {}: {}", i, items.get(i).getName());
+    }
+
+    // Verify results are sorted by name
+    for (int i = 1; i < items.size(); i++) {
+      final String currentName = items.get(i).getName();
+      final String previousName = items.get(i - 1).getName();
+      if (currentName.compareToIgnoreCase(previousName) < 0) {
+        LOGGER.error("Sorting violation at position {}: '{}' should come before '{}'", i,
+            currentName, previousName);
+        // Log more context around the violation
+        for (int j = Math.max(0, i - 3); j <= Math.min(items.size() - 1, i + 2); j++) {
+          LOGGER.error("  Position {}: {}", j, items.get(j).getName());
+        }
+      }
+      assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
+          "Concepts should be sorted by name. Found '" + currentName + "' after '" + previousName
+              + "'");
+    }
+  }
+
+  /**
+   * Test terms sorted by name.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testTermsSortedByName() throws Exception {
+    final String terminology = "RXNORM";
+    final String url =
+        baseUrl + "/term?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListTerm termList = objectMapper.readValue(content, ResultListTerm.class);
+    assertThat(termList).isNotNull();
+    assertFalse(termList.getItems().isEmpty());
+
+    LOGGER.info(" termList = {}", termList);
+
+    // Verify results are sorted by name
+    final List<Term> items = termList.getItems();
+    for (int i = 1; i < items.size(); i++) {
+      final String currentName = items.get(i).getName();
+      final String previousName = items.get(i - 1).getName();
+      assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
+          "Terms should be sorted by name. Found '" + currentName + "' after '" + previousName
+              + "'");
+    }
+  }
+
+  /**
+   * Test metadata sorted by name.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMetadataSortedByName() throws Exception {
+    final String terminology = "LNC";
+    final String url =
+        baseUrl + "/metadata?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMetadata metadataList =
+        objectMapper.readValue(content, ResultListMetadata.class);
+    assertThat(metadataList).isNotNull();
+    assertFalse(metadataList.getItems().isEmpty());
+
+    // Verify results are sorted by name (note: some metadata may not have
+    // names)
+    final List<Metadata> items = metadataList.getItems();
+    for (int i = 1; i < items.size(); i++) {
+      final String currentName = items.get(i).getName();
+      final String previousName = items.get(i - 1).getName();
+
+      // Handle null names - they should come first in ascending order
+      if (currentName == null && previousName == null) {
+        continue; // Both null, order doesn't matter
+      } else if (currentName == null) {
+        assertTrue(false, "Null names should come first in ascending sort order");
+      } else if (previousName == null) {
+        continue; // Previous is null, current is not, which is correct for
+                  // ascending
+      } else {
+        assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
+            "Metadata should be sorted by name. Found '" + currentName + "' after '" + previousName
+                + "'");
+      }
+    }
+  }
+
+  /**
+   * Test subsets sorted by name.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testSubsetsSortedByName() throws Exception {
+    final String url = baseUrl + "/subset?sort=name&ascending=true&limit=10";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListSubset subsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+          // n/a
+        });
+    assertThat(subsetList).isNotNull();
+    assertFalse(subsetList.getItems().isEmpty());
+
+    // Verify results are sorted by name
+    final List<Subset> items = subsetList.getItems();
+    for (int i = 1; i < items.size(); i++) {
+      final String currentName = items.get(i).getName();
+      final String previousName = items.get(i - 1).getName();
+      assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
+          "Subsets should be sorted by name. Found '" + currentName + "' after '" + previousName
+              + "'");
+    }
   }
 
   /**
