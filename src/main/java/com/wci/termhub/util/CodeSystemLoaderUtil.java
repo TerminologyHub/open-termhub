@@ -181,6 +181,10 @@ public final class CodeSystemLoaderUtil {
       LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}, time: {}",
           conceptCount, relationshipCount, termCount, (System.currentTimeMillis() - startTime));
 
+      // Free up some memory
+      relationshipBatch.clear();
+      termBatch.clear();
+
       LOGGER.info("  begin compute for ancestors");
       if (terminology.getAttributes() != null
           && terminology.getAttributes().containsKey(Terminology.Attributes.hierarchical.property())
@@ -487,16 +491,16 @@ public final class CodeSystemLoaderUtil {
 
         // Add ECL clause
         if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-          concept.getEclClauses().add(
-              propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
+          concept.getEclClauses()
+              .add(propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
         }
 
         relationships.add(relationship);
       }
 
       if ("relationship".equals(propertyType)) {
-        final ConceptRelationship relationship =
-            createRelationship(propertyNode, concept, terminology, terminologyCache, "relationship");
+        final ConceptRelationship relationship = createRelationship(propertyNode, concept,
+            terminology, terminologyCache, "relationship");
 
         // Process extensions for ECL clauses
         final JsonNode extensionNode = propertyNode.path("extension");

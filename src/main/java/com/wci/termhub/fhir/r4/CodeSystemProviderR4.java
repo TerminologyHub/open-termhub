@@ -34,7 +34,6 @@ import org.springframework.stereotype.Component;
 
 import com.wci.termhub.EnablePostLoadComputations;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
-import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
@@ -192,7 +191,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
     try {
 
       FhirUtilityR4.notSupportedSearchParams(request);
-      FhirUtilityR5.mutuallyExclusive("url", url, "system", system);
+      FhirUtilityR4.mutuallyExclusive("url", url, "system", system);
 
       final List<CodeSystem> list = new ArrayList<>();
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
