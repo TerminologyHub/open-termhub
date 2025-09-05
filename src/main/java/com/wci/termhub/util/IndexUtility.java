@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.SortedNumericDocValuesField;
@@ -266,21 +265,17 @@ public final class IndexUtility {
               break;
             case Keyword:
               // store as StringField (not TextField) for doc values / sorting
-              indexableFields.add(new StringField(
-                  indexName + "." + innerFieldAnnotation.suffix(),
-                  fieldValue.toString(),
-                  org.apache.lucene.document.Field.Store.NO));
+              indexableFields.add(new StringField(indexName + "." + innerFieldAnnotation.suffix(),
+                  fieldValue.toString(), org.apache.lucene.document.Field.Store.NO));
 
               if (isCollection) {
-                  indexableFields.add(
-                      new SortedSetDocValuesField(
-                          indexName + "." + innerFieldAnnotation.suffix(),
-                          new BytesRef(fieldValue.toString())));
+                indexableFields.add(
+                    new SortedSetDocValuesField(indexName + "." + innerFieldAnnotation.suffix(),
+                        new BytesRef(fieldValue.toString())));
               } else {
-                  indexableFields.add(
-                      new SortedDocValuesField(
-                          indexName + "." + innerFieldAnnotation.suffix(),
-                          new BytesRef(fieldValue.toString())));
+                indexableFields
+                    .add(new SortedDocValuesField(indexName + "." + innerFieldAnnotation.suffix(),
+                        new BytesRef(fieldValue.toString())));
               }
               break;
 

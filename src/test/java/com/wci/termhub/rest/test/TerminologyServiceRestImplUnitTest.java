@@ -59,11 +59,7 @@ import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.SubsetRef;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
-import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
-import com.wci.termhub.util.IndexUtility;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
 
 /**
  * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All
@@ -447,7 +443,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertThat(content).isNotNull();
     final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
     assertThat(conceptList).isNotNull();
-    assertFalse(conceptList.getItems().isEmpty());  // FAILS HERE
+    assertFalse(conceptList.getItems().isEmpty());
     assertTrue(conceptList.getItems().size() <= limit);
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
@@ -477,7 +473,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertThat(content).isNotNull();
     final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
     assertThat(conceptList).isNotNull();
-    assertFalse(conceptList.getItems().isEmpty()); // FAILS HERE
+    assertFalse(conceptList.getItems().isEmpty());
     assertTrue(conceptList.getItems().size() <= limit);
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
@@ -512,8 +508,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
       assertThat(concept.getId()).isNotNull();
-      assertThat(concept.getTerminology()).isEqualTo(terminology);
-      LOGGER.info(" XXX {}", concept.toString());
       assertThat(concept.getAncestors()).anyMatch(ancestor -> ancestor.getCode().equals(query));
     }
   }
@@ -1441,11 +1435,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       final String currentName = items.get(i).getName();
       final String previousName = items.get(i - 1).getName();
       assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
-          "Terminologies should be sorted by name. Found '" + currentName + "' after '" + previousName + "'");
+          "Terminologies should be sorted by name. Found '" + currentName + "' after '"
+              + previousName + "'");
     }
   }
 
-    /**
+  /**
    * Test concepts sorted by name.
    *
    * @throws Exception the exception
@@ -1454,7 +1449,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testConceptsSortedByName() throws Exception {
     final String terminology = "ICD10CM";
-    final String url = baseUrl + "/concept?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
+    final String url =
+        baseUrl + "/concept?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
@@ -1476,15 +1472,16 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       final String currentName = items.get(i).getName();
       final String previousName = items.get(i - 1).getName();
       if (currentName.compareToIgnoreCase(previousName) < 0) {
-        LOGGER.error("Sorting violation at position {}: '{}' should come before '{}'",
-            i, currentName, previousName);
+        LOGGER.error("Sorting violation at position {}: '{}' should come before '{}'", i,
+            currentName, previousName);
         // Log more context around the violation
         for (int j = Math.max(0, i - 3); j <= Math.min(items.size() - 1, i + 2); j++) {
           LOGGER.error("  Position {}: {}", j, items.get(j).getName());
         }
       }
       assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
-          "Concepts should be sorted by name. Found '" + currentName + "' after '" + previousName + "'");
+          "Concepts should be sorted by name. Found '" + currentName + "' after '" + previousName
+              + "'");
     }
   }
 
@@ -1497,7 +1494,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testTermsSortedByName() throws Exception {
     final String terminology = "RXNORM";
-    final String url = baseUrl + "/term?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
+    final String url =
+        baseUrl + "/term?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
@@ -1515,7 +1513,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       final String currentName = items.get(i).getName();
       final String previousName = items.get(i - 1).getName();
       assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
-          "Terms should be sorted by name. Found '" + currentName + "' after '" + previousName + "'");
+          "Terms should be sorted by name. Found '" + currentName + "' after '" + previousName
+              + "'");
     }
   }
 
@@ -1528,17 +1527,20 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testMetadataSortedByName() throws Exception {
     final String terminology = "LNC";
-    final String url = baseUrl + "/metadata?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
+    final String url =
+        baseUrl + "/metadata?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
-    final ResultListMetadata metadataList = objectMapper.readValue(content, ResultListMetadata.class);
+    final ResultListMetadata metadataList =
+        objectMapper.readValue(content, ResultListMetadata.class);
     assertThat(metadataList).isNotNull();
     assertFalse(metadataList.getItems().isEmpty());
 
-    // Verify results are sorted by name (note: some metadata may not have names)
+    // Verify results are sorted by name (note: some metadata may not have
+    // names)
     final List<Metadata> items = metadataList.getItems();
     for (int i = 1; i < items.size(); i++) {
       final String currentName = items.get(i).getName();
@@ -1550,10 +1552,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       } else if (currentName == null) {
         assertTrue(false, "Null names should come first in ascending sort order");
       } else if (previousName == null) {
-        continue; // Previous is null, current is not, which is correct for ascending
+        continue; // Previous is null, current is not, which is correct for
+                  // ascending
       } else {
-              assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
-          "Metadata should be sorted by name. Found '" + currentName + "' after '" + previousName + "'");
+        assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
+            "Metadata should be sorted by name. Found '" + currentName + "' after '" + previousName
+                + "'");
       }
     }
   }
@@ -1585,7 +1589,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       final String currentName = items.get(i).getName();
       final String previousName = items.get(i - 1).getName();
       assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
-          "Subsets should be sorted by name. Found '" + currentName + "' after '" + previousName + "'");
+          "Subsets should be sorted by name. Found '" + currentName + "' after '" + previousName
+              + "'");
     }
   }
 

@@ -11,13 +11,14 @@ package com.wci.termhub.test;
 
 import java.util.Collection;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.wci.termhub.util.StringUtility;
 
 /**
  * Base unit test.
  */
 public abstract class BaseUnitTest {
-
 
   /**
    * Gets the size.
@@ -138,15 +139,26 @@ public abstract class BaseUnitTest {
     public String getQuery() {
       final StringBuilder sb = new StringBuilder();
 
-      sb.append("terminology:").append(terminology);
+      if (terminology != null) {
+        sb.append(" terminology:").append(StringUtility.escapeQuery(terminology));
+      }
       if (version != null) {
-        sb.append(" AND version:").append(StringUtility.escapeQuery(version));
+        if (StringUtils.isNotBlank(sb)) {
+          sb.append(" AND ");
+        }
+        sb.append(" version:").append(StringUtility.escapeQuery(version));
       }
       if (code != null) {
-        sb.append(" AND code:").append(StringUtility.escapeQuery(code));
+        if (StringUtils.isNotBlank(sb)) {
+          sb.append(" AND ");
+        }
+        sb.append(" code:").append(StringUtility.escapeQuery(code));
       }
       if (name != null) {
-        sb.append(" AND name:").append(StringUtility.escapeQuery(name));
+        if (StringUtils.isNotBlank(sb)) {
+          sb.append(" AND ");
+        }
+        sb.append(" name:").append(StringUtility.escapeQuery(name));
       }
 
       return sb.toString();
