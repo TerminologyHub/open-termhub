@@ -59,8 +59,27 @@ public class DefaultQueryBuilder implements QueryBuilder {
   /* see superclass */
   @Override
   public String buildQuery(final String query) {
-    return (StringUtility.isEmpty(query) || query.equals("*") || query.equals("*:*")) ? "*:*"
-        : query;
+    if (StringUtility.isEmpty(query) || query.equals("*") || query.equals("*:*")) {
+      return "*:*";
+    }
+
+    // Handle name field queries for partial matching
+    if (query.matches("name\\s*:\\s*.*")) {
+      final String searchTerm = query.replaceFirst("name\\s*:\\s*", "").trim();
+      if (!searchTerm.isEmpty()) {
+        // Use normName field for partial matching (works for both Concept and Term)
+        return "normName:" + StringUtility.escapeQuery(searchTerm);
+      }
+    }
+
+    // Handle non-fielded queries to include partial matching on name fields
+    // This ensures non-fielded queries like "cancer" also search in name fields
+    if (!query.matches(".*\\w+:.*")) {
+      // Non-fielded query - add partial matching for name fields
+      return "(" + query + ") OR (normName:" + StringUtility.escapeQuery(query) + ")";
+    }
+
+    return query;
   }
 
   /* see superclass */
@@ -81,8 +100,27 @@ public class DefaultQueryBuilder implements QueryBuilder {
   /* see superclass */
   @Override
   public String buildEscapedQuery(final String query) {
-    return (StringUtility.isEmpty(query) || query.equals("*") || query.equals("*:*")) ? "*:*"
-        : ("\"" + StringUtility.escapeQuery(query) + "\"");
+    if (StringUtility.isEmpty(query) || query.equals("*") || query.equals("*:*")) {
+      return "*:*";
+    }
+
+    // Handle name field queries for partial matching (same as buildQuery)
+    if (query.matches("name\\s*:\\s*.*")) {
+      final String searchTerm = query.replaceFirst("name\\s*:\\s*", "").trim();
+      if (!searchTerm.isEmpty()) {
+        // Use normName field for partial matching (works for both Concept and Term)
+        return "normName:" + StringUtility.escapeQuery(searchTerm);
+      }
+    }
+
+    // Handle non-fielded queries to include partial matching on name fields (same as buildQuery)
+    if (!query.matches(".*\\w+:.*")) {
+      // Non-fielded query - add partial matching for name fields
+      return "(\"" + StringUtility.escapeQuery(query) + "\") OR (normName:" + StringUtility.escapeQuery(query) + ")";
+    }
+
+    // For other fielded queries, escape with quotes and escape colons
+    return "\"" + StringUtility.escapeQuery(query) + "\"";
   }
 
 }

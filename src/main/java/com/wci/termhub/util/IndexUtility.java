@@ -259,20 +259,26 @@ public final class IndexUtility {
 
           switch (fieldType) {
             case Text:
-              indexableFields.add(new TextField(indexName, fieldValue.toString(),
-                  org.apache.lucene.document.Field.Store.NO));
+              // use inline here
+              indexableFields.add(new TextField(indexName + "." + innerFieldAnnotation.suffix(),
+                  fieldValue.toString(), org.apache.lucene.document.Field.Store.NO));
               break;
             case Keyword:
-              indexableFields.add(new TextField(indexName, fieldValue.toString(),
-                  org.apache.lucene.document.Field.Store.NO));
+              // store as StringField (not TextField) for doc values / sorting
+              indexableFields.add(new StringField(indexName + "." + innerFieldAnnotation.suffix(),
+                  fieldValue.toString(), org.apache.lucene.document.Field.Store.NO));
+
               if (isCollection) {
                 indexableFields.add(
-                    new SortedSetDocValuesField(indexName, new BytesRef(fieldValue.toString())));
+                    new SortedSetDocValuesField(indexName + "." + innerFieldAnnotation.suffix(),
+                        new BytesRef(fieldValue.toString())));
               } else {
                 indexableFields
-                    .add(new SortedDocValuesField(indexName, new BytesRef(fieldValue.toString())));
+                    .add(new SortedDocValuesField(indexName + "." + innerFieldAnnotation.suffix(),
+                        new BytesRef(fieldValue.toString())));
               }
               break;
+
             default:
               logger.debug("MultiField field not found Adding default field: {}", fieldType);
           }
@@ -347,12 +353,13 @@ public final class IndexUtility {
     for (int i = 0; i < sortFields.size(); i++) {
 
       final String sortField = sortFields.get(i);
+      final String javaFieldName = mapFieldToJavaField(sortField);
 
       java.lang.reflect.Field field = null;
       Class<?> currentClass = clazz;
       while (currentClass != null && field == null) {
         try {
-          field = currentClass.getDeclaredField(sortField);
+          field = currentClass.getDeclaredField(javaFieldName);
         } catch (final NoSuchFieldException e) {
           currentClass = currentClass.getSuperclass();
         }
@@ -392,6 +399,38 @@ public final class IndexUtility {
     }
 
     return new Sort(sortFieldArray);
+  }
+
+  /**
+   * Maps field names to Java field names. Strips .keyword suffix and other
+   * specific suffixes.
+   *
+   * @param searchField the search field
+   * @return the java field name
+   */
+  private static String mapFieldToJavaField(final String searchField) {
+
+    if (searchField == null) {
+      return null;
+    }
+
+    if (searchField.endsWith(".keyword")) {
+      return searchField.substring(0, searchField.lastIndexOf(".keyword"));
+    }
+
+    if (searchField.contains(".keyword")) {
+      return searchField.replace(".keyword", "");
+    }
+
+    if (searchField.endsWith(".ngram")) {
+      return searchField.substring(0, searchField.lastIndexOf(".ngram"));
+    }
+
+    if (searchField.contains(".ngram")) {
+      return searchField.replace(".ngram", "");
+    }
+
+    return searchField;
   }
 
   /**

@@ -14,6 +14,8 @@ import java.util.Objects;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.InnerField;
+import org.springframework.data.elasticsearch.annotations.MultiField;
 
 import com.wci.termhub.model.AbstractHasId;
 
@@ -28,7 +30,9 @@ public class TestDocument extends AbstractHasId {
   private String code;
 
   /** The name. */
-  @Field(type = FieldType.Keyword)
+  @MultiField(mainField = @Field(type = FieldType.Text), otherFields = {
+    @InnerField(suffix = "keyword", type = FieldType.Keyword)
+  })
   private String name;
 
   /** The description. */

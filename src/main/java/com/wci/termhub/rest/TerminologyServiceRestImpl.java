@@ -944,6 +944,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
+      logger.info("XXXXXXXXXXXXXXXXXXXX query for term: {}", query2);
+
       final SearchParameters searchParams =
           new SearchParameters(query2, offset, maxLimit, sort, ascending);
       if (active != null && active) {
