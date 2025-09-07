@@ -23,6 +23,9 @@ public enum PreferredTermConfig {
   /** The lnc. */
   LNC("LNC", "LPDN", "LOINC Parts Display Name"),
 
+  /** The loinc. */
+  LOINC("LOINC", "LPDN", "LOINC Parts Display Name"),
+
   /** The icd10cm. */
   ICD10CM("ICD10CM", "HT", "Hierarchical Term"),
 

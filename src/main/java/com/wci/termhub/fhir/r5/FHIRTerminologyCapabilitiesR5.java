@@ -73,7 +73,7 @@ public class FHIRTerminologyCapabilitiesR5 extends TerminologyCapabilities
             + " capabilities.");
     setKind(Enumerations.CapabilityStatementKind.CAPABILITY);
     setSoftware(new TerminologyCapabilitiesSoftwareComponent()
-        .setName("Open Termhub R4 FHIR Terminology Server").setVersion(version));
+        .setName("Open Termhub R5 FHIR Terminology Server").setVersion(version));
     this.setExperimental(true);
     this.setPublisher("TERMHUB");
     final Meta meta = new Meta();

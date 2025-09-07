@@ -18,25 +18,12 @@ One option is to just build the code and run the server locally and use an INDEX
 # On Windows use export INDEX_DIR=c:/temp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 export ENABLE_POST_LOAD_COMPUTATIONS=true
+export JAVA_OPTS=-Xmx16g
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run
 ```
 
-### Option 2: build/run with docker
-
-the other option is to build the docker image and run as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists)
-
-```
-# On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
-export INDEX_DIR=/tmp/opentermhub/index
-/bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
-make docker
-docker run -d --rm --name open-termhub \
-  -e ENABLE_POST_LOAD_COMPUTATIONS=true \
-  -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
-```
-
-### Option 3: run with public docker image
+### Option 2: run with public docker image
 
 The final option is to run the latest published public docker image as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists):
 
@@ -45,7 +32,7 @@ The final option is to run the latest published public docker image as a contain
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
-  -e ENABLE_POST_LOAD_COMPUTATIONS=true \
+  -e ENABLE_POST_LOAD_COMPUTATIONS=true -e JAVA_OPTS="-Xmx16g" \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
@@ -77,29 +64,70 @@ Go to the [Termhub Login Page](https://app.terminologyhub.com/login) and log in 
 
 To properly test this, you'll want to create a TermHub project with the terminologies that you want to load into the Open TermHub container.
 
-Steps
-* Go to "Projects" sidebar
-* Click "New Project"
-* Set "Project Name" to "OpenTermhub Test Project"
-* Set "Project Description" to "OpenTermhub Test Project"
-* Scroll down to choose terminologies to add
-  * SNOMEDCT
-  * LOINC
-  * ISO-639-1
-  * ISO-639-2
-* Click "Create project" - you can always get back to this project from your "dashboard" or from the project list on the "Projects" sidebar item.
-* Click the icon to download all terminologies in your project
-<need image>
+### Steps after logging into TermHub
 
-This is a work in progress and will be ready soon ...
+* **Click the "Projects" sidebar item**
+
+<img width="200px" src="images/choose-sidebar-projects.png">
+
+* **Click the "New Project" button**
+
+<img width="100px" src="images/new-project-button.png">
+
+* **Select your organization**
+* **Set "Project Name" to "OpenTermhub Test Project"**
+* **Set "Project Description" to "OpenTermhub Test Project"**
+
+<img width="600px" src="images/configure-new-project.png">
+
+
+* **Scroll down to choose terminologies to add**
+  * **SNOMEDCT_US latest (also select the ICD10CM maps and the extension subset)**
+  
+<img width="800px" src="images/configure-snomedct_us.png">
+  
+  * **LOINC latest**
+
+<img width="800px" src="images/configure-loinc.png">
+
+  * **ISO-639-1 latest**
+  * **ISO-639-2 latest**
+  
+<img width="800px" src="images/configure-iso.png">
+  
+* **Scroll to the bottom and click "Create project"**
+
+<img width="800px" src="images/create-project.png">
+
+* **On the project details screen, choose the icon to download all** (choose "Format: FHIR R5 json)
+
+<img width="800px" src="images/download-all.png">
+
+At this point, you will have downloaded .zip files of all the terminologies set up in the project above.
+
+<img width="800px" src="images/downloads-directory.png">
+
+The next step is to unpack all of these .zip files and put the resulting .json files all together in the same directory, so that we can run the commands to load this data into the Open TermHub server that was launched at the top.
+
 
 **[Back to top](#step-by-step-instructions-with-termhub-data)**
 
 ## Loading data
 
-After the previous step, you will have CodeSystem .json files downloaded from TermHub and these can now be loaded through the API into a running container.
+After the previous step, you will have CodeSystem .json files downloaded from TermHub and these can now be loaded through the API into a running container.  The following assumes that all of 
+the zip files are unpacked and resulting .json files in a local directory
 
-... curl commands ... info about runtime
+#### Load SNOMEDCT_US
+
+```
+f=CodeSystem*snomedct_us*json
+curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
+  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
+  -d "@CodeSystem-snomedct_us-nlm-20250301-r5.json" | jq
+```
+
+
+
 
 **[Back to top](#step-by-step-instructions-with-termhub-data)**
 

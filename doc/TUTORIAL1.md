@@ -179,7 +179,6 @@ curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=name:di
 
 # Find concepts using an ECL Expression for this subset
 curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&expression=%5E731000124108&include=minimal" | jq
-
 ```
 
 ### Testing the FHIR R4 API

@@ -294,14 +294,20 @@ tasks.withType(JavaExec) {
   }
 }
 
-tasks.named('bootRun') {
-    // args = ['--spring.profiles.active=your-profile']
-}
-
+// Specify "export JAVA_OPTS=-Xmx8g" to set upper memory bound for upload
 bootRun {
     if (project.hasProperty('debug')) {
         jvmArgs = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"]
     }
+    // Check if the JAVA_OPTS environment variable is set and not empty
+    if (System.getenv('JAVA_OPTS')) {
+        // Use a simple loop to parse the arguments from the env variable
+        def opts = System.getenv('JAVA_OPTS').split()
+        for (arg in opts) {
+            jvmArgs arg
+        }
+    }
+    // args = ['--spring.profiles.active=your-profile']
 }
 
 bootJar {

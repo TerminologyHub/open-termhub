@@ -1252,6 +1252,81 @@ public final class TerminologyUtility {
   }
 
   /**
+   * Gets the latest version for a given terminology and publisher.
+   *
+   * @param searchService the search service
+   * @param terminology the terminology abbreviation
+   * @param publisher the publisher
+   * @return the latest terminology version, or null if none found
+   * @throws Exception the exception
+   */
+  public static String getLatestVersion(final EntityRepositoryService searchService,
+    final String terminology, final String publisher) throws Exception {
+    
+     final Terminology latestTerminology =
+          getLatestTerminologyVersion(searchService, terminology, publisher);
+     
+     if (latestTerminology == null) {
+       return null;
+     }
+
+    return latestTerminology.getVersion();
+  }
+
+  /**
+   * Gets the latest version for a given terminology and publisher.
+   *
+   * @param searchService the search service
+   * @param terminology the terminology abbreviation
+   * @param publisher the publisher
+   * @return the latest terminology version, or null if none found
+   * @throws Exception the exception
+   */
+  public static Terminology getLatestTerminologyVersion(final EntityRepositoryService searchService,
+    final String terminology, final String publisher) throws Exception {
+
+    final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
+        "abbreviation: \"" + StringUtility.escapeQuery(terminology) + "\"",
+        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\""), null, null, null, null);
+
+    final ResultList<Terminology> list = searchService.find(params, Terminology.class);
+
+    if (list.getItems().isEmpty()) {
+      return null;
+    }
+
+    Terminology latestTerminology = null;
+
+    // Find the terminology with the latest release date
+    Date latestDate = null;
+
+    for (final Terminology term : list.getItems()) {
+      final String releaseDate = term.getReleaseDate();
+      if (releaseDate != null) {
+        final Date date;
+        try {
+          if (releaseDate.contains("T")) {
+            // Full ISO 8601 date string with timezone
+            date = Date.from(java.time.Instant.parse(releaseDate));
+          } else {
+            // Fallback to date-only format
+            date = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
+          }
+
+          if (latestDate == null || date.compareTo(latestDate) > 0) {
+            latestDate = date;
+            latestTerminology = term;
+          }
+        } catch (final Exception e) {
+          logger.warn("Unable to parse release date: {}", releaseDate, e);
+        }
+      }
+    }
+
+    return latestTerminology;
+  }
+
+  /**
    * Removes the terminology and related concepts, relationships, etc.
    *
    * @param searchService the search service

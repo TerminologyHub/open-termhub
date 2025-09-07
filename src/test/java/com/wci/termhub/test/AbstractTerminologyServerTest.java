@@ -32,7 +32,6 @@ import com.wci.termhub.util.PropertyUtility;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestPropertySource(locations = "classpath:application-test.properties")
-// @TestMethodOrder(OrderAnnotation.class)
 public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
 
   /** The logger. */

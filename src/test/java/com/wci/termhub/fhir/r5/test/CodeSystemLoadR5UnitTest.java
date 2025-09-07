@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
-import com.wci.termhub.fhir.r4.test.CodeSystemLoadR4UnitTest;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 
@@ -55,7 +54,7 @@ public class CodeSystemLoadR5UnitTest extends AbstractFhirR5ServerTest {
     for (final String codeSystemFile : CODE_SYSTEM_FILES) {
       try {
         final Resource resource = new ClassPathResource("data/" + codeSystemFile,
-            CodeSystemLoadR4UnitTest.class.getClassLoader());
+            CodeSystemLoadR5UnitTest.class.getClassLoader());
 
         final String fileContent =
             FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);

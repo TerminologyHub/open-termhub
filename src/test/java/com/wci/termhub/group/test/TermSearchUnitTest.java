@@ -165,7 +165,7 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
     // check that each concept has at least a term has the word 'Procedure on
     // gastrointestinal tract' in it
     results.getItems().forEach(t -> {
-      assertTrue(t.getName().toLowerCase().contains(term));
+      assertTrue(t.getName().toLowerCase().contains(term.toLowerCase()));
     });
 
   }
@@ -178,7 +178,7 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindTestPaging() throws Exception {
 
-    final String term = "heart";
+    final String term = "procedure";
     final String terminology = "SNOMEDCT_US";
     final String version = "20240301";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, term);
@@ -213,7 +213,7 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
 
     sp.setOffset(20);
     results = searchService.find(sp, Term.class);
-    assertEquals(6, results.getItems().size());
+    assertEquals(10, results.getItems().size());
     results.getItems().forEach(t -> {
       assertEquals(terminology, t.getTerminology());
       assertEquals(version, t.getVersion());
