@@ -69,10 +69,9 @@ public final class TerminologyUtility {
   }
 
   /**
-   * Takes a value like "http://snomed.info/sct", or "SNOMEDCT_US" and it
-   * returns an object with abbreviation, publisher, version, and uri set. It
-   * attempts to align with currently installed terminologies and if unable
-   * returns default values.
+   * Takes a value like "http://snomed.info/sct", or "SNOMEDCT_US" and it returns an object with
+   * abbreviation, publisher, version, and uri set. It attempts to align with currently installed
+   * terminologies and if unable returns default values.
    *
    * @param searchService the search service
    * @param value the value
@@ -1262,13 +1261,13 @@ public final class TerminologyUtility {
    */
   public static String getLatestVersion(final EntityRepositoryService searchService,
     final String terminology, final String publisher) throws Exception {
-    
-     final Terminology latestTerminology =
-          getLatestTerminologyVersion(searchService, terminology, publisher);
-     
-     if (latestTerminology == null) {
-       return null;
-     }
+
+    final Terminology latestTerminology =
+        getLatestTerminologyVersion(searchService, terminology, publisher);
+
+    if (latestTerminology == null) {
+      return null;
+    }
 
     return latestTerminology.getVersion();
   }
