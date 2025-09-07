@@ -36,6 +36,8 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.TerminologyUtility;
 
+<<<<<<<HEAD=======
+import ca.uhn.fhir.context.FhirContext;>>>>>>>main
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
@@ -52,7 +54,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
+<<<<<<< HEAD
  * The Class QuestionnaireProviderR4. Prepared for a POC. Not fully tested or implemented.
+=======
+ * The Class QuestionnaireProviderR4. Prepared for a POC. Not fully tested or
+ * implemented.
+>>>>>>> main
  */
 @Component
 public class QuestionnaireProviderR4 implements IResourceProvider {
@@ -74,6 +81,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
   @Autowired
   private EntityRepositoryService searchService;
 
+<<<<<<< HEAD
   /**
    * The Constant context.
    *
@@ -86,6 +94,11 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
   // private static FhirContext context = FhirContext.forR4();
 
   @SuppressWarnings("null")
+=======
+  /** The Constant context. */
+  private static FhirContext context = FhirContext.forR4();
+
+>>>>>>> main
   /**
    * Gets the questionnaire.
    *
@@ -199,10 +212,11 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return")
-    @OptionalParam(name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page")
-    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
+    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
+        name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
+        name = "_offset") final NumberParam offset)
+    throws Exception {
 
     try {
 
@@ -672,10 +686,19 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
   }
 
   /**
+<<<<<<< HEAD
    * Checks if a concept has a relationship to the Survey instruments concept (LP29696-9).
    *
    * @param concept the concept to check
    * @return true if the concept is related to Survey instruments, false otherwise
+=======
+   * Checks if a concept has a relationship to the Survey instruments concept
+   * (LP29696-9).
+   *
+   * @param concept the concept to check
+   * @return true if the concept is related to Survey instruments, false
+   *         otherwise
+>>>>>>> main
    */
   private boolean hasSurveyInstrumentsRelationship(final Concept concept) {
     if (concept == null) {
