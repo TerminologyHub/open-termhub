@@ -16,6 +16,7 @@ import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import com.wci.termhub.lucene.LuceneDataAccess;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,7 +122,7 @@ public abstract class AbstractServerTest extends BaseUnitTest {
         throw e;
       }
     }
-
+    LuceneDataAccess.clearReaders();
     logger.info("Finished loading code systems");
   }
 
@@ -160,7 +161,7 @@ public abstract class AbstractServerTest extends BaseUnitTest {
         throw e;
       }
     }
-
+    LuceneDataAccess.clearReaders();
     logger.info("Finished loading concept maps");
   }
 
@@ -193,7 +194,7 @@ public abstract class AbstractServerTest extends BaseUnitTest {
         throw e;
       }
     }
-
+    LuceneDataAccess.clearReaders();
     logger.info("Finished loading value sets");
 
   }
