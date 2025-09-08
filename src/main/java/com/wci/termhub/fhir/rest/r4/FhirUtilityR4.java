@@ -1097,10 +1097,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * <<<<<<< HEAD Converts a LOINC Concept to a FHIR R4 Questionnaire. This is the primary method
-   * for creating questionnaires from LOINC concepts. ======= Converts a LOINC Concept to a FHIR R4
-   * Questionnaire. This is the primary method for creating questionnaires from LOINC concepts.
-   * >>>>>>> main
+   * Converts a LOINC Concept to a FHIR R4 Questionnaire. This is the primary
+   * method for creating questionnaires from LOINC concepts.
    *
    * @param concept the LOINC Concept
    * @param searchService the search service
@@ -1167,10 +1165,9 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * <<<<<<< HEAD Populates a Questionnaire with questions and answers based on LOINC relationships.
-   * This method uses the concept's existing relationships to create questionnaire items. =======
-   * Populates a Questionnaire with questions and answers based on LOINC relationships. This method
-   * uses the concept's existing relationships to create questionnaire items. >>>>>>> main
+   * Populates a Questionnaire with questions and answers based on LOINC
+   * relationships. This method uses the concept's existing relationships to
+   * create questionnaire items.
    *
    * @param questionnaire the Questionnaire to populate
    * @param searchService the search service for data access
@@ -1225,8 +1222,8 @@ public final class FhirUtilityR4 {
    * @param mainConcept the main questionnaire concept
    * @param searchService the search service
    * @param terminology the terminology
-   * @param processedCodes set of already processed codes <<<<<<< HEAD
-   * @param latestVersion the latest version ======= >>>>>>> main
+   * @param processedCodes set of already processed codes
+   * @param latestVersion the latest version
    * @return list of group questionnaire item components
    * @throws Exception the exception
    */
@@ -1294,8 +1291,8 @@ public final class FhirUtilityR4 {
    * @param hasMemberRel the has_member relationship
    * @param searchService the search service
    * @param terminology the terminology
-   * @param processedCodes set of already processed codes <<<<<<< HEAD
-   * @param latestVersion the latest version ======= >>>>>>> main
+   * @param processedCodes set of already processed codes
+   * @param latestVersion the latest version
    * @return the questionnaire item component
    * @throws Exception the exception
    */
@@ -1496,10 +1493,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * <<<<<<< HEAD Finds answer options for a question via has_answers relationships. Follows LOINC
-   * structure: Question --has_answers--> LL Code <--parent-- LA Codes ======= Finds answer options
-   * for a question via has_answers relationships. Follows LOINC structure: Question
-   * --has_answers--> LL Code <--parent-- LA Codes >>>>>>> main
+   * Finds answer options for a question via has_answers relationships. Follows
+   * LOINC structure: Question --has_answers--> LL Code <--parent-- LA Codes
    *
    * @param questionCode the question LOINC code
    * @param searchService the search service
@@ -1602,8 +1597,8 @@ public final class FhirUtilityR4 {
    * @param hasMemberRel the has_member relationship
    * @param searchService the search service
    * @param terminology the terminology
-   * @param processedCodes set of already processed codes <<<<<<< HEAD
-   * @param latestVersion the latest version ======= >>>>>>> main
+   * @param processedCodes set of already processed codes
+   * @param latestVersion the latest version
    * @return the questionnaire item component
    * @throws Exception the exception
    */
@@ -1650,10 +1645,9 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * <<<<<<< HEAD Gets the system URI for a terminology based on its abbreviation, publisher, and
-   * version. This method uses TerminologyUtility to get the actual URI from the database. =======
-   * Gets the system URI for a terminology based on its abbreviation, publisher, and version. This
-   * method uses TerminologyUtility to get the actual URI from the database. >>>>>>> main
+   * Gets the system URI for a terminology based on its abbreviation, publisher,
+   * and version. This method uses TerminologyUtility to get the actual URI from
+   * the database.
    *
    * @param searchService the search service
    * @param terminology the terminology abbreviation
@@ -1680,10 +1674,9 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * <<<<<<< HEAD Determines if a concept should be included as a main question based on its
-   * properties. Filters out variant concepts that are overly specific or descriptive. =======
-   * Determines if a concept should be included as a main question based on its properties. Filters
-   * out variant concepts that are overly specific or descriptive.
+   * Determines if a concept should be included as a main question based on its
+   * properties. Filters out variant concepts that are overly specific or
+   * descriptive.
    *
    * @param conceptCode the LOINC concept code to check
    * @param searchService the search service to query concept properties
