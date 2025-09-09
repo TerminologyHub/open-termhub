@@ -19,7 +19,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -37,6 +39,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
 import com.wci.termhub.model.HealthCheck;
@@ -1592,6 +1595,374 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
           "Subsets should be sorted by name. Found '" + currentName + "' after '" + previousName
               + "'");
     }
+  }
+
+  /**
+   * Test concept hierarchy fields for SNOMEDCT_US:73211009 - validates
+   * children, parents, descendants, ancestors are populated.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testConceptHierarchySnomedctUs362965005() throws Exception {
+    final String terminology = "SNOMEDCT";
+    final String code = "362965005";
+    final String url = baseUrl + "/concept/" + terminology + "/" + code
+        + "?include=children,parents,descendants,ancestors";
+    LOGGER.info("Testing url - {}", url);
+
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+
+    final Concept concept = objectMapper.readValue(content, Concept.class);
+    assertThat(concept).isNotNull();
+    assertEquals(code, concept.getCode(), "Concept code should match");
+    assertEquals(terminology, concept.getTerminology(), "Terminology should match");
+
+    // Validate hierarchy fields are populated
+    assertNotNull(concept.getChildren(), "Children list should not be null");
+    assertNotNull(concept.getParents(), "Parents list should not be null");
+    assertNotNull(concept.getDescendants(), "Descendants list should not be null");
+    assertNotNull(concept.getAncestors(), "Ancestors list should not be null");
+
+    /*
+     * "children": [
+     * {"local":false,"active":true,"name":"Disorder of cardiovascular system"
+     * ,"code":"49601007","terminology":"SNOMEDCT","version":"20240101",
+     * "publisher":"SANDBOX","leaf":true,"defined":true},
+     * {"local":false,"active":true,"name":"Disorder of breast","code":
+     * "79604008","terminology":"SNOMEDCT","version":"20240101","publisher":
+     * "SANDBOX","leaf":false,"defined":true},
+     * {"local":false,"active":true,"name":"Disorder of endocrine system","code"
+     * :"362969004","terminology":"SNOMEDCT","version":"20240101","publisher":
+     * "SANDBOX","leaf":false,"defined":true} ], "parents": [
+     * {"local":false,"active":true,"name":"Disease","code":"64572001",
+     * "terminology":"SNOMEDCT","version":"20240101","publisher":"SANDBOX",
+     * "leaf":false,"defined":false} ], "descendants": [
+     * {"local":false,"active":true,"name":"Disorder of breast","code":
+     * "79604008","leaf":false,"defined":true,"level":1},
+     * {"local":false,"active":true,"name":"Disorder of cardiovascular system"
+     * ,"code":"49601007","leaf":true,"defined":true,"level":1},
+     * {"local":false,"active":true,"name":"Disorder of endocrine system","code"
+     * :"362969004","leaf":false,"defined":true,"level":1},
+     * {"local":false,"active":true,"name":"Diabetes mellitus","code":"73211009"
+     * ,"leaf":true,"defined":false,"level":2},
+     * {"local":false,"active":true,"name":"Lesion of breast","code":"290073004"
+     * ,"leaf":false,"defined":true,"level":2},
+     * {"local":false,"active":true,"name":"Neoplasm of breast","code":
+     * "126926005","leaf":true,"defined":true,"level":3} ], "ancestors": [
+     * {"local":false,"active":true,"name":"Disease","code":"64572001","leaf":
+     * false,"defined":false,"level":1},
+     * {"local":false,"active":true,"name":"Clinical finding","code":"404684003"
+     * ,"leaf":false,"defined":false,"level":2},
+     * {"local":false,"active":true,"name":"SNOMED CT Concept","code":
+     * "138875005","leaf":false,"defined":false,"level":3}
+     */
+
+    // should be empty at the end
+    final Map<String, String> childrenErrors = new HashMap<>();
+    final Map<String, String> parentsErrors = new HashMap<>();
+    final Map<String, String> descendantsErrors = new HashMap<>();
+    final Map<String, String> ancestorsErrors = new HashMap<>();
+
+    if (concept.getChildren().size() != 3) {
+      childrenErrors.put("children",
+          "Should be 3 children, found: " + concept.getChildren().size());
+    }
+    if (concept.getParents().size() != 1) {
+      parentsErrors.put("parents", "Should be 1 parent, found: " + concept.getParents().size());
+    }
+    if (concept.getDescendants().size() != 6) {
+      descendantsErrors.put("descendants",
+          "Should be 6 descendants, found: " + concept.getDescendants().size());
+    }
+    if (concept.getAncestors().size() != 3) {
+      ancestorsErrors.put("ancestors",
+          "Should be 3 ancestors, found: " + concept.getAncestors().size());
+    }
+
+    String testCode = "49601007";
+    ConceptRef testConceptRef = concept.getChildren().stream()
+        .filter(c -> testCode.equals(c.getCode())).findFirst().orElse(null);
+    if (testConceptRef == null) {
+      childrenErrors.put(testCode, "Should have child with code " + testCode);
+    }
+    if (!testConceptRef.getName().equals("Disorder of cardiovascular system")) {
+      childrenErrors.put(testCode, "Should have name 'Disorder of cardiovascular system', found: "
+          + testConceptRef.getName());
+    }
+    if (!testConceptRef.getLeaf()) {
+      childrenErrors.put(testCode, "Should be leaf");
+    }
+    if (!testConceptRef.getDefined()) {
+      childrenErrors.put(testCode, "Should be defined");
+    }
+
+    final String testCode2 = "79604008";
+    testConceptRef = concept.getChildren().stream().filter(c -> testCode2.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      childrenErrors.put(testCode2, "Should have child with code " + testCode2);
+    } else {
+      if (!testConceptRef.getName().equals("Disorder of breast")) {
+        childrenErrors.put(testCode2,
+            "Should have name 'Disorder of breast', found: " + testConceptRef.getName());
+      }
+      if (testConceptRef.getLeaf()) {
+        childrenErrors.put(testCode2, "Should not be leaf");
+      }
+      if (!testConceptRef.getDefined()) {
+        childrenErrors.put(testCode2, "Should be defined");
+      }
+    }
+
+    final String testCode3 = "362969004";
+    testConceptRef = concept.getChildren().stream().filter(c -> testCode3.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      childrenErrors.put(testCode3, "Should have child with code " + testCode3);
+    } else {
+      if (!testConceptRef.getName().equals("Disorder of endocrine system")) {
+        childrenErrors.put(testCode3,
+            "Should have name 'Disorder of endocrine system', found: " + testConceptRef.getName());
+      }
+      if (testConceptRef.getLeaf()) {
+        childrenErrors.put(testCode3, "Should not be leaf");
+      }
+      if (!testConceptRef.getDefined()) {
+        childrenErrors.put(testCode3, "Should be defined");
+      }
+    }
+
+    // parents
+    final String parentCode = "64572001";
+    testConceptRef = concept.getParents().stream().filter(c -> parentCode.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      parentsErrors.put(parentCode, "Should have parent with code " + parentCode);
+    } else {
+      if (!testConceptRef.getName().equals("Disease")) {
+        parentsErrors.put(parentCode,
+            "Should have name 'Disease', found: " + testConceptRef.getName());
+      }
+      if (testConceptRef.getLeaf()) {
+        parentsErrors.put(parentCode, "Should not be leaf");
+      }
+      if (testConceptRef.getDefined()) {
+        parentsErrors.put(parentCode, "Should not be defined");
+      }
+    }
+
+    // descendants
+    final String descCode1 = "79604008";
+    testConceptRef = concept.getDescendants().stream().filter(c -> descCode1.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      descendantsErrors.put(descCode1, "Should have descendant with code " + descCode1);
+    } else {
+      if (!testConceptRef.getName().equals("Disorder of breast")) {
+        descendantsErrors.put(descCode1,
+            "Should have name 'Disorder of breast', found: " + testConceptRef.getName());
+      }
+      if (testConceptRef.getLeaf()) {
+        descendantsErrors.put(descCode1, "Should not be leaf");
+      }
+      if (!testConceptRef.getDefined()) {
+        descendantsErrors.put(descCode1, "Should be defined");
+      }
+      if (testConceptRef.getLevel() != 1) {
+        descendantsErrors.put(descCode1,
+            "Should have level 1, found: " + testConceptRef.getLevel());
+      }
+    }
+
+    final String descCode2 = "49601007";
+    testConceptRef = concept.getDescendants().stream().filter(c -> descCode2.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      descendantsErrors.put(descCode2, "Should have descendant with code " + descCode2);
+    } else {
+      if (!testConceptRef.getName().equals("Disorder of cardiovascular system")) {
+        descendantsErrors.put(descCode2,
+            "Should have name 'Disorder of cardiovascular system', found: "
+                + testConceptRef.getName());
+      }
+      if (!testConceptRef.getLeaf()) {
+        descendantsErrors.put(descCode2, "Should be leaf");
+      }
+      if (!testConceptRef.getDefined()) {
+        descendantsErrors.put(descCode2, "Should be defined");
+      }
+      if (testConceptRef.getLevel() != 1) {
+        descendantsErrors.put(descCode2,
+            "Should have level 1, found: " + testConceptRef.getLevel());
+      }
+    }
+
+    final String descCode3 = "362969004";
+    testConceptRef = concept.getDescendants().stream().filter(c -> descCode3.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      descendantsErrors.put(descCode3, "Should have descendant with code " + descCode3);
+    } else {
+      if (!testConceptRef.getName().equals("Disorder of endocrine system")) {
+        descendantsErrors.put(descCode3,
+            "Should have name 'Disorder of endocrine system', found: " + testConceptRef.getName());
+      }
+      if (testConceptRef.getLeaf()) {
+        descendantsErrors.put(descCode3, "Should not be leaf");
+      }
+      if (!testConceptRef.getDefined()) {
+        descendantsErrors.put(descCode3, "Should be defined");
+      }
+      if (testConceptRef.getLevel() != 1) {
+        descendantsErrors.put(descCode3,
+            "Should have level 1, found: " + testConceptRef.getLevel());
+      }
+    }
+
+    final String descCode4 = "73211009";
+    testConceptRef = concept.getDescendants().stream().filter(c -> descCode4.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      descendantsErrors.put(descCode4, "Should have descendant with code " + descCode4);
+    } else {
+      if (!testConceptRef.getName().equals("Diabetes mellitus")) {
+        descendantsErrors.put(descCode4,
+            "Should have name 'Diabetes mellitus', found: " + testConceptRef.getName());
+      }
+      if (!testConceptRef.getLeaf()) {
+        descendantsErrors.put(descCode4, "Should be leaf");
+      }
+      if (testConceptRef.getDefined()) {
+        descendantsErrors.put(descCode4, "Should not be defined");
+      }
+      if (testConceptRef.getLevel() != 2) {
+        descendantsErrors.put(descCode4,
+            "Should have level 2, found: " + testConceptRef.getLevel());
+      }
+    }
+
+    final String descCode5 = "290073004";
+    testConceptRef = concept.getDescendants().stream().filter(c -> descCode5.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      descendantsErrors.put(descCode5, "Should have descendant with code " + descCode5);
+    } else {
+      if (!testConceptRef.getName().equals("Lesion of breast")) {
+        descendantsErrors.put(descCode5,
+            "Should have name 'Lesion of breast', found: " + testConceptRef.getName());
+      }
+      if (testConceptRef.getLeaf()) {
+        descendantsErrors.put(descCode5, "Should not be leaf");
+      }
+      if (!testConceptRef.getDefined()) {
+        descendantsErrors.put(descCode5, "Should be defined");
+      }
+      if (testConceptRef.getLevel() != 2) {
+        descendantsErrors.put(descCode5,
+            "Should have level 2, found: " + testConceptRef.getLevel());
+      }
+    }
+
+    final String descCode6 = "126926005";
+    testConceptRef = concept.getDescendants().stream().filter(c -> descCode6.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      descendantsErrors.put(descCode6, "Should have descendant with code " + descCode6);
+    } else {
+      if (!testConceptRef.getName().equals("Neoplasm of breast")) {
+        descendantsErrors.put(descCode6,
+            "Should have name 'Neoplasm of breast', found: " + testConceptRef.getName());
+      }
+      if (!testConceptRef.getLeaf()) {
+        descendantsErrors.put(descCode6, "Should be leaf");
+      }
+      if (!testConceptRef.getDefined()) {
+        descendantsErrors.put(descCode6, "Should be defined");
+      }
+      if (testConceptRef.getLevel() != 3) {
+        descendantsErrors.put(descCode6,
+            "Should have level 3, found: " + testConceptRef.getLevel());
+      }
+    }
+
+    // ancestors
+    final String ancCode1 = "64572001";
+    testConceptRef = concept.getAncestors().stream().filter(c -> ancCode1.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      ancestorsErrors.put(ancCode1, "Should have ancestor with code " + ancCode1);
+    } else {
+      if (!testConceptRef.getName().equals("Disease")) {
+        ancestorsErrors.put(ancCode1,
+            "Should have name 'Disease', found: " + testConceptRef.getName());
+      }
+      if (testConceptRef.getLeaf()) {
+        ancestorsErrors.put(ancCode1, "Should not be leaf");
+      }
+      if (testConceptRef.getDefined()) {
+        ancestorsErrors.put(ancCode1, "Should not be defined");
+      }
+      if (testConceptRef.getLevel() != 1) {
+        ancestorsErrors.put(ancCode1, "Should have level 1, found: " + testConceptRef.getLevel());
+      }
+    }
+
+    final String ancCode2 = "404684003";
+    testConceptRef = concept.getAncestors().stream().filter(c -> ancCode2.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      ancestorsErrors.put(ancCode2, "Should have ancestor with code " + ancCode2);
+    } else {
+      if (!testConceptRef.getName().equals("Clinical finding")) {
+        ancestorsErrors.put(ancCode2,
+            "Should have name 'Clinical finding', found: " + testConceptRef.getName());
+      }
+      if (testConceptRef.getLeaf()) {
+        ancestorsErrors.put(ancCode2, "Should not be leaf");
+      }
+      if (testConceptRef.getDefined()) {
+        ancestorsErrors.put(ancCode2, "Should not be defined");
+      }
+      if (testConceptRef.getLevel() != 2) {
+        ancestorsErrors.put(ancCode2, "Should have level 2, found: " + testConceptRef.getLevel());
+      }
+    }
+
+    final String ancCode3 = "138875005";
+    testConceptRef = concept.getAncestors().stream().filter(c -> ancCode3.equals(c.getCode()))
+        .findFirst().orElse(null);
+    if (testConceptRef == null) {
+      ancestorsErrors.put(ancCode3, "Should have ancestor with code " + ancCode3);
+    } else {
+      if (!testConceptRef.getName().equals("SNOMED CT Concept")) {
+        ancestorsErrors.put(ancCode3,
+            "Should have name 'SNOMED CT Concept', found: " + testConceptRef.getName());
+      }
+      if (testConceptRef.getLeaf()) {
+        ancestorsErrors.put(ancCode3, "Should not be leaf");
+      }
+      if (testConceptRef.getDefined()) {
+        ancestorsErrors.put(ancCode3, "Should not be defined");
+      }
+      if (testConceptRef.getLevel() != 3) {
+        ancestorsErrors.put(ancCode3, "Should have level 3, found: " + testConceptRef.getLevel());
+      }
+    }
+
+    LOGGER.error("Children errors: {}", childrenErrors);
+    LOGGER.error("Parents errors: {}", parentsErrors);
+    LOGGER.error("Descendants errors: {}", descendantsErrors);
+    LOGGER.error("Ancestors errors: {}", ancestorsErrors);
+
+    assertEquals(0, childrenErrors.size() + parentsErrors.size() + descendantsErrors.size()
+        + ancestorsErrors.size(), "Should be no errors");
+
+    LOGGER.info("Successfully validated hierarchy fields for concept {}", code);
   }
 
   /**

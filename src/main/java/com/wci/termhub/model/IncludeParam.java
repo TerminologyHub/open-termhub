@@ -291,7 +291,6 @@ public class IncludeParam extends BaseModel {
     final List<String> fields = new ArrayList<>();
     fields.add("stemName"); // stemName always excluded
     fields.add("normName"); // normName always excluded
-    fields.add("eclClauses"); // eclClauses always excluded
     fields.add("labels"); // always excluded
 
     if (!terms) {

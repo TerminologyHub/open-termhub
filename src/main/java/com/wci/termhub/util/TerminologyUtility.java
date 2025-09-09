@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.wci.termhub.ecl.EclConceptFieldNames;
 import com.wci.termhub.ecl.EclToLuceneConverter;
 import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.Concept;
@@ -333,34 +332,6 @@ public final class TerminologyUtility {
   }
 
   /**
-   * Gets the concept ecl.
-   *
-   * @param searchService the search service
-   * @param terminology the terminology
-   * @param publisher the publisher
-   * @param version the version
-   * @param code the code
-   * @return the concept ecl
-   * @throws Exception the exception
-   */
-  public static List<String> getConceptEcl(final EntityRepositoryService searchService,
-    final String terminology, final String publisher, final String version, final String code)
-    throws Exception {
-    final SearchParameters nameParams = new SearchParameters(2, 0);
-    final String t = code.startsWith("V-") ? "SRC" : terminology;
-    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
-        + StringUtility.escapeQuery(t) + " AND publisher: \"" + StringUtility.escapeQuery(publisher)
-        + "\" AND version:" + StringUtility.escapeQuery(version));
-    final ResultList<Concept> list =
-        searchService.findFields(nameParams, ModelUtility.asList("ecl"), Concept.class);
-    if (list.getItems().isEmpty()) {
-      return null;
-    }
-    return list.getItems().get(0).getEclClauses();
-
-  }
-
-  /**
    * Gets the concept name.
    *
    * @param searchService the search service
@@ -416,8 +387,9 @@ public final class TerminologyUtility {
     final String fullAncPath = ancestorPath + (StringUtils.isEmpty(ancestorPath) ? "" : "~")
         + treePosition.getConcept().getCode();
     // Iterate over ancestor path
+    final StringBuilder finalQuery = new StringBuilder();
     for (final String code : fullAncPath.split("~")) {
-      final StringBuilder finalQuery = new StringBuilder();
+      finalQuery.setLength(0);
       finalQuery.append("concept.code:" + QueryParserBase.escape(code));
       finalQuery.append(" AND terminology: \"")
           .append(StringUtility.escapeQuery(treePosition.getTerminology())).append("\"");
@@ -432,12 +404,6 @@ public final class TerminologyUtility {
             .append("\"");
       }
 
-      // No requirement for additional type to match in hierarchies
-      // if (!StringUtility.isEmpty(treePosition.getAdditionalType())) {
-      // finalQuery.append(" AND additionalType:" +
-      // treePosition.getAdditionalType());
-      // }
-
       params.setQuery(finalQuery.toString());
       final ResultList<ConceptTreePosition> list =
           searchService.find(params, ConceptTreePosition.class);
@@ -445,29 +411,11 @@ public final class TerminologyUtility {
         throw new Exception("Unable to find matching tree position for ancestor = " + finalQuery);
       }
       if (list.getItems().size() > 1) {
-
-        list.getItems().forEach(item -> {
-          logger.error("    NUNO - {}", item);
-        });
-
         throw new Exception("Too many matching tree positions for ancestor = " + finalQuery
             + ". Found " + list.getItems().size() + " matches.");
       }
 
       final ConceptTreePosition partTree = new ConceptTreePosition(list.getItems().get(0));
-
-      // Look up the name - in theory this is no longer needed
-      // final ConceptRef conceptRef = new ConceptRef();
-      // final Concept concept =
-      // getConceptRef(searchService, partTree.getTerminology(),
-      // partTree.getPublisher(),
-      // partTree.getVersion(), partTree.getConcept().getCode(), indexName);
-      // conceptRef.setId(concept.getId());
-      // conceptRef.setName(concept.getName());
-      // conceptRef.setCode(partTree.getConcept().getCode());
-      // conceptRef.setLeaf(concept.getLeaf());
-      // partTree.setConcept(conceptRef);
-
       // Set the final return value to the top node
       if (tree == null) {
         tree = partTree;
@@ -479,7 +427,6 @@ public final class TerminologyUtility {
 
       // set parent tree to the just constructed
       parentTree = partTree;
-
       partAncPath += (partAncPath.equals("") ? "" : "~") + code;
 
     }
@@ -528,10 +475,7 @@ public final class TerminologyUtility {
    */
   public static Set<String> getAncestorCodes(final EntityRepositoryService searchService,
     final Concept concept) throws Exception {
-    return concept.getEclClauses().stream()
-        .filter(c -> c.matches(EclConceptFieldNames.ANCESTOR + "=[A-Z\\d].*"))
-        .map(c -> c.substring(EclConceptFieldNames.ANCESTOR.length() + 1))
-        .collect(Collectors.toSet());
+    return concept.getAncestors().stream().map(ConceptRef::getCode).collect(Collectors.toSet());
   }
 
   /**
@@ -544,10 +488,7 @@ public final class TerminologyUtility {
    */
   public static Set<String> getParentCodes(final EntityRepositoryService searchService,
     final Concept concept) throws Exception {
-    return concept.getEclClauses().stream()
-        .filter(c -> c.matches(EclConceptFieldNames.PARENT + "=[A-Z\\d].*"))
-        .map(c -> c.substring(EclConceptFieldNames.PARENT.length() + 1))
-        .collect(Collectors.toSet());
+    return concept.getParents().stream().map(ConceptRef::getCode).collect(Collectors.toSet());
   }
 
   /**
@@ -565,6 +506,14 @@ public final class TerminologyUtility {
     final List<ConceptRelationship> list = searchService.findAll(StringUtility.composeQuery("AND",
         "from.code:" + StringUtility.escapeQuery(concept.getCode()),
         "hierarchical:true AND active:true"), null, ConceptRelationship.class);
+
+    // Set defined status for parents - parents are not defined (higher in
+    // hierarchy)
+    // return list.stream().map(r -> {
+    // final ConceptRef parentRef = r.getTo();
+    // parentRef.setDefined(false);
+    // return parentRef;
+    // }).toList();
     return list.stream().map(r -> r.getTo()).toList();
   }
 
@@ -620,7 +569,14 @@ public final class TerminologyUtility {
         StringUtility.composeQuery("AND", "to.code:" + StringUtility.escapeQuery(concept.getCode()),
             "hierarchical:true", "active:true"),
         null, ConceptRelationship.class);
-    return list.stream().map(r -> r.getFrom()).toList();
+
+    // Set defined status for children - all children are defined (non-leaf
+    // concepts)
+    return list.stream().map(r -> {
+      final ConceptRef childRef = r.getFrom();
+      childRef.setDefined(true);
+      return childRef;
+    }).toList();
   }
 
   /**
