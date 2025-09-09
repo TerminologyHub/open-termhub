@@ -110,6 +110,7 @@ public class LuceneDataAccess {
         writerMap.put(clazz.getCanonicalName(), writer);
         // Commit to create the initial index structure
         writer.commit();
+        clearReaderForClass(clazz);
     }
 
     /**
@@ -125,6 +126,9 @@ public class LuceneDataAccess {
         final File indexDir = getIndexDirectory(clazz);
         LOGGER.info("Deleting index {} from {}", indexDirectory, indexDir.getAbsolutePath());
         if (indexDir.exists()) {
+            clearReaderForClass(clazz);
+            // need to close writer first
+            clearWriterForClass(clazz);
             FileUtils.deleteDirectory(indexDir);
         }
     }
@@ -148,6 +152,7 @@ public class LuceneDataAccess {
         for (final Class entityClass : entityClasses) {
             final IndexWriter writer = getIndexWriter(entityClass);
             writer.commit();
+            clearReaderForClass(entityClass);
         }
     }
 
@@ -335,7 +340,7 @@ public class LuceneDataAccess {
         // writer. This ensures schema consistency while being more efficient than
         // full reindexing
         updateDocumentInIndex(writer, id, existingEntity);
-
+        clearReaderForClass(clazz);
         LOGGER.debug("Successfully updated document with id: {} for index: {}", id, writer.getDirectory());
     }
 
@@ -418,6 +423,7 @@ public class LuceneDataAccess {
 
         // Commit all changes at once
         writer.commit();
+        clearReaderForClass(clazz);
         LOGGER.debug("Successfully completed bulk update for {} entities in index: {}",
                 entities.size(), writer.getDirectory());
     }
@@ -517,6 +523,7 @@ public class LuceneDataAccess {
             }
             deleteDocumentById(writer, id);
         }
+        clearReaderForClass(clazz);
         writer.commit();
     }
 
@@ -707,7 +714,7 @@ public class LuceneDataAccess {
         // writer. This ensures schema consistency while being more efficient than
         // full reindexing
         updateDocumentInIndex(writer, id, existingEntity);
-
+        clearReaderForClass(clazz);
         LOGGER.debug("Successfully updated field: {} in document with id: {} for index: {}",
                 fieldName, id, writer.getDirectory());
     }
@@ -865,15 +872,24 @@ public class LuceneDataAccess {
         return reader;
     }
 
-    public void removeReader(Class<? extends HasId> clazz) {
-        readerMap.put(clazz.getCanonicalName(), null);
-    }
-
     public static final void clearReaders() {
         readerMap.clear();
     }
 
-    public static final void clearReadersForClass(Class<? extends HasId> clazz) {
+    public static final void clearReaderForClass(Class<? extends HasId> clazz) {
         readerMap.remove(clazz.getCanonicalName());
+    }
+
+    public static final void clearWriterForClass(Class<? extends HasId> clazz) {
+        IndexWriter writer = writerMap.get(clazz.getCanonicalName());
+        if (writer == null) {
+            return;
+        }
+        try {
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        writerMap.remove(clazz.getCanonicalName());
     }
 }

@@ -421,7 +421,7 @@ public final class CodeSystemLoaderUtil {
       LOGGER.debug("CodeSystemLoaderUtil: terminology: {}", terminology);
     }
     service.add(Terminology.class, terminology);
-    LuceneDataAccess.clearReadersForClass(Terminology.class);
+    LuceneDataAccess.clearReaderForClass(Terminology.class);
     return terminology;
   }
 
