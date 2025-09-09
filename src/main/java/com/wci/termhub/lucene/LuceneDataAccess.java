@@ -872,4 +872,8 @@ public class LuceneDataAccess {
     public static final void clearReaders() {
         readerMap.clear();
     }
+
+    public static final void clearReadersForClass(Class<? extends HasId> clazz) {
+        readerMap.remove(clazz.getCanonicalName());
+    }
 }

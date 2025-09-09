@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.wci.termhub.lucene.LuceneDataAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -420,6 +421,7 @@ public final class CodeSystemLoaderUtil {
       LOGGER.debug("CodeSystemLoaderUtil: terminology: {}", terminology);
     }
     service.add(Terminology.class, terminology);
+    LuceneDataAccess.clearReadersForClass(Terminology.class);
     return terminology;
   }
 
