@@ -29,6 +29,7 @@ The final option is to run the latest published public docker image as a contain
 
 ```
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
+# On Windows if running within wsl use export INDEX_DIR=/mnt/c/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
