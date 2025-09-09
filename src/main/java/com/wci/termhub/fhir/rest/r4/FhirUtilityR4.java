@@ -1223,6 +1223,7 @@ public final class FhirUtilityR4 {
    * @param searchService the search service
    * @param terminology the terminology
    * @param processedCodes set of already processed codes
+   * @param latestVersion the latest version
    * @return list of group questionnaire item components
    * @throws Exception the exception
    */
@@ -1291,6 +1292,7 @@ public final class FhirUtilityR4 {
    * @param searchService the search service
    * @param terminology the terminology
    * @param processedCodes set of already processed codes
+   * @param latestVersion the latest version
    * @return the questionnaire item component
    * @throws Exception the exception
    */
@@ -1596,6 +1598,7 @@ public final class FhirUtilityR4 {
    * @param searchService the search service
    * @param terminology the terminology
    * @param processedCodes set of already processed codes
+   * @param latestVersion the latest version
    * @return the questionnaire item component
    * @throws Exception the exception
    */
@@ -1679,6 +1682,7 @@ public final class FhirUtilityR4 {
    * @param searchService the search service to query concept properties
    * @return true if the concept should be included as a main question
    */
+  @SuppressWarnings("unused")
   private static boolean isMainQuestionConcept(final String conceptCode,
     final EntityRepositoryService searchService) {
     try {
@@ -1790,6 +1794,7 @@ public final class FhirUtilityR4 {
    * @param terminology the terminology
    * @return the coding object
    */
+  @SuppressWarnings("unused")
   private static Coding createCoding(final String code, final Terminology terminology) {
     final Coding coding = new Coding();
     coding.setSystem(terminology.getUri());

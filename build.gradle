@@ -43,7 +43,7 @@ apply plugin: "eclipse"
 apply plugin: "checkstyle"
 
 group = 'com.wci.open-termhub'
-version = '1.1.0-202508'
+version = '1.1.0-202509'
 
 sourceCompatibility = 17
 targetCompatibility = 17

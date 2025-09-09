@@ -82,10 +82,6 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
   /** The axioms. */
   private List<Axiom> axioms;
 
-  /** The ECL index clauses. */
-  @Field(name = "ecl", type = FieldType.Keyword)
-  private List<String> eclClauses;
-
   /** The attributes. */
   @Field(type = FieldType.Object)
   private Map<String, String> attributes;
@@ -188,7 +184,6 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
       relationships = new ArrayList<>(concept.getRelationships());
       inverseRelationships = new ArrayList<>(concept.getInverseRelationships());
       treePositions = new ArrayList<>(concept.getTreePositions());
-      eclClauses = new ArrayList<>(concept.getEclClauses());
       highlights = new HashMap<>(concept.getHighlights());
     }
   }
@@ -438,7 +433,6 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
     attributes = new HashMap<>(0);
     semanticTypes = new HashSet<>(0);
     labels = new HashSet<>(0);
-    eclClauses = new ArrayList<>(0);
     children = new ArrayList<>(0);
     parents = new ArrayList<>(0);
     axioms = new ArrayList<>(0);
@@ -461,7 +455,6 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
     // Blank all @Schema "hidden"
     normName = null;
     stemName = null;
-    eclClauses = new ArrayList<>(0);
     getTerms().stream().forEach(t -> t.cleanForApi());
 
   }
@@ -642,27 +635,7 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
     this.treePositions = treePositions;
   }
 
-  /**
-   * Gets the ecl clauses.
-   *
-   * @return the ecl clauses
-   */
-  @Schema(hidden = true)
-  public List<String> getEclClauses() {
-    if (eclClauses == null) {
-      eclClauses = new ArrayList<>();
-    }
-    return eclClauses;
-  }
-
-  /**
-   * Sets the ecl clauses.
-   *
-   * @param eclClauses the new ecl clauses
-   */
-  public void setEclClauses(final List<String> eclClauses) {
-    this.eclClauses = eclClauses;
-  }
+  // ECL clauses methods removed per requirements
 
   /**
    * Gets the norm name.

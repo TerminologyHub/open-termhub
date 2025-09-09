@@ -61,6 +61,7 @@ public final class LuceneQueryBuilder {
    */
   public static Query parse(final String queryText, final Class<?> modelClass)
     throws ParseException {
+
     // Check if this is a complex query with OR operators or multiple fielded
     // parts
     final boolean isComplexQuery = queryText != null && (queryText.contains(" OR ")
@@ -69,7 +70,7 @@ public final class LuceneQueryBuilder {
     if (isComplexQuery) {
       // Handle complex queries with OR or AND operators
       try {
-        if (queryText.contains(" OR ")) {
+        if (queryText != null && queryText.contains(" OR ")) {
           // Handle OR queries like "(cancer) OR (normName:cancer)"
           final String[] parts = queryText.split(" OR ");
           if (parts.length == 2) {
@@ -92,7 +93,7 @@ public final class LuceneQueryBuilder {
             }
             return query;
           }
-        } else if (queryText.contains(" AND ")) {
+        } else if (queryText != null && queryText.contains(" AND ")) {
           // Handle AND queries like "name: diabetes AND terminology: SNOMEDCT"
           // Clean up malformed parentheses and extra characters
           String cleanedQuery = queryText.trim();
@@ -188,9 +189,8 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Transform non-fielded queries to use proper syntax for .keyword fields.
-   * This is needed because .keyword fields contain full phrases, not individual
-   * tokens.
+   * Transform non-fielded queries to use proper syntax for .keyword fields. This is needed because
+   * .keyword fields contain full phrases, not individual tokens.
    *
    * @param queryText the original query text
    * @param fields the searchable fields
@@ -228,10 +228,10 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Transform fielded queries to use .keyword suffix with wildcard matching.
-   * This handles the Elasticsearch @MultiField mapping where fields like 'name'
-   * are actually indexed as 'name.keyword' for exact matching, but we need
-   * wildcard queries for partial matching since the data contains full phrases.
+   * Transform fielded queries to use .keyword suffix with wildcard matching. This handles the
+   * Elasticsearch @MultiField mapping where fields like 'name' are actually indexed as
+   * 'name.keyword' for exact matching, but we need wildcard queries for partial matching since the
+   * data contains full phrases.
    *
    * @param queryText the original query text
    * @param modelClass the model class
@@ -299,8 +299,8 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Check if a model class uses MultiField annotations (like Concept/Term) vs
-   * direct keyword fields (like TestDocument).
+   * Check if a model class uses MultiField annotations (like Concept/Term) vs direct keyword fields
+   * (like TestDocument).
    *
    * @param modelClass the model class to check
    * @return true if the model uses MultiField annotations, false otherwise
@@ -316,9 +316,8 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Returns the list of searchable fields for a given model class. Uses
-   * reflection to find String or List<String> fields, or those annotated
-   * with @Field(type = FieldType.Text) or MultiField.
+   * Returns the list of searchable fields for a given model class. Uses reflection to find String
+   * or List<String> fields, or those annotated with @Field(type = FieldType.Text) or MultiField.
    *
    * @param modelClass the model class
    * @return the searchable fields
