@@ -68,6 +68,7 @@ public abstract class AbstractServerTest extends BaseUnitTest {
       searchService.deleteIndex(clazz);
       searchService.createIndex(clazz);
     }
+    LuceneDataAccess.clearReaders();
   }
 
   /**
