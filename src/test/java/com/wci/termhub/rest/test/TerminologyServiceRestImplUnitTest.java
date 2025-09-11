@@ -928,6 +928,20 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
   }
 
+  @Test
+  @Order(FIND)
+  public void testFindMapsetsWithMultipleSort() throws Exception {
+    final String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=&offset=0&limit=20&sort=from.code,group,priority&ascending=true&leaf=null";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
+    assertThat(mapsetList).isNotNull();
+    assertThat(mapsetList.getTotal()).isPositive();
+  }
+
   /**
    * Test find mapsets with query.
    *

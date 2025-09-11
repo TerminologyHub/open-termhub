@@ -364,41 +364,85 @@ public final class IndexUtility {
           currentClass = currentClass.getSuperclass();
         }
       }
-
-      if (field == null) {
-        throw new NoSuchFieldException("Field " + sortField + " not found in class "
-            + clazz.getName() + " or its superclasses");
-      }
-
       SortField.Type sortType;
-      final String fieldType = field.getType().getSimpleName();
-      switch (fieldType) {
-        case "String":
-          sortType = SortField.Type.STRING;
-          break;
-        case "Integer":
-          sortType = SortField.Type.INT;
-          break;
-        case "Long":
-        case "Date":
-        case "Instant":
-          sortType = SortField.Type.LONG;
-          break;
-        case "Float":
-          sortType = SortField.Type.FLOAT;
-          break;
-        case "Double":
-          sortType = SortField.Type.DOUBLE;
-          break;
-        default:
-          throw new IllegalArgumentException(
-              "Unsupported field type for sorting: " + field.getType());
+      if (field == null) {
+        // Handle nested fields by parsing the field path
+        sortType = determineSortTypeForNestedField(sortField, clazz);
+      } else {
+        // final String fieldType = field.getType().getSimpleName();
+        sortType = determineSortTypeForField(field);
+        
       }
 
       sortFieldArray[i] = new SortField(sortField, sortType, !searchParameters.getAscending());
     }
 
     return new Sort(sortFieldArray);
+  }
+
+  /**
+   * Determine sort type for nested field.
+   *
+   * @param sortField the sort field
+   * @param clazz the clazz
+   * @return the sort field. type
+   */
+  private static SortField.Type determineSortTypeForNestedField(final String sortField,
+    final Class<?> clazz) {
+    try {
+      // Use ModelUtility to get the actual field type for nested fields
+      // final String sortFieldName = ModelUtility.getSortField(clazz, sortField);
+
+      // Parse the nested field path (e.g., "from.code" -> ["from", "code"])
+      final String[] fieldParts = sortField.split("\\.");
+      Class<?> currentClass = clazz;
+      java.lang.reflect.Field field = null;
+
+      for (final String fieldPart : fieldParts) {
+        field = currentClass.getDeclaredField(fieldPart);
+        if (field.getType().isPrimitive() || field.getType().getName().startsWith("java.")) {
+          break;
+        }
+        currentClass = field.getType();
+      }
+
+      return determineSortTypeForField(field);
+
+    } catch (final Exception e) {
+      // If we can't determine the type, default to STRING
+    }
+
+    return SortField.Type.STRING;
+  }
+  
+  /**
+   * Determine sort type for field.
+   *
+   * @param field the field
+   * @return the sort field. type
+   */
+  private static SortField.Type determineSortTypeForField(final java.lang.reflect.Field field) {
+
+    if (field == null) {
+      return SortField.Type.STRING;
+    }
+    final String fieldType = field.getType().getSimpleName();
+    switch (fieldType) {
+      case "String":
+        return SortField.Type.STRING;
+      case "Integer":
+        return SortField.Type.INT;
+      case "Long":
+      case "Date":
+      case "Instant":
+        return SortField.Type.LONG;
+      case "Float":
+        return SortField.Type.FLOAT;
+      case "Double":
+        return SortField.Type.DOUBLE;
+      default:
+        return SortField.Type.STRING;
+    }
   }
 
   /**
