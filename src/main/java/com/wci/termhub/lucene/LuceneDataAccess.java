@@ -265,8 +265,8 @@ public class LuceneDataAccess {
       currentClass = currentClass.getSuperclass();
     }
 
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Adding document: {}", document);
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Adding document: {}", document);
     }
     return document;
   }
