@@ -152,6 +152,7 @@ public class LuceneDataAccess {
         for (final Class entityClass : entityClasses) {
             final IndexWriter writer = getIndexWriter(entityClass);
             writer.commit();
+            System.out.println("cleaning up reader for " + entityClass.getCanonicalName());
             clearReaderForClass(entityClass);
         }
     }
@@ -876,7 +877,7 @@ public class LuceneDataAccess {
         readerMap.clear();
     }
 
-    public static synchronized void clearReaderForClass(Class<? extends HasId> clazz) {
+    public static final void clearReaderForClass(Class<? extends HasId> clazz) {
         readerMap.remove(clazz.getCanonicalName());
     }
 
