@@ -152,7 +152,7 @@ public class LuceneDataAccess {
         for (final Class entityClass : entityClasses) {
             final IndexWriter writer = getIndexWriter(entityClass);
             writer.commit();
-            System.out.println("cleaning up reader for " + entityClass.getCanonicalName());
+            Thread.sleep(1000);
             clearReaderForClass(entityClass);
         }
     }
