@@ -179,7 +179,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
     terminology.setPublisher(publisher);
     terminology.setFamily("Fake Family");
     searchService.add(Terminology.class, terminology);
-
+    Thread.sleep(1000);
     final String query = "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"";
 
     LOGGER.info("testPublisherSearch Query: {}", query);
