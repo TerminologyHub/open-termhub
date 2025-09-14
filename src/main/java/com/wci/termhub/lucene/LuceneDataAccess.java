@@ -839,6 +839,7 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
     public IndexWriter getIndexWriter(Class<? extends HasId> clazz) throws Exception {
         String className = clazz.getCanonicalName();
         if (writerMap.containsKey(className)) {
+            LOGGER.info("Using cached writer for {}. writer for {}", className, writerMap.get(className).getDirectory());
             final IndexWriter writer = writerMap.get(className);
             return writer;
         } else {
@@ -848,6 +849,7 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
             }
             final FSDirectory directory = FSDirectory.open(indexDir.toPath());
             final IndexWriter writer = createIndexWriter(directory);
+            LOGGER.info("No cached writer for {}. Creating at {}", className, indexDir.getAbsolutePath());
             writerMap.put(className, writer);
             return writer;
         }
