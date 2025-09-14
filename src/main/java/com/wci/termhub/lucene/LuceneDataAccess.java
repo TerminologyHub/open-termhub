@@ -141,6 +141,7 @@ public class LuceneDataAccess {
      * @throws IllegalAccessException the illegal access exception
      */
     public void add(final List<? extends HasId> entities) throws Exception {
+        LOGGER.info("Adding {} entities to Lucene index", entities.size());
         Set<Class> entityClasses = new HashSet<>();
         for (final HasId entity : entities) {
             final IndexWriter writer = getIndexWriter(entity.getClass());
@@ -154,6 +155,7 @@ public class LuceneDataAccess {
             writer.commit();
             clearReaderForClass(entityClass);
         }
+        LOGGER.info("Done Adding {} entities to Lucene index", entities.size());
     }
 
     /**
@@ -538,7 +540,7 @@ public class LuceneDataAccess {
      */
     public <T extends HasId> ResultList<T> find(final Class<T> clazz,
                                                 final SearchParameters searchParameters) throws Exception {
-
+        LOGGER.info("Find: {}, {}", clazz.getCanonicalName(), searchParameters);
         // default search parameters if not provided
         final SearchParameters sp =
                 (searchParameters != null) ? searchParameters : new SearchParameters();
@@ -583,16 +585,16 @@ public class LuceneDataAccess {
     @SuppressWarnings("resource")
     public <T extends HasId> ResultList<T> find(final Class<T> clazz,
                                                 final SearchParameters searchParameters, final Query phraseQuery) throws Exception {
-
+LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phraseQuery);
         IndexSearcher searcher = null;
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("indexRootDirectory is {}; index is {}", indexRootDirectory,
                     clazz.getCanonicalName());
         }
-
+        LOGGER.info("Before getIndexReader");
         final IndexReader reader = getIndexReader(clazz);
-
+        LOGGER.info("After getIndexReader");
         final BooleanQuery queryBuilder =
                 new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
         if (LOGGER.isTraceEnabled()) {
@@ -877,6 +879,7 @@ public class LuceneDataAccess {
     }
 
     public static final void clearReaderForClass(Class<? extends HasId> clazz) {
+        LOGGER.info("Clearing reader for class: {}", clazz.getCanonicalName());
         readerMap.remove(clazz.getCanonicalName());
     }
 
