@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.UUID;
 
+import com.wci.termhub.lucene.LuceneDataAccess;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,6 +185,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
     LOGGER.info("testPublisherSearch Query: {}", query);
 
     SEARCH_PARAMETERS.setQuery(query);
+    LuceneDataAccess.clearReaders();
     final ResultList<Terminology> terminologies =
         searchService.find(SEARCH_PARAMETERS, Terminology.class);
     assertEquals(1, terminologies.getItems().size());
