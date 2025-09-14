@@ -151,9 +151,8 @@ public class LuceneDataAccess {
         // Commit all writers
         for (final Class entityClass : entityClasses) {
             final IndexWriter writer = getIndexWriter(entityClass);
-            long sequence = writer.commit();
+            writer.commit();
             clearReaderForClass(entityClass);
-            System.out.println("Committed index for " + entityClass.getCanonicalName() + " at sequence " + sequence);
         }
     }
 

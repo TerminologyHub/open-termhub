@@ -158,6 +158,7 @@ dependencyManagement {
 test {
     useJUnitPlatform()
     exclude '**/integrationtest/**'
+    maxParallelForks = 1
     testLogging {
         events "skipped", "failed"
         exceptionFormat "full"
