@@ -858,8 +858,10 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
         IndexReader reader = readerMap.get(canonicalClassName);
         if (reader == null) {
             synchronized (readerMap) {
+                LOGGER.info("No cached reader for {}, creating new one", canonicalClassName);
                 if (!readerMap.containsKey(canonicalClassName)) {
                     synchronized (readerMap) {
+                        LOGGER.info("No cached reader for {}, creating new one 2", canonicalClassName);
                         final File indexDir = getIndexDirectory(clazz);
                         final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
                         reader = DirectoryReader.open(fsDirectory);
@@ -871,6 +873,8 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
                 }
             }
         }
+        LOGGER.info("Using cached reader for {}", canonicalClassName);
+        LOGGER.info("Current reader has {} maxDoc and {} numDocs", reader.maxDoc(), reader.numDocs());
         return reader;
     }
 
