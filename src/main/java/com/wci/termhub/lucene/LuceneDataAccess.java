@@ -12,9 +12,12 @@ package com.wci.termhub.lucene;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -38,6 +41,7 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.stereotype.Component;
@@ -47,9 +51,9 @@ import com.wci.termhub.model.BaseModel;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.open.configuration.ApplicationProperties;
 import com.wci.termhub.util.IndexUtility;
 import com.wci.termhub.util.ModelUtility;
-import com.wci.termhub.util.PropertyUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.ThreadLocalMapper;
 
@@ -59,18 +63,35 @@ import com.wci.termhub.util.ThreadLocalMapper;
 @Component
 public class LuceneDataAccess {
 
-  /** The logger. */
+  /**
+   * The logger.
+   */
   private static final Logger LOGGER = LoggerFactory.getLogger(LuceneDataAccess.class);
 
-  /** The Constant INDEX_DIRECTORY. */
-  private static String indexRootDirectory;
+  /** The application properties. */
+  @Autowired
+  private ApplicationProperties applicationProperties;
+
+  /** The Constant readerMap. */
+  private static final Map<String, IndexReader> READER_MAP = new HashMap<>();
+
+  /** The Constant writerMap. */
+  private static final Map<String, IndexWriter> WRITER_MAP = new HashMap<>();
 
   /**
    * Instantiates a new lucene data access.
    */
   public LuceneDataAccess() {
     // n/a
-    indexRootDirectory = PropertyUtility.getProperties().getProperty("lucene.index.directory");
+  }
+
+  /**
+   * Sets the application properties.
+   *
+   * @param applicationProperties the new application properties
+   */
+  public void setApplicationProperties(final ApplicationProperties applicationProperties) {
+    this.applicationProperties = applicationProperties;
   }
 
   /**
@@ -84,21 +105,19 @@ public class LuceneDataAccess {
     // Create only if the index does not exist
     final File indexDir = getIndexDirectory(clazz);
     if (indexDir.exists()) {
-      if (LOGGER.isDebugEnabled()) {
+      if (LOGGER.isTraceEnabled()) {
         LOGGER.debug("Index already exists: {}", indexDir.getAbsolutePath());
       }
       return;
     }
-
-    LOGGER.info("Create Index: {}/{}", indexRootDirectory, clazz.getCanonicalName());
-
     // Create a new IndexWriter with default config to initialize the index
-    try (final FSDirectory directory = FSDirectory.open(indexDir.toPath());
-        final StandardAnalyzer analyzer = new StandardAnalyzer();
-        final IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(analyzer))) {
-      // Commit to create the initial index structure
-      writer.commit();
-    }
+    final FSDirectory directory = FSDirectory.open(indexDir.toPath());
+    final StandardAnalyzer analyzer = new StandardAnalyzer();
+    final IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(analyzer));
+    WRITER_MAP.put(clazz.getCanonicalName(), writer);
+    // Commit to create the initial index structure
+    writer.commit();
+    clearReaderForClass(clazz);
   }
 
   /**
@@ -114,6 +133,9 @@ public class LuceneDataAccess {
     final File indexDir = getIndexDirectory(clazz);
     LOGGER.info("Deleting index {} from {}", indexDirectory, indexDir.getAbsolutePath());
     if (indexDir.exists()) {
+      clearReaderForClass(clazz);
+      // need to close writer first
+      clearWriterForClass(clazz);
       FileUtils.deleteDirectory(indexDir);
     }
   }
@@ -122,28 +144,21 @@ public class LuceneDataAccess {
    * Adds the batch.
    *
    * @param entities the entities
-   * @throws IOException Signals that an I/O exception has occurred.
-   * @throws IllegalAccessException the illegal access exception
+   * @throws Exception the exception
    */
-  public void add(final List<? extends HasId> entities) throws IOException, IllegalAccessException {
-
-    try (final StandardAnalyzer analyzer = new StandardAnalyzer()) {
-      final IndexWriterConfig config = new IndexWriterConfig(analyzer);
-      final File indexDir = getIndexDirectory(entities.get(0).getClass());
-      if (!indexDir.exists()) {
-        indexDir.mkdirs();
-      }
-
-      try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
-          final IndexWriter writer = new IndexWriter(fsDirectory, config);) {
-
-        for (final HasId entity : entities) {
-          final Document document = getDocument(entity);
-          writer.addDocument(document);
-        }
-
-        writer.commit();
-      }
+  public void add(final List<? extends HasId> entities) throws Exception {
+    Set<Class> entityClasses = new HashSet<>();
+    for (final HasId entity : entities) {
+      final IndexWriter writer = getIndexWriter(entity.getClass());
+      final Document document = getDocument(entity);
+      writer.addDocument(document);
+      entityClasses.add(entity.getClass());
+    }
+    // Commit all writers
+    for (final Class entityClass : entityClasses) {
+      final IndexWriter writer = getIndexWriter(entityClass);
+      writer.commit();
+      clearReaderForClass(entityClass);
     }
   }
 
@@ -151,11 +166,9 @@ public class LuceneDataAccess {
    * Adds the entity to the index specified by the entity class name.
    *
    * @param entity the entity
-   * @throws IOException Signals that an I/O exception has occurred.
-   * @throws IllegalAccessException the illegal access exception
+   * @throws Exception the exception
    */
-  public void add(final HasId entity) throws IOException, IllegalAccessException {
-
+  public void add(final HasId entity) throws Exception {
     add(List.of(entity));
   }
 
@@ -272,9 +285,10 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Update an existing document efficiently by comparing fields and only updating changed ones.
-   * This method retrieves the existing entity, compares it with the new one, and updates only the
-   * fields that have actually changed, preserving schema consistency.
+   * Update an existing document efficiently by comparing fields and only
+   * updating changed ones. This method retrieves the existing entity, compares
+   * it with the new one, and updates only the fields that have actually
+   * changed, preserving schema consistency.
    *
    * @param clazz the clazz
    * @param id the id
@@ -291,63 +305,58 @@ public class LuceneDataAccess {
       throw new IllegalArgumentException("entity cannot be null");
     }
 
-    final String indexDirectory = clazz.getCanonicalName();
-    final File indexDir = getIndexDirectory(clazz);
+    final IndexWriter writer = getIndexWriter(clazz);
 
-    if (!indexDir.exists()) {
-      throw new IllegalStateException("Index directory does not exist: " + indexDirectory);
+    // First, retrieve the existing document to get the current entity
+    final Document existingDoc = getExistingDocument(writer, id);
+    if (existingDoc == null) {
+      throw new IllegalStateException(
+          "Document with id " + id + " not found in index " + writer.getDirectory());
     }
 
-    try (final FSDirectory directory = FSDirectory.open(indexDir.toPath());
-        final IndexWriter writer = createIndexWriter(directory)) {
+    // Get the entity field which contains the JSON representation
+    final StoredField entityField = (StoredField) existingDoc.getField("entity");
+    if (entityField == null) {
+      throw new IllegalStateException("Entity field not found in document with id " + id);
+    }
 
-      // First, retrieve the existing document to get the current entity
-      final Document existingDoc = getExistingDocument(writer, id);
-      if (existingDoc == null) {
-        throw new IllegalStateException(
-            "Document with id " + id + " not found in index " + indexDirectory);
-      }
+    // Parse the existing entity from JSON
+    final HasId existingEntity = parseEntityFromDocument(entityField, clazz);
 
-      // Get the entity field which contains the JSON representation
-      final StoredField entityField = (StoredField) existingDoc.getField("entity");
-      if (entityField == null) {
-        throw new IllegalStateException("Entity field not found in document with id " + id);
-      }
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Retrieved existing entity: {}", existingEntity);
+      LOGGER.debug("New entity: {}", entity);
+    }
 
-      // Parse the existing entity from JSON
-      final HasId existingEntity = parseEntityFromDocument(entityField, clazz);
+    // Compare entities and update only changed fields
+    final boolean hasChanges = updateChangedFields(existingEntity, entity);
 
+    if (!hasChanges) {
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Retrieved existing entity: {}", existingEntity);
-        LOGGER.debug("New entity: {}", entity);
+        LOGGER.debug("No changes detected for entity with id: {}", id);
       }
+      return;
+    }
 
-      // Compare entities and update only changed fields
-      final boolean hasChanges = updateChangedFields(existingEntity, entity);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Changes detected, updating document for entity with id: {}", id);
+    }
 
-      if (!hasChanges) {
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("No changes detected for entity with id: {}", id);
-        }
-        return;
-      }
-
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Changes detected, updating document for entity with id: {}", id);
-      }
-
-      // Now delete the old document and add the updated one using the same
-      // writer. This ensures schema consistency while being more efficient than
-      // full reindexing
-      updateDocumentInIndex(writer, id, existingEntity);
-
-      LOGGER.debug("Successfully updated document with id: {} for index: {}", id, indexDirectory);
+    // Now delete the old document and add the updated one using the same
+    // writer. This ensures schema consistency while being more efficient than
+    // full reindexing
+    updateDocumentInIndex(writer, id, existingEntity);
+    clearReaderForClass(clazz);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Successfully updated document with id: {} for index: {}", id,
+          writer.getDirectory());
     }
   }
 
   /**
-   * Update multiple entities efficiently by comparing fields and only updating changed ones. This
-   * method processes each entity individually using the optimized update approach.
+   * Update multiple entities efficiently by comparing fields and only updating
+   * changed ones. This method processes each entity individually using the
+   * optimized update approach.
    *
    * @param clazz the clazz
    * @param entities the map of id to entity
@@ -360,94 +369,83 @@ public class LuceneDataAccess {
       return;
     }
 
-    final String indexDirectory = clazz.getCanonicalName();
-    final File indexDir = getIndexDirectory(clazz);
+    final IndexWriter writer = getIndexWriter(clazz);
 
-    if (!indexDir.exists()) {
-      throw new IllegalStateException("Index directory does not exist: " + indexDirectory);
-    }
+    for (final Map.Entry<String, HasId> entry : entities.entrySet()) {
+      final String id = entry.getKey();
+      final HasId entity = entry.getValue();
 
-    try (final FSDirectory directory = FSDirectory.open(indexDir.toPath());
-        final IndexWriter writer = createIndexWriter(directory)) {
-
-      for (final Map.Entry<String, HasId> entry : entities.entrySet()) {
-        final String id = entry.getKey();
-        final HasId entity = entry.getValue();
-
-        if (id == null) {
-          LOGGER.warn("Skipping entity with null id in bulk update");
-          continue;
-        }
-        if (entity == null) {
-          LOGGER.warn("Skipping null entity with id: {} in bulk update", id);
-          continue;
-        }
-
-        try {
-          // First, retrieve the existing document to get the current entity
-          final Document existingDoc = getExistingDocument(writer, id);
-          if (existingDoc == null) {
-            LOGGER.warn("Document with id {} not found in bulk update, skipping", id);
-            continue;
-          }
-
-          // Get the entity field which contains the JSON representation
-          final StoredField entityField = (StoredField) existingDoc.getField("entity");
-          if (entityField == null) {
-            LOGGER.warn("Entity field not found in document with id {} in bulk update, skipping",
-                id);
-            continue;
-          }
-
-          // Parse the existing entity from JSON
-          final HasId existingEntity = parseEntityFromDocument(entityField, clazz);
-
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Processing bulk update for entity with id: {}", id);
-          }
-
-          // Compare entities and update only changed fields
-          final boolean hasChanges = updateChangedFields(existingEntity, entity);
-
-          if (!hasChanges) {
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("No changes detected for entity with id: {} in bulk update", id);
-            }
-            continue;
-          }
-
-          // Delete the old document and add the updated one
-          updateDocumentInIndex(writer, id, existingEntity);
-
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Updated entity with id: {} in bulk update", id);
-          }
-
-        } catch (final Exception e) {
-          LOGGER.error("Error updating entity with id: {} in bulk update", id, e);
-          // Continue with other entities instead of failing the entire batch
-        }
+      if (id == null) {
+        LOGGER.warn("Skipping entity with null id in bulk update");
+        continue;
+      }
+      if (entity == null) {
+        LOGGER.warn("Skipping null entity with id: {} in bulk update", id);
+        continue;
       }
 
-      // Commit all changes at once
-      writer.commit();
-      LOGGER.debug("Successfully completed bulk update for {} entities in index: {}",
-          entities.size(), indexDirectory);
+      try {
+        // First, retrieve the existing document to get the current entity
+        final Document existingDoc = getExistingDocument(writer, id);
+        if (existingDoc == null) {
+          LOGGER.warn("Document with id {} not found in bulk update, skipping", id);
+          continue;
+        }
+
+        // Get the entity field which contains the JSON representation
+        final StoredField entityField = (StoredField) existingDoc.getField("entity");
+        if (entityField == null) {
+          LOGGER.warn("Entity field not found in document with id {} in bulk update, skipping", id);
+          continue;
+        }
+
+        // Parse the existing entity from JSON
+        final HasId existingEntity = parseEntityFromDocument(entityField, clazz);
+
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Processing bulk update for entity with id: {}", id);
+        }
+
+        // Compare entities and update only changed fields
+        final boolean hasChanges = updateChangedFields(existingEntity, entity);
+
+        if (!hasChanges) {
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("No changes detected for entity with id: {} in bulk update", id);
+          }
+          continue;
+        }
+
+        // Delete the old document and add the updated one
+        updateDocumentInIndex(writer, id, existingEntity);
+
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Updated entity with id: {} in bulk update", id);
+        }
+
+      } catch (final Exception e) {
+        LOGGER.error("Error updating entity with id: {} in bulk update", id, e);
+        // Continue with other entities instead of failing the entire batch
+      }
     }
+
+    // Commit all changes at once
+    writer.commit();
+    clearReaderForClass(clazz);
+    LOGGER.debug("Successfully completed bulk update for {} entities in index: {}", entities.size(),
+        writer.getDirectory());
   }
 
   /**
-   * Compare two entities and update only the fields that have changed. This method uses reflection
-   * to compare field values and updates the existing entity with new values from the updated
-   * entity.
+   * Compare two entities and update only the fields that have changed. This
+   * method uses reflection to compare field values and updates the existing
+   * entity with new values from the updated entity.
    *
    * @param existingEntity the existing entity to update
    * @param updatedEntity the entity containing the new values
    * @return true if any fields were changed, false otherwise
-   * @throws Exception on error
    */
-  private boolean updateChangedFields(final HasId existingEntity, final HasId updatedEntity)
-    throws Exception {
+  private boolean updateChangedFields(final HasId existingEntity, final HasId updatedEntity) {
 
     boolean hasChanges = false;
     final Class<?> entityClass = existingEntity.getClass();
@@ -501,40 +499,13 @@ public class LuceneDataAccess {
    *
    * @param clazz the clazz
    * @param id the id
-   * @throws IOException Signals that an I/O exception has occurred.
-   * @throws IllegalAccessException the illegal access exception
+   * @throws Exception the exception
    */
-  public void remove(final Class<? extends HasId> clazz, final String id)
-    throws IOException, IllegalAccessException {
-
+  public void remove(final Class<? extends HasId> clazz, final String id) throws Exception {
     if (id == null) {
       throw new IllegalArgumentException("id cannot be null");
     }
-
-    final String indexDirectory = clazz.getCanonicalName();
-    try (final StandardAnalyzer analyzer = new StandardAnalyzer()) {
-      final IndexWriterConfig config = new IndexWriterConfig(analyzer);
-
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Removing id: {} for index:{}", id, indexDirectory);
-      }
-
-      final File indexDir = getIndexDirectory(clazz);
-      if (!indexDir.exists()) {
-        indexDir.mkdirs();
-      }
-
-      try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
-          final IndexWriter writer = new IndexWriter(fsDirectory, config)) {
-
-        deleteDocumentById(writer, id);
-
-      } catch (final Exception e) {
-        LOGGER.error("Error: {}", e.getMessage(), e);
-        throw e;
-      }
-    }
-
+    remove(clazz, List.of(id));
   }
 
   /**
@@ -542,39 +513,24 @@ public class LuceneDataAccess {
    *
    * @param clazz the clazz
    * @param ids the ids
-   * @throws IOException Signals that an I/O exception has occurred.
-   * @throws IllegalAccessException the illegal access exception
+   * @throws Exception the exception
    */
-  public void remove(final Class<? extends HasId> clazz, final List<String> ids)
-    throws IOException, IllegalAccessException {
+  public void remove(final Class<? extends HasId> clazz, final List<String> ids) throws Exception {
 
     if (ids == null || ids.isEmpty()) {
       throw new IllegalArgumentException("ids cannot be null");
     }
 
-    final String indexDirectory = clazz.getCanonicalName();
-    final File indexDir = getIndexDirectory(clazz);
+    final IndexWriter writer = getIndexWriter(clazz);
 
-    try (final StandardAnalyzer analyzer = new StandardAnalyzer()) {
-      final IndexWriterConfig config = new IndexWriterConfig(analyzer);
-
-      try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
-          final IndexWriter writer = new IndexWriter(fsDirectory, config)) {
-
-        for (final String id : ids) {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Removing id: {} for index:{}", id, indexDirectory);
-          }
-
-          deleteDocumentById(writer, id);
-        }
-        writer.commit();
-
-      } catch (final Exception e) {
-        LOGGER.error("Error: {}", e.getMessage(), e);
-        throw e;
+    for (final String id : ids) {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Removing id: {} for index:{}", id, writer.getDirectory());
       }
+      deleteDocumentById(writer, id);
     }
+    clearReaderForClass(clazz);
+    writer.commit();
   }
 
   /**
@@ -613,8 +569,12 @@ public class LuceneDataAccess {
       sp.setAscending(true);
     }
     try {
-      return find(clazz, sp, sp.getLuceneQuery() != null ? sp.getLuceneQuery()
-          : LuceneQueryBuilder.parse(sp.getQuery(), clazz));
+      final Query query = sp.getLuceneQuery() != null ? sp.getLuceneQuery()
+          : LuceneQueryBuilder.parse(sp.getQuery(), clazz);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Executing query: {} for class: {}", query, clazz.getSimpleName());
+      }
+      return find(clazz, sp, query);
     } catch (ParseException e) {
       throw new Exception("Unable to parse query = " + sp.getQuery(), e);
     }
@@ -637,74 +597,64 @@ public class LuceneDataAccess {
     IndexSearcher searcher = null;
 
     if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("indexRootDirectory is {}; index is {}", indexRootDirectory,
+      LOGGER.trace("indexRootDirectory is {}; index is {}", getIndexRootDirectory(),
           clazz.getCanonicalName());
     }
 
-    final File indexDir = getIndexDirectory(clazz);
-    try (final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
-        final IndexReader reader = DirectoryReader.open(fsDirectory)) {
+    final IndexReader reader = getIndexReader(clazz);
 
-      final BooleanQuery queryBuilder =
-          new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("  query = {}", queryBuilder);
-      }
-
-      searcher = new IndexSearcher(reader);
-
-      final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
-          ? IndexUtility.getDefaultSortOrder(clazz)
-          : IndexUtility.getSortOrder(searchParameters, clazz);
-
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("Search Parameters ({}): {}", clazz.getCanonicalName(), searchParameters);
-      }
-      final int start = searchParameters.getOffset();
-      final int end = searchParameters.getLimit() + (searchParameters.getOffset());
-
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("Search Parameters: start:{}, end:{}", start, end);
-      }
-
-      final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
-          : searcher.search(queryBuilder, end);
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("Query topDocs: {}", topDocs.totalHits.value);
-      }
-
-      final ResultList<T> results = new ResultList<>();
-      final ObjectMapper mapper = ThreadLocalMapper.get();
-      for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
-
-        final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
-        if (LOGGER.isTraceEnabled()) {
-          LOGGER.trace("Score: {}", scoreDoc.score);
-        }
-        final Document doc = searcher.storedFields().document(scoreDoc.doc);
-        final String jsonEntityString = doc.get("entity");
-        final T obj = mapper.readValue(jsonEntityString, clazz);
-        if (LOGGER.isTraceEnabled()) {
-          LOGGER.trace("search result: {}", obj);
-        }
-        results.getItems().add(obj);
-      }
-      results.setTotal(topDocs.totalHits.value);
-      return results;
-
-    } catch (final Exception e) {
-      throw e;
-    } finally {
-      if (searcher != null && searcher.getIndexReader() != null) {
-        searcher.getIndexReader().close();
-      }
+    final BooleanQuery queryBuilder =
+        new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("  query = {}", queryBuilder);
     }
+
+    searcher = new IndexSearcher(reader);
+
+    final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
+        ? IndexUtility.getDefaultSortOrder(clazz)
+        : IndexUtility.getSortOrder(searchParameters, clazz);
+
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Search Parameters ({}): {}", clazz.getCanonicalName(), searchParameters);
+    }
+    final int start = searchParameters.getOffset();
+    final int end = searchParameters.getLimit() + (searchParameters.getOffset());
+
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Search Parameters: start:{}, end:{}", start, end);
+    }
+
+    final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
+        : searcher.search(queryBuilder, end);
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Query topDocs: {}", topDocs.totalHits.value);
+    }
+
+    final ResultList<T> results = new ResultList<>();
+    final ObjectMapper mapper = ThreadLocalMapper.get();
+    for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
+
+      final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("Score: {}", scoreDoc.score);
+      }
+      final Document doc = searcher.storedFields().document(scoreDoc.doc);
+      final String jsonEntityString = doc.get("entity");
+      final T obj = mapper.readValue(jsonEntityString, clazz);
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("search result: {}", obj);
+      }
+      results.getItems().add(obj);
+    }
+    results.setTotal(topDocs.totalHits.value);
+    return results;
   }
 
   /**
-   * Add a field to an existing document without full reindexing. This method retrieves the existing
-   * entity, updates it with the new field value, and then re-indexes it to ensure schema
-   * consistency.
+   * Add a field to an existing document without full reindexing. This method
+   * retrieves the existing entity, updates it with the new field value, and
+   * then re-indexes it to ensure schema consistency.
    *
    * @param clazz the clazz
    * @param id the id
@@ -725,66 +675,56 @@ public class LuceneDataAccess {
       throw new IllegalArgumentException("entity cannot be null");
     }
 
-    final String indexDirectory = clazz.getCanonicalName();
-    final File indexDir = getIndexDirectory(clazz);
+    final IndexWriter writer = getIndexWriter(clazz);
 
-    if (!indexDir.exists()) {
-      throw new IllegalStateException("Index directory does not exist: " + indexDirectory);
+    // First, we need to retrieve the existing document to get the entity
+    final Document existingDoc = getExistingDocument(writer, id);
+    if (existingDoc == null) {
+      throw new IllegalStateException(
+          "Document with id " + id + " not found in index " + writer.getDirectory());
     }
 
-    try (final FSDirectory directory = FSDirectory.open(indexDir.toPath());
-        final IndexWriter writer = createIndexWriter(directory)) {
-
-      // First, we need to retrieve the existing document to get the entity
-      final Document existingDoc = getExistingDocument(writer, id);
-      if (existingDoc == null) {
-        throw new IllegalStateException(
-            "Document with id " + id + " not found in index " + indexDirectory);
-      }
-
-      // Get the entity field which contains the JSON representation
-      final StoredField entityField = (StoredField) existingDoc.getField("entity");
-      if (entityField == null) {
-        throw new IllegalStateException("Entity field not found in document with id " + id);
-      }
-
-      // Parse the existing entity from JSON
-      final HasId existingEntity = parseEntityFromDocument(entityField, clazz);
-
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Retrieved existing entity: {}", existingEntity);
-      }
-
-      // Get the field value from the new entity using reflection
-      final java.lang.reflect.Field field = getFieldByName(entity.getClass(), fieldName);
-      if (field == null) {
-        throw new IllegalArgumentException(
-            "Field '" + fieldName + "' not found in class " + entity.getClass().getName());
-      }
-
-      field.setAccessible(true);
-      final Object fieldValue = field.get(entity);
-      if (fieldValue == null) {
-        LOGGER.warn("Field value is null for field: {} in entity: {}", fieldName, entity);
-        return;
-      }
-
-      // Set the new field value on the existing entity
-      field.set(existingEntity, fieldValue);
-
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Updated existing entity with new field value: {} = {}", fieldName,
-            fieldValue);
-      }
-
-      // Now delete the old document and add the updated one using the same
-      // writer. This ensures schema consistency while being more efficient than
-      // full reindexing
-      updateDocumentInIndex(writer, id, existingEntity);
-
-      LOGGER.debug("Successfully updated field: {} in document with id: {} for index: {}",
-          fieldName, id, indexDirectory);
+    // Get the entity field which contains the JSON representation
+    final StoredField entityField = (StoredField) existingDoc.getField("entity");
+    if (entityField == null) {
+      throw new IllegalStateException("Entity field not found in document with id " + id);
     }
+
+    // Parse the existing entity from JSON
+    final HasId existingEntity = parseEntityFromDocument(entityField, clazz);
+
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.debug("Retrieved existing entity: {}", existingEntity);
+    }
+
+    // Get the field value from the new entity using reflection
+    final java.lang.reflect.Field field = getFieldByName(entity.getClass(), fieldName);
+    if (field == null) {
+      throw new IllegalArgumentException(
+          "Field '" + fieldName + "' not found in class " + entity.getClass().getName());
+    }
+
+    field.setAccessible(true);
+    final Object fieldValue = field.get(entity);
+    if (fieldValue == null) {
+      LOGGER.warn("Field value is null for field: {} in entity: {}", fieldName, entity);
+      return;
+    }
+
+    // Set the new field value on the existing entity
+    field.set(existingEntity, fieldValue);
+
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.debug("Updated existing entity with new field value: {} = {}", fieldName, fieldValue);
+    }
+
+    // Now delete the old document and add the updated one using the same
+    // writer. This ensures schema consistency while being more efficient than
+    // full reindexing
+    updateDocumentInIndex(writer, id, existingEntity);
+    clearReaderForClass(clazz);
+    LOGGER.debug("Successfully updated field: {} in document with id: {} for index: {}", fieldName,
+        id, writer.getDirectory());
   }
 
   /**
@@ -836,7 +776,7 @@ public class LuceneDataAccess {
    * @return the index directory
    */
   private File getIndexDirectory(final Class<? extends HasId> clazz) {
-    return new File(indexRootDirectory, clazz.getCanonicalName());
+    return new File(getIndexRootDirectory(), clazz.getCanonicalName());
   }
 
   /**
@@ -901,4 +841,100 @@ public class LuceneDataAccess {
         new BooleanQuery.Builder().add(query, BooleanClause.Occur.MUST).build();
     writer.deleteDocuments(booleanQuery);
   }
+
+  /**
+   * Gets the index writer.
+   *
+   * @param clazz the clazz
+   * @return the index writer
+   * @throws Exception the exception
+   */
+  public IndexWriter getIndexWriter(final Class<? extends HasId> clazz) throws Exception {
+    String className = clazz.getCanonicalName();
+    if (WRITER_MAP.containsKey(className)) {
+      final IndexWriter writer = WRITER_MAP.get(className);
+      return writer;
+    } else {
+      final File indexDir = getIndexDirectory(clazz);
+      if (!indexDir.exists()) {
+        indexDir.mkdirs();
+      }
+      final FSDirectory directory = FSDirectory.open(indexDir.toPath());
+      final IndexWriter writer = createIndexWriter(directory);
+      WRITER_MAP.put(className, writer);
+      return writer;
+    }
+  }
+
+  /**
+   * Gets the index reader.
+   *
+   * @param clazz the clazz
+   * @return the index reader
+   * @throws Exception the exception
+   */
+  public IndexReader getIndexReader(final Class<? extends HasId> clazz) throws Exception {
+    String canonicalClassName = clazz.getCanonicalName();
+    IndexReader reader = READER_MAP.get(canonicalClassName);
+    if (reader == null) {
+      synchronized (READER_MAP) {
+        if (!READER_MAP.containsKey(canonicalClassName)) {
+          synchronized (READER_MAP) {
+            final File indexDir = getIndexDirectory(clazz);
+            final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
+            reader = DirectoryReader.open(fsDirectory);
+            READER_MAP.put(canonicalClassName, reader);
+            return reader;
+          }
+        } else {
+          return READER_MAP.get(canonicalClassName);
+        }
+      }
+    }
+    return reader;
+  }
+
+  /**
+   * Clear readers.
+   */
+  public static final void clearReaders() {
+    READER_MAP.clear();
+  }
+
+  /**
+   * Clear reader for class.
+   *
+   * @param clazz the clazz
+   */
+  public static final void clearReaderForClass(final Class<? extends HasId> clazz) {
+    READER_MAP.remove(clazz.getCanonicalName());
+  }
+
+  /**
+   * Clear writer for class.
+   *
+   * @param clazz the clazz
+   */
+  public static final void clearWriterForClass(final Class<? extends HasId> clazz) {
+    IndexWriter writer = WRITER_MAP.get(clazz.getCanonicalName());
+    if (writer == null) {
+      return;
+    }
+    try {
+      writer.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    WRITER_MAP.remove(clazz.getCanonicalName());
+  }
+
+  /**
+   * Gets the index root directory.
+   *
+   * @return the index root directory
+   */
+  private String getIndexRootDirectory() {
+    return applicationProperties.getProperty("lucene.index.directory");
+  }
+
 }
