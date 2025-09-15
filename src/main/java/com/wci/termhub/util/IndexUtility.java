@@ -155,6 +155,12 @@ public final class IndexUtility {
 
         final String stringValue = fieldValue.toString();
         final FieldType fieldType = annotation.type();
+
+        // Debug logging for normName field
+        if ("normName".equals(field.getName()) && logger.isDebugEnabled()) {
+          logger.debug("Indexing normName field: {}", stringValue);
+        }
+
         switch (fieldType) {
           case Text:
             indexableFields.add(
@@ -252,6 +258,31 @@ public final class IndexUtility {
 
         final String indexName = ((StringUtils.isNotEmpty(indexNamePrefix)
             ? indexNamePrefix + "." + field.getName() : field.getName()));
+
+        // Process the main field from MultiField annotation
+        final FieldType mainFieldType = multiFieldAnnotation.mainField().type();
+        final String mainFieldName = indexName; // Use the base field name for
+                                                // main field
+
+        switch (mainFieldType) {
+          case Text:
+            indexableFields.add(new TextField(mainFieldName, fieldValue.toString(),
+                org.apache.lucene.document.Field.Store.NO));
+            break;
+          case Keyword:
+            indexableFields.add(new StringField(mainFieldName, fieldValue.toString(),
+                org.apache.lucene.document.Field.Store.NO));
+            if (isCollection) {
+              indexableFields.add(
+                  new SortedSetDocValuesField(mainFieldName, new BytesRef(fieldValue.toString())));
+            } else {
+              indexableFields.add(
+                  new SortedDocValuesField(mainFieldName, new BytesRef(fieldValue.toString())));
+            }
+            break;
+          default:
+            logger.debug("MultiField main field type not handled: {}", mainFieldType);
+        }
 
         for (final InnerField innerFieldAnnotation : multiFieldAnnotation.otherFields()) {
 
@@ -371,7 +402,7 @@ public final class IndexUtility {
       } else {
         // final String fieldType = field.getType().getSimpleName();
         sortType = determineSortTypeForField(field);
-        
+
       }
 
       sortFieldArray[i] = new SortField(sortField, sortType, !searchParameters.getAscending());
@@ -391,7 +422,8 @@ public final class IndexUtility {
     final Class<?> clazz) {
     try {
       // Use ModelUtility to get the actual field type for nested fields
-      // final String sortFieldName = ModelUtility.getSortField(clazz, sortField);
+      // final String sortFieldName = ModelUtility.getSortField(clazz,
+      // sortField);
 
       // Parse the nested field path (e.g., "from.code" -> ["from", "code"])
       final String[] fieldParts = sortField.split("\\.");
@@ -414,7 +446,7 @@ public final class IndexUtility {
 
     return SortField.Type.STRING;
   }
-  
+
   /**
    * Determine sort type for field.
    *
@@ -493,4 +525,5 @@ public final class IndexUtility {
     }
     return builder.build();
   }
+
 }

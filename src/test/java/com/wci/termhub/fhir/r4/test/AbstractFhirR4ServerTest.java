@@ -17,13 +17,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.test.AbstractServerTest;
-import com.wci.termhub.util.PropertyUtility;
 
 /**
  * Abstract superclass for source code tests.
@@ -31,6 +33,10 @@ import com.wci.termhub.util.PropertyUtility;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestPropertySource(properties = {
+    "lucene.index.directory=build/index/lucene-fhir-r4"
+})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
 
   /** The logger. */
@@ -41,7 +47,8 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
   private EntityRepositoryService searchService;
 
   /** The index directory. */
-  protected static final String INDEX_DIRECTORY = "build/index/lucene-fhir-r4";
+  @Value("${lucene.index.directory}")
+  private String indexDirectory;
 
   /** List of FHIR Code System files to load. */
   protected static final List<String> CODE_SYSTEM_FILES =
@@ -68,12 +75,11 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
    */
   @BeforeAll
   public void setupData() throws Exception {
-    PropertyUtility.setProperty("lucene.index.directory", INDEX_DIRECTORY);
     if (setupOnce) {
       return;
     }
     try {
-      clearAndCreateIndexDirectories(searchService, INDEX_DIRECTORY);
+      clearAndCreateIndexDirectories(searchService, indexDirectory);
       loadCodeSystems(searchService, CODE_SYSTEM_FILES, false);
       loadConceptMaps(searchService, CONCEPT_MAP_FILES);
       loadValueSets(searchService, VALUE_SET_FILES);

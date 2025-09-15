@@ -74,78 +74,12 @@ public final class StringUtility {
   /** The Constant RANDOM. */
   private static final SecureRandom RANDOM = new SecureRandom();
 
-  // /** The stopwords. */
-  // private static Set<String> stopwords = getStopWords();
-  //
-  // /** The unicode ascii map. */
-  // private static Map<String, String> unicodeAsciiMap = getUnicodeAsciiMap();
-
-  // /**
-  // * Returns the stop words.
-  // *
-  // * @return the stop words
-  // */
-  // private static Set<String> getStopWords() {
-  // try {
-  // return new HashSet<>(IOUtils
-  // .readLines(StringUtility.class.getClassLoader().getResourceAsStream("stopwords.txt"),
-  // StandardCharsets.UTF_8));
-  // } catch (final Exception e) {
-  // throw new RuntimeException(e);
-  // }
-  // }
-
-  // /**
-  // * Returns the unicode ascii map.
-  // *
-  // * @return the unicode ascii map
-  // */
-  // private static Map<String, String> getUnicodeAsciiMap() {
-  // try {
-  // return IOUtils
-  // .readLines(StringUtility.class.getClassLoader().getResourceAsStream("unicodeAsciiMap.txt"),
-  // StandardCharsets.UTF_8)
-  // .stream().filter(s -> s.startsWith("U"))
-  // .filter(s -> Character.isValidCodePoint(
-  // Integer.parseInt(s.replaceFirst("U\\+", "").replaceFirst("\\|.*", ""),
-  // 16)))
-  // .collect(Collectors.toMap(
-  // k -> new String(Character.toString(
-  // Integer.parseInt(k.replaceFirst("U\\+", "").replaceFirst("\\|.*", ""),
-  // 16))),
-  // v -> Character.toString(v.charAt(7))));
-  //
-  // } catch (final Exception e) {
-  // throw new RuntimeException(e);
-  // }
-  // }
-
   /**
    * Instantiates an empty {@link StringUtility}.
    */
   private StringUtility() {
     // n/a
   }
-
-  // /**
-  // * To ascii.
-  // *
-  // * @param unicodeString the unicode string
-  // * @return the string
-  // * @throws Exception the exception
-  // */
-  // public static String toAscii(final String unicodeString) throws Exception {
-  // final StringBuilder sb = new StringBuilder();
-  // for (final char c : unicodeString.toCharArray()) {
-  // final String str = Character.toString(c);
-  // if (unicodeAsciiMap.containsKey(str)) {
-  // sb.append(unicodeAsciiMap.get(str));
-  // } else {
-  // sb.append(str);
-  // }
-  // }
-  // return sb.toString();
-  // }
 
   /**
    * Convert roman numeral to arabic. For example MCMXLIX returns 1949. The roman numeral is first
@@ -259,18 +193,6 @@ public final class StringUtility {
     return value.replaceFirst("^[^\\p{IsAlphabetic}\\p{IsDigit}]*", "").trim();
   }
 
-  // /**
-  // * Reverse.
-  // *
-  // * @param string the string
-  // * @return the string
-  // */
-  // public static String reverse(final String string) {
-  // final List<String> list = Arrays.asList(string.split(" "));
-  // Collections.reverse(list);
-  // return FieldedStringTokenizer.join(list, " ").trim();
-  // }
-
   /**
    * Wordind.
    *
@@ -281,19 +203,6 @@ public final class StringUtility {
     final String[] tokens = FieldedStringTokenizer.split(name, PUNCTUATION);
     return Arrays.asList(tokens).stream().filter(s -> s.length() > 0).collect(Collectors.toList());
   }
-
-  // /**
-  // * Wordind no stopwords.
-  // *
-  // * @param name the name
-  // * @return the sets the
-  // */
-  // public static Set<String> wordindNoStopwords(final String name) {
-  // final String[] tokens = FieldedStringTokenizer.split(name, PUNCTUATION);
-  // return Arrays.asList(tokens).stream().filter(s -> s.length() > 0 &&
-  // !stopwords.contains(s))
-  // .collect(Collectors.toSet());
-  // }
 
   /**
    * Stem word.
@@ -668,7 +577,7 @@ public final class StringUtility {
       // These characters are part of the query syntax and must be escaped
       if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':'
           || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~'
-          || c == '*' || c == '?' || c == '|' || c == '&' || c == '/') {
+          || c == '*' || c == '?' || c == '|' || c == '&' || c == '/' || c == ' ') {
         sb.append('\\');
       }
       sb.append(c);

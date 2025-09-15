@@ -23,7 +23,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -356,7 +359,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
   }
 
-  /* see superclass */
   /* see superclass */
   @Override
   @RequestMapping(value = "/terminology/{id:[a-f0-9].+}", method = RequestMethod.PATCH,
@@ -944,7 +946,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      logger.info("XXXXXXXXXXXXXXXXXXXX query for term: {}", query2);
+      logger.info("query for term: {}", query2);
 
       final SearchParameters searchParams =
           new SearchParameters(query2, offset, maxLimit, sort, ascending);
@@ -2188,7 +2190,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "from.terminology:" + concept.getTerminology(),
-              "from.publisher: \"" + concept.getPublisher()) + "\"",
+              "from.publisher:" + concept.getPublisher()),
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2248,7 +2250,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
               "to.terminology:" + concept.getTerminology(),
-              "to.publisher: \"" + concept.getPublisher()) + "\"",
+              "to.publisher:" + concept.getPublisher()),
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2308,8 +2310,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Subset> subsets = lookupSubsets(null, true);
       final List<SubsetMember> members = findMembersHelper(subsets,
           StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(concept.getCode()),
-              "terminology:" + concept.getTerminology(), "publisher: \"" + concept.getPublisher(),
-              "version:" + concept.getVersion()) + "\"",
+              "terminology:" + concept.getTerminology(), "publisher:" + concept.getPublisher(),
+              "version:" + concept.getVersion()),
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2384,7 +2386,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "from.terminology:" + concept.getTerminology(),
-              "from.publisher: \"" + concept.getPublisher()) + "\"",
+              "from.publisher:" + concept.getPublisher()),
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2458,7 +2460,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
               "to.terminology:" + concept.getTerminology(),
-              "to.publisher: \"" + concept.getPublisher()) + "\"",
+              "to.publisher:" + concept.getPublisher()),
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2533,7 +2535,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "from.terminology:" + concept.getTerminology(),
-              "from.publisher: \"" + concept.getPublisher()) + "\"",
+              "from.publisher:" + concept.getPublisher()),
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2979,18 +2981,25 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Boolean active) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
-    final String mapsetQueryStr = ModelUtility.isEmpty(mapsets) ? null : "("
-        + String.join(" OR ",
-            mapsets.stream()
-                .map(m -> "(" + StringUtility.composeQuery("AND",
-                    "mapset.abbreviation:" + StringUtility.escapeQuery(m.getAbbreviation()),
-                    "mapset.publisher:\"" + StringUtility.escapeQuery(m.getPublisher()) + "\"",
-                    "mapset.version:" + StringUtility.escapeQuery(m.getVersion())) + ")")
-                .toList())
-        + ")";
+    final BooleanQuery.Builder mapsetQueryBuilder = new BooleanQuery.Builder();
+    if (!ModelUtility.isEmpty(mapsets)) {
+      for (final Mapset m : mapsets) {
+        final BooleanQuery.Builder mapsetClauseBuilder = new BooleanQuery.Builder();
+        mapsetClauseBuilder.add(
+            new TermQuery(
+                new org.apache.lucene.index.Term("mapset.abbreviation", m.getAbbreviation())),
+            BooleanClause.Occur.MUST);
+        mapsetClauseBuilder.add(
+            new TermQuery(new org.apache.lucene.index.Term("mapset.publisher", m.getPublisher())),
+            BooleanClause.Occur.MUST);
+        mapsetClauseBuilder.add(
+            new TermQuery(new org.apache.lucene.index.Term("mapset.version", m.getVersion())),
+            BooleanClause.Occur.MUST);
+        mapsetQueryBuilder.add(mapsetClauseBuilder.build(), BooleanClause.Occur.SHOULD);
+      }
+    }
 
-    final Query mapsetQuery =
-        mapsetQueryStr == null ? null : LuceneQueryBuilder.parse(mapsetQueryStr, Mapping.class);
+    final Query mapsetQuery = mapsetQueryBuilder.build();
     final String query2 = QueryBuilder.findBuilder(builders, null).buildQuery(query);
     final Query keywordQuery =
         StringUtility.isEmpty(query) ? null : LuceneQueryBuilder.parse(query2, Mapping.class);
@@ -3003,12 +3012,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
 
     final ResultList<Mapping> list = searchService.find(searchParams, Mapping.class);
-
-    // for (final Mapping mapping : list.getItems()) {
-    // mapping.cleanForApi();
-    // TerminologyUtility.populateConcept(mapping, ip, single, searchService);
-    // }
-
     // Sort the mappings by mapsetCode, group, priority
     Collections.sort(list.getItems(), new Comparator<Mapping>() {
 
@@ -3048,18 +3051,24 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Boolean active) throws Exception {
 
     // We are not using multiple indexes, so we instead have to add constraints
-    final String subsetQueryStr = ModelUtility.isEmpty(subsets) ? null : "("
-        + String.join(" OR ",
-            subsets.stream()
-                .map(s -> "(" + StringUtility.composeQuery("AND",
-                    "subset.abbreviation:" + StringUtility.escapeQuery(s.getAbbreviation()),
-                    "subset.publisher:\"" + StringUtility.escapeQuery(s.getPublisher()) + "\"",
-                    "subset.version:" + StringUtility.escapeQuery(s.getVersion())) + ")")
-                .toList())
-        + ")";
-
-    final Query subsetQuery = subsetQueryStr == null ? null
-        : LuceneQueryBuilder.parse(subsetQueryStr, SubsetMember.class);
+    final BooleanQuery.Builder subsetQueryBuilder = new BooleanQuery.Builder();
+    if (!ModelUtility.isEmpty(subsets)) {
+      for (final Subset s : subsets) {
+        final BooleanQuery.Builder subsetClauseBuilder = new BooleanQuery.Builder();
+        subsetClauseBuilder.add(
+            new TermQuery(
+                new org.apache.lucene.index.Term("subset.abbreviation", s.getAbbreviation())),
+            BooleanClause.Occur.MUST);
+        subsetClauseBuilder.add(
+            new TermQuery(new org.apache.lucene.index.Term("subset.publisher", s.getPublisher())),
+            BooleanClause.Occur.MUST);
+        subsetClauseBuilder.add(
+            new TermQuery(new org.apache.lucene.index.Term("subset.version", s.getVersion())),
+            BooleanClause.Occur.MUST);
+        subsetQueryBuilder.add(subsetClauseBuilder.build(), BooleanClause.Occur.SHOULD);
+      }
+    }
+    final Query subsetQuery = subsetQueryBuilder.build();
     final String query2 = QueryBuilder.findBuilder(builders, null).buildQuery(query);
     final Query keywordQuery = LuceneQueryBuilder.parse(query2, SubsetMember.class);
     final Query booleanQuery = getAndQuery(subsetQuery, keywordQuery);
@@ -3071,11 +3080,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
 
     final ResultList<SubsetMember> list = searchService.find(searchParams, SubsetMember.class);
-
-    // for (final SubsetMember member : list.getItems()) {
-    // member.cleanForApi();
-    // TerminologyUtility.populateConcept(member, ip, single, searchService);
-    // }
 
     // Restore the original query for the response
     searchParams.setQuery(query2);

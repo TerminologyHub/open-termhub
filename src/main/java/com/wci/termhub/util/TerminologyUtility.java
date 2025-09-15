@@ -83,9 +83,8 @@ public final class TerminologyUtility {
 
     TerminologyRef ref = new TerminologyRef();
     final String query = StringUtility.composeQuery("AND",
-        StringUtility.composeQuery("OR",
-            "abbreviation:\"" + StringUtility.escapeQuery(value) + "\"",
-            "uri:\"" + StringUtility.escapeQuery(value) + "\""));
+        StringUtility.composeQuery("OR", "abbreviation:" + StringUtility.escapeQuery(value),
+            "uri:" + StringUtility.escapeQuery(value)));
 
     final ResultList<Terminology> list =
         searchService.find(new SearchParameters(query, null, null, null, null), Terminology.class);
@@ -205,9 +204,9 @@ public final class TerminologyUtility {
     final String version) {
 
     return StringUtility.composeQuery("AND",
-        "terminology: \"" + StringUtility.escapeQuery(terminology) + "\"",
-        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
-        "version: \"" + StringUtility.escapeQuery(version) + "\"");
+        "terminology:" + StringUtility.escapeQuery(terminology),
+        "publisher:" + StringUtility.escapeQuery(publisher),
+        "version:" + StringUtility.escapeQuery(version));
   }
 
   /**
@@ -222,9 +221,9 @@ public final class TerminologyUtility {
     final String version) {
 
     return StringUtility.composeQuery("AND",
-        "abbreviation: \"" + StringUtility.escapeQuery(abbreviation) + "\"",
-        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
-        "version: \"" + StringUtility.escapeQuery(version) + "\"");
+        "abbreviation:" + StringUtility.escapeQuery(abbreviation),
+        "publisher:" + StringUtility.escapeQuery(publisher),
+        "version:" + StringUtility.escapeQuery(version));
   }
 
   /**
@@ -238,9 +237,9 @@ public final class TerminologyUtility {
   public static String getTerminologyUriQuery(final String uri, final String publisher,
     final String version) {
 
-    return StringUtility.composeQuery("AND", "uri: \"" + StringUtility.escapeQuery(uri) + "\"",
-        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"",
-        "version: \"" + StringUtility.escapeQuery(version) + "\"");
+    return StringUtility.composeQuery("AND", "uri:" + StringUtility.escapeQuery(uri),
+        "publisher:" + StringUtility.escapeQuery(publisher),
+        "version:" + StringUtility.escapeQuery(version));
   }
 
   /**
@@ -275,8 +274,8 @@ public final class TerminologyUtility {
     final SearchParameters params = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
     params.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
-        + StringUtility.escapeQuery(t) + " AND publisher:\"" + StringUtility.escapeQuery(publisher)
-        + "\" AND version:" + StringUtility.escapeQuery(version));
+        + StringUtility.escapeQuery(t) + " AND publisher:" + StringUtility.escapeQuery(publisher)
+        + " AND version:" + StringUtility.escapeQuery(version));
 
     final ResultList<Concept> list = searchService.find(params, Concept.class);
 
@@ -319,8 +318,8 @@ public final class TerminologyUtility {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
     nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
-        + StringUtility.escapeQuery(t) + " AND publisher: \"" + StringUtility.escapeQuery(publisher)
-        + "\" AND version:" + StringUtility.escapeQuery(version));
+        + StringUtility.escapeQuery(t) + " AND publisher:" + StringUtility.escapeQuery(publisher)
+        + " AND version:" + StringUtility.escapeQuery(version));
     final ResultList<Concept> list = searchService.findFields(nameParams,
         ModelUtility.asList("id", "name", "code", "terminology", "version", "publisher", "leaf"),
         Concept.class);
@@ -348,8 +347,8 @@ public final class TerminologyUtility {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
     nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
-        + StringUtility.escapeQuery(t) + " AND publisher: \"" + StringUtility.escapeQuery(publisher)
-        + "\" AND version:" + StringUtility.escapeQuery(version));
+        + StringUtility.escapeQuery(t) + " AND publisher:" + StringUtility.escapeQuery(publisher)
+        + " AND version:" + StringUtility.escapeQuery(version));
 
     final ResultList<Concept> list =
         searchService.findFields(nameParams, ModelUtility.asList("name"), Concept.class);
@@ -391,17 +390,16 @@ public final class TerminologyUtility {
     for (final String code : fullAncPath.split("~")) {
       finalQuery.setLength(0);
       finalQuery.append("concept.code:" + QueryParserBase.escape(code));
-      finalQuery.append(" AND terminology: \"")
-          .append(StringUtility.escapeQuery(treePosition.getTerminology())).append("\"");
-      finalQuery.append(" AND publisher: \"")
-          .append(StringUtility.escapeQuery(treePosition.getPublisher())).append("\"");
-      finalQuery.append(" AND version: \"")
-          .append(StringUtility.escapeQuery(treePosition.getVersion())).append("\"");
+      finalQuery.append(" AND terminology:")
+          .append(StringUtility.escapeQuery(treePosition.getTerminology()));
+      finalQuery.append(" AND publisher:")
+          .append(StringUtility.escapeQuery(treePosition.getPublisher()));
+      finalQuery.append(" AND version:")
+          .append(StringUtility.escapeQuery(treePosition.getVersion()));
       if (partAncPath.isEmpty()) {
-        finalQuery.append(" AND ancestorPath: \"\"");
+        finalQuery.append(" AND ancestorPath:\"\"");
       } else {
-        finalQuery.append(" AND ancestorPath: \"").append(QueryParserBase.escape(partAncPath))
-            .append("\"");
+        finalQuery.append(" AND ancestorPath:").append(QueryParserBase.escape(partAncPath));
       }
 
       params.setQuery(finalQuery.toString());
@@ -802,8 +800,8 @@ public final class TerminologyUtility {
     final String terminology, final String publisher, final String version) throws Exception {
 
     final SearchParameters params = new SearchParameters(2, 0);
-    params.setQuery("terminology:" + StringUtility.escapeQuery(terminology) + " AND publisher: \""
-        + StringUtility.escapeQuery(publisher) + "\" AND version:"
+    params.setQuery("terminology:" + StringUtility.escapeQuery(terminology) + " AND publisher:"
+        + StringUtility.escapeQuery(publisher) + " AND version:"
         + StringUtility.escapeQuery(version));
 
     final ResultList<ConceptTreePosition> result =
@@ -1180,10 +1178,10 @@ public final class TerminologyUtility {
    */
   public static Terminology findClosestByReleaseDate(final EntityRepositoryService searchService,
     final String abbreviation, final String publisher, final Date date) throws Exception {
-    final ResultList<Terminology> list = searchService
-        .find(new SearchParameters("abbreviation:" + StringUtility.escapeQuery(abbreviation)
-            + " AND publisher:\"" + StringUtility.escapeQuery(publisher) + "\"", null, null, null,
-            null), Terminology.class);
+    final ResultList<Terminology> list = searchService.find(
+        new SearchParameters("abbreviation:" + StringUtility.escapeQuery(abbreviation)
+            + " AND publisher:" + StringUtility.escapeQuery(publisher), null, null, null, null),
+        Terminology.class);
     Date maxDate = null;
     Terminology closest = null;
     for (final Terminology terminology : list.getItems()) {
@@ -1240,9 +1238,10 @@ public final class TerminologyUtility {
   public static Terminology getLatestTerminologyVersion(final EntityRepositoryService searchService,
     final String terminology, final String publisher) throws Exception {
 
-    final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-        "abbreviation: \"" + StringUtility.escapeQuery(terminology) + "\"",
-        "publisher: \"" + StringUtility.escapeQuery(publisher) + "\""), null, null, null, null);
+    final SearchParameters params = new SearchParameters(
+        StringUtility.composeQuery("AND", "abbreviation:" + StringUtility.escapeQuery(terminology),
+            "publisher:" + StringUtility.escapeQuery(publisher)),
+        null, null, null, null);
 
     final ResultList<Terminology> list = searchService.find(params, Terminology.class);
 

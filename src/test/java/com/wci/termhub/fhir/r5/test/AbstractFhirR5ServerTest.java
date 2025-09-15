@@ -17,13 +17,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.test.AbstractServerTest;
-import com.wci.termhub.util.PropertyUtility;
 
 /**
  * Abstract superclass for source code tests.
@@ -31,6 +33,10 @@ import com.wci.termhub.util.PropertyUtility;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestPropertySource(properties = {
+    "lucene.index.directory=build/index/lucene-fhir-r5"
+})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
 
   /** The logger. */
@@ -42,7 +48,8 @@ public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
   private EntityRepositoryService searchService;
 
   /** The index directory. */
-  protected static final String INDEX_DIRECTORY = "build/index/lucene-fhir-r5";
+  @Value("${lucene.index.directory}")
+  private String indexDirectory;
 
   /** List of FHIR Code System files to load. */
   protected static final List<String> CODE_SYSTEM_FILES =
@@ -57,7 +64,7 @@ public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
   /** List of FHIR Code System files to load. */
   protected static final List<String> VALUE_SET_FILES =
       List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json",
-      "ValueSet-snomedct_us-723264001-sandbox-20240301-r5.json");
+          "ValueSet-snomedct_us-723264001-sandbox-20240301-r5.json");
 
   /** The setup once. */
   private static boolean setupOnce = false;
@@ -69,14 +76,18 @@ public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
    */
   @BeforeAll
   public void setupData() throws Exception {
-    PropertyUtility.setProperty("lucene.index.directory", INDEX_DIRECTORY);
     if (setupOnce) {
       return;
     }
-    clearAndCreateIndexDirectories(searchService, INDEX_DIRECTORY);
-    loadCodeSystems(searchService, CODE_SYSTEM_FILES, false);
-    loadConceptMaps(searchService, CONCEPT_MAP_FILES);
-    loadValueSets(searchService, VALUE_SET_FILES);
+    try {
+      clearAndCreateIndexDirectories(searchService, indexDirectory);
+      loadCodeSystems(searchService, CODE_SYSTEM_FILES, false);
+      loadConceptMaps(searchService, CONCEPT_MAP_FILES);
+      loadValueSets(searchService, VALUE_SET_FILES);
+    } catch (final Exception e) {
+      logger.error("Error setting up data: {}", e.getMessage(), e);
+      throw e;
+    }
     setupOnce = true;
   }
 

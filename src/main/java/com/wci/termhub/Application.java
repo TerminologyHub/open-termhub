@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -28,6 +29,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.HasId;
+import com.wci.termhub.open.configuration.ApplicationProperties;
 import com.wci.termhub.util.AdhocUtility;
 import com.wci.termhub.util.ModelUtility;
 
@@ -46,6 +48,10 @@ public class Application extends SpringBootServletInitializer {
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(Application.class);
 
+  /** The application properties. */
+  @Autowired
+  private ApplicationProperties applicationProperties;
+
   /**
    * The main method.
    *
@@ -58,17 +64,18 @@ public class Application extends SpringBootServletInitializer {
     // https://stackoverflow.com/questions/13482020/
     // encoded-slash-2f-with-spring-requestmapping-path-param-gives-http-400
     System.setProperty("org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH", "true");
-    SpringApplication.run(Application.class, args);
-
-    // Log start of application
-    logger.debug("TERMHUB TERMINOLOGY APPLICATION START");
+    final Application app =
+        SpringApplication.run(Application.class, args).getBean(Application.class);
 
     // Bootstrap indexes
-    bootstrap();
+    app.bootstrap();
 
     if (System.getenv().get("ADHOC") != null) {
       AdhocUtility.execute(System.getenv("ADHOC"));
     }
+
+    // Log start of application
+    logger.debug("OPEN TERMHUB TERMINOLOGY APPLICATION START");
   }
 
   /**
@@ -88,10 +95,11 @@ public class Application extends SpringBootServletInitializer {
    *
    * @throws Exception the exception
    */
-  private static void bootstrap() throws Exception {
+  private void bootstrap() throws Exception {
 
     final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
     final LuceneDataAccess luceneDataAccess = new LuceneDataAccess();
+    luceneDataAccess.setApplicationProperties(applicationProperties);
 
     for (final Class<? extends HasId> clazz : indexedObjects) {
       luceneDataAccess.createIndex(clazz);
