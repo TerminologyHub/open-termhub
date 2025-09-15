@@ -585,16 +585,13 @@ public class LuceneDataAccess {
     @SuppressWarnings("resource")
     public <T extends HasId> ResultList<T> find(final Class<T> clazz,
                                                 final SearchParameters searchParameters, final Query phraseQuery) throws Exception {
-LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phraseQuery);
         IndexSearcher searcher = null;
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("indexRootDirectory is {}; index is {}", indexRootDirectory,
                     clazz.getCanonicalName());
         }
-        LOGGER.info("Before getIndexReader");
         final IndexReader reader = getIndexReader(clazz);
-        LOGGER.info("After getIndexReader");
         final BooleanQuery queryBuilder =
                 new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
         if (LOGGER.isTraceEnabled()) {
@@ -839,7 +836,9 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
     public IndexWriter getIndexWriter(Class<? extends HasId> clazz) throws Exception {
         String indexKey = getIndexKey(clazz);
         if (writerMap.containsKey(indexKey)) {
-            LOGGER.info("Using cached writer for {}. writer for {}", indexKey, writerMap.get(indexKey).getDirectory());
+            if(LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Using cached writer for {}. writer for {}", indexKey, writerMap.get(indexKey).getDirectory());
+            }
             final IndexWriter writer = writerMap.get(indexKey);
             return writer;
         } else {
@@ -860,10 +859,9 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
         IndexReader reader = readerMap.get(indexKey);
         if (reader == null) {
             synchronized (readerMap) {
-                LOGGER.info("No cached reader for {}, creating new one", indexKey);
                 if (!readerMap.containsKey(indexKey)) {
                     synchronized (readerMap) {
-                        LOGGER.info("No cached reader for {}, creating new one 2", indexKey);
+                        LOGGER.info("No cached reader for {}, creating new one", indexKey);
                         final File indexDir = getIndexDirectory(clazz);
                         final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
                         reader = DirectoryReader.open(fsDirectory);
@@ -875,19 +873,20 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
                 }
             }
         }
-        LOGGER.info("Using cached reader for {}", indexKey);
-        LOGGER.info("Current reader has {} maxDoc and {} numDocs", reader.maxDoc(), reader.numDocs());
+        if(LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Using cached reader for {}", indexKey);
+        }
         return reader;
     }
 
-    private static final String getIndexKey(Class<? extends HasId> clazz) {
+    private static String getIndexKey(Class<? extends HasId> clazz) {
         return indexRootDirectory+"/"+clazz.getCanonicalName();
     }
-    public static final void clearReaders() {
+    public static void clearReaders() {
         readerMap.clear();
     }
 
-    public static final void clearReaderForClass(Class<? extends HasId> clazz) {
+    public static void clearReaderForClass(Class<? extends HasId> clazz) {
         String indexKey = getIndexKey(clazz);
         LOGGER.info("Clearing reader for class: {}", indexKey);
         readerMap.remove(indexKey);
