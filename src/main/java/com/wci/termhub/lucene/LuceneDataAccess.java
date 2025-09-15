@@ -890,6 +890,7 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
     }
 
     public static final void clearWriterForClass(Class<? extends HasId> clazz) {
+        LOGGER.info("Clearing writer for class: {}", clazz.getCanonicalName());
         IndexWriter writer = writerMap.get(clazz.getCanonicalName());
         if (writer == null) {
             return;
@@ -900,5 +901,9 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
             throw new RuntimeException(e);
         }
         writerMap.remove(clazz.getCanonicalName());
+    }
+
+    public static final Map<String, IndexWriter> getWriters() {
+        return writerMap;
     }
 }

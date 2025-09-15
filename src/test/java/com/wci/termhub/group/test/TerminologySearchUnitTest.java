@@ -11,9 +11,11 @@ package com.wci.termhub.group.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Map;
 import java.util.UUID;
 
 import com.wci.termhub.lucene.LuceneDataAccess;
+import org.apache.lucene.index.IndexWriter;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,6 +172,11 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
   @Test
   public void testPublisherSearch() throws Exception {
     LuceneDataAccess.clearWriterForClass(Terminology.class);
+    Map<String, IndexWriter> writers = LuceneDataAccess.getWriters();
+  for(String key : writers.keySet()) {
+    LOGGER.info("Writer key: {}", key);
+    LOGGER.info("  Writer: {}", writers.get(key).getDirectory());
+  }
     final String publisher = "SNOMEDCT International";
     // create a terminology with publisher = "SNOMEDCT International"
     final Terminology terminology = new Terminology();
