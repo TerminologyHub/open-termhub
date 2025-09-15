@@ -107,7 +107,7 @@ public class LuceneDataAccess {
         final FSDirectory directory = FSDirectory.open(indexDir.toPath());
         final StandardAnalyzer analyzer = new StandardAnalyzer();
         final IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(analyzer));
-        writerMap.put(clazz.getCanonicalName(), writer);
+        writerMap.put(getIndexKey(clazz), writer);
         // Commit to create the initial index structure
         writer.commit();
         clearReaderForClass(clazz);
@@ -837,10 +837,10 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
     }
 
     public IndexWriter getIndexWriter(Class<? extends HasId> clazz) throws Exception {
-        String className = clazz.getCanonicalName();
-        if (writerMap.containsKey(className)) {
-            LOGGER.info("Using cached writer for {}. writer for {}", className, writerMap.get(className).getDirectory());
-            final IndexWriter writer = writerMap.get(className);
+        String indexKey = getIndexKey(clazz);
+        if (writerMap.containsKey(indexKey)) {
+            LOGGER.info("Using cached writer for {}. writer for {}", indexKey, writerMap.get(indexKey).getDirectory());
+            final IndexWriter writer = writerMap.get(indexKey);
             return writer;
         } else {
             final File indexDir = getIndexDirectory(clazz);
@@ -849,49 +849,54 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
             }
             final FSDirectory directory = FSDirectory.open(indexDir.toPath());
             final IndexWriter writer = createIndexWriter(directory);
-            LOGGER.info("No cached writer for {}. Creating at {}", className, indexDir.getAbsolutePath());
-            writerMap.put(className, writer);
+            LOGGER.info("No cached writer for {}. Creating at {}", indexKey, indexDir.getAbsolutePath());
+            writerMap.put(indexKey, writer);
             return writer;
         }
     }
 
     public IndexReader getIndexReader(Class<? extends HasId> clazz) throws Exception {
-        String canonicalClassName = clazz.getCanonicalName();
-        IndexReader reader = readerMap.get(canonicalClassName);
+        String indexKey = getIndexKey(clazz);
+        IndexReader reader = readerMap.get(indexKey);
         if (reader == null) {
             synchronized (readerMap) {
-                LOGGER.info("No cached reader for {}, creating new one", canonicalClassName);
-                if (!readerMap.containsKey(canonicalClassName)) {
+                LOGGER.info("No cached reader for {}, creating new one", indexKey);
+                if (!readerMap.containsKey(indexKey)) {
                     synchronized (readerMap) {
-                        LOGGER.info("No cached reader for {}, creating new one 2", canonicalClassName);
+                        LOGGER.info("No cached reader for {}, creating new one 2", indexKey);
                         final File indexDir = getIndexDirectory(clazz);
                         final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
                         reader = DirectoryReader.open(fsDirectory);
-                        readerMap.put(canonicalClassName, reader);
+                        readerMap.put(indexKey, reader);
                         return reader;
                     }
                 } else {
-                    return readerMap.get(canonicalClassName);
+                    return readerMap.get(indexKey);
                 }
             }
         }
-        LOGGER.info("Using cached reader for {}", canonicalClassName);
+        LOGGER.info("Using cached reader for {}", indexKey);
         LOGGER.info("Current reader has {} maxDoc and {} numDocs", reader.maxDoc(), reader.numDocs());
         return reader;
     }
 
+    private static final String getIndexKey(Class<? extends HasId> clazz) {
+        return indexRootDirectory+"/"+clazz.getCanonicalName();
+    }
     public static final void clearReaders() {
         readerMap.clear();
     }
 
     public static final void clearReaderForClass(Class<? extends HasId> clazz) {
-        LOGGER.info("Clearing reader for class: {}", clazz.getCanonicalName());
-        readerMap.remove(clazz.getCanonicalName());
+        String indexKey = getIndexKey(clazz);
+        LOGGER.info("Clearing reader for class: {}", indexKey);
+        readerMap.remove(indexKey);
     }
 
     public static final void clearWriterForClass(Class<? extends HasId> clazz) {
-        LOGGER.info("Clearing writer for class: {}", clazz.getCanonicalName());
-        IndexWriter writer = writerMap.get(clazz.getCanonicalName());
+        String indexKey = getIndexKey(clazz);
+        LOGGER.info("Clearing writer for class: {}", indexKey);
+        IndexWriter writer = writerMap.get(indexKey);
         if (writer == null) {
             return;
         }
@@ -900,7 +905,7 @@ LOGGER.info("Find: {}, {}, {}", clazz.getCanonicalName(), searchParameters, phra
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        writerMap.remove(clazz.getCanonicalName());
+        writerMap.remove(indexKey);
     }
 
     public static final Map<String, IndexWriter> getWriters() {
