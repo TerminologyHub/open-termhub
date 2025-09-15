@@ -169,7 +169,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
    */
   @Test
   public void testPublisherSearch() throws Exception {
-
+    LuceneDataAccess.clearWriterForClass(Terminology.class);
     final String publisher = "SNOMEDCT International";
     // create a terminology with publisher = "SNOMEDCT International"
     final Terminology terminology = new Terminology();
