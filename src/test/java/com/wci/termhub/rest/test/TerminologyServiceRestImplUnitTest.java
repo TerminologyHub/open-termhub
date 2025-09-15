@@ -928,10 +928,16 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
   }
 
+  /**
+   * Test find mapsets with multiple sort.
+   *
+   * @throws Exception the exception
+   */
   @Test
   @Order(FIND)
   public void testFindMapsetsWithMultipleSort() throws Exception {
-    final String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=&offset=0&limit=20&sort=from.code,group,priority&ascending=true&leaf=null";
+    final String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=&offset=0&limit=20&"
+        + "sort=from.code,group,priority&ascending=true&leaf=null";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
@@ -1255,6 +1261,46 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertEquals(testSubset.getName(), subset.getName());
     assertEquals(testSubset.getPublisher(), subset.getPublisher());
     assertEquals(testSubset.getVersion(), subset.getVersion());
+  }
+
+  /**
+   * Test get subset by id.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetSubsetWithQuery1() throws Exception {
+
+    final String url = baseUrl + "/subset/SNOMEDCT_US-EXTENSION/member?query=icd&offset=0&limit=10";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final Subset subset = objectMapper.readValue(content, Subset.class);
+    assertThat(subset).isNotNull();
+
+  }
+
+  /**
+   * Test get subset by id.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetSubsetWithQuery2() throws Exception {
+
+    final String url = baseUrl + "/subset/SNOMEDCT_US-EXTENSION/member?query=ICD&offset=0&limit=10";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final Subset subset = objectMapper.readValue(content, Subset.class);
+    assertThat(subset).isNotNull();
+
   }
 
   /**

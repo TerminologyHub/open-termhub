@@ -420,6 +420,10 @@ public final class CodeSystemLoaderUtil {
       LOGGER.debug("CodeSystemLoaderUtil: terminology: {}", terminology);
     }
     service.add(Terminology.class, terminology);
+
+    LOGGER.info("Created terminology: {}, publisher: {}, version: {}, id: {}",
+        terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion(),
+        terminology.getId());
     return terminology;
   }
 
