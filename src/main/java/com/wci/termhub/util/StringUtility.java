@@ -40,6 +40,8 @@ import org.tartarus.snowball.ext.EnglishStemmer;
 
 import com.google.common.base.CaseFormat;
 
+import java.util.Collection;
+
 /**
  * Utility class for interacting with Strings.
  */
@@ -426,7 +428,7 @@ public final class StringUtility {
    * @param clauses the clauses
    * @return the string
    */
-  public static String composeQuery(final String operator, final List<String> clauses) {
+  public static String composeQuery(final String operator, final Collection<String> clauses) {
     final StringBuilder sb = new StringBuilder();
     if (operator.equals("OR")) {
       sb.append("(");
