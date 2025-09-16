@@ -852,6 +852,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListConceptTreePosition conceptTreePositonList =
         objectMapper.readValue(content, ResultListConceptTreePosition.class);
     assertThat(conceptTreePositonList).isNotNull();
+
     assertEquals(1, conceptTreePositonList.getItems().size());
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
@@ -859,6 +860,15 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(ctp.getTerminology()).contains(terminology);
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
+
+      final ConceptRef concept = ctp.getConcept();
+      assertThat(concept.getActive()).isNotNull();
+      assertThat(concept.getCode()).isNotBlank();
+      assertThat(concept.getName()).isNotBlank();
+      assertThat(concept.getTerminology()).isNotBlank();
+      assertThat(concept.getPublisher()).isNotBlank();
+      assertThat(concept.getLeaf()).isNotNull();
+
     }
   }
 
