@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.SortedNumericDocValuesField;
@@ -199,18 +200,16 @@ public final class IndexUtility {
               indexableFields
                   .add(new NumericDocValuesField(indexName, Long.parseLong(stringValue)));
             }
-
             indexableFields.add(new StoredField(indexName, Long.parseLong(stringValue)));
             break;
           case Integer:
-            if (isCollection) {
-              indexableFields
-                  .add(new SortedNumericDocValuesField(indexName, Integer.parseInt(stringValue)));
-            } else {
-              indexableFields
-                  .add(new NumericDocValuesField(indexName, Integer.parseInt(stringValue)));
+            final int value = Integer.parseInt(stringValue);
+            // Always use SortedNumericDocValuesField (works for 1 or many values)
+            indexableFields.add(new SortedNumericDocValuesField(indexName, value));
+            indexableFields.add(new StoredField(indexName, value));
+            if ("length".equals(field.getName())) {
+              indexableFields.add(new IntPoint(indexName, value));
             }
-            indexableFields.add(new StoredField(indexName, Integer.parseInt(stringValue)));
             break;
           case Float:
             if (isCollection) {
@@ -261,8 +260,8 @@ public final class IndexUtility {
 
         // Process the main field from MultiField annotation
         final FieldType mainFieldType = multiFieldAnnotation.mainField().type();
-        final String mainFieldName = indexName; // Use the base field name for
-                                                // main field
+        // Use the base field name for the main field
+        final String mainFieldName = indexName;
 
         switch (mainFieldType) {
           case Text:

@@ -2026,6 +2026,117 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
+   * Test autocomplete single partial word.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testAutocompleteSingle() throws Exception {
+    String url = baseUrl + "/autocomplete?terminology=SNOMEDCT&query=dia&limit=10";
+    MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    // expect array of strings
+    List<String> suggestions = objectMapper.readValue(content, new TypeReference<List<String>>() {
+      // n/a
+    });
+    assertThat(suggestions).isNotNull();
+    assertThat(suggestions).hasSize(10);
+    for (final String suggestion : suggestions) {
+      assertThat(suggestion.toLowerCase()).contains("dia");
+    }
+
+    // change limit
+    url = baseUrl + "/autocomplete?terminology=SNOMEDCT&query=dia&limit=15";
+    result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    suggestions = objectMapper.readValue(content, new TypeReference<List<String>>() {
+      // n/a
+    });
+    assertThat(suggestions).isNotNull();
+    assertTrue(suggestions.size() >= 10,
+        "Should be at least 10 suggestions, got: " + suggestions.size());
+    assertTrue(suggestions.size() <= 15,
+        "Should be at most 15 suggestions, got: " + suggestions.size());
+    for (final String suggestion : suggestions) {
+      assertThat(suggestion.toLowerCase()).contains("dia");
+    }
+  }
+
+  /**
+   * Test autocomplete multiple partial word.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testAutocompleteMultiple() throws Exception {
+    final String url = baseUrl + "/autocomplete?terminology=SNOMEDCT&query=dia mel&limit=10";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    // expect array of strings
+    final List<String> suggestions =
+        objectMapper.readValue(content, new TypeReference<List<String>>() {
+          // n/a
+        });
+    assertThat(suggestions).isNotNull();
+    assertThat(suggestions.size()).isPositive();
+    for (final String suggestion : suggestions) {
+      assertThat(suggestion.toLowerCase()).contains("dia");
+      assertThat(suggestion.toLowerCase()).contains("mel");
+    }
+  }
+
+  /**
+   * Test autocomplete with multiple terminolgies.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testAutocompleteMultipleTerminologies() throws Exception {
+    final String url = baseUrl + "/autocomplete?terminology=SNOMEDCT,LNC&query=dia mel&limit=100";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    // expect array of strings
+    final List<String> suggestions =
+        objectMapper.readValue(content, new TypeReference<List<String>>() {
+          // n/a
+        });
+    assertThat(suggestions).isNotNull();
+    assertTrue(suggestions.size() >= 20,
+        "Should be at least 20 suggestions, got: " + suggestions.size());
+    for (final String suggestion : suggestions) {
+      assertThat(suggestion.toLowerCase()).contains("dia");
+      assertThat(suggestion.toLowerCase()).contains("mel");
+    }
+  }
+
+  /**
+   * Test autocomplete no expected results.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testAutocompleteNoResults() throws Exception {
+    final String url = baseUrl + "/autocomplete?terminology=RXNORM&query=noresults&limit=10";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    // expect empty array
+    final String content = result.getResponse().getContentAsString();
+    final List<String> suggestions =
+        objectMapper.readValue(content, new TypeReference<List<String>>() {
+          // n/a
+        });
+    assertThat(suggestions).isNotNull();
+    assertThat(suggestions).isEmpty();
+  }
+
+  /**
    * Gets the concept by code.
    *
    * @param terminology the terminology

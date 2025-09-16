@@ -17,13 +17,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.analysis.ngram.NGramTokenFilter;
+import org.apache.lucene.analysis.pattern.PatternReplaceFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
@@ -93,7 +100,7 @@ public final class LuceneQueryBuilder {
    * @param modelClass the model class
    * @return the field analyzers
    */
-  private static Map<String, Analyzer> getFieldAnalyzers(final Class<?> modelClass) {
+  public static Map<String, Analyzer> getFieldAnalyzers(final Class<?> modelClass) {
     if (FIELD_ANALYZERS_CACHE.containsKey(modelClass)) {
       return FIELD_ANALYZERS_CACHE.get(modelClass);
     }
@@ -113,7 +120,8 @@ public final class LuceneQueryBuilder {
         if (multiField != null) {
           for (final InnerField innerField : multiField.otherFields()) {
             final String subFieldName = fieldName + "." + innerField.suffix();
-            final Analyzer subFieldAnalyzer = getAnalyzerForFieldType(innerField.type());
+            final Analyzer subFieldAnalyzer = ("ngram".equals(innerField.suffix()))
+                ? getNgramAnalyzer() : getAnalyzerForFieldType(innerField.type());
             if (subFieldAnalyzer != null) {
               fieldAnalyzers.put(subFieldName, subFieldAnalyzer);
             }
@@ -132,6 +140,25 @@ public final class LuceneQueryBuilder {
 
     FIELD_ANALYZERS_CACHE.put(modelClass, fieldAnalyzers);
     return fieldAnalyzers;
+  }
+
+  /**
+   * The ngram analyzer.
+   *
+   * @return the ngram analyzer
+   */
+  private static Analyzer getNgramAnalyzer() {
+    return new Analyzer() {
+      @Override
+      protected TokenStreamComponents createComponents(final String fieldName) {
+        final Tokenizer tokenizer = new StandardTokenizer();
+        final TokenStream lower = new LowerCaseFilter(tokenizer);
+        final TokenStream cleaned =
+            new PatternReplaceFilter(lower, Pattern.compile("[^a-z0-9]+"), "", true);
+        final TokenStream ngrams = new NGramTokenFilter(cleaned, 3, 20, false);
+        return new TokenStreamComponents(tokenizer, ngrams);
+      }
+    };
   }
 
   /**
@@ -206,7 +233,6 @@ public final class LuceneQueryBuilder {
   private static Analyzer getAnalyzerForField(final Field field) {
     final org.springframework.data.elasticsearch.annotations.Field esField =
         field.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
-
     if (esField != null) {
       return getAnalyzerForFieldType(esField.type());
     }
@@ -214,7 +240,11 @@ public final class LuceneQueryBuilder {
     // Check for MultiField annotation
     final MultiField multiField = field.getAnnotation(MultiField.class);
     if (multiField != null) {
-      // For MultiField, use the main field type
+      for (final InnerField innerField : multiField.otherFields()) {
+        if ("ngram".equals(innerField.suffix())) {
+            return getNgramAnalyzer();
+        }
+      }
       return getAnalyzerForFieldType(multiField.mainField().type());
     }
 
@@ -291,7 +321,7 @@ public final class LuceneQueryBuilder {
       // For @MultiField fields, include both the text field and keyword field
       final MultiField multiField = f.getAnnotation(MultiField.class);
       if (multiField != null) {
-        return Stream.of(f.getName(), f.getName() + ".keyword");
+        return Stream.of(f.getName(), f.getName() + ".keyword", f.getName() + ".ngram");
       }
       return Stream.of(f.getName());
     }).toList());
