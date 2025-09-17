@@ -806,11 +806,10 @@ public class CodeSystemProviderR4 implements IResourceProvider {
       codeSystem.setId(id);
       return outcome;
 
-    } catch (FHIRServerResponseException fsre){
-      //Throw any write concurrency errors. Will be handled by AOP
-        throw fsre;
-    }
-    catch (final Exception e) {
+    } catch (FHIRServerResponseException fsre) {
+      // Throw any write concurrency errors. Will be handled by AOP
+      throw fsre;
+    } catch (final Exception e) {
       logger.error("Unexpected error creating code system", e);
       throw FhirUtilityR4.exception("Failed to create code system: " + e.getMessage(),
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

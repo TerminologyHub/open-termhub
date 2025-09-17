@@ -41,7 +41,6 @@ import com.wci.termhub.service.EntityRepositoryService;
 public abstract class AbstractTerminologyTest extends AbstractServerTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private final Logger logger = LoggerFactory.getLogger(AbstractTerminologyTest.class);
 
   /** The search service. */

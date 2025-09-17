@@ -11,16 +11,12 @@ package com.wci.termhub.group.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Map;
-import java.util.UUID;
-
-import com.wci.termhub.lucene.LuceneDataAccess;
-import org.apache.lucene.index.IndexWriter;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;

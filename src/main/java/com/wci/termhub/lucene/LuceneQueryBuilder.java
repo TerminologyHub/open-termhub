@@ -318,15 +318,15 @@ public final class LuceneQueryBuilder {
       final boolean isKeywordField = esField != null && esField.type() == FieldType.Keyword;
       final boolean isMultiField = multiField != null;
       return isString || isListString || isTextField || isKeywordField || isMultiField;
-    }).<String> flatMap(f ->
-    // For @MultiField fields, include both the text field and keyword field
-    {
-      final MultiField multiField = f.getAnnotation(MultiField.class);
-      if (multiField != null) {
-        return Stream.of(f.getName(), f.getName() + ".keyword", f.getName() + ".ngram");
-      }
-      return Stream.of(f.getName());
-    }).toList());
+    }).flatMap(
+        // For @MultiField fields, include both the text field and keyword field
+        f -> {
+          final MultiField multiField = f.getAnnotation(MultiField.class);
+          if (multiField != null) {
+            return Stream.of(f.getName(), f.getName() + ".keyword", f.getName() + ".ngram");
+          }
+          return Stream.of(f.getName());
+        }).toList());
 
     final List<String> subFieldNames = new ArrayList<>();
     for (final Field f : allFields) {

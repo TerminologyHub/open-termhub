@@ -9,35 +9,48 @@
  */
 package com.wci.termhub.lucene.eventing;
 
-import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
-import com.wci.termhub.lucene.LuceneDataAccess;
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.lucene.LuceneDataAccess;
 
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ * The Class WriteAspect.
+ */
 @Aspect
 @Component
 public class WriteAspect {
 
-    private final AtomicBoolean writeInProgress = new AtomicBoolean(false);
+  /** The write in progress. */
+  private final AtomicBoolean writeInProgress = new AtomicBoolean(false);
 
-    @Around("@annotation(ca.uhn.fhir.rest.annotation.Create) || @annotation(ca.uhn.fhir.rest.annotation.Delete)")
-    public Object aroundWrite(ProceedingJoinPoint pjp) throws Throwable {
-        if (!writeInProgress.compareAndSet(false, true)) {
-            throw FhirUtilityR4.exception("A write operation is already in progress",
-                    OperationOutcome.IssueType.CONFLICT, HttpServletResponse.SC_CONFLICT);
-        }
-        try {
-            Object result = pjp.proceed();
-            LuceneDataAccess.clearReaders();
-            return result;
-        } finally {
-            writeInProgress.set(false);
-        }
+  /**
+   * Around write.
+   *
+   * @param pjp the pjp
+   * @return the object
+   * @throws Throwable the throwable
+   */
+  @Around("@annotation(ca.uhn.fhir.rest.annotation.Create) || @annotation(ca.uhn.fhir.rest.annotation.Delete)")
+  public Object aroundWrite(final ProceedingJoinPoint pjp) throws Throwable {
+    if (!writeInProgress.compareAndSet(false, true)) {
+      throw FhirUtilityR4.exception("A write operation is already in progress",
+          OperationOutcome.IssueType.CONFLICT, HttpServletResponse.SC_CONFLICT);
     }
+    try {
+      final Object result = pjp.proceed();
+      LuceneDataAccess.clearReaders();
+      return result;
+    } finally {
+      writeInProgress.set(false);
+    }
+  }
 }
