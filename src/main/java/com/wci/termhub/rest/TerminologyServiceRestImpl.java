@@ -3110,7 +3110,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final String query2 = QueryBuilder.findBuilder(builders, null).buildQuery(query);
     final Query keywordQuery =
         StringUtility.isEmpty(query) ? null : LuceneQueryBuilder.parse(query2, Mapping.class);
-    final Query booleanQuery = getAndQuery(mapsetQuery, keywordQuery);
+    final Query booleanQuery =
+        ModelUtility.isEmpty(mapsets) ? keywordQuery : getAndQuery(mapsetQuery, keywordQuery);
     final SearchParameters searchParams =
         new SearchParameters(booleanQuery, offset, limit, sort, ascending);
 
