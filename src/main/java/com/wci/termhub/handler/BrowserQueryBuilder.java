@@ -10,9 +10,7 @@
 package com.wci.termhub.handler;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -84,7 +82,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
   /* see superclass */
   @Override
   public String buildEscapedQuery(final String query) {
-    return (StringUtils.isEmpty(query) || query.equals("*")) ? "*"
+    return (StringUtils.isEmpty(query) || query.equals("*:*") || query.equals("*")) ? "*"
         : "\"" + StringUtility.escapeQuery(query) + "\"";
   }
 
@@ -93,61 +91,45 @@ public class BrowserQueryBuilder implements QueryBuilder {
   public String buildQuery(final String query) {
     final StringBuilder sb = new StringBuilder();
     // Use * for empty query
-    if (StringUtility.isEmpty(query) || query.equals("*")) {
-      sb.append("*");
+    if (StringUtility.isEmpty(query) || query.equals("*:*") || query.equals("*")) {
+      sb.append("*:*");
     }
     // Fielded queries should be left alone
-    // code:9683-4
-    // attributes.STATUS:DEPRECATED
-    else if (query.matches(".*[a-zA-Z_]+[a-z]\\:.*")
-        || query.matches(".*attributes.[a-zA-Z_]+\\:.*")) {
+    else if (query.matches(".*[a-zA-Z]+[a-z]\\:.*")) {
       sb.append(query);
     }
     // Otherwise, build a query in parts
     else {
       final List<String> clauses = new ArrayList<>();
-      final String stemQuery = StringUtility.normalizeWithStemming(query);
-
-      // code:15771004 OR name:(15771004) OR terms.name:(15771004)
       if (isCode(query)) {
-        clauses.add("code:" + query + "^30");
-        clauses.add("identifiers.id:" + query + "^30");
+        clauses.add("code:" + StringUtility.escapeQuery(query) + "^30");
       } else if (isLowercaseCode(query)) {
-        // check both uppercase and lowercase
-        clauses.add("(code:" + query.toUpperCase() + "^30 OR code:" + query + "^30)");
+        clauses.add("code:" + StringUtility.escapeQuery(query.toUpperCase()) + "^30");
       }
 
-      // Concept name exact match
-      if (stemQuery.isEmpty()) {
-        clauses.add("name.keyword:(" + StringUtility.escapeQuery(query) + ")^30");
-      } else {
-        clauses.add("stemName.keyword:\"" + StringUtility.escapeQuery(stemQuery) + "\"^30");
-        clauses.add("terms.stemName.keyword:\"" + StringUtility.escapeQuery(stemQuery) + "\"^25");
+      final String normQuery = StringUtility.normalize(query);
+      // concept name exact match
+      clauses.add("(name.keyword:\"" + StringUtility.escapeQuery(query) + "\")^30");
+      if (!normQuery.isEmpty()) {
+        clauses.add("(normName.keyword:\"" + normQuery + "\")^25");
       }
-
+      // term name exact match
+      clauses.add("(terms.name.keyword:\"" + StringUtility.escapeQuery(query) + "\")^25");
+      if (!normQuery.isEmpty()) {
+        clauses.add("(terms.normName.keyword:\"" + normQuery + "\")^20");
+      }
       // term name match
-      if (!stemQuery.isEmpty()) {
-        // Boost for phrase
-        clauses.add("terms.stemName:\"" + StringUtility.escapeQuery(stemQuery) + "\"^5");
-        // If not a code, also do wildcard searches on each word (boost for AND)
-        if (!isCode(query)) {
-          final String clause = "normName:("
-              + String.join(" AND ",
-                  Arrays.asList(StringUtility.normalize(query).split(" ")).stream()
-                      .map(s -> StringUtility.escapeQuery(s) + "*").collect(Collectors.toList()))
-              + ")^5";
-          clauses.add(clause);
-          clauses.add("terms." + clause);
+      clauses.add("(terms.normName:\"" + StringUtility.escapeQuery(query) + "\")^10");
+      // all of the words
+      if (!normQuery.isEmpty()) {
+        final List<String> words = StringUtility.wordind(normQuery);
+        if (words.size() > 1) {
+          clauses.add("(" + StringUtility.composeQuery("AND", words) + ")^10");
         }
-        // Other matches, lower quality
-        clauses.add("terms.stemName:(" + StringUtility.escapeQuery(stemQuery) + ")^0.5");
+        // any of the words
+        clauses.add("(" + String.join(" ", words) + ")");
       }
-
-      // Favor shorter things
       sb.append(StringUtility.composeQuery("OR", clauses));
-      // NOTE: we could boost based on number of words in the query string
-      sb.append(" AND (wordCt:1^80 OR wordCt:2^80 OR wordCt:3^70 OR"
-          + " wordCt:4^70 OR wordCt:5^25 OR wordCt:6^10 OR wordCt:[7 TO *])");
 
     }
     return sb.toString();
@@ -165,7 +147,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
     //
     return
     // 43189234, C48123, XE8CT, PA007
-    query.replaceFirst("\\*$", "").matches("[\\dA-Z]+")
+    query.matches("[\\dA-Z]+")
         // 10234-1, A01.5XXA, I51.2, 1C61.3Y
         || query.matches("[\\dA-Z]+[\\-.][\\dA-Z]+")
         // HGNC:12345
@@ -183,7 +165,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
 
     return
     // 43189234, c48123, xe8ct, pa007
-    query.replaceFirst("\\*$", "").matches("[\\da-z]+")
+    query.matches("[\\da-z]+")
         // 10234-1, a01.5xxa, i51.2, 1cC61.3y
         || query.matches("[\\da-z]+[\\-.][\\da-z]+")
         // hgnc:12345

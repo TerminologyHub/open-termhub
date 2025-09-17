@@ -732,6 +732,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
           "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
           "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
           "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 1000, null, null);
+
       final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
 
       if (!mappings.isEmpty()) {
