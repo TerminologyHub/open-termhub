@@ -109,6 +109,7 @@ public class LuceneDataAccess {
    * @param clazz the clazz
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public void createIndex(final Class<? extends HasId> clazz) throws Exception {
 
     // Create only if the index does not exist
@@ -182,15 +183,17 @@ public class LuceneDataAccess {
    * @throws Exception the exception
    */
   public void add(final List<? extends HasId> entities) throws Exception {
-    Set<Class> entityClasses = new HashSet<>();
+    Set<Class<? extends HasId>> entityClasses = new HashSet<>();
     for (final HasId entity : entities) {
+      @SuppressWarnings("resource")
       final IndexWriter writer = getIndexWriter(entity.getClass());
       final Document document = getDocument(entity);
       writer.addDocument(document);
       entityClasses.add(entity.getClass());
     }
     // Commit all writers
-    for (final Class entityClass : entityClasses) {
+    for (final Class<? extends HasId> entityClass : entityClasses) {
+      @SuppressWarnings("resource")
       final IndexWriter writer = getIndexWriter(entityClass);
       writer.commit();
       clearReaderForClass(entityClass);
@@ -320,16 +323,16 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Update an existing document efficiently by comparing fields and only
-   * updating changed ones. This method retrieves the existing entity, compares
-   * it with the new one, and updates only the fields that have actually
-   * changed, preserving schema consistency.
+   * Update an existing document efficiently by comparing fields and only updating changed ones.
+   * This method retrieves the existing entity, compares it with the new one, and updates only the
+   * fields that have actually changed, preserving schema consistency.
    *
    * @param clazz the clazz
    * @param id the id
    * @param entity the new entity
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public void update(final Class<? extends HasId> clazz, final String id, final HasId entity)
     throws Exception {
 
@@ -389,14 +392,14 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Update multiple entities efficiently by comparing fields and only updating
-   * changed ones. This method processes each entity individually using the
-   * optimized update approach.
+   * Update multiple entities efficiently by comparing fields and only updating changed ones. This
+   * method processes each entity individually using the optimized update approach.
    *
    * @param clazz the clazz
    * @param entities the map of id to entity
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public void updateBulk(final Class<? extends HasId> clazz, final Map<String, HasId> entities)
     throws Exception {
 
@@ -472,9 +475,9 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Compare two entities and update only the fields that have changed. This
-   * method uses reflection to compare field values and updates the existing
-   * entity with new values from the updated entity.
+   * Compare two entities and update only the fields that have changed. This method uses reflection
+   * to compare field values and updates the existing entity with new values from the updated
+   * entity.
    *
    * @param existingEntity the existing entity to update
    * @param updatedEntity the entity containing the new values
@@ -550,6 +553,7 @@ public class LuceneDataAccess {
    * @param ids the ids
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public void remove(final Class<? extends HasId> clazz, final List<String> ids) throws Exception {
 
     if (ids == null || ids.isEmpty()) {
@@ -687,9 +691,9 @@ public class LuceneDataAccess {
   }
 
   /**
-   * Add a field to an existing document without full reindexing. This method
-   * retrieves the existing entity, updates it with the new field value, and
-   * then re-indexes it to ensure schema consistency.
+   * Add a field to an existing document without full reindexing. This method retrieves the existing
+   * entity, updates it with the new field value, and then re-indexes it to ensure schema
+   * consistency.
    *
    * @param clazz the clazz
    * @param id the id
@@ -697,6 +701,7 @@ public class LuceneDataAccess {
    * @param fieldName the field name to add
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public void addField(final Class<? extends HasId> clazz, final String id, final HasId entity,
     final String fieldName) throws Exception {
 
@@ -884,6 +889,7 @@ public class LuceneDataAccess {
    * @return the index writer
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public IndexWriter getIndexWriter(final Class<? extends HasId> clazz) throws Exception {
     String className = clazz.getCanonicalName();
     if (WRITER_MAP.containsKey(className)) {
@@ -908,6 +914,7 @@ public class LuceneDataAccess {
    * @return the index reader
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   public IndexReader getIndexReader(final Class<? extends HasId> clazz) throws Exception {
     String canonicalClassName = clazz.getCanonicalName();
     IndexReader reader = READER_MAP.get(canonicalClassName);
@@ -941,6 +948,7 @@ public class LuceneDataAccess {
    *
    * @param clazz the clazz
    */
+  @SuppressWarnings("resource")
   public static final void clearReaderForClass(final Class<? extends HasId> clazz) {
     READER_MAP.remove(clazz.getCanonicalName());
   }
@@ -950,6 +958,7 @@ public class LuceneDataAccess {
    *
    * @param clazz the clazz
    */
+  @SuppressWarnings("resource")
   public static final void clearWriterForClass(final Class<? extends HasId> clazz) {
     IndexWriter writer = WRITER_MAP.get(clazz.getCanonicalName());
     if (writer == null) {

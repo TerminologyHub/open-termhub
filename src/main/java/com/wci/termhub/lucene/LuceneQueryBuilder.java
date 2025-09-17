@@ -80,26 +80,27 @@ public final class LuceneQueryBuilder {
     final String[] searchableFields = getSearchableFields(modelClass);
 
     // Create PerFieldAnalyzerWrapper with field-specific analyzers
-    final Analyzer defaultAnalyzer = new StandardAnalyzer();
-    final PerFieldAnalyzerWrapper perFieldAnalyzer =
-        new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
+    try (final Analyzer defaultAnalyzer = new StandardAnalyzer();) {
+      final PerFieldAnalyzerWrapper perFieldAnalyzer =
+          new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
 
-    // Create query parser with field-specific analyzers
-    final MultiFieldQueryParser queryParser =
-        new MultiFieldQueryParser(searchableFields, perFieldAnalyzer);
-    queryParser.setSplitOnWhitespace(true);
-    queryParser.setAllowLeadingWildcard(true);
+      // Create query parser with field-specific analyzers
+      final MultiFieldQueryParser queryParser =
+          new MultiFieldQueryParser(searchableFields, perFieldAnalyzer);
+      queryParser.setSplitOnWhitespace(true);
+      queryParser.setAllowLeadingWildcard(true);
 
-    return queryParser.parse(queryText);
+      return queryParser.parse(queryText);
+    }
   }
 
   /**
-   * Gets field-specific analyzers for a given model class based on
-   * ElasticSearch annotations.
+   * Gets field-specific analyzers for a given model class based on ElasticSearch annotations.
    *
    * @param modelClass the model class
    * @return the field analyzers
    */
+  @SuppressWarnings("resource")
   public static Map<String, Analyzer> getFieldAnalyzers(final Class<?> modelClass) {
     if (FIELD_ANALYZERS_CACHE.containsKey(modelClass)) {
       return FIELD_ANALYZERS_CACHE.get(modelClass);
@@ -149,6 +150,7 @@ public final class LuceneQueryBuilder {
    */
   private static Analyzer getNgramAnalyzer() {
     return new Analyzer() {
+      @SuppressWarnings("resource")
       @Override
       protected TokenStreamComponents createComponents(final String fieldName) {
         final Tokenizer tokenizer = new StandardTokenizer();
@@ -242,7 +244,7 @@ public final class LuceneQueryBuilder {
     if (multiField != null) {
       for (final InnerField innerField : multiField.otherFields()) {
         if ("ngram".equals(innerField.suffix())) {
-            return getNgramAnalyzer();
+          return getNgramAnalyzer();
         }
       }
       return getAnalyzerForFieldType(multiField.mainField().type());
@@ -290,9 +292,8 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Returns the list of searchable fields for a given model class. Uses
-   * reflection to find String or List<String> fields, or those annotated
-   * with @Field(type = FieldType.Text) or MultiField.
+   * Returns the list of searchable fields for a given model class. Uses reflection to find String
+   * or List<String> fields, or those annotated with @Field(type = FieldType.Text) or MultiField.
    *
    * @param modelClass the model class
    * @return the searchable fields
@@ -317,8 +318,9 @@ public final class LuceneQueryBuilder {
       final boolean isKeywordField = esField != null && esField.type() == FieldType.Keyword;
       final boolean isMultiField = multiField != null;
       return isString || isListString || isTextField || isKeywordField || isMultiField;
-    }).<String>flatMap(f -> {
-      // For @MultiField fields, include both the text field and keyword field
+    }).<String> flatMap(f ->
+    // For @MultiField fields, include both the text field and keyword field
+    {
       final MultiField multiField = f.getAnnotation(MultiField.class);
       if (multiField != null) {
         return Stream.of(f.getName(), f.getName() + ".keyword", f.getName() + ".ngram");

@@ -40,7 +40,6 @@ import com.wci.termhub.test.AbstractServerTest;
 public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private final Logger logger = LoggerFactory.getLogger(AbstractFhirR5ServerTest.class);
 
   /** The search service. */
