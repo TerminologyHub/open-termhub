@@ -454,7 +454,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(concept.getName().toLowerCase()).contains(query.toLowerCase());
     }
   }
-  
+
   /**
    * Test find concepts multiple terminologies.
    *
