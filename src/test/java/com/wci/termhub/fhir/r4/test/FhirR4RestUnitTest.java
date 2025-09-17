@@ -1250,6 +1250,14 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
         // Exactly one should fail
         Assertions.assertTrue(created1 != null ^ created2 != null, "Exactly one write should fail due to locking");
+
+        if(created1 != null){
+            deleteCodeSystem(created1.getId());
+        }
+
+        if(created2 != null){
+            deleteCodeSystem(created2.getId());
+        }
     }
 
     @Test
@@ -1299,6 +1307,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
                 .toList();
         assertEquals(1, display.size());
         assertEquals("Surgical procedure on thorax", display.get(0));
+
+        deleteCodeSystem(created.getId());
     }
 
     @Test
@@ -1329,6 +1339,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         Boolean future2Result = future2.get();
         // Exactly one should fail
         Assertions.assertTrue(future1Result != null ^ future2Result, "Exactly one write should fail due to locking");
+        if(future1Result != null){
+            deleteCodeSystem(future1Result.getId());
+        }
     }
 
     private CodeSystem getNewCodeSystem(String id, String url) {
@@ -1336,6 +1349,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         codeSystem.setTitle(id);
         codeSystem.setUrl(url);
         codeSystem.setDate(new Date());
+        codeSystem.setVersion("1.0");
+        codeSystem.setPublisher("test");
         return codeSystem;
     }
 
