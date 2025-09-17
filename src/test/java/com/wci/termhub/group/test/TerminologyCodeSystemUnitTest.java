@@ -72,7 +72,7 @@ public class TerminologyCodeSystemUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindTerminologyByAbbreviation() throws Exception {
     final SearchParameters params = new SearchParameters();
-    params.setQuery("abbreviation: SNOMEDCT_US");
+    params.setQuery("abbreviation:SNOMEDCT_US");
 
     final ResultList<Terminology> results = searchService.find(params, Terminology.class);
 
@@ -89,7 +89,7 @@ public class TerminologyCodeSystemUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindTerminologyByPublisher() throws Exception {
     final SearchParameters params = new SearchParameters();
-    params.setQuery("publisher: SANDBOX");
+    params.setQuery("publisher:SANDBOX");
 
     final ResultList<Terminology> results = searchService.find(params, Terminology.class);
 
@@ -125,7 +125,7 @@ public class TerminologyCodeSystemUnitTest extends AbstractTerminologyTest {
   @Test
   public void testTerminologyUri() throws Exception {
     final SearchParameters params = new SearchParameters();
-    params.setQuery("abbreviation: ICD10CM");
+    params.setQuery("abbreviation:ICD10CM");
 
     final ResultList<Terminology> results = searchService.find(params, Terminology.class);
 
@@ -133,4 +133,5 @@ public class TerminologyCodeSystemUnitTest extends AbstractTerminologyTest {
     assertNotNull(results.getItems().get(0).getUri(), "URI should not be null");
     LOGGER.info("ICD-10-CM URI: {}", results.getItems().get(0).getUri());
   }
+
 }

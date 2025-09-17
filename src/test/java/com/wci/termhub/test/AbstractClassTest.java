@@ -9,46 +9,77 @@
  */
 package com.wci.termhub.test;
 
+import java.io.File;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.Application;
-import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.Term;
+import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.FileUtility;
 
 /**
  * Abstract superclass for source code tests.
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = Application.class)
-@ExtendWith(SpringExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class AbstractClassTest extends BaseUnitTest {
+@TestPropertySource(properties = {
+    "lucene.index.directory=build/index/lucene-index-class"
+})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+public abstract class AbstractClassTest extends AbstractServerTest {
 
   /** The logger. */
-  @SuppressWarnings("unused")
   private final Logger logger = LoggerFactory.getLogger(AbstractClassTest.class);
 
+  /** The search service. */
+  @Autowired
+  private EntityRepositoryService searchService;
+
   /** The index directory. */
-  protected static final String INDEX_DIRECTORY = "build/index/lucene-index-class";
+  @Value("${lucene.index.directory}")
+  private String indexDirectory;
 
   /** The setup once. */
   private static boolean setupOnce = false;
 
   /**
-   * Before all.
+   * Setup once.
+   *
+   * @throws Exception the exception
    */
   @BeforeAll
-  public void beforeAll() {
-    PropertyUtility.setProperty("lucene.index.directory", INDEX_DIRECTORY);
+  public void setupData() throws Exception {
     if (setupOnce) {
       return;
     }
+    FileUtility.deleteDirectoryRecursively(new File(indexDirectory).toPath());
+    logger.debug("Creating index for Concept");
+    searchService.createIndex(Concept.class);
+    logger.debug("Creating index for Term");
+    searchService.createIndex(Term.class);
     setupOnce = true;
+  }
+
+  /**
+   * Gets the index directory.
+   *
+   * @return the index directory
+   */
+  protected String getIndexDirectory() {
+    return indexDirectory;
   }
 
 }

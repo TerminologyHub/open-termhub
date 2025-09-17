@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.wci.termhub.ecl.test.SnomedEclResults;
 import org.apache.lucene.search.Query;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -31,6 +30,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.wci.termhub.ecl.EclToLuceneConverter;
 import com.wci.termhub.ecl.ExpressionConstraintListener;
+import com.wci.termhub.ecl.test.SnomedEclResults;
 import com.wci.termhub.lucene.LuceneEclDataAccess;
 import com.wci.termhub.model.Concept;
 

@@ -26,7 +26,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 /**
  * Represents a terminology abbreviation and associated metadata.
@@ -113,49 +112,40 @@ public class Terminology extends TerminologyRef implements HasAttributes {
   // Superclass tracks abbr/version/latest/publisher
 
   /** The release date formatted as yyyy-MM-dd. */
-  @Transient
   @Field(type = FieldType.Keyword)
   private String releaseDate;
 
   /** The terminology family. */
-  @Transient
   @Field(type = FieldType.Keyword)
   private String family;
 
   /** The uri (for downloading terminology artifacts). */
-  @Transient
   @Field(type = FieldType.Keyword)
   private String uri;
 
   /** The attributes. */
-  @Transient
   @Field(type = FieldType.Object)
   private Map<String, String> attributes;
 
   /** The root codes. */
-  @Transient
   @Field(type = FieldType.Keyword)
   private List<String> roots;
 
   // NOTE: the following 3 "ct" variables should eventually be removed
   // Once all terminologies have been reloaded to simply use "statistics"
   /** The concept count. */
-  @Transient
   @Field(type = FieldType.Long)
   private Long conceptCt;
 
   /** The relationship ct. */
-  @Transient
   @Field(type = FieldType.Long)
   private Long relationshipCt;
 
   /** The tree position ct. */
-  @Transient
   @Field(type = FieldType.Long)
   private Long treePositionCt;
 
   /** The statistics. */
-  @Transient
   @Field(type = FieldType.Object, enabled = false)
   private Map<String, Integer> statistics;
 

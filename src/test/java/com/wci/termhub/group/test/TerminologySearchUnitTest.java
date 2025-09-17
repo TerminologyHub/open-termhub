@@ -52,6 +52,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
   public void testFindAll() throws Exception {
 
     final ResultList<Terminology> all = searchService.findAll(SEARCH_PARAMETERS, Terminology.class);
+    assertEquals(6, all.getItems().size());
     LOGGER.info("Find all: {}", all.getItems().size());
   }
 
@@ -158,7 +159,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindTerminologyFake() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("abbreviation: FAKE");
+    SEARCH_PARAMETERS.setQuery("abbreviation: DOESNOTEXIST");
     final ResultList<Terminology> terminologies =
         searchService.find(SEARCH_PARAMETERS, Terminology.class);
     assertEquals(0, terminologies.getItems().size());
@@ -171,26 +172,19 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
    */
   @Test
   public void testPublisherSearch() throws Exception {
-    LuceneDataAccess.clearWriterForClass(Terminology.class);
-    Map<String, IndexWriter> writers = LuceneDataAccess.getWriters();
-  for(String key : writers.keySet()) {
-    LOGGER.info("Writer key: {}", key);
-    LOGGER.info("  Writer: {}", writers.get(key).getDirectory());
-  }
+
+    final SearchParameters params = new SearchParameters();
+    params.setQuery("*:*");
+    params.setLimit(100);
+
+    final ResultList<Terminology> all = searchService.find(params, Terminology.class);
+
+    all.getItems()
+        .forEach(t -> LOGGER.debug("Terminology: {} - {}", t.getAbbreviation(), t.getPublisher()));
+
     final String publisher = "SNOMEDCT International";
-    // create a terminology with publisher = "SNOMEDCT International"
-    final Terminology terminology = new Terminology();
-    terminology.setId(UUID.randomUUID().toString());
-    terminology.setAbbreviation("FAKE");
-    terminology.setName("Fake Terminology for Testing");
-    terminology.setVersion("http://fake.info/");
-    terminology.setPublisher(publisher);
-    terminology.setFamily("Fake Family");
-    searchService.add(Terminology.class, terminology);
-    final String query = "publisher: \"" + StringUtility.escapeQuery(publisher) + "\"";
-
+    final String query = "publisher:" + StringUtility.escapeQuery(publisher) + "";
     LOGGER.info("testPublisherSearch Query: {}", query);
-
     SEARCH_PARAMETERS.setQuery(query);
     LuceneDataAccess.clearReaders();
     final ResultList<Terminology> terminologies =

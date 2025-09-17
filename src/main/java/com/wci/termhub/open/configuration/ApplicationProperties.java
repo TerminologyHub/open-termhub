@@ -12,9 +12,12 @@ package com.wci.termhub.open.configuration;
 import java.util.Iterator;
 import java.util.Properties;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 /**
  * Application properties configuration.
  */
+@ConfigurationProperties
 public class ApplicationProperties extends Properties {
 
   /**

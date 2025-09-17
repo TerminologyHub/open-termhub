@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
-import jakarta.persistence.Transient;
 
 /**
  * Represents a terminology reference. This serves as a pointer from a project to an actual
@@ -34,19 +33,16 @@ public class TerminologyRef extends AbstractHasModified
     implements HasName, HasMinimize, Copyable<TerminologyRef>, Comparable<TerminologyRef> {
 
   /** The abbreviation. */
-  @Transient
   @Field(type = FieldType.Keyword)
   private String abbreviation;
 
   /** The name. */
-  @Transient
   @MultiField(mainField = @Field(type = FieldType.Text), otherFields = {
       @InnerField(suffix = "keyword", type = FieldType.Keyword)
   })
   private String name;
 
   /** The version. */
-  @Transient
   @Field(type = FieldType.Keyword)
   private String version;
 
@@ -55,21 +51,18 @@ public class TerminologyRef extends AbstractHasModified
   private String publisher;
 
   /** The release date. */
-  @Transient
   @Field(type = FieldType.Keyword)
   private String releaseDate;
 
   /** The uri (for downloading terminology artifacts). */
-  @Transient
+  @Field(type = FieldType.Keyword)
   private String uri;
 
   /** The latest flag. */
-  @Transient
   @Field(type = FieldType.Boolean)
   private Boolean latest;
 
   /** The loaded. */
-  @Transient
   @Field(type = FieldType.Boolean)
   private Boolean loaded;
 
@@ -341,7 +334,6 @@ public class TerminologyRef extends AbstractHasModified
         && Objects.equals(loaded, other.loaded) && Objects.equals(name, other.name)
         && Objects.equals(publisher, other.publisher) && Objects.equals(version, other.version);
   }
-
 
   /* see superclass */
   @Override

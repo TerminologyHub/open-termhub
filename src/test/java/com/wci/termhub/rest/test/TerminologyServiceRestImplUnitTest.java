@@ -852,6 +852,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListConceptTreePosition conceptTreePositonList =
         objectMapper.readValue(content, ResultListConceptTreePosition.class);
     assertThat(conceptTreePositonList).isNotNull();
+
     assertEquals(1, conceptTreePositonList.getItems().size());
     for (final ConceptTreePosition ctp : conceptTreePositonList.getItems()) {
       assertThat(ctp).isNotNull();
@@ -859,6 +860,15 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(ctp.getTerminology()).contains(terminology);
       assertThat(ctp.getVersion()).isNotNull();
       assertThat(ctp.getConcept()).isNotNull();
+
+      final ConceptRef concept = ctp.getConcept();
+      assertThat(concept.getActive()).isNotNull();
+      assertThat(concept.getCode()).isNotBlank();
+      assertThat(concept.getName()).isNotBlank();
+      assertThat(concept.getTerminology()).isNotBlank();
+      assertThat(concept.getPublisher()).isNotBlank();
+      assertThat(concept.getLeaf()).isNotNull();
+
     }
   }
 
@@ -926,6 +936,26 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(mapset.getToTerminology()).isNotNull();
       // assertThat(mapset.getToVersion()).isNotNull();
     }
+  }
+
+  /**
+   * Test find mapsets with multiple sort.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindMapsetsWithMultipleSort() throws Exception {
+    final String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=&offset=0&limit=20&"
+        + "sort=from.code,group,priority&ascending=true&leaf=null";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
+    assertThat(mapsetList).isNotNull();
+    assertThat(mapsetList.getTotal()).isPositive();
   }
 
   /**
@@ -1241,6 +1271,46 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertEquals(testSubset.getName(), subset.getName());
     assertEquals(testSubset.getPublisher(), subset.getPublisher());
     assertEquals(testSubset.getVersion(), subset.getVersion());
+  }
+
+  /**
+   * Test get subset by id.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetSubsetWithQuery1() throws Exception {
+
+    final String url = baseUrl + "/subset/SNOMEDCT_US-EXTENSION/member?query=icd&offset=0&limit=10";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final Subset subset = objectMapper.readValue(content, Subset.class);
+    assertThat(subset).isNotNull();
+
+  }
+
+  /**
+   * Test get subset by id.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetSubsetWithQuery2() throws Exception {
+
+    final String url = baseUrl + "/subset/SNOMEDCT_US-EXTENSION/member?query=ICD&offset=0&limit=10";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final Subset subset = objectMapper.readValue(content, Subset.class);
+    assertThat(subset).isNotNull();
+
   }
 
   /**
@@ -1963,6 +2033,117 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
         + ancestorsErrors.size(), "Should be no errors");
 
     LOGGER.info("Successfully validated hierarchy fields for concept {}", code);
+  }
+
+  /**
+   * Test autocomplete single partial word.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testAutocompleteSingle() throws Exception {
+    String url = baseUrl + "/autocomplete?terminology=SNOMEDCT&query=dia&limit=10";
+    MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    // expect array of strings
+    List<String> suggestions = objectMapper.readValue(content, new TypeReference<List<String>>() {
+      // n/a
+    });
+    assertThat(suggestions).isNotNull();
+    assertThat(suggestions).hasSize(10);
+    for (final String suggestion : suggestions) {
+      assertThat(suggestion.toLowerCase()).contains("dia");
+    }
+
+    // change limit
+    url = baseUrl + "/autocomplete?terminology=SNOMEDCT&query=dia&limit=15";
+    result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    suggestions = objectMapper.readValue(content, new TypeReference<List<String>>() {
+      // n/a
+    });
+    assertThat(suggestions).isNotNull();
+    assertTrue(suggestions.size() >= 10,
+        "Should be at least 10 suggestions, got: " + suggestions.size());
+    assertTrue(suggestions.size() <= 15,
+        "Should be at most 15 suggestions, got: " + suggestions.size());
+    for (final String suggestion : suggestions) {
+      assertThat(suggestion.toLowerCase()).contains("dia");
+    }
+  }
+
+  /**
+   * Test autocomplete multiple partial word.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testAutocompleteMultiple() throws Exception {
+    final String url = baseUrl + "/autocomplete?terminology=SNOMEDCT&query=dia mel&limit=10";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    // expect array of strings
+    final List<String> suggestions =
+        objectMapper.readValue(content, new TypeReference<List<String>>() {
+          // n/a
+        });
+    assertThat(suggestions).isNotNull();
+    assertThat(suggestions.size()).isPositive();
+    for (final String suggestion : suggestions) {
+      assertThat(suggestion.toLowerCase()).contains("dia");
+      assertThat(suggestion.toLowerCase()).contains("mel");
+    }
+  }
+
+  /**
+   * Test autocomplete with multiple terminolgies.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testAutocompleteMultipleTerminologies() throws Exception {
+    final String url = baseUrl + "/autocomplete?terminology=SNOMEDCT,LNC&query=dia mel&limit=100";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    // expect array of strings
+    final List<String> suggestions =
+        objectMapper.readValue(content, new TypeReference<List<String>>() {
+          // n/a
+        });
+    assertThat(suggestions).isNotNull();
+    assertTrue(suggestions.size() >= 20,
+        "Should be at least 20 suggestions, got: " + suggestions.size());
+    for (final String suggestion : suggestions) {
+      assertThat(suggestion.toLowerCase()).contains("dia");
+      assertThat(suggestion.toLowerCase()).contains("mel");
+    }
+  }
+
+  /**
+   * Test autocomplete no expected results.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testAutocompleteNoResults() throws Exception {
+    final String url = baseUrl + "/autocomplete?terminology=RXNORM&query=noresults&limit=10";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    // expect empty array
+    final String content = result.getResponse().getContentAsString();
+    final List<String> suggestions =
+        objectMapper.readValue(content, new TypeReference<List<String>>() {
+          // n/a
+        });
+    assertThat(suggestions).isNotNull();
+    assertThat(suggestions).isEmpty();
   }
 
   /**

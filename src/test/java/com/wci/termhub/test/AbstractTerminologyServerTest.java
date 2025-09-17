@@ -10,6 +10,7 @@
 package com.wci.termhub.test;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -17,13 +18,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.PropertyUtility;
 
 /**
  * Abstract superclass for source code tests.
@@ -31,7 +34,10 @@ import com.wci.termhub.util.PropertyUtility;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestPropertySource(locations = "classpath:application-test.properties")
+@TestPropertySource(properties = {
+    "lucene.index.directory=build/index/lucene-rest"
+})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
 
   /** The logger. */
@@ -43,7 +49,8 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
   private EntityRepositoryService searchService;
 
   /** The index directory. */
-  protected static final String INDEX_DIRECTORY = "build/index/lucene-rest";
+  @Value("${lucene.index.directory}")
+  private String indexDirectory;
 
   /** List of FHIR Code System files to load. */
   private static final List<String> CODE_SYSTEM_FILES =
@@ -69,14 +76,31 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
    */
   @BeforeAll
   public void setupData() throws Exception {
-    PropertyUtility.setProperty("lucene.index.directory", INDEX_DIRECTORY);
     if (setupOnce) {
       return;
     }
-    clearAndCreateIndexDirectories(searchService, INDEX_DIRECTORY);
-    loadCodeSystems(searchService, CODE_SYSTEM_FILES, true);
-    loadConceptMaps(searchService, CONCEPT_MAP_FILES);
-    loadValueSets(searchService, VALUE_SET_FILES);
+    try {
+      clearAndCreateIndexDirectories(searchService, indexDirectory);
+      loadCodeSystems(searchService, CODE_SYSTEM_FILES, true);
+      loadConceptMaps(searchService, CONCEPT_MAP_FILES);
+      loadValueSets(searchService, VALUE_SET_FILES);
+
+      // add another terminology to test searches that should not match
+      // create a terminology with publisher = "SNOMEDCT International"
+      final String publisher = "SNOMEDCT International";
+      final Terminology terminology = new Terminology();
+      terminology.setId(UUID.randomUUID().toString());
+      terminology.setAbbreviation("FAKE");
+      terminology.setName("Fake Terminology for Testing");
+      terminology.setVersion("http://fake.info/");
+      terminology.setPublisher(publisher);
+      terminology.setFamily("Fake Family");
+      searchService.add(Terminology.class, terminology);
+
+    } catch (final Exception e) {
+      logger.error("Error setting up data: {}", e.getMessage(), e);
+      throw e;
+    }
     setupOnce = true;
   }
 
