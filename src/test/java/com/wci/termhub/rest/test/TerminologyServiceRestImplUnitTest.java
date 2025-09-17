@@ -65,8 +65,8 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
- * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All
- * get/find tests are order 10. All delete tests are order 20.
+ * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All get/find tests are
+ * order 10. All delete tests are order 20.
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
@@ -212,8 +212,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(metadata.getModel()).isNotNull();
       assertThat(metadata.getCode()).isNotNull();
       /*
-       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US",
-       * "version":"20240301",
+       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20240301",
        * "publisher":"SANDBOX","model":"relationship","field":"uiLabel","code":
        * "Attributes","rank":0}
        */
@@ -1755,8 +1754,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test concept hierarchy fields for SNOMEDCT_US:73211009 - validates
-   * children, parents, descendants, ancestors are populated.
+   * Test concept hierarchy fields for SNOMEDCT_US:73211009 - validates children, parents,
+   * descendants, ancestors are populated.
    *
    * @throws Exception the exception
    */
@@ -1786,8 +1785,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertNotNull(concept.getAncestors(), "Ancestors list should not be null");
 
     /*
-     * "children": [
-     * {"local":false,"active":true,"name":"Disorder of cardiovascular system"
+     * "children": [ {"local":false,"active":true,"name":"Disorder of cardiovascular system"
      * ,"code":"49601007","terminology":"SNOMEDCT","version":"20240101",
      * "publisher":"SANDBOX","leaf":true,"defined":true},
      * {"local":false,"active":true,"name":"Disorder of breast","code":
@@ -1846,16 +1844,17 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
         .filter(c -> testCode.equals(c.getCode())).findFirst().orElse(null);
     if (testConceptRef == null) {
       childrenErrors.put(testCode, "Should have child with code " + testCode);
-    }
-    if (!testConceptRef.getName().equals("Disorder of cardiovascular system")) {
-      childrenErrors.put(testCode, "Should have name 'Disorder of cardiovascular system', found: "
-          + testConceptRef.getName());
-    }
-    if (!testConceptRef.getLeaf()) {
-      childrenErrors.put(testCode, "Should be leaf");
-    }
-    if (!testConceptRef.getDefined()) {
-      childrenErrors.put(testCode, "Should be defined");
+    } else {
+      if (!testConceptRef.getName().equals("Disorder of cardiovascular system")) {
+        childrenErrors.put(testCode, "Should have name 'Disorder of cardiovascular system', found: "
+            + testConceptRef.getName());
+      }
+      if (!testConceptRef.getLeaf()) {
+        childrenErrors.put(testCode, "Should be leaf");
+      }
+      if (!testConceptRef.getDefined()) {
+        childrenErrors.put(testCode, "Should be defined");
+      }
     }
 
     final String testCode2 = "79604008";

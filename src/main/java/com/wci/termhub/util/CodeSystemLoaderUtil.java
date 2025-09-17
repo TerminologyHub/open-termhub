@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.algo.TerminologyCache;
 import com.wci.termhub.algo.TreePositionAlgorithm;
+import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
@@ -424,6 +425,7 @@ public final class CodeSystemLoaderUtil {
     LOGGER.info("Created terminology: {}, publisher: {}, version: {}, id: {}",
         terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion(),
         terminology.getId());
+    LuceneDataAccess.clearReaderForClass(Terminology.class);
     return terminology;
   }
 

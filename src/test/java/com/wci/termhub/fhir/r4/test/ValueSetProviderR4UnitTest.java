@@ -15,10 +15,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.ValueSet;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -30,9 +36,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
+import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
@@ -44,28 +52,42 @@ import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 @AutoConfigureMockMvc
 public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
 
-  /** The Constant LOGGER. */
+  /**
+   * The Constant LOGGER.
+   */
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetProviderR4UnitTest.class);
 
-  /** The search service. */
+  /**
+   * The search service.
+   */
   @Autowired
   private EntityRepositoryService searchService;
 
-  /** List of FHIR Code System files to load. */
+  /**
+   * List of FHIR Code System files to load.
+   */
   private static final List<String> VALUE_SET_FILES =
       List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r4.json");
 
-  /** The provider. */
+  /**
+   * The provider.
+   */
   @Autowired
   private ValueSetProviderR4 provider;
 
-  /** The request. */
+  /**
+   * The request.
+   */
   private MockHttpServletRequest request;
 
-  /** The details. */
+  /**
+   * The details.
+   */
   private ServletRequestDetails details;
 
-  /** The Constant TEST_VALUESET_URL. */
+  /**
+   * The Constant TEST_VALUESET_URL.
+   */
   private static final String TEST_VALUESET_URL = "http://snomed.info/sct?fhir_vs=731000124108";
 
   /**
@@ -272,6 +294,77 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         LOGGER.error("Error reloading value set file: {}", valueSetFile, e);
         throw e;
       }
+    }
+  }
+
+  /**
+   * Test concurrent add.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConcurrentAdd() throws Exception {
+    final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    final ValueSet vs1 = new ValueSet();
+    vs1.setUrl("http://example.org/concurrent-vs-1");
+    vs1.setName("Concurrent VS 1");
+    vs1.setVersion("1.0");
+    vs1.setPublisher("Unit Test");
+    vs1.setTitle("Concurrent Value Set 1");
+    vs1.setDate(java.util.Date.from(java.time.Instant.now()));
+
+    final ValueSet vs2 = new ValueSet();
+    vs2.setUrl("http://example.org/concurrent-vs-2");
+    vs2.setName("Concurrent VS 2");
+    vs2.setVersion("1.0");
+    vs2.setPublisher("Unit Test");
+    vs2.setTitle("Concurrent Value Set 2");
+    vs2.setDate(java.util.Date.from(java.time.Instant.now()));
+
+    final Callable<MethodOutcome> writeTask1 = () -> {
+      return createValueSet(vs1);
+    };
+
+    final Callable<MethodOutcome> writeTask2 = () -> {
+      return createValueSet(vs2);
+    };
+
+    final Future<MethodOutcome> future1 = executor.submit(writeTask1);
+    // Ensure the first write starts before the second
+    Thread.sleep(10); // Small delay to increase chance of overlap
+
+    final Future<MethodOutcome> future2 = executor.submit(writeTask2);
+
+    executor.shutdown();
+
+    final MethodOutcome created1 = future1.get();
+    final MethodOutcome created2 = future2.get();
+
+    // Exactly one should fail
+    Assertions.assertTrue(created1.getCreated() ^ created2.getCreated(),
+        "Exactly one write should fail due to locking");
+    if (created1.getCreated()) {
+      provider.deleteValueSet(request, details, ((IdType) created1.getId()));
+    } else {
+      provider.deleteValueSet(request, details, ((IdType) created2.getId()));
+    }
+  }
+
+  /**
+   * Creates the value set.
+   *
+   * @param vs the vs
+   * @return the method outcome
+   * @throws Exception the exception
+   */
+  private MethodOutcome createValueSet(final ValueSet vs) throws Exception {
+    try {
+      return provider.createValueSet(vs);
+    } catch (final FHIRServerResponseException e) {
+      final MethodOutcome methodOutcome = new MethodOutcome();
+      methodOutcome.setCreated(false);
+      return methodOutcome;
     }
   }
 

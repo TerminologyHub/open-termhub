@@ -1,6 +1,6 @@
 buildscript {
   ext {
-    springBootVersion = "3.3.13"
+    springBootVersion = "3.4.9"
   }
   repositories {
     mavenLocal()
@@ -19,10 +19,16 @@ buildscript {
 
 // This must be at the top of the file (only can be below buildscript)
 plugins {
-  id "com.github.hierynomus.license" version "0.16.1"
-  id 'org.springframework.boot' version '3.3.5'
-  id "com.github.spotbugs" version "6.0.26"
-  id 'jacoco'
+    id 'java'
+    id 'eclipse'
+    id 'war'
+    id 'org.springframework.boot' version '3.4.9'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id "com.github.hierynomus.license" version "0.16.1"
+    id "com.github.spotbugs" version "6.0.26"
+    id 'jacoco'
+    id 'checkstyle'
+    id 'maven-publish'
 }
 
 repositories {
@@ -32,15 +38,6 @@ repositories {
   maven { url "https://repo.spring.io/milestone" }
   maven { url "https://repo.spring.io/snapshot" }
 }
-
-// Plugins
-// The dependency management plugin remains a transitive dependency of spring-boot-gradle-plugin
-// so there's no need for it to be listed as a classpath dependency in the buildscript configuration.
-apply plugin: "io.spring.dependency-management"
-apply plugin: "org.springframework.boot"
-apply plugin: "java"
-apply plugin: "eclipse"
-apply plugin: "checkstyle"
 
 group = 'com.wci.open-termhub'
 version = '1.1.1-202509'
@@ -57,6 +54,21 @@ java {
 //configurations.all {
 //   exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
 //}
+
+// Ensure Spring Boot's dependency management is explicitly configured
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.9"
+    }
+    dependencies {
+        dependency('org.fhir:ucum:1.0.9')
+
+        // NOTE: when spring version is updated, do NOT explicily do this
+        // It was only done to handle trivy vulnerability without upgrading to 3.5 boot
+        dependency('org.springframework:spring-core:6.2.11')
+        dependency('org.springframework:spring-context:6.2.11')
+    }
+}
 
 dependencies {
   // NOTE: "spring-boot-starter-web" must be the first dependency
@@ -94,6 +106,8 @@ dependencies {
 
   implementation 'org.apache.commons:commons-text:1.12.0'
   implementation 'org.apache.commons:commons-math3:3.6.1'
+  implementation 'org.springframework.boot:spring-boot-starter-aop'
+  implementation 'org.aspectj:aspectjweaver:1.9.22'
 
   implementation 'org.reflections:reflections:0.10.2'
   implementation ('com.google.guava:guava:33.4.8-jre') {
@@ -148,16 +162,11 @@ dependencies {
   testImplementation 'org.junit.platform:junit-platform-suite-engine:1.10.5'
 }
 
-dependencyManagement {
-  dependencies {
-    dependency('org.fhir:ucum:1.0.9')
-  }
-}
-
 // ./gradlew clean test
 test {
     useJUnitPlatform()
     exclude '**/integrationtest/**'
+    maxParallelForks = 1
     testLogging {
         events "skipped", "failed"
         exceptionFormat "full"
