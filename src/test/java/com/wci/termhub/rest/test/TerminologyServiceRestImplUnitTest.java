@@ -959,6 +959,63 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
+   * Test mapset by publisher.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMappingsByPublisher() throws Exception {
+    final String url = "/mapping?query=mapset.publisher:SANDBOX";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
+  }
+
+  /**
+   * Test mapset by abbreviation wildcard.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMappingsByAbbreviationWildcard() throws Exception {
+    final String url = "/mapping?query=mapset.abbreviation:SNOMED*";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
+  }
+
+  /**
+   * Test mapset by abbreviation.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMappingsByAbbreviation() throws Exception {
+    final String url = "/mapping?query=mapset.abbreviation:SNOMEDCT_US-ICD10CM";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
+  }
+
+  /**
    * Test find mapsets with query.
    *
    * @throws Exception the exception
