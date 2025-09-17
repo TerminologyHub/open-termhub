@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,24 +186,112 @@ public final class CodeSystemLoaderUtil {
       relationshipBatch.clear();
       termBatch.clear();
 
-      LOGGER.info("  begin compute for ancestors");
+      @SuppressWarnings("unused")
+      boolean polyhierarchyFlag = false;
+
+      LOGGER.info("  begin compute for hierarchy");
       if (terminology.getAttributes() != null
           && terminology.getAttributes().containsKey(Terminology.Attributes.hierarchical.property())
           && Boolean.parseBoolean(
               terminology.getAttributes().get(Terminology.Attributes.hierarchical.property()))) {
+
         for (final Concept concept : conceptCache) {
-          final Set<String> ancestors = terminologyCache.getAncestors(concept.getCode());
-          // get the conceptRef for each ancestor
-          if (ancestors != null && !ancestors.isEmpty()) {
-            for (final String ancestorCode : ancestors) {
-              final ConceptRef ancestorRef =
-                  terminologyCache.getOrCreateConceptRef(ancestorCode, concept);
-              concept.getAncestors().add(ancestorRef);
+          final String name = terminologyCache.getConceptName(concept.getCode());
+
+          if (name != null) {
+            concept.setName(name);
+          } else {
+            throw new Exception("Concept is not assigned a preferred name = " + concept.getCode());
+          }
+
+          // this should never happen
+          if (concept.getCode() == null) {
+            throw new Exception("Concept code is unexpectedly null = " + concept);
+          }
+
+          if (terminologyCache.getParents(concept.getCode()) != null) {
+            final Set<String> parents = terminologyCache.getParents(concept.getCode());
+            if (parents.size() > 1) {
+              polyhierarchyFlag = true;
+            }
+            for (final String parentCode : parents) {
+              final ConceptRef parent = new ConceptRef();
+              parent.setCode(parentCode);
+              parent.setName(terminologyCache.getConceptName(parentCode));
+              parent.setPublisher(concept.getPublisher());
+              parent.setTerminology(concept.getTerminology());
+              parent.setVersion(concept.getVersion());
+              parent.setDefined(terminologyCache.getDefined(parentCode));
+              parent.setLeaf(terminologyCache.isLeaf(parentCode));
+              concept.getParents().add(parent);
             }
           }
+          if (terminologyCache.getChildren(concept.getCode()) != null) {
+
+            for (final String childCode : terminologyCache.getChildren(concept.getCode())) {
+              final ConceptRef child = new ConceptRef();
+              child.setCode(childCode);
+              child.setName(terminologyCache.getConceptName(childCode));
+              child.setPublisher(concept.getPublisher());
+              child.setTerminology(concept.getTerminology());
+              child.setVersion(concept.getVersion());
+              child.setDefined(terminologyCache.getDefined(childCode));
+              child.setLeaf(terminologyCache.isLeaf(childCode));
+              concept.getChildren().add(child);
+            }
+          }
+          concept.setLeaf(terminologyCache.isLeaf(concept.getCode()));
+
+          if (terminologyCache.getAncestors(concept.getCode()) != null) {
+            for (final Map.Entry<String, Integer> ancestorCode : terminologyCache
+                .getAncestorsWithDepth(concept.getCode()).entrySet()) {
+              final ConceptRef ancestor = new ConceptRef();
+              ancestor.setLocal(null);
+              ancestor.setCode(ancestorCode.getKey());
+              ancestor.setName(terminologyCache.getConceptName(ancestorCode.getKey()));
+              // TBD: Do these need to be set here?
+              // ancestor.setPublisher(concept.getPublisher());
+              // ancestor.setTerminology(concept.getTerminology());
+              // ancestor.setVersion(concept.getVersion());
+              ancestor.setDefined(terminologyCache.getDefined(ancestorCode.getKey()));
+              ancestor.setLeaf(terminologyCache.isLeaf(ancestorCode.getKey()));
+              ancestor.setLevel(ancestorCode.getValue());
+              concept.getAncestors().add(ancestor);
+            }
+            // Sort by level+name
+            concept.setAncestors(concept.getAncestors().stream().sorted((a, b) -> {
+              final int l1 = 100 + a.getLevel();
+              final String k1 = l1 + a.getName();
+              final int l2 = 100 + b.getLevel();
+              final String k2 = l2 + b.getName();
+              return k1.compareTo(k2);
+            }).collect(Collectors.toList()));
+
+          }
+
+          final Map<String, ConceptRef> descendants =
+              terminologyCache.getDescendantsWithDepth(concept.getCode());
+
+          for (final Map.Entry<String, ConceptRef> entry : descendants.entrySet().stream()
+              .sorted((a, b) -> {
+                final ConceptRef aa = a.getValue();
+                final int l1 = 100 + aa.getLevel();
+                final String k1 = l1 + aa.getName();
+                final ConceptRef bb = b.getValue();
+                final int l2 = 100 + bb.getLevel();
+                final String k2 = l2 + bb.getName();
+                return k1.compareTo(k2);
+              }).collect(Collectors.toList())) {
+            final ConceptRef descendant = entry.getValue();
+            // TBD: Do these need to be set here?
+            // descendant.setPublisher(concept.getPublisher());
+            // descendant.setTerminology(concept.getTerminology());
+            // descendant.setVersion(concept.getVersion());
+            concept.getDescendants().add(descendant);
+          }
         }
-      }
-      LOGGER.info("  finish compute for ancestors");
+
+      } // end concept loop
 
       conceptCount = 0;
       final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
@@ -214,6 +303,7 @@ public final class CodeSystemLoaderUtil {
           service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
           conceptBatch.clear();
         }
+
       }
 
       if (!conceptBatch.isEmpty()) {
@@ -330,6 +420,10 @@ public final class CodeSystemLoaderUtil {
       LOGGER.debug("CodeSystemLoaderUtil: terminology: {}", terminology);
     }
     service.add(Terminology.class, terminology);
+
+    LOGGER.info("Created terminology: {}, publisher: {}, version: {}, id: {}",
+        terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion(),
+        terminology.getId());
     return terminology;
   }
 
@@ -421,6 +515,10 @@ public final class CodeSystemLoaderUtil {
     concept.setLeaf(true); // Default to true unless children found
     concept.setName(conceptNode.path("display").asText());
 
+    // Set defined status - default to true, will be updated based on
+    // definitionStatusId
+    concept.setDefined(true);
+
     // Set concept ID if different from code
     final String conceptId = conceptNode.path("conceptId").asText(null);
     if (conceptId != null && !conceptId.equals(concept.getCode())) {
@@ -444,6 +542,12 @@ public final class CodeSystemLoaderUtil {
 
       if ("semanticType".equals(code)) {
         concept.getSemanticTypes().add(value);
+      } else if ("definitionStatusId".equals(code)) {
+        // Set defined status based on definitionStatusId
+        // 900000000000073002 = Defined (true), 900000000000074008 = Primitive
+        // (false)
+        concept.setDefined("900000000000073002".equals(value));
+        concept.getAttributes().put(code, value);
       } else if (!"parent".equals(code)) {
         concept.getAttributes().put(code, value);
       }
@@ -489,11 +593,7 @@ public final class CodeSystemLoaderUtil {
           terminologyCache.addParChd(parentCode, concept.getCode());
         }
 
-        // Add ECL clause
-        if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-          concept.getEclClauses()
-              .add(propertyNode.path("code").asText() + "=" + valueCoding.path("code").asText());
-        }
+        // ECL clauses removed per requirements
 
         relationships.add(relationship);
       }
@@ -502,18 +602,7 @@ public final class CodeSystemLoaderUtil {
         final ConceptRelationship relationship = createRelationship(propertyNode, concept,
             terminology, terminologyCache, "relationship");
 
-        // Process extensions for ECL clauses
-        final JsonNode extensionNode = propertyNode.path("extension");
-        for (final JsonNode extension : extensionNode) {
-          final JsonNode extensionValueCoding = extension.path("valueCoding");
-          final JsonNode propertyValueCoding = propertyNode.path("valueCoding");
-
-          if (!extensionValueCoding.isMissingNode() && !propertyValueCoding.isMissingNode()
-              && extensionValueCoding.has("code") && propertyValueCoding.has("code")) {
-            concept.getEclClauses().add(extensionValueCoding.path("code").asText() + "="
-                + propertyValueCoding.path("code").asText());
-          }
-        }
+        // ECL clauses removed per requirements
 
         relationships.add(relationship);
       }
@@ -536,7 +625,7 @@ public final class CodeSystemLoaderUtil {
     final JsonNode designations = conceptNode.path("designation");
 
     for (final JsonNode designation : designations) {
-      final Term term = createBaseTerm(terminology, concept, designation);
+      final Term term = createBaseTerm(terminology, concept, designation, conceptNode);
       final PreferredTermConfig ptConfig =
           PreferredTermConfig.findByAbbreviation(terminology.getAbbreviation());
 
@@ -569,10 +658,11 @@ public final class CodeSystemLoaderUtil {
    * @param terminology the terminology
    * @param concept the concept
    * @param designation the designation
+   * @param conceptNode the concept node
    * @return the term
    */
   private static Term createBaseTerm(final Terminology terminology, final Concept concept,
-    final JsonNode designation) {
+    final JsonNode designation, final JsonNode conceptNode) {
 
     final Term term = new Term();
     term.setId(UUID.randomUUID().toString());
@@ -602,6 +692,26 @@ public final class CodeSystemLoaderUtil {
     final String componentId = designation.path("id").asText(null);
     if (componentId != null) {
       term.setComponentId(componentId);
+    }
+
+    // Set term attributes from concept properties
+    // Extract caseSignificanceId and moduleId from concept properties
+    final JsonNode properties = conceptNode.path("property");
+    for (final JsonNode property : properties) {
+      final String code = property.path("code").asText();
+      if ("caseSignificanceId".equals(code) && property.has("valueString")) {
+        term.getAttributes().put("caseSignificanceId", property.path("valueString").asText());
+      } else if ("moduleId".equals(code) && property.has("valueString")) {
+        term.getAttributes().put("moduleId", property.path("valueString").asText());
+      }
+    }
+
+    // Set default values if not found in concept properties
+    if (!term.getAttributes().containsKey("caseSignificanceId")) {
+      term.getAttributes().put("caseSignificanceId", "900000000000448009");
+    }
+    if (!term.getAttributes().containsKey("moduleId")) {
+      term.getAttributes().put("moduleId", "900000000000207008");
     }
 
     return term;
@@ -634,11 +744,12 @@ public final class CodeSystemLoaderUtil {
       relationship.setHierarchical(true);
     } else {
       relationship.setType("other");
-      relationship.setAdditionalType("Is a");
+      relationship.setAdditionalType("other");
       relationship.setHierarchical(false);
     }
 
-    // Process extensions to get additionalType and group
+    // Process extensions to get additionalType, group, and historical flag
+    boolean isHistorical = false;
     final JsonNode extensions = relationshipNode.path("extension");
     if (!extensions.isMissingNode()) {
       for (final JsonNode extension : extensions) {
@@ -650,6 +761,12 @@ public final class CodeSystemLoaderUtil {
           }
         } else if (url.endsWith("/group")) {
           relationship.setGroup(extension.path("valueString").asText());
+        } else if (url.endsWith("/historical")) {
+          // Check for historical relationship extension
+          final JsonNode valueBoolean = extension.path("valueBoolean");
+          if (!valueBoolean.isMissingNode() && valueBoolean.asBoolean()) {
+            isHistorical = true;
+          }
         }
       }
     }
@@ -667,9 +784,20 @@ public final class CodeSystemLoaderUtil {
     }
 
     // Set additional attributes
-    relationship.setHistorical(false);
+    relationship.setHistorical(isHistorical);
     relationship.setAsserted(true);
-    relationship.setDefining(relationshipNode.path("defining").asBoolean(false));
+    // Set defining to null and comment out current logic per requirements
+    relationship.setDefining(null);
+
+    // Call addHistoricalRel if this is a historical relationship
+    if (isHistorical && relationship.getTo() != null) {
+      try {
+        terminologyCache.addHistoricalRel(fromConcept.getCode(), relationship.getTo().getCode(),
+            relationship.getType());
+      } catch (final Exception e) {
+        LOGGER.warn("Failed to add historical relationship: {}", e.getMessage());
+      }
+    }
 
     return relationship;
   }

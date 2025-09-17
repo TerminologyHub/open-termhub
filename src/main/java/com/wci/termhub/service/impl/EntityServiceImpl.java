@@ -42,6 +42,10 @@ public class EntityServiceImpl implements EntityRepositoryService {
   /** The find all page size. */
   private int findAllPageSize = 10000;
 
+  /** The lucene data. */
+  @Autowired
+  private LuceneDataAccess luceneDataAccess;
+
   /** The builders. */
   @Autowired
   private List<QueryBuilder> builders;
@@ -60,8 +64,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
   public void createIndex(final Class<? extends HasId> clazz) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
-    luceneData.createIndex(clazz);
+    luceneDataAccess.createIndex(clazz);
   }
 
   /* see superclass */
@@ -69,8 +72,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
   public void deleteIndex(final Class<? extends HasId> clazz) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
-    luceneData.deleteIndex(clazz);
+    luceneDataAccess.deleteIndex(clazz);
   }
 
   /* see superclass */
@@ -78,11 +80,10 @@ public class EntityServiceImpl implements EntityRepositoryService {
   public void add(final Class<? extends HasId> clazz, final HasId entity) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("    ADD {} entity to index {}", entity, clazz.getSimpleName());
     }
-    luceneData.add(entity);
+    luceneDataAccess.add(entity);
   }
 
   /* see superclass */
@@ -91,13 +92,11 @@ public class EntityServiceImpl implements EntityRepositoryService {
     throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("    ADD {} entities to index: {}", clazz.getSimpleName(), entity.size());
     }
-    luceneData.add(entity);
+    luceneDataAccess.add(entity);
   }
-
 
   /* see superclass */
   @Override
@@ -105,11 +104,10 @@ public class EntityServiceImpl implements EntityRepositoryService {
     throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("    UPDATE {} entity to index {}", entity, clazz.getSimpleName());
     }
-    luceneData.update(clazz, id, entity);
+    luceneDataAccess.update(clazz, id, entity);
   }
 
   /* see superclass */
@@ -118,12 +116,11 @@ public class EntityServiceImpl implements EntityRepositoryService {
     throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("    UPDATE_BULK {} entities to index {}", entities.size(),
           clazz.getSimpleName());
     }
-    luceneData.updateBulk(clazz, entities);
+    luceneDataAccess.updateBulk(clazz, entities);
   }
 
   /* see superclass */
@@ -132,12 +129,11 @@ public class EntityServiceImpl implements EntityRepositoryService {
     final String fieldName) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("    ADD_FIELD {} field to entity {} in index {}", fieldName, id,
           clazz.getSimpleName());
     }
-    luceneData.addField(clazz, id, entity, fieldName);
+    luceneDataAccess.addField(clazz, id, entity, fieldName);
   }
 
   /* see superclass */
@@ -146,9 +142,8 @@ public class EntityServiceImpl implements EntityRepositoryService {
     final Class<T> clazz) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
     // use paging
-    return luceneData.find(clazz, searchParameters);
+    return luceneDataAccess.find(clazz, searchParameters);
   }
 
   /* see superclass */
@@ -156,10 +151,9 @@ public class EntityServiceImpl implements EntityRepositoryService {
   public <T extends HasId> T get(final String id, final Class<T> clazz) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
     final SearchParameters searchParameters = new SearchParameters();
     searchParameters.setQuery("id:" + id);
-    final ResultList<T> results = luceneData.find(clazz, searchParameters);
+    final ResultList<T> results = luceneDataAccess.find(clazz, searchParameters);
 
     if (results.getItems().size() == 1) {
       return results.getItems().get(0);
@@ -186,8 +180,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
   public void remove(final String id, final Class<? extends HasId> clazz) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
-    luceneData.remove(clazz, id);
+    luceneDataAccess.remove(clazz, id);
   }
 
   /* see superclass */
@@ -195,8 +188,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
   public void removeBulk(final List<String> ids, final Class<? extends HasId> clazz)
     throws Exception {
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
-    luceneData.remove(clazz, ids);
+    luceneDataAccess.remove(clazz, ids);
 
   }
 
@@ -222,8 +214,8 @@ public class EntityServiceImpl implements EntityRepositoryService {
     final Class<T> clazz) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
-    return luceneData.find(clazz, searchParameters);
+    // final LuceneDataAccess luceneData = new LuceneDataAccess();
+    return luceneDataAccess.find(clazz, searchParameters);
   }
 
   /* see superclass */
@@ -243,8 +235,8 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
       final Query searchQuery = findHelper(searchParameters, clazz, handler, false);
 
-      final LuceneDataAccess luceneData = new LuceneDataAccess();
-      final ResultList<T> result = luceneData.find(clazz, searchParameters, searchQuery);
+      // final LuceneDataAccess luceneData = new LuceneDataAccess();
+      final ResultList<T> result = luceneDataAccess.find(clazz, searchParameters, searchQuery);
 
       LOGGER.info("      result count = {} (total={})", result.getItems().size(),
           result.getTotal());
@@ -272,9 +264,9 @@ public class EntityServiceImpl implements EntityRepositoryService {
     final List<String> fields, final Class<T> clazz) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
-    final LuceneDataAccess luceneData = new LuceneDataAccess();
+    // final LuceneDataAccess luceneData = new LuceneDataAccess();
 
-    final ResultList<T> results = luceneData.find(clazz, searchParameters);
+    final ResultList<T> results = luceneDataAccess.find(clazz, searchParameters);
 
     // filter results by terminologies
     final ResultList<T> filteredResultList = new ResultList<>();

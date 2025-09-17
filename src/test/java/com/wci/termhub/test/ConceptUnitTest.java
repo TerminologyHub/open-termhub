@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -23,19 +22,22 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.elasticsearch.annotations.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.Application;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.FileUtility;
 import com.wci.termhub.util.ThreadLocalMapper;
 
 /**
  * The Class ConceptUnitTest.
  */
+@SpringBootTest(classes = Application.class)
 @TestMethodOrder(OrderAnnotation.class)
 public class ConceptUnitTest extends AbstractClassTest {
 
@@ -237,9 +239,6 @@ public class ConceptUnitTest extends AbstractClassTest {
       }
                 """;
 
-  /** The Constant INDEX_NAME. */
-  private static final String INDEX_NAME = Concept.class.getCanonicalName();
-
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
@@ -248,18 +247,29 @@ public class ConceptUnitTest extends AbstractClassTest {
   private static Concept concept;
 
   /**
+   * Checks for document annotation.
+   */
+  @Test
+  @Order(1)
+  public void hasDocumentAnnotation() {
+
+    // check if the class has the @Document annotation if not, throw an
+    // exception
+    final Class<?> clazz1 = Concept.class;
+    assertTrue(clazz1.isAnnotationPresent(Document.class));
+  }
+
+  /**
    * Creates the index.
    *
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
-  public void createIndex() throws Exception {
+  @Order(2)
+  public void verifyIndex() throws Exception {
 
-    logger.info("Creating index for Concept");
-    FileUtility.deleteDirectoryRecursively(Paths.get(INDEX_DIRECTORY));
-    final File indexFile = new File(INDEX_DIRECTORY, INDEX_NAME);
-    searchService.createIndex(Concept.class);
+    logger.info("Verify index for Conceptin INDEX_DIRECTORY:{}", getIndexDirectory());
+    final File indexFile = new File(getIndexDirectory(), Concept.class.getCanonicalName());
     assertTrue(indexFile.exists(),
         "Index directory does not exist: " + indexFile.getAbsolutePath());
   }
@@ -270,7 +280,7 @@ public class ConceptUnitTest extends AbstractClassTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(2)
+  @Order(3)
   public void testAddConcept() throws Exception {
 
     final ObjectMapper objectMapper = ThreadLocalMapper.get();
@@ -292,7 +302,7 @@ public class ConceptUnitTest extends AbstractClassTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(3)
+  @Order(4)
   public void findConceptByCode() throws Exception {
 
     final SearchParameters searchParameters = new SearchParameters("code:1000004", 100, 0);
@@ -315,7 +325,7 @@ public class ConceptUnitTest extends AbstractClassTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(5)
+  @Order(4)
   public void findConceptByMissingCode() throws Exception {
 
     final SearchParameters searchParameters = new SearchParameters("code:99999", 100, 0);
@@ -326,28 +336,28 @@ public class ConceptUnitTest extends AbstractClassTest {
     assertEquals(0, foundConceptObjects.getItems().size());
   }
 
-  // /**
-  // * Find concept by term name.
-  // *
-  // * @throws Exception the exception
-  // */
-  // @Test
-  // @Order(6)
-  // public void findConceptByTermName() throws Exception {
-  //
-  // final SearchParameters searchParameters = new SearchParameters();
-  // searchParameters.setQuery("term.name:\"Joint injury, NOS\"");
-  // logger.info("Search for : {}", searchParameters.getQuery());
-  //
-  // final ResultList<Concept> foundConceptObjects =
-  // searchService.find(searchParameters, Concept.class);
-  // assertEquals(1, foundConceptObjects.getItems().size());
-  //
-  // for (final Concept foundConceptObject : foundConceptObjects.getItems()) {
-  // logger.info("Concept found: {}", foundConceptObject.toString());
-  // assertEquals(concept.toString(), foundConceptObject.toString());
-  // }
-  // }
+  /**
+   * Find concept by term name.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(4)
+  public void findConceptByTermName() throws Exception {
+
+    final SearchParameters searchParameters = new SearchParameters();
+    searchParameters.setQuery("terms.name:\"Joint injury, NOS\"");
+    logger.info("Search for : {}", searchParameters.getQuery());
+
+    final ResultList<Concept> foundConceptObjects =
+        searchService.find(searchParameters, Concept.class);
+    assertEquals(1, foundConceptObjects.getItems().size());
+
+    for (final Concept foundConceptObject : foundConceptObjects.getItems()) {
+      logger.info("Concept found: {}", foundConceptObject.toString());
+      assertEquals(concept.toString(), foundConceptObject.toString());
+    }
+  }
 
   /**
    * Find concept by missing term name.
@@ -355,11 +365,11 @@ public class ConceptUnitTest extends AbstractClassTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(7)
+  @Order(4)
   public void findConceptByMissingTermName() throws Exception {
 
     final SearchParameters searchParameters =
-        new SearchParameters("term.name:\"dummy term name\"", 100, 0);
+        new SearchParameters("terms.name:\"dummy term name\"", 100, 0);
     logger.info("Search for : {}", searchParameters.getQuery());
 
     final ResultList<Concept> foundConceptObjects =

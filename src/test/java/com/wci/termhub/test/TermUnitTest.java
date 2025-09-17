@@ -18,7 +18,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -26,17 +25,19 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.elasticsearch.annotations.Document;
 
+import com.wci.termhub.Application;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.FileUtility;
 
 /**
  * The Class TermUnitTest.
  */
+@SpringBootTest(classes = Application.class)
 @TestMethodOrder(OrderAnnotation.class)
 public class TermUnitTest extends AbstractClassTest {
 
@@ -56,14 +57,12 @@ public class TermUnitTest extends AbstractClassTest {
   @Autowired
   private EntityRepositoryService searchService;
 
-  /** The Constant INDEX_NAME. */
-  private static final String INDEX_NAME = Term.class.getCanonicalName();
-
   /**
    * Setup.
    */
-  @BeforeAll
-  public static void setup() {
+  @Test
+  @Order(1)
+  public void setup() {
 
     logger.info("Creating object test data");
     // string, FiedType.Text, FieldType.Keyword
@@ -120,7 +119,7 @@ public class TermUnitTest extends AbstractClassTest {
    * Checks for document annotation.
    */
   @Test
-  @Order(1)
+  @Order(2)
   public void hasDocumentAnnotation() {
 
     // check if the class has the @Document annotation if not, throw an
@@ -135,13 +134,11 @@ public class TermUnitTest extends AbstractClassTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(2)
-  public void createIndex() throws Exception {
+  @Order(3)
+  public void verifyIndex() throws Exception {
 
-    logger.info("Creating index for Term");
-    final File indexFile = new File(INDEX_DIRECTORY, INDEX_NAME);
-    FileUtility.deleteDirectoryRecursively(new File(INDEX_DIRECTORY).toPath());
-    searchService.createIndex(Term.class);
+    logger.info("Verify index for Term in INDEX_DIRECTORY:{}", getIndexDirectory());
+    final File indexFile = new File(getIndexDirectory(), Term.class.getCanonicalName());
     assertTrue(indexFile.exists(),
         "Index directory does not exist: " + indexFile.getAbsolutePath());
   }
@@ -152,7 +149,7 @@ public class TermUnitTest extends AbstractClassTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(3)
+  @Order(4)
   public void testAddTerm() throws Exception {
 
     logger.info("Creating objects");
@@ -167,7 +164,7 @@ public class TermUnitTest extends AbstractClassTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(4)
+  @Order(5)
   public void testFind() throws Exception {
 
     ResultList<Term> foundTermsObjects = null;
@@ -221,7 +218,7 @@ public class TermUnitTest extends AbstractClassTest {
     assertEquals(1, foundTermsObjects.getItems().size());
 
     // add more complex queries
-    searchParameters.setQuery("code:" + TERM1.getCode() + " AND name:" + TERM2.getName());
+    searchParameters.setQuery("code:" + TERM1.getCode() + " AND name:\"" + TERM2.getName() + "\"");
     logger.info("Search for : {}", searchParameters.getQuery());
     foundTermsObjects = searchService.find(searchParameters, Term.class);
     assertEquals(0, foundTermsObjects.getItems().size());
@@ -249,7 +246,7 @@ public class TermUnitTest extends AbstractClassTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(5)
+  @Order(6)
   public void testRemove() throws Exception {
 
     logger.info("Deleting objects");

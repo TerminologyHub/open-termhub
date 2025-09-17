@@ -31,6 +31,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(Include.NON_EMPTY)
 public class SearchParameters extends BaseModel {
 
+  /** The field mappings. */
+  // Map of special field names to their Lucene field names
+  private final Map<String, String> fieldMappings =
+      Map.of("name", "name.keyword", "normName", "normName.keyword", "to.name", "to.name.keyword",
+          "from.name", "from.name.keyword", "stemName", "stemName.keyword", "concept.name",
+          "concept.name.keyword", "title", "title.keyword");
+
   /** The terminology. */
   private String terminology;
 
@@ -140,29 +147,19 @@ public class SearchParameters extends BaseModel {
       setAscending(ascending);
     }
     if (!StringUtility.isEmpty(sort)) {
-      if (sort.equals("name")) {
-        getSort().add("name.keyword");
-      } else if (sort.equals("normName")) {
-        getSort().add("normName.keyword");
-      } else if (sort.equals("to.name")) {
-        getSort().add("to.name.keyword");
-      } else if (sort.equals("from.name")) {
-        getSort().add("from.name.keyword");
-      } else if (sort.equals("stemName")) {
-        getSort().add("stemName.keyword");
-      } else if (sort.equals("concept.name")) {
-        getSort().add("concept.name.keyword");
-      } else if (sort.equals("title")) {
-        getSort().add("title.keyword");
-      } else {
-        getSort().add(sort);
+      // Split comma-separated sort fields
+      final String[] sortFields = sort.split(",");
+      for (final String sortField : sortFields) {
+        final String trimmedField = sortField.trim();
+        final String luceneField = fieldMappings.getOrDefault(trimmedField, trimmedField);
+        getSort().add(luceneField);
       }
     }
   }
 
   /**
-   * Instantiates a {@link SearchParameters} from the specified parameters. This is a helper
-   * constructor so it can be easily constructed for "find" methods.
+   * Instantiates a {@link SearchParameters} from the specified parameters. This
+   * is a helper constructor so it can be easily constructed for "find" methods.
    *
    * @param query the query
    * @param offset the offset

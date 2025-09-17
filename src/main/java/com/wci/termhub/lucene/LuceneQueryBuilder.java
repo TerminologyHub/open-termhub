@@ -13,23 +13,33 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.analysis.ngram.NGramTokenFilter;
+import org.apache.lucene.analysis.pattern.PatternReplaceFilter;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.InnerField;
 import org.springframework.data.elasticsearch.annotations.MultiField;
 
-import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.util.ModelUtility;
 
@@ -51,6 +61,9 @@ public final class LuceneQueryBuilder {
   /** The Constant SEARCHABLE_FIELDS_CACHE. */
   private static final Map<Class<?>, String[]> SEARCHABLE_FIELDS_CACHE = new HashMap<>();
 
+  /** The Constant FIELD_ANALYZERS_CACHE. */
+  private static final Map<Class<?>, Map<String, Analyzer>> FIELD_ANALYZERS_CACHE = new HashMap<>();
+
   /**
    * Parses the query for a specific model class.
    *
@@ -62,257 +75,220 @@ public final class LuceneQueryBuilder {
   public static Query parse(final String queryText, final Class<?> modelClass)
     throws ParseException {
 
-    // Check if this is a complex query with OR operators or multiple fielded
-    // parts
-    final boolean isComplexQuery = queryText != null && (queryText.contains(" OR ")
-        || (queryText.contains(" AND ") && queryText.matches(".*\\w+:.*\\w+:.*")));
+    // Get field-specific analyzers based on annotations
+    final Map<String, Analyzer> fieldAnalyzers = getFieldAnalyzers(modelClass);
+    final String[] searchableFields = getSearchableFields(modelClass);
 
-    if (isComplexQuery) {
-      // Handle complex queries with OR or AND operators
-      try {
-        if (queryText != null && queryText.contains(" OR ")) {
-          // Handle OR queries like "(cancer) OR (normName:cancer)"
-          final String[] parts = queryText.split(" OR ");
-          if (parts.length == 2) {
-            final String leftPart = parts[0].trim().replaceAll("^\\(", "").replaceAll("\\)$", "");
-            final String rightPart = parts[1].trim().replaceAll("^\\(", "").replaceAll("\\)$", "");
+    // Create PerFieldAnalyzerWrapper with field-specific analyzers
+    try (final Analyzer defaultAnalyzer = new StandardAnalyzer();) {
+      final PerFieldAnalyzerWrapper perFieldAnalyzer =
+          new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
 
-            // Parse each part separately
-            final Query leftQuery = parse(leftPart, modelClass);
-            final Query rightQuery = parse(rightPart, modelClass);
+      // Create query parser with field-specific analyzers
+      final MultiFieldQueryParser queryParser =
+          new MultiFieldQueryParser(searchableFields, perFieldAnalyzer);
+      queryParser.setSplitOnWhitespace(true);
+      queryParser.setAllowLeadingWildcard(true);
 
-            // Combine with OR
-            final BooleanQuery.Builder booleanQueryBuilder = new BooleanQuery.Builder();
-            booleanQueryBuilder.add(leftQuery, BooleanClause.Occur.SHOULD);
-            booleanQueryBuilder.add(rightQuery, BooleanClause.Occur.SHOULD);
-
-            final Query query = booleanQueryBuilder.build();
-            if (logger.isDebugEnabled()) {
-              logger.debug("    parsed query (complex OR): {} for class {}", query,
-                  modelClass != null ? modelClass.getSimpleName() : "null");
-            }
-            return query;
-          }
-        } else if (queryText != null && queryText.contains(" AND ")) {
-          // Handle AND queries like "name: diabetes AND terminology: SNOMEDCT"
-          // Clean up malformed parentheses and extra characters
-          String cleanedQuery = queryText.trim();
-          // Remove trailing extra parentheses
-          while (cleanedQuery.endsWith(")")) {
-            cleanedQuery = cleanedQuery.substring(0, cleanedQuery.length() - 1).trim();
-          }
-          // Remove leading extra parentheses
-          while (cleanedQuery.startsWith("(")) {
-            cleanedQuery = cleanedQuery.substring(1).trim();
-          }
-
-          final String[] parts = cleanedQuery.split(" AND ");
-          if (parts.length >= 2) {
-            final BooleanQuery.Builder booleanQueryBuilder = new BooleanQuery.Builder();
-
-            for (final String part : parts) {
-              final String trimmedPart = part.trim();
-              if (!trimmedPart.isEmpty()) {
-                // Clean up each part - remove extra parentheses and quotes
-                String cleanPart = trimmedPart;
-                // Remove surrounding quotes if they exist
-                if (cleanPart.startsWith("\"") && cleanPart.endsWith("\"")) {
-                  cleanPart = cleanPart.substring(1, cleanPart.length() - 1);
-                }
-                // Remove extra parentheses
-                while (cleanPart.startsWith("(") && cleanPart.endsWith(")")) {
-                  cleanPart = cleanPart.substring(1, cleanPart.length() - 1).trim();
-                }
-
-                // Parse each part separately
-                final Query partQuery = parse(cleanPart, modelClass);
-                booleanQueryBuilder.add(partQuery, BooleanClause.Occur.MUST);
-              }
-            }
-
-            final Query combinedQuery = booleanQueryBuilder.build();
-            if (logger.isDebugEnabled()) {
-              logger.debug("    parsed query (complex AND): {} for class {}", combinedQuery,
-                  modelClass != null ? modelClass.getSimpleName() : "null");
-            }
-            return combinedQuery;
-          }
-        }
-      } catch (Exception e) {
-        // Fall back to simple parsing if complex parsing fails
-        if (logger.isDebugEnabled()) {
-          logger.debug("    complex query parsing failed, falling back to simple parsing: {}",
-              e.getMessage());
-        }
-      }
-    }
-
-    final boolean isFieldedQuery = queryText != null && queryText.matches(".*\\w+:.*");
-    if (isFieldedQuery) {
-      // Transform fielded queries to use .keyword suffix for exact matching
-      String transformedQuery = transformFieldedQuery(queryText, modelClass);
-      try (final KeywordAnalyzer analyzer = new KeywordAnalyzer();) {
-        // Extract the field name from the transformed query
-        final String fieldName = transformedQuery.split(":")[0];
-        final String fieldQueryText = transformedQuery.substring(fieldName.length() + 1);
-        final QueryParser queryParser = new QueryParser(fieldName, analyzer);
-        final Query query = queryParser.parse(fieldQueryText);
-        if (logger.isDebugEnabled()) {
-          logger.debug("    parsed query: {} (transformed from: {}) for class {}", query, queryText,
-              modelClass != null ? modelClass.getSimpleName() : "null");
-        }
-        return query;
-      }
-    } else {
-
-      // Handle non-fielded queries by searching across all searchable fields
-      final String[] fields = getSearchableFields(modelClass != null ? modelClass : Concept.class);
-
-      // For .keyword fields with regex syntax, we need to use KeywordAnalyzer
-      // to avoid tokenizing the regex syntax
-      try (final KeywordAnalyzer analyzer = new KeywordAnalyzer();) {
-        final MultiFieldQueryParser multiFieldQueryParser =
-            new MultiFieldQueryParser(fields, analyzer);
-
-        // For .keyword fields, we need to use regex queries since the data
-        // contains full phrases
-        // Transform the query to use regex syntax for .keyword fields
-        final String regexQuery = transformToWildcardQuery(queryText, fields);
-        final Query query = multiFieldQueryParser.parse(regexQuery);
-        if (logger.isDebugEnabled()) {
-          logger.debug("    parsed query (multi-field): {} for class {}", query,
-              modelClass != null ? modelClass.getSimpleName() : "null");
-        }
-        return query;
-      }
+      return queryParser.parse(queryText);
     }
   }
 
   /**
-   * Transform non-fielded queries to use proper syntax for .keyword fields. This is needed because
-   * .keyword fields contain full phrases, not individual tokens.
+   * Gets field-specific analyzers for a given model class based on ElasticSearch annotations.
    *
-   * @param queryText the original query text
-   * @param fields the searchable fields
-   * @return the transformed query text with proper syntax for .keyword fields
-   */
-  private static String transformToWildcardQuery(final String queryText, final String[] fields) {
-    if (queryText == null || queryText.trim().isEmpty()) {
-      return queryText;
-    }
-
-    final String trimmedQuery = queryText.trim();
-    if ("*:*".equals(trimmedQuery)) {
-      return trimmedQuery;
-    }
-
-    final StringBuilder wildcardQuery = new StringBuilder();
-    for (int i = 0; i < fields.length; i++) {
-      if (i > 0) {
-        wildcardQuery.append(" ");
-      }
-
-      final String field = fields[i];
-      if (field.endsWith(".keyword")) {
-        // For .keyword fields, use a regex query to match the term anywhere in
-        // the field
-        // This allows us to match the term anywhere within the phrase
-        wildcardQuery.append(field).append(":/.*").append(trimmedQuery).append(".*/");
-      } else {
-        // For regular fields, use the original query
-        wildcardQuery.append(field).append(":").append(trimmedQuery);
-      }
-    }
-
-    return wildcardQuery.toString();
-  }
-
-  /**
-   * Transform fielded queries to use .keyword suffix with wildcard matching. This handles the
-   * Elasticsearch @MultiField mapping where fields like 'name' are actually indexed as
-   * 'name.keyword' for exact matching, but we need wildcard queries for partial matching since the
-   * data contains full phrases.
-   *
-   * @param queryText the original query text
    * @param modelClass the model class
-   * @return the transformed query text
+   * @return the field analyzers
    */
-  private static String transformFieldedQuery(final String queryText, final Class<?> modelClass) {
-    if (queryText == null) {
-      return queryText;
+  @SuppressWarnings("resource")
+  public static Map<String, Analyzer> getFieldAnalyzers(final Class<?> modelClass) {
+    if (FIELD_ANALYZERS_CACHE.containsKey(modelClass)) {
+      return FIELD_ANALYZERS_CACHE.get(modelClass);
     }
 
-    String transformed = queryText;
-
-    // Define field transformation patterns
-    final Map<String, FieldTransform> fieldTransforms = Map.of("name",
-        new FieldTransform("^name\\s*:\\s*.*", "name", modelClass), "normName",
-        new FieldTransform("^\\s*normName\\s*:\\s*[^\\s].*\\s*$", "normName.keyword"), "stemName",
-        new FieldTransform("^\\s*stemName\\s*:\\s*[^\\s].*\\s*$", "stemName.keyword"),
-        "subset.abbreviation",
-        new FieldTransform("^\\s*subset\\.abbreviation\\s*:\\s*.*", "subset.abbreviation"),
-        "subset.publisher",
-        new FieldTransform("^\\s*subset\\.publisher\\s*:\\s*.*", "subset.publisher"),
-        "subset.version", new FieldTransform("^\\s*subset\\.version\\s*:\\s*.*", "subset.version"));
-
-    // Apply transformations
-    for (final Map.Entry<String, FieldTransform> entry : fieldTransforms.entrySet()) {
-      final FieldTransform transform = entry.getValue();
-      if (transformed.matches(transform.pattern) && !transformed.contains(" AND ")
-          && !transformed.contains(" OR ")) {
-        final String searchTerm = extractSearchTerm(transformed, transform.pattern);
-        if (!searchTerm.isEmpty()) {
-          transformed = buildRegexQuery(searchTerm, transform, modelClass);
-          break;
-        }
-      }
-    }
-
-    return transformed;
-  }
-
-  /**
-   * Extract search term.
-   *
-   * @param queryText the query text
-   * @param pattern the pattern
-   * @return the string
-   */
-  private static String extractSearchTerm(final String queryText, final String pattern) {
-    final String regexPattern = pattern.replace("^\\s*", "").replace("\\s*$", "").replace(".*", "");
-    return queryText.replaceFirst(regexPattern, "").trim();
-  }
-
-  /**
-   * Builds the regex query.
-   *
-   * @param searchTerm the search term
-   * @param transform the transform
-   * @param modelClass the model class
-   * @return the string
-   */
-  private static String buildRegexQuery(final String searchTerm, final FieldTransform transform,
-    final Class<?> modelClass) {
-    final String cleanSearchTerm = searchTerm.replace("\\-", "-").replace("\\:", ":");
-    final String fieldName = transform.getFieldName(modelClass);
-    return fieldName + ":/.*" + cleanSearchTerm + ".*/";
-  }
-
-  /**
-   * Check if a model class uses MultiField annotations (like Concept/Term) vs direct keyword fields
-   * (like TestDocument).
-   *
-   * @param modelClass the model class to check
-   * @return true if the model uses MultiField annotations, false otherwise
-   */
-  private static boolean isMultiFieldModel(final Class<?> modelClass) {
-    if (modelClass == null) {
-      return true; // Default to MultiField behavior for null class
-    }
-
-    // Check if any field in the model class has @MultiField annotation
+    final Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
     final List<Field> allFields = ModelUtility.getAllFields(modelClass);
-    return allFields.stream().anyMatch(f -> f.getAnnotation(MultiField.class) != null);
+
+    for (final Field field : allFields) {
+      final String fieldName = field.getName();
+      final Analyzer analyzer = getAnalyzerForField(field);
+
+      if (analyzer != null) {
+        fieldAnalyzers.put(fieldName, analyzer);
+
+        // Handle MultiField annotations
+        final MultiField multiField = field.getAnnotation(MultiField.class);
+        if (multiField != null) {
+          for (final InnerField innerField : multiField.otherFields()) {
+            final String subFieldName = fieldName + "." + innerField.suffix();
+            final Analyzer subFieldAnalyzer = ("ngram".equals(innerField.suffix()))
+                ? getNgramAnalyzer() : getAnalyzerForFieldType(innerField.type());
+            if (subFieldAnalyzer != null) {
+              fieldAnalyzers.put(subFieldName, subFieldAnalyzer);
+            }
+          }
+        }
+      }
+    }
+
+    // Handle nested fields (e.g., ancestors.code, terms.name)
+    for (final String fieldPath : getNestedFieldPaths(modelClass)) {
+      final Analyzer nestedAnalyzer = getAnalyzerForNestedField(fieldPath, modelClass);
+      fieldAnalyzers.put(fieldPath, nestedAnalyzer);
+      logger.debug("Added analyzer for nested field: {} -> {}", fieldPath,
+          nestedAnalyzer.getClass().getSimpleName());
+    }
+
+    FIELD_ANALYZERS_CACHE.put(modelClass, fieldAnalyzers);
+    return fieldAnalyzers;
+  }
+
+  /**
+   * The ngram analyzer.
+   *
+   * @return the ngram analyzer
+   */
+  private static Analyzer getNgramAnalyzer() {
+    return new Analyzer() {
+      @SuppressWarnings("resource")
+      @Override
+      protected TokenStreamComponents createComponents(final String fieldName) {
+        final Tokenizer tokenizer = new StandardTokenizer();
+        final TokenStream lower = new LowerCaseFilter(tokenizer);
+        final TokenStream cleaned =
+            new PatternReplaceFilter(lower, Pattern.compile("[^a-z0-9]+"), "", true);
+        final TokenStream ngrams = new NGramTokenFilter(cleaned, 3, 20, false);
+        return new TokenStreamComponents(tokenizer, ngrams);
+      }
+    };
+  }
+
+  /**
+   * Gets nested field paths for the model class.
+   *
+   * @param modelClass the model class
+   * @return the nested field paths
+   */
+  private static Set<String> getNestedFieldPaths(final Class<?> modelClass) {
+    final Set<String> nestedPaths = new HashSet<>();
+    final List<Field> allFields = ModelUtility.getAllFields(modelClass);
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("Looking for nested fields in class: {}", modelClass.getSimpleName());
+    }
+
+    for (final Field field : allFields) {
+      final org.springframework.data.elasticsearch.annotations.Field esField =
+          field.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
+
+      if (esField != null && esField.type() == FieldType.Object) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Found Object field: {}", field.getName());
+        }
+
+        // Check if it's a List of HasId objects
+        if (List.class.isAssignableFrom(field.getType())) {
+          final java.lang.reflect.ParameterizedType genericType =
+              (java.lang.reflect.ParameterizedType) field.getGenericType();
+          final Class<?> listElementType = (Class<?>) genericType.getActualTypeArguments()[0];
+
+          if (HasId.class.isAssignableFrom(listElementType)) {
+            if (logger.isDebugEnabled()) {
+              logger.debug("Field {} is List<{}> implementing HasId, adding nested paths",
+                  field.getName(), listElementType.getSimpleName());
+            }
+            // Add common keyword fields that should be exact matches
+            nestedPaths.addAll(getCommonNestedPaths(field));
+
+          }
+        }
+        // Check if it's a direct HasId object (not a List)
+        else if (HasId.class.isAssignableFrom(field.getType())) {
+          logger.debug("Field {} implements HasId, adding nested paths", field.getName());
+          // Add common keyword fields that should be exact matches
+          nestedPaths.addAll(getCommonNestedPaths(field));
+        }
+      }
+    }
+
+    logger.debug("Nested field paths found: {}", nestedPaths);
+    return nestedPaths;
+  }
+
+  /**
+   * Gets the common nested paths.
+   *
+   * @param field the field
+   * @return the common nested paths
+   */
+  private static Set<String> getCommonNestedPaths(final Field field) {
+    return Set.of(field.getName() + ".code", field.getName() + ".terminology",
+        field.getName() + ".publisher", field.getName() + ".version", field.getName() + ".keyword");
+  }
+
+  /**
+   * Gets the analyzer for a specific field based on its annotations.
+   *
+   * @param field the field
+   * @return the analyzer
+   */
+  private static Analyzer getAnalyzerForField(final Field field) {
+    final org.springframework.data.elasticsearch.annotations.Field esField =
+        field.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
+    if (esField != null) {
+      return getAnalyzerForFieldType(esField.type());
+    }
+
+    // Check for MultiField annotation
+    final MultiField multiField = field.getAnnotation(MultiField.class);
+    if (multiField != null) {
+      for (final InnerField innerField : multiField.otherFields()) {
+        if ("ngram".equals(innerField.suffix())) {
+          return getNgramAnalyzer();
+        }
+      }
+      return getAnalyzerForFieldType(multiField.mainField().type());
+    }
+
+    // Default for String fields
+    if (field.getType().equals(String.class)) {
+      return new StandardAnalyzer();
+    }
+
+    return null;
+  }
+
+  /**
+   * Gets the analyzer for a specific field type.
+   *
+   * @param fieldType the field type
+   * @return the analyzer
+   */
+  private static Analyzer getAnalyzerForFieldType(final FieldType fieldType) {
+    switch (fieldType) {
+      case Keyword:
+        return new KeywordAnalyzer();
+      default:
+        return new StandardAnalyzer();
+    }
+  }
+
+  /**
+   * Gets the analyzer for a nested field path.
+   *
+   * @param fieldPath the field path (e.g., "ancestors.code")
+   * @param modelClass the model class
+   * @return the analyzer
+   */
+  private static Analyzer getAnalyzerForNestedField(final String fieldPath,
+    final Class<?> modelClass) {
+    // For nested keyword fields, use KeywordAnalyzer for exact matching
+    if (fieldPath.endsWith(".code") || fieldPath.endsWith(".keyword")) {
+      return new KeywordAnalyzer();
+    }
+
+    // For other nested fields, use the default analyzer
+    return new StandardAnalyzer();
   }
 
   /**
@@ -327,6 +303,7 @@ public final class LuceneQueryBuilder {
       return SEARCHABLE_FIELDS_CACHE.get(modelClass);
     }
     final List<Field> allFields = ModelUtility.getAllFields(modelClass);
+
     final List<String> fieldNames = new ArrayList<>(allFields.stream().filter(f -> {
       // Check for String or List<String>
       final Class<?> type = f.getType();
@@ -341,14 +318,16 @@ public final class LuceneQueryBuilder {
       final boolean isKeywordField = esField != null && esField.type() == FieldType.Keyword;
       final boolean isMultiField = multiField != null;
       return isString || isListString || isTextField || isKeywordField || isMultiField;
-    }).map(f -> {
-      // For @MultiField fields, use the .keyword suffix for exact matching
+    }).<String> flatMap(f ->
+    // For @MultiField fields, include both the text field and keyword field
+    {
       final MultiField multiField = f.getAnnotation(MultiField.class);
       if (multiField != null) {
-        return f.getName() + ".keyword";
+        return Stream.of(f.getName(), f.getName() + ".keyword", f.getName() + ".ngram");
       }
-      return f.getName();
+      return Stream.of(f.getName());
     }).toList());
+
     final List<String> subFieldNames = new ArrayList<>();
     for (final Field f : allFields) {
       final org.springframework.data.elasticsearch.annotations.Field esField =
@@ -374,59 +353,6 @@ public final class LuceneQueryBuilder {
     final String[] result = fieldNames.toArray(new String[0]);
     SEARCHABLE_FIELDS_CACHE.put(modelClass, result);
     return result;
-  }
-
-  /**
-   * The Class FieldTransform.
-   */
-  private static class FieldTransform {
-
-    /** The pattern. */
-    private final String pattern;
-
-    /** The field name. */
-    private final String fieldName;
-
-    /** The is multi field. */
-    private final boolean isMultiField;
-
-    /**
-     * Instantiates a new field transform.
-     *
-     * @param pattern the pattern
-     * @param fieldName the field name
-     * @param modelClass the model class
-     */
-    public FieldTransform(final String pattern, final String fieldName, final Class<?> modelClass) {
-      this.pattern = pattern;
-      this.fieldName = fieldName;
-      this.isMultiField = modelClass != null && isMultiFieldModel(modelClass);
-    }
-
-    /**
-     * Instantiates a new field transform.
-     *
-     * @param pattern the pattern
-     * @param fieldName the field name
-     */
-    public FieldTransform(final String pattern, final String fieldName) {
-      this.pattern = pattern;
-      this.fieldName = fieldName;
-      this.isMultiField = false;
-    }
-
-    /**
-     * Gets the field name.
-     *
-     * @param modelClass the model class
-     * @return the field name
-     */
-    public String getFieldName(final Class<?> modelClass) {
-      if ("name".equals(fieldName) && isMultiField) {
-        return "name.keyword";
-      }
-      return fieldName;
-    }
   }
 
 }
