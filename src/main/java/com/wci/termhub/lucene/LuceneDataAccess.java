@@ -18,9 +18,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.analysis.ngram.NGramTokenFilter;
+import org.apache.lucene.analysis.pattern.PatternReplaceFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.index.DirectoryReader;
@@ -112,8 +121,34 @@ public class LuceneDataAccess {
     }
     // Create a new IndexWriter with default config to initialize the index
     final FSDirectory directory = FSDirectory.open(indexDir.toPath());
-    final StandardAnalyzer analyzer = new StandardAnalyzer();
-    final IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(analyzer));
+    final Map<String, Analyzer> fieldAnalyzers = LuceneQueryBuilder.getFieldAnalyzers(clazz);
+
+    // Add ngram analyzer for autocomplete fields
+    fieldAnalyzers.put("name.ngram", new Analyzer() {
+      @Override
+      protected TokenStreamComponents createComponents(final String fieldName) {
+        final Tokenizer tokenizer = new StandardTokenizer();
+        final TokenStream lower = new LowerCaseFilter(tokenizer);
+        final TokenStream cleaned =
+            new PatternReplaceFilter(lower, Pattern.compile("[^a-z0-9]+"), "", true);
+        final TokenStream ngrams = new NGramTokenFilter(cleaned, 3, 20, false);
+        return new TokenStreamComponents(tokenizer, ngrams);
+      }
+    });
+
+    // Override name field to use StandardAnalyzer (not ngram)
+    fieldAnalyzers.put("name", new StandardAnalyzer());
+
+    // Default analyzer for all other fields
+    final Analyzer defaultAnalyzer = new StandardAnalyzer();
+
+    // Wrap per-field analyzers with default fallback
+    final PerFieldAnalyzerWrapper perFieldAnalyzer =
+        new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
+
+    // Create IndexWriter with per-field analyzer
+    final IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(perFieldAnalyzer));
+
     WRITER_MAP.put(clazz.getCanonicalName(), writer);
     // Commit to create the initial index structure
     writer.commit();

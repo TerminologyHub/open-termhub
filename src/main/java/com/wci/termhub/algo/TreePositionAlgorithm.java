@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
@@ -148,13 +149,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
     final ResultList<ConceptRelationship> list = new ResultList<>();
     final Map<String, String> additionalTypeMap = new HashMap<>();
-    // String searchAfter = null;
     while (true) {
-      // final ResultList<ConceptRelationship> innerList =
-      // searchService.findFields(params,
-      // ModelUtility.asList("id", "from.code", "to.code", "additionalType"),
-      // ConceptRelationship.class,
-      // searchAfter, prefixes);
       final ResultList<ConceptRelationship> innerList =
           searchService.find(params, ConceptRelationship.class);
       if (innerList.getItems().isEmpty()) {
@@ -259,7 +254,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       final ValidationResult result = new ValidationResult();
 
       computeTreePositions(rootCode, "", parChd, result, startDate, rootCodes.size() > 1,
-          additionalTypeMap);
+          additionalTypeMap, searchService);
       if (!result.isValid()) {
         logError("  validation result = " + result);
         throw new Exception("Validation failed");
@@ -307,13 +302,14 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
    * @param startDate the start date
    * @param multipleRoots the multiple roots
    * @param additionalTypeMap the additional type map
+   * @param searchService the search service
    * @return the sets the
    * @throws Exception the exception
    */
   public Set<String> computeTreePositions(final String code, final String ancestorPath,
     final Map<String, Set<String>> parChd, final ValidationResult validationResult,
-    final Date startDate, final boolean multipleRoots, final Map<String, String> additionalTypeMap)
-    throws Exception {
+    final Date startDate, final boolean multipleRoots, final Map<String, String> additionalTypeMap,
+    final EntityRepositoryService searchService) throws Exception {
 
     final Set<String> descConceptCodes = new HashSet<>();
 
@@ -344,13 +340,21 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       // Instantiate the tree position
       final ConceptTreePosition tp = new ConceptTreePosition();
       setCommonFields(tp);
+      final SearchParameters params = new SearchParameters(
+          TerminologyUtility.getTerminologyQuery(getTerminology(), getPublisher(), getVersion())
+              + " AND code:" + code,
+          0, 1, null, null);
+      final Concept concept = searchService.findSingle(params, Concept.class);
       final ConceptRef ref = new ConceptRef();
+      ref.setActive(concept.getActive());
+      ref.setLocal(concept.getLocal());
       ref.setCode(code);
-      // For now, don't worry about setting the name
-      ref.setName(null);
+      ref.setName(concept.getName());
+      ref.setTerminology(getTerminology());
+      ref.setPublisher(getPublisher());
+      ref.setLeaf(concept.getLeaf());
       tp.setConcept(ref);
       tp.setAncestorPath(ancestorPath);
-      tp.setTerminology(getTerminology());
 
       // Lookup the additional type rel to the parent
       tp.setAdditionalType(additionalTypeMap.get(code));
@@ -370,7 +374,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
           // call helper function on child concept add the results to the local
           // descendant set
           final Set<String> desc = computeTreePositions(childConceptCode, conceptPath, parChd,
-              validationResult, startDate, multipleRoots, additionalTypeMap);
+              validationResult, startDate, multipleRoots, additionalTypeMap, searchService);
           descConceptCodes.addAll(desc);
         }
       }

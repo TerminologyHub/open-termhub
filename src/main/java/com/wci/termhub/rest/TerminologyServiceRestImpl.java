@@ -21,10 +21,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
+import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
@@ -2789,6 +2793,109 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     } catch (final Exception e) {
       handleException(e, "trying to find project subset members");
+      return null;
+    }
+  }
+
+  /**
+   * Autocomplete for terms.
+   *
+   * @param terminology the terminology
+   * @param query the query
+   * @param limit the limit
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  @RequestMapping(value = "/autocomplete", method = RequestMethod.GET)
+  @Operation(summary = "Suggest autocompletions for text while searching",
+      description = "Finds top ten strings matching input query.", tags = {
+          "term"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "List of top ten matching strings"),
+      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content()),
+      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "terminology",
+          description = "Comma-separated list of terminology ids or abbreviations (or null for all terminologies)."
+              + " e.g. \"uuid1,uuid2\", \"SNOMEDCT,RXNORM\", or \"ICD10CM\".",
+          required = false),
+      @Parameter(name = "query", description = "Search text", required = true),
+      @Parameter(name = "limit",
+          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          required = false, schema = @Schema(implementation = Integer.class), example = "10"),
+  })
+  public ResponseEntity<List<String>> autocomplete(
+    @RequestParam(value = "terminology", required = false) final String terminology,
+    @RequestParam(name = "query", required = true) final String query,
+    @RequestParam(name = "limit", required = false, defaultValue = "10") final Integer limit)
+    throws Exception {
+
+    try {
+      // Get project terminologies (that support autocomplete)
+      final List<Terminology> tlist = lookupTerminologies(terminology, false).stream()
+          .filter(
+              t -> t.getAttributes().containsKey(Terminology.Attributes.autocomplete.property()))
+          .collect(Collectors.toList());
+
+      if (tlist.isEmpty()) {
+        return new ResponseEntity<>(new ArrayList<>(), new HttpHeaders(), HttpStatus.OK);
+      }
+      final BooleanQuery.Builder terminologyQueryBuilder = new BooleanQuery.Builder();
+      for (final Terminology term : tlist) {
+          terminologyQueryBuilder.add(
+              new TermQuery(new org.apache.lucene.index.Term("terminology", term.getAbbreviation())),
+              BooleanClause.Occur.SHOULD
+          );
+      }
+      final BooleanQuery terminologyQuery = terminologyQueryBuilder.build();
+      final String[] words = query.split("\\s+");
+      final BooleanQuery.Builder ngramQueryBuilder = new BooleanQuery.Builder();
+      for (final String word : words) {
+          ngramQueryBuilder.add(
+              new PrefixQuery(new org.apache.lucene.index.Term("name.ngram", word.toLowerCase())),
+              BooleanClause.Occur.MUST
+          );
+      }
+      final BooleanQuery ngramQuery = ngramQueryBuilder.build();
+
+      // Prepare length boost
+      final int doubleQueryLength = Math.max(query.length(), 5) * 2;
+      final Query shortLength = IntPoint.newRangeQuery("length", 0, doubleQueryLength);
+      final Query longLength  = IntPoint.newRangeQuery("length", doubleQueryLength + 1, Integer.MAX_VALUE);
+      final BoostQuery boostedShortLength = new BoostQuery(shortLength, 100f);
+
+      final BooleanQuery lengthQuery = new BooleanQuery.Builder()
+              .add(boostedShortLength, BooleanClause.Occur.SHOULD)
+              .add(longLength, BooleanClause.Occur.SHOULD)
+              .build();
+      final BooleanQuery finalQuery = new BooleanQuery.Builder()
+              .add(ngramQuery, BooleanClause.Occur.MUST)
+              .add(terminologyQuery, BooleanClause.Occur.MUST)
+              .add(lengthQuery, BooleanClause.Occur.MUST)
+              .build();
+
+      logger.info("Autocomplete search query: {}", finalQuery);
+      final Integer maxLimit = (limit == null) ? 10 : Math.min(limit, 1000);
+      final SearchParameters params = new SearchParameters(finalQuery, 0, maxLimit * 2, null, null);
+      final ResultList<Term> list =
+          searchService.findFields(params, ModelUtility.asList("name"), Term.class);
+
+      // De-duplicate and limit results
+      final Set<String> seen = new HashSet<>();
+      final List<String> resultNames = list.getItems().stream()
+          .filter(t -> !seen.contains(t.getName().toLowerCase()) && seen.size() < maxLimit)
+          .peek(t -> seen.add(t.getName().toLowerCase())).map(Term::getName)
+          .collect(Collectors.toList());
+
+      return new ResponseEntity<>(resultNames, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to find autocomplete terms");
       return null;
     }
   }
