@@ -454,6 +454,36 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(concept.getName().toLowerCase()).contains(query.toLowerCase());
     }
   }
+  
+  /**
+   * Test find concepts multiple terminologies.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindConceptsMultipleTerminologies() throws Exception {
+    final String terminology = "SNOMEDCT,LNC";
+    final String query = "diabetes";
+    final int limit = 15;
+    final String url = baseUrl + "/concept?terminology=" + terminology + "&query=name:" + query
+        + "&limit=" + limit;
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
+    assertThat(conceptList).isNotNull();
+    assertFalse(conceptList.getItems().isEmpty());
+    assertTrue(conceptList.getItems().size() <= limit);
+    for (final Concept concept : conceptList.getItems()) {
+      assertThat(concept).isNotNull();
+      assertThat(concept.getId()).isNotNull();
+      assertThat(concept.getTerminology()).isIn("SNOMEDCT", "LNC");
+      assertThat(concept.getName().toLowerCase()).contains(query.toLowerCase());
+    }
+  }
 
   /**
    * Test find concepts by code.
@@ -955,6 +985,63 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
     assertThat(mapsetList).isNotNull();
     assertThat(mapsetList.getTotal()).isPositive();
+  }
+
+  /**
+   * Test mapset by publisher.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMappingsByPublisher() throws Exception {
+    final String url = "/mapping?query=mapset.publisher:SANDBOX";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
+  }
+
+  /**
+   * Test mapset by abbreviation wildcard.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMappingsByAbbreviationWildcard() throws Exception {
+    final String url = "/mapping?query=mapset.abbreviation:SNOMED*";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
+  }
+
+  /**
+   * Test mapset by abbreviation.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMappingsByAbbreviation() throws Exception {
+    final String url = "/mapping?query=mapset.abbreviation:SNOMEDCT_US-ICD10CM";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
   }
 
   /**
