@@ -1108,8 +1108,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     // Ensure we lookup all terminologies
     final List<String> terminologyClauses = new ArrayList<>();
     for (final Terminology terminology : terminologies) {
-      terminologyClauses.add(TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
-          terminology.getPublisher(), terminology.getVersion()));
+      final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+          terminology.getPublisher(), terminology.getVersion());
+      terminologyClauses.add("(" + termQuery + ")");
     }
     final String terminologyQueryStr = StringUtility.composeQuery("OR", terminologyClauses);
     final Query terminologyQuery = LuceneQueryBuilder.parse(terminologyQueryStr, Concept.class);
