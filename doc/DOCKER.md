@@ -17,7 +17,7 @@ This will start the server with default settings. The application will be availa
 The following environment variables can be used to configure the application:
 
 - `ENABLE_POST_LOAD_COMPUTATIONS`: Enable/disable post-load computations (default: false)
-- `TERMHUB_TOKEN`: Authentication token for secure operations (required only if using Terminology Syndication from www.terminologyhub.com). To obtain this token:
+- `PROJECT_API_KEY`: Authentication token for secure operations (required only if using Terminology Syndication from www.terminologyhub.com). To obtain this token:
   1. Visit [www.terminologyhub.com](https://www.terminologyhub.com)
   2. Navigate to your project's edit page
   3. Either generate a new token or copy the existing "Project API Key"
@@ -45,7 +45,7 @@ services:
       - "8080:8080"
     environment:
       - ENABLE_POST_LOAD_COMPUTATIONS=true # Optional: default is false
-      - TERMHUB_TOKEN=${TERMHUB_TOKEN}     # Optional: only required if using Terminology Syndication from www.terminologyhub.com
+      - PROJECT_API_KEY=${PROJECT_API_KEY}     # Optional: only required if using Terminology Syndication from www.terminologyhub.com
     volumes:
       - ./data:/index      # Optional: index store location
     healthcheck:

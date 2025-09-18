@@ -1,14 +1,25 @@
-# Step-by-step instructions with TermHub data
-Instructions on using data from a TermHub project to Open Termhub up and running within 5 minutes.
+# Step-by-step instructions with Sandbox data using Syndication
+
+Instructions on using data local to this project to get Open Termhub up and running within 5 minutes but using syndication rather than manually loading data files.
+
+The Termhub public "Sandbox" project has an API key that can be used in conjunction with an
+environment variable to automatically download and load data into the container.  The project
+API key for this is as follows
+
+```
+export SANDBOX_TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJodHRwczovL2FwaS50ZXJtaW5vbG9neWh1Yi5jb20iLCJ0ZXJtaHViOnNhbHQiOiJHWVJGTTVDTiIsInRlcm1odWI6cm9sZSI6IlBST0pFQ1QiLCJpc3MiOiJodHRwczovL2FwaS50ZXJtaW5vbG9neWh1Yi5jb20iLCJ0ZXJtaHViOnByb2plY3RJZCI6IjkwYzA0NWI1LTRhNWItNGFjNS05NTRlLTg2Y2RiYmIyZGIyNyJ9.NARLUyztuOVT6DmpMazO-PEJbfUQbjkpX8ivQlpg_30
+```
 
 [Tutorial Training Video (TBD)](TBD)
 
 ## Prerequisites/Setup
-* Java 17+
+* Java 17+ or docker
 * This tutorial assumes you have cloned this open-termhub repository.
 
 
 ## Build and run the server
+
+Both options below assume you have the `$SANDBOX_KEY` variable set as described above.
 
 ### Option 1: build/run without docker
 
@@ -18,12 +29,12 @@ One option is to just build the code and run the server locally and use an INDEX
 # On Windows use export INDEX_DIR=c:/temp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 export ENABLE_POST_LOAD_COMPUTATIONS=true
-export JAVA_OPTS=-Xmx16g
+export TERMHUB_TOKEN=$SANDBOX_TOKEN
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run
 ```
 
-### Option 2: run with public docker image
+### Option 2: run with latest public docker image
 
 The final option is to run the latest published public docker image as a container with an INDEX_DIR environment variable to specify where the Lucene indexes should live (make sure this directory exists):
 
@@ -33,11 +44,13 @@ The final option is to run the latest published public docker image as a contain
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
-  -e ENABLE_POST_LOAD_COMPUTATIONS=true -e JAVA_OPTS="-Xmx16g" \
+  -e TERMHUB_TOKEN="$SANDBOX_TOKEN" \
+  -e ENABLE_POST_LOAD_COMPUTATIONS=true \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
-**[Back to top](#step-by-step-instructions-with-termhub-data)**
+**[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
+
 
 ## View API Documentation
 
@@ -46,96 +59,160 @@ All three of the above options will yield a running server and you should now yo
 * FHIR R4 Swagger [http://localhost:8080/fhir/r4/swagger-ui/index.html](http://localhost:8080/fhir/r4/swagger-ui/index.html)
 * FHIR R5 Swagger [http://localhost:8080/fhir/r5/swagger-ui/index.html](http://localhost:8080/fhir/r5/swagger-ui/index.html)
 
-
-**[Back to top](#step-by-step-instructions-with-termhub-data)**
-
-## Create TermHub account/login
-
-### Creating an account (skip if you have one)
-
-Start by going to the [Termhub Signup Page](https://app.terminologyhub.com/signup).  You can sign up with a username/password or via social login using a Google or Microsoft account.  Your email address will be your username.
-
-### Logging in (once you have created an account)
-
-Go to the [Termhub Login Page](https://app.terminologyhub.com/login) and log in using the account created in the previous step.
-
-**[Back to top](#step-by-step-instructions-with-termhub-data)**
-
-## Creating a TermHub Project
-
-To properly test this, you'll want to create a TermHub project with the terminologies that you want to load into the Open TermHub container.
-
-### Steps after logging into TermHub
-
-* **Click the "Projects" sidebar item**
-
-<img width="200px" src="images/choose-sidebar-projects.png">
-
-* **Click the "New Project" button**
-
-<img width="100px" src="images/new-project-button.png">
-
-* **Select your organization**
-* **Set "Project Name" to "OpenTermhub Test Project"**
-* **Set "Project Description" to "OpenTermhub Test Project"**
-
-<img width="600px" src="images/configure-new-project.png">
+**[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
 
 
-* **Scroll down to choose terminologies to add**
-  * **SNOMEDCT_US latest (also select the ICD10CM maps and the extension subset)**
-  
-<img width="800px" src="images/configure-snomedct_us.png">
-  
-  * **LOINC latest**
-
-<img width="800px" src="images/configure-loinc.png">
-
-  * **ISO-639-1 latest**
-  * **ISO-639-2 latest**
-  
-<img width="800px" src="images/configure-iso.png">
-  
-* **Scroll to the bottom and click "Create project"**
-
-<img width="800px" src="images/create-project.png">
-
-* **On the project details screen, choose the icon to download all** (choose "Format: FHIR R5 json)
-
-<img width="800px" src="images/download-all.png">
-
-At this point, you will have downloaded .zip files of all the terminologies set up in the project above.
-
-<img width="800px" src="images/downloads-directory.png">
-
-The next step is to unpack all of these .zip files and put the resulting .json files all together in the same directory, so that we can run the commands to load this data into the Open TermHub server that was launched at the top.
+## Loading SANDBOX data
 
 
-**[Back to top](#step-by-step-instructions-with-termhub-data)**
-
-## Loading data
-
-After the previous step, you will have CodeSystem .json files downloaded from TermHub and these can now be loaded through the API into a running container.  The following assumes that all of 
-the zip files are unpacked and resulting .json files in a local directory
-
-#### Load SNOMEDCT_US
-
-```
-f=CodeSystem*snomedct_us*json
-curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
-  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d "@CodeSystem-snomedct_us-nlm-20250301-r5.json" | jq
-```
-
-
-
-
-**[Back to top](#step-by-step-instructions-with-termhub-data)**
+**[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
 
 
 ## Demonstrating the UI
 
-try these curl commands
-OR try the postman collecition (postman-tutorial.json)
+Now that we have data loaded, we can try a several curl commands to demonstrate
+basic function. Alternatively, you can
 
-**[Back to top](#step-by-step-instructions-with-termhub-data)**
+[![Run in Postman](https://run.pstmn.io/button.svg)](postman-open-termhub-tutorial1.json).
+
+### Testing the Terminology API
+
+The following code block has a number of curl commands that test a few of the terminology API endpoints of the server to demonstrate basic function.
+
+```
+# Find terminologies (e.g. code systems)
+curl -s "http://localhost:8080/terminology" | jq
+
+# Find terminology metadata
+id=`curl -s "http://localhost:8080/terminology" | jq -r '.items[0].id' | perl -pe 's/\r//;'`
+curl -s "http://localhost:8080/terminology/$id/metadata" | jq
+
+# Get a SNOMEDCT concept, or relationships, or trees by code
+curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001" | jq
+curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001/relationships" | jq
+curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001/trees" | jq
+
+# Perform a SNOMEDCT search with a word query
+curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal" | jq
+
+# Perform a SNOMEDCT search with a code query
+curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=73211009&include=minimal" | jq
+
+# Perform a SNOMEDCT search with just an ECL expression
+curl -s -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&expression=%3C%3C128927009&include=minimal" | jq
+
+# Perform a SNOMEDCT search with a query and an ECL expression
+curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=%3C%3C128927009&include=minimal" | jq
+
+# Find mapsets (e.g. concept maps)
+curl -s "http://localhost:8080/mapset" | jq
+
+# Find mappings across all mapsets
+curl -s "http://localhost:8080/mapping" | jq
+
+# Find mapset mappings
+curl -s "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping" | jq
+
+# Find mappings in a particular mapset for a particular "from" code
+curl -s "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005" | jq
+curl -s "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:300862005" | jq
+
+# Find subsets (e.g. value sets)
+curl -s "http://localhost:8080/subset" | jq
+
+# Find members across all subsets
+curl -s "http://localhost:8080/member" | jq
+
+# Find subset members
+curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member" | jq
+
+# Find members in a particular subset for a particular code
+curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes" | jq
+curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=name:diabetes" | jq
+
+# Find concepts using an ECL Expression for this subset
+curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&expression=%5E731000124108&include=minimal" | jq
+```
+
+### Testing the FHIR R4 API
+
+The following code block has a number of curl commands that test a few of the FHIR R4 API endpoints of the server to demonstrate basic function.
+
+```
+# Find CodeSystems
+curl -s 'http://localhost:8080/fhir/r4/CodeSystem' | jq
+
+# Perform a SNOMEDCT CodeSystem $lookup for a code
+curl -s 'http://localhost:8080/fhir/r4/CodeSystem/$lookup?system=http://snomed.info/sct&code=73211009' | jq
+
+# Find ConceptMaps
+curl -s 'http://localhost:8080/fhir/r4/ConceptMap' | jq
+
+# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
+curl -s 'http://localhost:8080/fhir/r4/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&code=300862005' | jq
+
+# Find implied ValueSets for CodeSystem and explicit value set
+curl -s 'http://localhost:8080/fhir/r4/ValueSet' | jq
+curl -s 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs' | jq
+curl -s 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
+
+# Get a value set by id (pick the first one)
+id=`curl -s 'http://localhost:8080/fhir/r4/ValueSet' | jq -r '.entry[0].resource.id' | perl -pe 's/\r//;'`
+curl -s "http://localhost:8080/fhir/r4/ValueSet/$id" | jq
+
+# Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
+curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs' | jq
+
+# Perform an $expand operation on an explicit value set
+curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter
+curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes' | jq
+curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108&filter=diabetes' | jq
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
+curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
+```
+
+### Testing the FHIR R5 API
+
+The following code block has a number of curl commands that test a few of the FHIR R5 API endpoints of the server to demonstrate basic function.
+
+```
+# Find CodeSystems
+curl -s 'http://localhost:8080/fhir/r5/CodeSystem' | jq
+
+# Perform a SNOMEDCT CodeSystem $lookup for a code
+curl -s 'http://localhost:8080/fhir/r5/CodeSystem/$lookup?system=http://snomed.info/sct&code=73211009' | jq
+
+# Find ConceptMaps
+curl -s 'http://localhost:8080/fhir/r5/ConceptMap' | jq
+
+# Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
+curl -s 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&sourceSystem=http://snomed.info/sct&sourceCode=300862005' | jq
+
+# Find implied ValueSets for CodeSystems and explicit value sets
+curl -s 'http://localhost:8080/fhir/r5/ValueSet' | jq
+curl -s 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs' | jq
+curl -s 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
+
+# Get a value set by id (pick the first one)
+id=`curl -s 'http://localhost:8080/fhir/r5/ValueSet' | jq -r '.entry[0].resource.id' | perl -pe 's/\r//;'`
+curl -s "http://localhost:8080/fhir/r5/ValueSet/$id" | jq
+
+# Perform an $expand operation on the implicit ValueSet representing SNOMEDCT
+curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs' | jq
+
+# Perform an $expand operation on an explicit value set
+curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter
+curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes' | jq
+curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108&filter=diabetes' | jq
+
+# Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
+curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
+```
+
+**[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
+

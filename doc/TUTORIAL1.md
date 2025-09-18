@@ -4,7 +4,7 @@ Instructions on using data local to this project to get Open Termhub up and runn
 [Tutorial Training Video (TBD)](TBD)
 
 ## Prerequisites/Setup
-* Java 17+
+* Java 17+ or docker
 * This tutorial assumes you have cloned this open-termhub repository.
 
 
