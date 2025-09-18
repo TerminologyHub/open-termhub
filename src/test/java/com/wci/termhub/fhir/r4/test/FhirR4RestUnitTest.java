@@ -14,9 +14,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
@@ -25,10 +31,12 @@ import org.hl7.fhir.r4.model.CapabilityStatement;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.hl7.fhir.r4.model.ValueSet;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -59,47 +67,68 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
 /**
- * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4
- * endpoints, CodeSystem, ValueSet, and ConceptMap. All passed ids MUST be
- * lowercase, so they match our internally set id's
+ * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4 endpoints, CodeSystem,
+ * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set id's
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
 public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
-  /** The logger. */
+  /**
+   * The logger.
+   */
   private static final Logger LOGGER = LoggerFactory.getLogger(FhirR4RestUnitTest.class);
 
-  /** The port. */
+  /**
+   * The port.
+   */
   @LocalServerPort
   private int port;
 
-  /** The rest template. */
+  /**
+   * The rest template.
+   */
   @Autowired
   private TestRestTemplate restTemplate;
 
-  /** local host prefix. */
+  /**
+   * local host prefix.
+   */
   private static final String LOCALHOST = "http://localhost:";
 
-  /** The fhir metadata. */
+  /**
+   * The fhir metadata.
+   */
   private static final String FHIR_METADATA = "/fhir/r4/metadata";
 
-  /** Fhir url paths. */
+  /**
+   * Fhir url paths.
+   */
   private static final String FHIR_CODESYSTEM = "/fhir/r4/CodeSystem";
 
-  /** The Constant FHIR_CONCEPTMAP. */
+  /**
+   * The Constant FHIR_CONCEPTMAP.
+   */
   private static final String FHIR_CONCEPTMAP = "/fhir/r4/ConceptMap";
 
-  /** The fhir VS path. */
+  /**
+   * The fhir VS path.
+   */
   private static final String FHIR_VALUESET = "/fhir/r4/ValueSet";
 
-  /** The parser. */
+  /**
+   * The parser.
+   */
   private static IParser parser;
 
-  /** The object mapper. */
+  /**
+   * The object mapper.
+   */
   private ObjectMapper objectMapper = null;
 
-  /** The search service. */
+  /**
+   * The search service.
+   */
   @Autowired
   private EntityRepositoryService searchService;
 
@@ -114,7 +143,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
   }
 
-  /** Sets the up. */
+  /**
+   * Sets the up.
+   */
   @BeforeEach
   public void setUp() {
     // The object mapper
@@ -1185,4 +1216,252 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertEquals(0, mapsets.getTotal());
   }
 
+  /**
+   * Test concurrent add.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConcurrentAdd() throws Exception {
+    cleanupCodeSystems("http://example.org/concurrent-cs-1", "http://example.org/concurrent-cs-2");
+    final List<CodeSystem> codeSystems = new ArrayList<>();
+    final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    final Callable<CodeSystem> writeTask1 = () -> {
+      return createCodeSystem("concurrent-cs-1", "http://example.org/concurrent-cs-1");
+    };
+
+    final Callable<CodeSystem> writeTask2 = () -> {
+      return createCodeSystem("concurrent-cs-2", "http://example.org/concurrent-cs-2");
+    };
+
+    final Future<CodeSystem> future1 = executor.submit(writeTask1);
+    // Ensure the first write starts before the second
+    Thread.sleep(10); // Small delay to increase chance of overlap
+
+    final Future<CodeSystem> future2 = executor.submit(writeTask2);
+
+    executor.shutdown();
+
+    final CodeSystem created1 = future1.get();
+    final CodeSystem created2 = future2.get();
+    if (created1 != null) {
+      codeSystems.add(created1);
+    }
+    if (created2 != null) {
+      codeSystems.add(created2);
+    }
+
+    // Exactly one should fail
+    Assertions.assertTrue(created1 != null ^ created2 != null,
+        "Exactly one write should fail due to locking");
+
+    if (created1 != null) {
+      deleteCodeSystem(created1.getId());
+    }
+
+    if (created2 != null) {
+      deleteCodeSystem(created2.getId());
+    }
+  }
+
+  /**
+   * Test concurrent read and add.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConcurrentReadAndAdd() throws Exception {
+    cleanupCodeSystems("http://example.org/concurrent-cs-1");
+    final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    final CodeSystem codeSystem =
+        getNewCodeSystem("concurrent-cs-1", "http://example.org/concurrent-cs-1");
+    final CodeSystem.ConceptDefinitionComponent concept = new CodeSystem.ConceptDefinitionComponent();
+    concept.setCode("test-code");
+    codeSystem.setConcept(List.of(concept));
+
+    final Callable<CodeSystem> writeTask = () -> {
+      return createCodeSystem(codeSystem);
+    };
+
+    final Callable<Parameters> readTask = () -> {
+      final String code = "385487005";
+      final String url = "http://snomed.info/sct";
+      final String version = "http://snomed.info/sct/900000000000207008/version/20240101";
+      final String validateParams =
+          "/$validate-code?url=" + url + "&code=" + code + "&version=" + version;
+      final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + validateParams;
+      LOGGER.info("endpoint = {}", endpoint);
+
+      // Act
+      final String content = this.restTemplate.getForObject(endpoint, String.class);
+      LOGGER.info("Response content = {}", content);
+      return parser.parseResource(Parameters.class, content);
+    };
+
+    final Future<CodeSystem> future1 = executor.submit(writeTask);
+    // Ensure the first write starts before the second
+    Thread.sleep(10); // Small delay to increase chance of overlap
+
+    final Future<Parameters> future2 = executor.submit(readTask);
+
+    executor.shutdown();
+
+    final CodeSystem created = future1.get();
+    final Parameters parameters = future2.get();
+
+    assertNotNull(created);
+    final List<String> display = parameters.getParameter().stream()
+        .filter(p -> "display".equals(p.getName())).map(p -> p.getValue().toString()).toList();
+    assertEquals(1, display.size());
+    assertEquals("Surgical procedure on thorax", display.get(0));
+
+    deleteCodeSystem(created.getId());
+  }
+
+  /**
+   * Test concurrent delete.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConcurrentDelete() throws Exception {
+    cleanupCodeSystems("http://example.org/concurrent-cs-1", "http://example.org/concurrent-cs-2");
+    final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    final CodeSystem codeSystem =
+        createCodeSystem("concurrent-cs-1", "http://example.org/concurrent-cs-1");
+
+    final Callable<Boolean> deleteCodeSystem1 = () -> {
+      return deleteCodeSystem(codeSystem.getId());
+    };
+
+    final Callable<CodeSystem> createCodeSystem2 = () -> {
+      return createCodeSystem("concurrent-cs-2", "http://example.org/concurrent-cs-2");
+    };
+
+    final Future<CodeSystem> future1 = executor.submit(createCodeSystem2);
+    // Ensure the first write starts before the second
+    Thread.sleep(10); // Small delay to increase chance of overlap
+
+    final Future<Boolean> future2 = executor.submit(deleteCodeSystem1);
+
+    executor.shutdown();
+
+    final CodeSystem future1Result = future1.get();
+    final Boolean future2Result = future2.get();
+    // Exactly one should fail
+    Assertions.assertTrue(future1Result != null ^ future2Result,
+        "Exactly one write should fail due to locking");
+    if (future1Result != null) {
+      deleteCodeSystem(future1Result.getId());
+    }
+  }
+
+  /**
+   * Gets the new code system.
+   *
+   * @param id the id
+   * @param url the url
+   * @return the new code system
+   */
+  private CodeSystem getNewCodeSystem(final String id, final String url) {
+    final CodeSystem codeSystem = new CodeSystem();
+    codeSystem.setTitle(id);
+    codeSystem.setUrl(url);
+    codeSystem.setDate(new Date());
+    codeSystem.setVersion("1.0");
+    codeSystem.setPublisher("test");
+    return codeSystem;
+  }
+
+  /**
+   * Creates the code system.
+   *
+   * @param id the id
+   * @param url the url
+   * @return the code system
+   */
+  private CodeSystem createCodeSystem(final String id, final String url) {
+    final CodeSystem codeSystem = getNewCodeSystem(id, url);
+    return createCodeSystem(codeSystem);
+  }
+
+  /**
+   * Creates the code system.
+   *
+   * @param codeSystem the code system
+   * @return the code system
+   */
+  private CodeSystem createCodeSystem(final CodeSystem codeSystem) {
+    // call the create endpoint in LOCALHOST
+    // Serialize FHIR resource for POST
+    final String json = parser.encodeResourceToString(codeSystem);
+    final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+    headers.set("Content-Type", "application/fhir+json");
+    final org.springframework.http.HttpEntity<String> entity =
+        new org.springframework.http.HttpEntity<>(json, headers);
+    final ResponseEntity<String> response =
+        restTemplate.postForEntity(LOCALHOST + port + FHIR_CODESYSTEM, entity, String.class);
+    // Deserialize FHIR resource from response
+    if (response.getBody().contains("OperationOutcome")) {
+      final OperationOutcome operationOutcome =
+          parser.parseResource(OperationOutcome.class, response.getBody());
+      if (operationOutcome.getIssue().stream()
+          .filter(i -> i.getCode().equals(OperationOutcome.IssueType.CONFLICT)).count() == 1) {
+        return null;
+      }
+    }
+    return parser.parseResource(CodeSystem.class, response.getBody());
+  }
+
+  /**
+   * Delete code system.
+   *
+   * @param id the id
+   * @return true, if successful
+   */
+  private boolean deleteCodeSystem(final String id) {
+    // delete code system
+    final String deleteUrl = LOCALHOST + port + FHIR_CODESYSTEM + "/" + id;
+    final ResponseEntity<String> response =
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    if (response.getBody() != null && response.getBody().contains("OperationOutcome")) {
+      final OperationOutcome operationOutcome =
+          parser.parseResource(OperationOutcome.class, response.getBody());
+      return !(operationOutcome.getIssue().stream()
+          .filter(i -> i.getCode().equals(OperationOutcome.IssueType.CONFLICT)).count() == 1);
+    }
+    return true;
+  }
+
+  /**
+   * Cleanup code systems.
+   *
+   * @param uris the uris
+   */
+  private void cleanupCodeSystems(final String... uris) {
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM;
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    if (content.contains("OperationOutcome")) {
+      final OperationOutcome operationOutcome = parser.parseResource(OperationOutcome.class, content);
+      if (operationOutcome.getIssue().stream()
+          .filter(i -> i.getDiagnostics().equals("Failed to find code systems")).count() == 1) {
+        // No code systems to clean up
+        return;
+      }
+    }
+    final Bundle data = parser.parseResource(Bundle.class, content);
+    final List<CodeSystem> codeSystems = data.getEntry().stream()
+        .map(BundleEntryComponent::getResource).map(r -> (CodeSystem) r).toList();
+
+    for (final String uri : uris) {
+      final CodeSystem codeSystem = codeSystems.stream()
+          .filter(resource -> resource.getUrl().equals(uri)).findFirst().orElse(null);
+      if (codeSystem != null) {
+        deleteCodeSystem(codeSystem.getIdPart());
+      }
+    }
+  }
 }

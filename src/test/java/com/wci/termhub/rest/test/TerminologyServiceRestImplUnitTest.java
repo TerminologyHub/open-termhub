@@ -65,8 +65,8 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
- * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All
- * get/find tests are order 10. All delete tests are order 20.
+ * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All get/find tests are
+ * order 10. All delete tests are order 20.
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
@@ -212,8 +212,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(metadata.getModel()).isNotNull();
       assertThat(metadata.getCode()).isNotNull();
       /*
-       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US",
-       * "version":"20240301",
+       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20240301",
        * "publisher":"SANDBOX","model":"relationship","field":"uiLabel","code":
        * "Attributes","rank":0}
        */
@@ -452,6 +451,36 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(concept).isNotNull();
       assertThat(concept.getId()).isNotNull();
       assertThat(concept.getTerminology()).isEqualTo(terminology);
+      assertThat(concept.getName().toLowerCase()).contains(query.toLowerCase());
+    }
+  }
+
+  /**
+   * Test find concepts multiple terminologies.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindConceptsMultipleTerminologies() throws Exception {
+    final String terminology = "SNOMEDCT,LNC";
+    final String query = "diabetes";
+    final int limit = 15;
+    final String url = baseUrl + "/concept?terminology=" + terminology + "&query=name:" + query
+        + "&limit=" + limit;
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
+    assertThat(conceptList).isNotNull();
+    assertFalse(conceptList.getItems().isEmpty());
+    assertTrue(conceptList.getItems().size() <= limit);
+    for (final Concept concept : conceptList.getItems()) {
+      assertThat(concept).isNotNull();
+      assertThat(concept.getId()).isNotNull();
+      assertThat(concept.getTerminology()).isIn("SNOMEDCT", "LNC");
       assertThat(concept.getName().toLowerCase()).contains(query.toLowerCase());
     }
   }
@@ -956,6 +985,63 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
     assertThat(mapsetList).isNotNull();
     assertThat(mapsetList.getTotal()).isPositive();
+  }
+
+  /**
+   * Test mapset by publisher.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMappingsByPublisher() throws Exception {
+    final String url = "/mapping?query=mapset.publisher:SANDBOX";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
+  }
+
+  /**
+   * Test mapset by abbreviation wildcard.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMappingsByAbbreviationWildcard() throws Exception {
+    final String url = "/mapping?query=mapset.abbreviation:SNOMED*";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
+  }
+
+  /**
+   * Test mapset by abbreviation.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testMappingsByAbbreviation() throws Exception {
+    final String url = "/mapping?query=mapset.abbreviation:SNOMEDCT_US-ICD10CM";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListMapping mappingList = objectMapper.readValue(content, ResultListMapping.class);
+    assertThat(mappingList).isNotNull();
+    assertThat(mappingList.getTotal()).isPositive();
   }
 
   /**
@@ -1668,8 +1754,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test concept hierarchy fields for SNOMEDCT_US:73211009 - validates
-   * children, parents, descendants, ancestors are populated.
+   * Test concept hierarchy fields for SNOMEDCT_US:73211009 - validates children, parents,
+   * descendants, ancestors are populated.
    *
    * @throws Exception the exception
    */
@@ -1699,8 +1785,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertNotNull(concept.getAncestors(), "Ancestors list should not be null");
 
     /*
-     * "children": [
-     * {"local":false,"active":true,"name":"Disorder of cardiovascular system"
+     * "children": [ {"local":false,"active":true,"name":"Disorder of cardiovascular system"
      * ,"code":"49601007","terminology":"SNOMEDCT","version":"20240101",
      * "publisher":"SANDBOX","leaf":true,"defined":true},
      * {"local":false,"active":true,"name":"Disorder of breast","code":
@@ -1759,16 +1844,17 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
         .filter(c -> testCode.equals(c.getCode())).findFirst().orElse(null);
     if (testConceptRef == null) {
       childrenErrors.put(testCode, "Should have child with code " + testCode);
-    }
-    if (!testConceptRef.getName().equals("Disorder of cardiovascular system")) {
-      childrenErrors.put(testCode, "Should have name 'Disorder of cardiovascular system', found: "
-          + testConceptRef.getName());
-    }
-    if (!testConceptRef.getLeaf()) {
-      childrenErrors.put(testCode, "Should be leaf");
-    }
-    if (!testConceptRef.getDefined()) {
-      childrenErrors.put(testCode, "Should be defined");
+    } else {
+      if (!testConceptRef.getName().equals("Disorder of cardiovascular system")) {
+        childrenErrors.put(testCode, "Should have name 'Disorder of cardiovascular system', found: "
+            + testConceptRef.getName());
+      }
+      if (!testConceptRef.getLeaf()) {
+        childrenErrors.put(testCode, "Should be leaf");
+      }
+      if (!testConceptRef.getDefined()) {
+        childrenErrors.put(testCode, "Should be defined");
+      }
     }
 
     final String testCode2 = "79604008";

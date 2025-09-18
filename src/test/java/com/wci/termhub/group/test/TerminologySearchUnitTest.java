@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
@@ -181,6 +182,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
     final String query = "publisher:" + StringUtility.escapeQuery(publisher) + "";
     LOGGER.info("testPublisherSearch Query: {}", query);
     SEARCH_PARAMETERS.setQuery(query);
+    LuceneDataAccess.clearReaders();
     final ResultList<Terminology> terminologies =
         searchService.find(SEARCH_PARAMETERS, Terminology.class);
     assertEquals(1, terminologies.getItems().size());

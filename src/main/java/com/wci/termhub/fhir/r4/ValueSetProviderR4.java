@@ -681,6 +681,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
                     .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
                     .toList()),
             Concept.class) : null;
+    logger.info(
+        "XXX = " + new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()));
     final Query filterQuery = LuceneQueryBuilder.parse(
         new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
         Concept.class);
@@ -698,6 +700,11 @@ public class ValueSetProviderR4 implements IResourceProvider {
     expansion.setTimestamp(new Date());
     expansion.setTotal((int) list.getTotal());
     expansion.setOffset(offset);
+    // set filter
+    if (filter != null) {
+      expansion.addParameter(
+          new ValueSetExpansionParameterComponent().setName("filter").setValue(filter));
+    }
     // set count
     expansion.addParameter(
         new ValueSetExpansionParameterComponent().setName("count").setValue(new IntegerType(ct)));

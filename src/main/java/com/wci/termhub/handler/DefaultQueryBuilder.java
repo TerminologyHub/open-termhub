@@ -63,15 +63,6 @@ public class DefaultQueryBuilder implements QueryBuilder {
       return "*:*";
     }
 
-    // Handle name field queries for partial matching
-    if (query.matches("name\\s*:\\s*.*")) {
-      final String searchTerm = query.replaceFirst("name\\s*:\\s*", "").trim();
-      if (!searchTerm.isEmpty()) {
-        // Use normName field with phrase query for better matching
-        return "normName:\"" + StringUtility.escapeQuery(searchTerm) + "\"";
-      }
-    }
-
     // Handle non-fielded queries to include partial matching on name fields
     // This ensures non-fielded queries like "cancer" also search in name fields
     if (!query.matches(".*\\w+:.*")) {
@@ -116,7 +107,8 @@ public class DefaultQueryBuilder implements QueryBuilder {
     // Handle non-fielded queries to include partial matching on name fields (same as buildQuery)
     if (!query.matches(".*\\w+:.*")) {
       // Non-fielded query - add partial matching for name fields
-      return "(\"" + StringUtility.escapeQuery(query) + "\") OR (normName:" + StringUtility.escapeQuery(query) + ")";
+      return "(\"" + StringUtility.escapeQuery(query) + "\") OR (normName:"
+          + StringUtility.escapeQuery(query) + ")";
     }
 
     // For other fielded queries, escape with quotes and escape colons

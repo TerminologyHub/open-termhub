@@ -64,6 +64,10 @@ public final class LuceneQueryBuilder {
   /** The Constant FIELD_ANALYZERS_CACHE. */
   private static final Map<Class<?>, Map<String, Analyzer>> FIELD_ANALYZERS_CACHE = new HashMap<>();
 
+  /** The Constant NESTED_FIELD_SUFFIXES. */
+  private static final Set<String> NESTED_FIELD_SUFFIXES =
+      Set.of("code", "terminology", "version", "publisher", "abbreviation", "keyword");
+
   /**
    * Parses the query for a specific model class.
    *
@@ -222,8 +226,8 @@ public final class LuceneQueryBuilder {
    * @return the common nested paths
    */
   private static Set<String> getCommonNestedPaths(final Field field) {
-    return Set.of(field.getName() + ".code", field.getName() + ".terminology",
-        field.getName() + ".publisher", field.getName() + ".version", field.getName() + ".keyword");
+    return NESTED_FIELD_SUFFIXES.stream().map(suffix -> field.getName() + "." + suffix)
+        .collect(Collectors.toSet());
   }
 
   /**
@@ -283,7 +287,7 @@ public final class LuceneQueryBuilder {
   private static Analyzer getAnalyzerForNestedField(final String fieldPath,
     final Class<?> modelClass) {
     // For nested keyword fields, use KeywordAnalyzer for exact matching
-    if (fieldPath.endsWith(".code") || fieldPath.endsWith(".keyword")) {
+    if (NESTED_FIELD_SUFFIXES.stream().anyMatch(suffix -> fieldPath.endsWith("." + suffix))) {
       return new KeywordAnalyzer();
     }
 
@@ -318,9 +322,8 @@ public final class LuceneQueryBuilder {
       final boolean isKeywordField = esField != null && esField.type() == FieldType.Keyword;
       final boolean isMultiField = multiField != null;
       return isString || isListString || isTextField || isKeywordField || isMultiField;
-    }).<String> flatMap(f ->
-    // For @MultiField fields, include both the text field and keyword field
-    {
+    }).flatMap(f -> {
+      // For @MultiField fields, include both the text field and keyword field
       final MultiField multiField = f.getAnnotation(MultiField.class);
       if (multiField != null) {
         return Stream.of(f.getName(), f.getName() + ".keyword", f.getName() + ".ngram");
