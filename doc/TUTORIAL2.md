@@ -7,7 +7,7 @@ environment variable to automatically download and load data into the container.
 API key for this is as follows
 
 ```
-export SANDBOX_TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJodHRwczovL2FwaS50ZXJtaW5vbG9neWh1Yi5jb20iLCJ0ZXJtaHViOnNhbHQiOiJHWVJGTTVDTiIsInRlcm1odWI6cm9sZSI6IlBST0pFQ1QiLCJpc3MiOiJodHRwczovL2FwaS50ZXJtaW5vbG9neWh1Yi5jb20iLCJ0ZXJtaHViOnByb2plY3RJZCI6IjkwYzA0NWI1LTRhNWItNGFjNS05NTRlLTg2Y2RiYmIyZGIyNyJ9.NARLUyztuOVT6DmpMazO-PEJbfUQbjkpX8ivQlpg_30
+export SANDBOX_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJodHRwczovL2FwaS50ZXJtaW5vbG9neWh1Yi5jb20iLCJ0ZXJtaHViOnNhbHQiOiJHWVJGTTVDTiIsInRlcm1odWI6cm9sZSI6IlBST0pFQ1QiLCJpc3MiOiJodHRwczovL2FwaS50ZXJtaW5vbG9neWh1Yi5jb20iLCJ0ZXJtaHViOnByb2plY3RJZCI6IjkwYzA0NWI1LTRhNWItNGFjNS05NTRlLTg2Y2RiYmIyZGIyNyJ9.NARLUyztuOVT6DmpMazO-PEJbfUQbjkpX8ivQlpg_30
 ```
 
 [Tutorial Training Video (TBD)](TBD)
@@ -29,7 +29,7 @@ One option is to just build the code and run the server locally and use an INDEX
 # On Windows use export INDEX_DIR=c:/temp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 export ENABLE_POST_LOAD_COMPUTATIONS=true
-export TERMHUB_TOKEN=$SANDBOX_TOKEN
+export PROJECT_API_KEY=$SANDBOX_KEY
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run
 ```
@@ -44,7 +44,7 @@ The final option is to run the latest published public docker image as a contain
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
-  -e TERMHUB_TOKEN="$SANDBOX_TOKEN" \
+  -e PROJECT_API_KEY="$SANDBOX_KEY" \
   -e ENABLE_POST_LOAD_COMPUTATIONS=true \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
