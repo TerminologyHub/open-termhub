@@ -35,7 +35,7 @@ import com.wci.termhub.util.FileUtility;
 /**
  * The Class SyndicationIntegrationTest.
  *
- * This test requires TERMHUB_TOKEN to have a valid JWT token for the syndication service. It will
+ * This test requires PROJECT_API_KEY to have a valid JWT token for the syndication service. It will
  * download a sample syndication feed, verify there are contents. Loading terminologies is covered
  * in other tests.
  *

@@ -64,11 +64,12 @@ All three of the above options will yield a running server and you should now yo
 
 ## Loading SANDBOX data
 
+No step is required to load sandbox data because the syndication mechanism will load it automatically.  This means it is possible to
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
 
 
-## Demonstrating the UI
+## Demonstrating the Server
 
 Now that we have data loaded, we can try a several curl commands to demonstrate
 basic function. Alternatively, you can

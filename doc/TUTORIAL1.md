@@ -116,7 +116,7 @@ specified data.  The entire runtime for this is about 1 min.
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
 
 
-## Demonstrating the UI
+## Demonstrating the Server
 
 Now that we have data loaded, we can try a several curl commands to demonstrate
 basic function. Alternatively, you can
