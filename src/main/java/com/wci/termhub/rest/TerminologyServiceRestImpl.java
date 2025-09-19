@@ -1906,6 +1906,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
 
+      logger.info("Computing tree positions for terminology: {}, publisher: {}, version: {}",
+          terminology, publisher, version);
+
       // Look up the terminology to make sure it exists
       final Terminology term =
           TerminologyUtility.getTerminology(searchService, terminology, publisher, version);

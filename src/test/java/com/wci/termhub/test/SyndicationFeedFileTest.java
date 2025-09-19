@@ -36,7 +36,7 @@ import com.wci.termhub.syndication.SyndicationFeedEntry;
  *
  */
 @SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-syndication-test.properties")
 public class SyndicationFeedFileTest {
 
   /** The logger. */
