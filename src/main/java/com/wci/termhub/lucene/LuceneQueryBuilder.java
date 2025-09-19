@@ -326,7 +326,7 @@ public final class LuceneQueryBuilder {
       // For @MultiField fields, include both the text field and keyword field
       final MultiField multiField = f.getAnnotation(MultiField.class);
       if (multiField != null) {
-        return Stream.of(f.getName(), f.getName() + ".keyword", f.getName() + ".ngram");
+        return Stream.of(f.getName(), f.getName() + ".ngram");
       }
       return Stream.of(f.getName());
     }).toList());

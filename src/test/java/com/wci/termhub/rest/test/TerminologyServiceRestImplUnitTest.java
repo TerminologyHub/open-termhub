@@ -1303,6 +1303,30 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
+   * Test concept search with browser handler.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testConceptSearchWithBrowserHandler() throws Exception {
+    final String url = "/concept?terminology=SNOMEDCT&query=diabetes mellitus"
+        + "&offset=0&limit=20&leaf=false&handler=browser";
+    LOGGER.info(" Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+    final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
+    assertThat(conceptList).isNotNull();
+    assertFalse(conceptList.getItems().isEmpty());
+    for (final Concept concept : conceptList.getItems()) {
+      assertThat(concept.getName().contains("diabetes"));
+      assertThat(concept.getName().contains("mellitus"));
+    }
+  }
+
+  /**
    * Test get subsets.
    *
    * @throws Exception the exception

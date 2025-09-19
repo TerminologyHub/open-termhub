@@ -175,7 +175,7 @@ public final class IndexUtility {
             break;
           case Keyword:
             indexableFields.add(
-                new StringField(indexName, stringValue, org.apache.lucene.document.Field.Store.NO));
+                new TextField(indexName, stringValue, org.apache.lucene.document.Field.Store.NO));
             if (isCollection) {
               indexableFields
                   .add(new SortedSetDocValuesField(indexName, new BytesRef(stringValue)));
@@ -294,8 +294,8 @@ public final class IndexUtility {
                   fieldValue.toString(), org.apache.lucene.document.Field.Store.NO));
               break;
             case Keyword:
-              // store as StringField (not TextField) for doc values / sorting
-              indexableFields.add(new StringField(indexName + "." + innerFieldAnnotation.suffix(),
+              // Use TextField to support phrase queries consistently
+              indexableFields.add(new TextField(indexName + "." + innerFieldAnnotation.suffix(),
                   fieldValue.toString(), org.apache.lucene.document.Field.Store.NO));
 
               if (isCollection) {
