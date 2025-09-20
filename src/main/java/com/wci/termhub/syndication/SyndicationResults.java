@@ -405,6 +405,11 @@ public final class SyndicationResults extends BaseModel {
     return message;
   }
 
+  /**
+   * Hash code.
+   *
+   * @return the int
+   */
   @Override
   public int hashCode() {
     return Objects.hash(codeSystemErrors, codeSystemLoaded, conceptMapErrors, conceptMapLoaded,
@@ -412,15 +417,24 @@ public final class SyndicationResults extends BaseModel {
         totalSkipped, totalToLoad, valueSetErrors, valueSetLoaded);
   }
 
+  /**
+   * Equals.
+   *
+   * @param obj the obj
+   * @return true, if successful
+   */
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
+  public boolean equals(final Object obj) {
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
-    SyndicationResults other = (SyndicationResults) obj;
+    }
+    final SyndicationResults other = (SyndicationResults) obj;
     return codeSystemErrors == other.codeSystemErrors && codeSystemLoaded == other.codeSystemLoaded
         && conceptMapErrors == other.conceptMapErrors && conceptMapLoaded == other.conceptMapLoaded
         && durationMs == other.durationMs && Objects.equals(errorMessages, other.errorMessages)

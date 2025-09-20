@@ -179,13 +179,6 @@ public class SyndicationManager {
       return false;
     }
 
-    // Use SyndicationContentType to determine the type
-    final SyndicationContentType contentType =
-        SyndicationContentType.fromSyndicationCategory(category);
-    if (contentType == null) {
-      return false;
-    }
-
     return true;
   }
 

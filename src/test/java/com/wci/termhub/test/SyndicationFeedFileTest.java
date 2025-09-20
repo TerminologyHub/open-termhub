@@ -19,12 +19,9 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.test.context.TestPropertySource;
 
-import com.wci.termhub.Application;
 import com.wci.termhub.syndication.SyndicationClient;
 import com.wci.termhub.syndication.SyndicationFeed;
 import com.wci.termhub.syndication.SyndicationFeedEntry;
@@ -35,14 +32,18 @@ import com.wci.termhub.syndication.SyndicationFeedEntry;
  * Parse a syndication feed file and find a suitable entry to download.
  *
  */
-@SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-syndication-test.properties")
+// Removed @SpringBootTest to make this a unit test instead of integration test
 public class SyndicationFeedFileTest {
 
   /** The logger. */
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(SyndicationFeedFileTest.class);
 
+  /**
+   * Test parse syndication file.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void testParseSyndicationFile() throws Exception {
 

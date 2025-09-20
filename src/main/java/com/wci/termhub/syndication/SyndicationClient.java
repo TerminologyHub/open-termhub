@@ -454,12 +454,12 @@ public class SyndicationClient {
    * Check if an entry is of the specified content type.
    *
    * @param entry the syndication feed entry
-   * @param contentType the content type to check
+   * @param resourceType the resource type
    * @return true if the entry is of the specified type
    */
   private boolean isEntryOfContentType(final SyndicationFeedEntry entry,
-    final SyndicationContentType contentType) {
-    if (entry == null || entry.getCategory() == null || contentType == null) {
+    final SyndicationContentType resourceType) {
+    if (entry == null || entry.getCategory() == null || resourceType == null) {
       return false;
     }
 
@@ -468,7 +468,7 @@ public class SyndicationClient {
       return false;
     }
 
-    return contentType.getSyndicationCategory().equalsIgnoreCase(category);
+    return resourceType.getResourceType().equalsIgnoreCase(category);
   }
 
   /**

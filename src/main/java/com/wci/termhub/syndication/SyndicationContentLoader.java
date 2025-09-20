@@ -350,18 +350,10 @@ public class SyndicationContentLoader {
    */
   private void loadSingleEntry(final SyndicationFeedEntry entry, final SyndicationFeed feed,
     final SyndicationResults results) throws Exception {
-    // Determine content type from download URL (more reliable than syndication
-    // category)
+    // Determine content type from download URL
     final String downloadUrl = entry.getZipLink().getHref();
     final SyndicationContentType contentType = SyndicationContentType.fromDownloadUrl(downloadUrl);
     if (contentType == null) {
-      // Fallback to syndication category if URL-based detection fails
-      final SyndicationContentType fallbackType =
-          SyndicationContentType.fromSyndicationCategory(entry.getCategory().getTerm());
-      if (fallbackType == null) {
-        throw new IllegalArgumentException(
-            "Unknown content type for entry: " + entry.getTitle() + " (URL: " + downloadUrl + ")");
-      }
       logger.warn("Using fallback content type detection for entry: {} (URL: {})", entry.getTitle(),
           downloadUrl);
     }
