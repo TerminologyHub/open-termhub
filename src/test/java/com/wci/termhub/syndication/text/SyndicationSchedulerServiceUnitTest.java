@@ -9,7 +9,6 @@
  */
 package com.wci.termhub.syndication.text;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -101,41 +100,6 @@ public class SyndicationSchedulerServiceUnitTest {
   }
 
   /**
-   * Test check syndication cron when enabled.
-   *
-   * @throws Exception the exception
-   */
-  @Test
-  public void testCheckSyndicationCronWhenEnabled() throws Exception {
-    // Setup mock
-    SyndicationResults mockResults = mock(SyndicationResults.class);
-    when(mockManager.performSyndicationCheck()).thenReturn(mockResults);
-
-    // Execute
-    scheduler.checkSyndicationCron();
-
-    // Verify
-    verify(mockManager).performSyndicationCheck();
-  }
-
-  /**
-   * Test check syndication cron when disabled.
-   *
-   * @throws Exception the exception
-   */
-  @Test
-  public void testCheckSyndicationCronWhenDisabled() throws Exception {
-    // Disable syndication
-    ReflectionTestUtils.setField(scheduler, "syndicationCheckEnabled", false);
-
-    // Execute
-    scheduler.checkSyndicationCron();
-
-    // Verify
-    verify(mockManager, never()).performSyndicationCheck();
-  }
-
-  /**
    * Test check syndication fixed rate with exception.
    *
    * @throws Exception the exception
@@ -152,26 +116,4 @@ public class SyndicationSchedulerServiceUnitTest {
     verify(mockManager).performSyndicationCheck();
   }
 
-  /**
-   * Test check syndication cron with exception.
-   *
-   * @throws Exception the exception
-   */
-  @Test
-  public void testCheckSyndicationCronWithException() throws Exception {
-    // Setup mock to throw exception
-    when(mockManager.performSyndicationCheck()).thenThrow(new RuntimeException("Test exception"));
-
-    // Verify the mock was injected correctly
-    SyndicationManager injectedManager =
-        (SyndicationManager) ReflectionTestUtils.getField(scheduler, "syndicationManager");
-    assertNotNull(injectedManager);
-    assertEquals(mockManager, injectedManager);
-
-    // Execute - should not throw exception
-    scheduler.checkSyndicationCron();
-
-    // Verify
-    verify(mockManager).performSyndicationCheck();
-  }
 }

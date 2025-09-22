@@ -208,12 +208,12 @@ public class SyndicationContentTracker {
    */
   public int getLoadedContentCount() {
     try {
-      final SearchParameters searchParams = new SearchParameters("*:*", 0, 0);
+      final SearchParameters searchParams = new SearchParameters("*:*", 1, 0);
       final ResultList<SyndicatedContent> results =
           searchService.find(searchParams, SyndicatedContent.class);
       return (int) results.getTotal();
     } catch (final Exception e) {
-      logger.error("Error getting loaded content count", e);
+      logger.debug("No syndicated content found in index", e);
       return 0;
     }
   }

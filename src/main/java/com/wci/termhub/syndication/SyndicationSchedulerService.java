@@ -40,35 +40,31 @@ public class SyndicationSchedulerService {
   @Value("${syndication.check.interval:1440m}")
   private String syndicationCheckInterval;
 
+  /** The syndication completed flag file. */
+  private static final String SYNDICATION_COMPLETED_FILE = "syndication.completed";
+
   /**
    * Scheduled syndication check using fixed rate interval. This method runs at
    * the configured interval for testing purposes.
    */
-  @Scheduled(fixedRateString = "${syndication.check.interval:1440m}")
+  @Scheduled(fixedRateString = "${syndication.check.interval:1440m}", initialDelayString = "0")
   public void checkSyndicationFixedRate() {
     if (!syndicationCheckEnabled) {
       logger.debug("Syndication check is disabled, skipping");
       return;
     }
 
-    logger.info("Starting scheduled syndication check (fixed rate: {})", syndicationCheckInterval);
-    performSyndicationCheck();
-  }
-
-  /**
-   * Scheduled syndication check using cron expression. This method runs daily
-   * at 2 AM for production use.
-   */
-  @Scheduled(cron = "${syndication.check.cron:0 0 2 * * ?}")
-  public void checkSyndicationCron() {
-    if (!syndicationCheckEnabled) {
-      logger.debug("Syndication check is disabled, skipping");
+    // Check if syndication was already completed (persistent check)
+    if (isSyndicationCompleted()) {
+      logger.debug("Initial syndication already completed, skipping scheduled check");
       return;
     }
 
-    logger.info("Starting scheduled syndication check (cron: daily at 2 AM)");
+    logger.info("Starting initial syndication check (fixed rate: {})", syndicationCheckInterval);
     performSyndicationCheck();
+    setSyndicationCompleted();
   }
+
 
   /**
    * Perform the actual syndication check.
@@ -115,5 +111,31 @@ public class SyndicationSchedulerService {
    */
   public SyndicationManager.SyndicationStatus getSyndicationStatus() {
     return syndicationManager.getSyndicationStatus();
+  }
+
+  /**
+   * Check if syndication was already completed (persistent check).
+   *
+   * @return true if syndication was completed
+   */
+  private boolean isSyndicationCompleted() {
+    try {
+      return new java.io.File(SYNDICATION_COMPLETED_FILE).exists();
+    } catch (final Exception e) {
+      logger.warn("Error checking syndication completion status", e);
+      return false;
+    }
+  }
+
+  /**
+   * Mark syndication as completed (persistent).
+   */
+  private void setSyndicationCompleted() {
+    try {
+      new java.io.File(SYNDICATION_COMPLETED_FILE).createNewFile();
+      logger.info("Syndication completion marked as persistent");
+    } catch (final Exception e) {
+      logger.error("Error marking syndication as completed", e);
+    }
   }
 }
