@@ -60,14 +60,14 @@ public class SyndicationManager {
       return new SyndicationResults(false, "Syndication check is disabled", 0, 0, 0, 0);
     }
 
-    // Check if syndication check is already in progress
-    if (syndicationCheckInProgress) {
-      logger.info("Syndication check is already in progress, skipping this request");
-      return new SyndicationResults(false, "Syndication check already in progress", 0, 0, 0, 0);
+    // Check if syndication check is already in progress and set lock atomically
+    synchronized (this) {
+      if (syndicationCheckInProgress) {
+        logger.info("Syndication check is already in progress, skipping this request");
+        return new SyndicationResults(false, "Syndication check already in progress", 0, 0, 0, 0);
+      }
+      syndicationCheckInProgress = true;
     }
-
-    // Set lock to prevent overlapping checks
-    syndicationCheckInProgress = true;
     logger.info("Starting syndication check and load process");
     final long startTime = System.currentTimeMillis();
 
