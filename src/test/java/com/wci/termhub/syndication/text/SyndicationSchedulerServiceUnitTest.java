@@ -46,6 +46,12 @@ public class SyndicationSchedulerServiceUnitTest {
     ReflectionTestUtils.setField(scheduler, "syndicationManager", mockManager);
     ReflectionTestUtils.setField(scheduler, "syndicationCheckEnabled", true);
 
+    // Reset syndication completion state for each test
+    java.io.File completionFile = new java.io.File("syndication.completed");
+    if (completionFile.exists()) {
+      completionFile.delete();
+    }
+
     // Verify the mock was injected correctly
     SyndicationManager injectedManager =
         (SyndicationManager) ReflectionTestUtils.getField(scheduler, "syndicationManager");
@@ -114,6 +120,26 @@ public class SyndicationSchedulerServiceUnitTest {
 
     // Verify
     verify(mockManager).performSyndicationCheck();
+  }
+
+  /**
+   * Test check syndication fixed rate one-time behavior.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testCheckSyndicationFixedRateOneTimeBehavior() throws Exception {
+    // Setup mock
+    SyndicationResults mockResults = mock(SyndicationResults.class);
+    when(mockManager.performSyndicationCheck()).thenReturn(mockResults);
+
+    // Execute first time - should run
+    scheduler.checkSyndicationFixedRate();
+    verify(mockManager).performSyndicationCheck();
+
+    // Execute second time - should skip
+    scheduler.checkSyndicationFixedRate();
+    verify(mockManager).performSyndicationCheck(); // Still only called once
   }
 
 }
