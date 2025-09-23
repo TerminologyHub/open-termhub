@@ -200,7 +200,10 @@ public class SyndicationManagerUnitTest {
     // Setup mocks
     SyndicationFeed mockFeed = mock(SyndicationFeed.class);
     when(mockFeed.getEntries()).thenReturn(new ArrayList<>());
-    when(mockClient.getFeed()).thenReturn(mockFeed);
+    when(mockClient.getFeed()).thenAnswer(inv -> {
+      Thread.sleep(200);
+      return mockFeed;
+    });
 
     // Start first check
     Thread firstCheck = new Thread(() -> {
