@@ -354,8 +354,10 @@ public class SyndicationContentLoader {
     final String downloadUrl = entry.getZipLink().getHref();
     final SyndicationContentType contentType = SyndicationContentType.fromDownloadUrl(downloadUrl);
     if (contentType == null) {
-      logger.warn("Using fallback content type detection for entry: {} (URL: {})", entry.getTitle(),
-          downloadUrl);
+      throw new Exception("Unable to determine content type = " + downloadUrl);
+      // logger.warn("Using fallback content type detection for entry: {} (URL: {})",
+      // entry.getTitle(),
+      // downloadUrl);
     }
 
     logger.info("Downloading and loading {} content: {} (version: {}) from URL: {}", contentType,

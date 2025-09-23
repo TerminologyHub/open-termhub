@@ -26,7 +26,6 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.4'
     id 'com.github.hierynomus.license' version '0.16.1'
     id 'com.github.spotbugs' version '6.0.26'
-    id 'com.diffplug.spotless' version '6.25.0'
     id 'jacoco'
     id 'checkstyle'
     id 'maven-publish'
@@ -262,27 +261,6 @@ checkstyleMain {
 checkstyleTest {
   reports {
     html.destination = file("$buildDir/reports/checkstyle.html")
-  }
-}
-
-spotless {
-  format 'misc', {
-    // define the files to apply `misc` to
-    target '*.gradle', '.gitattributes', '.gitignore'
-
-    // define the steps to apply to those files
-    trimTrailingWhitespace()
-    indentWithSpaces(2) // or spaces. Takes an integer argument if you don't like 4
-    endWithNewline()
-  }
-  java {
-    target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
-    // apply a specific flavor of google-java-forma
-    // .reorderImports(true)
-    googleJavaFormat('1.28.0').reflowLongStrings().formatJavadoc(true).groupArtifact('com.google.googlejavaformat:google-java-format')
-    removeUnusedImports()
-    // fix formatting of type annotations
-    // formatAnnotations()
   }
 }
 
