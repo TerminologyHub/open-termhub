@@ -212,8 +212,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(metadata.getModel()).isNotNull();
       assertThat(metadata.getCode()).isNotNull();
       /*
-       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US",
-       * "version":"20240301",
+       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20240301",
        * "publisher":"SANDBOX","model":"relationship","field":"uiLabel","code":
        * "Attributes","rank":0}
        */
@@ -1798,8 +1797,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test concept hierarchy fields for SNOMEDCT_US:73211009 - validates
-   * children, parents, descendants, ancestors are populated.
+   * Test concept hierarchy fields for SNOMEDCT_US:73211009 - validates children, parents,
+   * descendants, ancestors are populated.
    *
    * @throws Exception the exception
    */
@@ -1829,8 +1828,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertNotNull(concept.getAncestors(), "Ancestors list should not be null");
 
     /*
-     * "children": [
-     * {"local":false,"active":true,"name":"Disorder of cardiovascular system"
+     * "children": [ {"local":false,"active":true,"name":"Disorder of cardiovascular system"
      * ,"code":"49601007","terminology":"SNOMEDCT","version":"20240101",
      * "publisher":"SANDBOX","leaf":true,"defined":true},
      * {"local":false,"active":true,"name":"Disorder of breast","code":
