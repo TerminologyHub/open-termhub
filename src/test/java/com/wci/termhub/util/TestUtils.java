@@ -32,9 +32,6 @@ public class TestUtils {
                         }
                     }
                     if (startCodeBlock && line.startsWith("curl -s")) {
-                        // An example line is curl -s
-                        // "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal"
-                        // | jq. From this line I only want the resource. Strip out the curl, hostname and jq
                         String resource = line.substring(line.indexOf("http"));
                         resource = resource.substring(0, resource.indexOf("|")).trim();
                         // Remove the hostname part
