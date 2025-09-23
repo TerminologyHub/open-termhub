@@ -81,7 +81,7 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
 
   /* see superclass */
   @Override
-  public void addViewControllers(ViewControllerRegistry registry) {
+  public void addViewControllers(final ViewControllerRegistry registry) {
     // This view controller is the key to solving your problem.
     // It is a clean way to tell Spring to forward any path that doesn't
     // match a static resource or an API endpoint to the index.html file.
