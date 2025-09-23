@@ -1,6 +1,6 @@
 buildscript {
   ext {
-    springBootVersion = "3.4.9"
+    springBootVersion = "3.4.10"
   }
   repositories {
     mavenLocal()
@@ -57,6 +57,7 @@ java {
 
 // Ensure Spring Boot's dependency management is explicitly configured
 dependencyManagement {
+<<<<<<< HEAD
     imports {
         mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.9"
     }
@@ -67,6 +68,18 @@ dependencyManagement {
         // It was only done to handle trivy vulnerability without upgrading to 3.5 boot
         dependency('org.springframework:spring-core:6.2.11')
         dependency('org.springframework:spring-context:6.2.11')
+=======
+//    imports {
+//        mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.9"
+//    }
+    dependencies {
+        dependency('org.fhir:ucum:1.0.9')
+
+//        // NOTE: when spring version is updated, do NOT explicily do this
+//        // It was only done to handle trivy vulnerability without upgrading to 3.5 boot
+//        dependency('org.springframework:spring-core:6.2.11')
+//        dependency('org.springframework:spring-context:6.2.11')
+>>>>>>> develop
     }
 }
 
@@ -78,7 +91,7 @@ dependencies {
   implementation 'org.springframework:spring-core:6.2.11'
 
   // Vulnerability import
-  implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.44"
+  //implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.44"
 
   // prometheus
   implementation "io.micrometer:micrometer-registry-prometheus"
