@@ -26,7 +26,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpEntity;
@@ -49,8 +49,7 @@ import jakarta.xml.bind.JAXBException;
  * The Class SyndicationClient.
  */
 @Service
-@ConditionalOnProperty(prefix = "syndication.check", name = "enabled", havingValue = "true",
-    matchIfMissing = false)
+@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${syndication.token:}')")
 public class SyndicationClient {
 
   /** The logger. */

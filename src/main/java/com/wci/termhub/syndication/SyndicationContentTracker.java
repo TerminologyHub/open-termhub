@@ -15,7 +15,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 import com.wci.termhub.model.ResultList;
@@ -32,8 +32,7 @@ import com.wci.termhub.util.StringUtility;
  * contentItemVersion
  */
 @Service
-@ConditionalOnProperty(name = "syndication.check.enabled", havingValue = "true",
-    matchIfMissing = false)
+@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${syndication.token:}')")
 public class SyndicationContentTracker {
 
   /** The logger. */

@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +21,7 @@ import org.springframework.stereotype.Service;
  * Service for scheduled syndication checks.
  */
 @Service
-@ConditionalOnProperty(prefix = "syndication.check", name = "enabled", havingValue = "true",
-    matchIfMissing = false)
+@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${syndication.token:}')")
 public class SyndicationSchedulerService {
 
   /** The logger. */
@@ -31,10 +30,6 @@ public class SyndicationSchedulerService {
   /** The syndication manager. */
   @Autowired
   private SyndicationManager syndicationManager;
-
-  /** The syndication check enabled. */
-  @Value("${syndication.check.enabled:true}")
-  private boolean syndicationCheckEnabled;
 
   /** The syndication check interval. */
   @Value("${syndication.check.interval:1440m}")
@@ -49,11 +44,6 @@ public class SyndicationSchedulerService {
    */
   @Scheduled(fixedRateString = "${syndication.check.interval:1440m}", initialDelayString = "0")
   public void checkSyndicationFixedRate() {
-    if (!syndicationCheckEnabled) {
-      logger.debug("Syndication check is disabled, skipping");
-      return;
-    }
-
     // Check if syndication was already completed (persistent check)
     if (isSyndicationCompleted()) {
       logger.debug("Initial syndication already completed, skipping scheduled check");
@@ -65,7 +55,6 @@ public class SyndicationSchedulerService {
     setSyndicationCompleted();
   }
 
-
   /**
    * Perform the actual syndication check.
    */
@@ -74,8 +63,7 @@ public class SyndicationSchedulerService {
 
       // Use the syndication manager to perform the complete check and load
       // process
-      final SyndicationResults results =
-          syndicationManager.performSyndicationCheck();
+      final SyndicationResults results = syndicationManager.performSyndicationCheck();
 
       if (results.isSuccess()) {
         logger.info(

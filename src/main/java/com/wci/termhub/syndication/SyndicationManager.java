@@ -11,19 +11,18 @@ package com.wci.termhub.syndication;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 /**
  * Manager service that orchestrates the entire syndication process.
  */
 @Service
-@ConditionalOnProperty(prefix = "syndication.check", name = "enabled", havingValue = "true",
-    matchIfMissing = false)
+@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${syndication.token:}')")
 public class SyndicationManager {
 
   /** The logger. */
@@ -41,9 +40,9 @@ public class SyndicationManager {
   @Autowired
   private SyndicationContentLoader contentLoader;
 
-  /** The syndication check enabled. */
-  @Value("${syndication.check.enabled:true}")
-  private boolean syndicationCheckEnabled;
+  /** The token. */
+  @Autowired
+  private String syndicationToken;
 
   /** The syndication check in progress lock. */
   private volatile boolean syndicationCheckInProgress = false;
@@ -55,10 +54,6 @@ public class SyndicationManager {
    * @throws Exception the exception
    */
   public SyndicationResults performSyndicationCheck() throws Exception {
-    if (!syndicationCheckEnabled) {
-      logger.info("Syndication check is disabled, skipping");
-      return new SyndicationResults(false, "Syndication check is disabled", 0, 0, 0, 0);
-    }
 
     // Check if syndication check is already in progress and set lock atomically
     synchronized (this) {
@@ -188,7 +183,8 @@ public class SyndicationManager {
    * @return the syndication status
    */
   public SyndicationStatus getSyndicationStatus() {
-    return new SyndicationStatus(syndicationCheckEnabled);
+    final boolean enabled = StringUtils.isNotBlank(syndicationToken);
+    return new SyndicationStatus(enabled);
   }
 
   /**

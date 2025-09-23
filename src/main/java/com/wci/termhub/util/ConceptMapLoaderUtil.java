@@ -53,6 +53,22 @@ public final class ConceptMapLoaderUtil {
   public static Mapset loadConceptMap(final EntityRepositoryService service,
     final String conceptMap) throws Exception {
 
+    final JsonNode jsonContent = ThreadLocalMapper.get().readTree(conceptMap);
+    return indexConceptMap(service, jsonContent, 1000, -1);
+
+  }
+
+  /**
+   * Load concept map from a JSON file and save it using the repository service.
+   *
+   * @param service the repository service to use for saving
+   * @param conceptMap the concept map
+   * @return the mapset
+   * @throws Exception if there is an error reading or processing the file
+   */
+  public static Mapset loadConceptMap(final EntityRepositoryService service,
+    final JsonNode conceptMap) throws Exception {
+
     return indexConceptMap(service, conceptMap, 1000, -1);
 
   }
@@ -68,34 +84,30 @@ public final class ConceptMapLoaderUtil {
    * @throws Exception the exception
    */
   private static Mapset indexConceptMap(final EntityRepositoryService service,
-    final String conceptMap, final int batchSize, final int limit) throws Exception {
+    final JsonNode conceptMap, final int batchSize, final int limit) throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
     try {
-
-      // Read the entire file as a JSON object
-      final JsonNode root = ThreadLocalMapper.get().readTree(conceptMap);
-
-      LOGGER.info("Indexing ConceptMap {}: ", root.path("title"));
+      LOGGER.info("Indexing ConceptMap {}: ", conceptMap.path("title"));
 
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
       }
 
-      Mapset mapset = getMapset(service, root);
+      Mapset mapset = getMapset(service, conceptMap);
       if (mapset != null) {
         throw new Exception("Can not create multiple ConceptMap resources with ConceptMap from "
             + mapset.getFromTerminology() + " to " + mapset.getToTerminology()
             + ", already have one with resource ID: ConceptMap/" + mapset.getId());
       }
 
-      mapset = createMapset(service, root);
+      mapset = createMapset(service, conceptMap);
 
       int mappingCount = 0;
 
       // process concept map array
-      final JsonNode groupArray = root.path("group");
+      final JsonNode groupArray = conceptMap.path("group");
       for (final JsonNode groupNode : groupArray) {
 
         for (final JsonNode elementNode : groupNode.path("element")) {
@@ -309,7 +321,8 @@ public final class ConceptMapLoaderUtil {
     // Store the original URIs in attributes
     mapset.setUri(root.path("url").asText());
 
-    // LOGGER.info(" terminology URIs: source={}, target={}", mapset.getFromTerminology(),
+    // LOGGER.info(" terminology URIs: source={}, target={}",
+    // mapset.getFromTerminology(),
     // mapset.getToTerminology());
 
     // LOGGER.info("ConceptMapLoaderUtil: mapset: {}", mapset);

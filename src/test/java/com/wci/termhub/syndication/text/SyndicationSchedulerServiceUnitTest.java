@@ -11,7 +11,6 @@ package com.wci.termhub.syndication.text;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,7 +43,6 @@ public class SyndicationSchedulerServiceUnitTest {
 
     // Inject mock using reflection - ensure the field is properly set
     ReflectionTestUtils.setField(scheduler, "syndicationManager", mockManager);
-    ReflectionTestUtils.setField(scheduler, "syndicationCheckEnabled", true);
 
     // Reset syndication completion state for each test
     java.io.File completionFile = new java.io.File("syndication.completed");
@@ -86,23 +84,6 @@ public class SyndicationSchedulerServiceUnitTest {
 
     // Verify
     verify(mockManager).performSyndicationCheck();
-  }
-
-  /**
-   * Test check syndication fixed rate when disabled.
-   *
-   * @throws Exception the exception
-   */
-  @Test
-  public void testCheckSyndicationFixedRateWhenDisabled() throws Exception {
-    // Disable syndication
-    ReflectionTestUtils.setField(scheduler, "syndicationCheckEnabled", false);
-
-    // Execute
-    scheduler.checkSyndicationFixedRate();
-
-    // Verify
-    verify(mockManager, never()).performSyndicationCheck();
   }
 
   /**

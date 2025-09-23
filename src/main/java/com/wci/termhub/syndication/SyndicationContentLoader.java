@@ -10,8 +10,8 @@
 package com.wci.termhub.syndication;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,9 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.ResultList;
@@ -43,8 +44,7 @@ import com.wci.termhub.util.ValueSetLoaderUtil;
  * Service for loading syndication content into the application.
  */
 @Service
-@ConditionalOnProperty(prefix = "syndication.check", name = "enabled", havingValue = "true",
-    matchIfMissing = false)
+@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${syndication.token:}')")
 public class SyndicationContentLoader {
 
   /** The logger. */
@@ -121,17 +121,17 @@ public class SyndicationContentLoader {
       throw new IOException("File does not exist: " + filePath);
     }
 
-    final String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+    final JsonNode jsonContent = readFile(file);
 
     switch (contentType) {
       case CODESYSTEM:
-        loadCodeSystem(content);
+        loadCodeSystem(jsonContent);
         break;
       case VALUESET:
-        loadValueSet(content);
+        loadValueSet(jsonContent.toString());
         break;
       case CONCEPTMAP:
-        loadConceptMap(content);
+        loadConceptMap(jsonContent.toString());
         break;
       default:
         throw new IllegalArgumentException("Unknown content type: " + contentType);
@@ -144,7 +144,7 @@ public class SyndicationContentLoader {
    * @param content the JSON content
    * @throws Exception the exception
    */
-  private void loadCodeSystem(final String content) throws Exception {
+  private void loadCodeSystem(final JsonNode content) throws Exception {
     logger.debug("Loading CodeSystem content");
     CodeSystemLoaderUtil.loadCodeSystem(searchService, content, enablePostLoadComputations);
   }
@@ -381,7 +381,7 @@ public class SyndicationContentLoader {
       }
 
       // Check if file is a ZIP file and extract if necessary
-      final String fileContent;
+      final JsonNode jsonFileContent;
       if (downloadedFile.getName().endsWith(".zip") || isZipFile(downloadedFile)) {
         logger.info("Downloaded file is a ZIP file, extracting...");
         final File extractDir = Files
@@ -396,28 +396,21 @@ public class SyndicationContentLoader {
         }
 
         logger.info("Found JSON file in ZIP: {}", jsonFile.getName());
-        fileContent = FileUtils.readFileToString(jsonFile, StandardCharsets.UTF_8);
+        jsonFileContent = readFile(jsonFile);
 
         // Clean up extracted files
         FileUtils.deleteDirectory(extractDir);
       } else {
         // Read file content directly
-        fileContent = FileUtils.readFileToString(downloadedFile, StandardCharsets.UTF_8);
+        jsonFileContent = readFile(downloadedFile);
       }
-
-      // Log file content for debugging
-      logger.info("Processing file content length: {} characters", fileContent.length());
-      final String preview =
-          fileContent.length() > 200 ? fileContent.substring(0, 200) + "..." : fileContent;
-      logger.info("File content preview: {}", preview);
 
       // Use URL-based content type for loading (more reliable than JSON content
       // type)
       final String resourceType = contentType.getResourceType();
 
       // Verify JSON content type matches expected type
-      final JsonNode root = ThreadLocalMapper.get().readTree(fileContent);
-      final String actualResourceType = root.path("resourceType").asText();
+      final String actualResourceType = jsonFileContent.path("resourceType").asText();
 
       logger.info("URL-based content type: {}, JSON content type: {}", resourceType,
           actualResourceType);
@@ -425,7 +418,7 @@ public class SyndicationContentLoader {
       // Load content based on URL-determined resource type
       switch (resourceType) {
         case "CodeSystem":
-          CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent,
+          CodeSystemLoaderUtil.loadCodeSystem(searchService, jsonFileContent,
               enablePostLoadComputations);
           results.incrementCodeSystemsLoaded();
           logger.info("Successfully loaded CodeSystem from file: {}", filePath);
@@ -435,7 +428,7 @@ public class SyndicationContentLoader {
               syndicationClient.getSyndicationUrl());
           break;
         case "ValueSet":
-          ValueSetLoaderUtil.loadSubset(searchService, fileContent, true);
+          ValueSetLoaderUtil.loadSubset(searchService, jsonFileContent.toString(), true);
           results.incrementValueSetsLoaded();
           logger.info("Successfully loaded ValueSet from file: {}", filePath);
           // Mark as loaded in tracker
@@ -444,7 +437,7 @@ public class SyndicationContentLoader {
               syndicationClient.getSyndicationUrl());
           break;
         case "ConceptMap":
-          ConceptMapLoaderUtil.loadConceptMap(searchService, fileContent);
+          ConceptMapLoaderUtil.loadConceptMap(searchService, jsonFileContent);
           results.incrementConceptMapsLoaded();
           logger.info("Successfully loaded ConceptMap from file: {}", filePath);
           // Mark as loaded in tracker
@@ -495,9 +488,10 @@ public class SyndicationContentLoader {
    * @return true if the file appears to be a ZIP file
    */
   private boolean isZipFile(final File file) {
-    try {
-      final String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-      return content.startsWith("PK");
+    try (final FileInputStream fis = new FileInputStream(file)) {
+      final byte[] header = new byte[2];
+      final int bytesRead = fis.read(header);
+      return bytesRead >= 2 && header[0] == 'P' && header[1] == 'K';
     } catch (final IOException e) {
       logger.warn("Error checking if file is ZIP: {}", file.getName(), e);
       return false;
@@ -532,5 +526,19 @@ public class SyndicationContentLoader {
       }
     }
     return null;
+  }
+
+  /**
+   * Read file.
+   *
+   * @param jsonFile the json file
+   * @return the json node
+   * @throws Exception the exception
+   */
+  private JsonNode readFile(final File jsonFile) throws Exception {
+    try (final FileInputStream fis = new FileInputStream(jsonFile);
+        final JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(fis)) {
+      return parser.readValueAsTree();
+    }
   }
 }

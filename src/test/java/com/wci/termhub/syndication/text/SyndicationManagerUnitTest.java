@@ -67,7 +67,6 @@ public class SyndicationManagerUnitTest {
     ReflectionTestUtils.setField(manager, "syndicationClient", mockClient);
     ReflectionTestUtils.setField(manager, "contentTracker", mockTracker);
     ReflectionTestUtils.setField(manager, "contentLoader", mockLoader);
-    ReflectionTestUtils.setField(manager, "syndicationCheckEnabled", true);
   }
 
   /**
@@ -94,7 +93,8 @@ public class SyndicationManagerUnitTest {
     when(mockFeed.getEntries()).thenReturn(entries);
 
     // Mock the entry with a valid category
-    when(mockEntry.getCategory()).thenReturn(mock(com.wci.termhub.syndication.SyndicationCategory.class));
+    when(mockEntry.getCategory())
+        .thenReturn(mock(com.wci.termhub.syndication.SyndicationCategory.class));
     when(mockEntry.getCategory().getTerm()).thenReturn("CODESYSTEM_FHIRR5_ALL");
 
     when(mockClient.getFeed()).thenReturn(mockFeed);
@@ -111,27 +111,6 @@ public class SyndicationManagerUnitTest {
     assertTrue(result.isSuccess());
     verify(mockClient).getFeed();
     verify(mockLoader).loadContent(anyList(), any(SyndicationFeed.class));
-  }
-
-  /**
-   * Test check syndication when disabled.
-   *
-   * @throws Exception the exception
-   */
-  @Test
-  public void testCheckSyndicationWhenDisabled() throws Exception {
-    // Disable syndication
-    ReflectionTestUtils.setField(manager, "syndicationCheckEnabled", false);
-
-    // Execute
-    SyndicationResults result = manager.performSyndicationCheck();
-
-    // Verify
-    assertNotNull(result);
-    assertFalse(result.isSuccess());
-    assertEquals("Syndication check is disabled", result.getMessage());
-    verify(mockClient, never()).getFeed();
-    verify(mockLoader, never()).loadContent(anyList(), any(SyndicationFeed.class));
   }
 
   /**

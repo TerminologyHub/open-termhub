@@ -177,7 +177,7 @@ public class TerminologyCache {
     // Warn if inactive
     else {
       logger
-          .warn("  Unexpected inactive targetComponentId of historical relationship = " + newCode);
+          .debug("  Unexpected inactive targetComponentId of historical relationship = " + newCode);
     }
   }
 
