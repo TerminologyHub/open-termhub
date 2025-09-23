@@ -242,7 +242,7 @@ public class SyndicationClient {
               }
               try {
                 StreamUtility.copyWithProgress(clientHttpResponse.getBody(), outputStream, length,
-                    "Download progress:");
+                    "Download progress = ");
               } catch (final Exception e) {
                 logger.error("Failed to download file from syndication service.", e);
               }
@@ -336,7 +336,7 @@ public class SyndicationClient {
                 : Integer.parseInt(lengthString.replace(",", ""));
             try {
               StreamUtility.copyWithProgress(clientHttpResponse.getBody(), outputStream, length,
-                  "Download progress:");
+                  "Download progress = ");
             } catch (final Exception e) {
               logger.error("Failed to download file from syndication service.", e);
             }
