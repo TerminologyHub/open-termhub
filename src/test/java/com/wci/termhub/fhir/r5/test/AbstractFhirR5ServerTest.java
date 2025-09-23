@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -33,7 +34,8 @@ import com.wci.termhub.test.AbstractServerTest;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestPropertySource(properties = {
+@ActiveProfiles("test")
+@TestPropertySource(locations = "classpath:application-test.properties", properties = {
     "lucene.index.directory=build/index/lucene-fhir-r5"
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

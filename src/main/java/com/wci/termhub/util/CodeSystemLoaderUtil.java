@@ -69,21 +69,38 @@ public final class CodeSystemLoaderUtil {
   public static String loadCodeSystem(final EntityRepositoryService service, final String content,
     final boolean computeTreePositions) throws Exception {
 
-    return indexCodeSystem(service, content, -1, computeTreePositions);
+    final JsonNode jsonContent = ThreadLocalMapper.get().readTree(content);
+    return indexCodeSystem(service, jsonContent, -1, computeTreePositions);
+  }
+
+  /**
+   * Load concepts from CodeSystem format JSON.
+   *
+   * @param service the service
+   * @param jsonContent the json content
+   * @param computeTreePositions whether to compute tree positions
+   * @return the string
+   * @throws Exception the exception
+   */
+  public static String loadCodeSystem(final EntityRepositoryService service,
+    final JsonNode jsonContent, final boolean computeTreePositions) throws Exception {
+
+    return indexCodeSystem(service, jsonContent, -1, computeTreePositions);
   }
 
   /**
    * Index concepts from CodeSystem format JSON.
    *
    * @param service the service
-   * @param content the content
+   * @param jsonContent the json content
    * @param limit the limit
    * @param computeTreePositions whether to compute tree positions
    * @return the string
    * @throws Exception the exception
    */
-  private static String indexCodeSystem(final EntityRepositoryService service, final String content,
-    final int limit, final boolean computeTreePositions) throws Exception {
+  private static String indexCodeSystem(final EntityRepositoryService service,
+    final JsonNode jsonContent, final int limit, final boolean computeTreePositions)
+    throws Exception {
 
     final long startTime = System.currentTimeMillis();
     final List<ConceptRelationship> relationshipBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
@@ -93,18 +110,14 @@ public final class CodeSystemLoaderUtil {
     final TerminologyCache terminologyCache = new TerminologyCache();
 
     try {
-
-      // Read the entire file as a JSON object
-      final JsonNode root = ThreadLocalMapper.get().readTree(content);
-
-      LOGGER.info("Indexing CodeSystem {}: ", root.path("title"));
+      LOGGER.info("Indexing CodeSystem {}: ", jsonContent.path("title"));
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
       }
 
-      final String abbreviation = root.path("title").asText();
-      final String publisher = root.path("publisher").asText();
-      String version = root.path("version").asText();
+      final String abbreviation = jsonContent.path("title").asText();
+      final String publisher = jsonContent.path("publisher").asText();
+      String version = jsonContent.path("version").asText();
       Terminology terminology = getTerminology(service, abbreviation, publisher, version);
 
       if (terminology != null) {
@@ -114,11 +127,11 @@ public final class CodeSystemLoaderUtil {
       }
 
       // Create the terminology
-      terminology = createTerminology(service, root, computeTreePositions);
+      terminology = createTerminology(service, jsonContent, computeTreePositions);
       id = terminology.getId();
 
       // Extract metadata from root
-      final List<Metadata> metadataList = createMetadata(terminology, root);
+      final List<Metadata> metadataList = createMetadata(terminology, jsonContent);
       if (metadataList != null && !metadataList.isEmpty()) {
         for (final Metadata metadata : metadataList) {
           service.add(Metadata.class, metadata);
@@ -130,7 +143,7 @@ public final class CodeSystemLoaderUtil {
       }
 
       // Process concepts array
-      final JsonNode concepts = root.path("concept");
+      final JsonNode concepts = jsonContent.path("concept");
       int conceptCount = 0;
       int relationshipCount = 0;
       int termCount = 0;
@@ -643,9 +656,6 @@ public final class CodeSystemLoaderUtil {
             concept.setName(term.getName());
           }
         }
-      } else {
-        LOGGER.warn("Unsupported terminology: {}. Using basic term processing.",
-            terminology.getAbbreviation());
       }
 
       terms.add(term);

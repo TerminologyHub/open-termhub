@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.wci.termhub.Application;
 import com.wci.termhub.model.ResultList;
@@ -38,6 +39,7 @@ import com.wci.termhub.service.EntityRepositoryService;
  * The Class TermUnitTest.
  */
 @SpringBootTest(classes = Application.class)
+@ActiveProfiles("test")
 @TestMethodOrder(OrderAnnotation.class)
 public class TermUnitTest extends AbstractClassTest {
 

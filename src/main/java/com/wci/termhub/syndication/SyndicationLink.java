@@ -18,6 +18,9 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlType
 public class SyndicationLink {
 
+  /**
+   * The Enum RelType.
+   */
   public enum RelType {
     /** The alternate. */
     alternate,

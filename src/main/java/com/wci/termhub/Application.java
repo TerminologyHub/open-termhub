@@ -30,6 +30,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.open.configuration.ApplicationProperties;
+import com.wci.termhub.syndication.SyndicationContentTracker;
 import com.wci.termhub.util.AdhocUtility;
 import com.wci.termhub.util.ModelUtility;
 
@@ -51,6 +52,10 @@ public class Application extends SpringBootServletInitializer {
   /** The application properties. */
   @Autowired
   private ApplicationProperties applicationProperties;
+
+  /** The content tracker. */
+  @Autowired(required = false)
+  private SyndicationContentTracker contentTracker;
 
   /**
    * The main method.
@@ -75,7 +80,7 @@ public class Application extends SpringBootServletInitializer {
     }
 
     // Log start of application
-    logger.debug("OPEN TERMHUB TERMINOLOGY APPLICATION START");
+    logger.info("OPEN TERMHUB TERMINOLOGY APPLICATION START");
   }
 
   /**
@@ -97,12 +102,22 @@ public class Application extends SpringBootServletInitializer {
    */
   private void bootstrap() throws Exception {
 
+    logger.info("Index directory: {}", applicationProperties.getProperty("lucene.index.directory"));
+
     final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
     final LuceneDataAccess luceneDataAccess = new LuceneDataAccess();
     luceneDataAccess.setApplicationProperties(applicationProperties);
 
     for (final Class<? extends HasId> clazz : indexedObjects) {
       luceneDataAccess.createIndex(clazz);
+    }
+
+    // Initialize content tracker (only if syndication is enabled)
+    if (contentTracker != null) {
+      contentTracker.initialize();
+      logger.info("Content tracker initialized with {} loaded items", contentTracker.getLoadedContentCount());
+    } else {
+      logger.info("Content tracker not available (syndication disabled)");
     }
   }
 }

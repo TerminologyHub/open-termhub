@@ -16,7 +16,6 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -27,6 +26,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpEntity;
@@ -49,6 +49,7 @@ import jakarta.xml.bind.JAXBException;
  * The Class SyndicationClient.
  */
 @Service
+@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${syndication.token:}')")
 public class SyndicationClient {
 
   /** The logger. */
@@ -63,6 +64,9 @@ public class SyndicationClient {
   /** The jwt. */
   private final String token;
 
+  /** The syndication URL. */
+  private final String syndicationUrl;
+
   /**
    * Instantiates a new syndication client.
    *
@@ -73,6 +77,8 @@ public class SyndicationClient {
   public SyndicationClient(@Qualifier("syndicationUrl") final String url,
       @Qualifier("syndicationToken") final String token) throws JAXBException {
 
+    this.syndicationUrl = url;
+    this.token = token;
     restTemplate = new RestTemplateBuilder().rootUri(url)
         .messageConverters(new StringHttpMessageConverter()).build();
     jaxbContext = JAXBContext.newInstance(SyndicationFeed.class);
@@ -81,8 +87,15 @@ public class SyndicationClient {
     logger.info("Syndication client configured with Token: {}",
         Strings.isBlank(token) ? "No" : "Yes");
 
-    this.token = token;
+  }
 
+  /**
+   * Gets the syndication URL.
+   *
+   * @return the syndication URL
+   */
+  public String getSyndicationUrl() {
+    return syndicationUrl;
   }
 
   /**
@@ -93,7 +106,7 @@ public class SyndicationClient {
    */
   public SyndicationFeed getFeed() throws Exception {
 
-    logger.info("Loading syndication feed");
+    logger.info("Fetching syndication feed");
     final HttpHeaders headers = new HttpHeaders();
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_XML));
     headers.setBearerAuth(getSyndicationCredentials());
@@ -106,7 +119,7 @@ public class SyndicationClient {
       logger.error("Failed to retrieve syndication feed: Body is null");
       throw new RuntimeException("Syndication feed body is null");
     }
-
+    logger.info("Syndication feed content:\n{}", body);
     return parseFeed(body);
   }
 
@@ -124,10 +137,16 @@ public class SyndicationClient {
       final String xmlBody = xml.replace("xmlns=\"http://www.w3.org/2005/Atom\"", "");
       final SyndicationFeed feed =
           (SyndicationFeed) jaxbContext.createUnmarshaller().unmarshal(new StringReader(xmlBody));
-      final List<SyndicationFeedEntry> sortedEntries = new ArrayList<>(feed.getEntries());
-      sortedEntries.sort(Comparator.comparing(SyndicationFeedEntry::getContentItemVersion,
-          Comparator.reverseOrder()));
-      feed.setEntries(sortedEntries);
+
+      logger.debug("Parsed syndication feed successfully. Found {} entries",
+          feed.getEntries().size());
+      for (int i = 0; i < feed.getEntries().size(); i++) {
+        final SyndicationFeedEntry entry = feed.getEntries().get(i);
+        logger.info("Entry {}: Title='{}', Category='{}', Version='{}', ID='{}'", i + 1,
+            entry.getTitle(), entry.getCategory() != null ? entry.getCategory().getTerm() : "null",
+            entry.getContentItemVersion(), entry.getContentItemIdentifier());
+      }
+
       return feed;
 
     } catch (final JAXBException e) {
@@ -174,7 +193,11 @@ public class SyndicationClient {
 
     final String syndicationCredentials = getSyndicationCredentials();
     final Set<Pair<SyndicationFeedEntry, SyndicationLink>> packageUrls = new LinkedHashSet<>();
-    gatherPackageUrls(entry.getContentItemVersion(), feed.getEntries(), packageUrls);
+    // Only download the specific entry, not all entries with matching versions
+    final SyndicationLink zipLink = entry.getZipLink();
+    if (zipLink != null && entry.getCategory() != null) {
+      packageUrls.add(Pair.of(entry, zipLink));
+    }
     if (!packageUrls.isEmpty()) {
       final Set<String> packageFilePaths = new HashSet<>();
       logger.info("Matched the following packages:");
@@ -185,19 +208,28 @@ public class SyndicationClient {
       try {
         for (final Pair<SyndicationFeedEntry, SyndicationLink> packageEntry : packageUrls) {
           final SyndicationLink packageLink = packageEntry.getSecond();
-          logger.info("Downloading package {} file {}",
-              packageEntry.getFirst().getContentItemVersion(), packageLink.getHref());
+          final String normalizedUrl = normalizeUrl(packageLink.getHref());
+          logger.info("Downloading package {} file {} (normalized: {})",
+              packageEntry.getFirst().getContentItemVersion(), packageLink.getHref(),
+              normalizedUrl);
 
           // Test credentials and download link using OPTIONS request
           final HttpHeaders headers = new HttpHeaders();
           headers.setBearerAuth(syndicationCredentials);
-          restTemplate.exchange(packageLink.getHref(), HttpMethod.OPTIONS,
-              new HttpEntity<Void>(headers), Void.class);
+          headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
+          logger.debug("Testing credentials with OPTIONS request to: {}", normalizedUrl);
+          logger.debug("Using credentials: {}", syndicationCredentials != null ? "***"
+              + syndicationCredentials.substring(Math.max(0, syndicationCredentials.length() - 4))
+              : "null");
+          restTemplate.exchange(normalizedUrl, HttpMethod.OPTIONS, new HttpEntity<Void>(headers),
+              Void.class);
 
           final File outputFile =
               Files.createTempFile(UUID.randomUUID().toString(), ".zip").toFile();
-          restTemplate.execute(packageLink.getHref(), HttpMethod.GET, request -> {
+          restTemplate.execute(normalizedUrl, HttpMethod.GET, request -> {
             request.getHeaders().setBearerAuth(syndicationCredentials);
+            request.getHeaders()
+                .setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
           }, clientHttpResponse -> {
             try (final FileOutputStream outputStream = new FileOutputStream(outputFile)) {
               final String lengthString = packageLink.getLength();
@@ -209,7 +241,7 @@ public class SyndicationClient {
               }
               try {
                 StreamUtility.copyWithProgress(clientHttpResponse.getBody(), outputStream, length,
-                    "Download progress: %s%%");
+                    "Download progress = ");
               } catch (final Exception e) {
                 logger.error("Failed to download file from syndication service.", e);
               }
@@ -220,12 +252,28 @@ public class SyndicationClient {
           packageFilePaths.add(outputFile.getAbsolutePath());
         }
       } catch (final HttpClientErrorException e) {
+        logger.error("HTTP error downloading package: Status={}, Response={}",
+            e.getStatusCode().value(), e.getResponseBodyAsString());
         throw new RestException(false, e.getStatusCode().value(), "HTTP_ERROR",
             e.getResponseBodyAsString());
       }
       return packageFilePaths;
     }
     return Collections.emptySet();
+  }
+
+  /**
+   * Normalize URL by converting format parameter to lowercase.
+   *
+   * @param url the original URL
+   * @return the normalized URL
+   */
+  private String normalizeUrl(final String url) {
+    if (url == null) {
+      return null;
+    }
+    // Convert format=R5 to format=r5 and format=R4 to format=r4
+    return url.replaceAll("format=R([45])", "format=r$1");
   }
 
   /**
@@ -236,42 +284,14 @@ public class SyndicationClient {
    */
   private String getSyndicationCredentials() throws Exception {
     if (!Strings.isBlank(token)) {
+      logger.debug("Using syndication token: ***{}",
+          token.substring(Math.max(0, token.length() - 4)));
       return token;
     }
-    throw new Exception("Token is not set.");
-  }
-
-  /**
-   * Gather package urls.
-   *
-   * @param loadVersionUri the load version uri
-   * @param sortedEntries the sorted entries
-   * @param downloadList the download list
-   */
-  private void gatherPackageUrls(final String loadVersionUri,
-    final List<SyndicationFeedEntry> sortedEntries,
-    final Set<Pair<SyndicationFeedEntry, SyndicationLink>> downloadList) {
-
-    for (final SyndicationFeedEntry entry : sortedEntries) {
-      final SyndicationLink zipLink = entry.getZipLink();
-      if (zipLink != null && entry.getCategory() != null
-          && (entry.getContentItemVersion().equals(loadVersionUri)
-              || entry.getContentItemIdentifier().equals(loadVersionUri))) {
-        downloadList.add(Pair.of(entry, zipLink));
-        final SyndicationDependency packageDependency = entry.getPackageDependency();
-        if (packageDependency != null) {
-          if (packageDependency.getEditionDependency() != null) {
-            gatherPackageUrls(packageDependency.getEditionDependency(), sortedEntries,
-                downloadList);
-          }
-          if (packageDependency.getDerivativeDependency() != null) {
-            for (final String dependencyUri : packageDependency.getDerivativeDependency()) {
-              gatherPackageUrls(dependencyUri, sortedEntries, downloadList);
-            }
-          }
-        }
-      }
-    }
+    logger.error("Syndication token is not set. "
+        + "Please set the PROJECT_API_KEY environment variable or syndication.token property.");
+    throw new Exception("Syndication token is not set. "
+        + "Please set the PROJECT_API_KEY environment variable or syndication.token property.");
   }
 
   /**
@@ -292,18 +312,22 @@ public class SyndicationClient {
     for (final SyndicationFeedEntry entry : feed.getEntries()) {
       final SyndicationLink zipLink = entry.getZipLink();
       if (zipLink != null) {
-        logger.info("Downloading package {} file {}", entry.getContentItemVersion(),
-            zipLink.getHref());
+        final String normalizedUrl = normalizeUrl(zipLink.getHref());
+        logger.info("Downloading package {} file {} (normalized: {})",
+            entry.getContentItemVersion(), zipLink.getHref(), normalizedUrl);
 
         // Test credentials and download link using OPTIONS request
         final HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(syndicationCredentials);
-        restTemplate.exchange(zipLink.getHref(), HttpMethod.OPTIONS, new HttpEntity<Void>(headers),
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
+        restTemplate.exchange(normalizedUrl, HttpMethod.OPTIONS, new HttpEntity<Void>(headers),
             Void.class);
 
         final File outputFile = Files.createTempFile(UUID.randomUUID().toString(), ".zip").toFile();
-        restTemplate.execute(zipLink.getHref(), HttpMethod.GET, request -> {
+        restTemplate.execute(normalizedUrl, HttpMethod.GET, request -> {
           request.getHeaders().setBearerAuth(syndicationCredentials);
+          request.getHeaders()
+              .setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
         }, clientHttpResponse -> {
           try (final FileOutputStream outputStream = new FileOutputStream(outputFile)) {
             final String lengthString = zipLink.getLength();
@@ -311,7 +335,7 @@ public class SyndicationClient {
                 : Integer.parseInt(lengthString.replace(",", ""));
             try {
               StreamUtility.copyWithProgress(clientHttpResponse.getBody(), outputStream, length,
-                  "Download progress: %s%%");
+                  "Download progress = ");
             } catch (final Exception e) {
               logger.error("Failed to download file from syndication service.", e);
             }
@@ -324,4 +348,177 @@ public class SyndicationClient {
     }
     return downloadedFiles;
   }
+
+  /**
+   * Get syndication feed entries filtered by content type.
+   *
+   * @param feed the syndication feed
+   * @param contentType the content type to filter by
+   * @return the filtered entries
+   */
+  public List<SyndicationFeedEntry> getEntriesByContentType(final SyndicationFeed feed,
+    final SyndicationContentType contentType) {
+
+    if (feed == null || feed.getEntries() == null || contentType == null) {
+      return Collections.emptyList();
+    }
+
+    final List<SyndicationFeedEntry> filteredEntries = new ArrayList<>();
+    for (final SyndicationFeedEntry entry : feed.getEntries()) {
+      if (isEntryOfContentType(entry, contentType)) {
+        filteredEntries.add(entry);
+      }
+    }
+
+    logger.debug("Filtered {} entries for content type {}", filteredEntries.size(), contentType);
+    return filteredEntries;
+  }
+
+  /**
+   * Get syndication feed entries that are new (not already loaded).
+   *
+   * @param feed the syndication feed
+   * @param contentTracker the content tracker for duplicate checking
+   * @return the new entries
+   * @throws Exception the exception
+   */
+  public List<SyndicationFeedEntry> getNewEntries(final SyndicationFeed feed,
+    final SyndicationContentTracker contentTracker) throws Exception {
+
+    if (feed == null || feed.getEntries() == null || contentTracker == null) {
+      return Collections.emptyList();
+    }
+
+    final List<SyndicationFeedEntry> newEntries = new ArrayList<>();
+    logger.info("Checking {} total entries for new content", feed.getEntries().size());
+
+    for (final SyndicationFeedEntry entry : feed.getEntries()) {
+      final boolean isNew = isNewEntry(entry, contentTracker);
+      logger.info("Entry {} - isNew: {}", entry.getContentItemIdentifier(), isNew);
+      if (isNew) {
+        newEntries.add(entry);
+      }
+    }
+
+    logger.info("Found {} new entries out of {} total entries", newEntries.size(),
+        feed.getEntries().size());
+    return newEntries;
+  }
+
+  /**
+   * Get syndication feed entries that are new and of specific content type.
+   *
+   * @param feed the syndication feed
+   * @param contentType the content type to filter by
+   * @param contentTracker the content tracker for duplicate checking
+   * @return the new entries of the specified type
+   * @throws Exception the exception
+   */
+  public List<SyndicationFeedEntry> getNewEntriesByContentType(final SyndicationFeed feed,
+    final SyndicationContentType contentType, final SyndicationContentTracker contentTracker)
+    throws Exception {
+
+    if (feed == null || feed.getEntries() == null || contentType == null
+        || contentTracker == null) {
+      return Collections.emptyList();
+    }
+
+    final List<SyndicationFeedEntry> newEntries = new ArrayList<>();
+    int totalEntries = feed.getEntries().size();
+    int matchingTypeEntries = 0;
+
+    logger.debug("Filtering {} total entries for content type: {}", totalEntries, contentType);
+
+    for (final SyndicationFeedEntry entry : feed.getEntries()) {
+      final boolean isCorrectType = isEntryOfContentType(entry, contentType);
+      if (isCorrectType) {
+        matchingTypeEntries++;
+        logger.debug("Entry {} is of type {} - checking if new", entry.getContentItemIdentifier(),
+            contentType);
+        if (isNewEntry(entry, contentTracker)) {
+          newEntries.add(entry);
+          logger.debug("Entry {} is NEW - adding to load list", entry.getContentItemIdentifier());
+        } else {
+          logger.debug("Entry {} is ALREADY LOADED - skipping", entry.getContentItemIdentifier());
+        }
+      }
+    }
+
+    logger.debug("Found {} new {} entries out of {} matching type entries ({} total entries)",
+        newEntries.size(), contentType, matchingTypeEntries, totalEntries);
+    return newEntries;
+  }
+
+  /**
+   * Check if an entry is of the specified content type.
+   *
+   * @param entry the syndication feed entry
+   * @param resourceType the resource type
+   * @return true if the entry is of the specified type
+   */
+  private boolean isEntryOfContentType(final SyndicationFeedEntry entry,
+    final SyndicationContentType resourceType) {
+    if (entry == null || entry.getCategory() == null || resourceType == null) {
+      return false;
+    }
+
+    final String category = entry.getCategory().getTerm();
+    if (category == null) {
+      return false;
+    }
+
+    return resourceType.getResourceType().equalsIgnoreCase(category);
+  }
+
+  /**
+   * Check if an entry is new (not already loaded).
+   *
+   * @param entry the syndication feed entry
+   * @param contentTracker the content tracker for duplicate checking
+   * @return true if the entry is new
+   * @throws Exception the exception
+   */
+  private boolean isNewEntry(final SyndicationFeedEntry entry,
+    final SyndicationContentTracker contentTracker) throws Exception {
+
+    if (entry == null || contentTracker == null) {
+      logger.info("isNewEntry returning false - entry: {}, contentTracker: {}", entry != null,
+          contentTracker != null);
+      return false;
+    }
+
+    final String entryId = entry.getId();
+    final String contentItemIdentifier = entry.getContentItemIdentifier();
+    final String contentItemVersion = entry.getContentItemVersion();
+
+    if (entryId == null || contentItemIdentifier == null || contentItemVersion == null) {
+      logger.warn(
+          "Missing required syndication feed fields - entryId: {}, identifier: {}, version: {}",
+          entryId, contentItemIdentifier, contentItemVersion);
+      return true; // Treat as new if we can't determine
+    }
+
+    logger.info("isNewEntry - entryId: '{}', identifier: '{}', version: '{}'", entryId,
+        contentItemIdentifier, contentItemVersion);
+
+    // Check if already loaded using entry ID (most reliable)
+    final boolean isLoadedByEntryId = contentTracker.isContentLoaded(entryId);
+    if (isLoadedByEntryId) {
+      logger.info("Entry already loaded (by entry ID): {}", entryId);
+      return false;
+    }
+
+    // Also check by resource identifier + version (backup check)
+    final boolean isLoadedByResource =
+        contentTracker.isContentLoaded(contentItemIdentifier, contentItemVersion);
+    if (isLoadedByResource) {
+      logger.info("Resource already loaded (by identifier + version): {} v{}",
+          contentItemIdentifier, contentItemVersion);
+      return false;
+    }
+
+    logger.info("Entry is new: {}", entryId);
+    return true;
+  }
+
 }

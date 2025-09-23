@@ -46,15 +46,29 @@ public final class StreamUtility {
     int byteCount = 0;
     int bytesRead;
     int percentageLogged = -1;
+    long lastLogTimeMs = 0L;
+    final long logIntervalMs = 5000L;
     for (final byte[] buffer =
         new byte[4096]; (bytesRead = inputStream.read(buffer)) != -1; byteCount += bytesRead) {
       outputStream.write(buffer, 0, bytesRead);
 
-      final float percentageFloat = ((float) byteCount / (float) totalStreamLength) * 100;
-      final int percentage = (int) Math.floor(percentageFloat);
-      if (percentage % 10 == 0 && percentage > percentageLogged) {
-        logger.info("{} {}", messageFormat, percentage);
-        percentageLogged = percentage;
+      final long now = System.currentTimeMillis();
+      final boolean totalKnownAndValid = totalStreamLength > 0 && byteCount <= totalStreamLength;
+
+      if (totalKnownAndValid) {
+        final float percentageFloat = ((float) byteCount / (float) totalStreamLength) * 100;
+        final int percentage = (int) Math.floor(percentageFloat);
+        if (percentage % 10 == 0 && percentage > percentageLogged
+            && now - lastLogTimeMs >= logIntervalMs) {
+          logger.info("{} {}%", messageFormat, percentage);
+          percentageLogged = percentage;
+          lastLogTimeMs = now;
+        }
+      } else {
+        if (now - lastLogTimeMs >= logIntervalMs) {
+          logger.info("{} still downloading...", messageFormat);
+          lastLogTimeMs = now;
+        }
       }
     }
 

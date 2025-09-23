@@ -41,8 +41,8 @@ import com.wci.termhub.util.FileUtility;
  *
  */
 @SpringBootTest(classes = Application.class)
-@TestPropertySource(locations = "classpath:application-test.properties")
-public class SyndicationIntegrationTest {
+@TestPropertySource(locations = "classpath:application-syndication-test.properties")
+public class SyndicationIntegrationTest extends AbstractSyndicationIntegrationTest {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(SyndicationIntegrationTest.class);

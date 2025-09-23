@@ -7,9 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.fhir.r4.test;
-
-import java.util.List;
+package com.wci.termhub.integrationtest;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -35,14 +33,14 @@ import com.wci.termhub.test.AbstractServerTest;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
-@TestPropertySource(locations = "classpath:application-test.properties", properties = {
-    "lucene.index.directory=build/index/lucene-fhir-r4"
+@TestPropertySource(locations = "classpath:application-syndication-test.properties", properties = {
+    "lucene.index.directory=build/index/lucene-syndication"
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
+public abstract class AbstractSyndicationIntegrationTest extends AbstractServerTest {
 
   /** The logger. */
-  private final Logger logger = LoggerFactory.getLogger(AbstractFhirR4ServerTest.class);
+  private final Logger logger = LoggerFactory.getLogger(AbstractSyndicationIntegrationTest.class);
 
   /** The search service. */
   @Autowired
@@ -51,21 +49,6 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
   /** The index directory. */
   @Value("${lucene.index.directory}")
   private String indexDirectory;
-
-  /** List of FHIR Code System files to load. */
-  protected static final List<String> CODE_SYSTEM_FILES =
-      List.of("CodeSystem-snomedct_us-sandbox-20240301-r4.json",
-          "CodeSystem-snomedct-sandbox-20240101-r4.json", "CodeSystem-lnc-sandbox-277-r4.json",
-          "CodeSystem-icd10cm-sandbox-2023-r4.json", "CodeSystem-rxnorm-sandbox-04012024-r4.json");
-
-  /** List of FHIR ConceptMap files to load. */
-  protected static final List<String> CONCEPT_MAP_FILES =
-      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r4.json");
-
-  /** List of FHIR Code System files to load. */
-  protected static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r4.json",
-          "ValueSet-snomedct_us-723264001-sandbox-20240301-r4.json");
 
   /** The setup once. */
   private static boolean setupOnce = false;
@@ -82,9 +65,6 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
     }
     try {
       clearAndCreateIndexDirectories(searchService, indexDirectory);
-      loadCodeSystems(searchService, CODE_SYSTEM_FILES, false);
-      loadConceptMaps(searchService, CONCEPT_MAP_FILES);
-      loadValueSets(searchService, VALUE_SET_FILES);
     } catch (final Exception e) {
       logger.error("Error setting up data: {}", e.getMessage(), e);
       throw e;
