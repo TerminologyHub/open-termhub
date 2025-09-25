@@ -61,11 +61,13 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
 
   /** List of FHIR ConceptMap files to load. */
   private static final List<String> CONCEPT_MAP_FILES =
-      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json");
+      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json",
+          "ConceptMap-cpt-hcpcs-fake-r5.json");
 
-  /** List of FHIR Code System files to load. */
+  /** The Constant VALUE_SET_FILES. */
   private static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json");
+      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json",
+          "ValueSet-hl7-body-site-r5.json", "ValueSet-personal-hl7-relationship-uv-ips-r5.json");
 
   /** The setup once. */
   private static boolean setupOnce = false;
