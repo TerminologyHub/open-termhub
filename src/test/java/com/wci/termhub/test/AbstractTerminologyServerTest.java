@@ -68,7 +68,7 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
       List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json");
 
   /** The setup once. */
-  private static boolean setupOnce = false;
+  protected static boolean setupOnce = false;
 
   /**
    * Setup once.
