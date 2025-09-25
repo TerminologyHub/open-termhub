@@ -148,6 +148,15 @@ public final class CodeSystemLoaderUtil {
       int relationshipCount = 0;
       int termCount = 0;
 
+      LOGGER.info("  initialize terminology cache");
+      for (final JsonNode conceptNode : concepts) {
+        if (limit != -1 && conceptCount >= limit) {
+          break;
+        }
+        cacheConcept(conceptNode, terminologyCache);
+      }
+
+      LOGGER.info("  index concepts");
       for (final JsonNode conceptNode : concepts) {
         if (limit != -1 && conceptCount >= limit) {
           break;
@@ -555,21 +564,83 @@ public final class CodeSystemLoaderUtil {
         value = property.path("valueBoolean").asText();
       }
 
+      // Redirect semantic type
       if ("semanticType".equals(code)) {
         concept.getSemanticTypes().add(value);
-      } else if ("definitionStatusId".equals(code)) {
+      }
+      // redirect active
+      else if ("active".equals(code)) {
+        concept.setActive(Boolean.valueOf(value));
+      }
+      // redirect leaf
+      else if ("leaf".equals(code)) {
+        concept.setLeaf(Boolean.valueOf(value));
+      }
+      // redirect defined
+      else if ("defined".equals(code)) {
+        concept.setDefined(Boolean.valueOf(value));
+      }
+      // Hack to handle defined if not set for SNOMED
+      else if ("definitionStatusId".equals(code)) {
         // Set defined status based on definitionStatusId
         // 900000000000073002 = Defined (true), 900000000000074008 = Primitive
         // (false)
         concept.setDefined("900000000000073002".equals(value));
         concept.getAttributes().put(code, value);
-      } else if (!"parent".equals(code)) {
+      }
+      // anything other than "parent" is just a property
+      else if (!"parent".equals(code)) {
         concept.getAttributes().put(code, value);
       }
 
     }
 
     return concept;
+  }
+
+  /**
+   * Cache concept.
+   *
+   * @param conceptNode the concept node
+   * @param cache the cache
+   * @throws Exception the exception
+   */
+  private static void cacheConcept(final JsonNode conceptNode, final TerminologyCache cache)
+    throws Exception {
+
+    // active/defined/name/par/chd
+
+    final Concept concept = new Concept();
+    concept.setName(conceptNode.path("display").asText());
+    // Process common properties
+    final JsonNode properties = conceptNode.path("property");
+    for (final JsonNode property : properties) {
+      final String code = property.path("code").asText();
+      String value = null;
+
+      if (property.has("valueString")) {
+        value = property.path("valueString").asText();
+      } else if (property.has("valueBoolean")) {
+        value = property.path("valueBoolean").asText();
+      }
+
+      // redirect active
+      if ("active".equals(code)) {
+        concept.setActive(Boolean.valueOf(value));
+      }
+      // redirect defined
+      else if ("defined".equals(code)) {
+        concept.setDefined(Boolean.valueOf(value));
+      }
+      // Cache parent/child relationship here
+      else if ("parent".equals(code)) {
+        if (property.has("valueCoding")) {
+          cache.addParChd(property.get("valueCoding").get("code").asText(),
+              conceptNode.path("code").asText());
+        }
+      }
+    }
+    cache.addConcept(concept);
   }
 
   /**
@@ -600,7 +671,7 @@ public final class CodeSystemLoaderUtil {
 
       if ("parent".equals(propertyType)) {
         final ConceptRelationship relationship =
-            createRelationship(propertyNode, concept, terminology, terminologyCache, "parent");
+            createRelationship(propertyNode, concept, terminology, terminologyCache);
         // Track parent-child relationship using thread-safe collections
         final JsonNode valueCoding = propertyNode.path("valueCoding");
         if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
@@ -614,8 +685,8 @@ public final class CodeSystemLoaderUtil {
       }
 
       if ("relationship".equals(propertyType)) {
-        final ConceptRelationship relationship = createRelationship(propertyNode, concept,
-            terminology, terminologyCache, "relationship");
+        final ConceptRelationship relationship =
+            createRelationship(propertyNode, concept, terminology, terminologyCache);
 
         // ECL clauses removed per requirements
 
@@ -741,7 +812,7 @@ public final class CodeSystemLoaderUtil {
    */
   private static ConceptRelationship createRelationship(final JsonNode relationshipNode,
     final Concept fromConcept, final Terminology terminology,
-    final TerminologyCache terminologyCache, final String relationshipType) {
+    final TerminologyCache terminologyCache) throws Exception {
 
     final ConceptRelationship relationship = new ConceptRelationship();
     relationship.setId(UUID.randomUUID().toString());
@@ -750,14 +821,14 @@ public final class CodeSystemLoaderUtil {
     relationship.setVersion(terminology.getVersion());
     relationship.setPublisher(terminology.getPublisher());
 
+    // Get type
+    final String relationshipType = relationshipNode.get("code").asText();
+
+    relationship.setType(relationshipType);
+    relationship.setHierarchical(false);
+
     if ("parent".equals(relationshipType)) {
-      relationship.setType("Is a");
-      relationship.setAdditionalType("116680003");
       relationship.setHierarchical(true);
-    } else {
-      relationship.setType("other");
-      relationship.setAdditionalType("other");
-      relationship.setHierarchical(false);
     }
 
     // Process extensions to get additionalType, group, and historical flag
@@ -770,6 +841,8 @@ public final class CodeSystemLoaderUtil {
           final JsonNode valueCoding = extension.path("valueCoding");
           if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
             relationship.setAdditionalType(valueCoding.path("code").asText());
+          } else if (!valueCoding.isMissingNode() && valueCoding.has("display")) {
+            relationship.setAdditionalType(valueCoding.path("display").asText());
           }
         } else if (url.endsWith("/group")) {
           relationship.setGroup(extension.path("valueString").asText());
@@ -783,16 +856,19 @@ public final class CodeSystemLoaderUtil {
       }
     }
 
-    final ConceptRef fromRef =
-        terminologyCache.getOrCreateConceptRef(fromConcept.getCode(), fromConcept);
+    final ConceptRef fromRef = terminologyCache.newConceptRef(fromConcept.getCode(),
+        terminology.getPublisher(), terminology.getAbbreviation(), terminology.getVersion());
     relationship.setFrom(fromRef);
 
     // Set target concept reference from valueCoding
     final JsonNode valueCoding = relationshipNode.path("valueCoding");
     if (!valueCoding.isMissingNode()) {
-      final ConceptRef toRef = terminologyCache.getOrCreateConceptRef(
-          valueCoding.path("code").asText(), valueCoding.path("display").asText(), terminology);
+      final ConceptRef toRef = terminologyCache.newConceptRef(valueCoding.path("code").asText(),
+          terminology.getPublisher(), terminology.getAbbreviation(), terminology.getVersion());
       relationship.setTo(toRef);
+    } else {
+      throw new Exception("Unexpected 'parent' property without a valueCoding = "
+          + fromConcept.getCode() + ", " + relationshipNode);
     }
 
     // Set additional attributes
