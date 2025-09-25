@@ -1,0 +1,443 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "fake-conceptmap-001",
+  "identifier": [
+    {
+      "system": "https://terminologyhub.com/fhir/conceptmap/identifier",
+      "value": "CM001"
+    }
+  ],
+  "url": "https://terminologyhub.com/fhir/conceptmap/fake-terminologies",
+  "version": "1.0.0",
+  "name": "Mapset from CPT to HCPCS",
+  "title": "CPT-HCPCS-Mapping",
+  "status": "active",
+  "experimental": true,
+  "date": "2024-01-15T00:00:00+00:00",
+  "publisher": "Example Healthcare Systems",
+  "group": [ {
+    "source": "http://www.ama-assn.org/go/cpt",
+    "target": "https://www.cms.gov/Medicare/Coding/HCPCSReleaseCodeSets",
+    "element": [ {
+      "code": "99213",
+      "display": "Office or other outpatient visit for the evaluation and management of an established patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "STANDARD MAPPING FOR ESTABLISHED PATIENT VISIT"
+        } ],
+        "code": "G0463",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99214",
+      "display": "Office or other outpatient visit for the evaluation and management of an established patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "COMPREHENSIVE MAPPING FOR ESTABLISHED PATIENT VISIT"
+        } ],
+        "code": "G0464",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99215",
+      "display": "Office or other outpatient visit for the evaluation and management of an established patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "COMPREHENSIVE MAPPING FOR COMPLEX ESTABLISHED PATIENT VISIT"
+        } ],
+        "code": "G0465",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99202",
+      "display": "Office or other outpatient visit for the evaluation and management of a new patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "STANDARD MAPPING FOR NEW PATIENT VISIT"
+        } ],
+        "code": "G0466",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99203",
+      "display": "Office or other outpatient visit for the evaluation and management of a new patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "DETAILED MAPPING FOR NEW PATIENT VISIT"
+        } ],
+        "code": "G0467",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99204",
+      "display": "Office or other outpatient visit for the evaluation and management of a new patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "COMPREHENSIVE MAPPING FOR NEW PATIENT VISIT"
+        } ],
+        "code": "G0468",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99205",
+      "display": "Office or other outpatient visit for the evaluation and management of a new patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "COMPREHENSIVE MAPPING FOR COMPLEX NEW PATIENT VISIT"
+        } ],
+        "code": "G0469",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99281",
+      "display": "Emergency department visit for the evaluation and management of a patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "MINIMAL MAPPING FOR EMERGENCY DEPARTMENT VISIT"
+        } ],
+        "code": "G0380",
+        "display": "Level 1 emergency department visit",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99282",
+      "display": "Emergency department visit for the evaluation and management of a patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "LOW COMPLEXITY MAPPING FOR EMERGENCY DEPARTMENT VISIT"
+        } ],
+        "code": "G0381",
+        "display": "Level 2 emergency department visit",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99283",
+      "display": "Emergency department visit for the evaluation and management of a patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "MODERATE COMPLEXITY MAPPING FOR EMERGENCY DEPARTMENT VISIT"
+        } ],
+        "code": "G0382",
+        "display": "Level 3 emergency department visit",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99284",
+      "display": "Emergency department visit for the evaluation and management of a patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "HIGH COMPLEXITY MAPPING FOR EMERGENCY DEPARTMENT VISIT"
+        } ],
+        "code": "G0383",
+        "display": "Level 4 emergency department visit",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99285",
+      "display": "Emergency department visit for the evaluation and management of a patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "CRITICAL COMPLEXITY MAPPING FOR EMERGENCY DEPARTMENT VISIT"
+        } ],
+        "code": "G0384",
+        "display": "Level 5 emergency department visit",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99291",
+      "display": "Critical care, evaluation and management of the critically ill or critically injured patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "CRITICAL CARE MAPPING - FIRST 30-74 MINUTES"
+        } ],
+        "code": "G0508",
+        "display": "Critical care services, first 30-74 minutes",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99292",
+      "display": "Critical care, evaluation and management of the critically ill or critically injured patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "CRITICAL CARE MAPPING - EACH ADDITIONAL 30 MINUTES"
+        } ],
+        "code": "G0509",
+        "display": "Critical care services, each additional 30 minutes",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99212",
+      "display": "Office or other outpatient visit for the evaluation and management of an established patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "MINIMAL MAPPING FOR ESTABLISHED PATIENT VISIT"
+        } ],
+        "code": "G0462",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99201",
+      "display": "Office or other outpatient visit for the evaluation and management of a new patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "MINIMAL MAPPING FOR NEW PATIENT VISIT"
+        } ],
+        "code": "G0461",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99211",
+      "display": "Office or other outpatient visit for the evaluation and management of an established patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "MINIMAL MAPPING FOR ESTABLISHED PATIENT VISIT - NURSE ONLY"
+        } ],
+        "code": "G0460",
+        "display": "Hospital outpatient clinic visit for assessment and management of a patient",
+        "equivalence": "equivalent"
+      } ]
+    }, {
+      "code": "99288",
+      "display": "Physician or other qualified health care professional direction of emergency medical systems",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "EMERGENCY MEDICAL SYSTEMS DIRECTION MAPPING"
+        } ],
+        "code": "G0390",
+        "display": "Trauma response team associated with hospital critical care service",
+        "equivalence": "relatedto"
+      } ]
+    }, {
+      "code": "99217",
+      "display": "Observation care discharge day management",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "OBSERVATION CARE DISCHARGE MAPPING"
+        } ],
+        "code": "G0178",
+        "display": "Physician certification for Medicare-covered home health services under a home health plan of care",
+        "equivalence": "relatedto"
+      } ]
+    }, {
+      "code": "99218",
+      "display": "Initial observation care, per day, for the evaluation and management of a patient",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "INITIAL OBSERVATION CARE MAPPING"
+        } ],
+        "code": "G0179",
+        "display": "Physician certification for Medicare-covered home health services under a home health plan of care",
+        "equivalence": "relatedto"
+      } ]
+    } ]
+  } ]
+}
