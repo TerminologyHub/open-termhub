@@ -121,17 +121,18 @@ public class SyndicationContentLoader {
       throw new IOException("File does not exist: " + filePath);
     }
 
-    final JsonNode jsonContent = readFile(file);
+    // final JsonNode jsonContent = readFile(file);
+    final String content = FileUtils.readFileToString(file, "UTF-8");
 
     switch (contentType) {
       case CODESYSTEM:
-        loadCodeSystem(jsonContent);
+        loadCodeSystem(content);
         break;
       case VALUESET:
-        loadValueSet(jsonContent.toString());
+        loadValueSet(content);
         break;
       case CONCEPTMAP:
-        loadConceptMap(jsonContent.toString());
+        loadConceptMap(content);
         break;
       default:
         throw new IllegalArgumentException("Unknown content type: " + contentType);
@@ -144,7 +145,7 @@ public class SyndicationContentLoader {
    * @param content the JSON content
    * @throws Exception the exception
    */
-  private void loadCodeSystem(final JsonNode content) throws Exception {
+  private void loadCodeSystem(final String content) throws Exception {
     logger.debug("Loading CodeSystem content");
     CodeSystemLoaderUtil.loadCodeSystem(searchService, content, enablePostLoadComputations);
   }
@@ -384,6 +385,7 @@ public class SyndicationContentLoader {
 
       // Check if file is a ZIP file and extract if necessary
       final JsonNode jsonFileContent;
+      final String content;
       if (downloadedFile.getName().endsWith(".zip") || isZipFile(downloadedFile)) {
         logger.info("Downloaded file is a ZIP file, extracting...");
         final File extractDir = Files
@@ -398,13 +400,16 @@ public class SyndicationContentLoader {
         }
 
         logger.info("Found JSON file in ZIP: {}", jsonFile.getName());
-        jsonFileContent = readFile(jsonFile);
+        // jsonFileContent = readFile(jsonFile);
+        content = FileUtils.readFileToString(jsonFile, "UTF-8");
 
         // Clean up extracted files
         FileUtils.deleteDirectory(extractDir);
       } else {
         // Read file content directly
-        jsonFileContent = readFile(downloadedFile);
+        // jsonFileContent = readFile(downloadedFile);
+        content = FileUtils.readFileToString(downloadedFile, "UTF-8");
+
       }
 
       // Use URL-based content type for loading (more reliable than JSON content
@@ -420,8 +425,7 @@ public class SyndicationContentLoader {
       // Load content based on URL-determined resource type
       switch (resourceType) {
         case "CodeSystem":
-          CodeSystemLoaderUtil.loadCodeSystem(searchService, jsonFileContent,
-              enablePostLoadComputations);
+          CodeSystemLoaderUtil.loadCodeSystem(searchService, content, enablePostLoadComputations);
           results.incrementCodeSystemsLoaded();
           logger.info("Successfully loaded CodeSystem from file: {}", filePath);
           // Mark as loaded in tracker
