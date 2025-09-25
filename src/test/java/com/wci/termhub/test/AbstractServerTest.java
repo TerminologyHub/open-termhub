@@ -53,8 +53,13 @@ public abstract class AbstractServerTest extends BaseUnitTest {
     logger.info("Deleting existing indexes from directory: {}", indexDirectory);
     final File indexDir = new File(indexDirectory);
     logger.info("Does index {} exist? {}", indexDir.getAbsolutePath(), indexDir.exists());
+    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
 
     if (indexDir.exists()) {
+      // Clear the writer cache before deleting the index directory. Otherwise, you will see lock errors even if there are no lock files.
+      for (final Class<? extends HasId> clazz : indexedObjects) {
+        LuceneDataAccess.clearWriterForClass(clazz);
+      }
       FileUtils.deleteDirectory(indexDir);
     }
 
@@ -63,7 +68,6 @@ public abstract class AbstractServerTest extends BaseUnitTest {
       throw new RuntimeException("Failed to create index directory: " + indexDirectory);
     }
 
-    final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
     for (final Class<? extends HasId> clazz : indexedObjects) {
       searchService.deleteIndex(clazz);
       searchService.createIndex(clazz);
