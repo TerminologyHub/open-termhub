@@ -683,6 +683,8 @@ public final class FhirUtilityR5 {
       }
     }
 
+    // TODO: what do we do with regular relationships?
+
     return parameters;
   }
 

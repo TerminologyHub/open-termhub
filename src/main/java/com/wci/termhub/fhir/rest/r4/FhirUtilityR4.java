@@ -539,6 +539,7 @@ public final class FhirUtilityR4 {
       parameters.addParameter(new Parameters.ParametersParameterComponent()
           .setName("sufficientlyDefined").setValue(new BooleanType(concept.getDefined())));
     }
+
     // TODO: review where the value comes from
     // if (codeSystem.getTitle().startsWith("SNOMED")) {
     // if (properties == null || properties.contains("effectiveTime")) {
@@ -657,6 +658,7 @@ public final class FhirUtilityR4 {
       }
     }
 
+    // TODO: what do we do with regular relationships?
     return parameters;
   }
 

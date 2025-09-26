@@ -836,7 +836,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @param request the request
    * @param details the details
    * @param id the id
-   * @return the method outcome
    * @throws Exception the exception
    */
   @Delete

@@ -535,7 +535,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       return out;
 
-    } catch (FHIRServerResponseException fe) {
+    } catch (final FHIRServerResponseException fe) {
       throw fe;
     } catch (final Exception e) {
       logger.error("Unexpected error creating value set", e);
@@ -550,7 +550,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @param request the request
    * @param details the details
    * @param id the id
-   * @return the method outcome
    * @throws Exception the exception
    */
   @Delete
@@ -745,6 +744,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
           }
         }
       }
+
+      // TODO: support "property" parameter on expand and add that info here
+
       expansion.addContains(code);
     }
     vs.setExpansion(expansion);

@@ -551,7 +551,6 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @param request the request
    * @param details the details
    * @param id the id
-   * @return the method outcome
    * @throws Exception the exception
    */
   @Delete
@@ -741,6 +740,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
           }
         }
       }
+
+      // TODO: support "property" parameter on expand and add that info here
+
       expansion.addContains(code);
     }
     vs.setExpansion(expansion);
