@@ -12,6 +12,7 @@ package com.wci.termhub.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,6 +45,15 @@ public final class ValueSetLoaderUtil {
   /** The Constant logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetLoaderUtil.class);
 
+  /** The id map. Used by QA to map from test files to internal ids. */
+  private static Map<String, String> idMap =
+      new LinkedHashMap<String, String>(101 * 4 / 3, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<String, String> eldest) {
+          return size() > 100;
+        }
+      };
+
   /** The Constant contextR4. */
   private static FhirContext contextR4 = FhirContext.forR4();
 
@@ -58,6 +68,16 @@ public final class ValueSetLoaderUtil {
    */
   private ValueSetLoaderUtil() {
     // Utility class
+  }
+
+  /**
+   * Map original id.
+   *
+   * @param originalId the original id
+   * @return the string
+   */
+  public static String mapOriginalId(final String originalId) {
+    return idMap.get(originalId);
   }
 
   /**
@@ -129,6 +149,7 @@ public final class ValueSetLoaderUtil {
       String originalId = valueSet.getIdElement().getIdPart();
       if (!StringUtility.isEmpty(originalId)) {
         subset.getAttributes().put("originalId", originalId);
+        idMap.put(originalId, id);
       }
       subset.setId(id);
       subset.setActive(true);
@@ -335,6 +356,7 @@ public final class ValueSetLoaderUtil {
       String id = UUID.randomUUID().toString();
       String originalId = valueSet.getIdElement().getIdPart();
       if (!StringUtility.isEmpty(originalId)) {
+        idMap.put(originalId, id);
         subset.getAttributes().put("originalId", originalId);
       }
       subset.setId(id);

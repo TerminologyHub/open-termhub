@@ -59,6 +59,7 @@ import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
@@ -769,11 +770,11 @@ public class CodeSystemProviderR4 implements IResourceProvider {
    * Create a new CodeSystem resource.
    *
    * @param bytes the bytes
-   * @return the created code system
+   * @return the method outcome (as required by HAPI)
    * @throws Exception the exception
    */
   @Create
-  public CodeSystem createCodeSystem(@ResourceParam final byte[] bytes) throws Exception {
+  public MethodOutcome createCodeSystem(@ResourceParam final byte[] bytes) throws Exception {
 
     try {
       logger.info("Create code system R4");
@@ -788,22 +789,23 @@ public class CodeSystemProviderR4 implements IResourceProvider {
 
       FileUtils.delete(file);
 
-      // // Return success
-      // final MethodOutcome out = new MethodOutcome();
-      // final IdType id = new IdType("CodeSystem", codeSystem.getId());
-      // out.setId(id);
-      // out.setResource(codeSystem);
-      // out.setCreated(true);
-      //
-      // final OperationOutcome outcome = new OperationOutcome();
-      // outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
-      // .setCode(OperationOutcome.IssueType.INFORMATIONAL)
-      // .setDiagnostics("ValueSet created = " + codeSystem.getId());
-      // out.setOperationOutcome(outcome);
+      // Return success
+      final MethodOutcome out = new MethodOutcome();
+      final IdType id = new IdType("CodeSystem", codeSystem.getId());
+      out.setId(id);
+      out.setResource(codeSystem);
+      out.setCreated(true);
 
-      return codeSystem;
+      final OperationOutcome outcome = new OperationOutcome();
+      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+          .setDiagnostics("CodeSystem created = " + codeSystem.getId());
+      out.setOperationOutcome(outcome);
+
+      return out;
 
     } catch (FHIRServerResponseException fe) {
+      logger.error("Unexpected error creating code system", fe);
       throw fe;
     } catch (final Exception e) {
       logger.error("Unexpected error creating code system", e);

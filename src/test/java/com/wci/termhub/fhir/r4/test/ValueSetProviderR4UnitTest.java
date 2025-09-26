@@ -39,6 +39,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
@@ -358,9 +359,10 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
    */
   private ValueSet createValueSet(final ValueSet vs) throws Exception {
     try {
-      ValueSet vs2 = provider
+      MethodOutcome out = provider
           .createValueSet(context.newJsonParser().encodeResourceToString(vs).getBytes("UTF-8"));
-      return vs2;
+      return (ValueSet) out.getResource();
+
     } catch (FHIRServerResponseException fe) {
       return null;
     }

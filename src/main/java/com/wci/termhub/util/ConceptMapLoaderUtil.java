@@ -13,6 +13,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
@@ -45,11 +47,30 @@ public final class ConceptMapLoaderUtil {
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapLoaderUtil.class);
 
+  /** The id map. Used by QA to map from test files to internal ids. */
+  private static Map<String, String> idMap =
+      new LinkedHashMap<String, String>(101 * 4 / 3, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<String, String> eldest) {
+          return size() > 100;
+        }
+      };
+
   /**
    * Instantiates a new concept map loader.
    */
   private ConceptMapLoaderUtil() {
     // n/a
+  }
+
+  /**
+   * Map original id.
+   *
+   * @param originalId the original id
+   * @return the string
+   */
+  public static String mapOriginalId(final String originalId) {
+    return idMap.get(originalId);
   }
 
   /**
@@ -303,6 +324,7 @@ public final class ConceptMapLoaderUtil {
     final String originalId = root.path("id").asText();
     if (isNotBlank(originalId)) {
       mapset.getAttributes().put("originalId", originalId);
+      idMap.put(originalId, mapset.getId());
     }
     mapset.setActive(true);
     mapset.setName(root.path("name").asText());

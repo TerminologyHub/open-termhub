@@ -74,6 +74,7 @@ import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
@@ -500,11 +501,11 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * Creates a ValueSet.
    *
    * @param bytes the bytes
-   * @return MethodOutcome with the new Subset code
+   * @return the method outcome (as required by HAPI)
    * @throws Exception if creating fails
    */
   @Create
-  public ValueSet createValueSet(@ResourceParam final byte[] bytes) throws Exception {
+  public MethodOutcome createValueSet(@ResourceParam final byte[] bytes) throws Exception {
 
     try {
       logger.info("Create value set R4");
@@ -520,19 +521,19 @@ public class ValueSetProviderR4 implements IResourceProvider {
       valueSet.getCompose().getInclude().clear();
       valueSet.getCompose().getExclude().clear();
 
-      // final MethodOutcome out = new MethodOutcome();
-      // final IdType id = new IdType("ValueSet", valueSet.getId());
-      // out.setId(id);
-      // out.setResource(valueSet);
-      // out.setCreated(true);
-      //
-      // final OperationOutcome outcome = new OperationOutcome();
-      // outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
-      // .setCode(OperationOutcome.IssueType.INFORMATIONAL)
-      // .setDiagnostics("ValueSet created = " + valueSet.getId());
-      // out.setOperationOutcome(outcome);
+      final MethodOutcome out = new MethodOutcome();
+      final IdType id = new IdType("ValueSet", valueSet.getId());
+      out.setId(id);
+      out.setResource(valueSet);
+      out.setCreated(true);
 
-      return valueSet;
+      final OperationOutcome outcome = new OperationOutcome();
+      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+          .setDiagnostics("ValueSet created = " + valueSet.getId());
+      out.setOperationOutcome(outcome);
+
+      return out;
 
     } catch (FHIRServerResponseException fe) {
       throw fe;

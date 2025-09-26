@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +60,15 @@ public final class CodeSystemLoaderUtil {
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(CodeSystemLoaderUtil.class);
 
+  /** The id map. Used by QA to map from test files to internal ids. */
+  private static Map<String, String> idMap =
+      new LinkedHashMap<String, String>(101 * 4 / 3, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<String, String> eldest) {
+          return size() > 100;
+        }
+      };
+
   /** The Constant BATCH_SIZE. */
   private static final int DEFAULT_BATCH_SIZE = 10000;
 
@@ -67,6 +77,16 @@ public final class CodeSystemLoaderUtil {
    */
   private CodeSystemLoaderUtil() {
     // Prevent instantiation
+  }
+
+  /**
+   * Map original id.
+   *
+   * @param originalId the original id
+   * @return the string
+   */
+  public static String mapOriginalId(final String originalId) {
+    return idMap.get(originalId);
   }
 
   /**
@@ -382,6 +402,7 @@ public final class CodeSystemLoaderUtil {
     final String originalId = root.path("id").asText();
     if (isNotBlank(originalId)) {
       terminology.getAttributes().put("originalId", originalId);
+      idMap.put(originalId, terminology.getId());
     }
 
     terminology.setActive(true);
@@ -901,6 +922,7 @@ public final class CodeSystemLoaderUtil {
     relationship.setHierarchical(false);
 
     if ("parent".equals(relationshipType)) {
+      relationship.setType("isa");
       relationship.setHierarchical(true);
     }
 

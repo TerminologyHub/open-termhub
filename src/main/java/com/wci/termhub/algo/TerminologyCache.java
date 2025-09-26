@@ -583,8 +583,12 @@ public class TerminologyCache {
    * @throws Exception the exception
    */
   public void addConcept(final Concept concept) throws Exception {
-    addActive(concept.getCode(), concept.getActive());
-    addDefined(concept.getCode(), concept.getDefined());
+    if (concept.getActive() != null) {
+      addActive(concept.getCode(), concept.getActive());
+    }
+    if (concept.getDefined() != null) {
+      addDefined(concept.getCode(), concept.getDefined());
+    }
     addName(concept.getCode(), concept.getName());
     for (final ConceptRef parent : concept.getParents()) {
       addParChd(parent.getCode(), concept.getCode());

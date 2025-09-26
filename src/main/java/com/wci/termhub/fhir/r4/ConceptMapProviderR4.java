@@ -58,6 +58,7 @@ import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
@@ -790,11 +791,11 @@ public class ConceptMapProviderR4 implements IResourceProvider {
    * Creates the concept map.
    *
    * @param bytes the bytes
-   * @return the method outcome
+   * @return the method outcome (as required by HAPI)
    * @throws Exception the exception
    */
   @Create
-  public ConceptMap createConceptMap(@ResourceParam final byte[] bytes) throws Exception {
+  public MethodOutcome createConceptMap(@ResourceParam final byte[] bytes) throws Exception {
     try {
 
       logger.info("Create concept map R4");
@@ -808,20 +809,20 @@ public class ConceptMapProviderR4 implements IResourceProvider {
 
       FileUtils.delete(file);
 
-      // // Return success
-      // final MethodOutcome out = new MethodOutcome();
-      // final IdType id = new IdType("ConceptMap", conceptMap.getId());
-      // out.setId(id);
-      // out.setResource(conceptMap);
-      // out.setCreated(true);
-      //
-      // final OperationOutcome outcome = new OperationOutcome();
-      // outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
-      // .setCode(OperationOutcome.IssueType.INFORMATIONAL)
-      // .setDiagnostics("ConceptMap created = " + conceptMap.getId());
-      // out.setOperationOutcome(outcome);
+      // Return success
+      final MethodOutcome out = new MethodOutcome();
+      final IdType id = new IdType("ConceptMap", conceptMap.getId());
+      out.setId(id);
+      out.setResource(conceptMap);
+      out.setCreated(true);
 
-      return conceptMap;
+      final OperationOutcome outcome = new OperationOutcome();
+      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+          .setDiagnostics("ConceptMap created = " + conceptMap.getId());
+      out.setOperationOutcome(outcome);
+
+      return out;
 
     } catch (FHIRServerResponseException fe) {
       throw fe;
