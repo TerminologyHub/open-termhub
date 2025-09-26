@@ -59,4 +59,5 @@ public class FHIRConfig {
 
     return servletRegistrationBean;
   }
+
 }

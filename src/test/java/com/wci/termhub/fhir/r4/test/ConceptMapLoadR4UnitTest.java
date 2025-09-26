@@ -11,10 +11,9 @@ package com.wci.termhub.fhir.r4.test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
+import org.hl7.fhir.r4.model.ConceptMap;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,13 +53,10 @@ public class ConceptMapLoadR4UnitTest extends AbstractFhirR4ServerTest {
         final Resource resource = new ClassPathResource("data/" + conceptMapFile,
             CodeSystemLoadR4UnitTest.class.getClassLoader());
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of concept map from classpath resource: data/{}",
               conceptMapFile);
-          ConceptMapLoaderUtil.loadConceptMap(searchService, fileContent);
+          ConceptMapLoaderUtil.loadConceptMap(searchService, resource.getFile(), ConceptMap.class);
         });
 
       } catch (final Exception e) {

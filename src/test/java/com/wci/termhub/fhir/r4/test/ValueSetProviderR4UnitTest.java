@@ -13,14 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.ValueSet;
@@ -40,6 +38,7 @@ import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
@@ -56,6 +55,9 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
    * The Constant LOGGER.
    */
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetProviderR4UnitTest.class);
+
+  /** The context. */
+  private static FhirContext context = FhirContext.forR4();
 
   /**
    * The search service.
@@ -282,12 +284,9 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         final Resource resource = new ClassPathResource("data/" + valueSetFile,
             ValueSetProviderR4UnitTest.class.getClassLoader());
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
-          ValueSetLoaderUtil.loadSubset(searchService, fileContent, false);
+          ValueSetLoaderUtil.loadSubset(searchService, resource.getFile(), ValueSet.class);
         });
 
       } catch (final Exception e) {
@@ -360,7 +359,9 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
    */
   private MethodOutcome createValueSet(final ValueSet vs) throws Exception {
     try {
-      return provider.createValueSet(vs);
+      // Turn value set to bytes and send back through
+      return provider
+          .createValueSet(context.newJsonParser().encodeResourceToString(vs).getBytes("UTF-8"));
     } catch (final FHIRServerResponseException e) {
       final MethodOutcome methodOutcome = new MethodOutcome();
       methodOutcome.setCreated(false);

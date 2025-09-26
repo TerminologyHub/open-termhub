@@ -40,21 +40,17 @@ import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
-import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.Delete;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
-import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.DateRangeParam;
@@ -68,7 +64,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * The CodeSystem provider.
+ * The CodeSystem provider R5.
  */
 @Component
 public class CodeSystemProviderR5 implements IResourceProvider {
@@ -83,9 +79,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   /** The enable post load computations. */
   @Autowired
   private EnablePostLoadComputations enablePostLoadComputations;
-
-  /** The Constant context. */
-  private static FhirContext context = FhirContext.forR5();
 
   /**
    * Gets the code system.
@@ -783,48 +776,50 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   /**
    * Create a new CodeSystem resource.
    *
-   * @param request the request
-   * @param details the details
-   * @param codeSystem the code system resource
+   * @param bytes the bytes
    * @return the created code system
    * @throws Exception the exception
    */
-  @Create
-  public MethodOutcome createCodeSystem(final HttpServletRequest request,
-    final ServletRequestDetails details, @ResourceParam final CodeSystem codeSystem)
-    throws Exception {
-
-    try {
-      logger.info("Create code system with {} concepts",
-          codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
-
-      // Convert CodeSystem to JSON string
-      final String content = context.newJsonParser().encodeResourceToString(codeSystem);
-      final int conceptCount = codeSystem.getConcept().size();
-      codeSystem.getConcept().clear();
-      codeSystem.setConcept(null);
-
-      // Use existing loader utility
-      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content,
-          enablePostLoadComputations.isEnabled());
-
-      // Return success
-      final MethodOutcome outcome = new MethodOutcome();
-      // Clear the "concepts" of the code system before sending it back
-      codeSystem.setCount(conceptCount);
-      codeSystem.getConcept().clear();
-      outcome.setResource(codeSystem);
-      outcome.setCreated(true);
-      final IdType id = new IdType("CodeSystem", terminologyId);
-      codeSystem.setId(id);
-      return outcome;
-
-    } catch (final Exception e) {
-      logger.error("Unexpected error creating code system", e);
-      throw FhirUtilityR5.exception("Failed to create code system: " + e.getMessage(),
-          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-    }
-  }
+  // @Create
+  // public MethodOutcome createCodeSystem(final byte[] bytes) throws Exception {
+  //
+  // try {
+  // logger.info("Create code system R5");
+  //
+  // // Write to a file so we can re-open streams against it
+  // final File file = File.createTempFile("tmp", ".json");
+  // // try (FileOutputStream outputStream = new FileOutputStream(file)) {
+  // // IOUtils.copy(request.getInputStream(), outputStream);
+  // // }
+  // FileUtils.writeByteArrayToFile(file, bytes);
+  //
+  // // Use existing loader utility
+  // final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
+  // enablePostLoadComputations.isEnabled(), CodeSystem.class);
+  //
+  // FileUtils.delete(file);
+  //
+  // // Return success
+  // final MethodOutcome out = new MethodOutcome();
+  // final IdType id = new IdType("CodeSystem", codeSystem.getId());
+  // out.setId(id);
+  // out.setResource(codeSystem);
+  // out.setCreated(true);
+  //
+  // final OperationOutcome outcome = new OperationOutcome();
+  // outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+  // .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+  // .setDiagnostics("ValueSet created = " + codeSystem.getId());
+  // out.setOperationOutcome(outcome);
+  //
+  // return out;
+  //
+  // } catch (final Exception e) {
+  // logger.error("Unexpected error creating code system", e);
+  // throw FhirUtilityR5.exception("Failed to create code system: " + e.getMessage(),
+  // OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+  // }
+  // }
 
   /**
    * Deletes the code system.

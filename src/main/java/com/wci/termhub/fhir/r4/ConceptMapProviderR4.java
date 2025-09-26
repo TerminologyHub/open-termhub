@@ -9,12 +9,14 @@
  */
 package com.wci.termhub.fhir.r4;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeType;
@@ -46,7 +48,6 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.Delete;
@@ -80,9 +81,6 @@ public class ConceptMapProviderR4 implements IResourceProvider {
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
-
-  /** The Constant context. */
-  private static FhirContext context = FhirContext.forR4();
 
   /**
    * Gets the concept map.
@@ -793,68 +791,42 @@ public class ConceptMapProviderR4 implements IResourceProvider {
   /**
    * Creates the concept map.
    *
-   * @param request the request
-   * @param details the details
-   * @param conceptMap the concept map
+   * @param bytes the bytes
    * @return the method outcome
    * @throws Exception the exception
    */
   @Create
-  public MethodOutcome createConceptMap(final HttpServletRequest request,
-    final ServletRequestDetails details, @ResourceParam final ConceptMap conceptMap)
-    throws Exception {
+  public MethodOutcome createConceptMap(@ResourceParam final byte[] bytes) throws Exception {
     try {
 
-      logger.info("Create concept map {}", conceptMap.getTitle());
+      logger.info("Create concept map R4");
 
-      // Extract source and target from group if not set at root level
-      if ((conceptMap.getSource() == null || conceptMap.getTarget() == null)
-          && !conceptMap.getGroup().isEmpty()) {
-        final ConceptMap.ConceptMapGroupComponent group = conceptMap.getGroupFirstRep();
-        if (conceptMap.getSource() == null && group.hasSource()) {
-          conceptMap.setSource(new UriType(group.getSource()));
-        }
-        if (conceptMap.getTarget() == null && group.hasTarget()) {
-          conceptMap.setTarget(new UriType(group.getTarget()));
-        }
-      }
+      // Write to a file so we can re-open streams against it
+      final File file = File.createTempFile("tmp", ".json");
+      FileUtils.writeByteArrayToFile(file, bytes);
 
-      // Validate required fields
-      if (conceptMap.getUrl() == null || conceptMap.getUrl().isEmpty()) {
-        throw FhirUtilityR4.exception("ConceptMap.url is required", IssueType.INVALID,
-            HttpServletResponse.SC_BAD_REQUEST);
-      }
-      if (conceptMap.getSource() == null) {
-        throw FhirUtilityR4.exception("ConceptMap.source is required", IssueType.INVALID,
-            HttpServletResponse.SC_BAD_REQUEST);
-      }
-      if (conceptMap.getTarget() == null) {
-        throw FhirUtilityR4.exception("ConceptMap.target is required", IssueType.INVALID,
-            HttpServletResponse.SC_BAD_REQUEST);
-      }
+      final ConceptMap conceptMap =
+          ConceptMapLoaderUtil.loadConceptMap(searchService, file, ConceptMap.class);
 
-      if (logger.isDebugEnabled()) {
-        logger.debug("Create ConceptMap with source: {} and target:{}", conceptMap.getSource(),
-            conceptMap.getTarget());
-      }
+      FileUtils.delete(file);
 
-      // Convert CodeSystem to JSON
-      final String content = context.newJsonParser().encodeResourceToString(conceptMap);
+      // Return success
+      final MethodOutcome out = new MethodOutcome();
+      final IdType id = new IdType("ConceptMap", conceptMap.getId());
+      out.setId(id);
+      out.setResource(conceptMap);
+      out.setCreated(true);
 
-      final Mapset mapset = ConceptMapLoaderUtil.loadConceptMap(searchService, content);
-
-      // Convert back to ConceptMap and return
-      final ConceptMap savedCm = FhirUtilityR4.toR4(mapset);
-      final MethodOutcome outcome = new MethodOutcome();
-      outcome.setResource(savedCm);
-      outcome.setCreated(true);
-      final IdType id = new IdType("ConceptMap", mapset.getId());
-      savedCm.setId(id);
-      return outcome;
+      final OperationOutcome outcome = new OperationOutcome();
+      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+          .setDiagnostics("ConceptMap created = " + conceptMap.getId());
+      out.setOperationOutcome(outcome);
+      return out;
 
     } catch (final Exception e) {
       logger.error("Unexpected error creating concept map", e);
-      throw FhirUtilityR4.exception("Failed to create concept map", IssueType.EXCEPTION,
+      throw FhirUtilityR4.exception(e.getMessage(), IssueType.EXCEPTION,
           HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }

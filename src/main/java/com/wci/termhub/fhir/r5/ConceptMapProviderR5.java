@@ -9,10 +9,12 @@
  */
 package com.wci.termhub.fhir.r5;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Coding;
@@ -42,7 +44,6 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.Delete;
@@ -75,9 +76,6 @@ public class ConceptMapProviderR5 implements IResourceProvider {
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
-
-  /** The Constant context. */
-  private static FhirContext context = FhirContext.forR5();
 
   /**
    * Gets the concept map.
@@ -769,55 +767,42 @@ public class ConceptMapProviderR5 implements IResourceProvider {
   /**
    * Creates the concept map.
    *
-   * @param request the request
-   * @param details the details
-   * @param conceptMap the concept map
+   * @param bytes the bytes
    * @return the method outcome
    * @throws Exception the exception
    */
   @Create
-  public MethodOutcome createConceptMap(final HttpServletRequest request,
-    final ServletRequestDetails details, @ResourceParam final ConceptMap conceptMap)
-    throws Exception {
+  public MethodOutcome createConceptMap(@ResourceParam final byte[] bytes) throws Exception {
     try {
 
-      logger.info("Create concept map {}", conceptMap.getTitle());
+      logger.info("Create concept map R5");
 
-      // Validate required fields
-      if (conceptMap.getUrl() == null || conceptMap.getUrl().isEmpty()) {
-        throw FhirUtilityR5.exception("ConceptMap.url is required", IssueType.INVALID,
-            HttpServletResponse.SC_BAD_REQUEST);
-      }
-      if (conceptMap.getSourceScope() == null) {
-        throw FhirUtilityR5.exception("ConceptMap.sourceScope is required", IssueType.INVALID,
-            HttpServletResponse.SC_BAD_REQUEST);
-      }
-      if (conceptMap.getTargetScope() == null) {
-        throw FhirUtilityR5.exception("ConceptMap.targetScope is required", IssueType.INVALID,
-            HttpServletResponse.SC_BAD_REQUEST);
-      }
+      // Write to a file so we can re-open streams against it
+      final File file = File.createTempFile("tmp", ".json");
+      FileUtils.writeByteArrayToFile(file, bytes);
 
-      if (logger.isDebugEnabled()) {
-        logger.debug("Create ConceptMap with source: {} and target:{}", conceptMap.getSourceScope(),
-            conceptMap.getTargetScope());
-      }
+      final ConceptMap conceptMap =
+          ConceptMapLoaderUtil.loadConceptMap(searchService, file, ConceptMap.class);
 
-      // Convert CodeSystem to JSON
-      final String content = context.newJsonParser().encodeResourceToString(conceptMap);
+      FileUtils.delete(file);
 
-      final Mapset mapset = ConceptMapLoaderUtil.loadConceptMap(searchService, content);
+      // Return success
+      final MethodOutcome out = new MethodOutcome();
+      final IdType id = new IdType("ConceptMap", conceptMap.getId());
+      out.setId(id);
+      out.setResource(conceptMap);
+      out.setCreated(true);
 
-      final ConceptMap savedCm = FhirUtilityR5.toR5(mapset);
-      final MethodOutcome outcome = new MethodOutcome();
-      outcome.setResource(savedCm);
-      outcome.setCreated(true);
-      final IdType id = new IdType("ConceptMap", mapset.getId());
-      savedCm.setId(id);
-      return outcome;
+      final OperationOutcome outcome = new OperationOutcome();
+      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+          .setDiagnostics("ConceptMap created = " + conceptMap.getId());
+      out.setOperationOutcome(outcome);
+      return out;
 
     } catch (final Exception e) {
       logger.error("Unexpected error creating concept map", e);
-      throw FhirUtilityR5.exception("Failed to create concept map", IssueType.EXCEPTION,
+      throw FhirUtilityR5.exception(e.getMessage(), IssueType.EXCEPTION,
           HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }

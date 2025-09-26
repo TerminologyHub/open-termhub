@@ -37,9 +37,8 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * Algorithm to compute tree positions. Should not be autowired as it is not
- * stateless or thread safe. Use ApplicationContext with getBean to get an
- * instance.
+ * Algorithm to compute tree positions. Should not be autowired as it is not stateless or thread
+ * safe. Use ApplicationContext with getBean to get an instance.
  */
 @Scope("prototype")
 @Component
@@ -159,8 +158,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       // Verify that codes only participate in a tree of one particular type
       // ASSUMPTION: rel.getAdditionalType() != null
       for (final ConceptRelationship rel : innerList.getItems()) {
+        final String additionalType =
+            rel.getAdditionalType() == null ? "<blank>" : rel.getAdditionalType();
         if (additionalTypeMap.containsKey(rel.getFrom().getCode())
-            && !additionalTypeMap.get(rel.getFrom().getCode()).equals(rel.getAdditionalType())) {
+            && !additionalTypeMap.get(rel.getFrom().getCode()).equals(additionalType)) {
           // If this occurs, we need to handle the situation of the same code
           // being involved in multiple trees each with their own relationship
           // type
@@ -171,10 +172,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
           // could respond appropriately
           throw new Exception(
               "Unexpected condition: same code, multiple additional relationship types = "
-                  + rel.getFrom().getCode() + ", " + rel.getAdditionalType() + ", "
+                  + rel.getFrom().getCode() + ", " + additionalType + ", "
                   + additionalTypeMap.get(rel.getFrom().getCode()));
         }
-        additionalTypeMap.put(rel.getFrom().getCode(), rel.getAdditionalType());
+        additionalTypeMap.put(rel.getFrom().getCode(), additionalType);
       }
 
       // searchAfter = innerList.getItems().get(innerList.getItems().size() -

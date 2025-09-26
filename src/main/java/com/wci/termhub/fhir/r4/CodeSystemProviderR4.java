@@ -9,6 +9,7 @@
  */
 package com.wci.termhub.fhir.r4;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
@@ -45,7 +47,6 @@ import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
@@ -84,9 +85,6 @@ public class CodeSystemProviderR4 implements IResourceProvider {
   /** The enable post load computations. */
   @Autowired
   private EnablePostLoadComputations enablePostLoadComputations;
-
-  /** The Constant context. */
-  private static FhirContext context = FhirContext.forR4();
 
   /**
    * Gets the code system.
@@ -770,41 +768,40 @@ public class CodeSystemProviderR4 implements IResourceProvider {
   /**
    * Create a new CodeSystem resource.
    *
-   * @param request the request
-   * @param details the details
-   * @param codeSystem the code system resource
+   * @param bytes the bytes
    * @return the created code system
    * @throws Exception the exception
    */
   @Create
-  public MethodOutcome createCodeSystem(final HttpServletRequest request,
-    final ServletRequestDetails details, @ResourceParam final CodeSystem codeSystem)
-    throws Exception {
+  public MethodOutcome createCodeSystem(@ResourceParam final byte[] bytes) throws Exception {
 
     try {
-      logger.info("Create code system with {} concepts",
-          codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
+      logger.info("Create code system R4");
 
-      // Convert CodeSystem to JSON string
-      final String content = context.newJsonParser().encodeResourceToString(codeSystem);
-      final int conceptCount = codeSystem.getConcept().size();
-      codeSystem.getConcept().clear();
-      codeSystem.setConcept(null);
+      // Write to a file so we can re-open streams against it
+      final File file = File.createTempFile("tmp", ".json");
+      FileUtils.writeByteArrayToFile(file, bytes);
 
       // Use existing loader utility
-      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content,
-          enablePostLoadComputations.isEnabled());
+      final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
+          enablePostLoadComputations.isEnabled(), CodeSystem.class);
+
+      FileUtils.delete(file);
 
       // Return success
-      final MethodOutcome outcome = new MethodOutcome();
-      // Clear the "concepts" of the code system before sending it back
-      codeSystem.setCount(conceptCount);
-      codeSystem.getConcept().clear();
-      outcome.setResource(codeSystem);
-      outcome.setCreated(true);
-      final IdType id = new IdType("CodeSystem", terminologyId);
-      codeSystem.setId(id);
-      return outcome;
+      final MethodOutcome out = new MethodOutcome();
+      final IdType id = new IdType("CodeSystem", codeSystem.getId());
+      out.setId(id);
+      out.setResource(codeSystem);
+      out.setCreated(true);
+
+      final OperationOutcome outcome = new OperationOutcome();
+      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+          .setDiagnostics("ValueSet created = " + codeSystem.getId());
+      out.setOperationOutcome(outcome);
+
+      return out;
 
     } catch (FHIRServerResponseException fsre) {
       // Throw any write concurrency errors. Will be handled by AOP

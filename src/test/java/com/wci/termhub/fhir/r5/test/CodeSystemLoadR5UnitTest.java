@@ -11,10 +11,9 @@ package com.wci.termhub.fhir.r5.test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
+import org.hl7.fhir.r5.model.CodeSystem;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,13 +55,11 @@ public class CodeSystemLoadR5UnitTest extends AbstractFhirR5ServerTest {
         final Resource resource = new ClassPathResource("data/" + codeSystemFile,
             CodeSystemLoadR5UnitTest.class.getClassLoader());
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
         assertThrows(Exception.class, () -> {
           logger.info("Attempt reload of code system from classpath resource: data/{}",
               codeSystemFile);
-          CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, false);
+          CodeSystemLoaderUtil.loadCodeSystem(searchService, resource.getFile(), false,
+              CodeSystem.class);
         }, "Expected exception when reloading code system that is already loaded: "
             + codeSystemFile);
 

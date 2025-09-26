@@ -11,6 +11,7 @@ package com.wci.termhub.util;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,10 +22,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
+import org.hl7.fhir.r5.model.CodeSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,6 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.wci.termhub.Application;
 import com.wci.termhub.algo.TerminologyCache;
 import com.wci.termhub.algo.TreePositionAlgorithm;
+import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
@@ -44,6 +47,9 @@ import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 
+import ca.uhn.fhir.context.FhirContext;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Utility class for loading CodeSystem format JSON files.
  */
@@ -55,6 +61,12 @@ public final class CodeSystemLoaderUtil {
   /** The Constant BATCH_SIZE. */
   private static final int DEFAULT_BATCH_SIZE = 10000;
 
+  /** The Constant context. */
+  private static FhirContext contextR5 = FhirContext.forR5();
+
+  /** The context R 4. */
+  private static FhirContext contextR4 = FhirContext.forR4();
+
   /**
    * Instantiates a new code system loader util.
    */
@@ -65,33 +77,38 @@ public final class CodeSystemLoaderUtil {
   /**
    * Load concepts from CodeSystem format JSON.
    *
+   * @param <T> the generic type
    * @param service the service
-   * @param content the content
+   * @param file the file
    * @param computeTreePositions whether to compute tree positions
+   * @param type the type
    * @return the string
    * @throws Exception the exception
    */
-  public static String loadCodeSystem(final EntityRepositoryService service, final String content,
-    final boolean computeTreePositions) throws Exception {
+  public static <T> T loadCodeSystem(final EntityRepositoryService service, final File file,
+    final boolean computeTreePositions, final Class<T> type) throws Exception {
 
     // Application.logMemory();
     // final JsonNode jsonContent = ThreadLocalMapper.get().readTree(content);
     Application.logMemory();
-    return indexCodeSystem(service, content, -1, computeTreePositions);
+    return indexCodeSystem(service, file, -1, computeTreePositions, type);
   }
 
   /**
    * Index concepts from CodeSystem format JSON.
    *
+   * @param <T> the generic type
    * @param service the service
-   * @param jsonContent the json content
+   * @param file the file
    * @param limit the limit
    * @param computeTreePositions whether to compute tree positions
+   * @param type the type
    * @return the string
    * @throws Exception the exception
    */
-  private static String indexCodeSystem(final EntityRepositoryService service, final String content,
-    final int limit, final boolean computeTreePositions) throws Exception {
+  @SuppressWarnings("unchecked")
+  private static <T> T indexCodeSystem(final EntityRepositoryService service, final File file,
+    final int limit, final boolean computeTreePositions, final Class<T> type) throws Exception {
 
     final long startTime = System.currentTimeMillis();
     final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
@@ -100,23 +117,32 @@ public final class CodeSystemLoaderUtil {
     final String id;
     final TerminologyCache terminologyCache = new TerminologyCache();
 
-    final JsonNode jsonContent = getRootWithoutConcepts(content);
+    final JsonNode jsonContent = getRootWithoutConcepts(file);
 
     try {
-      LOGGER.info("Indexing CodeSystem {}: ", jsonContent.path("title"));
+      LOGGER.info("Indexing CodeSystem {} = {}", jsonContent.path("title"),
+          jsonContent.path("url"));
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
       }
 
+      // Basic checks
+      // Validate required fields
+      if (jsonContent.get("url").isMissingNode()) {
+        throw FhirUtilityR4.exception("CodeSystem.url is required", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+
+      // check for existing
       final String abbreviation = jsonContent.path("title").asText();
       final String publisher = jsonContent.path("publisher").asText();
       final String version = jsonContent.path("version").asText();
-      Terminology terminology = getTerminology(service, abbreviation, publisher, version);
+      Terminology terminology = findTerminology(service, abbreviation, publisher, version);
 
       if (terminology != null) {
-        throw new Exception("Can not create multiple CodeSystem resources with CodeSystem.url "
-            + terminology.getUri() + " and CodeSystem.version " + terminology.getVersion()
-            + ", already have one with resource ID: CodeSystem/" + terminology.getId());
+        throw new Exception(
+            "Can not create multiple ConceptMap resources the same title, publisher,"
+                + " and version. duplicate = " + terminology.getId());
       }
 
       // Create the terminology
@@ -135,29 +161,26 @@ public final class CodeSystemLoaderUtil {
         throw new Exception("Unexpected null metadata list");
       }
 
-      // Process concepts array
-      JsonFactory factory = new JsonFactory();
-
       int conceptCount = 0;
       int relationshipCount = 0;
       int termCount = 0;
       LOGGER.info("  initialize terminology cache");
-      try (JsonParser parser = factory.createParser(content)) {
+      try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
 
         // You can iterate through the tokens one by one
         while (parser.nextToken() != null) {
 
           // Get the current token
-          JsonToken token = parser.currentToken();
+          final JsonToken token = parser.currentToken();
 
           // Example: Find the start of a nested JSON array
-          if (token == JsonToken.START_ARRAY && "concepts".equals(parser.currentName())) {
+          if (token == JsonToken.START_ARRAY && "concept".equals(parser.currentName())) {
 
             // Process each object within the array without loading the whole array into memory
             while (parser.nextToken() != JsonToken.END_ARRAY) {
 
               // Use ObjectMapper to read the sub-object as a JsonNode
-              final JsonNode conceptNode = ThreadLocalMapper.get().readTree(parser);
+              final JsonNode conceptNode = parser.readValueAsTree();
               if (limit != -1 && conceptCount >= limit) {
                 break;
               }
@@ -169,22 +192,22 @@ public final class CodeSystemLoaderUtil {
       }
 
       LOGGER.info("  index concepts");
-      try (JsonParser parser = factory.createParser(content)) {
+      try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
 
         // You can iterate through the tokens one by one
         while (parser.nextToken() != null) {
 
           // Get the current token
-          JsonToken token = parser.currentToken();
+          final JsonToken token = parser.currentToken();
 
           // Example: Find the start of a nested JSON array
-          if (token == JsonToken.START_ARRAY && "concepts".equals(parser.currentName())) {
+          if (token == JsonToken.START_ARRAY && "concept".equals(parser.currentName())) {
 
             // Process each object within the array without loading the whole array into memory
             while (parser.nextToken() != JsonToken.END_ARRAY) {
 
               // Use ObjectMapper to read the sub-object as a JsonNode
-              final JsonNode conceptNode = ThreadLocalMapper.get().readTree(parser);
+              final JsonNode conceptNode = parser.readValueAsTree();
 
               if (limit != -1 && conceptCount >= limit) {
                 break;
@@ -198,10 +221,7 @@ public final class CodeSystemLoaderUtil {
               relationshipBatch.addAll(conceptRelationships);
               relationshipCount++;
 
-              // TODO: we should not duplicate the data
-              // when we need relationships, we can just have a utility method
-              // that looks them up and attaches them to the concept
-              // Like how the include param "relationships" is handled in TermHub
+              // we should not duplicate the data
               // concept.getRelationships().addAll(conceptRelationships);
 
               if (relationshipBatch.size() == DEFAULT_BATCH_SIZE) {
@@ -268,7 +288,18 @@ public final class CodeSystemLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
       Application.logMemory();
 
-      return id;
+      // R4
+      if (type == org.hl7.fhir.r4.model.CodeSystem.class) {
+        final org.hl7.fhir.r4.model.CodeSystem result = contextR4.newJsonParser().parseResource(
+            org.hl7.fhir.r4.model.CodeSystem.class, getRootWithoutConcepts(file).toString());
+        result.setId(id);
+        return (T) result;
+      }
+      // else R5
+      final CodeSystem result = contextR5.newJsonParser().parseResource(CodeSystem.class,
+          getRootWithoutConcepts(file).toString());
+      result.setId(id);
+      return (T) result;
 
     } catch (final Exception e) {
       LOGGER.error("Error indexing code system.", e);
@@ -286,7 +317,7 @@ public final class CodeSystemLoaderUtil {
    * @return the terminology
    * @throws Exception the exception
    */
-  private static Terminology getTerminology(final EntityRepositoryService service,
+  private static Terminology findTerminology(final EntityRepositoryService service,
     final String abbreviation, final String publisher, final String version) throws Exception {
 
     String versionToLookup = version;
@@ -935,16 +966,15 @@ public final class CodeSystemLoaderUtil {
   /**
    * Gets the root without concepts.
    *
-   * @param json the json
+   * @param file the file
    * @return the root without concepts
    * @throws Exception the exception
    */
   @SuppressWarnings("resource")
-  private static JsonNode getRootWithoutConcepts(final String json) throws Exception {
-    final JsonFactory factory = new JsonFactory();
+  private static JsonNode getRootWithoutConcepts(final File file) throws Exception {
 
     // Use try-with-resources to ensure the parser is closed
-    try (JsonParser parser = factory.createParser(json)) {
+    try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
 
       // The first token should be the start of the root object: {
       if (parser.nextToken() != JsonToken.START_OBJECT) {
@@ -960,7 +990,7 @@ public final class CodeSystemLoaderUtil {
         // Advance the parser past the field name
         parser.nextToken();
 
-        if ("concepts".equals(fieldName)) {
+        if ("concept".equals(fieldName)) {
           // We found the large array. The next token should be START_ARRAY.
           // The skipChildren() method is the key to low memory usage.
           if (parser.currentToken() == JsonToken.START_ARRAY) {

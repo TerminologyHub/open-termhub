@@ -28,6 +28,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.ResultList;
@@ -121,18 +122,15 @@ public class SyndicationContentLoader {
       throw new IOException("File does not exist: " + filePath);
     }
 
-    // final JsonNode jsonContent = readFile(file);
-    final String content = FileUtils.readFileToString(file, "UTF-8");
-
     switch (contentType) {
       case CODESYSTEM:
-        loadCodeSystem(content);
+        loadCodeSystem(file);
         break;
       case VALUESET:
-        loadValueSet(content);
+        loadValueSet(file);
         break;
       case CONCEPTMAP:
-        loadConceptMap(content);
+        loadConceptMap(file);
         break;
       default:
         throw new IllegalArgumentException("Unknown content type: " + contentType);
@@ -142,34 +140,37 @@ public class SyndicationContentLoader {
   /**
    * Load CodeSystem content.
    *
-   * @param content the JSON content
+   * @param file the file
    * @throws Exception the exception
    */
-  private void loadCodeSystem(final String content) throws Exception {
+  private void loadCodeSystem(final File file) throws Exception {
     logger.debug("Loading CodeSystem content");
-    CodeSystemLoaderUtil.loadCodeSystem(searchService, content, enablePostLoadComputations);
+
+    CodeSystemLoaderUtil.loadCodeSystem(searchService, file, enablePostLoadComputations,
+        org.hl7.fhir.r5.model.CodeSystem.class);
   }
 
   /**
    * Load ValueSet content.
    *
-   * @param content the JSON content
+   * @param file the file
    * @throws Exception the exception
    */
-  private void loadValueSet(final String content) throws Exception {
+  private void loadValueSet(final File file) throws Exception {
     logger.debug("Loading ValueSet content");
-    ValueSetLoaderUtil.loadSubset(searchService, content, true);
+    ValueSetLoaderUtil.loadSubset(searchService, file, org.hl7.fhir.r5.model.ValueSet.class);
   }
 
   /**
    * Load ConceptMap content.
    *
-   * @param content the JSON content
+   * @param file the file
    * @throws Exception the exception
    */
-  private void loadConceptMap(final String content) throws Exception {
+  private void loadConceptMap(final File file) throws Exception {
     logger.debug("Loading ConceptMap content");
-    ConceptMapLoaderUtil.loadConceptMap(searchService, content);
+    ConceptMapLoaderUtil.loadConceptMap(searchService, file,
+        org.hl7.fhir.r5.model.ConceptMap.class);
   }
 
   /**
@@ -280,11 +281,11 @@ public class SyndicationContentLoader {
     logger.info("Starting content loading for {} syndication entries.", entries.size());
 
     // Track processed entry IDs to prevent duplicates in current run
-    Set<String> processedEntryIds = new HashSet<>();
+    final Set<String> processedEntryIds = new HashSet<>();
 
     // First pass: try to load all entries
-    List<SyndicationFeedEntry> failedEntries = new ArrayList<>();
-    List<SyndicationFeedEntry> retryEntries = new ArrayList<>();
+    final List<SyndicationFeedEntry> failedEntries = new ArrayList<>();
+    final List<SyndicationFeedEntry> retryEntries = new ArrayList<>();
 
     for (final SyndicationFeedEntry entry : entries) {
       // Skip if already processed in this run
@@ -310,7 +311,7 @@ public class SyndicationContentLoader {
     // Second pass: retry failed entries
     if (!retryEntries.isEmpty()) {
       logger.info("Retrying {} failed entries...", retryEntries.size());
-      List<SyndicationFeedEntry> stillFailed = new ArrayList<>();
+      final List<SyndicationFeedEntry> stillFailed = new ArrayList<>();
 
       for (final SyndicationFeedEntry entry : retryEntries) {
         try {
@@ -384,8 +385,8 @@ public class SyndicationContentLoader {
       }
 
       // Check if file is a ZIP file and extract if necessary
-      final JsonNode jsonFileContent;
-      final String content;
+      // final JsonNode jsonFileContent;
+      final File file;
       if (downloadedFile.getName().endsWith(".zip") || isZipFile(downloadedFile)) {
         logger.info("Downloaded file is a ZIP file, extracting...");
         final File extractDir = Files
@@ -399,16 +400,13 @@ public class SyndicationContentLoader {
               "No JSON file found in extracted ZIP: " + downloadedFile.getName());
         }
 
-        logger.info("Found JSON file in ZIP: {}", jsonFile.getName());
-        // jsonFileContent = readFile(jsonFile);
-        content = FileUtils.readFileToString(jsonFile, "UTF-8");
+        file = jsonFile;
 
         // Clean up extracted files
         FileUtils.deleteDirectory(extractDir);
       } else {
         // Read file content directly
-        // jsonFileContent = readFile(downloadedFile);
-        content = FileUtils.readFileToString(downloadedFile, "UTF-8");
+        file = downloadedFile;
 
       }
 
@@ -417,7 +415,7 @@ public class SyndicationContentLoader {
       final String resourceType = contentType.getResourceType();
 
       // Verify JSON content type matches expected type
-      final String actualResourceType = jsonFileContent.path("resourceType").asText();
+      final String actualResourceType = getResourceType(file);
 
       logger.info("URL-based content type: {}, JSON content type: {}", resourceType,
           actualResourceType);
@@ -425,7 +423,8 @@ public class SyndicationContentLoader {
       // Load content based on URL-determined resource type
       switch (resourceType) {
         case "CodeSystem":
-          CodeSystemLoaderUtil.loadCodeSystem(searchService, content, enablePostLoadComputations);
+          CodeSystemLoaderUtil.loadCodeSystem(searchService, file, enablePostLoadComputations,
+              org.hl7.fhir.r5.model.ConceptMap.class);
           results.incrementCodeSystemsLoaded();
           logger.info("Successfully loaded CodeSystem from file: {}", filePath);
           // Mark as loaded in tracker
@@ -434,7 +433,7 @@ public class SyndicationContentLoader {
               syndicationClient.getSyndicationUrl());
           break;
         case "ValueSet":
-          ValueSetLoaderUtil.loadSubset(searchService, jsonFileContent.toString(), true);
+          ValueSetLoaderUtil.loadSubset(searchService, file, org.hl7.fhir.r5.model.ValueSet.class);
           results.incrementValueSetsLoaded();
           logger.info("Successfully loaded ValueSet from file: {}", filePath);
           // Mark as loaded in tracker
@@ -443,7 +442,8 @@ public class SyndicationContentLoader {
               syndicationClient.getSyndicationUrl());
           break;
         case "ConceptMap":
-          ConceptMapLoaderUtil.loadConceptMap(searchService, jsonFileContent);
+          ConceptMapLoaderUtil.loadConceptMap(searchService, file,
+              org.hl7.fhir.r5.model.ConceptMap.class);
           results.incrementConceptMapsLoaded();
           logger.info("Successfully loaded ConceptMap from file: {}", filePath);
           // Mark as loaded in tracker
@@ -541,10 +541,47 @@ public class SyndicationContentLoader {
    * @return the json node
    * @throws Exception the exception
    */
+  @SuppressWarnings("unused")
   private JsonNode readFile(final File jsonFile) throws Exception {
     try (final FileInputStream fis = new FileInputStream(jsonFile);
         final JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(fis)) {
       return parser.readValueAsTree();
+    }
+  }
+
+  /**
+   * Gets the resource type.
+   *
+   * @param file the file
+   * @return the resource type
+   * @throws Exception the exception
+   */
+  private String getResourceType(final File file) throws Exception {
+
+    // Use try-with-resources to ensure the parser is closed
+    try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+
+      // The first token should be the start of the root object: {
+      if (parser.nextToken() != JsonToken.START_OBJECT) {
+        throw new IOException("Expected start of object at the root of the file.");
+      }
+
+      // Create a node to build the new JSON tree, skipping the concepts array
+      @SuppressWarnings("unused")
+      final JsonNode newRoot = ThreadLocalMapper.get().createObjectNode();
+
+      while (parser.nextToken() != JsonToken.END_OBJECT) {
+        final String fieldName = parser.currentName();
+
+        // Advance the parser past the field name
+        parser.nextToken();
+
+        if ("resourceType".equals(fieldName)) {
+          return parser.readValueAsTree();
+        }
+      }
+
+      throw new Exception("Unable to find resourceType field");
     }
   }
 }
