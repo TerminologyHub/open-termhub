@@ -39,14 +39,13 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 
 /**
- * The Class ValueSetProviderR4UnitTest.
+ * Tests for ValueSetProviderR4.
  */
 @AutoConfigureMockMvc
 public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
@@ -286,7 +285,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
 
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
-          ValueSetLoaderUtil.loadSubset(searchService, resource.getFile(), ValueSet.class);
+          ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(), ValueSet.class);
         });
 
       } catch (final Exception e) {
@@ -321,51 +320,49 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
     vs2.setTitle("Concurrent Value Set 2");
     vs2.setDate(java.util.Date.from(java.time.Instant.now()));
 
-    final Callable<MethodOutcome> writeTask1 = () -> {
+    final Callable<ValueSet> writeTask1 = () -> {
       return createValueSet(vs1);
     };
 
-    final Callable<MethodOutcome> writeTask2 = () -> {
+    final Callable<ValueSet> writeTask2 = () -> {
       return createValueSet(vs2);
     };
 
-    final Future<MethodOutcome> future1 = executor.submit(writeTask1);
+    final Future<ValueSet> future1 = executor.submit(writeTask1);
     // Ensure the first write starts before the second
     Thread.sleep(10); // Small delay to increase chance of overlap
 
-    final Future<MethodOutcome> future2 = executor.submit(writeTask2);
+    final Future<ValueSet> future2 = executor.submit(writeTask2);
 
     executor.shutdown();
 
-    final MethodOutcome created1 = future1.get();
-    final MethodOutcome created2 = future2.get();
+    final ValueSet created1 = future1.get();
+    final ValueSet created2 = future2.get();
 
-    // Exactly one should fail
-    Assertions.assertTrue(created1.getCreated() ^ created2.getCreated(),
+    // Exactly one should fail, then delete the other
+    Assertions.assertTrue(created1 == null ^ created2 == null,
         "Exactly one write should fail due to locking");
-    if (created1.getCreated()) {
-      provider.deleteValueSet(request, details, ((IdType) created1.getId()));
-    } else {
-      provider.deleteValueSet(request, details, ((IdType) created2.getId()));
+    if (created1 != null) {
+      provider.deleteValueSet(request, details, new IdType(created1.getId()));
+    } else if (created2 != null) {
+      provider.deleteValueSet(request, details, new IdType(created2.getId()));
     }
   }
 
   /**
-   * Creates the value set.
+   * Creates the value set. Return null if there is an ereror creating it.
    *
    * @param vs the vs
    * @return the method outcome
    * @throws Exception the exception
    */
-  private MethodOutcome createValueSet(final ValueSet vs) throws Exception {
+  private ValueSet createValueSet(final ValueSet vs) throws Exception {
     try {
-      // Turn value set to bytes and send back through
-      return provider
+      ValueSet vs2 = provider
           .createValueSet(context.newJsonParser().encodeResourceToString(vs).getBytes("UTF-8"));
-    } catch (final FHIRServerResponseException e) {
-      final MethodOutcome methodOutcome = new MethodOutcome();
-      methodOutcome.setCreated(false);
-      return methodOutcome;
+      return vs2;
+    } catch (FHIRServerResponseException fe) {
+      return null;
     }
   }
 

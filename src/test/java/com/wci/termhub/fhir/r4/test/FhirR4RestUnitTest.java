@@ -943,6 +943,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(1)
   public void testValueSetExpandById() throws Exception {
     // Arrange
+    // This id is from CodeSystem-snomedct-sandbox-20240101-r{4,5}.json
     final String vsId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b_entire";
     final int count = 50;
     final String expandParams = "/$expand?count=" + count;
@@ -1277,7 +1278,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
     final CodeSystem codeSystem =
         getNewCodeSystem("concurrent-cs-1", "http://example.org/concurrent-cs-1");
-    final CodeSystem.ConceptDefinitionComponent concept = new CodeSystem.ConceptDefinitionComponent();
+    final CodeSystem.ConceptDefinitionComponent concept =
+        new CodeSystem.ConceptDefinitionComponent();
     concept.setCode("test-code");
     codeSystem.setConcept(List.of(concept));
 
@@ -1404,14 +1406,10 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         new org.springframework.http.HttpEntity<>(json, headers);
     final ResponseEntity<String> response =
         restTemplate.postForEntity(LOCALHOST + port + FHIR_CODESYSTEM, entity, String.class);
-    // Deserialize FHIR resource from response
-    if (response.getBody().contains("OperationOutcome")) {
-      final OperationOutcome operationOutcome =
-          parser.parseResource(OperationOutcome.class, response.getBody());
-      if (operationOutcome.getIssue().stream()
-          .filter(i -> i.getCode().equals(OperationOutcome.IssueType.CONFLICT)).count() == 1) {
-        return null;
-      }
+
+    // if conflict, return null
+    if (response.getStatusCode().value() == 417) {
+      return null;
     }
     return parser.parseResource(CodeSystem.class, response.getBody());
   }
@@ -1445,7 +1443,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM;
     final String content = this.restTemplate.getForObject(endpoint, String.class);
     if (content.contains("OperationOutcome")) {
-      final OperationOutcome operationOutcome = parser.parseResource(OperationOutcome.class, content);
+      final OperationOutcome operationOutcome =
+          parser.parseResource(OperationOutcome.class, content);
       if (operationOutcome.getIssue().stream()
           .filter(i -> i.getDiagnostics().equals("Failed to find code systems")).count() == 1) {
         // No code systems to clean up

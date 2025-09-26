@@ -74,7 +74,6 @@ import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
@@ -505,7 +504,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @throws Exception if creating fails
    */
   @Create
-  public MethodOutcome createValueSet(@ResourceParam final byte[] bytes) throws Exception {
+  public ValueSet createValueSet(@ResourceParam final byte[] bytes) throws Exception {
 
     try {
       logger.info("Create value set R4");
@@ -514,27 +513,29 @@ public class ValueSetProviderR4 implements IResourceProvider {
       final File file = File.createTempFile("tmp", ".json");
       FileUtils.writeByteArrayToFile(file, bytes);
 
-      final ValueSet valueSet = ValueSetLoaderUtil.loadSubset(searchService, file, ValueSet.class);
-
+      final ValueSet valueSet =
+          ValueSetLoaderUtil.loadValueSet(searchService, file, ValueSet.class);
       FileUtils.delete(file);
 
       valueSet.getCompose().getInclude().clear();
       valueSet.getCompose().getExclude().clear();
 
-      final MethodOutcome out = new MethodOutcome();
-      final IdType id = new IdType("ValueSet", valueSet.getId());
-      out.setId(id);
-      out.setResource(valueSet);
-      out.setCreated(true);
+      // final MethodOutcome out = new MethodOutcome();
+      // final IdType id = new IdType("ValueSet", valueSet.getId());
+      // out.setId(id);
+      // out.setResource(valueSet);
+      // out.setCreated(true);
+      //
+      // final OperationOutcome outcome = new OperationOutcome();
+      // outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+      // .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+      // .setDiagnostics("ValueSet created = " + valueSet.getId());
+      // out.setOperationOutcome(outcome);
 
-      final OperationOutcome outcome = new OperationOutcome();
-      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
-          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
-          .setDiagnostics("ValueSet created = " + valueSet.getId());
-      out.setOperationOutcome(outcome);
+      return valueSet;
 
-      return out;
-
+    } catch (FHIRServerResponseException fe) {
+      throw fe;
     } catch (final Exception e) {
       logger.error("Unexpected error creating value set", e);
       throw FhirUtilityR4.exception(e.getMessage(), OperationOutcome.IssueType.EXCEPTION,
@@ -552,8 +553,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @throws Exception the exception
    */
   @Delete
-  public MethodOutcome deleteValueSet(final HttpServletRequest request,
-    final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
+  public void deleteValueSet(final HttpServletRequest request, final ServletRequestDetails details,
+    @IdParam final IdType id) throws Exception {
 
     try {
       if (id == null || id.getIdPart() == null) {
@@ -588,7 +589,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
       }
 
       TerminologyUtility.removeSubset(searchService, subset.getId());
-      return new MethodOutcome();
 
     } catch (final FHIRServerResponseException e) {
       throw e;

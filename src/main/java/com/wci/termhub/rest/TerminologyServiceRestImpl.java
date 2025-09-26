@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.wci.termhub.Application;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.handler.QueryBuilder;
 import com.wci.termhub.lucene.LuceneQueryBuilder;
@@ -1919,6 +1920,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Create and configure the tree position algorithm
       final TreePositionAlgorithm treepos = new TreePositionAlgorithm(searchService);
+      treepos.addProgressListener(new DefaultProgressListener());
       treepos.setTerminology(terminology);
       treepos.setPublisher(publisher);
       treepos.setVersion(version);
@@ -2851,37 +2853,33 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       }
       final BooleanQuery.Builder terminologyQueryBuilder = new BooleanQuery.Builder();
       for (final Terminology term : tlist) {
-          terminologyQueryBuilder.add(
-              new TermQuery(new org.apache.lucene.index.Term("terminology", term.getAbbreviation())),
-              BooleanClause.Occur.SHOULD
-          );
+        terminologyQueryBuilder.add(
+            new TermQuery(new org.apache.lucene.index.Term("terminology", term.getAbbreviation())),
+            BooleanClause.Occur.SHOULD);
       }
       final BooleanQuery terminologyQuery = terminologyQueryBuilder.build();
       final String[] words = query.split("\\s+");
       final BooleanQuery.Builder ngramQueryBuilder = new BooleanQuery.Builder();
       for (final String word : words) {
-          ngramQueryBuilder.add(
-              new PrefixQuery(new org.apache.lucene.index.Term("name.ngram", word.toLowerCase())),
-              BooleanClause.Occur.MUST
-          );
+        ngramQueryBuilder.add(
+            new PrefixQuery(new org.apache.lucene.index.Term("name.ngram", word.toLowerCase())),
+            BooleanClause.Occur.MUST);
       }
       final BooleanQuery ngramQuery = ngramQueryBuilder.build();
 
       // Prepare length boost
       final int doubleQueryLength = Math.max(query.length(), 5) * 2;
       final Query shortLength = IntPoint.newRangeQuery("length", 0, doubleQueryLength);
-      final Query longLength  = IntPoint.newRangeQuery("length", doubleQueryLength + 1, Integer.MAX_VALUE);
+      final Query longLength =
+          IntPoint.newRangeQuery("length", doubleQueryLength + 1, Integer.MAX_VALUE);
       final BoostQuery boostedShortLength = new BoostQuery(shortLength, 100f);
 
-      final BooleanQuery lengthQuery = new BooleanQuery.Builder()
-              .add(boostedShortLength, BooleanClause.Occur.SHOULD)
-              .add(longLength, BooleanClause.Occur.SHOULD)
-              .build();
+      final BooleanQuery lengthQuery =
+          new BooleanQuery.Builder().add(boostedShortLength, BooleanClause.Occur.SHOULD)
+              .add(longLength, BooleanClause.Occur.SHOULD).build();
       final BooleanQuery finalQuery = new BooleanQuery.Builder()
-              .add(ngramQuery, BooleanClause.Occur.MUST)
-              .add(terminologyQuery, BooleanClause.Occur.MUST)
-              .add(lengthQuery, BooleanClause.Occur.MUST)
-              .build();
+          .add(ngramQuery, BooleanClause.Occur.MUST).add(terminologyQuery, BooleanClause.Occur.MUST)
+          .add(lengthQuery, BooleanClause.Occur.MUST).build();
 
       logger.info("Autocomplete search query: {}", finalQuery);
       final Integer maxLimit = (limit == null) ? 10 : Math.min(limit, 1000);

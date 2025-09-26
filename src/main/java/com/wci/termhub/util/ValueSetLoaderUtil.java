@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
@@ -70,7 +71,7 @@ public final class ValueSetLoaderUtil {
    * @throws Exception on error
    */
   @SuppressWarnings("unchecked")
-  public static <T> T loadSubset(final EntityRepositoryService service, final File file,
+  public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
     final Class<T> type) throws Exception {
 
     LOGGER.info("Loading Subset from JSON, isR5={}", type == org.hl7.fhir.r5.model.ValueSet.class);
@@ -79,14 +80,12 @@ public final class ValueSetLoaderUtil {
       final IParser parser = contextR4.newJsonParser();
       final org.hl7.fhir.r4.model.ValueSet vs = parser.parseResource(
           org.hl7.fhir.r4.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-      indexValueSetR4(service, vs);
-      return (T) vs;
+      return (T) indexValueSetR4(service, vs);
     }
     final IParser parser = contextR5.newJsonParser();
     final org.hl7.fhir.r5.model.ValueSet vs = parser.parseResource(
         org.hl7.fhir.r5.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-    indexValueSetR5(service, vs);
-    return (T) vs;
+    return (T) indexValueSetR5(service, vs);
   }
 
   /**
@@ -124,9 +123,12 @@ public final class ValueSetLoaderUtil {
       }
 
       subset = new Subset();
-      String id = valueSet.getIdElement().getIdPart();
-      if (id == null || id.isEmpty()) {
-        id = java.util.UUID.randomUUID().toString();
+      // The HAPI Plan server @Create method blanks the identifier on sending a
+      // code system in. Always create a new identifier.
+      String id = UUID.randomUUID().toString();
+      String originalId = valueSet.getIdElement().getIdPart();
+      if (!StringUtility.isEmpty(originalId)) {
+        subset.getAttributes().put("originalId", originalId);
       }
       subset.setId(id);
       subset.setActive(true);
@@ -328,9 +330,12 @@ public final class ValueSetLoaderUtil {
       }
 
       subset = new Subset();
-      String id = valueSet.getIdElement().getIdPart();
-      if (id == null || id.isEmpty()) {
-        id = java.util.UUID.randomUUID().toString();
+      // The HAPI Plan server @Create method blanks the identifier on sending a
+      // code system in. Always create a new identifier.
+      String id = UUID.randomUUID().toString();
+      String originalId = valueSet.getIdElement().getIdPart();
+      if (!StringUtility.isEmpty(originalId)) {
+        subset.getAttributes().put("originalId", originalId);
       }
       subset.setId(id);
       subset.setActive(true);

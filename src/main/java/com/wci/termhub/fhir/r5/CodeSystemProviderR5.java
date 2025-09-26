@@ -9,6 +9,7 @@
  */
 package com.wci.termhub.fhir.r5;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
@@ -32,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.wci.termhub.EnablePostLoadComputations;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -40,11 +43,13 @@ import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
+import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.Delete;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
@@ -52,7 +57,6 @@ import ca.uhn.fhir.rest.annotation.OperationParam;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.annotation.Search;
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
@@ -780,46 +784,48 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @return the created code system
    * @throws Exception the exception
    */
-  // @Create
-  // public MethodOutcome createCodeSystem(final byte[] bytes) throws Exception {
-  //
-  // try {
-  // logger.info("Create code system R5");
-  //
-  // // Write to a file so we can re-open streams against it
-  // final File file = File.createTempFile("tmp", ".json");
-  // // try (FileOutputStream outputStream = new FileOutputStream(file)) {
-  // // IOUtils.copy(request.getInputStream(), outputStream);
-  // // }
-  // FileUtils.writeByteArrayToFile(file, bytes);
-  //
-  // // Use existing loader utility
-  // final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
-  // enablePostLoadComputations.isEnabled(), CodeSystem.class);
-  //
-  // FileUtils.delete(file);
-  //
-  // // Return success
-  // final MethodOutcome out = new MethodOutcome();
-  // final IdType id = new IdType("CodeSystem", codeSystem.getId());
-  // out.setId(id);
-  // out.setResource(codeSystem);
-  // out.setCreated(true);
-  //
-  // final OperationOutcome outcome = new OperationOutcome();
-  // outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
-  // .setCode(OperationOutcome.IssueType.INFORMATIONAL)
-  // .setDiagnostics("ValueSet created = " + codeSystem.getId());
-  // out.setOperationOutcome(outcome);
-  //
-  // return out;
-  //
-  // } catch (final Exception e) {
-  // logger.error("Unexpected error creating code system", e);
-  // throw FhirUtilityR5.exception("Failed to create code system: " + e.getMessage(),
-  // OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-  // }
-  // }
+  @Create
+  public CodeSystem createCodeSystem(final byte[] bytes) throws Exception {
+
+    try {
+      logger.info("Create code system R5");
+
+      // Write to a file so we can re-open streams against it
+      final File file = File.createTempFile("tmp", ".json");
+      // try (FileOutputStream outputStream = new FileOutputStream(file)) {
+      // IOUtils.copy(request.getInputStream(), outputStream);
+      // }
+      FileUtils.writeByteArrayToFile(file, bytes);
+
+      // Use existing loader utility
+      final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
+          enablePostLoadComputations.isEnabled(), CodeSystem.class, new DefaultProgressListener());
+
+      FileUtils.delete(file);
+
+      // // Return success
+      // final MethodOutcome out = new MethodOutcome();
+      // final IdType id = new IdType("CodeSystem", codeSystem.getId());
+      // out.setId(id);
+      // out.setResource(codeSystem);
+      // out.setCreated(true);
+      //
+      // final OperationOutcome outcome = new OperationOutcome();
+      // outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+      // .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+      // .setDiagnostics("ValueSet created = " + codeSystem.getId());
+      // out.setOperationOutcome(outcome);
+
+      return codeSystem;
+
+    } catch (FHIRServerResponseException fe) {
+      throw fe;
+    } catch (final Exception e) {
+      logger.error("Unexpected error creating code system", e);
+      throw FhirUtilityR5.exception("Failed to create code system: " + e.getMessage(),
+          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+  }
 
   /**
    * Deletes the code system.
@@ -831,7 +837,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @throws Exception the exception
    */
   @Delete
-  public MethodOutcome deleteCodeSystem(final HttpServletRequest request,
+  public void deleteCodeSystem(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
@@ -849,7 +855,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       }
 
       TerminologyUtility.removeTerminology(searchService, terminology.getId());
-      return new MethodOutcome();
 
     } catch (final FHIRServerResponseException e) {
       throw e;

@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 
@@ -59,7 +60,7 @@ public class CodeSystemLoadR4UnitTest extends AbstractFhirR4ServerTest {
           LOGGER.info("Attempt reload of code system from classpath resource: data/{}",
               codeSystemFile);
           CodeSystemLoaderUtil.loadCodeSystem(searchService, resource.getFile(), false,
-              CodeSystem.class);
+              CodeSystem.class, new DefaultProgressListener());
         });
 
       } catch (final Exception e) {

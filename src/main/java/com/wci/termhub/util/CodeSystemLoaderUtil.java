@@ -23,7 +23,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
-import org.hl7.fhir.r5.model.CodeSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +31,12 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.wci.termhub.Application;
+import com.wci.termhub.algo.ProgressEvent;
+import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.algo.TerminologyCache;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
@@ -47,7 +49,6 @@ import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 
-import ca.uhn.fhir.context.FhirContext;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
@@ -60,12 +61,6 @@ public final class CodeSystemLoaderUtil {
 
   /** The Constant BATCH_SIZE. */
   private static final int DEFAULT_BATCH_SIZE = 10000;
-
-  /** The Constant context. */
-  private static FhirContext contextR5 = FhirContext.forR5();
-
-  /** The context R 4. */
-  private static FhirContext contextR4 = FhirContext.forR4();
 
   /**
    * Instantiates a new code system loader util.
@@ -86,12 +81,13 @@ public final class CodeSystemLoaderUtil {
    * @throws Exception the exception
    */
   public static <T> T loadCodeSystem(final EntityRepositoryService service, final File file,
-    final boolean computeTreePositions, final Class<T> type) throws Exception {
+    final boolean computeTreePositions, final Class<T> type, final ProgressListener listener)
+    throws Exception {
 
     // Application.logMemory();
     // final JsonNode jsonContent = ThreadLocalMapper.get().readTree(content);
     Application.logMemory();
-    return indexCodeSystem(service, file, -1, computeTreePositions, type);
+    return indexCodeSystem(service, file, computeTreePositions, type, listener);
   }
 
   /**
@@ -103,27 +99,34 @@ public final class CodeSystemLoaderUtil {
    * @param limit the limit
    * @param computeTreePositions whether to compute tree positions
    * @param type the type
+   * @param listener the listener
    * @return the string
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexCodeSystem(final EntityRepositoryService service, final File file,
-    final int limit, final boolean computeTreePositions, final Class<T> type) throws Exception {
+    final boolean computeTreePositions, final Class<T> type, final ProgressListener listener)
+    throws Exception {
 
     final long startTime = System.currentTimeMillis();
     final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
     final List<ConceptRelationship> relationshipBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
     final List<Term> termBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
-    final String id;
     final TerminologyCache terminologyCache = new TerminologyCache();
 
     final JsonNode jsonContent = getRootWithoutConcepts(file);
 
     try {
+
+      // Set listener to 0%
+      listener.updateProgress(new ProgressEvent(0));
+      final int progressDenominator = computeTreePositions ? 50 : 100;
+      final float progressScale = 100.0f * progressDenominator / 100.0f;
+
       LOGGER.info("Indexing CodeSystem {} = {}", jsonContent.path("title"),
           jsonContent.path("url"));
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE, limit);
+        LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE);
       }
 
       // Basic checks
@@ -147,7 +150,6 @@ public final class CodeSystemLoaderUtil {
 
       // Create the terminology
       terminology = createTerminology(service, jsonContent, computeTreePositions);
-      id = terminology.getId();
 
       // Extract metadata from root
       final List<Metadata> metadataList = createMetadata(terminology, jsonContent);
@@ -181,15 +183,16 @@ public final class CodeSystemLoaderUtil {
 
               // Use ObjectMapper to read the sub-object as a JsonNode
               final JsonNode conceptNode = parser.readValueAsTree();
-              if (limit != -1 && conceptCount >= limit) {
-                break;
-              }
+              conceptCount++;
               cacheConcept(conceptNode, terminologyCache);
 
             }
           }
         }
       }
+
+      final int totalConceptCount = conceptCount;
+      conceptCount = 0;
 
       LOGGER.info("  index concepts");
       try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
@@ -208,10 +211,6 @@ public final class CodeSystemLoaderUtil {
 
               // Use ObjectMapper to read the sub-object as a JsonNode
               final JsonNode conceptNode = parser.readValueAsTree();
-
-              if (limit != -1 && conceptCount >= limit) {
-                break;
-              }
 
               final Concept concept = createConcept(conceptNode, terminology, terminologyCache);
               computeParentsChildren(concept, terminologyCache);
@@ -255,6 +254,9 @@ public final class CodeSystemLoaderUtil {
                 LOGGER.info("  concept count: {}", conceptCount);
                 Application.logMemory();
 
+                // Progress update
+                listener.updateProgress(new ProgressEvent(
+                    (int) ((conceptCount * 1.0 / totalConceptCount) * progressScale)));
               }
             }
           }
@@ -274,6 +276,9 @@ public final class CodeSystemLoaderUtil {
         LOGGER.info("  concept count: {}", conceptCount);
       }
 
+      // Progress update
+      listener.updateProgress(
+          new ProgressEvent((int) ((conceptCount * 1.0 / totalConceptCount) * progressScale)));
       LOGGER.info("  final counts - concepts: {}, relationships: {}, terms: {}, time: {}",
           conceptCount, relationshipCount, termCount, (System.currentTimeMillis() - startTime));
 
@@ -283,23 +288,39 @@ public final class CodeSystemLoaderUtil {
 
       // compute tree positions if required
       if (computeTreePositions) {
-        computeConceptTreePositions(service, terminology);
+
+        // Set listener to 51%
+        listener.updateProgress(new ProgressEvent(51));
+
+        final ProgressListener listener2 = new ProgressListener() {
+
+          /**
+           * Update progress.
+           *
+           * @param event the event
+           */
+          @Override
+          public void updateProgress(final ProgressEvent event) {
+            // Take the event progress and rescale it for here
+            int progress = 50 + (int) (event.getProgress() * progressScale);
+            listener.updateProgress(new ProgressEvent(progress));
+          }
+        };
+
+        computeConceptTreePositions(service, terminology, listener2);
       }
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
       Application.logMemory();
 
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
       // R4
       if (type == org.hl7.fhir.r4.model.CodeSystem.class) {
-        final org.hl7.fhir.r4.model.CodeSystem result = contextR4.newJsonParser().parseResource(
-            org.hl7.fhir.r4.model.CodeSystem.class, getRootWithoutConcepts(file).toString());
-        result.setId(id);
-        return (T) result;
+        return (T) FhirUtilityR4.toR4(terminology);
       }
       // else R5
-      final CodeSystem result = contextR5.newJsonParser().parseResource(CodeSystem.class,
-          getRootWithoutConcepts(file).toString());
-      result.setId(id);
-      return (T) result;
+      return (T) FhirUtilityR5.toR5(terminology);
 
     } catch (final Exception e) {
       LOGGER.error("Error indexing code system.", e);
@@ -354,15 +375,15 @@ public final class CodeSystemLoaderUtil {
 
     final Terminology terminology = new Terminology();
     // The HAPI Plan server @Create method blanks the identifier on sending a
-    // code system in
-    final String id = root.path("id").asText();
-    if (isNotBlank(id)) {
-      terminology.setId(id);
-    } else {
-      final String uuid = UUID.randomUUID().toString();
-      terminology.setId(uuid);
-      LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
+    // code system in. Always create a new identifier.
+    terminology.setId(UUID.randomUUID().toString());
+
+    // Set "originalId" if provided
+    final String originalId = root.path("id").asText();
+    if (isNotBlank(originalId)) {
+      terminology.getAttributes().put("originalId", originalId);
     }
+
     terminology.setActive(true);
     terminology.setUri(root.path("url").asText());
     terminology.setName(root.path("name").asText());
@@ -459,7 +480,7 @@ public final class CodeSystemLoaderUtil {
         metadata.setField(MetaModel.Field.valueOf(fieldType));
         metadataList.add(metadata);
         if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("  ADD metadata = {}", metadata.toString());
+          LOGGER.debug("    ADD metadata = {}", metadata.toString());
         }
 
       } catch (final IllegalArgumentException e) {
@@ -486,8 +507,10 @@ public final class CodeSystemLoaderUtil {
 
     final Concept concept = new Concept();
 
-    final String id =
-        conceptNode.has("id") ? conceptNode.path("id").asText() : UUID.randomUUID().toString();
+    final String id = UUID.randomUUID().toString();
+    if (conceptNode.has("id")) {
+      concept.getAttributes().put("originalId", conceptNode.path("id").asText());
+    }
 
     concept.setId(id);
     concept.setCode(conceptNode.path("code").asText());
@@ -945,16 +968,18 @@ public final class CodeSystemLoaderUtil {
    *
    * @param service the service
    * @param terminology the terminology
+   * @param listener the listener
    * @throws Exception the exception
    */
   private static void computeConceptTreePositions(final EntityRepositoryService service,
-    final Terminology terminology) throws Exception {
+    final Terminology terminology, final ProgressListener listener) throws Exception {
 
     LOGGER.info(
         "  Computing concept tree positions for terminology: {}, publisher: {}, version: {}",
         terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion());
 
     final TreePositionAlgorithm treepos = new TreePositionAlgorithm(service);
+    treepos.addProgressListener(listener);
     treepos.setTerminology(terminology.getAbbreviation());
     treepos.setPublisher(terminology.getPublisher());
     treepos.setVersion(terminology.getVersion());

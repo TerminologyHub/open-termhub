@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.wci.termhub.EnablePostLoadComputations;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -58,7 +59,6 @@ import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.annotation.Search;
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
@@ -773,7 +773,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
    * @throws Exception the exception
    */
   @Create
-  public MethodOutcome createCodeSystem(@ResourceParam final byte[] bytes) throws Exception {
+  public CodeSystem createCodeSystem(@ResourceParam final byte[] bytes) throws Exception {
 
     try {
       logger.info("Create code system R4");
@@ -784,28 +784,27 @@ public class CodeSystemProviderR4 implements IResourceProvider {
 
       // Use existing loader utility
       final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
-          enablePostLoadComputations.isEnabled(), CodeSystem.class);
+          enablePostLoadComputations.isEnabled(), CodeSystem.class, new DefaultProgressListener());
 
       FileUtils.delete(file);
 
-      // Return success
-      final MethodOutcome out = new MethodOutcome();
-      final IdType id = new IdType("CodeSystem", codeSystem.getId());
-      out.setId(id);
-      out.setResource(codeSystem);
-      out.setCreated(true);
+      // // Return success
+      // final MethodOutcome out = new MethodOutcome();
+      // final IdType id = new IdType("CodeSystem", codeSystem.getId());
+      // out.setId(id);
+      // out.setResource(codeSystem);
+      // out.setCreated(true);
+      //
+      // final OperationOutcome outcome = new OperationOutcome();
+      // outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+      // .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+      // .setDiagnostics("ValueSet created = " + codeSystem.getId());
+      // out.setOperationOutcome(outcome);
 
-      final OperationOutcome outcome = new OperationOutcome();
-      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
-          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
-          .setDiagnostics("ValueSet created = " + codeSystem.getId());
-      out.setOperationOutcome(outcome);
+      return codeSystem;
 
-      return out;
-
-    } catch (FHIRServerResponseException fsre) {
-      // Throw any write concurrency errors. Will be handled by AOP
-      throw fsre;
+    } catch (FHIRServerResponseException fe) {
+      throw fe;
     } catch (final Exception e) {
       logger.error("Unexpected error creating code system", e);
       throw FhirUtilityR4.exception("Failed to create code system: " + e.getMessage(),
@@ -823,7 +822,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
    * @throws Exception the exception
    */
   @Delete
-  public MethodOutcome deleteCodeSystem(final HttpServletRequest request,
+  public void deleteCodeSystem(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
@@ -841,7 +840,6 @@ public class CodeSystemProviderR4 implements IResourceProvider {
       }
 
       TerminologyUtility.removeTerminology(searchService, terminology.getId());
-      return new MethodOutcome();
 
     } catch (final FHIRServerResponseException e) {
       throw e;

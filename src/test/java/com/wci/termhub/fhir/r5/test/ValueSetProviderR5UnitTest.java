@@ -180,7 +180,7 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
 
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
-          ValueSetLoaderUtil.loadSubset(searchService, resource.getFile(), ValueSet.class);
+          ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(), ValueSet.class);
         });
 
       } catch (final Exception e) {

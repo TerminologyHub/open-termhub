@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -147,7 +148,7 @@ public class SyndicationContentLoader {
     logger.debug("Loading CodeSystem content");
 
     CodeSystemLoaderUtil.loadCodeSystem(searchService, file, enablePostLoadComputations,
-        org.hl7.fhir.r5.model.CodeSystem.class);
+        org.hl7.fhir.r5.model.CodeSystem.class, new DefaultProgressListener());
   }
 
   /**
@@ -158,7 +159,7 @@ public class SyndicationContentLoader {
    */
   private void loadValueSet(final File file) throws Exception {
     logger.debug("Loading ValueSet content");
-    ValueSetLoaderUtil.loadSubset(searchService, file, org.hl7.fhir.r5.model.ValueSet.class);
+    ValueSetLoaderUtil.loadValueSet(searchService, file, org.hl7.fhir.r5.model.ValueSet.class);
   }
 
   /**
@@ -424,7 +425,7 @@ public class SyndicationContentLoader {
       switch (resourceType) {
         case "CodeSystem":
           CodeSystemLoaderUtil.loadCodeSystem(searchService, file, enablePostLoadComputations,
-              org.hl7.fhir.r5.model.ConceptMap.class);
+              org.hl7.fhir.r5.model.ConceptMap.class, new DefaultProgressListener());
           results.incrementCodeSystemsLoaded();
           logger.info("Successfully loaded CodeSystem from file: {}", filePath);
           // Mark as loaded in tracker
@@ -433,7 +434,7 @@ public class SyndicationContentLoader {
               syndicationClient.getSyndicationUrl());
           break;
         case "ValueSet":
-          ValueSetLoaderUtil.loadSubset(searchService, file, org.hl7.fhir.r5.model.ValueSet.class);
+          ValueSetLoaderUtil.loadValueSet(searchService, file, org.hl7.fhir.r5.model.ValueSet.class);
           results.incrementValueSetsLoaded();
           logger.info("Successfully loaded ValueSet from file: {}", filePath);
           // Mark as loaded in tracker

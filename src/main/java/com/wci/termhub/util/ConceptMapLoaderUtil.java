@@ -297,13 +297,12 @@ public final class ConceptMapLoaderUtil {
     final Mapset mapset = new Mapset();
 
     // Convert to internal model
-    final String id = root.path("id").asText();
-    if (isNotBlank(id)) {
-      mapset.setId(id);
-    } else {
-      final String uuid = UUID.randomUUID().toString();
-      mapset.setId(uuid);
-      LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
+    // The HAPI Plan server @Create method blanks the identifier on sending a
+    // code system in. Always create a new identifier.
+    mapset.setId(UUID.randomUUID().toString());
+    final String originalId = root.path("id").asText();
+    if (isNotBlank(originalId)) {
+      mapset.getAttributes().put("originalId", originalId);
     }
     mapset.setActive(true);
     mapset.setName(root.path("name").asText());

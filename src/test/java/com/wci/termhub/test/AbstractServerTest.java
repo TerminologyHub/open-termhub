@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.service.EntityRepositoryService;
@@ -117,7 +118,7 @@ public abstract class AbstractServerTest extends BaseUnitTest {
 
         logger.info("Loading code system from classpath resource: data/{}", codeSystemFile);
         CodeSystemLoaderUtil.loadCodeSystem(searchService, resource.getFile(), computeTreePositions,
-            CodeSystem.class);
+            CodeSystem.class, new DefaultProgressListener());
       } catch (final Exception e) {
         logger.error("Error loading code system file: {}", codeSystemFile, e);
         throw e;
@@ -183,7 +184,7 @@ public abstract class AbstractServerTest extends BaseUnitTest {
 
         logger.info("Loading value sets from classpath resource: data/{}", valueSetFile);
         assertNotNull(
-            ValueSetLoaderUtil.loadSubset(searchService, resource.getFile(), ValueSet.class));
+            ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(), ValueSet.class));
 
       } catch (final Exception e) {
         logger.error("Error loading value set file: {}", valueSetFile, e);
