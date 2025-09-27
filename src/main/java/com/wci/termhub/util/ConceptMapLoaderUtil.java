@@ -76,21 +76,19 @@ public final class ConceptMapLoaderUtil {
   }
 
   /**
-   * Load concept map from a JSON file and save it using the repository service.
+   * Load concept map.
    *
    * @param <T> the generic type
-   * @param service the repository service to use for saving
+   * @param service the service
    * @param file the file
    * @param type the type
    * @param listener the listener
-   * @return the mapset
-   * @throws Exception if there is an error reading or processing the file
+   * @return the t
+   * @throws Exception the exception
    */
   public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
     final Class<T> type, final ProgressListener listener) throws Exception {
-
     return indexConceptMap(service, file, type, listener);
-
   }
 
   /**
@@ -101,7 +99,7 @@ public final class ConceptMapLoaderUtil {
    * @param file the file
    * @param type the type
    * @param listener the listener
-   * @return the mapset
+   * @return the t
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")

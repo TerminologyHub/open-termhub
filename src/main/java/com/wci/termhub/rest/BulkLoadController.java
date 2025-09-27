@@ -87,7 +87,7 @@ public class BulkLoadController {
   private static Map<String, Exception> processExceptionMap = new HashMap<>();
 
   /**
-   * Gets the progress.
+   * <<<<<<< HEAD Gets the progress.
    *
    * @param type the type
    * @param processId the process id
@@ -325,6 +325,7 @@ public class BulkLoadController {
    * @return the response entity
    * @throws Exception the exception
    */
+
   @RequestMapping(value = "/ValueSet/$load", method = RequestMethod.POST,
       consumes = "multipart/form-data")
   @Operation(summary = "Load ValueSet data",
@@ -425,6 +426,7 @@ public class BulkLoadController {
 
     } catch (final FHIRServerResponseException fe) {
       throw fe;
+
     } catch (final Exception e) {
       logger.error("Unexpected error creating value set", e);
       throw FhirUtilityR5.exception("Failed to create value set = " + e.getMessage(),
@@ -540,6 +542,7 @@ public class BulkLoadController {
 
     } catch (final FHIRServerResponseException fe) {
       throw fe;
+
     } catch (final Exception e) {
       logger.error("Unexpected error creating concept map", e);
       throw FhirUtilityR5.exception("Failed to create concept map = " + e.getMessage(),
@@ -559,9 +562,7 @@ public class BulkLoadController {
   @RequestMapping(value = "/Bundle/$load", method = RequestMethod.POST,
       consumes = "multipart/form-data")
   @Operation(summary = "Load Bundle data",
-      description = "Loads Bundle data from the specified file. "
-          + "This bundle can contain CodeSystem, ConceptMap, or ValueSet resources.",
-      tags = {
+      description = "Loads Bundle data from the specified file.", tags = {
           "load"
       })
   @ApiResponses({
@@ -582,7 +583,7 @@ public class BulkLoadController {
   })
   @RequestBody(description = "Multi-part form data", required = true,
       content = @Content(schema = @Schema(implementation = String.class), examples = {
-          @ExampleObject(value = "resource={\"resourceType\":\"ConceptMap\",...}")
+          @ExampleObject(value = "resource={\"resourceType\":\"Bundle\",...}")
       }))
   public ResponseEntity<String> loadBundle(
     @RequestParam(name = "background", required = false) final boolean background,
@@ -616,4 +617,5 @@ public class BulkLoadController {
     }
   }
 
+  // TDOO: update tutorial1
 }
