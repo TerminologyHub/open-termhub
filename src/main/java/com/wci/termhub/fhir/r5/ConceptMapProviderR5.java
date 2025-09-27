@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -779,8 +780,8 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       final File file = File.createTempFile("tmp", ".json");
       FileUtils.writeByteArrayToFile(file, bytes);
 
-      final ConceptMap conceptMap =
-          ConceptMapLoaderUtil.loadConceptMap(searchService, file, ConceptMap.class);
+      final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService, file,
+          ConceptMap.class, new DefaultProgressListener());
 
       FileUtils.delete(file);
 

@@ -22,6 +22,8 @@ import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.wci.termhub.algo.ProgressEvent;
+import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.model.Concept;
@@ -87,12 +89,13 @@ public final class ValueSetLoaderUtil {
    * @param service the repository service
    * @param file the file
    * @param type the type
+   * @param listener the listener
    * @return the Subset id
    * @throws Exception on error
    */
   @SuppressWarnings("unchecked")
   public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
-    final Class<T> type) throws Exception {
+    final Class<T> type, final ProgressListener listener) throws Exception {
 
     LOGGER.info("Loading Subset from JSON, isR5={}", type == org.hl7.fhir.r5.model.ValueSet.class);
 
@@ -100,12 +103,12 @@ public final class ValueSetLoaderUtil {
       final IParser parser = contextR4.newJsonParser();
       final org.hl7.fhir.r4.model.ValueSet vs = parser.parseResource(
           org.hl7.fhir.r4.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-      return (T) indexValueSetR4(service, vs);
+      return (T) indexValueSetR4(service, vs, listener);
     }
     final IParser parser = contextR5.newJsonParser();
     final org.hl7.fhir.r5.model.ValueSet vs = parser.parseResource(
         org.hl7.fhir.r5.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-    return (T) indexValueSetR5(service, vs);
+    return (T) indexValueSetR5(service, vs, listener);
   }
 
   /**
@@ -113,16 +116,19 @@ public final class ValueSetLoaderUtil {
    *
    * @param service the service
    * @param valueSet the value set
+   * @param listener the listener
    * @return the string
    * @throws Exception the exception
    */
   private static org.hl7.fhir.r4.model.ValueSet indexValueSetR4(
-    final EntityRepositoryService service, final org.hl7.fhir.r4.model.ValueSet valueSet)
-    throws Exception {
+    final EntityRepositoryService service, final org.hl7.fhir.r4.model.ValueSet valueSet,
+    final ProgressListener listener) throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
     try {
+      // Set listener to 0%
+      listener.updateProgress(new ProgressEvent(0));
 
       LOGGER.info("Indexing ValueSet R4 {} = {}", valueSet.getTitle(), valueSet.getUrl());
       // Basic checks
@@ -138,8 +144,10 @@ public final class ValueSetLoaderUtil {
       final String version = valueSet.getVersion();
       Subset subset = findSubset(service, abbreviation, publisher, version);
       if (subset != null) {
-        throw new Exception("Can not create multiple ValueSet resources the same title, publisher,"
-            + " and version. duplicate = " + subset.getId());
+        throw FhirUtilityR4.exception(
+            "Can not create multiple ValueSet resources the same title, publisher,"
+                + " and version. duplicate = " + subset.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
 
       subset = new Subset();
@@ -222,7 +230,8 @@ public final class ValueSetLoaderUtil {
             .getCompose().getInclude()) {
 
           if (includes.getSystem() == null) {
-            throw new Exception("Unable to determine system of value set");
+            throw FhirUtilityR4.exception("Unable to determine system of value set",
+                IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
           }
 
           final TerminologyRef ref = new TerminologyRef();
@@ -319,6 +328,9 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
       return FhirUtilityR4.toR4ValueSet(subset, null, false);
 
     } catch (final Exception e) {
@@ -332,12 +344,13 @@ public final class ValueSetLoaderUtil {
    *
    * @param service the service
    * @param valueSet the value set
+   * @param listener the listener
    * @return the string
    * @throws Exception the exception
    */
   private static org.hl7.fhir.r5.model.ValueSet indexValueSetR5(
-    final EntityRepositoryService service, final org.hl7.fhir.r5.model.ValueSet valueSet)
-    throws Exception {
+    final EntityRepositoryService service, final org.hl7.fhir.r5.model.ValueSet valueSet,
+    final ProgressListener listener) throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
@@ -357,8 +370,10 @@ public final class ValueSetLoaderUtil {
       final String version = valueSet.getVersion();
       Subset subset = findSubset(service, abbreviation, publisher, version);
       if (subset != null) {
-        throw new Exception("Can not create multiple ValueSet resources the same title, publisher,"
-            + " and version. duplicate = " + subset.getId());
+        throw FhirUtilityR4.exception(
+            "Can not create multiple ValueSet resources the same title, publisher,"
+                + " and version. duplicate = " + subset.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
 
       subset = new Subset();
@@ -439,7 +454,8 @@ public final class ValueSetLoaderUtil {
             .getCompose().getInclude()) {
 
           if (includes.getSystem() == null) {
-            throw new Exception("Unable to determine system of value set");
+            throw FhirUtilityR4.exception("Unable to determine system of value set",
+                IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
           }
 
           final TerminologyRef ref = new TerminologyRef();
@@ -532,7 +548,9 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      valueSet.setId(id);
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
       return FhirUtilityR5.toR5ValueSet(subset, null, false);
 
     } catch (final Exception e) {

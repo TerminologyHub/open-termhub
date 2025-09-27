@@ -154,7 +154,8 @@ public abstract class AbstractServerTest extends BaseUnitTest {
           throw new IllegalArgumentException("Invalid resource type - expected ConceptMap");
         }
 
-        ConceptMapLoaderUtil.loadConceptMap(searchService, resource.getFile(), ConceptMap.class);
+        ConceptMapLoaderUtil.loadConceptMap(searchService, resource.getFile(), ConceptMap.class,
+            new DefaultProgressListener());
       } catch (final Exception e) {
         logger.error("Error loading concept map file: {}", conceptMapFile, e);
         throw e;
@@ -183,8 +184,8 @@ public abstract class AbstractServerTest extends BaseUnitTest {
         }
 
         logger.info("Loading value sets from classpath resource: data/{}", valueSetFile);
-        assertNotNull(
-            ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(), ValueSet.class));
+        assertNotNull(ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(),
+            ValueSet.class, new DefaultProgressListener()));
 
       } catch (final Exception e) {
         logger.error("Error loading value set file: {}", valueSetFile, e);

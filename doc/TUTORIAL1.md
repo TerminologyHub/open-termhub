@@ -66,49 +66,49 @@ resources.
 #### Load Sandbox SNOMEDCT_US
 
 ```
-curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
-  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-snomedct_us-sandbox-20240301-r5.json' | jq
+curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'resource=@src/main/resources/data/CodeSystem-snomedct_us-sandbox-20240301-r5.json' | jq
 ```
 
 #### Load Sandbox RXNORM
 
 ```
-curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
-  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-rxnorm-sandbox-04012024-r5.json' | jq
+curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'resource=@src/main/resources/data/CodeSystem-rxnorm-sandbox-04012024-r5.json' | jq
 ```
 
 #### Load Sandbox ICD10CM
 
 ```
-curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
-  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-icd10cm-sandbox-2023-r5.json' | jq
+curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'resource=@src/main/resources/data/CodeSystem-icd10cm-sandbox-2023-r5.json' | jq
 ```
 
 #### Load Sandbox LNC
 
 ```
-curl -X POST http://localhost:8080/fhir/r5/CodeSystem \
-  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json' | jq
+curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'resource=@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json' | jq
 ```
 
 #### Load the SNOMEDCT_US to ICD10CM concept maps 
 
 ```
-curl -X POST http://localhost:8080/fhir/r5/ConceptMap \
-  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json' | jq
+curl -X POST 'http://localhost:8080/fhir/ConceptMap/$load' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'resource=@src/main/resources/data/ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json' | jq
 ```
 
 #### Load the SNOMEDCT_US EXTENSION value set
 
 ```
-curl -X POST http://localhost:8080/fhir/r5/ValueSet \
-  -H 'accept: application/fhir+json' -H 'Content-Type: application/fhir+json' \
-  -d '@src/main/resources/data/ValueSet-snomedct_us-extension-sandbox-20240301-r5.json' | jq
+curl -X POST 'http://localhost:8080/fhir/ValueSet/$load' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'resource=@src/main/resources/data/ValueSet-snomedct_us-extension-sandbox-20240301-r5.json' | jq
 ```
 
 After running the commands above, the running server should be loaded with the

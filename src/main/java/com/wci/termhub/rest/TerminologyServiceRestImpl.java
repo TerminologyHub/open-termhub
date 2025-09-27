@@ -116,6 +116,8 @@ import jakarta.servlet.http.HttpServletRequest;
         email = "info@terminologyhub.com")),
     tags = {
         @Tag(name = "terminology", description = "Terminology service endpoints"),
+        @Tag(name = "mapset", description = "Mapset endpoints"),
+        @Tag(name = "subset", description = "Subset endpoints"),
         @Tag(name = "metadata", description = "Terminology and metadata endpoints"),
         @Tag(name = "concept", description = "Concept endpoints"),
         @Tag(name = "concept by id",
@@ -123,7 +125,7 @@ import jakarta.servlet.http.HttpServletRequest;
         @Tag(name = "concept by code",
             description = "Concept service endpoints with \"by code\" parameters"),
         @Tag(name = "term", description = "Term endpoints"),
-        @Tag(name = "mapset", description = "Mapset endpoints"),
+        @Tag(name = "load", description = "Bulk loader endpoints"),
     }, servers = {
         @Server(description = "Current Instance", url = "/")
     })

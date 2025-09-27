@@ -25,6 +25,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.wci.termhub.algo.ProgressEvent;
+import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.model.Concept;
@@ -74,20 +76,19 @@ public final class ConceptMapLoaderUtil {
   }
 
   /**
-   * Load concept map from a JSON file and save it using the repository service.
+   * Load concept map.
    *
    * @param <T> the generic type
-   * @param service the repository service to use for saving
+   * @param service the service
    * @param file the file
    * @param type the type
-   * @return the mapset
-   * @throws Exception if there is an error reading or processing the file
+   * @param listener the listener
+   * @return the t
+   * @throws Exception the exception
    */
   public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
-    final Class<T> type) throws Exception {
-
-    return indexConceptMap(service, file, type);
-
+    final Class<T> type, final ProgressListener listener) throws Exception {
+    return indexConceptMap(service, file, type, listener);
   }
 
   /**
@@ -97,12 +98,13 @@ public final class ConceptMapLoaderUtil {
    * @param service the service
    * @param file the file
    * @param type the type
-   * @return the mapset
+   * @param listener the listener
+   * @return the t
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexConceptMap(final EntityRepositoryService service, final File file,
-    final Class<T> type) throws Exception {
+    final Class<T> type, final ProgressListener listener) throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
@@ -110,6 +112,9 @@ public final class ConceptMapLoaderUtil {
     final JsonNode conceptMap = ThreadLocalMapper.get().readTree(file);
 
     try {
+      // Set listener to 0%
+      listener.updateProgress(new ProgressEvent(0));
+
       LOGGER.info("Indexing ConceptMap {} = {}", conceptMap.path("title"), conceptMap.path("url"));
 
       // Basic checks
@@ -125,9 +130,10 @@ public final class ConceptMapLoaderUtil {
       final String version = conceptMap.path("version").asText();
       Mapset mapset = findMapset(service, abbreviation, publisher, version);
       if (mapset != null) {
-        throw new Exception(
+        throw FhirUtilityR4.exception(
             "Can not create multiple ConceptMap resources the same title, publisher,"
-                + " and version. duplicate = " + mapset.getId());
+                + " and version. duplicate = " + mapset.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
       mapset = createMapset(service, conceptMap);
 
@@ -169,6 +175,7 @@ public final class ConceptMapLoaderUtil {
 
       // process concept map array
       final JsonNode groupArray = conceptMap.path("group");
+      int totalCt = groupArray.size();
       for (final JsonNode groupNode : groupArray) {
 
         for (final JsonNode elementNode : groupNode.path("element")) {
@@ -253,6 +260,7 @@ public final class ConceptMapLoaderUtil {
             service.add(Mapping.class, mapping);
             if (++mappingCount % 5000 == 0) {
               LOGGER.info("  count: {}", mappingCount);
+              listener.updateProgress(new ProgressEvent((int) (mappingCount * 1.0 / totalCt)));
             }
             // Too much info
             if (LOGGER.isDebugEnabled()) {
@@ -264,6 +272,9 @@ public final class ConceptMapLoaderUtil {
 
       LOGGER.info("  final counts - mapsets: {}, mappings: {}", 1, mappingCount);
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
+
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
 
       // R4
       if (type == org.hl7.fhir.r4.model.ConceptMap.class) {
@@ -312,7 +323,8 @@ public final class ConceptMapLoaderUtil {
 
     // Validate that this is a CodeSystem resource
     if (!root.has("resourceType") || !"ConceptMap".equals(root.get("resourceType").asText())) {
-      throw new IllegalArgumentException("Invalid resource type - expected ConceptMap");
+      throw FhirUtilityR4.exception("Invalid resource type - expected ConceptMap",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
 
     final Mapset mapset = new Mapset();
@@ -345,7 +357,8 @@ public final class ConceptMapLoaderUtil {
       fromTerminology = root.path("group").get(0).path("source").asText();
     }
     if (fromTerminology == null) {
-      throw new Exception("Unable to determine information about the map source");
+      throw FhirUtilityR4.exception("Unable to determine information about the map source",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
     final TerminologyRef fromRef = new TerminologyRef();
     fromRef.setUri(fromTerminology);
@@ -361,7 +374,8 @@ public final class ConceptMapLoaderUtil {
       toTerminology = root.path("group").get(0).path("target").asText();
     }
     if (toTerminology == null) {
-      throw new Exception("Unable to determine information about the map target");
+      throw FhirUtilityR4.exception("Unable to determine information about the map target",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
     final TerminologyRef toRef = new TerminologyRef();
     toRef.setUri(toTerminology);
