@@ -163,9 +163,10 @@ public final class CodeSystemLoaderUtil {
       Terminology terminology = findTerminology(service, abbreviation, publisher, version);
 
       if (terminology != null) {
-        throw new Exception(
-            "Can not create multiple ConceptMap resources the same title, publisher,"
-                + " and version. duplicate = " + terminology.getId());
+        throw FhirUtilityR4.exception(
+            "Can not create multiple CodeSystem resources the same title, publisher,"
+                + " and version. duplicate = " + terminology.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
 
       // Create the terminology
@@ -180,7 +181,8 @@ public final class CodeSystemLoaderUtil {
       }
 
       if (metadataList == null) {
-        throw new Exception("Unexpected null metadata list");
+        throw FhirUtilityR4.exception("Unexpected null metadata list", IssueType.INVALID,
+            HttpServletResponse.SC_EXPECTATION_FAILED);
       }
 
       int conceptCount = 0;
@@ -262,7 +264,9 @@ public final class CodeSystemLoaderUtil {
 
               // this should never happen
               if ((concept.getCode() == null) || (concept.getName() == null)) {
-                throw new Exception("Concept code is unexpectedly null = " + concept);
+                throw FhirUtilityR4.exception("Concept code is unexpectedly null = " + concept,
+                    IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
+
               }
 
               // Add concept to batch
@@ -390,7 +394,8 @@ public final class CodeSystemLoaderUtil {
 
     // Validate that this is a CodeSystem resource
     if (!root.has("resourceType") || !"CodeSystem".equals(root.get("resourceType").asText())) {
-      throw new IllegalArgumentException("Invalid resource type - expected CodeSystem");
+      throw FhirUtilityR4.exception("Invalid resource type - expected CodeSystem",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
 
     final Terminology terminology = new Terminology();
@@ -970,8 +975,9 @@ public final class CodeSystemLoaderUtil {
           terminology.getPublisher(), terminology.getAbbreviation(), terminology.getVersion());
       relationship.setTo(toRef);
     } else {
-      throw new Exception("Unexpected 'parent' property without a valueCoding = "
-          + fromConcept.getCode() + ", " + relationshipNode);
+      throw FhirUtilityR4.exception("Unexpected 'parent' property without a valueCoding = "
+          + fromConcept.getCode() + ", " + relationshipNode, IssueType.INVALID,
+          HttpServletResponse.SC_EXPECTATION_FAILED);
     }
 
     // Set additional attributes

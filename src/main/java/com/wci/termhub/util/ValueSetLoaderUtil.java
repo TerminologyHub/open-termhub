@@ -144,8 +144,10 @@ public final class ValueSetLoaderUtil {
       final String version = valueSet.getVersion();
       Subset subset = findSubset(service, abbreviation, publisher, version);
       if (subset != null) {
-        throw new Exception("Can not create multiple ValueSet resources the same title, publisher,"
-            + " and version. duplicate = " + subset.getId());
+        throw FhirUtilityR4.exception(
+            "Can not create multiple ValueSet resources the same title, publisher,"
+                + " and version. duplicate = " + subset.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
 
       subset = new Subset();
@@ -228,7 +230,8 @@ public final class ValueSetLoaderUtil {
             .getCompose().getInclude()) {
 
           if (includes.getSystem() == null) {
-            throw new Exception("Unable to determine system of value set");
+            throw FhirUtilityR4.exception("Unable to determine system of value set",
+                IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
           }
 
           final TerminologyRef ref = new TerminologyRef();
@@ -367,8 +370,10 @@ public final class ValueSetLoaderUtil {
       final String version = valueSet.getVersion();
       Subset subset = findSubset(service, abbreviation, publisher, version);
       if (subset != null) {
-        throw new Exception("Can not create multiple ValueSet resources the same title, publisher,"
-            + " and version. duplicate = " + subset.getId());
+        throw FhirUtilityR4.exception(
+            "Can not create multiple ValueSet resources the same title, publisher,"
+                + " and version. duplicate = " + subset.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
 
       subset = new Subset();
@@ -449,7 +454,8 @@ public final class ValueSetLoaderUtil {
             .getCompose().getInclude()) {
 
           if (includes.getSystem() == null) {
-            throw new Exception("Unable to determine system of value set");
+            throw FhirUtilityR4.exception("Unable to determine system of value set",
+                IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
           }
 
           final TerminologyRef ref = new TerminologyRef();

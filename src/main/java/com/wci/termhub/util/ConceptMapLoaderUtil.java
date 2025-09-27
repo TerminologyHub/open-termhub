@@ -132,9 +132,10 @@ public final class ConceptMapLoaderUtil {
       final String version = conceptMap.path("version").asText();
       Mapset mapset = findMapset(service, abbreviation, publisher, version);
       if (mapset != null) {
-        throw new Exception(
+        throw FhirUtilityR4.exception(
             "Can not create multiple ConceptMap resources the same title, publisher,"
-                + " and version. duplicate = " + mapset.getId());
+                + " and version. duplicate = " + mapset.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
       mapset = createMapset(service, conceptMap);
 
@@ -324,7 +325,8 @@ public final class ConceptMapLoaderUtil {
 
     // Validate that this is a CodeSystem resource
     if (!root.has("resourceType") || !"ConceptMap".equals(root.get("resourceType").asText())) {
-      throw new IllegalArgumentException("Invalid resource type - expected ConceptMap");
+      throw FhirUtilityR4.exception("Invalid resource type - expected ConceptMap",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
 
     final Mapset mapset = new Mapset();
@@ -357,7 +359,8 @@ public final class ConceptMapLoaderUtil {
       fromTerminology = root.path("group").get(0).path("source").asText();
     }
     if (fromTerminology == null) {
-      throw new Exception("Unable to determine information about the map source");
+      throw FhirUtilityR4.exception("Unable to determine information about the map source",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
     final TerminologyRef fromRef = new TerminologyRef();
     fromRef.setUri(fromTerminology);
@@ -373,7 +376,8 @@ public final class ConceptMapLoaderUtil {
       toTerminology = root.path("group").get(0).path("target").asText();
     }
     if (toTerminology == null) {
-      throw new Exception("Unable to determine information about the map target");
+      throw FhirUtilityR4.exception("Unable to determine information about the map target",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
     final TerminologyRef toRef = new TerminologyRef();
     toRef.setUri(toTerminology);
