@@ -94,8 +94,7 @@ public class BulkLoadController {
    * @return the progress
    * @throws Exception the exception
    */
-  @RequestMapping(value = "/{CodeSystem,ConceptMap,ValueSet,Bundle}/$load/{processId}/progress",
-      method = RequestMethod.GET)
+  @RequestMapping(value = "/{type}/$load/{processId}/progress", method = RequestMethod.GET)
   @Operation(summary = "Get process progress",
       description = "Gets progress for the specified process id", tags = {
           "load"
@@ -132,8 +131,7 @@ public class BulkLoadController {
    * @return the process error
    * @throws Exception the exception
    */
-  @RequestMapping(value = "/{CodeSystem,ConceptMap,ValueSet,Bundle}/$load/{processId}/error",
-      method = RequestMethod.GET)
+  @RequestMapping(value = "/{type}/$load/{processId}/error", method = RequestMethod.GET)
   @Operation(summary = "Get process error", description = "Gets error for the specified process id",
       tags = {
           "load"
@@ -170,8 +168,7 @@ public class BulkLoadController {
    * @return the process result
    * @throws Exception the exception
    */
-  @RequestMapping(value = "/{CodeSystem,ConceptMap,ValueSet,Bundle}/$load/{processId}/result",
-      method = RequestMethod.GET)
+  @RequestMapping(value = "/{type}/$load/{processId}/result", method = RequestMethod.GET)
   @Operation(summary = "Get process result",
       description = "Gets result for the specified process id", tags = {
           "load"
