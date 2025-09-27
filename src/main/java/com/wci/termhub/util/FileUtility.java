@@ -98,7 +98,7 @@ public final class FileUtility {
     if (!destinationDir.exists()) {
       destinationDir.mkdirs();
     }
-    logger.info("Starting extracting files to {}", destinationDir.getAbsolutePath());
+    logger.info("  starting extracting files to {}", destinationDir.getAbsolutePath());
 
     try (final InputStream fis = Files.newInputStream(Paths.get(zipFilePath));
         final ZipInputStream zis = new ZipInputStream(fis)) {
@@ -109,7 +109,7 @@ public final class FileUtility {
 
         final File newFile = getZippedFile(destinationDir, zipEntry);
 
-        logger.info("Extracting file to {}", newFile.getAbsolutePath());
+        logger.info("    file = {}", newFile.getAbsolutePath());
 
         try (final FileOutputStream fos = new FileOutputStream(newFile)) {
           final byte[] buffer = new byte[1024];

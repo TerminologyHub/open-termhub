@@ -303,8 +303,7 @@ public class SyndicationContentLoader {
       try {
         loadSingleEntry(entry, feed, results);
       } catch (final Exception e) {
-        logger.warn("Failed to load entry on first attempt: {} - {}", entry.getTitle(),
-            e.getMessage());
+        logger.warn("Failed to load entry on first attempt: {}", entry.getTitle(), e);
         failedEntries.add(entry);
         retryEntries.add(entry);
       }
@@ -320,7 +319,7 @@ public class SyndicationContentLoader {
           loadSingleEntry(entry, feed, results);
           logger.info("Successfully loaded entry on retry: {}", entry.getTitle());
         } catch (final Exception e) {
-          logger.error("Failed to load entry on retry: {} - {}", entry.getTitle(), e.getMessage());
+          logger.error("Failed to load entry on retry: {}", entry.getTitle(), e);
           stillFailed.add(entry);
           results.incrementTotalErrors();
           results.addErrorMessage(
@@ -389,10 +388,10 @@ public class SyndicationContentLoader {
       // Check if file is a ZIP file and extract if necessary
       // final JsonNode jsonFileContent;
       final File file;
+      final File extractDir =
+          Files.createTempDirectory("syndication-extract-" + UUID.randomUUID().toString()).toFile();
       if (downloadedFile.getName().endsWith(".zip") || isZipFile(downloadedFile)) {
         logger.info("Downloaded file is a ZIP file, extracting...");
-        final File extractDir = Files
-            .createTempDirectory("syndication-extract-" + UUID.randomUUID().toString()).toFile();
         FileUtility.extractZipFile(downloadedFile.getAbsolutePath(), extractDir.getAbsolutePath());
 
         // Find the first JSON file in the extracted directory
@@ -404,12 +403,9 @@ public class SyndicationContentLoader {
 
         file = jsonFile;
 
-        // Clean up extracted files
-        FileUtils.deleteDirectory(extractDir);
       } else {
         // Read file content directly
         file = downloadedFile;
-
       }
 
       // Use URL-based content type for loading (more reliable than JSON content
@@ -461,9 +457,10 @@ public class SyndicationContentLoader {
       results.incrementTotalLoaded();
 
       // Clean up temporary file
-      if (!downloadedFile.delete()) {
+      if (!file.delete()) {
         logger.warn("Failed to delete temporary file: {}", filePath);
       }
+      FileUtils.deleteDirectory(extractDir);
     }
     // Clear Lucene readers after loading to ensure new content is visible
     LuceneDataAccess.clearReaders();
@@ -580,7 +577,7 @@ public class SyndicationContentLoader {
         parser.nextToken();
 
         if ("resourceType".equals(fieldName)) {
-          return parser.readValueAsTree();
+          return parser.getValueAsString();
         }
       }
 
