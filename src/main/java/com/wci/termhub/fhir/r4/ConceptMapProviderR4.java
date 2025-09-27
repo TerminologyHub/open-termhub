@@ -722,11 +722,12 @@ public class ConceptMapProviderR4 implements IResourceProvider {
           (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
           // terminology clause (null if null) - no reversing
           terminology == null ? null
-              : ("from.terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation())),
+              : ("from.terminology:\"" + StringUtility.escapeQuery(terminology.getAbbreviation())
+                  + "\""),
           // mapset clauses
           // TODO: how do we include publisher?, needs to be in concept map
-          "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
-          "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
+          "mapset.abbreviation:\"" + StringUtility.escapeQuery(map.getTitle()) + "\"",
+          "mapset.version:\"" + StringUtility.escapeQuery(map.getVersion()) + "\"",
           "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 1000, null, null);
 
       final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();

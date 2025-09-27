@@ -2199,8 +2199,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
-              "from.terminology:" + concept.getTerminology(),
-              "from.publisher:" + concept.getPublisher()),
+              "from.terminology:\"" + concept.getTerminology() + "\"",
+              "from.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2259,8 +2259,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapset> mapsets = lookupMapsets(null, true);
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
-              "to.terminology:" + concept.getTerminology(),
-              "to.publisher:" + concept.getPublisher()),
+              "to.terminology:\"" + concept.getTerminology() + "\"",
+              "to.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2320,8 +2320,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Subset> subsets = lookupSubsets(null, true);
       final List<SubsetMember> members = findMembersHelper(subsets,
           StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(concept.getCode()),
-              "terminology:" + concept.getTerminology(), "publisher:" + concept.getPublisher(),
-              "version:" + concept.getVersion()),
+              "terminology:\"" + concept.getTerminology() + "\"",
+              "publisher:\"" + concept.getPublisher() + "\"",
+              "version:\"" + concept.getVersion() + "\""),
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2395,8 +2396,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
-              "from.terminology:" + concept.getTerminology(),
-              "from.publisher:" + concept.getPublisher()),
+              "from.terminology:\"" + concept.getTerminology() + "\"",
+              "from.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2469,8 +2470,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapset> mapsets = lookupMapsets(null, true);
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
-              "to.terminology:" + concept.getTerminology(),
-              "to.publisher:" + concept.getPublisher()),
+              "to.terminology:\"" + concept.getTerminology() + "\"",
+              "to.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2544,8 +2545,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<SubsetMember> members = findMembersHelper(subsets,
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
-              "from.terminology:" + concept.getTerminology(),
-              "from.publisher:" + concept.getPublisher()),
+              "from.terminology:\"" + concept.getTerminology() + "\"",
+              "from.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object

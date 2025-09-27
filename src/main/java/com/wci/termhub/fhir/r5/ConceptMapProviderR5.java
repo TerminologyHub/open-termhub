@@ -694,13 +694,13 @@ public class ConceptMapProviderR5 implements IResourceProvider {
               // terminology clause (null if null) - no reversing
               sourceTerminology == null ? null
                   : ("from.terminology:"
-                      + StringUtility.escapeQuery(sourceTerminology.getAbbreviation())),
+                      + StringUtility.escapeQuery(sourceTerminology.getAbbreviation()) + "\""),
               targetTerminology == null ? null
                   : ("to.terminology:"
-                      + StringUtility.escapeQuery(targetTerminology.getAbbreviation())),
+                      + StringUtility.escapeQuery(targetTerminology.getAbbreviation()) + "\""),
               // mapset clauses
-              "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
-              "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
+              "mapset.abbreviation:\"" + StringUtility.escapeQuery(map.getTitle()) + "\"",
+              "mapset.version:\"" + StringUtility.escapeQuery(map.getVersion()) + "\"",
               "mapset.code:" + mapsetCode), null, 1000, null, null), Mapping.class).getItems();
 
       if (logger.isDebugEnabled()) {

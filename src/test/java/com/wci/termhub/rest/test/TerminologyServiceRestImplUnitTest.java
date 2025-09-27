@@ -63,6 +63,8 @@ import com.wci.termhub.model.SubsetRef;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.test.AbstractTerminologyServerTest;
+import com.wci.termhub.util.CodeSystemLoaderUtil;
+import com.wci.termhub.util.ConceptMapLoaderUtil;
 
 /**
  * Unit tests for TerminologyServiceRestImpl. All systems tests are order 1. All get/find tests are
@@ -133,7 +135,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyIcd10Cm() throws Exception {
-    final String id = "177f2263-fe04-4f1f-b0e6-9b351ab8baa9";
+    final String id = CodeSystemLoaderUtil.mapOriginalId("177f2263-fe04-4f1f-b0e6-9b351ab8baa9");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -169,7 +171,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologySnomedCtUs() throws Exception {
-    final String id = "340c926f-9ad6-4f1b-b230-dc4ca14575ab";
+    final String id = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -191,7 +193,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
-    final String id = "340c926f-9ad6-4f1b-b230-dc4ca14575ab";
+    final String id = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
     final String url = baseUrl + "/terminology/" + id + "/metadata";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -1087,7 +1089,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testFindMapsetById() throws Exception {
 
-    final String id = "2a545e12-04eb-48ee-b988-c17346b4e05f";
+    final String id = ConceptMapLoaderUtil.mapOriginalId("2a545e12-04eb-48ee-b988-c17346b4e05f");
     final String url = baseUrl + "/mapset/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -2158,8 +2160,10 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     LOGGER.error("Descendants errors: {}", descendantsErrors);
     LOGGER.error("Ancestors errors: {}", ancestorsErrors);
 
-    assertEquals(0, childrenErrors.size() + parentsErrors.size() + descendantsErrors.size()
-        + ancestorsErrors.size(), "Should be no errors");
+    assertEquals(0, childrenErrors.size(), "Children errors = " + childrenErrors);
+    assertEquals(0, parentsErrors.size(), "Children errors = " + parentsErrors);
+    assertEquals(0, descendantsErrors.size(), "Children errors = " + descendantsErrors);
+    assertEquals(0, ancestorsErrors.size(), "Children errors = " + ancestorsErrors);
 
     LOGGER.info("Successfully validated hierarchy fields for concept {}", code);
   }

@@ -579,7 +579,7 @@ public final class CodeSystemLoaderUtil {
         // concept.setActive(Boolean.valueOf(value));
       }
       // redirect defined
-      else if ("defined".equals(code)) {
+      else if ("sufficientlyDefined".equals(code)) {
         // already handled by cacheConcept
         continue;
         // concept.setDefined(Boolean.valueOf(value));
@@ -723,8 +723,16 @@ public final class CodeSystemLoaderUtil {
         concept.setActive(Boolean.valueOf(value));
       }
       // redirect defined
-      else if ("defined".equals(code)) {
+      else if ("sufficientlyDefined".equals(code)) {
         concept.setDefined(Boolean.valueOf(value));
+      }
+      // Need hack for defined for now
+      else if ("definitionStatusId".equals(code)) {
+        // Set defined status based on definitionStatusId
+        // 900000000000073002 = Defined (true), 900000000000074008 = Primitive
+        // (false)
+        concept.setDefined("900000000000073002".equals(value));
+        concept.getAttributes().put(code, value);
       }
       // Cache parent/child relationship here
       else if ("parent".equals(code)) {

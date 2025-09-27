@@ -42,7 +42,8 @@ public class WriteAspect {
   @Around("@annotation(ca.uhn.fhir.rest.annotation.Create) || @annotation(ca.uhn.fhir.rest.annotation.Delete)")
   public Object aroundWrite(final ProceedingJoinPoint pjp) throws Throwable {
     if (!writeInProgress.compareAndSet(false, true)) {
-      throw FhirUtilityR4.exception("A write operation is already in progress",
+      throw FhirUtilityR4.exception(
+          "A write operation is already in progress, please wait until it completes",
           OperationOutcome.IssueType.CONFLICT, HttpServletResponse.SC_CONFLICT);
     }
     try {
