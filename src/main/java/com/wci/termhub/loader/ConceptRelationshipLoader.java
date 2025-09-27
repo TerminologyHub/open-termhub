@@ -76,8 +76,7 @@ public final class ConceptRelationshipLoader {
       index(fullFileName, batchSize, limit);
 
     } catch (final Exception e) {
-      logger.error("An error occurred while loading the file.");
-      e.printStackTrace();
+      logger.error("An error occurred while loading the file.", e);
       System.exit(1);
     }
 

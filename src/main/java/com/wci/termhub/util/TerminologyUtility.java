@@ -781,7 +781,7 @@ public final class TerminologyUtility {
       luceneQuery = converter.parse(expr);
 
     } catch (final RecognitionException e) {
-      logger.error("  expr = " + expr);
+      logger.error("  expr = " + expr, e);
       throw new LocalException("Expression cannot be parsed, must reference an id", e);
     } catch (final NullPointerException e) {
       throw new LocalException("Expression cannot be parsed", e);

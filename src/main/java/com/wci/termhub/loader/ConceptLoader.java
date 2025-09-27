@@ -77,8 +77,7 @@ public final class ConceptLoader {
       index(fullFileName, batchSize, limit);
 
     } catch (final Exception e) {
-      logger.error("An error occurred while loading the file.");
-      e.printStackTrace();
+      logger.error("An error occurred while loading the file.", e);
       System.exit(1);
     }
 
@@ -165,8 +164,7 @@ public final class ConceptLoader {
       System.out.println("duration: " + (System.currentTimeMillis() - startTime) + " ms");
 
     } catch (final Exception e) {
-      logger.error("An error occurred while processing the file.");
-      e.printStackTrace();
+      logger.error("An error occurred while processing the file.", e);
       System.exit(1);
     }
 

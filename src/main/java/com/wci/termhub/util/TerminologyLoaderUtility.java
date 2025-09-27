@@ -162,7 +162,7 @@
 //
 // } catch (final Exception e) {
 // LOGGER.error("indexTerminology: An error occurred while processing the
-/// file.");
+/// file.",e);
 // throw e;
 // }
 // }
@@ -215,7 +215,7 @@
 /// startTime) + " ms");
 //
 // } catch (final Exception e) {
-// LOGGER.error("indexMetadata: An error occurred while processing the file.");
+// LOGGER.error("indexMetadata: An error occurred while processing the file.",e);
 // throw e;
 // }
 //

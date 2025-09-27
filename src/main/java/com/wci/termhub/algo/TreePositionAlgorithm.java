@@ -121,7 +121,6 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
     searchService.createIndex(ConceptTreePosition.class);
 
-    // Look up the terminology to make sure it exists
     final Terminology term = TerminologyUtility.getTerminology(searchService, getTerminology(),
         getPublisher(), getVersion());
     if (term == null) {

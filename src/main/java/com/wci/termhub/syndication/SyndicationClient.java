@@ -253,7 +253,7 @@ public class SyndicationClient {
         }
       } catch (final HttpClientErrorException e) {
         logger.error("HTTP error downloading package: Status={}, Response={}",
-            e.getStatusCode().value(), e.getResponseBodyAsString());
+            e.getStatusCode().value(), e.getResponseBodyAsString(), e);
         throw new RestException(false, e.getStatusCode().value(), "HTTP_ERROR",
             e.getResponseBodyAsString());
       }
