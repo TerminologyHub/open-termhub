@@ -186,8 +186,12 @@ public final class ValueSetLoaderUtil {
             valueSet.getCompose().getIncludeFirstRep();
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
-          final TerminologyRef fromRef = TerminologyUtility.getTerminology(service,
-              include.getSystem(), valueSet.getVersion());
+          final TerminologyRef fromRef = new TerminologyRef();
+          fromRef.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          fromRef.setUri(include.getSystem());
+          fromRef.setPublisher(valueSet.getPublisher());
+          fromRef.setVersion(valueSet.getVersion());
+
           subset.setFromTerminology(fromRef.getAbbreviation());
           subset.setFromPublisher(fromRef.getPublisher());
           subset.setFromVersion(fromRef.getVersion());
@@ -199,7 +203,7 @@ public final class ValueSetLoaderUtil {
       // Store experimental and identifier in attributes if present
       if (valueSet.hasExperimental()) {
         if (subset.getAttributes() == null) {
-          subset.setAttributes(new java.util.HashMap<>());
+          subset.setAttributes(new HashMap<>());
         }
         subset.getAttributes().put(Subset.Attributes.fhirExperimental.name(),
             Boolean.toString(valueSet.getExperimental()));
@@ -221,8 +225,11 @@ public final class ValueSetLoaderUtil {
             throw new Exception("Unable to determine system of value set");
           }
 
-          final TerminologyRef ref =
-              TerminologyUtility.getTerminology(service, includes.getSystem(), subset.getVersion());
+          final TerminologyRef ref = new TerminologyRef();
+          ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          ref.setUri(includes.getSystem());
+          ref.setPublisher(subset.getPublisher());
+          ref.setVersion(subset.getVersion());
 
           for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
@@ -236,7 +243,7 @@ public final class ValueSetLoaderUtil {
                 ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
 
             final SubsetMember m = new SubsetMember();
-            m.setId(java.util.UUID.randomUUID().toString());
+            m.setId(UUID.randomUUID().toString());
             m.setActive(true);
             m.setTerminology(ref.getAbbreviation());
             m.setPublisher(ref.getPublisher());
@@ -273,8 +280,12 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            map.put(c.getSystem(),
-                TerminologyUtility.getTerminology(service, c.getSystem(), subset.getVersion()));
+            final TerminologyRef ref = new TerminologyRef();
+            ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
+            ref.setUri(c.getSystem());
+            ref.setPublisher(subset.getPublisher());
+            ref.setVersion(subset.getVersion());
+            map.put(c.getSystem(), ref);
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -282,7 +293,7 @@ public final class ValueSetLoaderUtil {
               ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
 
           final SubsetMember m = new SubsetMember();
-          m.setId(java.util.UUID.randomUUID().toString());
+          m.setId(UUID.randomUUID().toString());
           m.setActive(true);
           m.setTerminology(ref.getAbbreviation());
           m.setPublisher(ref.getPublisher());
@@ -394,8 +405,12 @@ public final class ValueSetLoaderUtil {
             valueSet.getCompose().getIncludeFirstRep();
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
-          final TerminologyRef fromRef =
-              TerminologyUtility.getTerminology(service, include.getSystem(), subset.getVersion());
+          final TerminologyRef fromRef = new TerminologyRef();
+          fromRef.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          fromRef.setUri(include.getSystem());
+          fromRef.setPublisher(valueSet.getPublisher());
+          fromRef.setVersion(valueSet.getVersion());
+
           subset.setFromTerminology(fromRef.getAbbreviation());
           subset.setFromPublisher(fromRef.getPublisher());
           subset.setFromVersion(fromRef.getVersion());
@@ -405,7 +420,7 @@ public final class ValueSetLoaderUtil {
       // Store experimental and identifier in attributes if present
       if (valueSet.hasExperimental()) {
         if (subset.getAttributes() == null) {
-          subset.setAttributes(new java.util.HashMap<>());
+          subset.setAttributes(new HashMap<>());
         }
         subset.getAttributes().put(Subset.Attributes.fhirExperimental.name(),
             Boolean.toString(valueSet.getExperimental()));
@@ -427,8 +442,11 @@ public final class ValueSetLoaderUtil {
             throw new Exception("Unable to determine system of value set");
           }
 
-          final TerminologyRef ref =
-              TerminologyUtility.getTerminology(service, includes.getSystem(), subset.getVersion());
+          final TerminologyRef ref = new TerminologyRef();
+          ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          ref.setUri(includes.getSystem());
+          ref.setPublisher(subset.getPublisher());
+          ref.setVersion(subset.getVersion());
 
           for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
@@ -442,7 +460,7 @@ public final class ValueSetLoaderUtil {
                 ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
 
             final SubsetMember m = new SubsetMember();
-            m.setId(java.util.UUID.randomUUID().toString());
+            m.setId(UUID.randomUUID().toString());
             m.setActive(true);
             m.setTerminology(ref.getAbbreviation());
             m.setPublisher(ref.getPublisher());
@@ -476,8 +494,12 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            map.put(c.getSystem(),
-                TerminologyUtility.getTerminology(service, c.getSystem(), subset.getVersion()));
+            final TerminologyRef ref = new TerminologyRef();
+            ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
+            ref.setUri(c.getSystem());
+            ref.setPublisher(subset.getPublisher());
+            ref.setVersion(subset.getVersion());
+            map.put(c.getSystem(), ref);
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -485,7 +507,7 @@ public final class ValueSetLoaderUtil {
               ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
 
           final SubsetMember subsetMember = new SubsetMember();
-          subsetMember.setId(java.util.UUID.randomUUID().toString());
+          subsetMember.setId(UUID.randomUUID().toString());
           subsetMember.setActive(true);
           subsetMember.setTerminology(ref.getAbbreviation());
           subsetMember.setPublisher(ref.getPublisher());

@@ -19,6 +19,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1169,7 +1172,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
       final MapsetRef mapsetRef = mapping.getMapset();
       assertThat(mapsetRef).isNotNull();
-      // NUNO assertNotNull(mapsetRef.getActive());
+
       assertEquals("SNOMEDCT_US-ICD10CM", mapsetRef.getAbbreviation());
       assertNotNull(mapsetRef.getVersion());
       assertNotNull(mapsetRef.getPublisher());
@@ -1328,6 +1331,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
   }
 
+  /**
+   * Test concept search with browser handler and LNC concept name.
+   *
+   * @throws Exception the exception
+   */
   @Test
   @Order(FIND)
   public void testConceptSearchWithBrowserHandlerAndLNCConceptName() throws Exception {
@@ -1787,15 +1795,85 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertThat(subsetList).isNotNull();
     assertFalse(subsetList.getItems().isEmpty());
 
-    // Verify results are sorted by name
-    final List<Subset> items = subsetList.getItems();
-    for (int i = 1; i < items.size(); i++) {
-      final String currentName = items.get(i).getName();
-      final String previousName = items.get(i - 1).getName();
-      assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
-          "Subsets should be sorted by name. Found '" + currentName + "' after '" + previousName
-              + "'");
+    // Copy array and sort it by name
+    List<Subset> sortedNames = new ArrayList<>(subsetList.getItems());
+    Collections.sort(sortedNames, new Comparator<Subset>() {
+      @Override
+      public int compare(final Subset s1, final Subset s2) {
+        final String name1 = s1.getName() != null ? s1.getName() : "";
+        final String name2 = s2.getName() != null ? s2.getName() : "";
+        return name1.compareTo(name2);
+      }
+    });
+
+    // loop through the sorted names and compare to the original list
+    for (int i = 0; i < sortedNames.size(); i++) {
+      final Subset sortedName = sortedNames.get(i);
+      final Subset originalName = subsetList.getItems().get(i);
+      assertEquals(sortedName.getName(), originalName.getName(),
+          "Subsets should be sorted by name");
     }
+
+  }
+
+  /**
+   * Test value set H 17 body site subset loaded.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetH17BodySiteSubsetLoaded() throws Exception {
+    final String url = baseUrl + "/subset";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    final ResultListSubset subsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+        });
+    assertThat(subsetList).isNotNull();
+    final Subset bodySite = subsetList.getItems().stream()
+        .filter(s -> "SNOMED CT Body Structures".equals(s.getAbbreviation())).findFirst()
+        .orElse(null);
+    assertNotNull(bodySite, "Expected 'SNOMED CT Body Structures' subset");
+    assertEquals("FHIR Project team", bodySite.getPublisher());
+    assertEquals("4.0.1", bodySite.getVersion());
+  }
+
+  /**
+   * Test value set ips personal relationship subset members.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetIpsPersonalRelationshipSubsetMembers() throws Exception {
+    // Find subset by abbreviation
+    final String url = baseUrl + "/subset";
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    final ResultListSubset subsetList =
+        objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+        });
+    final Subset ipsRel = subsetList.getItems().stream()
+        .filter(s -> "IPS Personal Relationship".equals(s.getAbbreviation())).findFirst()
+        .orElse(null);
+    assertNotNull(ipsRel, "Expected 'IPS Personal Relationship' subset");
+    assertEquals("HL7 International", ipsRel.getPublisher());
+    assertEquals("0.1.0", ipsRel.getVersion());
+
+    // Verify members
+    final String membersUrl = baseUrl + "/subset/" + ipsRel.getId() + "/member?limit=1000";
+    final MvcResult mres = mockMvc.perform(get(membersUrl)).andExpect(status().isOk()).andReturn();
+    final String mcontent = mres.getResponse().getContentAsString();
+    final ResultListSubsetMember members =
+        objectMapper.readValue(mcontent, ResultListSubsetMember.class);
+    assertThat(members).isNotNull();
+    assertTrue(members.getTotal() >= 39, "Should have at least 39 members");
+
+    // Spot-check some expected codes
+    final List<String> codes = members.getItems().stream().map(SubsetMember::getCode).toList();
+    assertThat(codes).contains("AUNT", "SPS", "PRN", "MTH", "SON");
   }
 
   /**
@@ -2338,6 +2416,53 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     return subsetList.getItems().stream()
         .filter(subset -> abbreviation.equals(subset.getAbbreviation())).findFirst().orElseThrow(
             () -> new RuntimeException("Subset with abbreviation " + abbreviation + " not found"));
+  }
+
+  /**
+   * Test that the fake ConceptMap (CPT-HCPCS) is loaded by checking the count
+   * of mapsets.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFakeConceptMapLoaded() throws Exception {
+    final String url = baseUrl + "/mapset";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+    assertThat(content).isNotNull();
+
+    final ResultListMapset mapsetList = objectMapper.readValue(content, ResultListMapset.class);
+    assertThat(mapsetList).isNotNull();
+    assertThat(mapsetList.getTotal()).isPositive();
+
+    // Check that we have at least one mapset (the fake CPT-HCPCS one should be
+    // loaded)
+    final int totalMapsets = mapsetList.getItems().size();
+    LOGGER.info("Total mapsets loaded: {}", totalMapsets);
+    assertThat(totalMapsets).isGreaterThanOrEqualTo(1);
+
+    // Look for the fake ConceptMap by checking for CPT-HCPCS mapping
+    boolean foundFakeMapset = false;
+    for (final Mapset mapset : mapsetList.getItems()) {
+      LOGGER.info("Checking mapset: {} - {}", mapset.getAbbreviation(), mapset.getName());
+      if (mapset.getFromTerminology() != null && mapset.getToTerminology() != null) {
+        final String fromTerm = mapset.getFromTerminology().toLowerCase();
+        final String toTerm = mapset.getToTerminology().toLowerCase();
+        if ((fromTerm.contains("cpt") && toTerm.contains("hcpcs"))
+            || (fromTerm.contains("hcpcs") && toTerm.contains("cpt"))) {
+          foundFakeMapset = true;
+          LOGGER.info("Found fake ConceptMap: {} -> {}", mapset.getFromTerminology(),
+              mapset.getToTerminology());
+          break;
+        }
+      }
+    }
+
+    // Verify that the fake ConceptMap was loaded
+    assertTrue(foundFakeMapset, "Fake ConceptMap (CPT-HCPCS) should be loaded");
   }
 
 }

@@ -347,12 +347,10 @@ public final class ConceptMapLoaderUtil {
     if (fromTerminology == null) {
       throw new Exception("Unable to determine information about the map source");
     }
-    final TerminologyRef fromRef =
-        TerminologyUtility.getTerminology(service, fromTerminology, version);
-    mapset.setFromTerminology(fromRef.getAbbreviation());
-    mapset.setFromPublisher(fromRef.getPublisher());
-    mapset.setFromVersion(fromRef.getVersion());
-    mapset.getAttributes().put("fhirSourceUri", fromRef.getUri());
+    final TerminologyRef fromRef = new TerminologyRef();
+    fromRef.setUri(fromTerminology);
+    fromRef.setPublisher(root.path("publisher").asText());
+    fromRef.setVersion(version);
 
     String toTerminology = null;
     if (root.has("targetScopeUri")) {
@@ -365,7 +363,26 @@ public final class ConceptMapLoaderUtil {
     if (toTerminology == null) {
       throw new Exception("Unable to determine information about the map target");
     }
-    final TerminologyRef toRef = TerminologyUtility.getTerminology(service, toTerminology, version);
+    final TerminologyRef toRef = new TerminologyRef();
+    toRef.setUri(toTerminology);
+    toRef.setPublisher(root.path("publisher").asText());
+    toRef.setVersion(version);
+
+    // Extract abbreviations from title field
+    final String title = root.path("title").asText();
+    String[] titleParts = title.split("-");
+    final String fromAbbreviation = titleParts.length > 0 ? titleParts[0] : fromTerminology;
+    final String toAbbreviation = titleParts.length > 1 ? titleParts[1] : toTerminology;
+
+    // Set the abbreviations
+    fromRef.setAbbreviation(fromAbbreviation);
+    toRef.setAbbreviation(toAbbreviation);
+
+    mapset.setFromTerminology(fromRef.getAbbreviation());
+    mapset.setFromPublisher(fromRef.getPublisher());
+    mapset.setFromVersion(fromRef.getVersion());
+    mapset.getAttributes().put("fhirSourceUri", fromRef.getUri());
+
     mapset.setToTerminology(toRef.getAbbreviation());
     mapset.setToPublisher(toRef.getPublisher());
     mapset.setToVersion(toRef.getVersion());

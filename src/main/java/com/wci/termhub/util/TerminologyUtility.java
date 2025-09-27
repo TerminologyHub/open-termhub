@@ -97,6 +97,7 @@ public final class TerminologyUtility {
       // This happens if you do not load the terminology first
       ref.setPublisher("unknown");
       ref.setVersion("unknown");
+      // return ref;
     }
     if (list.getItems().size() == 1) {
       final Terminology terminology = list.getItems().get(0);
