@@ -9,6 +9,7 @@
  */
 package com.wci.termhub.fhir.r5;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
@@ -32,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.wci.termhub.EnablePostLoadComputations;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -44,7 +47,6 @@ import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
@@ -68,7 +70,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * The CodeSystem provider.
+ * The CodeSystem provider R5.
  */
 @Component
 public class CodeSystemProviderR5 implements IResourceProvider {
@@ -83,9 +85,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   /** The enable post load computations. */
   @Autowired
   private EnablePostLoadComputations enablePostLoadComputations;
-
-  /** The Constant context. */
-  private static FhirContext context = FhirContext.forR5();
 
   /**
    * Gets the code system.
@@ -783,42 +782,47 @@ public class CodeSystemProviderR5 implements IResourceProvider {
   /**
    * Create a new CodeSystem resource.
    *
-   * @param request the request
-   * @param details the details
-   * @param codeSystem the code system resource
-   * @return the created code system
+   * @param bytes the bytes
+   * @return the method outcome (as required by HAPI)
    * @throws Exception the exception
    */
   @Create
-  public MethodOutcome createCodeSystem(final HttpServletRequest request,
-    final ServletRequestDetails details, @ResourceParam final CodeSystem codeSystem)
-    throws Exception {
+  public MethodOutcome createCodeSystem(@ResourceParam final byte[] bytes) throws Exception {
 
     try {
-      logger.info("Create code system with {} concepts",
-          codeSystem.getConcept() != null ? codeSystem.getConcept().size() : 0);
+      logger.info("Create code system R5");
 
-      // Convert CodeSystem to JSON string
-      final String content = context.newJsonParser().encodeResourceToString(codeSystem);
-      final int conceptCount = codeSystem.getConcept().size();
-      codeSystem.getConcept().clear();
-      codeSystem.setConcept(null);
+      // Write to a file so we can re-open streams against it
+      final File file = File.createTempFile("tmp", ".json");
+      // try (FileOutputStream outputStream = new FileOutputStream(file)) {
+      // IOUtils.copy(request.getInputStream(), outputStream);
+      // }
+      FileUtils.writeByteArrayToFile(file, bytes);
 
       // Use existing loader utility
-      final String terminologyId = CodeSystemLoaderUtil.loadCodeSystem(searchService, content,
-          enablePostLoadComputations.isEnabled());
+      final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
+          enablePostLoadComputations.isEnabled(), CodeSystem.class, new DefaultProgressListener());
+
+      FileUtils.delete(file);
 
       // Return success
-      final MethodOutcome outcome = new MethodOutcome();
-      // Clear the "concepts" of the code system before sending it back
-      codeSystem.setCount(conceptCount);
-      codeSystem.getConcept().clear();
-      outcome.setResource(codeSystem);
-      outcome.setCreated(true);
-      final IdType id = new IdType("CodeSystem", terminologyId);
-      codeSystem.setId(id);
-      return outcome;
+      final MethodOutcome out = new MethodOutcome();
+      final IdType id = new IdType("CodeSystem", codeSystem.getId());
+      out.setId(id);
+      out.setResource(codeSystem);
+      out.setCreated(true);
 
+      final OperationOutcome outcome = new OperationOutcome();
+      outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+          .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+          .setDiagnostics("CodeSystem created = " + codeSystem.getId());
+      out.setOperationOutcome(outcome);
+
+      return out;
+
+    } catch (FHIRServerResponseException fe) {
+      logger.error("Unexpected error creating code system", fe);
+      throw fe;
     } catch (final Exception e) {
       logger.error("Unexpected error creating code system", e);
       throw FhirUtilityR5.exception("Failed to create code system: " + e.getMessage(),
@@ -832,11 +836,10 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @param request the request
    * @param details the details
    * @param id the id
-   * @return the method outcome
    * @throws Exception the exception
    */
   @Delete
-  public MethodOutcome deleteCodeSystem(final HttpServletRequest request,
+  public void deleteCodeSystem(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
@@ -854,7 +857,6 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       }
 
       TerminologyUtility.removeTerminology(searchService, terminology.getId());
-      return new MethodOutcome();
 
     } catch (final FHIRServerResponseException e) {
       throw e;

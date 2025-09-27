@@ -539,6 +539,7 @@ public final class FhirUtilityR4 {
       parameters.addParameter(new Parameters.ParametersParameterComponent()
           .setName("sufficientlyDefined").setValue(new BooleanType(concept.getDefined())));
     }
+
     // TODO: review where the value comes from
     // if (codeSystem.getTitle().startsWith("SNOMED")) {
     // if (properties == null || properties.contains("effectiveTime")) {
@@ -657,6 +658,7 @@ public final class FhirUtilityR4 {
       }
     }
 
+    // TODO: what do we do with regular relationships?
     return parameters;
   }
 
@@ -733,7 +735,10 @@ public final class FhirUtilityR4 {
           .addTag("fromPublisher", terminology.getPublisher(), null)
           .addTag("fromVersion", terminology.getVersion(), null)
           .addTag("includesUri", terminology.getUri(), null));
+    } else {
+      set.setMeta(new Meta());
     }
+    set.getMeta().addTag("originalId", terminology.getAttributes().get("originalId"), null);
 
     return set;
   }
@@ -816,7 +821,10 @@ public final class FhirUtilityR4 {
           .addTag("fromPublisher", subset.getFromPublisher(), null)
           .addTag("fromVersion", subset.getFromVersion(), null)
           .addTag("includesUri", subset.getAttributes().get("fhirIncludesUri"), null));
+    } else {
+      valueSet.setMeta(new Meta());
     }
+    valueSet.getMeta().addTag("originalId", subset.getAttributes().get("originalId"), null);
 
     return valueSet;
   }
@@ -920,6 +928,12 @@ public final class FhirUtilityR4 {
       cs.setCopyright(copyright);
     }
 
+    // Add originalId as meta info
+    if (terminology.getAttributes().containsKey("originalId")) {
+      cs.setMeta(
+          new Meta().addTag("originalId", terminology.getAttributes().get("originalId"), null));
+    }
+
     // logger.info("Converted terminology to CodeSystem: id={}, name={},
     // version={}", cs.getId(),
     // cs.getName(), cs.getVersion());
@@ -978,6 +992,12 @@ public final class FhirUtilityR4 {
     if (mapset.getAttributes().containsKey("fhirTargetUri")) {
       cm.setTarget(new UriType(mapset.getAttributes().get("fhirTargetUri")));
     }
+
+    // Add originalId as meta info
+    if (mapset.getAttributes().containsKey("originalId")) {
+      cm.setMeta(new Meta().addTag("originalId", mapset.getAttributes().get("originalId"), null));
+    }
+
     return cm;
   }
 
@@ -1097,8 +1117,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Converts a LOINC Concept to a FHIR R4 Questionnaire. This is the primary
-   * method for creating questionnaires from LOINC concepts.
+   * Converts a LOINC Concept to a FHIR R4 Questionnaire. This is the primary method for creating
+   * questionnaires from LOINC concepts.
    *
    * @param concept the LOINC Concept
    * @param searchService the search service
@@ -1165,9 +1185,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Populates a Questionnaire with questions and answers based on LOINC
-   * relationships. This method uses the concept's existing relationships to
-   * create questionnaire items.
+   * Populates a Questionnaire with questions and answers based on LOINC relationships. This method
+   * uses the concept's existing relationships to create questionnaire items.
    *
    * @param questionnaire the Questionnaire to populate
    * @param searchService the search service for data access
@@ -1493,8 +1512,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Finds answer options for a question via has_answers relationships. Follows
-   * LOINC structure: Question --has_answers--> LL Code <--parent-- LA Codes
+   * Finds answer options for a question via has_answers relationships. Follows LOINC structure:
+   * Question --has_answers--> LL Code <--parent-- LA Codes
    *
    * @param questionCode the question LOINC code
    * @param searchService the search service
@@ -1645,9 +1664,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Gets the system URI for a terminology based on its abbreviation, publisher,
-   * and version. This method uses TerminologyUtility to get the actual URI from
-   * the database.
+   * Gets the system URI for a terminology based on its abbreviation, publisher, and version. This
+   * method uses TerminologyUtility to get the actual URI from the database.
    *
    * @param searchService the search service
    * @param terminology the terminology abbreviation
@@ -1674,9 +1692,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Determines if a concept should be included as a main question based on its
-   * properties. Filters out variant concepts that are overly specific or
-   * descriptive.
+   * Determines if a concept should be included as a main question based on its properties. Filters
+   * out variant concepts that are overly specific or descriptive.
    *
    * @param conceptCode the LOINC concept code to check
    * @param searchService the search service to query concept properties

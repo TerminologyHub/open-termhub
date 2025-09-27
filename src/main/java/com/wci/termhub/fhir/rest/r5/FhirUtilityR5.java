@@ -683,6 +683,8 @@ public final class FhirUtilityR5 {
       }
     }
 
+    // TODO: what do we do with regular relationships?
+
     return parameters;
   }
 
@@ -759,7 +761,10 @@ public final class FhirUtilityR5 {
           .addTag("fromPublisher", terminology.getPublisher(), null)
           .addTag("fromVersion", terminology.getVersion(), null)
           .addTag("includesUri", terminology.getUri(), null));
+    } else {
+      set.setMeta(new Meta());
     }
+    set.getMeta().addTag("originalId", terminology.getAttributes().get("originalId"), null);
 
     return set;
   }
@@ -842,7 +847,10 @@ public final class FhirUtilityR5 {
           .addTag("fromPublisher", subset.getFromPublisher(), null)
           .addTag("fromVersion", subset.getFromVersion(), null)
           .addTag("includesUri", subset.getAttributes().get("fhirIncludesUri"), null));
+    } else {
+      valueSet.setMeta(new Meta());
     }
+    valueSet.getMeta().addTag("originalId", subset.getAttributes().get("originalId"), null);
 
     return valueSet;
   }
@@ -929,6 +937,12 @@ public final class FhirUtilityR5 {
       cs.setCount(terminology.getConceptCt().intValue());
     }
 
+    // Add originalId as meta info
+    if (terminology.getAttributes().containsKey("originalId")) {
+      cs.setMeta(
+          new Meta().addTag("originalId", terminology.getAttributes().get("originalId"), null));
+    }
+
     // logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
     // cs.getName(), cs.getVersion());
 
@@ -977,6 +991,11 @@ public final class FhirUtilityR5 {
 
     if (mapset.getAttributes().containsKey("fhirTargetUri")) {
       cm.setTargetScope(new UriType(mapset.getAttributes().get("fhirTargetUri") + "?fhir_vs"));
+    }
+
+    // Add originalId as meta info
+    if (mapset.getAttributes().containsKey("originalId")) {
+      cm.setMeta(new Meta().addTag("originalId", mapset.getAttributes().get("originalId"), null));
     }
 
     return cm;

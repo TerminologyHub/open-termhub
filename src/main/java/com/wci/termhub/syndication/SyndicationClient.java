@@ -424,7 +424,7 @@ public class SyndicationClient {
     }
 
     final List<SyndicationFeedEntry> newEntries = new ArrayList<>();
-    int totalEntries = feed.getEntries().size();
+    final int totalEntries = feed.getEntries().size();
     int matchingTypeEntries = 0;
 
     logger.debug("Filtering {} total entries for content type: {}", totalEntries, contentType);

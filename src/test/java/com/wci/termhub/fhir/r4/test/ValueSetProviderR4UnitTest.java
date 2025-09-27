@@ -13,14 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.ValueSet;
@@ -40,6 +38,7 @@ import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
@@ -47,7 +46,7 @@ import ca.uhn.fhir.rest.param.UriParam;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 
 /**
- * The Class ValueSetProviderR4UnitTest.
+ * Tests for ValueSetProviderR4.
  */
 @AutoConfigureMockMvc
 public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
@@ -56,6 +55,9 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
    * The Constant LOGGER.
    */
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetProviderR4UnitTest.class);
+
+  /** The context. */
+  private static FhirContext context = FhirContext.forR4();
 
   /**
    * The search service.
@@ -282,12 +284,9 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         final Resource resource = new ClassPathResource("data/" + valueSetFile,
             ValueSetProviderR4UnitTest.class.getClassLoader());
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
-          ValueSetLoaderUtil.loadSubset(searchService, fileContent, false);
+          ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(), ValueSet.class);
         });
 
       } catch (final Exception e) {
@@ -322,49 +321,50 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
     vs2.setTitle("Concurrent Value Set 2");
     vs2.setDate(java.util.Date.from(java.time.Instant.now()));
 
-    final Callable<MethodOutcome> writeTask1 = () -> {
+    final Callable<ValueSet> writeTask1 = () -> {
       return createValueSet(vs1);
     };
 
-    final Callable<MethodOutcome> writeTask2 = () -> {
+    final Callable<ValueSet> writeTask2 = () -> {
       return createValueSet(vs2);
     };
 
-    final Future<MethodOutcome> future1 = executor.submit(writeTask1);
+    final Future<ValueSet> future1 = executor.submit(writeTask1);
     // Ensure the first write starts before the second
     Thread.sleep(10); // Small delay to increase chance of overlap
 
-    final Future<MethodOutcome> future2 = executor.submit(writeTask2);
+    final Future<ValueSet> future2 = executor.submit(writeTask2);
 
     executor.shutdown();
 
-    final MethodOutcome created1 = future1.get();
-    final MethodOutcome created2 = future2.get();
+    final ValueSet created1 = future1.get();
+    final ValueSet created2 = future2.get();
 
-    // Exactly one should fail
-    Assertions.assertTrue(created1.getCreated() ^ created2.getCreated(),
+    // Exactly one should fail, then delete the other
+    Assertions.assertTrue(created1 == null ^ created2 == null,
         "Exactly one write should fail due to locking");
-    if (created1.getCreated()) {
-      provider.deleteValueSet(request, details, ((IdType) created1.getId()));
-    } else {
-      provider.deleteValueSet(request, details, ((IdType) created2.getId()));
+    if (created1 != null) {
+      provider.deleteValueSet(request, details, new IdType(created1.getId()));
+    } else if (created2 != null) {
+      provider.deleteValueSet(request, details, new IdType(created2.getId()));
     }
   }
 
   /**
-   * Creates the value set.
+   * Creates the value set. Return null if there is an ereror creating it.
    *
    * @param vs the vs
    * @return the method outcome
    * @throws Exception the exception
    */
-  private MethodOutcome createValueSet(final ValueSet vs) throws Exception {
+  private ValueSet createValueSet(final ValueSet vs) throws Exception {
     try {
-      return provider.createValueSet(vs);
-    } catch (final FHIRServerResponseException e) {
-      final MethodOutcome methodOutcome = new MethodOutcome();
-      methodOutcome.setCreated(false);
-      return methodOutcome;
+      MethodOutcome out = provider
+          .createValueSet(context.newJsonParser().encodeResourceToString(vs).getBytes("UTF-8"));
+      return (ValueSet) out.getResource();
+
+    } catch (FHIRServerResponseException fe) {
+      return null;
     }
   }
 

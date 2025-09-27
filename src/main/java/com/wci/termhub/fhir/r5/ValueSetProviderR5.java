@@ -11,6 +11,7 @@ package com.wci.termhub.fhir.r5;
 
 import static com.wci.termhub.util.IndexUtility.getAndQuery;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.lucene.search.Query;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -61,7 +63,6 @@ import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
@@ -96,9 +97,6 @@ public class ValueSetProviderR5 implements IResourceProvider {
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
-
-  /** The Constant context. */
-  private static FhirContext context = FhirContext.forR5();
 
   /**
    * Gets the value set.
@@ -476,49 +474,56 @@ public class ValueSetProviderR5 implements IResourceProvider {
     }
   }
 
-  /**
-   * Loads a ValueSet from a FHIR R5 ValueSet resource and persists it as a Subset and
-   * SubsetMembers. Example usage: POST /ValueSet/$load with a FHIR R5 ValueSet resource in the
-   * body.
-   *
-   * @param valueSet the FHIR R5 ValueSet resource
-   * @return Parameters resource with the new Subset code
-   * @throws Exception if loading fails
-   */
-  @Operation(name = "$load", idempotent = true)
-  public Parameters loadValueSet(
-    @OperationParam(name = "valueSet", min = 1, max = 1) final ValueSet valueSet) throws Exception {
-    if (valueSet == null) {
-      throw FhirUtilityR5.exception("Missing valueSet parameter", IssueType.INVALID, 400);
-    }
-    final String subsetId = ValueSetLoaderUtil.loadSubset(searchService,
-        context.newJsonParser().encodeResourceToString(valueSet), false);
-    final Parameters out = new Parameters();
-    out.addParameter().setName("subsetId").setValue(new StringType(subsetId));
-    return out;
-  }
+  // /**
+  // * Loads a ValueSet from a FHIR R5 ValueSet resource and persists it as a Subset and
+  // * SubsetMembers. Example usage: POST /ValueSet/$load with a FHIR R5 ValueSet resource in the
+  // * body.
+  // *
+  // * @param valueSet the FHIR R5 ValueSet resource
+  // * @return Parameters resource with the new Subset code
+  // * @throws Exception if loading fails
+  // */
+  // @Operation(name = "$load", idempotent = true)
+  // public Parameters loadValueSet(
+  // @OperationParam(name = "valueSet", min = 1, max = 1) final ValueSet valueSet) throws Exception
+  // {
+  // if (valueSet == null) {
+  // throw FhirUtilityR5.exception("Missing valueSet parameter", IssueType.INVALID, 400);
+  // }
+  // final String subsetId = ValueSetLoaderUtil.loadSubset(searchService,
+  // context.newJsonParser().encodeResourceToString(valueSet), false);
+  // final Parameters out = new Parameters();
+  // out.addParameter().setName("subsetId").setValue(new StringType(subsetId));
+  // return out;
+  // }
 
   /**
    * Creates a ValueSet.
    *
-   * @param valueSet the FHIR R5 ValueSet resource
-   * @return MethodOutcome with the new Subset code
+   * @param bytes the bytes
+   * @return the method outcome (as required by HAPI)
    * @throws Exception if creating fails
    */
   @Create
-  public MethodOutcome createValueSet(@ResourceParam final ValueSet valueSet) throws Exception {
+  public MethodOutcome createValueSet(@ResourceParam final byte[] bytes) throws Exception {
 
     try {
-      logger.info("Create value set {}", valueSet.getTitle());
+      logger.info("Create value set R5");
 
-      final String subsetId = ValueSetLoaderUtil.loadSubset(searchService,
-          context.newJsonParser().encodeResourceToString(valueSet), true);
+      // Write to a file so we can re-open streams against it
+      final File file = File.createTempFile("tmp", ".json");
+      FileUtils.writeByteArrayToFile(file, bytes);
+
+      final ValueSet valueSet =
+          ValueSetLoaderUtil.loadValueSet(searchService, file, ValueSet.class);
+
+      FileUtils.delete(file);
 
       valueSet.getCompose().getInclude().clear();
       valueSet.getCompose().getExclude().clear();
 
       final MethodOutcome out = new MethodOutcome();
-      final IdType id = new IdType("ValueSet", subsetId);
+      final IdType id = new IdType("ValueSet", valueSet.getId());
       out.setId(id);
       out.setResource(valueSet);
       out.setCreated(true);
@@ -526,16 +531,17 @@ public class ValueSetProviderR5 implements IResourceProvider {
       final OperationOutcome outcome = new OperationOutcome();
       outcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
           .setCode(OperationOutcome.IssueType.INFORMATIONAL)
-          .setDiagnostics("ValueSet created. Subset ID: " + subsetId);
-
+          .setDiagnostics("ValueSet created = " + valueSet.getId());
       out.setOperationOutcome(outcome);
 
       return out;
 
+    } catch (FHIRServerResponseException fe) {
+      throw fe;
     } catch (final Exception e) {
       logger.error("Unexpected error creating value set", e);
-      throw FhirUtilityR5.exception("Failed to create value set: " + e.getMessage(),
-          OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      throw FhirUtilityR5.exception(e.getMessage(), OperationOutcome.IssueType.EXCEPTION,
+          HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -545,12 +551,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @param request the request
    * @param details the details
    * @param id the id
-   * @return the method outcome
    * @throws Exception the exception
    */
   @Delete
-  public MethodOutcome deleteValueSet(final HttpServletRequest request,
-    final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
+  public void deleteValueSet(final HttpServletRequest request, final ServletRequestDetails details,
+    @IdParam final IdType id) throws Exception {
 
     try {
       if (id == null || id.getIdPart() == null) {
@@ -585,7 +590,6 @@ public class ValueSetProviderR5 implements IResourceProvider {
       }
 
       TerminologyUtility.removeSubset(searchService, subset.getId());
-      return new MethodOutcome();
 
     } catch (final FHIRServerResponseException e) {
       throw e;
@@ -736,6 +740,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
           }
         }
       }
+
+      // TODO: support "property" parameter on expand and add that info here
+
       expansion.addContains(code);
     }
     vs.setExpansion(expansion);

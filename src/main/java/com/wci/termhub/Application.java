@@ -81,6 +81,19 @@ public class Application extends SpringBootServletInitializer {
 
     // Log start of application
     logger.info("OPEN TERMHUB TERMINOLOGY APPLICATION START");
+    logMemory();
+
+  }
+
+  /**
+   * Log memory.
+   *
+   * @throws Exception the exception
+   */
+  public static void logMemory() throws Exception {
+    logger.info("  MEMORY (" + Runtime.getRuntime().totalMemory() + " - "
+        + Runtime.getRuntime().freeMemory() + ") = "
+        + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
   }
 
   /**
@@ -115,7 +128,8 @@ public class Application extends SpringBootServletInitializer {
     // Initialize content tracker (only if syndication is enabled)
     if (contentTracker != null) {
       contentTracker.initialize();
-      logger.info("Content tracker initialized with {} loaded items", contentTracker.getLoadedContentCount());
+      logger.info("Content tracker initialized with {} loaded items",
+          contentTracker.getLoadedContentCount());
     } else {
       logger.info("Content tracker not available (syndication disabled)");
     }

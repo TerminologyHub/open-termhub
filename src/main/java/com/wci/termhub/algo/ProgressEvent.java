@@ -45,6 +45,15 @@ public class ProgressEvent {
   }
 
   /**
+   * Instantiates a new progress event.
+   *
+   * @param progress the progress
+   */
+  public ProgressEvent(final long progress) {
+    this.progress = progress;
+  }
+
+  /**
    * Instantiates a {@link ProgressEvent} from the specified information.
    *
    * @param note progress note

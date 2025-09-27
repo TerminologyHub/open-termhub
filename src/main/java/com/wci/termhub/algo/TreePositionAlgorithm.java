@@ -37,9 +37,8 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * Algorithm to compute tree positions. Should not be autowired as it is not
- * stateless or thread safe. Use ApplicationContext with getBean to get an
- * instance.
+ * Algorithm to compute tree positions. Should not be autowired as it is not stateless or thread
+ * safe. Use ApplicationContext with getBean to get an instance.
  */
 @Scope("prototype")
 @Component
@@ -60,16 +59,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
   private int objectCt = 0;
 
   /** The Constant FETCH_SIZE. */
-  private static final int FETCH_SIZE = 5000;
+  private static final int FETCH_SIZE = 20000;
 
   /** The Constant BATCH_SIZE. */
-  private static final int BATCH_SIZE = 1000;
-
-  /** The batch. */
-  private final List<HasId> batch = new ArrayList<>();
-
-  /** The seen. */
-  private final List<String> seen = new ArrayList<>();
+  private static final int BATCH_SIZE = 20000;
 
   /**
    * Instantiates an empty {@link TreePositionAlgorithm}.
@@ -159,8 +152,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       // Verify that codes only participate in a tree of one particular type
       // ASSUMPTION: rel.getAdditionalType() != null
       for (final ConceptRelationship rel : innerList.getItems()) {
+        final String additionalType =
+            rel.getAdditionalType() == null ? "<blank>" : rel.getAdditionalType();
         if (additionalTypeMap.containsKey(rel.getFrom().getCode())
-            && !additionalTypeMap.get(rel.getFrom().getCode()).equals(rel.getAdditionalType())) {
+            && !additionalTypeMap.get(rel.getFrom().getCode()).equals(additionalType)) {
           // If this occurs, we need to handle the situation of the same code
           // being involved in multiple trees each with their own relationship
           // type
@@ -171,10 +166,10 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
           // could respond appropriately
           throw new Exception(
               "Unexpected condition: same code, multiple additional relationship types = "
-                  + rel.getFrom().getCode() + ", " + rel.getAdditionalType() + ", "
+                  + rel.getFrom().getCode() + ", " + additionalType + ", "
                   + additionalTypeMap.get(rel.getFrom().getCode()));
         }
-        additionalTypeMap.put(rel.getFrom().getCode(), rel.getAdditionalType());
+        additionalTypeMap.put(rel.getFrom().getCode(), additionalType);
       }
 
       // searchAfter = innerList.getItems().get(innerList.getItems().size() -
@@ -194,6 +189,14 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
     final Map<String, Set<String>> parChd = new HashMap<>();
     final Map<String, Set<String>> chdPar = new HashMap<>();
+    final HashSet<String> codes = new HashSet<>();
+
+    // Get total concept count for progress monitoring
+    codes.addAll(parChd.keySet());
+    codes.addAll(chdPar.keySet());
+    final int totalConceptCt = codes.size();
+    codes.clear();
+
     logInfo("    processing hierarchies");
     for (final ConceptRelationship rel : list.getItems()) {
 
@@ -228,7 +231,6 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     }
 
     // Find roots (iterate through parents and see if they are children)
-    // fireAdjustedProgressEvent(5, step, steps, "Find roots");
     final Set<String> rootCodes = new HashSet<>();
     for (final String par : parChd.keySet()) {
       // things with no children
@@ -253,11 +255,21 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
       final ValidationResult result = new ValidationResult();
 
+      final List<HasId> batch = new ArrayList<>();
       computeTreePositions(rootCode, "", parChd, result, startDate, rootCodes.size() > 1,
-          additionalTypeMap, searchService);
+          additionalTypeMap, searchService, batch, new ArrayList<>(), totalConceptCt);
       if (!result.isValid()) {
         logError("  validation result = " + result);
         throw new Exception("Validation failed");
+      }
+
+      // Handle any leftover batch
+      if (!batch.isEmpty()) {
+        // Process the final batch
+        logInfo("    BATCH index = " + batch.size());
+        searchService.addBulk(ConceptTreePosition.class, batch);
+        objectCt += batch.size();
+        batch.clear();
       }
 
       // Check cancel flag
@@ -265,11 +277,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
 
     }
 
-    // Process the final batch
-    logInfo("    BATCH index = " + batch.size());
-
-    // Mark the terminology as having computed tree positions and count tree
-    // positions
+    // Mark the terminology as having computed tree positions and count tree positions
     term.getAttributes().put(Terminology.Attributes.treePositions.property(), "true");
     term.getAttributes().put(Terminology.Attributes.hierarchical.property(), "true");
     if (polyHierarchy) {
@@ -284,12 +292,6 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     logInfo("  treepos count = " + objectCt);
     logInfo("FINISH compute tree positions");
 
-    if (!batch.isEmpty()) {
-      searchService.addBulk(ConceptTreePosition.class, batch);
-      objectCt += batch.size();
-      batch.clear();
-    }
-
   }
 
   /**
@@ -303,13 +305,17 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
    * @param multipleRoots the multiple roots
    * @param additionalTypeMap the additional type map
    * @param searchService the search service
+   * @param batch the batch
+   * @param seen the seen
+   * @param totalConceptCt the total concept ct
    * @return the sets the
    * @throws Exception the exception
    */
   public Set<String> computeTreePositions(final String code, final String ancestorPath,
     final Map<String, Set<String>> parChd, final ValidationResult validationResult,
     final Date startDate, final boolean multipleRoots, final Map<String, String> additionalTypeMap,
-    final EntityRepositoryService searchService) throws Exception {
+    final EntityRepositoryService searchService, final List<HasId> batch, final List<String> seen,
+    final int totalConceptCt) throws Exception {
 
     final Set<String> descConceptCodes = new HashSet<>();
 
@@ -374,7 +380,8 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
           // call helper function on child concept add the results to the local
           // descendant set
           final Set<String> desc = computeTreePositions(childConceptCode, conceptPath, parChd,
-              validationResult, startDate, multipleRoots, additionalTypeMap, searchService);
+              validationResult, startDate, multipleRoots, additionalTypeMap, searchService, batch,
+              seen, totalConceptCt);
           descConceptCodes.addAll(desc);
         }
       }
@@ -383,9 +390,13 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       tp.setChildCt(parChd.containsKey(code) ? parChd.get(code).size() : 0);
       batch.add(tp);
       if ((batch.size() % BATCH_SIZE) == 0) {
+        logInfo("    BATCH index = " + batch.size());
         searchService.addBulk(ConceptTreePosition.class, batch);
         objectCt += batch.size();
         batch.clear();
+
+        // Progress update
+        fireProgressEvent((int) ((seen.size() * 1.0 / totalConceptCt)), "");
       }
       objectCt++;
 
