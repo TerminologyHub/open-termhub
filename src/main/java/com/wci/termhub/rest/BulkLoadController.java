@@ -64,7 +64,6 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/fhir")
 @CrossOrigin(origins = "*")
-
 public class BulkLoadController {
 
   /** The logger. */
@@ -295,8 +294,8 @@ public class BulkLoadController {
               BulkLoadController.processResultMap.get(processId)
                   .add("CodeSystem/" + codeSystem.getId());
 
-            } catch (Exception e) {
-              processProgressMap.put(processId, -1l);
+            } catch (final Exception e) {
+              processProgressMap.put(processId, -1L);
               processExceptionMap.put(processId, e);
 
             }
@@ -411,7 +410,7 @@ public class BulkLoadController {
               BulkLoadController.processResultMap.get(processId)
                   .add("ValueSet/" + valueSet.getId());
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
               processExceptionMap.put(processId, e);
 
             }
@@ -526,7 +525,7 @@ public class BulkLoadController {
               BulkLoadController.processResultMap.get(processId)
                   .add("ConceptMap/" + conceptMap.getId());
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
               processExceptionMap.put(processId, e);
 
             }
