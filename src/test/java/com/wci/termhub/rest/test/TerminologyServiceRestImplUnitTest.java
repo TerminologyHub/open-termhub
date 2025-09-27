@@ -1830,6 +1830,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String content = result.getResponse().getContentAsString();
     final ResultListSubset subsetList =
         objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+          // n/a
         });
     assertThat(subsetList).isNotNull();
     final Subset bodySite = subsetList.getItems().stream()
@@ -1854,6 +1855,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String content = result.getResponse().getContentAsString();
     final ResultListSubset subsetList =
         objectMapper.readValue(content, new TypeReference<ResultListSubset>() {
+          // n/a
         });
     final Subset ipsRel = subsetList.getItems().stream()
         .filter(s -> "IPS Personal Relationship".equals(s.getAbbreviation())).findFirst()
@@ -2419,8 +2421,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test that the fake ConceptMap (CPT-HCPCS) is loaded by checking the count
-   * of mapsets.
+   * Test that the fake ConceptMap (CPT-HCPCS) is loaded by checking the count of mapsets.
    *
    * @throws Exception the exception
    */

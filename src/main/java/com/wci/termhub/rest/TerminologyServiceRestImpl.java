@@ -124,6 +124,7 @@ import jakarta.servlet.http.HttpServletRequest;
             description = "Concept service endpoints with \"by code\" parameters"),
         @Tag(name = "term", description = "Term endpoints"),
         @Tag(name = "mapset", description = "Mapset endpoints"),
+        @Tag(name = "load", description = "Bulk loader endpoints"),
     }, servers = {
         @Server(description = "Current Instance", url = "/")
     })

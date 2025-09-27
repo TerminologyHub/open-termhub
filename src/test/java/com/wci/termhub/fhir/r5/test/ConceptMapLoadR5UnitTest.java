@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 
@@ -56,7 +57,8 @@ public class ConceptMapLoadR5UnitTest {
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of concept map from classpath resource: data/{}",
               conceptMapFile);
-          ConceptMapLoaderUtil.loadConceptMap(searchService, resource.getFile(), ConceptMap.class);
+          ConceptMapLoaderUtil.loadConceptMap(searchService, resource.getFile(), ConceptMap.class,
+              new DefaultProgressListener());
         });
 
       } catch (final Exception e) {

@@ -159,7 +159,8 @@ public class SyndicationContentLoader {
    */
   private void loadValueSet(final File file) throws Exception {
     logger.debug("Loading ValueSet content");
-    ValueSetLoaderUtil.loadValueSet(searchService, file, org.hl7.fhir.r5.model.ValueSet.class);
+    ValueSetLoaderUtil.loadValueSet(searchService, file, org.hl7.fhir.r5.model.ValueSet.class,
+        new DefaultProgressListener());
   }
 
   /**
@@ -170,8 +171,8 @@ public class SyndicationContentLoader {
    */
   private void loadConceptMap(final File file) throws Exception {
     logger.debug("Loading ConceptMap content");
-    ConceptMapLoaderUtil.loadConceptMap(searchService, file,
-        org.hl7.fhir.r5.model.ConceptMap.class);
+    ConceptMapLoaderUtil.loadConceptMap(searchService, file, org.hl7.fhir.r5.model.ConceptMap.class,
+        new DefaultProgressListener());
   }
 
   /**
@@ -434,7 +435,8 @@ public class SyndicationContentLoader {
               syndicationClient.getSyndicationUrl());
           break;
         case "ValueSet":
-          ValueSetLoaderUtil.loadValueSet(searchService, file, org.hl7.fhir.r5.model.ValueSet.class);
+          ValueSetLoaderUtil.loadValueSet(searchService, file, org.hl7.fhir.r5.model.ValueSet.class,
+              new DefaultProgressListener());
           results.incrementValueSetsLoaded();
           logger.info("Successfully loaded ValueSet from file: {}", filePath);
           // Mark as loaded in tracker
@@ -444,7 +446,7 @@ public class SyndicationContentLoader {
           break;
         case "ConceptMap":
           ConceptMapLoaderUtil.loadConceptMap(searchService, file,
-              org.hl7.fhir.r5.model.ConceptMap.class);
+              org.hl7.fhir.r5.model.ConceptMap.class, new DefaultProgressListener());
           results.incrementConceptMapsLoaded();
           logger.info("Successfully loaded ConceptMap from file: {}", filePath);
           // Mark as loaded in tracker

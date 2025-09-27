@@ -33,6 +33,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.service.EntityRepositoryService;
@@ -286,7 +287,8 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
 
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
-          ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(), ValueSet.class);
+          ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(), ValueSet.class,
+              new DefaultProgressListener());
         });
 
       } catch (final Exception e) {

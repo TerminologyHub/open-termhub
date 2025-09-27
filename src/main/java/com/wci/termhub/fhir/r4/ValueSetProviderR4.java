@@ -46,6 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -514,8 +515,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
       final File file = File.createTempFile("tmp", ".json");
       FileUtils.writeByteArrayToFile(file, bytes);
 
-      final ValueSet valueSet =
-          ValueSetLoaderUtil.loadValueSet(searchService, file, ValueSet.class);
+      final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService, file, ValueSet.class,
+          new DefaultProgressListener());
       FileUtils.delete(file);
 
       valueSet.getCompose().getInclude().clear();
