@@ -221,10 +221,17 @@ public class TerminologyCache {
         // If the child is an "old code" and the parent is a "new code"
         // Set the descendant inactive and set historical field
         if (historicalRels.containsKey(child)) {
-          descRef.setActive(false);
-          descRef.setHistorical(
+          final String label =
               historicalRels.get(child).stream().filter(s -> s.startsWith(code + "|"))
-                  .map(s -> s.replaceFirst(".*\\|", "")).findFirst().get());
+                  .map(s -> s.replaceFirst(".*\\|", "")).findFirst().orElse(null);
+          // If label is null, this is an inactive code that has
+          // an actual parent that isn't a historical rel, skip it.
+          // e.g. 42649-4 => LG41196-3
+          if (label == null) {
+            continue;
+          }
+          descRef.setActive(false);
+          descRef.setHistorical(label);
         }
 
         descendantDepthMap.put(child, descRef);

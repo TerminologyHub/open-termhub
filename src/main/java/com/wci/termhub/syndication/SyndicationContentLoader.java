@@ -456,7 +456,7 @@ public class SyndicationContentLoader {
       }
       results.incrementTotalLoaded();
 
-      // Clean up temporary file
+      // Clean up temporary file and extract directory
       if (!file.delete()) {
         logger.warn("Failed to delete temporary file: {}", filePath);
       }

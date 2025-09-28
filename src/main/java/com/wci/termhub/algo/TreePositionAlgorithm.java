@@ -232,8 +232,14 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     // Find roots (iterate through parents and see if they are children)
     final Set<String> rootCodes = new HashSet<>();
     for (final String par : parChd.keySet()) {
-      // things with no children
+      // things with no parents
       if (!chdPar.containsKey(par)) {
+        // Temporary bypass for LOINC
+        // for LL, LG, and LP things
+        if (getTerminology().equals("LOINC")
+            && (par.startsWith("LL") || par.startsWith("LP") || par.startsWith("LG"))) {
+          continue;
+        }
         rootCodes.add(par);
       }
     }
