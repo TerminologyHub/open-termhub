@@ -215,6 +215,17 @@ curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/s
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
 curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
 ```
+**[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
+
+
+### View in Browser
+
+Once data is loaded, you can visualize it within the embedded terminology browser.
+
+See [http://localhost:8080/index.html](http://localhost:8080/index.html)
+
+This is a locally-available version of the TermHub browser that lets you interact with the
+content loaded into the open termhub container.
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
 

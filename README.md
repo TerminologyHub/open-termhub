@@ -2,21 +2,22 @@
 Open source FHIR® terminology server deployable as a docker container with
 local sandbox terminology data provided for testing. This runtime
 container works seamlessly with terminology content provided by 
-[TermHub](https://www.terminologyhub.com) which has a large library of code systems, value sets, and concept mappings.
+[TermHub](https://www.terminologyhub.com) which has a library of code systems, value sets, and concept mappings.
 
 ## Table of Contents
 
-1. [Build, Test, and make Docker Images](doc/BUILD.md)
-2. [Step-by-step instructions with Sandbox data](doc/TUTORIAL1.md)
-3. [Step-by-step instructions with TermHub data](doc/TUTORIAL2.md)
+1. [Step-by-step instructions with Sandbox data](doc/TUTORIAL1.md)
+2. [Step-by-step instructions with Sandbox data using syndication](doc/TUTORIAL2.md)
 
 ## Contributing
 
-1. Fork it!
-2. Create your feature branch: `git checkout -b my-new-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request
+1. [Build and Test](doc/BUILD.md)
+2. [Docker Image](doc/DOCKER.md)
+3. Fork it!
+4. Create your feature branch: `git checkout -b my-new-feature`
+5. Commit your changes: `git commit -am 'Add some feature'`
+6. Push to the branch: `git push origin my-new-feature`
+7. Submit a pull request
 
 **[Back to top](#table-of-contents)**
 

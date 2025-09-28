@@ -20,11 +20,6 @@ To run individual tests, specify the tests, e.g.
 
 `./gradlew test --tests ConceptUnitTest`
 
-### Operational Tasks
-
-Use ConceptLoader to load concepts in JSON format.
-
-`./gradlew runLoadConcepts -PinputFile="YOUR_CONCEPTS_JSON_FILE"`
 
 ### API Documentation (Swagger)
 

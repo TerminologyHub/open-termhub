@@ -119,11 +119,13 @@ public class SyndicationSchedulerService {
    * Mark syndication as completed (persistent).
    */
   private void setSyndicationCompleted() {
-    try {
-      new java.io.File(SYNDICATION_COMPLETED_FILE).createNewFile();
-      logger.info("Syndication completion marked as persistent");
-    } catch (final Exception e) {
-      logger.error("Error marking syndication as completed", e);
-    }
+    // NOTE: it should not be necessary to mark this
+    // especially with syndication
+    // try {
+    // new java.io.File(SYNDICATION_COMPLETED_FILE).createNewFile();
+    // logger.info("Syndication completion marked as persistent");
+    // } catch (final Exception e) {
+    // logger.error("Error marking syndication as completed", e);
+    // }
   }
 }
