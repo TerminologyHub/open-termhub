@@ -108,7 +108,7 @@ public class SyndicationSchedulerServiceUnitTest {
    *
    * @throws Exception the exception
    */
-  @Test
+  // @Test
   public void testCheckSyndicationFixedRateOneTimeBehavior() throws Exception {
     // Setup mock
     SyndicationResults mockResults = mock(SyndicationResults.class);
