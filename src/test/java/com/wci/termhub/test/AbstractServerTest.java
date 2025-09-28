@@ -13,16 +13,19 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.wci.termhub.lucene.LuceneDataAccess;
 import org.apache.commons.io.FileUtils;
+import org.hl7.fhir.r5.model.CodeSystem;
+import org.hl7.fhir.r5.model.ConceptMap;
+import org.hl7.fhir.r5.model.ValueSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.wci.termhub.algo.DefaultProgressListener;
+import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
@@ -117,11 +120,9 @@ public abstract class AbstractServerTest extends BaseUnitTest {
           throw new FileNotFoundException("Could not find resource: data/" + codeSystemFile);
         }
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
         logger.info("Loading code system from classpath resource: data/{}", codeSystemFile);
-        CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, computeTreePositions);
+        CodeSystemLoaderUtil.loadCodeSystem(searchService, resource.getFile(), computeTreePositions,
+            CodeSystem.class, new DefaultProgressListener());
       } catch (final Exception e) {
         logger.error("Error loading code system file: {}", codeSystemFile, e);
         throw e;
@@ -157,10 +158,8 @@ public abstract class AbstractServerTest extends BaseUnitTest {
           throw new IllegalArgumentException("Invalid resource type - expected ConceptMap");
         }
 
-        final String content =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-        ConceptMapLoaderUtil.loadConceptMap(searchService, content);
-
+        ConceptMapLoaderUtil.loadConceptMap(searchService, resource.getFile(), ConceptMap.class,
+            new DefaultProgressListener());
       } catch (final Exception e) {
         logger.error("Error loading concept map file: {}", conceptMapFile, e);
         throw e;
@@ -188,11 +187,9 @@ public abstract class AbstractServerTest extends BaseUnitTest {
           throw new FileNotFoundException("Could not find resource: data/" + valueSetFile);
         }
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
         logger.info("Loading value sets from classpath resource: data/{}", valueSetFile);
-        assertNotNull(ValueSetLoaderUtil.loadSubset(searchService, fileContent, true));
+        assertNotNull(ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(),
+            ValueSet.class, new DefaultProgressListener()));
 
       } catch (final Exception e) {
         logger.error("Error loading value set file: {}", valueSetFile, e);

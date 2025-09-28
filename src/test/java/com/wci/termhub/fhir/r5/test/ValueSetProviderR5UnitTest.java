@@ -13,10 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +27,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.r5.ValueSetProviderR5;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ValueSetLoaderUtil;
@@ -180,12 +179,10 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
         final Resource resource = new ClassPathResource("data/" + valueSetFile,
             ValueSetProviderR5UnitTest.class.getClassLoader());
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of value set from classpath resource: data/{}", valueSetFile);
-          ValueSetLoaderUtil.loadSubset(searchService, fileContent, false);
+          ValueSetLoaderUtil.loadValueSet(searchService, resource.getFile(), ValueSet.class,
+              new DefaultProgressListener());
         });
 
       } catch (final Exception e) {

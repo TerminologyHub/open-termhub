@@ -11,10 +11,9 @@ package com.wci.termhub.fhir.r4.test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
+import org.hl7.fhir.r4.model.CodeSystem;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 
@@ -56,13 +56,11 @@ public class CodeSystemLoadR4UnitTest extends AbstractFhirR4ServerTest {
         final Resource resource = new ClassPathResource("data/" + codeSystemFile,
             CodeSystemLoadR4UnitTest.class.getClassLoader());
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of code system from classpath resource: data/{}",
               codeSystemFile);
-          CodeSystemLoaderUtil.loadCodeSystem(searchService, fileContent, false);
+          CodeSystemLoaderUtil.loadCodeSystem(searchService, resource.getFile(), false,
+              CodeSystem.class, new DefaultProgressListener());
         });
 
       } catch (final Exception e) {

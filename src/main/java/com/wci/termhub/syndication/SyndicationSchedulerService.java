@@ -32,17 +32,17 @@ public class SyndicationSchedulerService {
   private SyndicationManager syndicationManager;
 
   /** The syndication check interval. */
-  @Value("${syndication.check.interval:1440m}")
+  @Value("${syndication.check.interval}")
   private String syndicationCheckInterval;
 
   /** The syndication completed flag file. */
   private static final String SYNDICATION_COMPLETED_FILE = "syndication.completed";
 
   /**
-   * Scheduled syndication check using fixed rate interval. This method runs at
-   * the configured interval for testing purposes.
+   * Scheduled syndication check using fixed rate interval. This method runs at the configured
+   * interval for testing purposes.
    */
-  @Scheduled(fixedRateString = "${syndication.check.interval:1440m}", initialDelayString = "0")
+  @Scheduled(fixedRateString = "${syndication.check.interval}", initialDelayString = "0")
   public void checkSyndicationFixedRate() {
     // Check if syndication was already completed (persistent check)
     if (isSyndicationCompleted()) {
@@ -84,8 +84,8 @@ public class SyndicationSchedulerService {
   }
 
   /**
-   * Manual trigger for syndication check. This method can be called
-   * programmatically or via REST endpoint.
+   * Manual trigger for syndication check. This method can be called programmatically or via REST
+   * endpoint.
    */
   public void triggerSyndicationCheck() {
     logger.info("Manual syndication check triggered");
@@ -119,11 +119,13 @@ public class SyndicationSchedulerService {
    * Mark syndication as completed (persistent).
    */
   private void setSyndicationCompleted() {
-    try {
-      new java.io.File(SYNDICATION_COMPLETED_FILE).createNewFile();
-      logger.info("Syndication completion marked as persistent");
-    } catch (final Exception e) {
-      logger.error("Error marking syndication as completed", e);
-    }
+    // NOTE: it should not be necessary to mark this
+    // especially with syndication
+    // try {
+    // new java.io.File(SYNDICATION_COMPLETED_FILE).createNewFile();
+    // logger.info("Syndication completion marked as persistent");
+    // } catch (final Exception e) {
+    // logger.error("Error marking syndication as completed", e);
+    // }
   }
 }

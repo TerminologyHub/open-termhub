@@ -27,10 +27,10 @@ One option is to just build the code and run the server locally and use an INDEX
 
 ```
 # On Windows use export INDEX_DIR=c:/temp/opentermhub/index
+# On Windows if running within wsl use export INDEX_DIR=/mnt/c/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 export ENABLE_POST_LOAD_COMPUTATIONS=true
 export PROJECT_API_KEY=$SANDBOX_KEY
-export JAVA_OPTS=-Xmx8g
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run
 ```
@@ -215,6 +215,17 @@ curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/s
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
 curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
 ```
+**[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
+
+
+### View in Browser
+
+Once data is loaded, you can visualize it within the embedded terminology browser.
+
+See [http://localhost:8080/index.html](http://localhost:8080/index.html)
+
+This is a locally-available version of the TermHub browser that lets you interact with the
+content loaded into the open termhub container.
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
 

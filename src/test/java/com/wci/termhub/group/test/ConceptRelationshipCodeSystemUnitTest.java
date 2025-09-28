@@ -25,8 +25,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.test.AbstractTerminologyTest;
 
 /**
- * Unit tests for concept relationship functionality with FHIR Code System
- * files.
+ * Unit tests for concept relationship functionality with FHIR Code System files.
  */
 public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTest {
 
@@ -71,7 +70,7 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
   @Test
   public void testFindIsaRelationships() throws Exception {
     final SearchParameters params = new SearchParameters();
-    params.setQuery("terminology:SNOMEDCT_US AND type:Is\\ a");
+    params.setQuery("terminology:SNOMEDCT_US AND type:isa");
     params.setLimit(10);
 
     final ResultList<ConceptRelationship> results =
@@ -79,11 +78,11 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
 
     results.getItems().forEach(rel -> LOGGER.info("FOUND: {}", rel));
 
-    assertFalse(results.getItems().isEmpty(), "Should find ISA relationships");
+    assertFalse(results.getItems().isEmpty(), "Should find parent relationships");
     LOGGER.info("Found {} ISA relationships (limited to 10)", results.getItems().size());
 
     for (final ConceptRelationship rel : results.getItems()) {
-      assertEquals("Is a", rel.getType());
+      assertEquals("isa", rel.getType());
       assertEquals("SNOMEDCT_US", rel.getTerminology());
 
     }
@@ -125,7 +124,7 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
           rel.getFrom().getCode(), rel.getTo().getCode(), rel.getAdditionalType());
 
       // Check for ISA relationship (parent)
-      if ("Is a".equals(rel.getType()) && "116680003".equals(rel.getAdditionalType())) {
+      if ("isa".equals(rel.getType()) && "116680003".equals(rel.getAdditionalType())) {
         assertEquals("186747009", rel.getTo().getCode(),
             "ISA relationship should point to Coronavirus infection");
         assertEquals("Coronavirus infection", rel.getTo().getName());
@@ -134,7 +133,7 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
       }
 
       // Check for Pathological process relationship
-      if ("other".equals(rel.getType()) && "370135005".equals(rel.getAdditionalType())) {
+      if ("relationship".equals(rel.getType()) && "370135005".equals(rel.getAdditionalType())) {
         assertEquals("441862004", rel.getTo().getCode(),
             "Pathological process relationship should point to Infectious process");
         assertEquals("Infectious process", rel.getTo().getName());
@@ -143,7 +142,7 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
       }
 
       // Check for Causative agent relationship
-      if ("other".equals(rel.getType()) && "246075003".equals(rel.getAdditionalType())) {
+      if ("relationship".equals(rel.getType()) && "246075003".equals(rel.getAdditionalType())) {
         assertEquals("840533007", rel.getTo().getCode(),
             "Causative agent relationship should point to SARS-CoV-2");
         assertEquals("SARS-CoV-2", rel.getTo().getName());
@@ -154,7 +153,7 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
 
     // Verify all three relationships were found
     assertTrue(foundIsaRelationship,
-        "Should find ISA relationship (type='Is a', additionalType='116680003')");
+        "Should find ISA relationship (type='isa', additionalType='116680003')");
     assertTrue(foundPathologicalProcess,
         "Should find Pathological process relationship (type='other', additionalType='370135005')");
     assertTrue(foundCausativeAgent,
@@ -195,12 +194,13 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
   @Test
   public void testFindParentChildRelationships() throws Exception {
     // Use a known SNOMED CT concept code
-    final String fromConceptCode = "73211009"; // Diabetes mellitus
+    // Diabetes mellitus
+    final String fromConceptCode = "73211009";
 
     // Find parent concepts (concepts that this concept is a child of)
     final SearchParameters parentsParams = new SearchParameters();
     parentsParams
-        .setQuery("terminology:SNOMEDCT_US AND from.code:" + fromConceptCode + " AND type:Is\\ a");
+        .setQuery("terminology:SNOMEDCT_US AND from.code:" + fromConceptCode + " AND type:isa");
 
     final ResultList<ConceptRelationship> parentRels =
         searchService.find(parentsParams, ConceptRelationship.class);
@@ -213,7 +213,7 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
 
     for (final ConceptRelationship rel : parentRels.getItems()) {
       assertEquals(fromConceptCode, rel.getFrom().getCode());
-      assertEquals("Is a", rel.getType());
+      assertEquals("isa", rel.getType());
       LOGGER.info("Parent concept: {}", rel);
     }
 
@@ -221,7 +221,7 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
     // Find child concepts (concepts that are children of this concept)
     final SearchParameters childrenParams = new SearchParameters();
     childrenParams
-        .setQuery("terminology:SNOMEDCT_US AND to.code:" + toConceptCode + " AND type:Is\\ a");
+        .setQuery("terminology:SNOMEDCT_US AND to.code:" + toConceptCode + " AND type:isa");
     childrenParams.setLimit(10);
 
     final ResultList<ConceptRelationship> childRels =
@@ -235,7 +235,7 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
 
     for (final ConceptRelationship rel : childRels.getItems()) {
       assertEquals(toConceptCode, rel.getTo().getCode());
-      assertEquals("Is a", rel.getType());
+      assertEquals("isa", rel.getType());
       LOGGER.info("Child concept: {}", rel.getFrom().getCode());
     }
   }

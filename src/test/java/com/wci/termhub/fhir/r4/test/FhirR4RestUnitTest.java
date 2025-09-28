@@ -61,6 +61,7 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ThreadLocalMapper;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -291,7 +292,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(1)
   public void testCodeSystemById() throws Exception {
     // Arrange
-    final String csId = "340c926f-9ad6-4f1b-b230-dc4ca14575ab";
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -420,7 +421,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(1)
   public void testCodeSystemValidateCodeById() throws Exception {
     // Arrange
-    final String csId = "177f2263-fe04-4f1f-b0e6-9b351ab8baa9";
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("177f2263-fe04-4f1f-b0e6-9b351ab8baa9");
     final String code = "E10";
     final String validateParams = "/$validate-code?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + validateParams;
@@ -482,7 +483,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(1)
   public void testCodeSystemSubsumesById() throws Exception {
     // Arrange
-    final String csId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b";
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b");
     final String codeA = "73211009";
     final String codeB = "727499001";
     final String subsumesParams = "/$subsumes?codeA=" + codeA + "&codeB=" + codeB;
@@ -598,7 +599,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(1)
   public void testCodeSystemLookupById() throws Exception {
     // Arrange
-    final String system = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b";
+    final String system =
+        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b");
     final String code = "73211009";
     final String lookupParams = "/$lookup?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + system + lookupParams;
@@ -722,7 +724,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(1)
   public void testValueSetById() throws Exception {
     // Arrange
-    final String vsId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b_entire";
+    final String vsId =
+        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b") + "_entire";
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -868,7 +871,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(1)
   public void testValueSetValidateCodeById() throws Exception {
     // Arrange
-    final String vsId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b_entire";
+    final String vsId =
+        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b") + "_entire";
     final String code = "73211009";
     final String validateParams = "/$validate-code?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId + validateParams;
@@ -943,7 +947,10 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(1)
   public void testValueSetExpandById() throws Exception {
     // Arrange
-    final String vsId = "3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b_entire";
+    // This id is from CodeSystem-snomedct-sandbox-20240101-r{4,5}.json
+    final String vsId =
+        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b") + "_entire";
+
     final int count = 50;
     final String expandParams = "/$expand?count=" + count;
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId + expandParams;
@@ -1277,7 +1284,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
     final CodeSystem codeSystem =
         getNewCodeSystem("concurrent-cs-1", "http://example.org/concurrent-cs-1");
-    final CodeSystem.ConceptDefinitionComponent concept = new CodeSystem.ConceptDefinitionComponent();
+    final CodeSystem.ConceptDefinitionComponent concept =
+        new CodeSystem.ConceptDefinitionComponent();
     concept.setCode("test-code");
     codeSystem.setConcept(List.of(concept));
 
@@ -1404,15 +1412,16 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         new org.springframework.http.HttpEntity<>(json, headers);
     final ResponseEntity<String> response =
         restTemplate.postForEntity(LOCALHOST + port + FHIR_CODESYSTEM, entity, String.class);
-    // Deserialize FHIR resource from response
-    if (response.getBody().contains("OperationOutcome")) {
-      final OperationOutcome operationOutcome =
-          parser.parseResource(OperationOutcome.class, response.getBody());
-      if (operationOutcome.getIssue().stream()
-          .filter(i -> i.getCode().equals(OperationOutcome.IssueType.CONFLICT)).count() == 1) {
-        return null;
-      }
+
+    // if conflict, return null
+    if (response.getStatusCode().value() == 409) {
+      return null;
     }
+    if (response.getStatusCode().value() > 399) {
+      LOGGER.info("   status code = " + response.getStatusCode().value());
+    }
+
+    // OperationOutcome here means there was an error in code system provider
     return parser.parseResource(CodeSystem.class, response.getBody());
   }
 
@@ -1445,7 +1454,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM;
     final String content = this.restTemplate.getForObject(endpoint, String.class);
     if (content.contains("OperationOutcome")) {
-      final OperationOutcome operationOutcome = parser.parseResource(OperationOutcome.class, content);
+      final OperationOutcome operationOutcome =
+          parser.parseResource(OperationOutcome.class, content);
       if (operationOutcome.getIssue().stream()
           .filter(i -> i.getDiagnostics().equals("Failed to find code systems")).count() == 1) {
         // No code systems to clean up

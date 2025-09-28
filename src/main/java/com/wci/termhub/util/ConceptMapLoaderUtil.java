@@ -11,12 +11,24 @@ package com.wci.termhub.util;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
+import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.wci.termhub.algo.ProgressEvent;
+import com.wci.termhub.algo.ProgressListener;
+import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.Mapping;
@@ -27,6 +39,8 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Utility class for loading ConceptMap format JSON files.
  */
@@ -34,6 +48,15 @@ public final class ConceptMapLoaderUtil {
 
   /** The logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ConceptMapLoaderUtil.class);
+
+  /** The id map. Used by QA to map from test files to internal ids. */
+  private static Map<String, String> idMap =
+      new LinkedHashMap<String, String>(101 * 4 / 3, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<String, String> eldest) {
+          return size() > 100;
+        }
+      };
 
   /**
    * Instantiates a new concept map loader.
@@ -43,71 +66,116 @@ public final class ConceptMapLoaderUtil {
   }
 
   /**
-   * Load concept map from a JSON file and save it using the repository service.
+   * Map original id.
    *
-   * @param service the repository service to use for saving
-   * @param conceptMap the concept map
-   * @return the mapset
-   * @throws Exception if there is an error reading or processing the file
+   * @param originalId the original id
+   * @return the string
    */
-  public static Mapset loadConceptMap(final EntityRepositoryService service,
-    final String conceptMap) throws Exception {
-
-    final JsonNode jsonContent = ThreadLocalMapper.get().readTree(conceptMap);
-    return indexConceptMap(service, jsonContent, 1000, -1);
-
+  public static String mapOriginalId(final String originalId) {
+    return idMap.get(originalId);
   }
 
   /**
-   * Load concept map from a JSON file and save it using the repository service.
+   * Load concept map.
    *
-   * @param service the repository service to use for saving
-   * @param conceptMap the concept map
-   * @return the mapset
-   * @throws Exception if there is an error reading or processing the file
+   * @param <T> the generic type
+   * @param service the service
+   * @param file the file
+   * @param type the type
+   * @param listener the listener
+   * @return the t
+   * @throws Exception the exception
    */
-  public static Mapset loadConceptMap(final EntityRepositoryService service,
-    final JsonNode conceptMap) throws Exception {
-
-    return indexConceptMap(service, conceptMap, 1000, -1);
-
+  public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
+    final Class<T> type, final ProgressListener listener) throws Exception {
+    return indexConceptMap(service, file, type, listener);
   }
 
   /**
    * Index concept map.
    *
+   * @param <T> the generic type
    * @param service the service
-   * @param conceptMap the concept map
-   * @param batchSize the batch size
-   * @param limit the limit
-   * @return the mapset
+   * @param file the file
+   * @param type the type
+   * @param listener the listener
+   * @return the t
    * @throws Exception the exception
    */
-  private static Mapset indexConceptMap(final EntityRepositoryService service,
-    final JsonNode conceptMap, final int batchSize, final int limit) throws Exception {
+  @SuppressWarnings("unchecked")
+  private static <T> T indexConceptMap(final EntityRepositoryService service, final File file,
+    final Class<T> type, final ProgressListener listener) throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
+    // Use JSON as a way to handle both R4 and R5
+    final JsonNode conceptMap = ThreadLocalMapper.get().readTree(file);
+
     try {
-      LOGGER.info("Indexing ConceptMap {}: ", conceptMap.path("title"));
+      // Set listener to 0%
+      listener.updateProgress(new ProgressEvent(0));
+
+      LOGGER.info("Indexing ConceptMap {} = {}", conceptMap.path("title"), conceptMap.path("url"));
+
+      // Basic checks
+      // Validate required fields
+      if (conceptMap.get("url").isMissingNode()) {
+        throw FhirUtilityR4.exception("ConceptMap.url is required", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+
+      // check for existing
+      final String abbreviation = conceptMap.path("title").asText();
+      final String publisher = conceptMap.path("publisher").asText();
+      final String version = conceptMap.path("version").asText();
+      Mapset mapset = findMapset(service, abbreviation, publisher, version);
+      if (mapset != null) {
+        throw FhirUtilityR4.exception(
+            "Can not create multiple ConceptMap resources the same title, publisher,"
+                + " and version. duplicate = " + mapset.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
+      }
+      mapset = createMapset(service, conceptMap);
+
+      // Get "source" - either "sourceUri", or "sourceScopeUri", or group.source
+      final String source;
+      if (conceptMap.has("sourceUri")) {
+        source = conceptMap.get("sourceUri").asText();
+      } else if (conceptMap.has("sourceScopeUri")) {
+        source = conceptMap.get("sourceScopeUri").asText().replaceFirst("\\?fhir_cm", "");
+      } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
+          && conceptMap.get("group").get(0).has("source")) {
+        source = conceptMap.get("group").get(0).get("source").asText();
+      } else {
+        throw FhirUtilityR4.exception("ConceptMap.source is required", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+      mapset.getAttributes().put("fhirSourceUri", source);
+
+      // Get "source" - either "sourceUri", or "sourceScopeUri", or group.source
+      final String target;
+      if (conceptMap.has("targetUri")) {
+        target = conceptMap.get("targetUri").asText();
+      } else if (conceptMap.has("targetScopeUri")) {
+        target = conceptMap.get("targetScopeUri").asText().replaceFirst("\\?fhir_cm", "");
+      } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
+          && conceptMap.get("group").get(0).has("target")) {
+        target = conceptMap.get("group").get(0).get("target").asText();
+      } else {
+        throw FhirUtilityR4.exception("ConceptMap.target is required", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+      mapset.getAttributes().put("fhirTargetUri", target);
 
       if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("  batch size: {}, limit: {}", batchSize, limit);
+        LOGGER.debug("Create ConceptMap with source: {} and target:{}", source, target);
       }
-
-      Mapset mapset = getMapset(service, conceptMap);
-      if (mapset != null) {
-        throw new Exception("Can not create multiple ConceptMap resources with ConceptMap from "
-            + mapset.getFromTerminology() + " to " + mapset.getToTerminology()
-            + ", already have one with resource ID: ConceptMap/" + mapset.getId());
-      }
-
-      mapset = createMapset(service, conceptMap);
 
       int mappingCount = 0;
 
       // process concept map array
       final JsonNode groupArray = conceptMap.path("group");
+      int totalCt = groupArray.size();
       for (final JsonNode groupNode : groupArray) {
 
         for (final JsonNode elementNode : groupNode.path("element")) {
@@ -192,6 +260,7 @@ public final class ConceptMapLoaderUtil {
             service.add(Mapping.class, mapping);
             if (++mappingCount % 5000 == 0) {
               LOGGER.info("  count: {}", mappingCount);
+              listener.updateProgress(new ProgressEvent((int) (mappingCount * 1.0 / totalCt)));
             }
             // Too much info
             if (LOGGER.isDebugEnabled()) {
@@ -204,7 +273,15 @@ public final class ConceptMapLoaderUtil {
       LOGGER.info("  final counts - mapsets: {}, mappings: {}", 1, mappingCount);
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      return mapset;
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
+      // R4
+      if (type == org.hl7.fhir.r4.model.ConceptMap.class) {
+        return (T) FhirUtilityR4.toR4(mapset);
+      }
+      // else R5
+      return (T) FhirUtilityR5.toR5(mapset);
 
     } catch (final Exception e) {
       LOGGER.error("Error indexing concept map", e);
@@ -216,16 +293,14 @@ public final class ConceptMapLoaderUtil {
    * Gets the terminology.
    *
    * @param service the service
-   * @param root the root
+   * @param abbreviation the abbreviation
+   * @param publisher the publisher
+   * @param version the version
    * @return the terminology
    * @throws Exception the exception
    */
-  private static Mapset getMapset(final EntityRepositoryService service, final JsonNode root)
-    throws Exception {
-
-    final String abbreviation = root.path("title").asText();
-    final String publisher = root.path("publisher").asText();
-    final String version = root.path("version").asText();
+  private static Mapset findMapset(final EntityRepositoryService service, final String abbreviation,
+    final String publisher, final String version) throws Exception {
 
     final SearchParameters searchParams = new SearchParameters();
     searchParams
@@ -248,19 +323,20 @@ public final class ConceptMapLoaderUtil {
 
     // Validate that this is a CodeSystem resource
     if (!root.has("resourceType") || !"ConceptMap".equals(root.get("resourceType").asText())) {
-      throw new IllegalArgumentException("Invalid resource type - expected ConceptMap");
+      throw FhirUtilityR4.exception("Invalid resource type - expected ConceptMap",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
 
     final Mapset mapset = new Mapset();
 
     // Convert to internal model
-    final String id = root.path("id").asText();
-    if (isNotBlank(id)) {
-      mapset.setId(id);
-    } else {
-      final String uuid = UUID.randomUUID().toString();
-      mapset.setId(uuid);
-      LOGGER.warn("Missing ID in root node, generating new UUID for terminology as {}", uuid);
+    // The HAPI Plan server @Create method blanks the identifier on sending a
+    // code system in. Always create a new identifier.
+    mapset.setId(UUID.randomUUID().toString());
+    final String originalId = root.path("id").asText();
+    if (isNotBlank(originalId)) {
+      mapset.getAttributes().put("originalId", originalId);
+      idMap.put(originalId, mapset.getId());
     }
     mapset.setActive(true);
     mapset.setName(root.path("name").asText());
@@ -281,14 +357,13 @@ public final class ConceptMapLoaderUtil {
       fromTerminology = root.path("group").get(0).path("source").asText();
     }
     if (fromTerminology == null) {
-      throw new Exception("Unable to determine information about the map source");
+      throw FhirUtilityR4.exception("Unable to determine information about the map source",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
-    final TerminologyRef fromRef =
-        TerminologyUtility.getTerminology(service, fromTerminology, version);
-    mapset.setFromTerminology(fromRef.getAbbreviation());
-    mapset.setFromPublisher(fromRef.getPublisher());
-    mapset.setFromVersion(fromRef.getVersion());
-    mapset.getAttributes().put("fhirSourceUri", fromRef.getUri());
+    final TerminologyRef fromRef = new TerminologyRef();
+    fromRef.setUri(fromTerminology);
+    fromRef.setPublisher(root.path("publisher").asText());
+    fromRef.setVersion(version);
 
     String toTerminology = null;
     if (root.has("targetScopeUri")) {
@@ -299,9 +374,29 @@ public final class ConceptMapLoaderUtil {
       toTerminology = root.path("group").get(0).path("target").asText();
     }
     if (toTerminology == null) {
-      throw new Exception("Unable to determine information about the map target");
+      throw FhirUtilityR4.exception("Unable to determine information about the map target",
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
-    final TerminologyRef toRef = TerminologyUtility.getTerminology(service, toTerminology, version);
+    final TerminologyRef toRef = new TerminologyRef();
+    toRef.setUri(toTerminology);
+    toRef.setPublisher(root.path("publisher").asText());
+    toRef.setVersion(version);
+
+    // Extract abbreviations from title field
+    final String title = root.path("title").asText();
+    String[] titleParts = title.split("-");
+    final String fromAbbreviation = titleParts.length > 0 ? titleParts[0] : fromTerminology;
+    final String toAbbreviation = titleParts.length > 1 ? titleParts[1] : toTerminology;
+
+    // Set the abbreviations
+    fromRef.setAbbreviation(fromAbbreviation);
+    toRef.setAbbreviation(toAbbreviation);
+
+    mapset.setFromTerminology(fromRef.getAbbreviation());
+    mapset.setFromPublisher(fromRef.getPublisher());
+    mapset.setFromVersion(fromRef.getVersion());
+    mapset.getAttributes().put("fhirSourceUri", fromRef.getUri());
+
     mapset.setToTerminology(toRef.getAbbreviation());
     mapset.setToPublisher(toRef.getPublisher());
     mapset.setToVersion(toRef.getVersion());
@@ -328,5 +423,53 @@ public final class ConceptMapLoaderUtil {
     // LOGGER.info("ConceptMapLoaderUtil: mapset: {}", mapset);
     service.add(Mapset.class, mapset);
     return mapset;
+  }
+
+  /**
+   * Gets the root without groups.
+   *
+   * @param file the file
+   * @return the root without groups
+   * @throws Exception the exception
+   */
+  @SuppressWarnings({
+      "resource", "unused"
+  })
+  private static JsonNode getRootWithoutGroups(final File file) throws Exception {
+
+    // Use try-with-resources to ensure the parser is closed
+    try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+
+      // The first token should be the start of the root object: {
+      if (parser.nextToken() != JsonToken.START_OBJECT) {
+        throw new IOException("Expected start of object at the root of the file.");
+      }
+
+      // Create a node to build the new JSON tree, skipping the concepts array
+      final JsonNode newRoot = ThreadLocalMapper.get().createObjectNode();
+
+      while (parser.nextToken() != JsonToken.END_OBJECT) {
+        final String fieldName = parser.currentName();
+
+        // Advance the parser past the field name
+        parser.nextToken();
+
+        if ("group".equals(fieldName)) {
+          // We found the large array. The next token should be START_ARRAY.
+          // The skipChildren() method is the key to low memory usage.
+          if (parser.currentToken() == JsonToken.START_ARRAY) {
+            parser.skipChildren();
+          }
+          // Do nothing with the skipped data; it's just gone.
+        } else {
+          // For all other fields, read the entire value as a JsonNode
+          // and add it to our new root object.
+          final JsonNode node = parser.readValueAsTree();
+          ((ObjectNode) newRoot).set(fieldName, node);
+        }
+      }
+
+      return newRoot;
+    }
   }
 }

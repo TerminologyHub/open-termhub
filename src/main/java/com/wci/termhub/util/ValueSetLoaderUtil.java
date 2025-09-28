@@ -9,14 +9,23 @@
  */
 package com.wci.termhub.util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
+import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.wci.termhub.algo.ProgressEvent;
+import com.wci.termhub.algo.ProgressListener;
+import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -28,14 +37,24 @@ import com.wci.termhub.service.EntityRepositoryService;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * The Class SubsetLoaderUtil.
+ * Value set loader utility.
  */
 public final class ValueSetLoaderUtil {
 
   /** The Constant logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(ValueSetLoaderUtil.class);
+
+  /** The id map. Used by QA to map from test files to internal ids. */
+  private static Map<String, String> idMap =
+      new LinkedHashMap<String, String>(101 * 4 / 3, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<String, String> eldest) {
+          return size() > 100;
+        }
+      };
 
   /** The Constant contextR4. */
   private static FhirContext contextR4 = FhirContext.forR4();
@@ -54,29 +73,42 @@ public final class ValueSetLoaderUtil {
   }
 
   /**
-   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
-   * and persists.
+   * Map original id.
+   *
+   * @param originalId the original id
+   * @return the string
+   */
+  public static String mapOriginalId(final String originalId) {
+    return idMap.get(originalId);
+  }
+
+  /**
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember, and persists.
+   *
+   * @param <T> the generic type
    * @param service the repository service
-   * @param json the ValueSet JSON
-   * @param isR5 true for R5, false for R4
+   * @param file the file
+   * @param type the type
+   * @param listener the listener
    * @return the Subset id
    * @throws Exception on error
    */
-  public static String loadSubset(final EntityRepositoryService service, final String json,
-    final boolean isR5) throws Exception {
+  @SuppressWarnings("unchecked")
+  public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
+    final Class<T> type, final ProgressListener listener) throws Exception {
 
-    LOGGER.info("Loading Subset from JSON, isR5={}", isR5);
+    LOGGER.info("Loading Subset from JSON, isR5={}", type == org.hl7.fhir.r5.model.ValueSet.class);
 
-    if (!isR5) {
+    if (type == org.hl7.fhir.r4.model.ValueSet.class) {
       final IParser parser = contextR4.newJsonParser();
-      final org.hl7.fhir.r4.model.ValueSet vs =
-          parser.parseResource(org.hl7.fhir.r4.model.ValueSet.class, json);
-      return indexValueSetR4(service, vs);
+      final org.hl7.fhir.r4.model.ValueSet vs = parser.parseResource(
+          org.hl7.fhir.r4.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
+      return (T) indexValueSetR4(service, vs, listener);
     }
     final IParser parser = contextR5.newJsonParser();
-    final org.hl7.fhir.r5.model.ValueSet vs =
-        parser.parseResource(org.hl7.fhir.r5.model.ValueSet.class, json);
-    return indexValueSetR5(service, vs);
+    final org.hl7.fhir.r5.model.ValueSet vs = parser.parseResource(
+        org.hl7.fhir.r5.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
+    return (T) indexValueSetR5(service, vs, listener);
   }
 
   /**
@@ -84,29 +116,48 @@ public final class ValueSetLoaderUtil {
    *
    * @param service the service
    * @param valueSet the value set
+   * @param listener the listener
    * @return the string
    * @throws Exception the exception
    */
-  private static String indexValueSetR4(final EntityRepositoryService service,
-    final org.hl7.fhir.r4.model.ValueSet valueSet) throws Exception {
+  private static org.hl7.fhir.r4.model.ValueSet indexValueSetR4(
+    final EntityRepositoryService service, final org.hl7.fhir.r4.model.ValueSet valueSet,
+    final ProgressListener listener) throws Exception {
 
-    LOGGER.info("Indexing ValueSet R4: {}", valueSet.getTitle());
     final long startTime = System.currentTimeMillis();
 
     try {
+      // Set listener to 0%
+      listener.updateProgress(new ProgressEvent(0));
 
-      // throw exception if this value set was already loaded
-      if (doesValueSetExist(service, valueSet.getTitle(), valueSet.getVersion(),
-          valueSet.getPublisher())) {
-        throw new Exception(
-            "ValueSet with title '" + valueSet.getTitle() + "', version '" + valueSet.getVersion()
-                + "' and publisher '" + valueSet.getPublisher() + "' already exists.");
+      LOGGER.info("Indexing ValueSet R4 {} = {}", valueSet.getTitle(), valueSet.getUrl());
+      // Basic checks
+      // Validate required fields
+      if (valueSet.getUrl() == null) {
+        throw FhirUtilityR4.exception("ValueSet.url is required", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
       }
 
-      final Subset subset = new Subset();
-      String id = valueSet.getIdElement().getIdPart();
-      if (id == null || id.isEmpty()) {
-        id = java.util.UUID.randomUUID().toString();
+      // check for existing
+      final String abbreviation = valueSet.getTitle();
+      final String publisher = valueSet.getPublisher();
+      final String version = valueSet.getVersion();
+      Subset subset = findSubset(service, abbreviation, publisher, version);
+      if (subset != null) {
+        throw FhirUtilityR4.exception(
+            "Can not create multiple ValueSet resources the same title, publisher,"
+                + " and version. duplicate = " + subset.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
+      }
+
+      subset = new Subset();
+      // The HAPI Plan server @Create method blanks the identifier on sending a
+      // code system in. Always create a new identifier.
+      String id = UUID.randomUUID().toString();
+      String originalId = valueSet.getIdElement().getIdPart();
+      if (!StringUtility.isEmpty(originalId)) {
+        subset.getAttributes().put("originalId", originalId);
+        idMap.put(originalId, id);
       }
       subset.setId(id);
       subset.setActive(true);
@@ -143,8 +194,12 @@ public final class ValueSetLoaderUtil {
             valueSet.getCompose().getIncludeFirstRep();
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
-          final TerminologyRef fromRef = TerminologyUtility.getTerminology(service,
-              include.getSystem(), valueSet.getVersion());
+          final TerminologyRef fromRef = new TerminologyRef();
+          fromRef.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          fromRef.setUri(include.getSystem());
+          fromRef.setPublisher(valueSet.getPublisher());
+          fromRef.setVersion(valueSet.getVersion());
+
           subset.setFromTerminology(fromRef.getAbbreviation());
           subset.setFromPublisher(fromRef.getPublisher());
           subset.setFromVersion(fromRef.getVersion());
@@ -156,7 +211,7 @@ public final class ValueSetLoaderUtil {
       // Store experimental and identifier in attributes if present
       if (valueSet.hasExperimental()) {
         if (subset.getAttributes() == null) {
-          subset.setAttributes(new java.util.HashMap<>());
+          subset.setAttributes(new HashMap<>());
         }
         subset.getAttributes().put(Subset.Attributes.fhirExperimental.name(),
             Boolean.toString(valueSet.getExperimental()));
@@ -175,11 +230,15 @@ public final class ValueSetLoaderUtil {
             .getCompose().getInclude()) {
 
           if (includes.getSystem() == null) {
-            throw new Exception("Unable to determine system of value set");
+            throw FhirUtilityR4.exception("Unable to determine system of value set",
+                IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
           }
 
-          final TerminologyRef ref =
-              TerminologyUtility.getTerminology(service, includes.getSystem(), subset.getVersion());
+          final TerminologyRef ref = new TerminologyRef();
+          ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          ref.setUri(includes.getSystem());
+          ref.setPublisher(subset.getPublisher());
+          ref.setVersion(subset.getVersion());
 
           for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
@@ -193,7 +252,7 @@ public final class ValueSetLoaderUtil {
                 ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
 
             final SubsetMember m = new SubsetMember();
-            m.setId(java.util.UUID.randomUUID().toString());
+            m.setId(UUID.randomUUID().toString());
             m.setActive(true);
             m.setTerminology(ref.getAbbreviation());
             m.setPublisher(ref.getPublisher());
@@ -230,8 +289,12 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            map.put(c.getSystem(),
-                TerminologyUtility.getTerminology(service, c.getSystem(), subset.getVersion()));
+            final TerminologyRef ref = new TerminologyRef();
+            ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
+            ref.setUri(c.getSystem());
+            ref.setPublisher(subset.getPublisher());
+            ref.setVersion(subset.getVersion());
+            map.put(c.getSystem(), ref);
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -239,7 +302,7 @@ public final class ValueSetLoaderUtil {
               ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
 
           final SubsetMember m = new SubsetMember();
-          m.setId(java.util.UUID.randomUUID().toString());
+          m.setId(UUID.randomUUID().toString());
           m.setActive(true);
           m.setTerminology(ref.getAbbreviation());
           m.setPublisher(ref.getPublisher());
@@ -265,7 +328,11 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      return subset.getId();
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
+      return FhirUtilityR4.toR4ValueSet(subset, null, false);
+
     } catch (final Exception e) {
       LOGGER.error("Error indexing value set", e);
       throw e;
@@ -277,29 +344,46 @@ public final class ValueSetLoaderUtil {
    *
    * @param service the service
    * @param valueSet the value set
+   * @param listener the listener
    * @return the string
    * @throws Exception the exception
    */
-  private static String indexValueSetR5(final EntityRepositoryService service,
-    final org.hl7.fhir.r5.model.ValueSet valueSet) throws Exception {
+  private static org.hl7.fhir.r5.model.ValueSet indexValueSetR5(
+    final EntityRepositoryService service, final org.hl7.fhir.r5.model.ValueSet valueSet,
+    final ProgressListener listener) throws Exception {
 
-    LOGGER.info("Indexing ValueSet R5: {}", valueSet.getTitle());
     final long startTime = System.currentTimeMillis();
 
     try {
 
-      // throw exception if this value set was already loaded
-      if (doesValueSetExist(service, valueSet.getTitle(), valueSet.getVersion(),
-          valueSet.getPublisher())) {
-        throw new Exception(
-            "ValueSet with title '" + valueSet.getTitle() + "', version '" + valueSet.getVersion()
-                + "' and publisher '" + valueSet.getPublisher() + "' already exists.");
+      LOGGER.info("Indexing ValueSet R4 {} = {}", valueSet.getTitle(), valueSet.getUrl());
+      // Basic checks
+      // Validate required fields
+      if (valueSet.getUrl() == null) {
+        throw FhirUtilityR4.exception("ValueSet.url is required", IssueType.INVALID,
+            HttpServletResponse.SC_BAD_REQUEST);
       }
 
-      final Subset subset = new Subset();
-      String id = valueSet.getIdElement().getIdPart();
-      if (id == null || id.isEmpty()) {
-        id = java.util.UUID.randomUUID().toString();
+      // check for existing
+      final String abbreviation = valueSet.getTitle();
+      final String publisher = valueSet.getPublisher();
+      final String version = valueSet.getVersion();
+      Subset subset = findSubset(service, abbreviation, publisher, version);
+      if (subset != null) {
+        throw FhirUtilityR4.exception(
+            "Can not create multiple ValueSet resources the same title, publisher,"
+                + " and version. duplicate = " + subset.getId(),
+            IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
+      }
+
+      subset = new Subset();
+      // The HAPI Plan server @Create method blanks the identifier on sending a
+      // code system in. Always create a new identifier.
+      String id = UUID.randomUUID().toString();
+      String originalId = valueSet.getIdElement().getIdPart();
+      if (!StringUtility.isEmpty(originalId)) {
+        idMap.put(originalId, id);
+        subset.getAttributes().put("originalId", originalId);
       }
       subset.setId(id);
       subset.setActive(true);
@@ -336,8 +420,12 @@ public final class ValueSetLoaderUtil {
             valueSet.getCompose().getIncludeFirstRep();
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
-          final TerminologyRef fromRef =
-              TerminologyUtility.getTerminology(service, include.getSystem(), subset.getVersion());
+          final TerminologyRef fromRef = new TerminologyRef();
+          fromRef.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          fromRef.setUri(include.getSystem());
+          fromRef.setPublisher(valueSet.getPublisher());
+          fromRef.setVersion(valueSet.getVersion());
+
           subset.setFromTerminology(fromRef.getAbbreviation());
           subset.setFromPublisher(fromRef.getPublisher());
           subset.setFromVersion(fromRef.getVersion());
@@ -347,7 +435,7 @@ public final class ValueSetLoaderUtil {
       // Store experimental and identifier in attributes if present
       if (valueSet.hasExperimental()) {
         if (subset.getAttributes() == null) {
-          subset.setAttributes(new java.util.HashMap<>());
+          subset.setAttributes(new HashMap<>());
         }
         subset.getAttributes().put(Subset.Attributes.fhirExperimental.name(),
             Boolean.toString(valueSet.getExperimental()));
@@ -366,11 +454,15 @@ public final class ValueSetLoaderUtil {
             .getCompose().getInclude()) {
 
           if (includes.getSystem() == null) {
-            throw new Exception("Unable to determine system of value set");
+            throw FhirUtilityR4.exception("Unable to determine system of value set",
+                IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
           }
 
-          final TerminologyRef ref =
-              TerminologyUtility.getTerminology(service, includes.getSystem(), subset.getVersion());
+          final TerminologyRef ref = new TerminologyRef();
+          ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          ref.setUri(includes.getSystem());
+          ref.setPublisher(subset.getPublisher());
+          ref.setVersion(subset.getVersion());
 
           for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
@@ -384,7 +476,7 @@ public final class ValueSetLoaderUtil {
                 ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
 
             final SubsetMember m = new SubsetMember();
-            m.setId(java.util.UUID.randomUUID().toString());
+            m.setId(UUID.randomUUID().toString());
             m.setActive(true);
             m.setTerminology(ref.getAbbreviation());
             m.setPublisher(ref.getPublisher());
@@ -418,8 +510,12 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            map.put(c.getSystem(),
-                TerminologyUtility.getTerminology(service, c.getSystem(), subset.getVersion()));
+            final TerminologyRef ref = new TerminologyRef();
+            ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
+            ref.setUri(c.getSystem());
+            ref.setPublisher(subset.getPublisher());
+            ref.setVersion(subset.getVersion());
+            map.put(c.getSystem(), ref);
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -427,7 +523,7 @@ public final class ValueSetLoaderUtil {
               ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
 
           final SubsetMember subsetMember = new SubsetMember();
-          subsetMember.setId(java.util.UUID.randomUUID().toString());
+          subsetMember.setId(UUID.randomUUID().toString());
           subsetMember.setActive(true);
           subsetMember.setTerminology(ref.getAbbreviation());
           subsetMember.setPublisher(ref.getPublisher());
@@ -452,7 +548,11 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      return subset.getId();
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
+      return FhirUtilityR5.toR5ValueSet(subset, null, false);
+
     } catch (final Exception e) {
       LOGGER.error("Error indexing value set", e);
       throw e;
@@ -464,25 +564,20 @@ public final class ValueSetLoaderUtil {
    * Does value set exist.
    *
    * @param service the service
-   * @param title the title
-   * @param version the version
+   * @param abbreviation the abbreviation
    * @param publisher the publisher
-   * @return true, if successful
+   * @param version the version
+   * @return the subset
    * @throws Exception the exception
    */
-  private static boolean doesValueSetExist(final EntityRepositoryService service,
-    final String title, final String version, final String publisher) throws Exception {
+  private static Subset findSubset(final EntityRepositoryService service, final String abbreviation,
+    final String publisher, final String version) throws Exception {
 
-    LOGGER.info(
-        "  Checking if ValueSet exists with abbreviation={}, fromVersion={}, fromPublisher={}",
-        title, version, publisher);
+    final SearchParameters searchParams = new SearchParameters();
+    searchParams
+        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
+    final ResultList<Subset> subset = service.find(searchParams, Subset.class);
 
-    final SearchParameters params = new SearchParameters();
-    params.setQuery("abbreviation:" + StringUtility.escapeQuery(title) + " AND version: \""
-        + StringUtility.escapeQuery(version) + "\"" + " AND publisher: \""
-        + StringUtility.escapeQuery(publisher) + "\"");
-
-    final ResultList<Subset> existingSubsets = service.find(params, Subset.class);
-    return !existingSubsets.getItems().isEmpty();
+    return (subset.getItems().isEmpty()) ? null : subset.getItems().get(0);
   }
 }

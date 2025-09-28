@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.wci.termhub.Application;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.handler.QueryBuilder;
 import com.wci.termhub.lucene.LuceneQueryBuilder;
@@ -115,6 +116,8 @@ import jakarta.servlet.http.HttpServletRequest;
         email = "info@terminologyhub.com")),
     tags = {
         @Tag(name = "terminology", description = "Terminology service endpoints"),
+        @Tag(name = "mapset", description = "Mapset endpoints"),
+        @Tag(name = "subset", description = "Subset endpoints"),
         @Tag(name = "metadata", description = "Terminology and metadata endpoints"),
         @Tag(name = "concept", description = "Concept endpoints"),
         @Tag(name = "concept by id",
@@ -122,7 +125,7 @@ import jakarta.servlet.http.HttpServletRequest;
         @Tag(name = "concept by code",
             description = "Concept service endpoints with \"by code\" parameters"),
         @Tag(name = "term", description = "Term endpoints"),
-        @Tag(name = "mapset", description = "Mapset endpoints"),
+        @Tag(name = "load", description = "Bulk loader endpoints"),
     }, servers = {
         @Server(description = "Current Instance", url = "/")
     })
@@ -1919,6 +1922,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
       // Create and configure the tree position algorithm
       final TreePositionAlgorithm treepos = new TreePositionAlgorithm(searchService);
+      treepos.addProgressListener(new DefaultProgressListener());
       treepos.setTerminology(terminology);
       treepos.setPublisher(publisher);
       treepos.setVersion(version);
@@ -2197,8 +2201,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
-              "from.terminology:" + concept.getTerminology(),
-              "from.publisher:" + concept.getPublisher()),
+              "from.terminology:\"" + concept.getTerminology() + "\"",
+              "from.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2257,8 +2261,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapset> mapsets = lookupMapsets(null, true);
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
-              "to.terminology:" + concept.getTerminology(),
-              "to.publisher:" + concept.getPublisher()),
+              "to.terminology:\"" + concept.getTerminology() + "\"",
+              "to.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2318,8 +2322,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Subset> subsets = lookupSubsets(null, true);
       final List<SubsetMember> members = findMembersHelper(subsets,
           StringUtility.composeQuery("AND", "code:" + StringUtility.escapeQuery(concept.getCode()),
-              "terminology:" + concept.getTerminology(), "publisher:" + concept.getPublisher(),
-              "version:" + concept.getVersion()),
+              "terminology:\"" + concept.getTerminology() + "\"",
+              "publisher:\"" + concept.getPublisher() + "\"",
+              "version:\"" + concept.getVersion() + "\""),
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2393,8 +2398,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
-              "from.terminology:" + concept.getTerminology(),
-              "from.publisher:" + concept.getPublisher()),
+              "from.terminology:\"" + concept.getTerminology() + "\"",
+              "from.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2467,8 +2472,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapset> mapsets = lookupMapsets(null, true);
       final List<Mapping> mappings = findMappingsHelper(mapsets,
           StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
-              "to.terminology:" + concept.getTerminology(),
-              "to.publisher:" + concept.getPublisher()),
+              "to.terminology:\"" + concept.getTerminology() + "\"",
+              "to.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2542,8 +2547,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<SubsetMember> members = findMembersHelper(subsets,
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
-              "from.terminology:" + concept.getTerminology(),
-              "from.publisher:" + concept.getPublisher()),
+              "from.terminology:\"" + concept.getTerminology() + "\"",
+              "from.publisher:\"" + concept.getPublisher()) + "\"",
           0, 10000, null, null, true).getItems();
 
       // Return the object
@@ -2851,37 +2856,33 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       }
       final BooleanQuery.Builder terminologyQueryBuilder = new BooleanQuery.Builder();
       for (final Terminology term : tlist) {
-          terminologyQueryBuilder.add(
-              new TermQuery(new org.apache.lucene.index.Term("terminology", term.getAbbreviation())),
-              BooleanClause.Occur.SHOULD
-          );
+        terminologyQueryBuilder.add(
+            new TermQuery(new org.apache.lucene.index.Term("terminology", term.getAbbreviation())),
+            BooleanClause.Occur.SHOULD);
       }
       final BooleanQuery terminologyQuery = terminologyQueryBuilder.build();
       final String[] words = query.split("\\s+");
       final BooleanQuery.Builder ngramQueryBuilder = new BooleanQuery.Builder();
       for (final String word : words) {
-          ngramQueryBuilder.add(
-              new PrefixQuery(new org.apache.lucene.index.Term("name.ngram", word.toLowerCase())),
-              BooleanClause.Occur.MUST
-          );
+        ngramQueryBuilder.add(
+            new PrefixQuery(new org.apache.lucene.index.Term("name.ngram", word.toLowerCase())),
+            BooleanClause.Occur.MUST);
       }
       final BooleanQuery ngramQuery = ngramQueryBuilder.build();
 
       // Prepare length boost
       final int doubleQueryLength = Math.max(query.length(), 5) * 2;
       final Query shortLength = IntPoint.newRangeQuery("length", 0, doubleQueryLength);
-      final Query longLength  = IntPoint.newRangeQuery("length", doubleQueryLength + 1, Integer.MAX_VALUE);
+      final Query longLength =
+          IntPoint.newRangeQuery("length", doubleQueryLength + 1, Integer.MAX_VALUE);
       final BoostQuery boostedShortLength = new BoostQuery(shortLength, 100f);
 
-      final BooleanQuery lengthQuery = new BooleanQuery.Builder()
-              .add(boostedShortLength, BooleanClause.Occur.SHOULD)
-              .add(longLength, BooleanClause.Occur.SHOULD)
-              .build();
+      final BooleanQuery lengthQuery =
+          new BooleanQuery.Builder().add(boostedShortLength, BooleanClause.Occur.SHOULD)
+              .add(longLength, BooleanClause.Occur.SHOULD).build();
       final BooleanQuery finalQuery = new BooleanQuery.Builder()
-              .add(ngramQuery, BooleanClause.Occur.MUST)
-              .add(terminologyQuery, BooleanClause.Occur.MUST)
-              .add(lengthQuery, BooleanClause.Occur.MUST)
-              .build();
+          .add(ngramQuery, BooleanClause.Occur.MUST).add(terminologyQuery, BooleanClause.Occur.MUST)
+          .add(lengthQuery, BooleanClause.Occur.MUST).build();
 
       logger.info("Autocomplete search query: {}", finalQuery);
       final Integer maxLimit = (limit == null) ? 10 : Math.min(limit, 1000);

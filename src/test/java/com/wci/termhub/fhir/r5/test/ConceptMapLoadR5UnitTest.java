@@ -11,10 +11,9 @@ package com.wci.termhub.fhir.r5.test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
+import org.hl7.fhir.r5.model.ConceptMap;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 
@@ -54,13 +54,11 @@ public class ConceptMapLoadR5UnitTest {
         final Resource resource = new ClassPathResource("data/" + conceptMapFile,
             CodeSystemLoadR5UnitTest.class.getClassLoader());
 
-        final String fileContent =
-            FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-
         assertThrows(Exception.class, () -> {
           LOGGER.info("Attempt reload of concept map from classpath resource: data/{}",
               conceptMapFile);
-          ConceptMapLoaderUtil.loadConceptMap(searchService, fileContent);
+          ConceptMapLoaderUtil.loadConceptMap(searchService, resource.getFile(), ConceptMap.class,
+              new DefaultProgressListener());
         });
 
       } catch (final Exception e) {

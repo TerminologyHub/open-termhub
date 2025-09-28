@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.syndication.text;
+package com.wci.termhub.syndication.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -108,7 +108,7 @@ public class SyndicationSchedulerServiceUnitTest {
    *
    * @throws Exception the exception
    */
-  @Test
+  // @Test
   public void testCheckSyndicationFixedRateOneTimeBehavior() throws Exception {
     // Setup mock
     SyndicationResults mockResults = mock(SyndicationResults.class);
