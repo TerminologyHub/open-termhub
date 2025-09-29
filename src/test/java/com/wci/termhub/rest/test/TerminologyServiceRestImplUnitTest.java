@@ -2450,10 +2450,4 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     // Verify that the fake ConceptMap was loaded
     assertTrue(foundFakeMapset, "Fake ConceptMap (CPT-HCPCS) should be loaded");
   }
-
-  @AfterAll
-  public static void teardown() {
-    // There are tests that delete content. So any subsequent tests should re-setup the data
-    setupOnce = false;
-  }
 }

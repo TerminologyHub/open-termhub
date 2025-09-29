@@ -68,7 +68,7 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
           "ValueSet-snomedct_us-723264001-sandbox-20240301-r4.json");
 
   /** The setup once. */
-  private static boolean setupOnce = false;
+  protected static boolean setupOnce = false;
 
   /**
    * Setup once.
