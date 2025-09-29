@@ -65,7 +65,6 @@ import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.SubsetRef;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 
@@ -135,7 +134,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  // @Test
+  @Test
   @Order(FIND)
   public void testGetTerminologyIcd10Cm() throws Exception {
     final String id = CodeSystemLoaderUtil.mapOriginalId("177f2263-fe04-4f1f-b0e6-9b351ab8baa9");
@@ -171,7 +170,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  // @Test
+  @Test
   @Order(FIND)
   public void testGetTerminologySnomedCtUs() throws Exception {
     final String id = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
@@ -193,7 +192,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  // @Test
+  @Test
   @Order(FIND)
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
     final String id = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
