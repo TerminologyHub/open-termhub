@@ -22,7 +22,6 @@ import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyTest;
 
 /**
  * Unit tests for concept relationship functionality with FHIR Code System files.

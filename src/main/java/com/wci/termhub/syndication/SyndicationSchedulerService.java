@@ -39,7 +39,8 @@ public class SyndicationSchedulerService {
   private static final String SYNDICATION_COMPLETED_FILE = "syndication.completed";
 
   /**
-   * Scheduled syndication check using fixed rate interval. This method runs at the configured
+   * Scheduled syndication check using fixed rate interval. This method runs at
+   * the configured
    * interval for testing purposes.
    */
   @Scheduled(fixedRateString = "${syndication.check.interval}", initialDelayString = "0")
@@ -84,7 +85,8 @@ public class SyndicationSchedulerService {
   }
 
   /**
-   * Manual trigger for syndication check. This method can be called programmatically or via REST
+   * Manual trigger for syndication check. This method can be called
+   * programmatically or via REST
    * endpoint.
    */
   public void triggerSyndicationCheck() {

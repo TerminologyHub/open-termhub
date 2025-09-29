@@ -16,6 +16,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -23,7 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.jayway.jsonpath.JsonPath;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
 import com.wci.termhub.util.TestUtils;
 
 /**
@@ -44,15 +44,14 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    */
   @BeforeAll
   public static void beforeAll() {
-    tutorialResources =
-        TestUtils.getUrlsFromMarkdown("doc/TUTORIAL1.md", "Testing the Terminology API");
+    tutorialResources = TestUtils.getUrlsFromMarkdown("doc/TUTORIAL1.md", "Testing the Terminology API");
   }
 
   /**
    * Test find terminologies.
    */
   // Test for: curl -s "http://localhost:8080/terminology" | jq
-  // @Test
+  @Test
   void testFindTerminologies() {
     String resource = "/terminology";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -70,11 +69,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test find terminology metadata.
    */
   // Test for: curl -s "http://localhost:8080/terminology/$id/metadata" | jq
-  // @Test
+  @Test
   void testFindTerminologyMetadata() {
     // Make independent by fetching the ID first
-    ResponseEntity<String> terminologyResponse =
-        restTemplate.getForEntity("/terminology", String.class);
+    ResponseEntity<String> terminologyResponse = restTemplate.getForEntity("/terminology", String.class);
     assertThat(terminologyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
     String terminologyBody = terminologyResponse.getBody();
     String terminologyId = JsonPath.read(terminologyBody, "$.items[0].id");
@@ -95,7 +93,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test get snomed concept by code.
    */
   // Test for: curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001" | jq
-  // @Test
+  @Test
   void testGetSnomedConceptByCode() {
     String resource = "/concept/SNOMEDCT_US/107907001";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -112,7 +110,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test get snomed concept relationships.
    */
   // Test for: curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001/relationships" | jq
-  // @Test
+  @Test
   void testGetSnomedConceptRelationships() {
     String resource = "/concept/SNOMEDCT_US/107907001/relationships";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -127,7 +125,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test get snomed concept trees.
    */
   // Test for: curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001/trees" | jq
-  // @Test
+  @Test
   void testGetSnomedConceptTrees() {
     String resource = "/concept/SNOMEDCT_US/107907001/trees";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -143,7 +141,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test search snomed by word query.
    */
   // "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal" | jq
-  // @Test
+  @Test
   void testSearchSnomedByWordQuery() {
     String url = "/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -159,7 +157,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test search snomed by code query.
    */
   // "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=73211009&include=minimal" | jq
-  // @Test
+  @Test
   void testSearchSnomedByCodeQuery() {
     String url = "/concept?terminology=SNOMEDCT_US&query=73211009&include=minimal";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -176,7 +174,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test search snomed by ecl expression.
    */
   // | jq
-  // @Test
+  @Test
   void testSearchSnomedByEclExpression() {
     String url = "/concept?terminology=SNOMEDCT_US&expression=<<128927009&include=minimal";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -193,10 +191,9 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test search snomed by query and ecl.
    */
   // | jq
-  // @Test
+  @Test
   void testSearchSnomedByQueryAndEcl() {
-    String url =
-        "/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=<<128927009&include=minimal";
+    String url = "/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=<<128927009&include=minimal";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     String body = response.getBody();
@@ -209,7 +206,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test find mapsets.
    */
   // Test for: curl -s "http://localhost:8080/mapset" | jq
-  // @Test
+  @Test
   void testFindMapsets() {
     String resource = "/mapset";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -224,7 +221,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test find mappings across all mapsets.
    */
   // Test for: curl -s "http://localhost:8080/mapping" | jq
-  // @Test
+  @Test
   void testFindMappingsAcrossAllMapsets() {
     String resource = "/mapping";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -239,7 +236,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test find mapset mappings.
    */
   // Test for: curl -s "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping" | jq
-  // @Test
+  @Test
   void testFindMapsetMappings() {
     String resource = "/mapset/SNOMEDCT_US-ICD10CM/mapping";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -250,12 +247,13 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
     tutorialResources.remove(resource);
   }
 
-  // Test for: curl -s "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005"
+  // Test for: curl -s
+  // "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005"
   /**
    * Test find mapset mappings by code.
    */
   // | jq
-  // @Test
+  @Test
   void testFindMapsetMappingsByCode() {
     String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -266,12 +264,13 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
     tutorialResources.remove(url);
   }
 
-  // Test for: curl -s "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005"
+  // Test for: curl -s
+  // "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005"
   /**
    * Test find mapset mappings by from code.
    */
   // | jq
-  // @Test
+  @Test
   void testFindMapsetMappingsByFromCode() {
     String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:300862005";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -286,7 +285,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test find subsets.
    */
   // Test for: curl -s "http://localhost:8080/subset" | jq
-  // @Test
+  @Test
   void testFindSubsets() {
     String resource = "/subset";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -301,7 +300,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test find members across all subsets.
    */
   // Test for: curl -s "http://localhost:8080/member" | jq
-  // @Test
+  @Test
   void testFindMembersAcrossAllSubsets() {
     String resource = "/member";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -316,7 +315,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test find subset members.
    */
   // Test for: curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member" | jq
-  // @Test
+  @Test
   void testFindSubsetMembers() {
     String resource = "/subset/SNOMEDCT_US-EXTENSION/member";
     ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
@@ -327,12 +326,13 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
     tutorialResources.remove(resource);
   }
 
-  // Test for: curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes"
+  // Test for: curl -s
+  // "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes"
   /**
    * Test find subset members by query.
    */
   // | jq
-  // @Test
+  @Test
   void testFindSubsetMembersByQuery() {
     String url = "/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -349,7 +349,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test find subset members by name query.
    */
   // | jq
-  // @Test
+  @Test
   void testFindSubsetMembersByNameQuery() {
     String url = "/subset/SNOMEDCT_US-EXTENSION/member?query=name:diabetes";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
@@ -366,10 +366,9 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    * Test find concepts in subset by ecl.
    */
   // | jq
-  // @Test
+  @Test
   void testFindConceptsInSubsetByEcl() {
-    String url =
-        "/concept?terminology=SNOMEDCT_US&query=diabetes&expression=^731000124108&include=minimal";
+    String url = "/concept?terminology=SNOMEDCT_US&query=diabetes&expression=^731000124108&include=minimal";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     String body = response.getBody();
