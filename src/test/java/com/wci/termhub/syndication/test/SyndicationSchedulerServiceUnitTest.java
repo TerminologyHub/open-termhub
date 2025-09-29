@@ -11,6 +11,7 @@ package com.wci.termhub.syndication.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -118,9 +119,10 @@ public class SyndicationSchedulerServiceUnitTest {
     scheduler.checkSyndicationFixedRate();
     verify(mockManager).performSyndicationCheck();
 
-    // Execute second time - should skip
+    // Execute second time - should skip due to completion file
     scheduler.checkSyndicationFixedRate();
-    verify(mockManager).performSyndicationCheck(); // Still only called once
+    // Verify that performSyndicationCheck was only called once total
+    verify(mockManager, times(1)).performSyndicationCheck();
   }
 
 }
