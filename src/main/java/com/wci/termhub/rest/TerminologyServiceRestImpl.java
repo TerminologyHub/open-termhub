@@ -1271,6 +1271,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
+              "terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
@@ -1417,6 +1418,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND",
               "to.code:" + StringUtility.escapeQuery(concept.getCode()),
+              "terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
