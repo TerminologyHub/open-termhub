@@ -684,11 +684,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
-      assertThat(conceptRel.getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT", conceptRel.getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT_US");
       assertThat(conceptRel.getVersion()).isNotNull();
       assertThat(conceptRel.getFrom()).isNotNull();
       assertThat(conceptRel.getFrom().getCode()).isNotNull();
-      assertThat(conceptRel.getFrom().getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT", conceptRel.getFrom()
+          .getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT_US");
       assertThat(conceptRel.getTo()).isNotNull();
     }
   }
@@ -710,18 +713,21 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
     assertThat(content).isNotNull();
-    final ResultListConceptRelationship conceptRels =
-        objectMapper.readValue(content, ResultListConceptRelationship.class);
+    final ResultListConceptRelationship conceptRels = objectMapper.readValue(content,
+        ResultListConceptRelationship.class);
     assertThat(conceptRels).isNotNull();
     assertFalse(conceptRels.getItems().isEmpty());
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
-      assertThat(conceptRel.getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT_US", conceptRel.getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT");
       assertThat(conceptRel.getVersion()).isNotNull();
       assertThat(conceptRel.getFrom()).isNotNull();
       assertThat(conceptRel.getFrom().getCode()).isNotNull();
-      assertThat(conceptRel.getFrom().getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT_US", conceptRel.getFrom()
+          .getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT");
       assertThat(conceptRel.getTo()).isNotNull();
     }
   }
@@ -751,11 +757,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
-      assertThat(conceptRel.getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT", conceptRel.getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT_US");
       assertThat(conceptRel.getVersion()).isNotNull();
       assertThat(conceptRel.getFrom()).isNotNull();
-      assertThat(conceptRel.getFrom().getCode()).isNotNull();
-      assertThat(conceptRel.getFrom().getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT", conceptRel.getFrom().getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT_US");
       assertThat(conceptRel.getTo()).isNotNull();
     }
   }
@@ -785,11 +792,13 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
-      assertThat(conceptRel.getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT_US", conceptRel.getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT");
       assertThat(conceptRel.getVersion()).isNotNull();
       assertThat(conceptRel.getFrom()).isNotNull();
       assertThat(conceptRel.getFrom().getCode()).isNotNull();
-      assertThat(conceptRel.getFrom().getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT_US", conceptRel.getFrom().getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT");
       assertThat(conceptRel.getTo()).isNotNull();
     }
   }
