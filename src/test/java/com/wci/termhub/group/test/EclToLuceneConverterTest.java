@@ -18,12 +18,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.wci.termhub.ecl.EclToLuceneConverter;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
  * Unit testing for ECL to lucene syntax.
  */
-public class EclToLuceneConverterTest extends AbstractTerminologyServerTest {
+public class EclToLuceneConverterTest extends AbstractTerminologyTest {
 
   /** The logger. */
   private final Logger logger = LoggerFactory.getLogger(EclToLuceneConverterTest.class);

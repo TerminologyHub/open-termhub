@@ -24,7 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.jayway.jsonpath.JsonPath;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
 import com.wci.termhub.util.TestUtils;
 
 /**
@@ -45,8 +44,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    */
   @BeforeAll
   public static void beforeAll() {
-    tutorialResources =
-        TestUtils.getUrlsFromMarkdown("doc/TUTORIAL1.md", "Testing the Terminology API");
+    tutorialResources = TestUtils.getUrlsFromMarkdown("doc/TUTORIAL1.md", "Testing the Terminology API");
   }
 
   /**
@@ -74,8 +72,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   @Test
   void testFindTerminologyMetadata() {
     // Make independent by fetching the ID first
-    ResponseEntity<String> terminologyResponse =
-        restTemplate.getForEntity("/terminology", String.class);
+    ResponseEntity<String> terminologyResponse = restTemplate.getForEntity("/terminology", String.class);
     assertThat(terminologyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
     String terminologyBody = terminologyResponse.getBody();
     String terminologyId = JsonPath.read(terminologyBody, "$.items[0].id");
@@ -196,8 +193,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // | jq
   @Test
   void testSearchSnomedByQueryAndEcl() {
-    String url =
-        "/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=<<128927009&include=minimal";
+    String url = "/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=<<128927009&include=minimal";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     String body = response.getBody();
@@ -251,7 +247,8 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
     tutorialResources.remove(resource);
   }
 
-  // Test for: curl -s "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005"
+  // Test for: curl -s
+  // "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005"
   /**
    * Test find mapset mappings by code.
    */
@@ -267,7 +264,8 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
     tutorialResources.remove(url);
   }
 
-  // Test for: curl -s "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005"
+  // Test for: curl -s
+  // "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005"
   /**
    * Test find mapset mappings by from code.
    */
@@ -328,7 +326,8 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
     tutorialResources.remove(resource);
   }
 
-  // Test for: curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes"
+  // Test for: curl -s
+  // "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes"
   /**
    * Test find subset members by query.
    */
@@ -369,8 +368,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // | jq
   @Test
   void testFindConceptsInSubsetByEcl() {
-    String url =
-        "/concept?terminology=SNOMEDCT_US&query=diabetes&expression=^731000124108&include=minimal";
+    String url = "/concept?terminology=SNOMEDCT_US&query=diabetes&expression=^731000124108&include=minimal";
     ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     String body = response.getBody();

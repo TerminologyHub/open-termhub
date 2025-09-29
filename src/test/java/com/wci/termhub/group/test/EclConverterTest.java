@@ -31,12 +31,11 @@ import com.wci.termhub.ecl.ExpressionConstraintListener;
 import com.wci.termhub.ecl.test.SnomedEclResults;
 import com.wci.termhub.lucene.LuceneEclDataAccess;
 import com.wci.termhub.model.Concept;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
  * Unit testing to for ECL to lucene syntax;.
  */
-public class EclConverterTest extends AbstractTerminologyServerTest {
+public class EclConverterTest extends AbstractTerminologyTest {
 
   /**
    * The logger.
