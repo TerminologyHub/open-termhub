@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -2466,4 +2467,9 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertTrue(foundFakeMapset, "Fake ConceptMap (CPT-HCPCS) should be loaded");
   }
 
+  @AfterAll
+  public static void teardown() {
+    // There are tests that delete content. So any subsequent tests should re-setup the data
+    setupOnce = false;
+  }
 }
