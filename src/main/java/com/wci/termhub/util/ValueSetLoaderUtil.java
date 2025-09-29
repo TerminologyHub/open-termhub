@@ -151,6 +151,7 @@ public final class ValueSetLoaderUtil {
       }
 
       subset = new Subset();
+      subset.getAttributes().put("loaded", "false");
       // The HAPI Plan server @Create method blanks the identifier on sending a
       // code system in. Always create a new identifier.
       String id = UUID.randomUUID().toString();
@@ -330,7 +331,8 @@ public final class ValueSetLoaderUtil {
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
-
+      subset.getAttributes().put("loaded", "true");
+      service.update(Subset.class, subset.getId(), subset);
       return FhirUtilityR4.toR4ValueSet(subset, null, false);
 
     } catch (final Exception e) {
@@ -377,6 +379,7 @@ public final class ValueSetLoaderUtil {
       }
 
       subset = new Subset();
+      subset.getAttributes().put("loaded", "false");
       // The HAPI Plan server @Create method blanks the identifier on sending a
       // code system in. Always create a new identifier.
       String id = UUID.randomUUID().toString();
@@ -550,7 +553,8 @@ public final class ValueSetLoaderUtil {
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
-
+      subset.getAttributes().put("loaded", "true");
+      service.update(Subset.class, subset.getId(), subset);
       return FhirUtilityR5.toR5ValueSet(subset, null, false);
 
     } catch (final Exception e) {
