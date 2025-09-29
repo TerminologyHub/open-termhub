@@ -36,6 +36,7 @@ import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.hl7.fhir.r4.model.ValueSet;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -1473,5 +1474,11 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         deleteCodeSystem(codeSystem.getIdPart());
       }
     }
+  }
+
+  @AfterAll
+  public static void teardown() {
+    // There are tests that delete content. So any subsequent tests should re-setup the data
+    setupOnce = false;
   }
 }
