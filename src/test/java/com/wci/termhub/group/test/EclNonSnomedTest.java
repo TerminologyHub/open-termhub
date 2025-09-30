@@ -25,7 +25,6 @@ import com.wci.termhub.ecl.ExpressionConstraintListener;
 import com.wci.termhub.integrationtest.EclConverterTest;
 import com.wci.termhub.lucene.LuceneEclDataAccess;
 import com.wci.termhub.model.Concept;
-import com.wci.termhub.rest.test.AbstractTerminologyServerTest;
 
 /**
  * EclNonSnomedTest.

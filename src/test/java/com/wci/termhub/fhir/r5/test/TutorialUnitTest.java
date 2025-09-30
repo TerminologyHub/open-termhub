@@ -69,10 +69,10 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(1)
   void testFindCodeSystems() {
-    String url = "/fhir/r5/CodeSystem";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/fhir/r5/CodeSystem";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("Bundle");
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
@@ -89,11 +89,11 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(2)
   void testCodeSystemLookup() {
-    String url = "/fhir/r5/CodeSystem/$lookup?system=http://snomed.info/sct&code=73211009";
-    ResponseEntity<String> response =
+    final String url = "/fhir/r5/CodeSystem/$lookup?system=http://snomed.info/sct&code=73211009";
+    final ResponseEntity<String> response =
         restTemplate.getForEntity(url + VERSION_PARAMETER, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("Parameters");
     assertThat(
@@ -113,10 +113,10 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(3)
   void testFindConceptMaps() {
-    String url = "/fhir/r5/ConceptMap";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/fhir/r5/ConceptMap";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("Bundle");
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
@@ -128,16 +128,18 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
    */
   @SuppressWarnings("unchecked")
   // Test for: curl -s
-  // 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&sourceSystem=http://snomed.info/sct&sourceCode=300862005'
+  // 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106
+  // &sourceSystem=http://snomed.info/sct&sourceCode=300862005'
   // | jq
   @Test
   @Order(4)
   void testConceptMapTranslate() {
-    String url =
-        "/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&sourceSystem=http://snomed.info/sct&sourceCode=300862005";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url =
+        "/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106"
+            + "&sourceSystem=http://snomed.info/sct&sourceCode=300862005";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("Parameters");
     assertThat(
@@ -155,15 +157,15 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(5)
   void testFindAllValueSetsAndExtractId() {
-    String url = "/fhir/r5/ValueSet";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/fhir/r5/ValueSet";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("Bundle");
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
 
-    String valueSetId = JsonPath.read(body, "$.entry[0].resource.id");
+    final String valueSetId = JsonPath.read(body, "$.entry[0].resource.id");
     assertThat(valueSetId).isNotNull();
     tutorialResources.remove(url);
   }
@@ -176,11 +178,11 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(6)
   void testFindImplicitValueSetForCodeSystem() {
-    String url = "/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs";
-    ResponseEntity<String> response =
+    final String url = "/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs";
+    final ResponseEntity<String> response =
         restTemplate.getForEntity(url + VERSION_PARAMETER, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("Bundle");
     assertThat((Integer) JsonPath.read(body, "$.total")).isEqualTo(1);
@@ -197,10 +199,10 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(7)
   void testFindExplicitValueSet() {
-    String url = "/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("Bundle");
     assertThat((Integer) JsonPath.read(body, "$.total")).isEqualTo(1);
@@ -221,7 +223,7 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     String body = response.getBody();
 
-    String valueSetId = JsonPath.read(body, "$.entry[0].resource.id");
+    final String valueSetId = JsonPath.read(body, "$.entry[0].resource.id");
     url = "/fhir/r5/ValueSet/$id";
     response = restTemplate.getForEntity(url.replace("$id", valueSetId), String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -242,11 +244,11 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(9)
   void testExpandImplicitValueSet() {
-    String url = "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs";
-    ResponseEntity<String> response =
+    final String url = "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs";
+    final ResponseEntity<String> response =
         restTemplate.getForEntity(url + VALUE_SET_VERSION_PARAMETER, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("ValueSet");
     assertThat((String) JsonPath.read(body, "$.url")).isEqualTo("http://snomed.info/sct?fhir_vs");
@@ -263,10 +265,10 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(10)
   void testExpandExplicitValueSet() {
-    String url = "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("ValueSet");
     assertThat((String) JsonPath.read(body, "$.url"))
@@ -284,11 +286,12 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(11)
   void testExpandImplicitValueSetWithFilter() {
-    String url = "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes";
-    ResponseEntity<String> response =
+    final String url =
+        "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes";
+    final ResponseEntity<String> response =
         restTemplate.getForEntity(url + VALUE_SET_VERSION_PARAMETER, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.expansion.total")).isGreaterThan(0);
     tutorialResources.remove(url);
@@ -303,11 +306,11 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(12)
   void testExpandExplicitValueSetWithFilter() {
-    String url =
+    final String url =
         "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108&filter=diabetes";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.expansion.total")).isGreaterThan(0);
     tutorialResources.remove(url);
@@ -317,17 +320,18 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
    * Test expand value set with filter and ecl.
    */
   // Test for: curl -s
-  // 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal'
+  // 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009
+  // &filter=gastrointestinal'
   // | jq
   @Test
   @Order(13)
   void testExpandValueSetWithFilterAndEcl() {
-    String url =
+    final String url =
         "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/<<128927009&filter=gastrointestinal";
-    ResponseEntity<String> response =
+    final ResponseEntity<String> response =
         restTemplate.getForEntity(url + VALUE_SET_VERSION_PARAMETER, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("ValueSet");
     assertThat((Integer) JsonPath.read(body, "$.expansion.total")).isGreaterThan(0);
