@@ -20,6 +20,7 @@ One option is to just build the code and run the server locally and use an INDEX
 # On Windows if running within wsl use export INDEX_DIR=/mnt/c/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
 export ENABLE_POST_LOAD_COMPUTATIONS=true
+export JAVA_OPTS=-Xmx4g
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run
 ```
@@ -34,6 +35,7 @@ The final option is to run the latest published public docker image as a contain
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
+  -e JAVA_OPTS=-Xmx2g \
   -e ENABLE_POST_LOAD_COMPUTATIONS=true \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```

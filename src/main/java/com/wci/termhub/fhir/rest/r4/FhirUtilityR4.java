@@ -67,6 +67,7 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.DateUtility;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 import ca.uhn.fhir.rest.param.NumberParam;
@@ -550,16 +551,6 @@ public final class FhirUtilityR4 {
     // if (properties == null || properties.contains("modified")) {
     // parameters.addParameter(createProperty("modified", concept.getModified(),
     // false));
-    // }
-    // }
-
-    // TODO: review missing "defined"
-    // if (properties == null || properties.contains("normalForm")) {
-    // if (codeSystem.getTitle().startsWith("SNOMED")) {
-    // parameters.addParameter(new
-    // Parameters.ParametersParameterComponent().setName("normalForm")
-    // .setValue(new StringType(
-    // FhirUtility.getNormalForm(concept, relationships, displayMap, false))));
     // }
     // }
 
@@ -1255,8 +1246,8 @@ public final class FhirUtilityR4 {
 
     try {
       // Find has_member relationships from the main concept
-      final String hasMemberQuery =
-          "from.code:\"" + mainConcept.getCode() + "\" AND additionalType:\"has_member\"";
+      final String hasMemberQuery = "from.code:" + StringUtility.escapeQuery(mainConcept.getCode())
+          + " AND additionalType:has_member";
       final List<ConceptRelationship> hasMemberRels =
           searchService.findAll(hasMemberQuery, null, ConceptRelationship.class);
 
@@ -1399,7 +1390,7 @@ public final class FhirUtilityR4 {
     try {
       // Find has_member relationships from the group concept
       final String hasMemberQuery =
-          "from.code:\"" + groupCode + "\" AND additionalType:\"has_member\"";
+          "from.code:" + StringUtility.escapeQuery(groupCode) + " AND additionalType:has_member";
       final List<ConceptRelationship> hasMemberRels =
           searchService.findAll(hasMemberQuery, null, ConceptRelationship.class);
 
@@ -1531,8 +1522,8 @@ public final class FhirUtilityR4 {
 
     try {
       // Find has_answers relationships from the question to get LL codes
-      final String hasAnswersQuery =
-          "from.code:\"" + questionCode + "\" AND additionalType:\"has_answers\"";
+      final String hasAnswersQuery = "from.code:" + StringUtility.escapeQuery(questionCode)
+          + " AND additionalType:has_answers";
       final List<ConceptRelationship> hasAnswersRels =
           searchService.findAll(hasAnswersQuery, null, ConceptRelationship.class);
 
@@ -1540,7 +1531,8 @@ public final class FhirUtilityR4 {
         final String llCode = hasAnswersRel.getTo().getCode();
         if (llCode != null) {
           // Find parent relationships from LA codes to the LL code
-          final String parentQuery = "to.code:\"" + llCode + "\" AND type:\"Is a\"";
+          final String parentQuery =
+              "to.code:" + StringUtility.escapeQuery(llCode) + " AND type:\"Is a\"";
           final List<ConceptRelationship> parentRels =
               searchService.findAll(parentQuery, null, ConceptRelationship.class);
 
@@ -1743,7 +1735,7 @@ public final class FhirUtilityR4 {
 
           // If we can find a concept with the base name, this is a variant
           try {
-            final String searchQuery = "name:\"" + baseName + "\"";
+            final String searchQuery = "name:" + StringUtility.escapeQuery(baseName);
             final List<Concept> baseConcepts =
                 searchService.findAll(searchQuery, null, Concept.class);
             if (!baseConcepts.isEmpty()) {

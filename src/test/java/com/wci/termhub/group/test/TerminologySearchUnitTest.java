@@ -178,7 +178,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
         .forEach(t -> LOGGER.debug("Terminology: {} - {}", t.getAbbreviation(), t.getPublisher()));
 
     final String publisher = "SNOMEDCT International";
-    final String query = "publisher:" + StringUtility.escapeQuery(publisher) + "";
+    final String query = "publisher:" + StringUtility.escapeQuery(publisher);
     LOGGER.info("testPublisherSearch Query: {}", query);
     SEARCH_PARAMETERS.setQuery(query);
     LuceneDataAccess.clearReaders();

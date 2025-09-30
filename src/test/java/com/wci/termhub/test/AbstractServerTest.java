@@ -59,7 +59,8 @@ public abstract class AbstractServerTest extends BaseUnitTest {
     final List<Class<? extends HasId>> indexedObjects = ModelUtility.getIndexedObjects();
 
     if (indexDir.exists()) {
-      // Clear the writer cache before deleting the index directory. Otherwise, you will see lock errors even if there are no lock files.
+      // Clear the writer cache before deleting the index directory. Otherwise, you will see lock
+      // errors even if there are no lock files.
       for (final Class<? extends HasId> clazz : indexedObjects) {
         LuceneDataAccess.clearWriterForClass(clazz);
       }

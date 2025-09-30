@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,14 +34,11 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tartarus.snowball.ext.EnglishStemmer;
 
 import com.google.common.base.CaseFormat;
-
-import java.util.Collection;
 
 /**
  * Utility class for interacting with Strings.
@@ -502,7 +500,7 @@ public final class StringUtility {
 
     if (!StringUtility.isEmpty(fieldValue)) {
       if (escapeValue) {
-        return fieldName + ":\"" + QueryParserBase.escape(fieldValue) + "\"";
+        return fieldName + ":" + StringUtility.escapeQuery(fieldValue);
       } else {
         return fieldName + ":" + fieldValue;
       }
@@ -561,6 +559,19 @@ public final class StringUtility {
    */
   public static String escapeRegex(final String regex) {
     return regex.replaceAll("([\\\\\\.\\[\\{\\(\\*\\+\\?\\^\\$\\|])", "\\\\$1");
+  }
+
+  /**
+   * Escape field.
+   *
+   * @param field the field
+   * @param value the value
+   * @return the string
+   */
+  public static String escapeField(final String field, final String value) {
+    final StringBuilder sb = new StringBuilder();
+    sb.append(field).append(":").append(escapeQuery(value));
+    return sb.toString();
   }
 
   /**

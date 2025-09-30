@@ -71,7 +71,11 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
           "ValueSet-hl7-body-site-r5.json", "ValueSet-personal-hl7-relationship-uv-ips-r5.json");
 
   /** The setup once. */
-  protected static boolean setupOnce = false;
+  private static boolean setupOnce = false;
+
+  public static void setSetupOnce(final boolean flag) {
+    setupOnce = flag;
+  }
 
   /**
    * Setup once.

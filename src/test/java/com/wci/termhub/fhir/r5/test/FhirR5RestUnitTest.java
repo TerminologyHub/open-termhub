@@ -1194,6 +1194,6 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @AfterAll
   public static void teardown() {
     // There are tests that delete content. So any subsequent tests should re-setup the data
-    setupOnce = false;
+    setSetupOnce(false);
   }
 }

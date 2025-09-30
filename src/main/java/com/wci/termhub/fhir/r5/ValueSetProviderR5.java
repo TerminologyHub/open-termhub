@@ -801,8 +801,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // "valueString": "The code '16224591000119103' was found in the ValueSet,
       // however the
       // display 'abc' did not match any designations."
-      final Query codeQuery = LuceneQueryBuilder
-          .parse("code:\"" + StringUtility.escapeQuery(code) + "\"", Concept.class);
+      final Query codeQuery =
+          LuceneQueryBuilder.parse("code:" + StringUtility.escapeQuery(code), Concept.class);
       final Query expression = getExpressionQuery(vs.getUrl());
       final Query booleanQuery = getAndQuery(codeQuery, expression);
       final List<Concept> list = searchService.findAll(null, booleanQuery, Concept.class);

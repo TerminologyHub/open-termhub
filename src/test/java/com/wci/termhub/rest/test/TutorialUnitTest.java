@@ -44,7 +44,8 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    */
   @BeforeAll
   public static void beforeAll() {
-    tutorialResources = TestUtils.getUrlsFromMarkdown("doc/TUTORIAL1.md", "Testing the Terminology API");
+    tutorialResources =
+        TestUtils.getUrlsFromMarkdown("doc/TUTORIAL1.md", "Testing the Terminology API");
   }
 
   /**
@@ -53,14 +54,14 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/terminology" | jq
   @Test
   void testFindTerminologies() {
-    String resource = "/terminology";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/terminology";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isEqualTo(6);
 
-    String id = JsonPath.read(body, "$.items[0].id");
+    final String id = JsonPath.read(body, "$.items[0].id");
     assertThat(id).isNotNull();
     tutorialResources.remove(resource);
   }
@@ -72,15 +73,16 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   @Test
   void testFindTerminologyMetadata() {
     // Make independent by fetching the ID first
-    ResponseEntity<String> terminologyResponse = restTemplate.getForEntity("/terminology", String.class);
+    final ResponseEntity<String> terminologyResponse =
+        restTemplate.getForEntity("/terminology", String.class);
     assertThat(terminologyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String terminologyBody = terminologyResponse.getBody();
-    String terminologyId = JsonPath.read(terminologyBody, "$.items[0].id");
+    final String terminologyBody = terminologyResponse.getBody();
+    final String terminologyId = JsonPath.read(terminologyBody, "$.items[0].id");
 
-    String resource = "/terminology/" + terminologyId + "/metadata";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/terminology/" + terminologyId + "/metadata";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$[0].terminology")).isEqualTo("SNOMEDCT_US");
     assertThat((String) JsonPath.read(body, "$[0].publisher")).isEqualTo("SANDBOX");
@@ -95,10 +97,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001" | jq
   @Test
   void testGetSnomedConceptByCode() {
-    String resource = "/concept/SNOMEDCT_US/107907001";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/concept/SNOMEDCT_US/107907001";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.terminology")).isEqualTo("SNOMEDCT_US");
     assertThat((String) JsonPath.read(body, "$.version")).isEqualTo("20240301");
@@ -112,10 +114,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001/relationships" | jq
   @Test
   void testGetSnomedConceptRelationships() {
-    String resource = "/concept/SNOMEDCT_US/107907001/relationships";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/concept/SNOMEDCT_US/107907001/relationships";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(resource);
@@ -127,10 +129,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/concept/SNOMEDCT_US/107907001/trees" | jq
   @Test
   void testGetSnomedConceptTrees() {
-    String resource = "/concept/SNOMEDCT_US/107907001/trees";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/concept/SNOMEDCT_US/107907001/trees";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(resource);
@@ -143,10 +145,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal" | jq
   @Test
   void testSearchSnomedByWordQuery() {
-    String url = "/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/concept?terminology=SNOMEDCT_US&query=diabetes&include=minimal";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(url);
@@ -159,10 +161,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=73211009&include=minimal" | jq
   @Test
   void testSearchSnomedByCodeQuery() {
-    String url = "/concept?terminology=SNOMEDCT_US&query=73211009&include=minimal";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/concept?terminology=SNOMEDCT_US&query=73211009&include=minimal";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isEqualTo(1);
     tutorialResources.remove(url);
@@ -176,27 +178,29 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // | jq
   @Test
   void testSearchSnomedByEclExpression() {
-    String url = "/concept?terminology=SNOMEDCT_US&expression=<<128927009&include=minimal";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/concept?terminology=SNOMEDCT_US&expression=<<128927009&include=minimal";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(url);
   }
 
   // Test for: curl -s
-  // "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=%3C%3C128927009&include=minimal"
+  // "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=gastrointestinal
+  // &expression=%3C%3C128927009&include=minimal"
   /**
    * Test search snomed by query and ecl.
    */
   // | jq
   @Test
   void testSearchSnomedByQueryAndEcl() {
-    String url = "/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=<<128927009&include=minimal";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url =
+        "/concept?terminology=SNOMEDCT_US&query=gastrointestinal&expression=<<128927009&include=minimal";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(url);
@@ -208,10 +212,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/mapset" | jq
   @Test
   void testFindMapsets() {
-    String resource = "/mapset";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/mapset";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(resource);
@@ -223,10 +227,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/mapping" | jq
   @Test
   void testFindMappingsAcrossAllMapsets() {
-    String resource = "/mapping";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/mapping";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(resource);
@@ -238,10 +242,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/mapset/SNOMEDCT_US-ICD10CM/mapping" | jq
   @Test
   void testFindMapsetMappings() {
-    String resource = "/mapset/SNOMEDCT_US-ICD10CM/mapping";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/mapset/SNOMEDCT_US-ICD10CM/mapping";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(resource);
@@ -255,10 +259,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // | jq
   @Test
   void testFindMapsetMappingsByCode() {
-    String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=300862005";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(url);
@@ -272,10 +276,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // | jq
   @Test
   void testFindMapsetMappingsByFromCode() {
-    String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:300862005";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=from.code:300862005";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(url);
@@ -287,10 +291,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/subset" | jq
   @Test
   void testFindSubsets() {
-    String resource = "/subset";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/subset";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(resource);
@@ -302,10 +306,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/member" | jq
   @Test
   void testFindMembersAcrossAllSubsets() {
-    String resource = "/member";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/member";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(resource);
@@ -317,10 +321,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // Test for: curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member" | jq
   @Test
   void testFindSubsetMembers() {
-    String resource = "/subset/SNOMEDCT_US-EXTENSION/member";
-    ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
+    final String resource = "/subset/SNOMEDCT_US-EXTENSION/member";
+    final ResponseEntity<String> response = restTemplate.getForEntity(resource, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(resource);
@@ -334,10 +338,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // | jq
   @Test
   void testFindSubsetMembersByQuery() {
-    String url = "/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(url);
@@ -351,10 +355,10 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // | jq
   @Test
   void testFindSubsetMembersByNameQuery() {
-    String url = "/subset/SNOMEDCT_US-EXTENSION/member?query=name:diabetes";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url = "/subset/SNOMEDCT_US-EXTENSION/member?query=name:diabetes";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(url);
@@ -368,10 +372,11 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   // | jq
   @Test
   void testFindConceptsInSubsetByEcl() {
-    String url = "/concept?terminology=SNOMEDCT_US&query=diabetes&expression=^731000124108&include=minimal";
-    ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+    final String url =
+        "/concept?terminology=SNOMEDCT_US&query=diabetes&expression=^731000124108&include=minimal";
+    final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
+    final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(url);
