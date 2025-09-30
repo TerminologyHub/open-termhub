@@ -273,7 +273,7 @@ public final class TerminologyUtility {
     final SearchParameters params = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
     params.setQuery(StringUtility.composeQuery("AND", StringUtility.escapeField("code", code),
-        StringUtility.escapeField("terminology", terminology),
+        StringUtility.escapeField("terminology", t),
         StringUtility.escapeField("publisher", publisher),
         StringUtility.escapeField("version", version)));
 
@@ -318,7 +318,7 @@ public final class TerminologyUtility {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
     nameParams.setQuery(StringUtility.composeQuery("AND", StringUtility.escapeField("code", code),
-        StringUtility.escapeField("terminology", terminology),
+        StringUtility.escapeField("terminology", t),
         StringUtility.escapeField("publisher", publisher),
         StringUtility.escapeField("version", version)));
     final ResultList<Concept> list = searchService.findFields(nameParams,
@@ -348,7 +348,7 @@ public final class TerminologyUtility {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
     nameParams.setQuery(StringUtility.composeQuery("AND", StringUtility.escapeField("code", code),
-        StringUtility.escapeField("terminology", terminology),
+        StringUtility.escapeField("terminology", t),
         StringUtility.escapeField("publisher", publisher),
         StringUtility.escapeField("version", version)));
 
@@ -1312,7 +1312,21 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(conceptIds.getItems(), Concept.class);
-      offset += batchSize;
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
+    }
+
+    // delete terminology terms in batches
+    offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> termIds = searchService.findIds(params, Term.class);
+      if (termIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(termIds.getItems(), Term.class);
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
     }
 
     // delete concept relationships in batches
@@ -1325,7 +1339,8 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(conceptRelIds.getItems(), ConceptRelationship.class);
-      offset += batchSize;
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
     }
 
     // delete concept trees in batches
@@ -1338,9 +1353,22 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(conceptTreePositionIds.getItems(), ConceptTreePosition.class);
-      offset += batchSize;
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
     }
 
+    // delete terminology metadata in batches
+    offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> metadataIds = searchService.findIds(params, Metadata.class);
+      if (metadataIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(metadataIds.getItems(), Metadata.class);
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
+    }
     // delete the terminology
     searchService.remove(id, Terminology.class);
 
@@ -1375,7 +1403,9 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(mappingIds.getItems(), Mapping.class);
-      offset += batchSize;
+
+      // NO need to change batch size, just delete first page
+      // offset += batchSize;
     }
     searchService.remove(id, Mapset.class);
   }
@@ -1412,7 +1442,9 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(subsetMemberIds.getItems(), SubsetMember.class);
-      offset += batchSize;
+
+      // NO need to change batch size, just delete first page
+      // offset += batchSize;
     }
     searchService.remove(id, Subset.class);
   }
