@@ -275,7 +275,8 @@ public final class ConceptMapLoaderUtil {
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
-
+      mapset.getAttributes().put("loaded", "true");
+      service.update(Mapset.class, mapset.getId(), mapset);
       // R4
       if (type == org.hl7.fhir.r4.model.ConceptMap.class) {
         return (T) FhirUtilityR4.toR4(mapset);
@@ -328,7 +329,7 @@ public final class ConceptMapLoaderUtil {
     }
 
     final Mapset mapset = new Mapset();
-
+    mapset.getAttributes().put("loaded", "false");
     // Convert to internal model
     // The HAPI Plan server @Create method blanks the identifier on sending a
     // code system in. Always create a new identifier.

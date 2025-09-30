@@ -338,7 +338,8 @@ public final class CodeSystemLoaderUtil {
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
-
+      terminology.getAttributes().put("loaded", "true");
+      service.update(Terminology.class, terminology.getId(), terminology);
       // R4
       if (type == org.hl7.fhir.r4.model.CodeSystem.class) {
         return (T) FhirUtilityR4.toR4(terminology);
@@ -399,14 +400,17 @@ public final class CodeSystemLoaderUtil {
     }
 
     final Terminology terminology = new Terminology();
+    final Map<String, String> attributes = new HashMap<>();
+
     // The HAPI Plan server @Create method blanks the identifier on sending a
     // code system in. Always create a new identifier.
     terminology.setId(UUID.randomUUID().toString());
+    attributes.put("loaded", "false");
 
     // Set "originalId" if provided
     final String originalId = root.path("id").asText();
     if (isNotBlank(originalId)) {
-      terminology.getAttributes().put("originalId", originalId);
+      attributes.put("originalId", originalId);
       idMap.put(originalId, terminology.getId());
     }
 
@@ -428,7 +432,6 @@ public final class CodeSystemLoaderUtil {
     terminology.setConceptCt(root.path("count").asLong(0));
 
     // Set terminology attributes
-    final Map<String, String> attributes = new HashMap<>();
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
       final String uri = property.path("uri").asText();
