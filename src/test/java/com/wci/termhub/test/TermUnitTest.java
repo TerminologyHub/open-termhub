@@ -34,6 +34,7 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.StringUtility;
 
 /**
  * The Class TermUnitTest.
@@ -220,7 +221,8 @@ public class TermUnitTest extends AbstractClassTest {
     assertEquals(1, foundTermsObjects.getItems().size());
 
     // add more complex queries
-    searchParameters.setQuery("code:" + TERM1.getCode() + " AND name:\"" + TERM2.getName() + "\"");
+    searchParameters.setQuery(
+        "code:" + TERM1.getCode() + " AND name:" + StringUtility.escapeQuery(TERM2.getName()));
     logger.info("Search for : {}", searchParameters.getQuery());
     foundTermsObjects = searchService.find(searchParameters, Term.class);
     assertEquals(0, foundTermsObjects.getItems().size());

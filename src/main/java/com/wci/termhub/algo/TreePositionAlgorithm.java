@@ -34,6 +34,7 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
@@ -353,7 +354,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
       setCommonFields(tp);
       final SearchParameters params = new SearchParameters(
           TerminologyUtility.getTerminologyQuery(getTerminology(), getPublisher(), getVersion())
-              + " AND code:" + code,
+              + " AND code:" + StringUtility.escapeQuery(code),
           0, 1, null, null);
       final Concept concept = searchService.findSingle(params, Concept.class);
       final ConceptRef ref = new ConceptRef();

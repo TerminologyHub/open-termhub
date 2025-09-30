@@ -83,7 +83,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
   @Override
   public String buildEscapedQuery(final String query) {
     return (StringUtils.isEmpty(query) || query.equals("*:*") || query.equals("*")) ? "*"
-        : "\"" + StringUtility.escapeQuery(query) + "\"";
+        : StringUtility.escapeQuery(query);
   }
 
   /* see superclass */
@@ -109,17 +109,17 @@ public class BrowserQueryBuilder implements QueryBuilder {
 
       final String normQuery = StringUtility.normalize(query);
       // concept name exact match
-      clauses.add("(name.keyword:\"" + StringUtility.escapeQuery(query) + "\")^30");
+      clauses.add("(name.keyword:" + StringUtility.escapeQuery(query) + ")^30");
       if (!normQuery.isEmpty()) {
         clauses.add("(normName.keyword:\"" + normQuery + "\")^25");
       }
       // term name exact match
-      clauses.add("(terms.name.keyword:\"" + StringUtility.escapeQuery(query) + "\")^25");
+      clauses.add("(terms.name.keyword:" + StringUtility.escapeQuery(query) + ")^25");
       if (!normQuery.isEmpty()) {
         clauses.add("(terms.normName.keyword:\"" + normQuery + "\")^20");
       }
       // term name match
-      clauses.add("(terms.normName:\"" + StringUtility.escapeQuery(query) + "\")^10");
+      clauses.add("(terms.normName:" + StringUtility.escapeQuery(query) + ")^10");
       // all of the words
       if (!normQuery.isEmpty()) {
         final List<String> words = StringUtility.wordind(normQuery);
