@@ -555,6 +555,8 @@ public final class CodeSystemLoaderUtil {
     concept.setDefined(cache.getDefined(concept.getCode()));
     concept.setLeaf(cache.isLeaf(concept.getCode()));
     concept.setName(cache.getConceptName(concept.getCode()));
+    concept.setNormName(StringUtility.normalize(concept.getName()));
+    concept.setStemName(StringUtility.normalizeWithStemming(concept.getName()));
 
     // Set defined status - default to true, will be updated based on
     // definitionStatusId
@@ -866,6 +868,8 @@ public final class CodeSystemLoaderUtil {
     term.setId(UUID.randomUUID().toString());
     term.setActive(true);
     term.setName(designation.path("value").asText());
+    term.setNormName(StringUtility.normalize(term.getName()));
+    term.setStemName(StringUtility.normalizeWithStemming(term.getName()));
 
     // Safely set term type with null checks
     if (designation.has("use") && designation.path("use").has("code")) {
