@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.search.BooleanClause;
@@ -1119,7 +1120,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     final Query terminologyQuery = LuceneQueryBuilder.parse(terminologyQueryStr, Concept.class);
     final Query keywordQuery = LuceneQueryBuilder.parse(query, Concept.class);
     final Query expressionQuery = TerminologyUtility.getExpressionQuery(expression);
-    final Query booleanQuery = getAndQuery(terminologyQuery, keywordQuery, expressionQuery);
+    final Query leafQuery =
+        BooleanUtils.isTrue(leaf) ? LuceneQueryBuilder.parse("leaf:true", Concept.class) : null;
+    final Query activeQuery =
+        active == null ? LuceneQueryBuilder.parse("(active:true^25 OR active:false)", Concept.class)
+            : LuceneQueryBuilder.parse("active:" + active, Concept.class);
+    final Query booleanQuery =
+        getAndQuery(terminologyQuery, keywordQuery, expressionQuery, leafQuery, activeQuery);
+
     final SearchParameters searchParams =
         new SearchParameters(booleanQuery, offset, limit, sort, ascending);
     if (active != null && active) {
@@ -2264,7 +2272,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // Find mappings
       final List<Mapset> mapsets = lookupMapsets(null, true);
       final List<Mapping> mappings = findMappingsHelper(mapsets,
-          StringUtility.composeQuery("AND", "to.code:" + concept.getCode(),
+          StringUtility.composeQuery("AND",
+              "to.code:" + StringUtility.escapeQuery(concept.getCode()),
               "to.terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
               "to.publisher:" + StringUtility.escapeQuery(concept.getPublisher())),
           0, 10000, null, null, true).getItems();

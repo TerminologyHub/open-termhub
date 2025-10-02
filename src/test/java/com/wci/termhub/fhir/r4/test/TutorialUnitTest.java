@@ -26,7 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.jayway.jsonpath.JsonPath;
-import com.wci.termhub.util.TestUtils;
+import com.wci.termhub.util.test.TestUtils;
 
 /**
  * Unit tests for tutorial 1.

@@ -116,16 +116,16 @@ public class BrowserQueryBuilder implements QueryBuilder {
 
       // Concept name exact match
       if (stemQuery.isEmpty()) {
-        clauses.add("name.keyword:(" + StringUtility.escapeQuery(query) + ")^90");
+        clauses.add("name.keyword:(" + StringUtility.escapeQueryNoSpace(query) + ")^90");
       } else {
-        clauses.add("stemName.keyword:" + StringUtility.escapeQuery(stemQuery) + "^80");
-        clauses.add("terms.stemName.keyword:" + StringUtility.escapeQuery(stemQuery) + "^85");
+        clauses.add("stemName.keyword:\"" + stemQuery + "\"^80");
+        clauses.add("terms.stemName.keyword:\"" + stemQuery + "\"^85");
       }
 
       // term name match
       if (!stemQuery.isEmpty()) {
         // Boost for phrase
-        clauses.add("terms.stemName:" + StringUtility.escapeQuery(stemQuery) + "^70");
+        clauses.add("terms.stemName:\"" + stemQuery + "\"^70");
 
         // If not a code, also do AND wildcard searches on each word (boost for AND)
         if (!isCode(query)) {
@@ -142,8 +142,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
           clauses.add("terms." + clause);
         }
         // Other matches, lower quality
-        clauses.add(
-            "terms.stemName:(" + String.join(" ", Arrays.asList(stemQuery.split(" "))) + ")^0.5");
+        clauses.add("terms.stemName:(" + stemQuery + ")^0.5");
       }
 
       // Favor shorter things

@@ -797,6 +797,7 @@ public class LuceneDataAccess {
    * @return the index writer
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   private Analyzer buildPerFieldAnalyzer(final Class<? extends HasId> clazz) throws Exception {
 
     final Map<String, Analyzer> fieldAnalyzers = LuceneQueryBuilder.getFieldAnalyzers(clazz);
@@ -817,6 +818,7 @@ public class LuceneDataAccess {
    */
   private Analyzer createNgramAnalyzer() {
     return new Analyzer() {
+      @SuppressWarnings("resource")
       @Override
       protected TokenStreamComponents createComponents(final String fieldName) {
         final Tokenizer tokenizer = new StandardTokenizer();
