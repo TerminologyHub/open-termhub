@@ -422,10 +422,6 @@ public class EntityServiceImpl implements EntityRepositoryService {
     final String queryString =
         escapeFlag ? QueryBuilder.findBuilder(builders, handler).buildEscapedQuery(params)
             : QueryBuilder.findBuilder(builders, handler).buildQuery(params);
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("    query [{}] offset={}, limit={}, {} {}", queryString, params.getOffset(),
-          params.getLimit(), clazz.getSimpleName(), handler);
-    }
     final Query query = LuceneQueryBuilder.parse(queryString, clazz);
     return query;
 

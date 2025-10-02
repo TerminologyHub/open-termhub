@@ -651,6 +651,8 @@ public class LuceneDataAccess {
     final int start = searchParameters.getOffset();
     final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
+    LOGGER.info("  query = {} [{}, {}, {}, {}]", searchParameters.getQuery(), start, end, sort,
+        clazz.getName());
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("  query = {} [{}, {}, {}, {}]", searchParameters.getQuery(), start, end, sort,
           clazz.getName());
