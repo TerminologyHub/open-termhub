@@ -149,9 +149,10 @@ public final class TerminologyUtility {
   public static Terminology getTerminology(final EntityRepositoryService searchService,
     final String terminology, final String publisher, final String version) throws Exception {
 
-    final ResultList<Terminology> tlist = searchService.find(
-        new SearchParameters(getTerminologyAbbrQuery(terminology, publisher, version), 2, 0),
-        Terminology.class);
+    final String terminologyQuery = getTerminologyAbbrQuery(terminology, publisher, version);
+    logger.info("  terminology query = " + terminologyQuery);
+    final ResultList<Terminology> tlist =
+        searchService.find(new SearchParameters(terminologyQuery, 2, 0), Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;

@@ -336,10 +336,15 @@ public final class CodeSystemLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
       Application.logMemory();
 
-      // Set listener to 100%
-      listener.updateProgress(new ProgressEvent(100));
+      // Get the terminology again because the tree position computer would've changed it
+      terminology = service.get(terminology.getId(), Terminology.class);
+      // Set loaded to true and save it again
       terminology.getAttributes().put("loaded", "true");
       service.update(Terminology.class, terminology.getId(), terminology);
+
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
       // R4
       if (type == org.hl7.fhir.r4.model.CodeSystem.class) {
         return (T) FhirUtilityR4.toR4(terminology);

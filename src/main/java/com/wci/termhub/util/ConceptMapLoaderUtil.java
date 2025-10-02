@@ -273,10 +273,15 @@ public final class ConceptMapLoaderUtil {
       LOGGER.info("  final counts - mapsets: {}, mappings: {}", 1, mappingCount);
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      // Set listener to 100%
-      listener.updateProgress(new ProgressEvent(100));
+      // Get the mapset again because the tree position computer would've changed it
+      mapset = service.get(mapset.getId(), Mapset.class);
+      // Set loaded to true and save it again
       mapset.getAttributes().put("loaded", "true");
       service.update(Mapset.class, mapset.getId(), mapset);
+
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
       // R4
       if (type == org.hl7.fhir.r4.model.ConceptMap.class) {
         return (T) FhirUtilityR4.toR4(mapset);

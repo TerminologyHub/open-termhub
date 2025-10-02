@@ -35,7 +35,7 @@ The final option is to run the latest published public docker image as a contain
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
-  -e JAVA_OPTS=-Xmx2g \
+  -e JAVA_OPTS=-Xmx4g \
   -e ENABLE_POST_LOAD_COMPUTATIONS=true \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```

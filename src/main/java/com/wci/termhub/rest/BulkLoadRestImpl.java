@@ -64,10 +64,10 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/fhir")
 @CrossOrigin(origins = "*")
-public class BulkLoadController {
+public class BulkLoadRestImpl {
 
   /** The logger. */
-  private static Logger logger = LoggerFactory.getLogger(BulkLoadController.class);
+  private static Logger logger = LoggerFactory.getLogger(BulkLoadRestImpl.class);
 
   /** The search service. */
   @Autowired
@@ -87,14 +87,16 @@ public class BulkLoadController {
   private static Map<String, Exception> processExceptionMap = new HashMap<>();
 
   /**
-   * <<<<<<< HEAD Gets the progress.
+   * Gets the progress.
    *
    * @param type the type
    * @param processId the process id
    * @return the progress
    * @throws Exception the exception
    */
-  @RequestMapping(value = "/{type}/$load/{processId}/progress", method = RequestMethod.GET)
+  @Hidden
+  @RequestMapping(value = "/{type}/$load/{processId}/progress", method = RequestMethod.GET,
+      produces = "text/plain")
   @Operation(summary = "Get process progress",
       description = "Gets progress for the specified process id", tags = {
           "load"
@@ -111,7 +113,7 @@ public class BulkLoadController {
           required = true),
       @Parameter(name = "processId", description = "process id, e.g. <uuid>")
   })
-  public ResponseEntity<Long> getProcessProgress(@PathVariable("type") final String type,
+  public ResponseEntity<String> getProcessProgress(@PathVariable("type") final String type,
     @PathVariable("processId") final String processId) throws Exception {
 
     if (!processProgressMap.containsKey(processId)) {
@@ -119,7 +121,8 @@ public class BulkLoadController {
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_NOT_FOUND);
     }
 
-    return new ResponseEntity<Long>(Long.valueOf(processProgressMap.get(processId)), null, 200);
+    logger.info("  progress " + processId + " = " + processProgressMap.get(processId));
+    return new ResponseEntity<String>("" + processProgressMap.get(processId), null, 200);
 
   }
 
@@ -131,7 +134,9 @@ public class BulkLoadController {
    * @return the process error
    * @throws Exception the exception
    */
-  @RequestMapping(value = "/{type}/$load/{processId}/error", method = RequestMethod.GET)
+  @Hidden
+  @RequestMapping(value = "/{type}/$load/{processId}/error", method = RequestMethod.GET,
+      produces = "text/plain")
   @Operation(summary = "Get process error", description = "Gets error for the specified process id",
       tags = {
           "load"
@@ -168,7 +173,9 @@ public class BulkLoadController {
    * @return the process result
    * @throws Exception the exception
    */
-  @RequestMapping(value = "/{type}/$load/{processId}/result", method = RequestMethod.GET)
+  @Hidden
+  @RequestMapping(value = "/{type}/$load/{processId}/result", method = RequestMethod.GET,
+      produces = "text/plain")
   @Operation(summary = "Get process result",
       description = "Gets result for the specified process id", tags = {
           "load"
@@ -222,7 +229,7 @@ public class BulkLoadController {
       @Parameter(name = "background",
           description = "true/false value indicating whether to run the load in the background."
               + "If 'true', the endpoint returns a process id.",
-          required = false),
+          required = false, hidden = true),
       @Parameter(name = "resource",
           description = "Multi-part form data part containing the code system data",
           required = true)
@@ -287,8 +294,8 @@ public class BulkLoadController {
 
               FileUtils.delete(file);
 
-              BulkLoadController.processResultMap.put(processId, new ArrayList<>());
-              BulkLoadController.processResultMap.get(processId)
+              BulkLoadRestImpl.processResultMap.put(processId, new ArrayList<>());
+              BulkLoadRestImpl.processResultMap.get(processId)
                   .add("CodeSystem/" + codeSystem.getId());
 
             } catch (final Exception e) {
@@ -340,7 +347,7 @@ public class BulkLoadController {
       @Parameter(name = "background",
           description = "true/false value indicating whether to run the load in the background."
               + "If 'true', the endpoint returns a process id.",
-          required = false),
+          required = false, hidden = true),
       @Parameter(name = "resource",
           description = "Multi-part form data part containing the code system data",
           required = true)
@@ -404,9 +411,8 @@ public class BulkLoadController {
 
               FileUtils.delete(file);
 
-              BulkLoadController.processResultMap.put(processId, new ArrayList<>());
-              BulkLoadController.processResultMap.get(processId)
-                  .add("ValueSet/" + valueSet.getId());
+              BulkLoadRestImpl.processResultMap.put(processId, new ArrayList<>());
+              BulkLoadRestImpl.processResultMap.get(processId).add("ValueSet/" + valueSet.getId());
 
             } catch (final Exception e) {
               processExceptionMap.put(processId, e);
@@ -520,8 +526,8 @@ public class BulkLoadController {
 
               FileUtils.delete(file);
 
-              BulkLoadController.processResultMap.put(processId, new ArrayList<>());
-              BulkLoadController.processResultMap.get(processId)
+              BulkLoadRestImpl.processResultMap.put(processId, new ArrayList<>());
+              BulkLoadRestImpl.processResultMap.get(processId)
                   .add("ConceptMap/" + conceptMap.getId());
 
             } catch (final Exception e) {

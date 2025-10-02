@@ -610,9 +610,6 @@ public class LuceneDataAccess {
     try {
       final Query query = sp.getLuceneQuery() != null ? sp.getLuceneQuery()
           : LuceneQueryBuilder.parse(sp.getQuery(), clazz);
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Executing query: {} for class: {}", query, clazz.getSimpleName());
-      }
       return find(clazz, sp, query);
     } catch (ParseException e) {
       throw new Exception("Unable to parse query = " + sp.getQuery(), e);
@@ -644,9 +641,6 @@ public class LuceneDataAccess {
 
     final BooleanQuery queryBuilder =
         new BooleanQuery.Builder().add(phraseQuery, BooleanClause.Occur.SHOULD).build();
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("  query = {}", queryBuilder);
-    }
 
     searcher = new IndexSearcher(reader);
 
@@ -654,14 +648,12 @@ public class LuceneDataAccess {
         ? IndexUtility.getDefaultSortOrder(clazz)
         : IndexUtility.getSortOrder(searchParameters, clazz);
 
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Search Parameters ({}): {}", clazz.getCanonicalName(), searchParameters);
-    }
     final int start = searchParameters.getOffset();
     final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Search Parameters: start:{}, end:{}", start, end);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("  query = {} [{}, {}, {}, {}]", searchParameters.getQuery(), start, end, sort,
+          clazz.getName());
     }
 
     final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)

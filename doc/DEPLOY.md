@@ -32,61 +32,59 @@ docker run --rm --name open-termhub -p 8080:8080 \
   wcinformatics/open-termhub:latest
 ```
 
-The exact size needed for the volume varies and depends on the number and size of terminology assets included in 
-the deployment.  For example, a configuration that loads the latest versions of SNOMEDCT_US, RXNORM, LOINC, and
-ICD10CM with `ENABLE_POST_LOAD_COMPUTATIONS=true` a volume size of XxGB is recommended.  The same data set up with
-`ENABLE_POST_LOAD_COMPUTATIONS=false` requires a small volume size of XxGB 
+### Volume size
 
-And here is an example of using docker compose:
+The exact size needed for the volume varies and depends on the number and size of terminology assets included in the deployment.  For example, a configuration that loads the latest versions of SNOMEDCT_US, RXNORM, LOINC, and ICD10CM with `ENABLE_POST_LOAD_COMPUTATIONS=true` a volume size of 20GB is recommended.  The same data set up with `ENABLE_POST_LOAD_COMPUTATIONS=false` requires a small volume size of 10GB.  
 
-```yaml
-version: '3.8'
-services:
-  termhub:    # This is the container name in Docker Compose
-    image: wcinformatics/open-termhub:latest
-    ports:
-      - "8080:8080"
-    environment:
-      - ENABLE_POST_LOAD_COMPUTATIONS=true # Optional: default is false
-      - PROJECT_API_KEY=${PROJECT_API_KEY} # Optional: only required if using Terminology Syndication from www.terminologyhub.com
-      - JAVA_OPTS=-Xmx4g                   # Recommended
-    volumes:
-      - ./data:/index                      # Optional: index store location for persistent retrieval
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-```
+The best strategy is to load the data assets you need in an "offline" environment and you can see exactly how much space is needed, then provision a volume for the container that is large enough for that size.
+
+## Creating a TermHub Project with an API Key
+
+The primary content provider for Open TermHub is the TermHub (cloud) application itself.  The idea is that you can use TermHub to configure "projects" that have terminology specifications that you want to use.
+
+Start by logging into your account
+
+## Loading the Container
+
+There are a few options for loading a container including: 
+* Pre-loading a volume offline and then mounting it to a container
+* Using syndication to have a container load itself upon startup
+* Launching a container and loading it from "downloaded" artifacts
 
 
-## Health Checks
+### Pre-loading a Volume
 
-The application provides health endpoints:
-- Health check: `http://localhost:8080/actuator/health`
-- Info: `http://localhost:8080/actuator/info`
+This option is recommended for situations where you want to control terminology versions and ensure the data being
+served by the container is exactly what is needed by downstream services.  This is also a recommended option for
+running with Kubernetes because it will allow you to scale pods in "read only" mode that are mounted with the same
+persistent volume.   
 
-## Troubleshooting
+This option is NOT recommended if you want to use "latest" versions and have the container automatically "update"
+content. This option is NOT recommended if you need to make write calls to the container and intend to have multiple
+pods running.
 
-1. **Container fails to start**:
-   - Check logs: `docker logs termhub`
-   - Verify environment variables are set correctly
-   - Ensure required volumes are mounted properly
+Pre-loading a volume can use either of the "syndication" or "direct load" strategies discussed below.  The difference
+is that you run this process on your own separately from the deployment and then shut down the container, package
+up the index directory data and prepare it to be mounted as a volume to containers to be deployed either directly
+(via something like EC2 or Fargate) or as part of an orchestration platform (fia something like Kubernetes)
 
-2. **Performance issues**:
-   - Consider adjusting Java heap size: `-e JAVA_OPTS="-Xmx8g"`
-   - Monitor container resources: `docker stats termhub`
+### Loading Data with Syndication
 
-3. **Network issues**:
-   - Verify port mappings
-   - Check network connectivity: `docker network inspect bridge`
+Open TermHub supports syndication of content from a TermHub project that is configured with an API key and one or
+more terminology/subset/mapset (code system, value set, concept map) resources.  [See the section above](#creating-a-termhub-project-with-an-api-key) for information on setting up a project.
 
-## Building from Source
+If the container is launched with a `PROJECT_API_KEY` environment variable set to the project API key of a corresponding TermHub project, then the container will load itself upon startup.  This mode can be used either to pre-load some data to be packaged and deployed to a container service later -- or it can be used simply to streamline loading data into a running container.
 
-To build the Docker image from source:
+If the TermHub project has been configured with "latest" versions of terminologies, it is possible to configure "re-syndication" of the container to grab new versions of the content when available.  In this mode, when new versions are available the container "reconciles" the feed defined by the project with data that is loaded - so it is possible to tweak
+the contents of the deployed service simply by changing the configuration in TermHub (cloud). This "resyndication" option is configured by a `SYNDICATION_CHECK_CRON` environment variable, which uses cron-style configuration to specify when the container should attempt resyndication. 
 
-```bash
-git clone https://github.com/wcinformatics/open-termhub.git
-cd open-termhub
-make docker
-```
+* e.g. `0 0 * * *` for daily check at midnight
+
+If using resyndication, it is NOT recommended to run multiple containers mounted to the same indexes volume that are both configured for resyndication because both deployments will attempt to load data on the same schedule, causing a conflict.
+
+
+### Loading Data Manually
+
+
+
+
