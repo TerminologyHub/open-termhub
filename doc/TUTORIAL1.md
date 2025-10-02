@@ -19,7 +19,7 @@ One option is to just build the code and run the server locally and use an INDEX
 # On Windows use export INDEX_DIR=c:/temp/opentermhub/index
 # On Windows if running within wsl use export INDEX_DIR=/mnt/c/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
-export ENABLE_POST_LOAD_COMPUTATIONS=true
+export ENABLE_POST_LOAD_COMPUTATIONS=false
 export JAVA_OPTS=-Xmx4g
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run
