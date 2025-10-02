@@ -122,30 +122,7 @@ public class LuceneDataAccess {
     }
     // Create a new IndexWriter with default config to initialize the index
     final FSDirectory directory = FSDirectory.open(indexDir.toPath());
-    final Map<String, Analyzer> fieldAnalyzers = LuceneQueryBuilder.getFieldAnalyzers(clazz);
-
-    // Add ngram analyzer for autocomplete fields
-    fieldAnalyzers.put("name.ngram", new Analyzer() {
-      @Override
-      protected TokenStreamComponents createComponents(final String fieldName) {
-        final Tokenizer tokenizer = new StandardTokenizer();
-        final TokenStream lower = new LowerCaseFilter(tokenizer);
-        final TokenStream cleaned =
-            new PatternReplaceFilter(lower, Pattern.compile("[^a-z0-9]+"), "", true);
-        final TokenStream ngrams = new NGramTokenFilter(cleaned, 3, 20, false);
-        return new TokenStreamComponents(tokenizer, ngrams);
-      }
-    });
-
-    // Override name field to use StandardAnalyzer (not ngram)
-    fieldAnalyzers.put("name", new StandardAnalyzer());
-
-    // Default analyzer for all other fields
-    final Analyzer defaultAnalyzer = new StandardAnalyzer();
-
-    // Wrap per-field analyzers with default fallback
-    final PerFieldAnalyzerWrapper perFieldAnalyzer =
-        new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
+    final Analyzer perFieldAnalyzer = buildPerFieldAnalyzer(clazz);
 
     // Create IndexWriter with per-field analyzer
     final IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(perFieldAnalyzer));
@@ -822,13 +799,55 @@ public class LuceneDataAccess {
   /**
    * Create an IndexWriter with StandardAnalyzer.
    *
+   * @param clazz the clazz
+   * @return the index writer
+   * @throws Exception the exception
+   */
+  private Analyzer buildPerFieldAnalyzer(final Class<? extends HasId> clazz) throws Exception {
+
+    final Map<String, Analyzer> fieldAnalyzers = LuceneQueryBuilder.getFieldAnalyzers(clazz);
+
+    fieldAnalyzers.put("name.ngram", createNgramAnalyzer());
+
+    fieldAnalyzers.put("name", new StandardAnalyzer());
+
+    final Analyzer defaultAnalyzer = new StandardAnalyzer();
+
+    return new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
+  }
+
+  /**
+   * Creates the ngram analyzer.
+   *
+   * @return the analyzer
+   */
+  private Analyzer createNgramAnalyzer() {
+    return new Analyzer() {
+      @Override
+      protected TokenStreamComponents createComponents(final String fieldName) {
+        final Tokenizer tokenizer = new StandardTokenizer();
+        final TokenStream lower = new LowerCaseFilter(tokenizer);
+        final TokenStream cleaned =
+            new PatternReplaceFilter(lower, Pattern.compile("[^a-z0-9]+"), "", true);
+        final TokenStream ngrams = new NGramTokenFilter(cleaned, 3, 20, false);
+        return new TokenStreamComponents(tokenizer, ngrams);
+      }
+    };
+  }
+
+  /**
+   * Creates the index writer.
+   *
+   * @param clazz the clazz
    * @param directory the directory
    * @return the index writer
-   * @throws IOException on error
+   * @throws Exception the exception
    */
   @SuppressWarnings("resource")
-  private IndexWriter createIndexWriter(final FSDirectory directory) throws IOException {
-    return new IndexWriter(directory, new IndexWriterConfig(new StandardAnalyzer()));
+  private IndexWriter createIndexWriter(final Class<? extends HasId> clazz,
+    final FSDirectory directory) throws Exception {
+    final Analyzer analyzer = buildPerFieldAnalyzer(clazz);
+    return new IndexWriter(directory, new IndexWriterConfig(analyzer));
   }
 
   /**
@@ -901,7 +920,7 @@ public class LuceneDataAccess {
         indexDir.mkdirs();
       }
       final FSDirectory directory = FSDirectory.open(indexDir.toPath());
-      final IndexWriter writer = createIndexWriter(directory);
+      final IndexWriter writer = createIndexWriter(clazz, directory);
       WRITER_MAP.put(className, writer);
       return writer;
     }
