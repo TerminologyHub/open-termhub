@@ -116,7 +116,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
 
       // Concept name exact match
       if (stemQuery.isEmpty()) {
-        clauses.add("name.keyword:(" + StringUtility.escapeQueryNoSpace(query) + ")^90");
+        clauses.add("name.keyword:\"" + StringUtility.escapeQueryNoSpace(query) + "\"^90");
       } else {
         clauses.add("stemName.keyword:\"" + stemQuery + "\"^80");
         clauses.add("terms.stemName.keyword:\"" + stemQuery + "\"^85");

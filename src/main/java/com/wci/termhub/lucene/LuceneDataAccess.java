@@ -628,11 +628,9 @@ public class LuceneDataAccess {
     final int start = searchParameters.getOffset();
     final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-    LOGGER.info("  query = {} [{}, {}, {}, {}]", searchParameters.getQuery(), start, end, sort,
-        clazz.getName());
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("  query = {} [{}, {}, {}, {}]", searchParameters.getQuery(), start, end, sort,
-          clazz.getName());
+      LOGGER.debug("  lucene = {} [{}, {}, {}, {}]", searchParameters.getLuceneQuery(), start, end,
+          searchParameters.getSort(), clazz.getName());
     }
 
     final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
