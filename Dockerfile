@@ -56,6 +56,7 @@ WORKDIR /srv/rt
 
 # Set runtime environment variables
 ENV ENABLE_POST_LOAD_COMPUTATIONS=false
+ENV DEBUG=false
 
 # Run the built product when the container launches
 CMD ["/srv/rt/run.sh"]
