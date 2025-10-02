@@ -107,37 +107,43 @@ public class BrowserQueryBuilder implements QueryBuilder {
 
       // code:15771004 OR name:(15771004) OR terms.name:(15771004)
       if (isCode(query)) {
-        clauses.add("code:" + query + "^30");
-        clauses.add("identifiers.id:" + query + "^30");
+        clauses.add("code:" + query + "^100");
+        clauses.add("identifiers.id:" + query + "^100");
       } else if (isLowercaseCode(query)) {
         // check both uppercase and lowercase
-        clauses.add("(code:" + query.toUpperCase() + "^30 OR code:" + query + "^30)");
+        clauses.add("(code:" + query.toUpperCase() + "^100 OR code:" + query + "^100)");
       }
 
       // Concept name exact match
       if (stemQuery.isEmpty()) {
-        clauses.add("name.keyword:(" + StringUtility.escapeQuery(query) + ")^30");
+        clauses.add("name.keyword:(" + StringUtility.escapeQuery(query) + ")^90");
       } else {
-        clauses.add("stemName.keyword:\"" + StringUtility.escapeQuery(stemQuery) + "\"^30");
-        clauses.add("terms.stemName.keyword:\"" + StringUtility.escapeQuery(stemQuery) + "\"^25");
+        clauses.add("stemName.keyword:" + StringUtility.escapeQuery(stemQuery) + "^80");
+        clauses.add("terms.stemName.keyword:" + StringUtility.escapeQuery(stemQuery) + "^85");
       }
 
       // term name match
       if (!stemQuery.isEmpty()) {
         // Boost for phrase
-        clauses.add("terms.stemName:\"" + StringUtility.escapeQuery(stemQuery) + "\"^25");
-        // If not a code, also do wildcard searches on each word (boost for AND)
+        clauses.add("terms.stemName:" + StringUtility.escapeQuery(stemQuery) + "^70");
+
+        // If not a code, also do AND wildcard searches on each word (boost for AND)
         if (!isCode(query)) {
-          final String clause = "normName:("
+          String clause =
+              "stemName:(" + String.join(" AND ", Arrays.asList(stemQuery.split(" "))) + ")^70";
+          clauses.add(clause);
+          clauses.add("terms." + clause);
+          clause = "normName:("
               + String.join(" AND ",
                   Arrays.asList(StringUtility.normalize(query).split(" ")).stream()
                       .map(s -> StringUtility.escapeQuery(s) + "*").collect(Collectors.toList()))
-              + ")^25";
+              + ")^60";
           clauses.add(clause);
           clauses.add("terms." + clause);
         }
         // Other matches, lower quality
-        clauses.add("terms.stemName:(" + StringUtility.escapeQuery(stemQuery) + ")");
+        clauses.add(
+            "terms.stemName:(" + String.join(" ", Arrays.asList(stemQuery.split(" "))) + ")^0.5");
       }
 
       // Favor shorter things

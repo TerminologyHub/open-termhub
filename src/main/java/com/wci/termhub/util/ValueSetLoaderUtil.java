@@ -329,10 +329,15 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      // Set listener to 100%
-      listener.updateProgress(new ProgressEvent(100));
+      // Get the subset again because the tree position computer would've changed it
+      subset = service.get(subset.getId(), Subset.class);
+      // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
       service.update(Subset.class, subset.getId(), subset);
+
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
       return FhirUtilityR4.toR4ValueSet(subset, null, false);
 
     } catch (final Exception e) {
@@ -551,10 +556,15 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      // Set listener to 100%
-      listener.updateProgress(new ProgressEvent(100));
+      // Get the subset again because the tree position computer would've changed it
+      subset = service.get(subset.getId(), Subset.class);
+      // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
       service.update(Subset.class, subset.getId(), subset);
+
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
       return FhirUtilityR5.toR5ValueSet(subset, null, false);
 
     } catch (final Exception e) {

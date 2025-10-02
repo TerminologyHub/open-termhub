@@ -34,6 +34,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.EnablePostLoadComputations;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.algo.ProgressEvent;
@@ -43,6 +46,7 @@ import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
+import com.wci.termhub.util.ThreadLocalMapper;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -64,10 +68,10 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/fhir")
 @CrossOrigin(origins = "*")
-public class BulkLoadController {
+public class BulkLoadRestImpl {
 
   /** The logger. */
-  private static Logger logger = LoggerFactory.getLogger(BulkLoadController.class);
+  private static Logger logger = LoggerFactory.getLogger(BulkLoadRestImpl.class);
 
   /** The search service. */
   @Autowired
@@ -87,14 +91,16 @@ public class BulkLoadController {
   private static Map<String, Exception> processExceptionMap = new HashMap<>();
 
   /**
-   * <<<<<<< HEAD Gets the progress.
+   * Gets the progress.
    *
    * @param type the type
    * @param processId the process id
    * @return the progress
    * @throws Exception the exception
    */
-  @RequestMapping(value = "/{type}/$load/{processId}/progress", method = RequestMethod.GET)
+  @Hidden
+  @RequestMapping(value = "/{type}/$load/{processId}/progress", method = RequestMethod.GET,
+      produces = "text/plain")
   @Operation(summary = "Get process progress",
       description = "Gets progress for the specified process id", tags = {
           "load"
@@ -111,7 +117,7 @@ public class BulkLoadController {
           required = true),
       @Parameter(name = "processId", description = "process id, e.g. <uuid>")
   })
-  public ResponseEntity<Long> getProcessProgress(@PathVariable("type") final String type,
+  public ResponseEntity<String> getProcessProgress(@PathVariable("type") final String type,
     @PathVariable("processId") final String processId) throws Exception {
 
     if (!processProgressMap.containsKey(processId)) {
@@ -119,7 +125,8 @@ public class BulkLoadController {
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_NOT_FOUND);
     }
 
-    return new ResponseEntity<Long>(Long.valueOf(processProgressMap.get(processId)), null, 200);
+    logger.info("  progress " + processId + " = " + processProgressMap.get(processId));
+    return new ResponseEntity<String>("" + processProgressMap.get(processId), null, 200);
 
   }
 
@@ -131,7 +138,9 @@ public class BulkLoadController {
    * @return the process error
    * @throws Exception the exception
    */
-  @RequestMapping(value = "/{type}/$load/{processId}/error", method = RequestMethod.GET)
+  @Hidden
+  @RequestMapping(value = "/{type}/$load/{processId}/error", method = RequestMethod.GET,
+      produces = "text/plain")
   @Operation(summary = "Get process error", description = "Gets error for the specified process id",
       tags = {
           "load"
@@ -168,7 +177,9 @@ public class BulkLoadController {
    * @return the process result
    * @throws Exception the exception
    */
-  @RequestMapping(value = "/{type}/$load/{processId}/result", method = RequestMethod.GET)
+  @Hidden
+  @RequestMapping(value = "/{type}/$load/{processId}/result", method = RequestMethod.GET,
+      produces = "text/plain")
   @Operation(summary = "Get process result",
       description = "Gets result for the specified process id", tags = {
           "load"
@@ -222,7 +233,7 @@ public class BulkLoadController {
       @Parameter(name = "background",
           description = "true/false value indicating whether to run the load in the background."
               + "If 'true', the endpoint returns a process id.",
-          required = false),
+          required = false, hidden = true),
       @Parameter(name = "resource",
           description = "Multi-part form data part containing the code system data",
           required = true)
@@ -231,8 +242,8 @@ public class BulkLoadController {
       content = @Content(schema = @Schema(implementation = String.class), examples = {
           @ExampleObject(value = "resource={\"resourceType\":\"CodeSystem\",...}")
       }))
-  public ResponseEntity<String> loadCodeSystem(
-    @RequestParam(name = "background", required = false) final boolean background,
+  public ResponseEntity<String> loadCodeSystem(@Parameter(hidden = true)
+  @RequestParam(name = "background", required = false) final boolean background,
     @RequestPart("resource") final MultipartFile resourceFile) throws Exception {
     // MultipartFile resourceFile
     try {
@@ -287,8 +298,8 @@ public class BulkLoadController {
 
               FileUtils.delete(file);
 
-              BulkLoadController.processResultMap.put(processId, new ArrayList<>());
-              BulkLoadController.processResultMap.get(processId)
+              BulkLoadRestImpl.processResultMap.put(processId, new ArrayList<>());
+              BulkLoadRestImpl.processResultMap.get(processId)
                   .add("CodeSystem/" + codeSystem.getId());
 
             } catch (final Exception e) {
@@ -340,7 +351,7 @@ public class BulkLoadController {
       @Parameter(name = "background",
           description = "true/false value indicating whether to run the load in the background."
               + "If 'true', the endpoint returns a process id.",
-          required = false),
+          required = false, hidden = true),
       @Parameter(name = "resource",
           description = "Multi-part form data part containing the code system data",
           required = true)
@@ -349,8 +360,8 @@ public class BulkLoadController {
       content = @Content(schema = @Schema(implementation = String.class), examples = {
           @ExampleObject(value = "resource={\"resourceType\":\"ValueSet\",...}")
       }))
-  public ResponseEntity<String> loadValueSet(
-    @RequestParam(name = "background", required = false) final boolean background,
+  public ResponseEntity<String> loadValueSet(@Parameter(hidden = true)
+  @RequestParam(name = "background", required = false) final boolean background,
     @RequestPart("resource") final MultipartFile resourceFile) throws Exception {
     // MultipartFile resourceFile
     try {
@@ -404,9 +415,8 @@ public class BulkLoadController {
 
               FileUtils.delete(file);
 
-              BulkLoadController.processResultMap.put(processId, new ArrayList<>());
-              BulkLoadController.processResultMap.get(processId)
-                  .add("ValueSet/" + valueSet.getId());
+              BulkLoadRestImpl.processResultMap.put(processId, new ArrayList<>());
+              BulkLoadRestImpl.processResultMap.get(processId).add("ValueSet/" + valueSet.getId());
 
             } catch (final Exception e) {
               processExceptionMap.put(processId, e);
@@ -456,7 +466,7 @@ public class BulkLoadController {
       @Parameter(name = "background",
           description = "true/false value indicating whether to run the load in the background."
               + "If 'true', the endpoint returns a process id.",
-          required = false),
+          required = false, hidden = true),
       @Parameter(name = "resource",
           description = "Multi-part form data part containing the code system data",
           required = true)
@@ -465,8 +475,8 @@ public class BulkLoadController {
       content = @Content(schema = @Schema(implementation = String.class), examples = {
           @ExampleObject(value = "resource={\"resourceType\":\"ConceptMap\",...}")
       }))
-  public ResponseEntity<String> loadConceptMap(
-    @RequestParam(name = "background", required = false) final boolean background,
+  public ResponseEntity<String> loadConceptMap(@Parameter(hidden = true)
+  @RequestParam(name = "background", required = false) final boolean background,
     @RequestPart("resource") final MultipartFile resourceFile) throws Exception {
     // MultipartFile resourceFile
     try {
@@ -520,8 +530,8 @@ public class BulkLoadController {
 
               FileUtils.delete(file);
 
-              BulkLoadController.processResultMap.put(processId, new ArrayList<>());
-              BulkLoadController.processResultMap.get(processId)
+              BulkLoadRestImpl.processResultMap.put(processId, new ArrayList<>());
+              BulkLoadRestImpl.processResultMap.get(processId)
                   .add("ConceptMap/" + conceptMap.getId());
 
             } catch (final Exception e) {
@@ -570,10 +580,10 @@ public class BulkLoadController {
           content = @Content())
   })
   @Parameters({
-      @Parameter(name = "background",
-          description = "true/false value indicating whether to run the load in the background."
-              + "If 'true', the endpoint returns a process id.",
-          required = false),
+      // @Parameter(name = "background",
+      // description = "true/false value indicating whether to run the load in the background."
+      // + "If 'true', the endpoint returns a process id.",
+      // required = false),
       @Parameter(name = "resource",
           description = "Multi-part form data part containing the code system data",
           required = true)
@@ -582,8 +592,8 @@ public class BulkLoadController {
       content = @Content(schema = @Schema(implementation = String.class), examples = {
           @ExampleObject(value = "resource={\"resourceType\":\"Bundle\",...}")
       }))
-  public ResponseEntity<String> loadBundle(
-    @RequestParam(name = "background", required = false) final boolean background,
+  public ResponseEntity<String> loadBundle(@Parameter(hidden = true)
+  @RequestParam(name = "background", required = false) final boolean background,
     @RequestPart("resource") final MultipartFile resourceFile) throws Exception {
     // MultipartFile resourceFile
     try {
@@ -591,22 +601,59 @@ public class BulkLoadController {
 
       // Write to a file so we can re-open streams against it
       final File file = File.createTempFile("tmp", ".json");
-      // try (FileOutputStream outputStream = new FileOutputStream(file)) {
-      // IOUtils.copy(request.getInputStream(), outputStream);
-      // }
       FileUtils.writeByteArrayToFile(file, resourceFile.getBytes());
+      final List<String> results = new ArrayList<>();
 
-      // Go through the bundle and determine which resource type we're on
-      // save that to a file and make the appropriate loader call
+      if (!background) {
 
-      // // Use existing loader utility
-      // final ConceptMap conceptMap =
-      // ConceptMapLoaderUtil.loadConceptMap(searchService, file, ConceptMap.class);
-      //
-      // FileUtils.delete(file);
+        handleBundle(searchService, new DefaultProgressListener(), file, results);
+        FileUtils.delete(file);
 
-      return new ResponseEntity<>("Coming soon", null, 200);
+        return new ResponseEntity<>(results.toString(), null, 200);
+      }
 
+      // If running in the background, load and return the process id
+      else {
+        final String processId = UUID.randomUUID().toString();
+        BulkLoadRestImpl.processResultMap.put(processId, results);
+
+        final ProgressListener listener = new ProgressListener() {
+
+          /**
+           * Update progress.
+           *
+           * @param event the event
+           */
+          @Override
+          public void updateProgress(final ProgressEvent event) {
+            if (!processProgressMap.containsKey(processId)
+                || event.getProgress() > processProgressMap.get(processId)) {
+              processProgressMap.put(processId, event.getProgress());
+            }
+          }
+        };
+
+        final Thread t = new Thread(new Runnable() {
+
+          /* see superclass */
+          @Override
+          public void run() {
+            try {
+              handleBundle(searchService, listener, file, results);
+            } catch (final Exception e) {
+              processExceptionMap.put(processId, e);
+            }
+          }
+        });
+        t.start();
+
+        // Return the process id
+        return new ResponseEntity<>(processId, null, 200);
+
+      }
+
+    } catch (final FHIRServerResponseException fe) {
+      throw fe;
     } catch (final Exception e) {
       logger.error("Unexpected error creating concept map", e);
       throw FhirUtilityR5.exception("Failed to create concept map = " + e.getMessage(),
@@ -614,5 +661,122 @@ public class BulkLoadController {
     }
   }
 
-  // TDOO: update tutorial1
+  /**
+   * Handle bundle.
+   *
+   * @param searchService the search service
+   * @param listener the listener
+   * @param file the file
+   * @param results the results
+   * @throws Exception the exception
+   */
+  @SuppressWarnings("resource")
+  private void handleBundle(final EntityRepositoryService searchService,
+    final ProgressListener listener, final File file, final List<String> results) throws Exception {
+
+    // Get the entry count for progress monitoring
+    long totalEntryCount = 0;
+
+    // Use try-with-resources to ensure the JsonParser is safely closed
+    try (final JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+
+      // We iterate through all tokens until the end of the file
+      while (parser.nextToken() != null) {
+
+        // 1. Check for the "entry" field name
+        if (parser.currentToken() == JsonToken.FIELD_NAME && "entry".equals(parser.getText())) {
+
+          // Advance the parser one token: it should now be at the start of the array ([)
+          if (parser.nextToken() != JsonToken.START_ARRAY) {
+            // Handle case where "entry" field is not followed by an array (e.g., malformed FHIR)
+            continue;
+          }
+
+          // 2. We are now inside the "entry" array. Loop until the END_ARRAY (]) token.
+          while (parser.nextToken() != JsonToken.END_ARRAY) {
+
+            // 3. Check for the start of a new resource object ({). This marks a new entry.
+            if (parser.currentToken() == JsonToken.START_OBJECT) {
+              totalEntryCount++;
+
+              // 4. Skip the entire resource object now that we have counted it.
+              // This is the CRITICAL step for low memory usage.
+              parser.skipChildren();
+            }
+          }
+
+          // We found and counted the entries, so we can stop processing the file.
+          break;
+        }
+      }
+    }
+
+    int entryCount = 0;
+
+    // Go through the bundle and determine which resource type we're on
+    // save that to a file and make the appropriate loader call
+    try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+
+      // You can iterate through the tokens one by one
+      while (parser.nextToken() != null) {
+
+        // Get the current token
+        final JsonToken token = parser.currentToken();
+
+        // Example: Find the start of a nested JSON array
+        if (token == JsonToken.START_ARRAY && "entry".equals(parser.currentName())) {
+
+          // Process each object within the array without loading the whole array into memory
+          while (parser.nextToken() != JsonToken.END_ARRAY) {
+
+            // Progress update
+            entryCount++;
+            listener.updateProgress(new ProgressEvent((int) (entryCount * 1.0 / totalEntryCount)));
+
+            // Use ObjectMapper to read the sub-object as a JsonNode
+            final JsonNode entryNode = parser.readValueAsTree();
+            if (entryNode.has("resource")) {
+              final String resourceType =
+                  entryNode.get("resource").get("resourceType").asText(null);
+              logger.info("  resource = " + resourceType);
+
+              final File tmpResourceFile = File.createTempFile("tmp", ".json");
+              FileUtils.writeStringToFile(tmpResourceFile, entryNode.get("resource").asText(),
+                  "UTF-8");
+
+              switch (resourceType) {
+                case "CodeSystem": {
+                  final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService,
+                      file, enablePostLoadComputations.isEnabled(), CodeSystem.class, listener);
+                  results.add("CodeSystem/" + codeSystem.getId());
+                  break;
+                }
+                case "ValueSet": {
+                  // Use existing loader utility
+                  final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService, file,
+                      ValueSet.class, listener);
+                  results.add("ValueSet/" + valueSet.getId());
+                  break;
+                }
+                case "ConceptMap": {
+                  // Use existing loader utility
+                  final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService,
+                      file, ConceptMap.class, listener);
+                  results.add("ConceptMap/" + conceptMap.getId());
+                  break;
+                }
+                default: {
+                  logger.info("    SKIP unhandled resource");
+                  continue;
+                }
+              }
+
+            }
+
+          }
+        }
+      }
+    }
+  }
+
 }

@@ -31,6 +31,7 @@ One option is to just build the code and run the server locally and use an INDEX
 export INDEX_DIR=/tmp/opentermhub/index
 export ENABLE_POST_LOAD_COMPUTATIONS=true
 export PROJECT_API_KEY=$SANDBOX_KEY
+export JAVA_OPTS=-Xmx4g
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run
 ```
@@ -45,8 +46,9 @@ The final option is to run the latest published public docker image as a contain
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
-  -e PROJECT_API_KEY="$SANDBOX_KEY" \
+  -e JAVA_OPTS=-Xmx4g \
   -e ENABLE_POST_LOAD_COMPUTATIONS=true \
+  -e PROJECT_API_KEY="$SANDBOX_KEY" \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 

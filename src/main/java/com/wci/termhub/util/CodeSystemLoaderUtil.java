@@ -336,10 +336,15 @@ public final class CodeSystemLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
       Application.logMemory();
 
-      // Set listener to 100%
-      listener.updateProgress(new ProgressEvent(100));
+      // Get the terminology again because the tree position computer would've changed it
+      terminology = service.get(terminology.getId(), Terminology.class);
+      // Set loaded to true and save it again
       terminology.getAttributes().put("loaded", "true");
       service.update(Terminology.class, terminology.getId(), terminology);
+
+      // Set listener to 100%
+      listener.updateProgress(new ProgressEvent(100));
+
       // R4
       if (type == org.hl7.fhir.r4.model.CodeSystem.class) {
         return (T) FhirUtilityR4.toR4(terminology);
@@ -550,6 +555,8 @@ public final class CodeSystemLoaderUtil {
     concept.setDefined(cache.getDefined(concept.getCode()));
     concept.setLeaf(cache.isLeaf(concept.getCode()));
     concept.setName(cache.getConceptName(concept.getCode()));
+    concept.setNormName(StringUtility.normalize(concept.getName()));
+    concept.setStemName(StringUtility.normalizeWithStemming(concept.getName()));
 
     // Set defined status - default to true, will be updated based on
     // definitionStatusId
@@ -861,6 +868,8 @@ public final class CodeSystemLoaderUtil {
     term.setId(UUID.randomUUID().toString());
     term.setActive(true);
     term.setName(designation.path("value").asText());
+    term.setNormName(StringUtility.normalize(term.getName()));
+    term.setStemName(StringUtility.normalizeWithStemming(term.getName()));
 
     // Safely set term type with null checks
     if (designation.has("use") && designation.path("use").has("code")) {

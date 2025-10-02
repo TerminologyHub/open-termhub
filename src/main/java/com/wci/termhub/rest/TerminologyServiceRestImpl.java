@@ -1129,9 +1129,11 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       searchParams.setLeaf(true);
     }
 
+    logger
+        .info("  query = " + query + ", expression = " + expression + ", params = " + searchParams);
     if (logger.isDebugEnabled()) {
       logger.debug(
-          "   query = " + query + ", expression = " + expression + ", params = " + searchParams);
+          "  query = " + query + ", expression = " + expression + ", params = " + searchParams);
     }
 
     final ResultList<Concept> list = searchService.findFields(searchParams,
