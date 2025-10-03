@@ -214,7 +214,8 @@ public class TermUnitTest extends AbstractClassTest {
     foundTermsObjects = searchService.find(searchParameters, Term.class);
     assertEquals(2, foundTermsObjects.getItems().size());
 
-    searchParameters.setQuery(StringUtility.escapeField("publisher", "dummy publisher with space"));
+    searchParameters
+        .setQuery(StringUtility.escapeKeywordField("publisher", "dummy publisher with space"));
     logger.info("Search for : {}", searchParameters.getQuery());
     foundTermsObjects = searchService.find(searchParameters, Term.class);
     assertEquals(1, foundTermsObjects.getItems().size());

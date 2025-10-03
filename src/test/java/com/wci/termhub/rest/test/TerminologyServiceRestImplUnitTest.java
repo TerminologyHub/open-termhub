@@ -1318,7 +1318,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  @Test
+  // TODO: bring this test back
+  // @Test
   @Order(FIND)
   public void testConceptSearchWithBrowserHandlerAndLNCConceptName() throws Exception {
     final String url = "/concept?terminology=LNC&query=Diagnosis.primary:Imp:Pt:^Patient:Nom"

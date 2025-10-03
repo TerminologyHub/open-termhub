@@ -97,7 +97,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
       sb.append("*:*");
     }
     // Fielded queries should be left alone
-    else if (query.matches("^[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^:]*$")) {
+    else if (query.matches(".*[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^:]*.*")) {
       sb.append(query);
     }
     // Otherwise, build a query in parts
@@ -116,16 +116,16 @@ public class BrowserQueryBuilder implements QueryBuilder {
 
       // Concept name exact match
       if (stemQuery.isEmpty()) {
-        clauses.add("name.keyword:(" + StringUtility.escapeQuery(query) + ")^90");
+        clauses.add("name.keyword:\"" + StringUtility.escapeQueryNoSpace(query) + "\"^90");
       } else {
-        clauses.add("stemName.keyword:" + StringUtility.escapeQuery(stemQuery) + "^80");
-        clauses.add("terms.stemName.keyword:" + StringUtility.escapeQuery(stemQuery) + "^85");
+        clauses.add("stemName.keyword:\"" + stemQuery + "\"^80");
+        // clauses.add("terms.stemName.keyword:\"" + stemQuery + "\"^85");
       }
 
       // term name match
       if (!stemQuery.isEmpty()) {
         // Boost for phrase
-        clauses.add("terms.stemName:" + StringUtility.escapeQuery(stemQuery) + "^70");
+        clauses.add("terms.stemName:\"" + stemQuery + "\"^70");
 
         // If not a code, also do AND wildcard searches on each word (boost for AND)
         if (!isCode(query)) {
@@ -141,9 +141,9 @@ public class BrowserQueryBuilder implements QueryBuilder {
           clauses.add(clause);
           clauses.add("terms." + clause);
         }
-        // Other matches, lower quality
-        clauses.add(
-            "terms.stemName:(" + String.join(" ", Arrays.asList(stemQuery.split(" "))) + ")^0.5");
+
+        // Other matches, lower quality -- for now exclude these
+        // clauses.add("terms.stemName:(" + stemQuery + ")");
       }
 
       // Favor shorter things

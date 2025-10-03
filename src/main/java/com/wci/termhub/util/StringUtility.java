@@ -568,9 +568,22 @@ public final class StringUtility {
    * @param value the value
    * @return the string
    */
-  public static String escapeField(final String field, final String value) {
+  public static String escapeKeywordField(final String field, final String value) {
     final StringBuilder sb = new StringBuilder();
     sb.append(field).append(":").append(escapeQuery(value));
+    return sb.toString();
+  }
+
+  /**
+   * Escape term field.
+   *
+   * @param field the field
+   * @param value the value
+   * @return the string
+   */
+  public static String escapeTermField(final String field, final String value) {
+    final StringBuilder sb = new StringBuilder();
+    sb.append(field).append(":\"").append(escapeQueryNoSpace(value)).append("\"");
     return sb.toString();
   }
 
@@ -591,6 +604,48 @@ public final class StringUtility {
       if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':'
           || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~'
           || c == '*' || c == '?' || c == '|' || c == '&' || c == '/' || c == ' ') {
+        sb.append('\\');
+      }
+      sb.append(c);
+    }
+
+    // Escape "and", "or", and "not" - escape each char of the word
+    final String q1 = sb.toString();
+    final StringBuilder sb2 = new StringBuilder();
+    boolean first = true;
+    for (final String word : q1.split(" ")) {
+      if (!first) {
+        sb2.append(" ");
+      }
+      first = false;
+      if (word.toLowerCase().matches("(and|or|not)")) {
+        for (final String c : word.split("")) {
+          sb2.append("\\").append(c);
+        }
+      } else {
+        sb2.append(word);
+      }
+    }
+    return sb2.toString();
+  }
+
+  /**
+   * Escape query no space.
+   *
+   * @param s the s
+   * @return the string
+   */
+  public static String escapeQueryNoSpace(final String s) {
+    if (s == null) {
+      return "";
+    }
+    final StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < s.length(); i++) {
+      final char c = s.charAt(i);
+      // These characters are part of the query syntax and must be escaped
+      if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':'
+          || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~'
+          || c == '*' || c == '?' || c == '|' || c == '&' || c == '/') {
         sb.append('\\');
       }
       sb.append(c);

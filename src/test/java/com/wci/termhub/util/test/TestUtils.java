@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.util;
+package com.wci.termhub.util.test;
 
 import java.io.File;
 import java.io.IOException;

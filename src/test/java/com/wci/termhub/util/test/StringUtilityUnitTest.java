@@ -207,6 +207,10 @@ public class StringUtilityUnitTest {
         StringUtility.escapeQuery("National Library of Medicine"));
     assertEquals("National\\ Library\\ of\\ \\?\\ Medicine",
         StringUtility.escapeQuery("National Library of ? Medicine"));
+
+    assertEquals("National Library of Medicine",
+        StringUtility.escapeQueryNoSpace("National Library of Medicine"));
+
   }
 
   /**
@@ -217,7 +221,10 @@ public class StringUtilityUnitTest {
   @Test
   public void testEscapeField() throws Exception {
     assertEquals("publisher:National\\ Library\\ of\\ Medicine",
-        StringUtility.escapeField("publisher", "National Library of Medicine"));
+        StringUtility.escapeKeywordField("publisher", "National Library of Medicine"));
+
+    assertEquals("publisher:\"National Library of Medicine\"",
+        StringUtility.escapeTermField("publisher", "National Library of Medicine"));
 
   }
 

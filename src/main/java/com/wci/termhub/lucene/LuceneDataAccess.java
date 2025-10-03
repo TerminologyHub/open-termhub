@@ -628,11 +628,11 @@ public class LuceneDataAccess {
     final int start = searchParameters.getOffset();
     final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-    LOGGER.info("  query = {} [{}, {}, {}, {}]", searchParameters.getQuery(), start, end, sort,
-        clazz.getName());
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("  query = {} [{}, {}, {}, {}]", searchParameters.getQuery(), start, end, sort,
-          clazz.getName());
+    LOGGER.info("  lucene = {} [{}, {}, {}, {}]", searchParameters.getLuceneQuery(), start, end,
+        searchParameters.getSort(), clazz.getName());
+    if (LOGGER.isDebugEnabled() && searchParameters.getLuceneQuery() != null) {
+      LOGGER.debug("  lucene = {} [{}, {}, {}, {}]", searchParameters.getLuceneQuery(), start, end,
+          searchParameters.getSort(), clazz.getName());
     }
 
     final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
@@ -797,6 +797,7 @@ public class LuceneDataAccess {
    * @return the index writer
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   private Analyzer buildPerFieldAnalyzer(final Class<? extends HasId> clazz) throws Exception {
 
     final Map<String, Analyzer> fieldAnalyzers = LuceneQueryBuilder.getFieldAnalyzers(clazz);
@@ -817,6 +818,7 @@ public class LuceneDataAccess {
    */
   private Analyzer createNgramAnalyzer() {
     return new Analyzer() {
+      @SuppressWarnings("resource")
       @Override
       protected TokenStreamComponents createComponents(final String fieldName) {
         final Tokenizer tokenizer = new StandardTokenizer();
