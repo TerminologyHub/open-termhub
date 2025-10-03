@@ -13,10 +13,8 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -36,6 +34,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.InnerField;
 import org.springframework.data.elasticsearch.annotations.MultiField;
@@ -63,10 +62,6 @@ public final class LuceneQueryBuilder {
 
   /** The Constant FIELD_ANALYZERS_CACHE. */
   private static final Map<Class<?>, Map<String, Analyzer>> FIELD_ANALYZERS_CACHE = new HashMap<>();
-
-  /** The Constant NESTED_FIELD_SUFFIXES. */
-  private static final Set<String> NESTED_FIELD_SUFFIXES =
-      Set.of("code", "terminology", "version", "publisher", "abbreviation", "keyword");
 
   /**
    * Parses the query for a specific model class.
@@ -111,40 +106,111 @@ public final class LuceneQueryBuilder {
     }
 
     final Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
+
+    // Recursively collect analyzers for this model and any nested
+    // @Document/HasId
+    // models
+    collectAnalyzersForClass(modelClass, null, fieldAnalyzers);
+
+    FIELD_ANALYZERS_CACHE.put(modelClass, fieldAnalyzers);
+    return fieldAnalyzers;
+  }
+
+  /**
+   * Recursively collects analyzers for fields on a model class and nested model
+   * classes based on ElasticSearch annotations. Uses a dotted prefix for nested
+   * objects/collections.
+   *
+   * @param modelClass the model class
+   * @param prefix the field path prefix, or null for top-level
+   * @param fieldAnalyzers the output map of field path to analyzer
+   */
+  private static void collectAnalyzersForClass(final Class<?> modelClass, final String prefix,
+    final Map<String, Analyzer> fieldAnalyzers) {
+
     final List<Field> allFields = ModelUtility.getAllFields(modelClass);
 
     for (final Field field : allFields) {
       final String fieldName = field.getName();
-      final Analyzer analyzer = getAnalyzerForField(field);
+      final String fieldPath =
+          (prefix == null || prefix.isEmpty()) ? fieldName : prefix + "." + fieldName;
 
-      if (analyzer != null) {
-        fieldAnalyzers.put(fieldName, analyzer);
+      // Handle @MultiField first (Text + inner keyword/ngram)
+      final MultiField multiField = field.getAnnotation(MultiField.class);
+      if (multiField != null) {
+        // Main field
+        final Analyzer mainAnalyzer = getAnalyzerForFieldType(multiField.mainField().type());
+        if (mainAnalyzer != null) {
+          fieldAnalyzers.put(fieldPath, mainAnalyzer);
+        }
+        // Inner fields
+        for (final InnerField innerField : multiField.otherFields()) {
+          final String subFieldPath = fieldPath + "." + innerField.suffix();
+          final Analyzer subFieldAnalyzer = ("ngram".equals(innerField.suffix()))
+              ? getNgramAnalyzer() : getAnalyzerForFieldType(innerField.type());
+          if (subFieldAnalyzer != null) {
+            fieldAnalyzers.put(subFieldPath, subFieldAnalyzer);
+          }
+        }
+      }
 
-        // Handle MultiField annotations
-        final MultiField multiField = field.getAnnotation(MultiField.class);
-        if (multiField != null) {
-          for (final InnerField innerField : multiField.otherFields()) {
-            final String subFieldName = fieldName + "." + innerField.suffix();
-            final Analyzer subFieldAnalyzer = ("ngram".equals(innerField.suffix()))
-                ? getNgramAnalyzer() : getAnalyzerForFieldType(innerField.type());
-            if (subFieldAnalyzer != null) {
-              fieldAnalyzers.put(subFieldName, subFieldAnalyzer);
+      // Handle single @Field annotation
+      final org.springframework.data.elasticsearch.annotations.Field esField =
+          field.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
+      if (esField != null) {
+        // Map analyzer for this concrete field
+        final Analyzer analyzer = getAnalyzerForFieldType(esField.type());
+        if (analyzer != null) {
+          fieldAnalyzers.put(fieldPath, analyzer);
+        }
+
+        // If it's an object, recurse into nested model types
+        if (esField.type() == FieldType.Object) {
+          // If this is a collection, extract the element type
+          if (List.class.isAssignableFrom(field.getType())) {
+            try {
+              final java.lang.reflect.Type genericType = field.getGenericType();
+              if (genericType instanceof java.lang.reflect.ParameterizedType) {
+                final java.lang.reflect.ParameterizedType parameterizedType =
+                    (java.lang.reflect.ParameterizedType) genericType;
+                final java.lang.reflect.Type elementType =
+                    parameterizedType.getActualTypeArguments()[0];
+                if (elementType instanceof Class) {
+                  final Class<?> elementClass = (Class<?>) elementType;
+                  if (isDocumentModel(elementClass)) {
+                    collectAnalyzersForClass(elementClass, fieldPath, fieldAnalyzers);
+                  }
+                }
+              }
+            } catch (final Exception e) {
+              // Defensive: ignore bad generic info
+            }
+          } else {
+            final Class<?> nestedClass = field.getType();
+            if (isDocumentModel(nestedClass)) {
+              collectAnalyzersForClass(nestedClass, fieldPath, fieldAnalyzers);
             }
           }
         }
       }
-    }
 
-    // Handle nested fields (e.g., ancestors.code, terms.name)
-    for (final String fieldPath : getNestedFieldPaths(modelClass)) {
-      final Analyzer nestedAnalyzer = getAnalyzerForNestedField(fieldPath, modelClass);
-      fieldAnalyzers.put(fieldPath, nestedAnalyzer);
-      logger.debug("Added analyzer for nested field: {} -> {}", fieldPath,
-          nestedAnalyzer.getClass().getSimpleName());
+      // If there are no annotations but it's a String, default to
+      // StandardAnalyzer
+      if (multiField == null && esField == null && field.getType().equals(String.class)) {
+        fieldAnalyzers.put(fieldPath, new StandardAnalyzer());
+      }
     }
+  }
 
-    FIELD_ANALYZERS_CACHE.put(modelClass, fieldAnalyzers);
-    return fieldAnalyzers;
+  /**
+   * Determines if a class is a model eligible for nested recursion. Models
+   * should be annotated with @Document, but HasId is allowed as a fallback.
+   *
+   * @param clazz the class
+   * @return true, if the class is a model
+   */
+  private static boolean isDocumentModel(final Class<?> clazz) {
+    return clazz.getAnnotation(Document.class) != null || HasId.class.isAssignableFrom(clazz);
   }
 
   /**
@@ -168,101 +234,6 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Gets nested field paths for the model class.
-   *
-   * @param modelClass the model class
-   * @return the nested field paths
-   */
-  private static Set<String> getNestedFieldPaths(final Class<?> modelClass) {
-    final Set<String> nestedPaths = new HashSet<>();
-    final List<Field> allFields = ModelUtility.getAllFields(modelClass);
-
-    if (logger.isDebugEnabled()) {
-      logger.debug("Looking for nested fields in class: {}", modelClass.getSimpleName());
-    }
-
-    for (final Field field : allFields) {
-      final org.springframework.data.elasticsearch.annotations.Field esField =
-          field.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
-
-      if (esField != null && esField.type() == FieldType.Object) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("Found Object field: {}", field.getName());
-        }
-
-        // Check if it's a List of HasId objects
-        if (List.class.isAssignableFrom(field.getType())) {
-          final java.lang.reflect.ParameterizedType genericType =
-              (java.lang.reflect.ParameterizedType) field.getGenericType();
-          final Class<?> listElementType = (Class<?>) genericType.getActualTypeArguments()[0];
-
-          if (HasId.class.isAssignableFrom(listElementType)) {
-            if (logger.isDebugEnabled()) {
-              logger.debug("Field {} is List<{}> implementing HasId, adding nested paths",
-                  field.getName(), listElementType.getSimpleName());
-            }
-            // Add common keyword fields that should be exact matches
-            nestedPaths.addAll(getCommonNestedPaths(field));
-
-          }
-        }
-        // Check if it's a direct HasId object (not a List)
-        else if (HasId.class.isAssignableFrom(field.getType())) {
-          logger.debug("Field {} implements HasId, adding nested paths", field.getName());
-          // Add common keyword fields that should be exact matches
-          nestedPaths.addAll(getCommonNestedPaths(field));
-        }
-      }
-    }
-
-    logger.debug("Nested field paths found: {}", nestedPaths);
-    return nestedPaths;
-  }
-
-  /**
-   * Gets the common nested paths.
-   *
-   * @param field the field
-   * @return the common nested paths
-   */
-  private static Set<String> getCommonNestedPaths(final Field field) {
-    return NESTED_FIELD_SUFFIXES.stream().map(suffix -> field.getName() + "." + suffix)
-        .collect(Collectors.toSet());
-  }
-
-  /**
-   * Gets the analyzer for a specific field based on its annotations.
-   *
-   * @param field the field
-   * @return the analyzer
-   */
-  private static Analyzer getAnalyzerForField(final Field field) {
-    final org.springframework.data.elasticsearch.annotations.Field esField =
-        field.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
-    if (esField != null) {
-      return getAnalyzerForFieldType(esField.type());
-    }
-
-    // Check for MultiField annotation
-    final MultiField multiField = field.getAnnotation(MultiField.class);
-    if (multiField != null) {
-      for (final InnerField innerField : multiField.otherFields()) {
-        if ("ngram".equals(innerField.suffix())) {
-          return getNgramAnalyzer();
-        }
-      }
-      return getAnalyzerForFieldType(multiField.mainField().type());
-    }
-
-    // Default for String fields
-    if (field.getType().equals(String.class)) {
-      return new StandardAnalyzer();
-    }
-
-    return null;
-  }
-
-  /**
    * Gets the analyzer for a specific field type.
    *
    * @param fieldType the field type
@@ -278,26 +249,9 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Gets the analyzer for a nested field path.
-   *
-   * @param fieldPath the field path (e.g., "ancestors.code")
-   * @param modelClass the model class
-   * @return the analyzer
-   */
-  private static Analyzer getAnalyzerForNestedField(final String fieldPath,
-    final Class<?> modelClass) {
-    // For nested keyword fields, use KeywordAnalyzer for exact matching
-    if (NESTED_FIELD_SUFFIXES.stream().anyMatch(suffix -> fieldPath.endsWith("." + suffix))) {
-      return new KeywordAnalyzer();
-    }
-
-    // For other nested fields, use the default analyzer
-    return new StandardAnalyzer();
-  }
-
-  /**
-   * Returns the list of searchable fields for a given model class. Uses reflection to find String
-   * or List<String> fields, or those annotated with @Field(type = FieldType.Text) or MultiField.
+   * Returns the list of searchable fields for a given model class. Uses
+   * reflection to find String or List<String> fields, or those annotated
+   * with @Field(type = FieldType.Text) or MultiField.
    *
    * @param modelClass the model class
    * @return the searchable fields
