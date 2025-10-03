@@ -621,8 +621,10 @@ public class LuceneDataAccess {
 
     searcher = new IndexSearcher(reader);
 
+    // If no explicit sort is provided, sort by score (null Sort triggers relevance
+    // ordering)
     final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
-        ? IndexUtility.getDefaultSortOrder(clazz)
+        ? null
         : IndexUtility.getSortOrder(searchParameters, clazz);
 
     final int start = searchParameters.getOffset();
