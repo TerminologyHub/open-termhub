@@ -141,8 +141,9 @@ public class BrowserQueryBuilder implements QueryBuilder {
           clauses.add(clause);
           clauses.add("terms." + clause);
         }
-        // Other matches, lower quality
-        clauses.add("terms.stemName:(" + stemQuery + ")^0.5");
+
+        // Other matches, lower quality -- for now exclude these
+        // clauses.add("terms.stemName:(" + stemQuery + ")");
       }
 
       // Favor shorter things
