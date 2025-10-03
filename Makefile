@@ -24,7 +24,7 @@ scan: ## scan for vulnerabilities in dependencies
 	trivy fs gradle.lockfile --format template -o report.html --template "@config/trivy/html.tpl"
 	grep CRITICAL report.html
 	/bin/rm -rf gradle.lockfile
-	
+
 scandocker:
 	trivy image $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
 	grep CRITICAL report.html
@@ -48,11 +48,12 @@ test-r5: clean ## Run R5 tests only
 run: ## Run the server
 	./gradlew bootRun
 
-rundebug: ## Run the server in debug mode
-	./gradlew bootRun --debug-jvm
+# connect 
+rundebug: ## Run the server with debug logging and JVM debug port (5005)
+	DEBUG=true ./gradlew bootRun --debug-jvm
 
 docker: ## Build the docker image and tag with version and latest leave arm64 out for now)
-	docker buildx build --platform linux/amd64 --no-cache-filter=gradle-build -t $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) . 
+	docker buildx build --platform linux/amd64 --no-cache-filter=gradle-build -t $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) .
 	docker tag $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
 	@echo APP_VERSION=$(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 

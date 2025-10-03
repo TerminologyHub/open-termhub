@@ -273,6 +273,12 @@ public final class ConceptMapLoaderUtil {
       LOGGER.info("  final counts - mapsets: {}, mappings: {}", 1, mappingCount);
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
+      // Get the mapset again because the tree position computer would've changed it
+      mapset = service.get(mapset.getId(), Mapset.class);
+      // Set loaded to true and save it again
+      mapset.getAttributes().put("loaded", "true");
+      service.update(Mapset.class, mapset.getId(), mapset);
+
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
 
@@ -328,7 +334,7 @@ public final class ConceptMapLoaderUtil {
     }
 
     final Mapset mapset = new Mapset();
-
+    mapset.getAttributes().put("loaded", "false");
     // Convert to internal model
     // The HAPI Plan server @Create method blanks the identifier on sending a
     // code system in. Always create a new identifier.

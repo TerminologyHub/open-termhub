@@ -34,6 +34,7 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.StringUtility;
 
 /**
  * The Class TermUnitTest.
@@ -104,7 +105,7 @@ public class TermUnitTest extends AbstractClassTest {
     TERM3.setName("dummyname with space");
     TERM3.setTerminology("dummyterminology");
     TERM3.setVersion("dummyversion");
-    TERM3.setPublisher("dummypublisher");
+    TERM3.setPublisher("dummy publisher with space");
     TERM3.setComponentId("dummycomponentId");
     TERM3.setConceptId("dummyconceptId");
     TERM3.setDescriptorId("dummydescriptorId");
@@ -213,14 +214,21 @@ public class TermUnitTest extends AbstractClassTest {
     foundTermsObjects = searchService.find(searchParameters, Term.class);
     assertEquals(2, foundTermsObjects.getItems().size());
 
-    // add more complex queries
-    searchParameters.setQuery("name:" + TERM3.getName());
+    searchParameters
+        .setQuery(StringUtility.escapeKeywordField("publisher", "dummy publisher with space"));
     logger.info("Search for : {}", searchParameters.getQuery());
     foundTermsObjects = searchService.find(searchParameters, Term.class);
     assertEquals(1, foundTermsObjects.getItems().size());
 
     // add more complex queries
-    searchParameters.setQuery("code:" + TERM1.getCode() + " AND name:\"" + TERM2.getName() + "\"");
+    searchParameters.setQuery("name:\"" + TERM3.getName() + "\"");
+    logger.info("Search for : {}", searchParameters.getQuery());
+    foundTermsObjects = searchService.find(searchParameters, Term.class);
+    assertEquals(1, foundTermsObjects.getItems().size());
+
+    // add more complex queries
+    searchParameters.setQuery("code:" + TERM1.getCode() + " AND name:\""
+        + StringUtility.escapeQuery(TERM2.getName()) + "\"");
     logger.info("Search for : {}", searchParameters.getQuery());
     foundTermsObjects = searchService.find(searchParameters, Term.class);
     assertEquals(0, foundTermsObjects.getItems().size());

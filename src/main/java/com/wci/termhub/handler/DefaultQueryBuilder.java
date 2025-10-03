@@ -107,12 +107,12 @@ public class DefaultQueryBuilder implements QueryBuilder {
     // Handle non-fielded queries to include partial matching on name fields (same as buildQuery)
     if (!query.matches(".*\\w+:.*")) {
       // Non-fielded query - add partial matching for name fields
-      return "(\"" + StringUtility.escapeQuery(query) + "\") OR (normName:"
+      return "(" + StringUtility.escapeQuery(query) + ") OR (normName:"
           + StringUtility.escapeQuery(query) + ")";
     }
 
     // For other fielded queries, escape with quotes and escape colons
-    return "\"" + StringUtility.escapeQuery(query) + "\"";
+    return StringUtility.escapeQuery(query);
   }
 
 }

@@ -151,6 +151,7 @@ public final class ValueSetLoaderUtil {
       }
 
       subset = new Subset();
+      subset.getAttributes().put("loaded", "false");
       // The HAPI Plan server @Create method blanks the identifier on sending a
       // code system in. Always create a new identifier.
       String id = UUID.randomUUID().toString();
@@ -328,6 +329,12 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
+      // Get the subset again because the tree position computer would've changed it
+      subset = service.get(subset.getId(), Subset.class);
+      // Set loaded to true and save it again
+      subset.getAttributes().put("loaded", "true");
+      service.update(Subset.class, subset.getId(), subset);
+
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
 
@@ -377,6 +384,7 @@ public final class ValueSetLoaderUtil {
       }
 
       subset = new Subset();
+      subset.getAttributes().put("loaded", "false");
       // The HAPI Plan server @Create method blanks the identifier on sending a
       // code system in. Always create a new identifier.
       String id = UUID.randomUUID().toString();
@@ -547,6 +555,12 @@ public final class ValueSetLoaderUtil {
 
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
+
+      // Get the subset again because the tree position computer would've changed it
+      subset = service.get(subset.getId(), Subset.class);
+      // Set loaded to true and save it again
+      subset.getAttributes().put("loaded", "true");
+      service.update(Subset.class, subset.getId(), subset);
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));

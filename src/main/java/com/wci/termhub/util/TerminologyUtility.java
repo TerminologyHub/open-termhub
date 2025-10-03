@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.RecognitionException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,9 +82,8 @@ public final class TerminologyUtility {
 
     final TerminologyRef ref = new TerminologyRef();
     final String query = StringUtility.composeQuery("AND",
-        StringUtility.composeQuery("OR",
-            "abbreviation:\"" + StringUtility.escapeQuery(value) + "\"",
-            "uri:" + StringUtility.escapeQuery(value)));
+        StringUtility.composeQuery("OR", StringUtility.escapeKeywordField("abbreviation", value),
+            StringUtility.escapeKeywordField("uri", value)));
 
     final ResultList<Terminology> list =
         searchService.find(new SearchParameters(query, null, null, null, null), Terminology.class);
@@ -151,9 +149,10 @@ public final class TerminologyUtility {
   public static Terminology getTerminology(final EntityRepositoryService searchService,
     final String terminology, final String publisher, final String version) throws Exception {
 
-    final ResultList<Terminology> tlist = searchService.find(
-        new SearchParameters(getTerminologyAbbrQuery(terminology, publisher, version), 2, 0),
-        Terminology.class);
+    final String terminologyQuery = getTerminologyAbbrQuery(terminology, publisher, version);
+    logger.info("  terminology query = " + terminologyQuery);
+    final ResultList<Terminology> tlist =
+        searchService.find(new SearchParameters(terminologyQuery, 2, 0), Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
@@ -206,9 +205,9 @@ public final class TerminologyUtility {
     final String version) {
 
     return StringUtility.composeQuery("AND",
-        "terminology:\"" + StringUtility.escapeQuery(terminology) + "\"",
-        "publisher:\"" + StringUtility.escapeQuery(publisher) + "\"",
-        "version:\"" + StringUtility.escapeQuery(version)) + "\"";
+        StringUtility.escapeKeywordField("terminology", terminology),
+        StringUtility.escapeKeywordField("publisher", publisher),
+        StringUtility.escapeKeywordField("version", version));
   }
 
   /**
@@ -223,9 +222,9 @@ public final class TerminologyUtility {
     final String version) {
 
     return StringUtility.composeQuery("AND",
-        "abbreviation:\"" + StringUtility.escapeQuery(abbreviation) + "\"",
-        "publisher:\"" + StringUtility.escapeQuery(publisher) + "\"",
-        "version:\"" + StringUtility.escapeQuery(version) + "\"");
+        StringUtility.escapeKeywordField("abbreviation", abbreviation),
+        StringUtility.escapeKeywordField("publisher", publisher),
+        StringUtility.escapeKeywordField("version", version));
   }
 
   /**
@@ -239,9 +238,9 @@ public final class TerminologyUtility {
   public static String getTerminologyUriQuery(final String uri, final String publisher,
     final String version) {
 
-    return StringUtility.composeQuery("AND", "uri:" + StringUtility.escapeQuery(uri),
-        "publisher:\"" + StringUtility.escapeQuery(publisher) + "\"",
-        "version:\"" + StringUtility.escapeQuery(version) + "\"");
+    return StringUtility.composeQuery("AND", StringUtility.escapeKeywordField("uri", uri),
+        StringUtility.escapeKeywordField("publisher", uri),
+        StringUtility.escapeKeywordField("version", uri));
   }
 
   /**
@@ -275,10 +274,11 @@ public final class TerminologyUtility {
     throws Exception {
     final SearchParameters params = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
-    params.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:\""
-        + StringUtility.escapeQuery(t) + "\" AND publisher:\""
-        + StringUtility.escapeQuery(publisher) + "\" AND version:\""
-        + StringUtility.escapeQuery(version) + "\"");
+    params
+        .setQuery(StringUtility.composeQuery("AND", StringUtility.escapeKeywordField("code", code),
+            StringUtility.escapeKeywordField("terminology", t),
+            StringUtility.escapeKeywordField("publisher", publisher),
+            StringUtility.escapeKeywordField("version", version)));
 
     final ResultList<Concept> list = searchService.find(params, Concept.class);
 
@@ -320,10 +320,11 @@ public final class TerminologyUtility {
     throws Exception {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
-    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:\""
-        + StringUtility.escapeQuery(t) + "\" AND publisher:\""
-        + StringUtility.escapeQuery(publisher) + "\" AND version:\""
-        + StringUtility.escapeQuery(version) + "\"");
+    nameParams
+        .setQuery(StringUtility.composeQuery("AND", StringUtility.escapeKeywordField("code", code),
+            StringUtility.escapeKeywordField("terminology", t),
+            StringUtility.escapeKeywordField("publisher", publisher),
+            StringUtility.escapeKeywordField("version", version)));
     final ResultList<Concept> list = searchService.findFields(nameParams,
         ModelUtility.asList("id", "name", "code", "terminology", "version", "publisher", "leaf"),
         Concept.class);
@@ -350,10 +351,11 @@ public final class TerminologyUtility {
     throws Exception {
     final SearchParameters nameParams = new SearchParameters(2, 0);
     final String t = code.startsWith("V-") ? "SRC" : terminology;
-    nameParams.setQuery("code:" + StringUtility.escapeQuery(code) + " AND terminology:\""
-        + StringUtility.escapeQuery(t) + "\" AND publisher:\""
-        + StringUtility.escapeQuery(publisher) + "\" AND version:\""
-        + StringUtility.escapeQuery(version) + "\"");
+    nameParams
+        .setQuery(StringUtility.composeQuery("AND", StringUtility.escapeKeywordField("code", code),
+            StringUtility.escapeKeywordField("terminology", t),
+            StringUtility.escapeKeywordField("publisher", publisher),
+            StringUtility.escapeKeywordField("version", version)));
 
     final ResultList<Concept> list =
         searchService.findFields(nameParams, ModelUtility.asList("name"), Concept.class);
@@ -394,17 +396,18 @@ public final class TerminologyUtility {
     final StringBuilder finalQuery = new StringBuilder();
     for (final String code : fullAncPath.split("~")) {
       finalQuery.setLength(0);
-      finalQuery.append("concept.code:" + QueryParserBase.escape(code));
-      finalQuery.append(" AND terminology:\"")
-          .append(StringUtility.escapeQuery(treePosition.getTerminology())).append("\"");
-      finalQuery.append(" AND publisher:\"")
-          .append(StringUtility.escapeQuery(treePosition.getPublisher())).append("\"");
-      finalQuery.append(" AND version:\"")
-          .append(StringUtility.escapeQuery(treePosition.getVersion())).append("\"");
+      finalQuery.append(StringUtility.escapeKeywordField("concept.code", code));
+      finalQuery.append(" AND ");
+      finalQuery
+          .append(StringUtility.escapeKeywordField("terminology", treePosition.getTerminology()));
+      finalQuery.append(" AND ");
+      finalQuery.append(StringUtility.escapeKeywordField("publisher", treePosition.getPublisher()));
+      finalQuery.append(" AND ");
+      finalQuery.append(StringUtility.escapeKeywordField("version", treePosition.getVersion()));
       if (partAncPath.isEmpty()) {
         finalQuery.append(" AND ancestorPath:\"\"");
       } else {
-        finalQuery.append(" AND ancestorPath:").append(QueryParserBase.escape(partAncPath));
+        finalQuery.append(" AND ancestorPath:").append(StringUtility.escapeQuery(partAncPath));
       }
 
       params.setQuery(finalQuery.toString());
@@ -507,7 +510,7 @@ public final class TerminologyUtility {
     final Terminology terminology, final Concept concept) throws Exception {
 
     final List<ConceptRelationship> list = searchService.findAll(StringUtility.composeQuery("AND",
-        "from.code:" + StringUtility.escapeQuery(concept.getCode()),
+        StringUtility.escapeKeywordField("from.code", concept.getCode()),
         "hierarchical:true AND active:true"), null, ConceptRelationship.class);
 
     // Set defined status for parents - parents are not defined (higher in
@@ -568,10 +571,9 @@ public final class TerminologyUtility {
   public static List<ConceptRef> getChildren(final EntityRepositoryService searchService,
     final Terminology terminology, final Concept concept) throws Exception {
 
-    final List<ConceptRelationship> list = searchService.findAll(
-        StringUtility.composeQuery("AND", "to.code:" + StringUtility.escapeQuery(concept.getCode()),
-            "hierarchical:true", "active:true"),
-        null, ConceptRelationship.class);
+    final List<ConceptRelationship> list = searchService.findAll(StringUtility.composeQuery("AND",
+        StringUtility.escapeKeywordField("to.code", concept.getCode()), "hierarchical:true",
+        "active:true"), null, ConceptRelationship.class);
 
     // Set defined status for children - all children are defined (non-leaf
     // concepts)
@@ -596,7 +598,7 @@ public final class TerminologyUtility {
     final Concept concept) throws Exception {
 
     final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-        "from.code:" + StringUtility.escapeQuery(concept.getCode())), 0, 1000, "", true);
+        StringUtility.escapeKeywordField("from.code", concept.getCode())), 0, 1000, "", true);
 
     final ResultList<ConceptRelationship> list =
         searchService.find(params, ConceptRelationship.class);
@@ -618,7 +620,7 @@ public final class TerminologyUtility {
     final Concept concept) throws Exception {
 
     final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-        "to.code:" + StringUtility.escapeQuery(concept.getCode())), 0, 1000, "", true);
+        StringUtility.escapeKeywordField("to.code", concept.getCode())), 0, 1000, "", true);
 
     final ResultList<ConceptRelationship> list =
         searchService.find(params, ConceptRelationship.class);
@@ -639,9 +641,11 @@ public final class TerminologyUtility {
     final EntityRepositoryService searchService, final Terminology terminology,
     final Concept concept) throws Exception {
 
-    final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-        "terminology:\"" + StringUtility.escapeQuery(terminology.getAbbreviation()) + "\"",
-        "concept.code:" + StringUtility.escapeQuery(concept.getCode())), 0, 1000, "", true);
+    final SearchParameters params = new SearchParameters(
+        StringUtility.composeQuery("AND",
+            StringUtility.escapeKeywordField("terminology", terminology.getAbbreviation()),
+            StringUtility.escapeKeywordField("concept.code", concept.getCode())),
+        0, 1000, "", true);
 
     final ResultList<ConceptTreePosition> list =
         searchService.find(params, ConceptTreePosition.class);
@@ -805,9 +809,10 @@ public final class TerminologyUtility {
     final String terminology, final String publisher, final String version) throws Exception {
 
     final SearchParameters params = new SearchParameters(2, 0);
-    params.setQuery("terminology:\"" + StringUtility.escapeQuery(terminology)
-        + "\" AND publisher:\"" + StringUtility.escapeQuery(publisher) + "\" AND version:\""
-        + StringUtility.escapeQuery(version) + "\"");
+    params.setQuery(StringUtility.composeQuery("AND",
+        StringUtility.escapeKeywordField("terminology", terminology),
+        StringUtility.escapeKeywordField("publisher", publisher),
+        StringUtility.escapeKeywordField("version", version)));
 
     final ResultList<ConceptTreePosition> result =
         searchService.find(params, ConceptTreePosition.class);
@@ -1183,14 +1188,11 @@ public final class TerminologyUtility {
    */
   public static Terminology findClosestByReleaseDate(final EntityRepositoryService searchService,
     final String abbreviation, final String publisher, final Date date) throws Exception {
-    final ResultList<Terminology> list =
-        searchService
-            .find(
-                new SearchParameters(
-                    "abbreviation:\"" + StringUtility.escapeQuery(abbreviation)
-                        + "\" AND publisher:\"" + StringUtility.escapeQuery(publisher) + "\"",
-                    null, null, null, null),
-                Terminology.class);
+    final ResultList<Terminology> list = searchService.find(
+        new SearchParameters(StringUtility.composeQuery("AND",
+            StringUtility.escapeKeywordField("abbreviation", abbreviation),
+            StringUtility.escapeKeywordField("publisher", publisher)), null, null, null, null),
+        Terminology.class);
     Date maxDate = null;
     Terminology closest = null;
     for (final Terminology terminology : list.getItems()) {
@@ -1248,8 +1250,8 @@ public final class TerminologyUtility {
     final String terminology, final String publisher) throws Exception {
 
     final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-        "abbreviation:\"" + StringUtility.escapeQuery(terminology) + "\"",
-        "publisher:\"" + StringUtility.escapeQuery(publisher) + "\""), null, null, null, null);
+        StringUtility.escapeKeywordField("abbreviation", terminology),
+        StringUtility.escapeKeywordField("publisher", publisher)), null, null, null, null);
 
     final ResultList<Terminology> list = searchService.find(params, Terminology.class);
 
@@ -1317,7 +1319,21 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(conceptIds.getItems(), Concept.class);
-      offset += batchSize;
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
+    }
+
+    // delete terminology terms in batches
+    offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> termIds = searchService.findIds(params, Term.class);
+      if (termIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(termIds.getItems(), Term.class);
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
     }
 
     // delete concept relationships in batches
@@ -1330,7 +1346,8 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(conceptRelIds.getItems(), ConceptRelationship.class);
-      offset += batchSize;
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
     }
 
     // delete concept trees in batches
@@ -1343,9 +1360,22 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(conceptTreePositionIds.getItems(), ConceptTreePosition.class);
-      offset += batchSize;
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
     }
 
+    // delete terminology metadata in batches
+    offset = 0;
+    while (true) {
+      params.setOffset(offset);
+      final ResultList<String> metadataIds = searchService.findIds(params, Metadata.class);
+      if (metadataIds.getItems().isEmpty()) {
+        break;
+      }
+      searchService.removeBulk(metadataIds.getItems(), Metadata.class);
+      // No need to increment, next call will find the first BATCH_SIZE
+      // offset += batchSize;
+    }
     // delete the terminology
     searchService.remove(id, Terminology.class);
 
@@ -1380,7 +1410,9 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(mappingIds.getItems(), Mapping.class);
-      offset += batchSize;
+
+      // NO need to change batch size, just delete first page
+      // offset += batchSize;
     }
     searchService.remove(id, Mapset.class);
   }
@@ -1417,7 +1449,9 @@ public final class TerminologyUtility {
         break;
       }
       searchService.removeBulk(subsetMemberIds.getItems(), SubsetMember.class);
-      offset += batchSize;
+
+      // NO need to change batch size, just delete first page
+      // offset += batchSize;
     }
     searchService.remove(id, Subset.class);
   }

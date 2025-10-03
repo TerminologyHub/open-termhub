@@ -10,7 +10,7 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="com.wci.termhub" level="INFO" additivity="false">
+    <logger name="com.wci.termhub" level="${env:LOG_LEVEL:-INFO}" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
 </configuration>

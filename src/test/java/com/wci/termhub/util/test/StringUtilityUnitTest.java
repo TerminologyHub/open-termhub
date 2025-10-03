@@ -197,4 +197,35 @@ public class StringUtilityUnitTest {
     assertEquals(10, random1.length(), "Random string length incorrect");
     assertFalse(random1.equals(random2), "Two random strings should not be equal");
   }
+
+  /**
+   * Test escape query with quotes.
+   */
+  @Test
+  public void testEscapeQuery() {
+    assertEquals("National\\ Library\\ of\\ Medicine",
+        StringUtility.escapeQuery("National Library of Medicine"));
+    assertEquals("National\\ Library\\ of\\ \\?\\ Medicine",
+        StringUtility.escapeQuery("National Library of ? Medicine"));
+
+    assertEquals("National Library of Medicine",
+        StringUtility.escapeQueryNoSpace("National Library of Medicine"));
+
+  }
+
+  /**
+   * Test escape field.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testEscapeField() throws Exception {
+    assertEquals("publisher:National\\ Library\\ of\\ Medicine",
+        StringUtility.escapeKeywordField("publisher", "National Library of Medicine"));
+
+    assertEquals("publisher:\"National Library of Medicine\"",
+        StringUtility.escapeTermField("publisher", "National Library of Medicine"));
+
+  }
+
 }

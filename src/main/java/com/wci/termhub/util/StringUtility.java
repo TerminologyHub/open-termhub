@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,14 +34,11 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tartarus.snowball.ext.EnglishStemmer;
 
 import com.google.common.base.CaseFormat;
-
-import java.util.Collection;
 
 /**
  * Utility class for interacting with Strings.
@@ -502,7 +500,7 @@ public final class StringUtility {
 
     if (!StringUtility.isEmpty(fieldValue)) {
       if (escapeValue) {
-        return fieldName + ":\"" + QueryParserBase.escape(fieldValue) + "\"";
+        return fieldName + ":" + StringUtility.escapeQuery(fieldValue);
       } else {
         return fieldName + ":" + fieldValue;
       }
@@ -564,6 +562,32 @@ public final class StringUtility {
   }
 
   /**
+   * Escape field.
+   *
+   * @param field the field
+   * @param value the value
+   * @return the string
+   */
+  public static String escapeKeywordField(final String field, final String value) {
+    final StringBuilder sb = new StringBuilder();
+    sb.append(field).append(":").append(escapeQuery(value));
+    return sb.toString();
+  }
+
+  /**
+   * Escape term field.
+   *
+   * @param field the field
+   * @param value the value
+   * @return the string
+   */
+  public static String escapeTermField(final String field, final String value) {
+    final StringBuilder sb = new StringBuilder();
+    sb.append(field).append(":\"").append(escapeQueryNoSpace(value)).append("\"");
+    return sb.toString();
+  }
+
+  /**
    * Escape.
    *
    * @param s the s
@@ -580,6 +604,48 @@ public final class StringUtility {
       if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':'
           || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~'
           || c == '*' || c == '?' || c == '|' || c == '&' || c == '/' || c == ' ') {
+        sb.append('\\');
+      }
+      sb.append(c);
+    }
+
+    // Escape "and", "or", and "not" - escape each char of the word
+    final String q1 = sb.toString();
+    final StringBuilder sb2 = new StringBuilder();
+    boolean first = true;
+    for (final String word : q1.split(" ")) {
+      if (!first) {
+        sb2.append(" ");
+      }
+      first = false;
+      if (word.toLowerCase().matches("(and|or|not)")) {
+        for (final String c : word.split("")) {
+          sb2.append("\\").append(c);
+        }
+      } else {
+        sb2.append(word);
+      }
+    }
+    return sb2.toString();
+  }
+
+  /**
+   * Escape query no space.
+   *
+   * @param s the s
+   * @return the string
+   */
+  public static String escapeQueryNoSpace(final String s) {
+    if (s == null) {
+      return "";
+    }
+    final StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < s.length(); i++) {
+      final char c = s.charAt(i);
+      // These characters are part of the query syntax and must be escaped
+      if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':'
+          || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~'
+          || c == '*' || c == '?' || c == '|' || c == '&' || c == '/') {
         sb.append('\\');
       }
       sb.append(c);

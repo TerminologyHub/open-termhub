@@ -24,7 +24,6 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyTest;
 import com.wci.termhub.util.StringUtility;
 
 /**

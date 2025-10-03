@@ -336,6 +336,12 @@ public final class CodeSystemLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
       Application.logMemory();
 
+      // Get the terminology again because the tree position computer would've changed it
+      terminology = service.get(terminology.getId(), Terminology.class);
+      // Set loaded to true and save it again
+      terminology.getAttributes().put("loaded", "true");
+      service.update(Terminology.class, terminology.getId(), terminology);
+
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
 
@@ -399,14 +405,17 @@ public final class CodeSystemLoaderUtil {
     }
 
     final Terminology terminology = new Terminology();
+    final Map<String, String> attributes = new HashMap<>();
+
     // The HAPI Plan server @Create method blanks the identifier on sending a
     // code system in. Always create a new identifier.
     terminology.setId(UUID.randomUUID().toString());
+    attributes.put("loaded", "false");
 
     // Set "originalId" if provided
     final String originalId = root.path("id").asText();
     if (isNotBlank(originalId)) {
-      terminology.getAttributes().put("originalId", originalId);
+      attributes.put("originalId", originalId);
       idMap.put(originalId, terminology.getId());
     }
 
@@ -428,7 +437,6 @@ public final class CodeSystemLoaderUtil {
     terminology.setConceptCt(root.path("count").asLong(0));
 
     // Set terminology attributes
-    final Map<String, String> attributes = new HashMap<>();
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
       final String uri = property.path("uri").asText();
@@ -547,6 +555,8 @@ public final class CodeSystemLoaderUtil {
     concept.setDefined(cache.getDefined(concept.getCode()));
     concept.setLeaf(cache.isLeaf(concept.getCode()));
     concept.setName(cache.getConceptName(concept.getCode()));
+    concept.setNormName(StringUtility.normalize(concept.getName()));
+    concept.setStemName(StringUtility.normalizeWithStemming(concept.getName()));
 
     // Set defined status - default to true, will be updated based on
     // definitionStatusId
@@ -858,6 +868,8 @@ public final class CodeSystemLoaderUtil {
     term.setId(UUID.randomUUID().toString());
     term.setActive(true);
     term.setName(designation.path("value").asText());
+    term.setNormName(StringUtility.normalize(term.getName()));
+    term.setStemName(StringUtility.normalizeWithStemming(term.getName()));
 
     // Safely set term type with null checks
     if (designation.has("use") && designation.path("use").has("code")) {

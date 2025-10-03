@@ -25,12 +25,11 @@ import com.wci.termhub.ecl.ExpressionConstraintListener;
 import com.wci.termhub.integrationtest.EclConverterTest;
 import com.wci.termhub.lucene.LuceneEclDataAccess;
 import com.wci.termhub.model.Concept;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
 
 /**
  * EclNonSnomedTest.
  */
-public class EclNonSnomedTest extends AbstractTerminologyServerTest {
+public class EclNonSnomedTest extends AbstractTerminologyTest {
 
   /** The logger. */
   private final Logger logger = LoggerFactory.getLogger(EclConverterTest.class);

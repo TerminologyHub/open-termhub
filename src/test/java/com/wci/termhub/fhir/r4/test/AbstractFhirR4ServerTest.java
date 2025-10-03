@@ -71,6 +71,15 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
   private static boolean setupOnce = false;
 
   /**
+   * Sets the setup once.
+   *
+   * @param flag the new setup once
+   */
+  public static void setSetupOnce(final boolean flag) {
+    setupOnce = flag;
+  }
+
+  /**
    * Setup once.
    *
    * @throws Exception the exception

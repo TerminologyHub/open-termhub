@@ -64,7 +64,7 @@ public class TermhubQueryBuilder implements QueryBuilder {
   public String buildEscapedQuery(final String query) {
     // Not sure this is important
     return (StringUtils.isEmpty(query) || query.equals("*")) ? "*"
-        : "\"" + StringUtility.escapeQuery(query) + "\"";
+        : StringUtility.escapeQuery(query);
   }
 
   /* see superclass */

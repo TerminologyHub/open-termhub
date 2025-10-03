@@ -40,7 +40,7 @@ repositories {
 }
 
 group = 'com.wci.open-termhub'
-version = '1.1.2-202510'
+version = '1.1.3-202510'
 
 sourceCompatibility = 17
 targetCompatibility = 17
@@ -262,40 +262,6 @@ checkstyleTest {
   reports {
     html.destination = file("$buildDir/reports/checkstyle.html")
   }
-}
-
-// usage ./gradlew runLoadConcepts -PinputFile=location of concepts JSON file -PbatchSize=1000 -Plimit=1000
-// limit is optional, if not present, the entire file will be loaded.  Used for developing.
-task runLoadConcepts(type: JavaExec) {
-  main = 'com.wci.termhub.loader.ConceptLoader'
-  classpath = sourceSets.main.runtimeClasspath
-  if (project.hasProperty('inputFile')) {
-    args += [project.getProperty('inputFile')]
-  }
-  if (project.hasProperty('limit')) {
-    args += [project.getProperty('limit')]
-  }
-  if (project.hasProperty('batchSize')) {
-    args += [project.getProperty('batchSize')]
-  }
-  jvmArgs = ['-Xms1G', '-Xmx8G']
-}
-
-// usage ./gradlew runLoadConceptRels -PinputFile=location of concepts relationship JSON file -PbatchSize=1000 -Plimit=1000
-// limit is optional, if not present, the entire file will be loaded. Used for developing.
-task runLoadConceptRels(type: JavaExec) {
-  main = 'com.wci.termhub.loader.ConceptRelationshipLoader'
-  classpath = sourceSets.main.runtimeClasspath
-  if (project.hasProperty('inputFile')) {
-    args += [project.getProperty('inputFile')]
-  }
-  if (project.hasProperty('limit')) {
-    args += [project.getProperty('limit')]
-  }
-  if (project.hasProperty('batchSize')) {
-    args += [project.getProperty('batchSize')]
-  }
-  jvmArgs = ['-Xms1G', '-Xmx8G']
 }
 
 tasks.withType(JavaExec) {

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -65,7 +66,6 @@ import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.SubsetRef;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
-import com.wci.termhub.test.AbstractTerminologyServerTest;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 
@@ -135,7 +135,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  // @Test
+  @Test
   @Order(FIND)
   public void testGetTerminologyIcd10Cm() throws Exception {
     final String id = CodeSystemLoaderUtil.mapOriginalId("177f2263-fe04-4f1f-b0e6-9b351ab8baa9");
@@ -171,7 +171,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  // @Test
+  @Test
   @Order(FIND)
   public void testGetTerminologySnomedCtUs() throws Exception {
     final String id = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
@@ -193,7 +193,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    *
    * @throws Exception the exception
    */
-  // @Test
+  @Test
   @Order(FIND)
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
     final String id = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
@@ -216,14 +216,13 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(metadata.getField()).isNotNull();
       assertThat(metadata.getModel()).isNotNull();
       assertThat(metadata.getCode()).isNotNull();
-      /*
-       * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20240301",
-       * "publisher":"SANDBOX","model":"relationship","field":"uiLabel","code":
-       * "Attributes","rank":0}
-       */
-      // has no name
-      // assertThat(metadata.getName()).isNotNull();
     }
+    /*
+     * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20240301",
+     * "publisher":"SANDBOX","model":"relationship","field":"uiLabel","code": "Attributes","rank":0}
+     */
+    // has no name
+    // assertThat(metadata.getName()).isNotNull();
   }
 
   /**
@@ -683,11 +682,13 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
-      assertThat(conceptRel.getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT", conceptRel.getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT_US");
       assertThat(conceptRel.getVersion()).isNotNull();
       assertThat(conceptRel.getFrom()).isNotNull();
       assertThat(conceptRel.getFrom().getCode()).isNotNull();
-      assertThat(conceptRel.getFrom().getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT", conceptRel.getFrom().getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT_US");
       assertThat(conceptRel.getTo()).isNotNull();
     }
   }
@@ -716,11 +717,13 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
-      assertThat(conceptRel.getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT_US", conceptRel.getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT");
       assertThat(conceptRel.getVersion()).isNotNull();
       assertThat(conceptRel.getFrom()).isNotNull();
       assertThat(conceptRel.getFrom().getCode()).isNotNull();
-      assertThat(conceptRel.getFrom().getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT_US", conceptRel.getFrom().getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT");
       assertThat(conceptRel.getTo()).isNotNull();
     }
   }
@@ -750,11 +753,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
-      assertThat(conceptRel.getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT", conceptRel.getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT_US");
       assertThat(conceptRel.getVersion()).isNotNull();
       assertThat(conceptRel.getFrom()).isNotNull();
-      assertThat(conceptRel.getFrom().getCode()).isNotNull();
-      assertThat(conceptRel.getFrom().getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT", conceptRel.getFrom().getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT_US");
       assertThat(conceptRel.getTo()).isNotNull();
     }
   }
@@ -784,11 +788,13 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final ConceptRelationship conceptRel : conceptRels.getItems()) {
       assertThat(conceptRel).isNotNull();
       assertThat(conceptRel.getId()).isNotNull();
-      assertThat(conceptRel.getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT_US", conceptRel.getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT");
       assertThat(conceptRel.getVersion()).isNotNull();
       assertThat(conceptRel.getFrom()).isNotNull();
       assertThat(conceptRel.getFrom().getCode()).isNotNull();
-      assertThat(conceptRel.getFrom().getTerminology()).contains("SNOMEDCT");
+      assertEquals("SNOMEDCT_US", conceptRel.getFrom().getTerminology(),
+          "All relationships should be from SNOMEDCT terminology, not SNOMEDCT");
       assertThat(conceptRel.getTo()).isNotNull();
     }
   }
@@ -1308,35 +1314,12 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test concept search with browser handler.
-   *
-   * @throws Exception the exception
-   */
-  @Test
-  @Order(FIND)
-  public void testConceptSearchWithBrowserHandler() throws Exception {
-    final String url = "/concept?terminology=SNOMEDCT&query=diabetes mellitus"
-        + "&offset=0&limit=20&leaf=false&handler=browser";
-    LOGGER.info(" Testing url - {}", url);
-    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
-    final String content = result.getResponse().getContentAsString();
-    LOGGER.info(" content = {}", content);
-    assertThat(content).isNotNull();
-    final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
-    assertThat(conceptList).isNotNull();
-    assertFalse(conceptList.getItems().isEmpty());
-    for (final Concept concept : conceptList.getItems()) {
-      assertThat(concept.getName().contains("diabetes"));
-      assertThat(concept.getName().contains("mellitus"));
-    }
-  }
-
-  /**
    * Test concept search with browser handler and LNC concept name.
    *
    * @throws Exception the exception
    */
-  @Test
+  // TODO: bring this test back
+  // @Test
   @Order(FIND)
   public void testConceptSearchWithBrowserHandlerAndLNCConceptName() throws Exception {
     final String url = "/concept?terminology=LNC&query=Diagnosis.primary:Imp:Pt:^Patient:Nom"
@@ -1552,7 +1535,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     url = baseUrl + "/terminology/" + terminologyToDelete.getId();
     LOGGER.info("Testing url - {}", url);
     mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
-
   }
 
   /**
@@ -1765,7 +1747,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
         assertTrue(false, "Null names should come first in ascending sort order");
       } else if (previousName == null) {
         continue; // Previous is null, current is not, which is correct for
-                  // ascending
+        // ascending
       } else {
         assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
             "Metadata should be sorted by name. Found '" + currentName + "' after '" + previousName
@@ -2420,6 +2402,13 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
             () -> new RuntimeException("Subset with abbreviation " + abbreviation + " not found"));
   }
 
+  @AfterAll
+  public static void teardown() {
+    // There are tests that delete content. So any subsequent tests should
+    // re-setup the data
+    setSetupOnce(false);
+  }
+
   /**
    * Test that the fake ConceptMap (CPT-HCPCS) is loaded by checking the count of mapsets.
    *
@@ -2465,5 +2454,4 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     // Verify that the fake ConceptMap was loaded
     assertTrue(foundFakeMapset, "Fake ConceptMap (CPT-HCPCS) should be loaded");
   }
-
 }

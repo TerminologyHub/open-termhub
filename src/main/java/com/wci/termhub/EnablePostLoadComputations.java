@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * The Class EnablePostLoadComputations.
+ * Represents configuration for enablement of post load config.
  */
 @Component
 public class EnablePostLoadComputations {

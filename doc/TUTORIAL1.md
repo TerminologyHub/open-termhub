@@ -19,7 +19,8 @@ One option is to just build the code and run the server locally and use an INDEX
 # On Windows use export INDEX_DIR=c:/temp/opentermhub/index
 # On Windows if running within wsl use export INDEX_DIR=/mnt/c/tmp/opentermhub/index
 export INDEX_DIR=/tmp/opentermhub/index
-export ENABLE_POST_LOAD_COMPUTATIONS=true
+export ENABLE_POST_LOAD_COMPUTATIONS=false
+export JAVA_OPTS=-Xmx4g
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR
 make build run
 ```
@@ -34,7 +35,8 @@ The final option is to run the latest published public docker image as a contain
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
-  -e ENABLE_POST_LOAD_COMPUTATIONS=true \
+  -e JAVA_OPTS=-Xmx4g \
+  -e ENABLE_POST_LOAD_COMPUTATIONS=false \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
@@ -274,7 +276,8 @@ Once data is loaded, you can visualize it within the embedded terminology browse
 See [http://localhost:8080/index.html](http://localhost:8080/index.html)
 
 This is a locally-available version of the TermHub browser that lets you interact with the
-content loaded into the open termhub container.
+content loaded into the open termhub container. The hierarchy stuff will only work
+properly if you use `ENABLE_POST_LOAD_COMPUTATIONS=true` when loading data.
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data)**
 

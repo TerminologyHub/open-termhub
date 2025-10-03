@@ -21,7 +21,6 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.test.AbstractTerminologyTest;
 import com.wci.termhub.util.StringUtility;
 
 /**
@@ -179,7 +178,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
         .forEach(t -> LOGGER.debug("Terminology: {} - {}", t.getAbbreviation(), t.getPublisher()));
 
     final String publisher = "SNOMEDCT International";
-    final String query = "publisher:" + StringUtility.escapeQuery(publisher) + "";
+    final String query = "publisher:" + StringUtility.escapeQuery(publisher);
     LOGGER.info("testPublisherSearch Query: {}", query);
     SEARCH_PARAMETERS.setQuery(query);
     LuceneDataAccess.clearReaders();

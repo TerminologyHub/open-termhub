@@ -29,6 +29,7 @@ import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.ResourceType;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -1190,4 +1191,9 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertEquals(0, mapsets.getTotal());
   }
 
+  @AfterAll
+  public static void teardown() {
+    // There are tests that delete content. So any subsequent tests should re-setup the data
+    setSetupOnce(false);
+  }
 }

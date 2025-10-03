@@ -27,9 +27,8 @@ import com.wci.termhub.util.StringUtility;
 /**
  * Service for tracking loaded syndication content using Lucene index.
  *
- * This service maintains a registry of loaded content using: - Primary Key:
- * syndication feed entry ID (UUID) - Resource Key: contentItemIdentifier +
- * contentItemVersion
+ * This service maintains a registry of loaded content using: - Primary Key: syndication feed entry
+ * ID (UUID) - Resource Key: contentItemIdentifier + contentItemVersion
  */
 @Service
 @ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${syndication.token:}')")
@@ -67,7 +66,7 @@ public class SyndicationContentTracker {
     }
 
     try {
-      final String query = "entryId:\"" + StringUtility.escapeQuery(entryId) + "\"";
+      final String query = "entryId:" + StringUtility.escapeQuery(entryId);
       final SearchParameters searchParams = new SearchParameters(query, 1, 0);
       final ResultList<SyndicatedContent> results =
           searchService.find(searchParams, SyndicatedContent.class);
@@ -172,7 +171,7 @@ public class SyndicationContentTracker {
    */
   public SyndicatedContent getContentItemInfo(final String entryId) {
     try {
-      final String query = "entryId:\"" + StringUtility.escapeQuery(entryId) + "\"";
+      final String query = "entryId:" + StringUtility.escapeQuery(entryId);
       final SearchParameters searchParams = new SearchParameters(query, 1, 0);
       final ResultList<SyndicatedContent> results =
           searchService.find(searchParams, SyndicatedContent.class);

@@ -16,6 +16,8 @@ This will start the server with default settings. The application will be availa
 
 The following environment variables can be used to configure the application:
 
+- `DEBUG`: set to "true" to see debug messages in the log
+- `JAVA_OPTS`: Java options including memory usage, recommendation is to use `-Xmx4g` but it can load full data with `-Xmx2g`
 - `ENABLE_POST_LOAD_COMPUTATIONS`: Enable/disable post-load computations (default: false)
 - `PROJECT_API_KEY`: Authentication token for secure operations (required only if using Terminology Syndication from www.terminologyhub.com). To obtain this token:
   1. Visit [www.terminologyhub.com](https://www.terminologyhub.com)

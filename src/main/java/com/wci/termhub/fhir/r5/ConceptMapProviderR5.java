@@ -688,21 +688,22 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       logger.info("Processing concept map: id={}, code={}, url={}", map.getId(), mapsetCode,
           map.getUrl());
 
-      final List<Mapping> mappings =
-          searchService.find(new SearchParameters(StringUtility.composeQuery("AND",
+      final List<Mapping> mappings = searchService.find(
+          new SearchParameters(StringUtility.composeQuery("AND",
               // code clause
               (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
               // terminology clause (null if null) - no reversing
               sourceTerminology == null ? null
                   : ("from.terminology:"
-                      + StringUtility.escapeQuery(sourceTerminology.getAbbreviation()) + "\""),
+                      + StringUtility.escapeQuery(sourceTerminology.getAbbreviation())),
               targetTerminology == null ? null
                   : ("to.terminology:"
-                      + StringUtility.escapeQuery(targetTerminology.getAbbreviation()) + "\""),
+                      + StringUtility.escapeQuery(targetTerminology.getAbbreviation())),
               // mapset clauses
-              "mapset.abbreviation:\"" + StringUtility.escapeQuery(map.getTitle()) + "\"",
-              "mapset.version:\"" + StringUtility.escapeQuery(map.getVersion()) + "\"",
-              "mapset.code:" + mapsetCode), null, 1000, null, null), Mapping.class).getItems();
+              "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
+              "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
+              "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 1000, null, null),
+          Mapping.class).getItems();
 
       if (logger.isDebugEnabled()) {
         logger.info("Found {} mappings for concept map {}", mappings.size(), map.getId());

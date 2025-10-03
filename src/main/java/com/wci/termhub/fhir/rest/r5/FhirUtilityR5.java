@@ -578,16 +578,6 @@ public final class FhirUtilityR5 {
     // }
     // }
 
-    // TODO: review missing "defined"
-    // if (properties == null || properties.contains("normalForm")) {
-    // if (codeSystem.getTitle().startsWith("SNOMED")) {
-    // parameters.addParameter(new
-    // Parameters.ParametersParameterComponent().setName("normalForm")
-    // .setValue(new StringType(
-    // FhirUtility.getNormalForm(concept, relationships, displayMap, false))));
-    // }
-    // }
-
     // Definitions
     if (properties == null || properties.contains("definition")) {
       for (final Definition def : concept.getDefinitions()) {

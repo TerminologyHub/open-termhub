@@ -84,7 +84,7 @@ public class WildcardQueryBuilder implements QueryBuilder {
   @Override
   public String buildEscapedQuery(final String query) {
     return (StringUtility.isEmpty(query) || query.equals("*")) ? "*"
-        : "\"" + StringUtility.escapeQuery(query) + "\"";
+        : StringUtility.escapeQuery(query);
   }
 
   /* see superclass */

@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.test;
+package com.wci.termhub.rest.test;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +28,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.test.AbstractServerTest;
 
 /**
  * Abstract superclass for source code tests.
@@ -70,7 +71,11 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
           "ValueSet-hl7-body-site-r5.json", "ValueSet-personal-hl7-relationship-uv-ips-r5.json");
 
   /** The setup once. */
-  protected static boolean setupOnce = false;
+  private static boolean setupOnce = false;
+
+  public static void setSetupOnce(final boolean flag) {
+    setupOnce = flag;
+  }
 
   /**
    * Setup once.
