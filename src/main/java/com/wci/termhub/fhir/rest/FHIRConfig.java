@@ -57,6 +57,7 @@ public class FHIRConfig {
     hapiServlet.setServerName("Open Termhub R5 FHIR Terminology Server");
     hapiServlet.setServerVersion(getClass().getPackage().getImplementationVersion());
     hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
+
     // servletRegistrationBean.setOrder(100);
 
     return servletRegistrationBean;
