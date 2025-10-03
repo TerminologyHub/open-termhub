@@ -16,7 +16,7 @@ the embedded terminology browser.
 The following environment variables can be used to configure the application:
 
 - `DEBUG`: set to "true" to see debug messages in the log
-- `JAVA_OPTS`: Java options including memory usage, recommendation is to use `-Xmx4g` but it can load full data with `-Xmx2g`
+- `JAVA_OPTS`: Java options including memory usage, recommendation is to use `-Xmx4g` (we are testing various scenarios to allow this to be done with `-Xmx2g`).  NOTE: if you load data separately from deployment, you only need the setting this high while loading data, then can deploy with `-Xmx1g`.
 - `ENABLE_POST_LOAD_COMPUTATIONS`: Enable/disable post-load computations (default: false).  This can be set to "true" to compute tree position information which is used by the embedded browser to display hierarchy information.
 - `PROJECT_API_KEY`: Authentication token for secure operations (required only if using Terminology Syndication from www.terminologyhub.com). To obtain this token, [see below](#creating-a-termhub-project-with-an-api-key):
 
