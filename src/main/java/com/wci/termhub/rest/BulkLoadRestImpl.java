@@ -745,30 +745,31 @@ public class BulkLoadRestImpl {
                   "UTF-8");
 
               switch (resourceType) {
-                case "CodeSystem": {
+                case "CodeSystem":
                   final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService,
-                      file, enablePostLoadComputations.isEnabled(), CodeSystem.class, listener);
+                      file, enablePostLoadComputations.isEnabled(), CodeSystem.class,
+                      new DefaultProgressListener());
                   results.add("CodeSystem/" + codeSystem.getId());
                   break;
-                }
-                case "ValueSet": {
+
+                case "ValueSet":
                   // Use existing loader utility
                   final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService, file,
-                      ValueSet.class, listener);
+                      ValueSet.class, new DefaultProgressListener());
                   results.add("ValueSet/" + valueSet.getId());
                   break;
-                }
-                case "ConceptMap": {
+
+                case "ConceptMap":
                   // Use existing loader utility
                   final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService,
-                      file, ConceptMap.class, listener);
+                      file, ConceptMap.class, new DefaultProgressListener());
                   results.add("ConceptMap/" + conceptMap.getId());
                   break;
-                }
-                default: {
+
+                default:
                   logger.info("    SKIP unhandled resource");
                   continue;
-                }
+
               }
 
             }

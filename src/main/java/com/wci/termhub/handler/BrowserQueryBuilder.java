@@ -97,7 +97,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
       sb.append("*:*");
     }
     // Fielded queries should be left alone
-    else if (query.matches("^[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^:]*$")) {
+    else if (query.matches(".*[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^:]*.*")) {
       sb.append(query);
     }
     // Otherwise, build a query in parts
@@ -119,7 +119,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
         clauses.add("name.keyword:\"" + StringUtility.escapeQueryNoSpace(query) + "\"^90");
       } else {
         clauses.add("stemName.keyword:\"" + stemQuery + "\"^80");
-        clauses.add("terms.stemName.keyword:\"" + stemQuery + "\"^85");
+        // clauses.add("terms.stemName.keyword:\"" + stemQuery + "\"^85");
       }
 
       // term name match

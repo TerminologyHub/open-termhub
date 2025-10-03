@@ -7,7 +7,7 @@ if [ "${DEBUG:-false}" = "true" ]; then
     export LOG_LEVEL=DEBUG
 else
     echo "Debug logging disabled"
-    export LEVEL=INFO
+    export LOG_LEVEL=INFO
 fi
 
 echo "java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -jar open-termhub-*.jar"
