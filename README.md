@@ -8,6 +8,7 @@ container works seamlessly with terminology content provided by
 
 1. [Step-by-step instructions with Sandbox data](doc/TUTORIAL1.md)
 2. [Step-by-step instructions with Sandbox data using syndication](doc/TUTORIAL2.md)
+3. [More information on building and deploying with real data](doc/DEPLOY.md)
 
 ## Contributing
 
