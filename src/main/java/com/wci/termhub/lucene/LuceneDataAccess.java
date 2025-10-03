@@ -624,14 +624,11 @@ public class LuceneDataAccess {
     // If no explicit sort is provided, sort by score (null Sort triggers relevance
     // ordering)
     final Sort sort = (searchParameters.getSort() == null || searchParameters.getSort().isEmpty())
-        ? null
-        : IndexUtility.getSortOrder(searchParameters, clazz);
+        ? null : IndexUtility.getSortOrder(searchParameters, clazz);
 
     final int start = searchParameters.getOffset();
     final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-    LOGGER.info("  lucene = {} [{}, {}, {}, {}]", searchParameters.getLuceneQuery(), start, end,
-        searchParameters.getSort(), clazz.getName());
     if (LOGGER.isDebugEnabled() && searchParameters.getLuceneQuery() != null) {
       LOGGER.debug("  lucene = {} [{}, {}, {}, {}]", searchParameters.getLuceneQuery(), start, end,
           searchParameters.getSort(), clazz.getName());
