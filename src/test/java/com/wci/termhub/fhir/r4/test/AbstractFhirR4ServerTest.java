@@ -11,10 +11,6 @@ package com.wci.termhub.fhir.r4.test;
 
 import java.util.List;
 
-import com.wci.termhub.fhir.util.FhirUtility;
-import com.wci.termhub.model.Mapset;
-import com.wci.termhub.model.Subset;
-import com.wci.termhub.model.Terminology;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -105,30 +101,4 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
     setupOnce = true;
   }
 
-  protected void setTerminologyLoaded(Terminology terminology, boolean flag) throws Exception {
-    if(terminology == null) {
-      throw new Exception("Terminology cannot be null");
-    }
-    terminology.getAttributes().put("loaded", Boolean.toString(flag));
-    searchService.update(Terminology.class, terminology.getId(), terminology);
-    FhirUtility.clearCaches();
-  }
-
-  protected void setMapsetLoaded(Mapset mapset, boolean flag) throws Exception {
-    if(mapset == null) {
-      throw new Exception("Terminology cannot be null");
-    }
-    mapset.getAttributes().put("loaded", Boolean.toString(flag));
-    searchService.update(Mapset.class, mapset.getId(), mapset);
-    FhirUtility.clearCaches();
-  }
-
-  protected void setValuesetLoaded(Subset subset, boolean flag) throws Exception {
-    if(subset == null) {
-      throw new Exception("Terminology cannot be null");
-    }
-    subset.getAttributes().put("loaded", Boolean.toString(flag));
-    searchService.update(Subset.class, subset.getId(), subset);
-    FhirUtility.clearCaches();
-  }
 }

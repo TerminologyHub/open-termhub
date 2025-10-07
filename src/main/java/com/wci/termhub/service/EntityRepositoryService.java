@@ -103,18 +103,6 @@ public interface EntityRepositoryService {
   public <T extends HasId> T get(final String id, final Class<T> clazz) throws Exception;
 
   /**
-   * Find by id.
-   *
-   * @param <T> the generic type
-   * @param id the id
-   * @param clazz the clazz
-   * @param filterUnloaded the filter unloaded entities
-   * @return the optional
-   * @throws Exception the exception
-   */
-  public <T extends HasId> T get(final String id, final Class<T> clazz, boolean filterUnloaded) throws Exception;
-
-  /**
    * Find ids.
    *
    * @param <T> the generic type

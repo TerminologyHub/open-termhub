@@ -337,7 +337,7 @@ public final class CodeSystemLoaderUtil {
       Application.logMemory();
 
       // Get the terminology again because the tree position computer would've changed it
-      terminology = service.get(terminology.getId(), Terminology.class, false);
+      terminology = service.get(terminology.getId(), Terminology.class);
       // Set loaded to true and save it again
       terminology.getAttributes().put("loaded", "true");
       service.update(Terminology.class, terminology.getId(), terminology);
