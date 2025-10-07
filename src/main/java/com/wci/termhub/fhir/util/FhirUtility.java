@@ -825,4 +825,14 @@ public final class FhirUtility {
       return code;
     }
   }
+
+  /**
+   * Clear caches. Used only for testing.
+   */
+  public static void clearCaches() {
+    terminologyCache = new TimerCache<>(1000, 10000);
+    mapsetCache = new TimerCache<>(1000, 10000);
+    codeSystemUriCache = new TimerCache<>(1000, 10000);
+    displayMap = new HashMap<>();
+  }
 }

@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.wci.termhub.model.HasAttributes;
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -584,6 +585,10 @@ public class LuceneDataAccess {
     if (sp.getAscending() == null) {
       sp.setAscending(true);
     }
+
+    if (sp.getFilterUnloaded() == null) {
+      sp.setFilterUnloaded(true);
+    }
     try {
       final Query query = sp.getLuceneQuery() != null ? sp.getLuceneQuery()
           : LuceneQueryBuilder.parse(sp.getQuery(), clazz);
@@ -653,6 +658,18 @@ public class LuceneDataAccess {
       final T obj = mapper.readValue(jsonEntityString, clazz);
       if (LOGGER.isTraceEnabled()) {
         LOGGER.trace("search result: {}", obj);
+      }
+      if (searchParameters.getFilterUnloaded() == null || searchParameters.getFilterUnloaded()) {
+        // Any partially loaded objects are skipped
+        if (obj instanceof HasAttributes) {
+          Map<String, String> attributes = ((HasAttributes) obj).getAttributes();
+          if (attributes != null) {
+            String loaded = attributes.get("loaded");
+            if (loaded != null && loaded.equals("false")) {
+              continue;
+            }
+          }
+        }
       }
       results.getItems().add(obj);
     }
@@ -936,6 +953,9 @@ public class LuceneDataAccess {
       synchronized (READER_MAP) {
         if (!READER_MAP.containsKey(canonicalClassName)) {
           synchronized (READER_MAP) {
+            if(LOGGER.isTraceEnabled()){
+              LOGGER.trace("Creating new IndexReader for class: {}", canonicalClassName);
+            }
             final File indexDir = getIndexDirectory(clazz);
             final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
             reader = DirectoryReader.open(fsDirectory);
