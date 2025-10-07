@@ -330,7 +330,7 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       // Get the subset again because the tree position computer would've changed it
-      subset = service.get(subset.getId(), Subset.class, false);
+      subset = service.get(subset.getId(), Subset.class);
       // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
       service.update(Subset.class, subset.getId(), subset);
@@ -557,7 +557,7 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       // Get the subset again because the tree position computer would've changed it
-      subset = service.get(subset.getId(), Subset.class, false);
+      subset = service.get(subset.getId(), Subset.class);
       // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
       service.update(Subset.class, subset.getId(), subset);

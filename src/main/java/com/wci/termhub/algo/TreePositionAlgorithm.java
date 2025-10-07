@@ -123,7 +123,7 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     searchService.createIndex(ConceptTreePosition.class);
 
     final Terminology term = TerminologyUtility.getTerminology(searchService, getTerminology(),
-        getPublisher(), getVersion(), false);
+        getPublisher(), getVersion());
     if (term == null) {
       throw new Exception("Unable to find terminology = " + getTerminology() + ", publisher = "
           + getPublisher() + ", version = " + getVersion());

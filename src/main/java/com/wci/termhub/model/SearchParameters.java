@@ -79,7 +79,6 @@ public class SearchParameters extends BaseModel {
   /** The leaf. */
   private Boolean leaf;
 
-  private Boolean filterUnloaded;
   /**
    * Instantiates an empty {@link SearchParameters}.
    */
@@ -479,24 +478,6 @@ public class SearchParameters extends BaseModel {
   }
 
   /**
-   * Gets the include unloaded.
-   *
-   * @return the include unloaded
-   */
-  @Schema(description = "Include unloaded concepts in search results")
-  public Boolean getFilterUnloaded() {
-    return filterUnloaded;
-  }
-  /**
-   * Sets the include unloaded.
-   *
-   * @param filterUnloaded the new include unloaded
-   */
-  public void setFilterUnloaded(final Boolean filterUnloaded) {
-    this.filterUnloaded = filterUnloaded;
-  }
-
-  /**
    * Hash code.
    *
    * @return the int
@@ -505,7 +486,7 @@ public class SearchParameters extends BaseModel {
   @Override
   public int hashCode() {
     return Objects.hash(active, ascending, expression, field, filters, index, leaf, limit, offset,
-        query, sort, terminology, luceneQuery, filterUnloaded);
+        query, sort, terminology, luceneQuery);
   }
 
   /**
@@ -530,7 +511,7 @@ public class SearchParameters extends BaseModel {
         && Objects.equals(leaf, other.leaf) && Objects.equals(limit, other.limit)
         && Objects.equals(offset, other.offset) && Objects.equals(query, other.query)
         && Objects.equals(sort, other.sort) && Objects.equals(terminology, other.terminology)
-        && Objects.equals(luceneQuery, other.luceneQuery) && Objects.equals(filterUnloaded, other.filterUnloaded);
+        && Objects.equals(luceneQuery, other.luceneQuery);
   }
 
 }
