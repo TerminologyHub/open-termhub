@@ -274,7 +274,7 @@ public final class ConceptMapLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       // Get the mapset again because the tree position computer would've changed it
-      mapset = service.get(mapset.getId(), Mapset.class);
+      mapset = service.get(mapset.getId(), Mapset.class, false);
       // Set loaded to true and save it again
       mapset.getAttributes().put("loaded", "true");
       service.update(Mapset.class, mapset.getId(), mapset);
