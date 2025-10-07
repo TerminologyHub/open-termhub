@@ -18,14 +18,58 @@ The following environment variables can be used to configure the application:
 - `DEBUG`: set to "true" to see debug messages in the log
 - `JAVA_OPTS`: Java options including memory usage, recommendation is to use `-Xmx4g` (we are testing various scenarios to allow this to be done with `-Xmx2g`).  NOTE: if you load data separately from deployment, you only need the setting this high while loading data, then can deploy with `-Xmx1g`.
 - `ENABLE_POST_LOAD_COMPUTATIONS`: Enable/disable post-load computations (default: false).  This can be set to "true" to compute tree position information which is used by the embedded browser to display hierarchy information.
-- `PROJECT_API_KEY`: Authentication token for secure operations (required only if using Terminology Syndication from www.terminologyhub.com). To obtain this token, [see below](#creating-a-termhub-project-with-an-api-key):
+`PROJECT_API_KEY`: Authentication token for secure operations (required only if using Terminology Syndication from www.terminologyhub.com). To obtain this token, [see below](#creating-a-termhub-project-with-an-api-key):
+- `SYNDICATION_CHECK_ON_STARTUP` (optional): when set to `true`, performs a one-time syndication load at application startup. If not set or false, no startup syndication occurs.
+- `SYNDICATION_CHECK_CRON` (optional): a Spring cron expression (6 fields: sec min hour dom mon dow) to enable periodic re-syndication. If not set or empty, no schedule is registered. Requires `PROJECT_API_KEY`.
 
 **[Back to top](#deploying-open-termhub-with-full-terminologies-from-termhub)**
 
+### application.properties examples
+
+```bashs
+# Enable syndication
+syndication.token=<your-project-api-key>
+
+# Optional: one-time startup load
+syndication.check.on-startup=true
+
+# Optional: periodic re-syndication (Spring cron format: sec min hour dom mon dow)
+syndication.check.cron=0 0 0 * * *
+```
+
+### Docker examples
+
+One-time startup load only:
+
+```bashs
+docker run --rm --name open-termhub -p 8080:8080 \
+  -e PROJECT_API_KEY=... \
+  -e SYNDICATION_CHECK_ON_STARTUP=true \
+  wcinformatics/open-termhub:latest
+```
+
+Periodic re-syndication only:
+
+```bashs
+docker run --rm --name open-termhub -p 8080:8080 \
+  -e PROJECT_API_KEY=... \
+  -e SYNDICATION_CHECK_CRON="0 0 0 * * *" \
+  wcinformatics/open-termhub:latest
+```
+
+Both startup and periodic:
+
+```bashs
+docker run --rm --name open-termhub -p 8080:8080 \
+  -e PROJECT_API_KEY=... \
+  -e SYNDICATION_CHECK_ON_STARTUP=true \
+  -e SYNDICATION_CHECK_CRON="0 0 0 * * *" \
+  wcinformatics/open-termhub:latest
+```
 
 ## Data Persistence
 
-The application uses Lucene for fast searching of terminology data. By default, indexes are stored in `/index`. To persist these indexes between container restarts, mount a volume to `/index` on the container.  For example, 
+The application uses Lucene for fast searching of terminology data. By default, indexes are stored in `/index`. To persist these indexes between container restarts, mount a volume to `/index` on the container.  For example,
 
 ```bashs
 docker run --rm --name open-termhub -p 8080:8080 \
@@ -35,7 +79,7 @@ docker run --rm --name open-termhub -p 8080:8080 \
 
 ### Volume size
 
-The exact size needed for the volume varies and depends on the number and size of terminology assets included in the deployment.  For example, a configuration that loads the latest versions of SNOMEDCT_US, RXNORM, LOINC, and ICD10CM with `ENABLE_POST_LOAD_COMPUTATIONS=true` a volume size of 20GB is recommended.  The same data set up with `ENABLE_POST_LOAD_COMPUTATIONS=false` requires a small volume size of 10GB.  
+The exact size needed for the volume varies and depends on the number and size of terminology assets included in the deployment.  For example, a configuration that loads the latest versions of SNOMEDCT_US, RXNORM, LOINC, and ICD10CM with `ENABLE_POST_LOAD_COMPUTATIONS=true` a volume size of 20GB is recommended.  The same data set up with `ENABLE_POST_LOAD_COMPUTATIONS=false` requires a small volume size of 10GB.
 
 The best strategy is to load the data assets you need in an "offline" environment and you can see exactly how much space is needed, then provision a volume for the container that is large enough for that size.
 
@@ -71,7 +115,7 @@ Here is an example of a project with a number of "latest" terminology versions
 
 ## Loading the Container
 
-There are a few options for loading a container including: 
+There are a few options for loading a container including:
 * Pre-loading a volume offline and then mounting it to a container (**RECOMMENDED**)
 * Using syndication to have a container load itself upon startup
 * Launching a container and loading it from "downloaded" artifacts
@@ -79,7 +123,7 @@ There are a few options for loading a container including:
 
 ### Pre-loading a Volume
 
-This option is recommended for situations where you want to control terminology versions and ensure the data being served by the container is exactly what is needed by downstream services.  This is also a recommended option for running with Kubernetes because it will allow you to scale pods in "read only" mode that are mounted with the same persistent volume.   
+This option is recommended for situations where you want to control terminology versions and ensure the data being served by the container is exactly what is needed by downstream services.  This is also a recommended option for running with Kubernetes because it will allow you to scale pods in "read only" mode that are mounted with the same persistent volume.
 
 This option is NOT recommended if you want to use "latest" versions and have the container automatically "update" content. This option is NOT recommended if you need to make write calls to the container and intend to have multiple pods running.
 
@@ -90,17 +134,49 @@ Pre-loading a volume can use either of the "syndication" or "direct load" strate
 
 Open TermHub supports syndication of content from a TermHub project that is configured with an API key and one or more terminology/subset/mapset (code system, value set, concept map) resources.  [See the section above](#creating-a-termhub-project-with-an-api-key) for information on setting up a project.
 
-If the container is launched with a `PROJECT_API_KEY` environment variable set to the project API key of a corresponding TermHub project, then the container will load itself upon startup.  This mode can be used either to pre-load some data to be packaged and deployed to a container service later -- or it can be used simply to streamline loading data into a running container.
+Syndication features are enabled when a token is provided. Use one or both of the modes below:
+
+- One-time startup load: set `PROJECT_API_KEY` and `SYNDICATION_CHECK_ON_STARTUP=true`. If not set, the app starts and performs no syndication at startup.
+- Periodic re-syndication: set `PROJECT_API_KEY` and `SYNDICATION_CHECK_CRON` to a valid Spring cron expression.
+
+Examples of valid Spring cron expressions:
+
+```
+0 0 0 * * *
+0 5 * * * *
+```
+
+#### Spring cron vs UNIX cron
+
+- Spring cron uses 6 fields: seconds minutes hours day-of-month month day-of-week (optional 7th year). UNIX cron uses 5 fields (no seconds).
+- If you paste a 5‑field UNIX cron into `syndication.check.cron`, it will fail to parse. Add a leading seconds field.
+
+Common conversions:
+
+```bashs
+# UNIX → Spring
+# Daily at midnight
+0 0 * * *      ->  0 0 0 * * *
+
+# Every 5 minutes
+*/5 * * * *     ->  0 */5 * * * *
+
+# Hourly at minute 5
+5 * * * *       ->  0 5 * * * *
+```
 
 
 
-#### Coming soon: Resyndication 
+#### Resyndication
 
-If the TermHub project has been configured with "latest" versions of terminologies, it is possible to configure "re-syndication" of the container to grab new versions of the content when available.  In this mode, when new versions are available the container "reconciles" the feed defined by the project with data that is loaded - so it is possible to tweak the contents of the deployed service simply by changing the configuration in TermHub (cloud). This "resyndication" option is configured by a `SYNDICATION_CHECK_CRON` environment variable, which uses cron-style configuration to specify when the container should attempt resyndication. 
+If the TermHub project has been configured with "latest" versions of terminologies, you can configure periodic re-syndication via `SYNDICATION_CHECK_CRON`. The service will reconcile the project feed with the currently loaded data and load new versions when available.
 
-* e.g. `0 0 * * *` for daily check at midnight
+- Example: `SYNDICATION_CHECK_CRON="0 0 0 * * *"` for daily at midnight
+- Warning: avoid running multiple containers mounted to the same indexes volume with the same Spring cron schedule (concurrent writes will conflict)
 
-If using resyndication, it is NOT recommended to run multiple containers mounted to the same indexes volume that are both configured for resyndication because both deployments will attempt to load data on the same schedule, causing a conflict.
+#### Startup one-time load
+
+To perform a one-time load at startup, set `SYNDICATION_CHECK_ON_STARTUP=true`. If not set or false, the application starts and performs no syndication on startup.
 
 
 ### Loading Data Manually
@@ -119,7 +195,7 @@ curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
 -F "resource=@CodeSystem-snomedct_us-nlm-20250901-r5.json"
 ```
 
-These represent single individual versions of the terminology files and can be loaded as needed (and deleted as needed). 
+These represent single individual versions of the terminology files and can be loaded as needed (and deleted as needed).
 
 This approach is recommended if you do not want to rely on the embedded capabilities of the syndication mechanism and prefer to build a means to download and precisely loads of specific versions of data that you later intend to deploy to a running container.
 
