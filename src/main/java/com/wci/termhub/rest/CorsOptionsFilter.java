@@ -1,3 +1,12 @@
+/*
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
+ */
 package com.wci.termhub.rest;
 
 import java.io.IOException;
@@ -36,9 +45,18 @@ public class CorsOptionsFilter implements Filter {
   /** The Constant MAX_AGE. Cache preflight response for 1 hour. */
   private static final String MAX_AGE = "3600";
 
+  /**
+   * Do filter.
+   *
+   * @param req the req
+   * @param res the res
+   * @param chain the chain
+   * @throws IOException Signals that an I/O exception has occurred.
+   * @throws ServletException the servlet exception
+   */
   /* see superclass */
   @Override
-  public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+  public void doFilter(final ServletRequest req, final ServletResponse res, final FilterChain chain)
     throws IOException, ServletException {
 
     final HttpServletResponse response = (HttpServletResponse) res;

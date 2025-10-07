@@ -88,7 +88,25 @@ public final class ConceptMapLoaderUtil {
    */
   public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
     final Class<T> type, final ProgressListener listener) throws Exception {
-    return indexConceptMap(service, file, type, listener);
+    return loadConceptMap(service, file, type, listener, null);
+  }
+
+  /**
+   * Load concept map.
+   *
+   * @param <T>          the generic type
+   * @param service      the service
+   * @param file         the file
+   * @param type         the type
+   * @param listener     the listener
+   * @param isSyndicated the is syndicated
+   * @return the t
+   * @throws Exception the exception
+   */
+  public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
+      final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
+      throws Exception {
+    return indexConceptMap(service, file, type, listener, isSyndicated);
   }
 
   /**
@@ -99,12 +117,14 @@ public final class ConceptMapLoaderUtil {
    * @param file the file
    * @param type the type
    * @param listener the listener
+   * @param isSyndicated the is syndicated
    * @return the t
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexConceptMap(final EntityRepositoryService service, final File file,
-    final Class<T> type, final ProgressListener listener) throws Exception {
+      final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
+      throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
@@ -277,6 +297,9 @@ public final class ConceptMapLoaderUtil {
       mapset = service.get(mapset.getId(), Mapset.class);
       // Set loaded to true and save it again
       mapset.getAttributes().put("loaded", "true");
+      if (isSyndicated != null && isSyndicated) {
+        mapset.getAttributes().put("syndicated", "true");
+      }
       service.update(Mapset.class, mapset.getId(), mapset);
 
       // Set listener to 100%

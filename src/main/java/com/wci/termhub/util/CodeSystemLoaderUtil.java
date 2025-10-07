@@ -105,10 +105,28 @@ public final class CodeSystemLoaderUtil {
     final boolean computeTreePositions, final Class<T> type, final ProgressListener listener)
     throws Exception {
 
-    // Application.logMemory();
-    // final JsonNode jsonContent = ThreadLocalMapper.get().readTree(content);
+    return loadCodeSystem(service, file, computeTreePositions, type, listener, null);
+  }
+
+  /**
+   * Load concepts from CodeSystem format JSON.
+   *
+   * @param <T>                  the generic type
+   * @param service              the service
+   * @param file                 the file
+   * @param computeTreePositions whether to compute tree positions
+   * @param type                 the type
+   * @param listener             the listener
+   * @param isSyndicated         the is syndicated
+   * @return the string
+   * @throws Exception the exception
+   */
+  public static <T> T loadCodeSystem(final EntityRepositoryService service, final File file,
+      final boolean computeTreePositions, final Class<T> type, final ProgressListener listener,
+      final Boolean isSyndicated) throws Exception {
+
     Application.logMemory();
-    return indexCodeSystem(service, file, computeTreePositions, type, listener);
+    return indexCodeSystem(service, file, computeTreePositions, type, listener, isSyndicated);
   }
 
   /**
@@ -120,13 +138,14 @@ public final class CodeSystemLoaderUtil {
    * @param computeTreePositions whether to compute tree positions
    * @param type the type
    * @param listener the listener
+   * @param isSyndicated         the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexCodeSystem(final EntityRepositoryService service, final File file,
-    final boolean computeTreePositions, final Class<T> type, final ProgressListener listener)
-    throws Exception {
+      final boolean computeTreePositions, final Class<T> type, final ProgressListener listener,
+      final Boolean isSyndicated) throws Exception {
 
     final long startTime = System.currentTimeMillis();
     final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
@@ -340,6 +359,9 @@ public final class CodeSystemLoaderUtil {
       terminology = service.get(terminology.getId(), Terminology.class);
       // Set loaded to true and save it again
       terminology.getAttributes().put("loaded", "true");
+      if (isSyndicated != null && isSyndicated) {
+        terminology.getAttributes().put("syndicated", "true");
+      }
       service.update(Terminology.class, terminology.getId(), terminology);
 
       // Set listener to 100%
@@ -802,8 +824,8 @@ public final class CodeSystemLoaderUtil {
       }
 
       if ("relationship".equals(propertyType)) {
-        final ConceptRelationship relationship =
-            createRelationship(propertyNode, concept, terminology, terminologyCache);
+        final ConceptRelationship relationship = createRelationship(propertyNode, concept, terminology,
+            terminologyCache);
 
         // ECL clauses removed per requirements
 

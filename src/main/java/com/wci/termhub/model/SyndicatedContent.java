@@ -47,6 +47,18 @@ public class SyndicatedContent implements HasId {
   @Field(type = FieldType.Text)
   private String title;
 
+  /** The terminology. */
+  @Field(type = FieldType.Keyword)
+  private String terminology;
+
+  /** The publisher. */
+  @Field(type = FieldType.Keyword)
+  private String publisher;
+
+  /** The version. */
+  @Field(type = FieldType.Keyword)
+  private String version;
+
   /** The loaded timestamp. */
   @Field(type = FieldType.Date)
   private Date loadedTimestamp;
@@ -198,6 +210,60 @@ public class SyndicatedContent implements HasId {
   }
 
   /**
+   * Gets the terminology.
+   *
+   * @return the terminology
+   */
+  public String getTerminology() {
+    return terminology;
+  }
+
+  /**
+   * Sets the terminology.
+   *
+   * @param terminology the new terminology
+   */
+  public void setTerminology(final String terminology) {
+    this.terminology = terminology;
+  }
+
+  /**
+   * Gets the publisher.
+   *
+   * @return the publisher
+   */
+  public String getPublisher() {
+    return publisher;
+  }
+
+  /**
+   * Sets the publisher.
+   *
+   * @param publisher the new publisher
+   */
+  public void setPublisher(final String publisher) {
+    this.publisher = publisher;
+  }
+
+  /**
+   * Gets the version.
+   *
+   * @return the version
+   */
+  public String getVersion() {
+    return version;
+  }
+
+  /**
+   * Sets the version.
+   *
+   * @param version the new version
+   */
+  public void setVersion(final String version) {
+    this.version = version;
+  }
+
+  /**
    * Returns the loaded timestamp.
    *
    * @return the loaded timestamp
@@ -275,6 +341,11 @@ public class SyndicatedContent implements HasId {
     return contentItemIdentifier + "|" + contentItemVersion;
   }
 
+  /**
+   * To string.
+   *
+   * @return the string
+   */
   @Override
   public String toString() {
     try {
