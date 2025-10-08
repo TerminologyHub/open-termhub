@@ -97,7 +97,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
       sb.append("*:*");
     }
     // Fielded queries should be left alone
-    else if (StringUtility.isFieldedQuery(query)) {
+    else if (StringUtility.isFieldedQuery(query) && !isSingleTokenWithMultipleColons(query)) {
       sb.append(query);
     }
     // Otherwise, build a query in parts
@@ -127,7 +127,8 @@ public class BrowserQueryBuilder implements QueryBuilder {
         // Boost for phrase
         clauses.add("terms.stemName:\"" + stemQuery + "\"^70");
 
-        // If not a code, also do AND wildcard searches on each word (boost for AND)
+        // If not a code, also do AND wildcard searches on each word (boost for
+        // AND)
         if (!isCode(query)) {
           String clause =
               "stemName:(" + String.join(" AND ", Arrays.asList(stemQuery.split(" "))) + ")^70";
@@ -189,5 +190,23 @@ public class BrowserQueryBuilder implements QueryBuilder {
         // hgnc:12345
         || query.matches("[a-z]+\\:\\d+");
 
+  }
+
+  /**
+   * Returns true if the query is a single token (no whitespace) containing multiple colons.
+   * This commonly occurs in LOINC-style names and should not be treated as a fielded query.
+   *
+   * @param query the query
+   * @return true, if single token with multiple colons
+   */
+  private boolean isSingleTokenWithMultipleColons(final String query) {
+    if (query == null || query.indexOf(' ') != -1) {
+      return false;
+    }
+    final int first = query.indexOf(':');
+    if (first == -1) {
+      return false;
+    }
+    return query.indexOf(':', first + 1) != -1;
   }
 }

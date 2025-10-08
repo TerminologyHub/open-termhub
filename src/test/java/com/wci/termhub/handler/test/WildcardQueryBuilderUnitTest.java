@@ -23,13 +23,20 @@ import com.wci.termhub.model.SearchParameters;
  */
 public class WildcardQueryBuilderUnitTest {
 
+  /** The builder. */
   private WildcardQueryBuilder builder;
 
+  /**
+   * Sets the up.
+   */
   @BeforeEach
   public void setUp() {
     builder = new WildcardQueryBuilder();
   }
 
+  /**
+   * Test build query empty and wildcard.
+   */
   @Test
   public void testBuildQueryEmptyAndWildcard() {
     assertEquals("*", builder.buildQuery(""));
@@ -43,6 +50,9 @@ public class WildcardQueryBuilderUnitTest {
     assertTrue(q.contains("(active:true^25 OR active:false)"));
   }
 
+  /**
+   * Test build query fielded pass through.
+   */
   @Test
   public void testBuildQueryFieldedPassThrough() {
     assertEquals("name:foo", builder.buildQuery("name:foo"));
@@ -56,6 +66,9 @@ public class WildcardQueryBuilderUnitTest {
     assertEquals("terminology:SNOMEDCT AND active:true AND leaf:false", q);
   }
 
+  /**
+   * Test build query non fielded adds wildcards and escapes.
+   */
   @Test
   public void testBuildQueryNonFieldedAddsWildcardsAndEscapes() {
     // Words become escaped + * and AND-composed
@@ -64,6 +77,9 @@ public class WildcardQueryBuilderUnitTest {
     assertEquals("a\\-b.c\\(d\\),ef*", builder.buildQuery("a-b.c(d),ef"));
   }
 
+  /**
+   * Test build escaped query.
+   */
   @Test
   public void testBuildEscapedQuery() {
     // Escaped variant uses * for empty, escapes otherwise
