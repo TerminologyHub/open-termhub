@@ -75,17 +75,6 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
   private EntityRepositoryService searchService;
 
   /**
-   * The Constant context.
-   *
-   * @param request the request
-   * @param details the details
-   * @param id the id
-   * @return the questionnaire
-   * @throws Exception the exception
-   */
-  // private static FhirContext context = FhirContext.forR4();
-
-  /**
    * Gets the questionnaire.
    *
    * @param request the request

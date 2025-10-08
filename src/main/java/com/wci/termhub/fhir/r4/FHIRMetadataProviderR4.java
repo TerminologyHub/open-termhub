@@ -177,6 +177,18 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
 
           // Set the "service" property
           security.setService(Collections.singletonList(serviceCodeableConcept));
+
+          // Ensure system interactions advertise transaction/batch
+          boolean hasTxn = rest.getInteraction().stream()
+              .anyMatch(i -> i.getCode() == CapabilityStatement.SystemRestfulInteraction.TRANSACTION);
+          if (!hasTxn) {
+            rest.addInteraction().setCode(CapabilityStatement.SystemRestfulInteraction.TRANSACTION);
+          }
+          boolean hasBatch = rest.getInteraction().stream()
+              .anyMatch(i -> i.getCode() == CapabilityStatement.SystemRestfulInteraction.BATCH);
+          if (!hasBatch) {
+            rest.addInteraction().setCode(CapabilityStatement.SystemRestfulInteraction.BATCH);
+          }
         }
         return capabilityStatement;
       }

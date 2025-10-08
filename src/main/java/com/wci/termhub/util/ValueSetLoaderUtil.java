@@ -57,10 +57,10 @@ public final class ValueSetLoaderUtil {
       };
 
   /** The Constant contextR4. */
-  private static FhirContext contextR4 = FhirContext.forR4();
+  private static final FhirContext FHIR_CONTEXT_R4 = FhirContext.forR4();
 
   /** The Constant contextR5. */
-  private static FhirContext contextR5 = FhirContext.forR5();
+  private static final FhirContext FHIR_CONTEXT_R5 = FhirContext.forR5();
 
   /** The Constant JSON_SUBSET_CODE. */
   private static final String JSON_SUBSET_CODE = "https://terminologyhub.com/model/subset/code";
@@ -119,12 +119,12 @@ public final class ValueSetLoaderUtil {
     LOGGER.info("Loading Subset from JSON, isR5={}", type == org.hl7.fhir.r5.model.ValueSet.class);
 
     if (type == org.hl7.fhir.r4.model.ValueSet.class) {
-      final IParser parser = contextR4.newJsonParser();
+      final IParser parser = FHIR_CONTEXT_R4.newJsonParser();
       final org.hl7.fhir.r4.model.ValueSet vs = parser.parseResource(
           org.hl7.fhir.r4.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
       return (T) indexValueSetR4(service, vs, listener, isSyndicated);
     }
-    final IParser parser = contextR5.newJsonParser();
+    final IParser parser = FHIR_CONTEXT_R5.newJsonParser();
     final org.hl7.fhir.r5.model.ValueSet vs = parser.parseResource(
         org.hl7.fhir.r5.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
     return (T) indexValueSetR5(service, vs, listener, isSyndicated);
@@ -158,10 +158,16 @@ public final class ValueSetLoaderUtil {
             HttpServletResponse.SC_BAD_REQUEST);
       }
 
-      // check for existing
+      // check for existing (require key fields)
       final String abbreviation = valueSet.getTitle();
       final String publisher = valueSet.getPublisher();
       final String version = valueSet.getVersion();
+      if (abbreviation == null || abbreviation.isEmpty() || publisher == null
+          || publisher.isEmpty() || version == null || version.isEmpty()) {
+        throw FhirUtilityR4.exception(
+            "ValueSet requires title, publisher, and version for import (missing one or more)",
+            IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+      }
       Subset subset = findSubset(service, abbreviation, publisher, version);
       if (subset != null) {
         throw FhirUtilityR4.exception(
@@ -615,8 +621,9 @@ public final class ValueSetLoaderUtil {
     final String publisher, final String version) throws Exception {
 
     final SearchParameters searchParams = new SearchParameters();
-    searchParams
-        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
+    final String versionForQuery = (version == null || version.isEmpty()) ? "*" : version;
+    searchParams.setQuery(
+        TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, versionForQuery));
     final ResultList<Subset> subset = service.find(searchParams, Subset.class);
 
     return (subset.getItems().isEmpty()) ? null : subset.getItems().get(0);
