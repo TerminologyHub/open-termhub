@@ -96,8 +96,11 @@ public class BrowserQueryBuilder implements QueryBuilder {
     if (StringUtility.isEmpty(query) || query.equals("*:*") || query.equals("*")) {
       sb.append("*:*");
     }
-    // Fielded queries should be left alone
-    else if (query.matches(".*[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^:]*.*")) {
+    // Fielded queries should be left alone, except when the input is a single token
+    // with multiple colons (e.g., certain LOINC-style names), which should be treated
+    // as a literal term rather than a fielded query
+    else if (query.matches(".*[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^\\s:]+(\\s.*|$)")
+        && !isSingleTokenWithMultipleColons(query)) {
       sb.append(query);
     }
     // Otherwise, build a query in parts
@@ -189,5 +192,23 @@ public class BrowserQueryBuilder implements QueryBuilder {
         // hgnc:12345
         || query.matches("[a-z]+\\:\\d+");
 
+  }
+
+  /**
+   * Returns true if the query is a single token (no whitespace) containing multiple colons.
+   * This commonly occurs in LOINC-style names and should not be treated as a fielded query.
+   *
+   * @param query the query
+   * @return true, if single token with multiple colons
+   */
+  private boolean isSingleTokenWithMultipleColons(final String query) {
+    if (query == null || query.indexOf(' ') != -1) {
+      return false;
+    }
+    final int first = query.indexOf(':');
+    if (first == -1) {
+      return false;
+    }
+    return query.indexOf(':', first + 1) != -1;
   }
 }
