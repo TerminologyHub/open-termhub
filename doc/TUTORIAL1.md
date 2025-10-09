@@ -188,12 +188,7 @@ curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&ex
 # Find concept using bulk search
 # NOTE: Must have carriage return between each term and content type must be text/plain
 # NOTE: Limit is the number of results to return for each term
-curl -s -X 'POST' \
-  'http://localhost:8080/concept/bulk?terminology=SNOMEDCT_US&limit=1&active=true' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: text/plain' \
-  -d 'heart
-procedure' | jq
+curl -s -X POST "http://localhost:8080/concept/bulk?terminology=SNOMEDCT_US&limit=1&active=true" -H 'accept: application/json'  -H 'Content-Type: text/plain'  --data-binary $'heart\nprocedure' | jq
 ```
 
 ### Testing the FHIR R4 API
