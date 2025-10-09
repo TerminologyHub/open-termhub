@@ -35,6 +35,7 @@ import com.wci.termhub.util.test.TestUtils;
 public class TutorialUnitTest extends AbstractTerminologyServerTest {
 
   /** The logger. */
+  @SuppressWarnings("unused")
   private final Logger logger = LoggerFactory.getLogger(TutorialUnitTest.class);
 
   /** The rest template. */
@@ -49,6 +50,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    */
   @BeforeAll
   public static void beforeAll() {
+    // NOTE: all curl commands in the tutorial need to be on a single line for this
     tutorialResources =
         TestUtils.getUrlsFromMarkdown("doc/TUTORIAL1.md", "Testing the Terminology API");
   }
@@ -388,8 +390,11 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   }
 
   // test for: curl -s -X POST \
-  //  "http://localhost:8080/concept/bulk?terminology=SNOMEDCT_US&limit=1&active=true'
-  // -H 'accept: application/json'  -H 'Content-Type: text/plain'  --data-binary $'heart\nprocedure"
+  // "http://localhost:8080/concept/bulk?terminology=SNOMEDCT_US&limit=1&active=true'
+  /**
+   * Test find concepts bulk search.
+   */
+  // -H 'accept: application/json' -H 'Content-Type: text/plain' --data-binary $'heart\nprocedure"
   @Test
   void testFindConceptsBulkSearch() {
     final String url = "/concept/bulk?terminology=SNOMEDCT_US&limit=1&active=true";
@@ -408,7 +413,6 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
     // Remove any tutorial entry that starts with the URL (handles appended headers/body)
     tutorialResources.removeIf(s -> s.startsWith(url));
   }
-
 
   /**
    * Check all tutorial resources tested.
