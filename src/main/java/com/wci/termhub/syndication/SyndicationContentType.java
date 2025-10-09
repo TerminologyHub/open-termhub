@@ -47,6 +47,24 @@ public enum SyndicationContentType {
   }
 
   /**
+   * Resolve a content type from a stored resource type string.
+   *
+   * @param resourceType the resource type string
+   * @return the matching content type, or null if none matches
+   */
+  public static SyndicationContentType fromResourceType(final String resourceType) {
+    if (resourceType == null) {
+      return null;
+    }
+    for (final SyndicationContentType t : values()) {
+      if (t.getResourceType().equals(resourceType)) {
+        return t;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Get syndication content type from download URL path.
    *
    * @param downloadUrl the download URL

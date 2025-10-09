@@ -45,9 +45,18 @@ public class CorsOptionsFilter implements Filter {
   /** The Constant MAX_AGE. Cache preflight response for 1 hour. */
   private static final String MAX_AGE = "3600";
 
+  /**
+   * Do filter.
+   *
+   * @param req the req
+   * @param res the res
+   * @param chain the chain
+   * @throws IOException Signals that an I/O exception has occurred.
+   * @throws ServletException the servlet exception
+   */
   /* see superclass */
   @Override
-  public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+  public void doFilter(final ServletRequest req, final ServletResponse res, final FilterChain chain)
     throws IOException, ServletException {
 
     final HttpServletResponse response = (HttpServletResponse) res;

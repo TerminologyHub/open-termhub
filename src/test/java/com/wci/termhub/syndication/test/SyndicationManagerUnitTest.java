@@ -150,7 +150,7 @@ public class SyndicationManagerUnitTest {
     assertNotNull(result);
     assertFalse(result.isSuccess());
     assertTrue(result.getMessage().contains("Network error"));
-    verify(mockClient).getFeed();
+    verify(mockClient, times(3)).getFeed();
     verify(mockLoader, never()).loadContent(anyList(), any(SyndicationFeed.class));
   }
 
