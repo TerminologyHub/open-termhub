@@ -58,7 +58,7 @@ All three of the above options will yield a running server and you should now yo
 The sandbox data is a collection of mini terminology assets derived from the major
 vocabularies used in healthcare in the US including SNOMED, LOINC, RXNORM, ICD10.
 This data exactly corresponds to the data in the "Sandbox" public project in TermHub
-cloud server itself. Copies of these files exist in src/main/resources/data and so 
+cloud server itself. Copies of these files exist in src/main/resources/data and so
 can be loaded directly from here once the server is running.
 
 Use one of the options above to ensure the server is running and then run the
@@ -98,7 +98,7 @@ curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
   -F 'resource=@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json' | jq
 ```
 
-#### Load the SNOMEDCT_US to ICD10CM concept maps 
+#### Load the SNOMEDCT_US to ICD10CM concept maps
 
 ```
 curl -X POST 'http://localhost:8080/fhir/ConceptMap/$load' \
@@ -184,6 +184,16 @@ curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=name:di
 
 # Find concepts using an ECL Expression for this subset
 curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&expression=%5E731000124108&include=minimal" | jq
+
+# Find concept using bulk search
+# NOTE: Must have carriage return between each term and content type must be text/plain
+# NOTE: Limit is the number of results to return for each term
+curl -s -X 'POST' \
+  'http://localhost:8080/concept/bulk?terminology=SNOMEDCT_US&limit=1&active=true' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: text/plain' \
+  -d 'heart
+procedure' | jq
 ```
 
 ### Testing the FHIR R4 API
