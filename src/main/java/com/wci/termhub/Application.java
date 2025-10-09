@@ -36,6 +36,7 @@ import com.wci.termhub.open.configuration.ApplicationProperties;
 import com.wci.termhub.syndication.SyndicationContentTracker;
 import com.wci.termhub.util.AdhocUtility;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.SystemReportUtility;
 
 /**
  * The Application entry point.
@@ -84,7 +85,7 @@ public class Application extends SpringBootServletInitializer implements Applica
 
     // Log start of application
     logger.info("OPEN TERMHUB TERMINOLOGY APPLICATION START");
-    logMemory();
+    SystemReportUtility.logMemory();
 
   }
 
@@ -97,22 +98,11 @@ public class Application extends SpringBootServletInitializer implements Applica
     final String[] profiles = environment.getActiveProfiles();
     for (final String profile : profiles) {
       if ("test".equals(profile)) {
-        logger.info("Skipping bootstrap in test profile");
+        logger.debug("Skipping bootstrap in test profile");
         return;
       }
     }
     bootstrap();
-  }
-
-  /**
-   * Log memory.
-   *
-   * @throws Exception the exception
-   */
-  public static void logMemory() throws Exception {
-    logger.info("  MEMORY (" + Runtime.getRuntime().totalMemory() + " - "
-        + Runtime.getRuntime().freeMemory() + ") = "
-        + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
   }
 
   /**

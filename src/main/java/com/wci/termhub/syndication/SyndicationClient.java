@@ -89,8 +89,7 @@ public class SyndicationClient {
         .messageConverters(new StringHttpMessageConverter()).build();
     jaxbContext = JAXBContext.newInstance(SyndicationFeed.class);
 
-    logger.info("Syndication client configured with URL: {}", url);
-    logger.info("Syndication client configured with Token: {}",
+    logger.info("Syndication client configured with URL: {} : token: {} ", url,
         Strings.isBlank(token) ? "No" : "Yes");
 
   }

@@ -48,9 +48,9 @@ test-r5: clean ## Run R5 tests only
 run: ## Run the server
 	./gradlew bootRun
 
-# connect 
+# connect
 rundebug: ## Run the server with debug logging and JVM debug port (5005)
-	DEBUG=true ./gradlew bootRun --debug-jvm
+	./gradlew bootRun --debug-jvm -DLOG_LEVEL=debug
 
 docker: ## Build the docker image and tag with version and latest leave arm64 out for now)
 	docker buildx build --platform linux/amd64 --no-cache-filter=gradle-build -t $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) .

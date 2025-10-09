@@ -670,14 +670,14 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     final boolean reverse) throws Exception {
 
     if (logger.isDebugEnabled()) {
-      logger.info("translateHelper called with parameters:");
-      logger.info("  maps size: {}", maps.size());
-      logger.info("  sourceTerminology: {}",
+      logger.debug("translateHelper called with parameters:");
+      logger.debug("  maps size: {}", maps.size());
+      logger.debug("  sourceTerminology: {}",
           sourceTerminology != null ? sourceTerminology.getAbbreviation() : "null");
-      logger.info("  targetTerminology: {}",
+      logger.debug("  targetTerminology: {}",
           targetTerminology != null ? targetTerminology.getAbbreviation() : "null");
-      logger.info("  code: {}", code);
-      logger.info("  reverse: {}", reverse);
+      logger.debug("  code: {}", code);
+      logger.debug("  reverse: {}", reverse);
     }
     final Parameters parameters = new Parameters();
     final List<ParametersParameterComponent> matches = new ArrayList<>();
@@ -685,8 +685,10 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     for (final ConceptMap map : maps) {
       // Get the identifier from the map
       final String mapsetCode = map.getIdentifier().get(0).getValue();
-      logger.info("Processing concept map: id={}, code={}, url={}", map.getId(), mapsetCode,
+      if (logger.isDebugEnabled()) {
+        logger.debug("Processing concept map: id={}, code={}, url={}", map.getId(), mapsetCode,
           map.getUrl());
+      }
 
       final List<Mapping> mappings = searchService.find(
           new SearchParameters(StringUtility.composeQuery("AND",
@@ -706,7 +708,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           Mapping.class).getItems();
 
       if (logger.isDebugEnabled()) {
-        logger.info("Found {} mappings for concept map {}", mappings.size(), map.getId());
+        logger.debug("Found {} mappings for concept map {}", mappings.size(), map.getId());
       }
       if (!mappings.isEmpty()) {
         for (final Mapping mapping : mappings) {

@@ -1569,7 +1569,9 @@ public final class TerminologyUtility {
   private static void removeEntity(final EntityRepositoryService searchService, final String query,
     final Class<? extends HasId> clazz) throws Exception {
 
-    logger.info("Removing items from class: {}; query: {}", clazz, query);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Removing items from class: {}; query: {}", clazz, query);
+    }
 
     // find the class
     final int batchSize = 5000;
