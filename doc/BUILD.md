@@ -8,6 +8,32 @@ Instructions on building this project, running tests, making a docker image, and
 
 Edit `src/main/resources/application.properties` and edit the `lucene.index.directory` property (OR set the INDEX_DIR environment variable) to indicate the desired location for the Lucene indexes.  NOTE: Unit tests make use of this directory.
 
+## Syndication configuration
+
+Syndication is disabled unless a token is provided. Configure via properties or environment variables:
+
+- `syndication.token` (or `PROJECT_API_KEY`) — required to enable syndication
+- `syndication.check.on-startup` (or `SYNDICATION_CHECK_ON_STARTUP`) — optional; when `true`, performs a one-time syndication load at startup; if not set/false, no startup syndication occurs
+- `syndication.check.cron` (or `SYNDICATION_CHECK_CRON`) — optional; a Spring cron expression to enable periodic re-syndication; if not set/empty, no schedule is registered
+
+Example `application.properties` entries:
+
+```
+syndication.token=<your-project-api-key>
+# Optional one-time startup load
+syndication.check.on-startup=true
+# Optional periodic re-syndication (Spring cron: sec min hour dom mon dow)
+syndication.check.cron=0 0 0 * * *
+```
+
+Equivalent environment variables:
+
+```
+export PROJECT_API_KEY=<your-project-api-key>
+export SYNDICATION_CHECK_ON_STARTUP=true
+export SYNDICATION_CHECK_CRON="0 0 0 * * *"
+```
+
 ### Building, testing, running
 * To clean use `make clean`
 * To build use `make build`

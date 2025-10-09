@@ -14,8 +14,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,13 +37,17 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.lucene.LuceneDataAccess;
+import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SyndicatedContent;
+import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.FileUtility;
+import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ThreadLocalMapper;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
@@ -176,6 +185,31 @@ public class SyndicationContentLoader {
   }
 
   /**
+   * Normalize a version string: if it contains "/version/", return the suffix;
+   * if it is a URL, return the last path segment; otherwise return as-is.
+   *
+   * @param version the version string
+   * @return normalized version
+   */
+  private String normalizeVersion(final String version) {
+    if (version == null) {
+      return null;
+    }
+    final String v = version.trim();
+    final int idx = v.indexOf("/version/");
+    if (idx >= 0) {
+      return v.substring(idx + "/version/".length());
+    }
+    if (v.startsWith("http")) {
+      final int slash = v.lastIndexOf('/');
+      if (slash >= 0 && slash < v.length() - 1) {
+        return v.substring(slash + 1);
+      }
+    }
+    return v;
+  }
+
+  /**
    * Load syndication entries by content type.
    *
    * @param entries the syndication feed entries
@@ -281,6 +315,7 @@ public class SyndicationContentLoader {
     }
 
     logger.info("Starting content loading for {} syndication entries.", entries.size());
+    final Map<FeedKey, Set<String>> feedVersions = buildFeedVersionMap(entries);
 
     // Track processed entry IDs to prevent duplicates in current run
     final Set<String> processedEntryIds = new HashSet<>();
@@ -301,7 +336,7 @@ public class SyndicationContentLoader {
       processedEntryIds.add(entry.getId());
 
       try {
-        loadSingleEntry(entry, feed, results);
+        loadSingleEntry(entry, feed, feedVersions, results);
       } catch (final Exception e) {
         logger.warn("Failed to load entry on first attempt: {}", entry.getTitle(), e);
         failedEntries.add(entry);
@@ -316,7 +351,7 @@ public class SyndicationContentLoader {
 
       for (final SyndicationFeedEntry entry : retryEntries) {
         try {
-          loadSingleEntry(entry, feed, results);
+          loadSingleEntry(entry, feed, feedVersions, results);
           logger.info("Successfully loaded entry on retry: {}", entry.getTitle());
         } catch (final Exception e) {
           logger.error("Failed to load entry on retry: {}", entry.getTitle(), e);
@@ -348,23 +383,27 @@ public class SyndicationContentLoader {
    *
    * @param entry the syndication feed entry to load
    * @param feed the syndication feed (needed for downloading packages)
+   * @param feedVersions the feed versions
    * @param results the loading results to update
    * @throws Exception the exception
    */
   private void loadSingleEntry(final SyndicationFeedEntry entry, final SyndicationFeed feed,
-    final SyndicationResults results) throws Exception {
-    // Determine content type from download URL
-    final String downloadUrl = entry.getZipLink().getHref();
-    final SyndicationContentType contentType = SyndicationContentType.fromDownloadUrl(downloadUrl);
-    if (contentType == null) {
-      throw new Exception("Unable to determine content type = " + downloadUrl);
-      // logger.warn("Using fallback content type detection for entry: {} (URL: {})",
-      // entry.getTitle(),
-      // downloadUrl);
-    }
+    final Map<FeedKey, Set<String>> feedVersions, final SyndicationResults results)
+    throws Exception {
 
-    logger.info("Downloading and loading {} content: {} (version: {}) from URL: {}", contentType,
-        entry.getTitle(), entry.getContentItemVersion(), downloadUrl);
+    final String downloadUrl = entry.getZipLink().getHref();
+    final SyndicationContentType resourceType = SyndicationContentType.fromDownloadUrl(downloadUrl);
+
+    logger.info("Downloading and loading content: {} (version: {}) from URL: {}", entry.getTitle(),
+        entry.getContentItemVersion(), downloadUrl);
+
+    // Guard by resource identity (identifier + version)
+    final String identifier = entry.getContentItemIdentifier();
+    final String version = entry.getContentItemVersion();
+    if (contentTracker.isContentLoaded(identifier, version)) {
+      logger.info("Resource already loaded: {}|{}, skipping", identifier, version);
+      return;
+    }
 
     // Check if this entry is already loaded to prevent duplicate processing
     if (contentTracker.isContentLoaded(entry.getId())) {
@@ -397,8 +436,9 @@ public class SyndicationContentLoader {
         // Find the first JSON file in the extracted directory
         final File jsonFile = findFirstJsonFile(extractDir);
         if (jsonFile == null) {
-          throw new RuntimeException(
-              "No JSON file found in extracted ZIP: " + downloadedFile.getName());
+          logger.warn("No JSON file found in extracted ZIP: {}. Using original downloaded file.",
+              downloadedFile.getName());
+          continue;
         }
 
         file = jsonFile;
@@ -408,51 +448,137 @@ public class SyndicationContentLoader {
         file = downloadedFile;
       }
 
-      // Use URL-based content type for loading (more reliable than JSON content
-      // type)
-      final String resourceType = contentType.getResourceType();
+      final SyndicationContentType actualResourceType =
+          SyndicationContentType.fromResourceType(getResourceType(file));
 
-      // Verify JSON content type matches expected type
-      final String actualResourceType = getResourceType(file);
+      final SyndicationContentType effectiveResourceType =
+          resourceType != null ? resourceType : actualResourceType;
 
-      logger.info("URL-based content type: {}, JSON content type: {}", resourceType,
-          actualResourceType);
+      if (resourceType != null && !resourceType.equals(actualResourceType)) {
+        throw new IllegalArgumentException("Content type mismatch: URL-based type is "
+            + resourceType + ", but JSON file type is " + actualResourceType);
+      }
 
-      // Load content based on URL-determined resource type
-      switch (resourceType) {
-        case "CodeSystem":
-          CodeSystemLoaderUtil.loadCodeSystem(searchService, file, enablePostLoadComputations,
-              org.hl7.fhir.r5.model.ConceptMap.class, new DefaultProgressListener());
-          results.incrementCodeSystemsLoaded();
+      final Set<String> allowedVersions =
+          feedVersions.getOrDefault(FeedKey.from(entry), Collections.emptySet());
+
+      switch (effectiveResourceType) {
+        case CODESYSTEM:
+          final org.hl7.fhir.r5.model.CodeSystem loadedCodeSystem =
+              CodeSystemLoaderUtil.loadCodeSystem(searchService, file, enablePostLoadComputations,
+                  org.hl7.fhir.r5.model.CodeSystem.class, new DefaultProgressListener(),
+                  Boolean.TRUE);
           logger.info("Successfully loaded CodeSystem from file: {}", filePath);
-          // Mark as loaded in tracker
-          contentTracker.markContentAsLoaded(entry.getId(), entry.getContentItemIdentifier(),
-              entry.getContentItemVersion(), resourceType, entry.getTitle(),
-              syndicationClient.getSyndicationUrl());
+
+          // Ensure a fresh reader view for newly indexed terminology
+          LuceneDataAccess.clearReaderForClass(Terminology.class);
+          final String versionNormalized = normalizeVersion(loadedCodeSystem.getVersion());
+          final Terminology terminologyInternal = getTerminologyWithRetry(
+              loadedCodeSystem.getTitle(), loadedCodeSystem.getPublisher(), versionNormalized);
+          if (terminologyInternal == null) {
+            logger.warn(
+                "Loaded terminology not immediately searchable; proceeding with known values: {} | {} | {}",
+                loadedCodeSystem.getTitle(), loadedCodeSystem.getPublisher(), versionNormalized);
+            contentTracker.markContentAsLoaded(entry, effectiveResourceType,
+                loadedCodeSystem.getTitle(), loadedCodeSystem.getPublisher(), versionNormalized,
+                syndicationClient.getSyndicationUrl());
+            results.addResults(effectiveResourceType, 1, 0);
+            break;
+          }
+
+          // Mark as loaded before cleanup to ensure idempotency on retry
+          contentTracker.markContentAsLoaded(entry, effectiveResourceType,
+              terminologyInternal.getAbbreviation(), terminologyInternal.getPublisher(),
+              terminologyInternal.getVersion(), syndicationClient.getSyndicationUrl());
+
+          // Cleanup other versions should not be fatal
+          try {
+            TerminologyUtility.removeOtherTerminologyVersions(searchService, terminologyInternal,
+                allowedVersions);
+          } catch (final Exception e) {
+            logger.warn("Cleanup failed removing other versions for {}: {}",
+                terminologyInternal.getAbbreviation(), e.getMessage());
+          }
+          results.addResults(effectiveResourceType, 1, 0);
           break;
-        case "ValueSet":
-          ValueSetLoaderUtil.loadValueSet(searchService, file, org.hl7.fhir.r5.model.ValueSet.class,
-              new DefaultProgressListener());
-          results.incrementValueSetsLoaded();
+        case VALUESET:
+          final org.hl7.fhir.r5.model.ValueSet loadedSubset = ValueSetLoaderUtil.loadValueSet(
+              searchService, file, org.hl7.fhir.r5.model.ValueSet.class,
+              new DefaultProgressListener(), Boolean.TRUE);
           logger.info("Successfully loaded ValueSet from file: {}", filePath);
-          // Mark as loaded in tracker
-          contentTracker.markContentAsLoaded(entry.getId(), entry.getContentItemIdentifier(),
-              entry.getContentItemVersion(), resourceType, entry.getTitle(),
-              syndicationClient.getSyndicationUrl());
+
+          // Ensure a fresh reader view for newly indexed subsets
+          LuceneDataAccess.clearReaderForClass(Subset.class);
+          final String versionNormalizedSubset = normalizeVersion(loadedSubset.getVersion());
+          final Subset subsetInternal = getSubsetWithRetry(loadedSubset.getTitle(),
+              loadedSubset.getPublisher(), versionNormalizedSubset);
+          if (subsetInternal == null) {
+            logger.warn(
+                "Loaded subset not immediately searchable; proceeding with known values: {} | {} | {}",
+                loadedSubset.getTitle(), loadedSubset.getPublisher(), versionNormalizedSubset);
+            contentTracker.markContentAsLoaded(entry, effectiveResourceType,
+                loadedSubset.getTitle(), loadedSubset.getPublisher(), versionNormalizedSubset,
+                syndicationClient.getSyndicationUrl());
+            results.addResults(effectiveResourceType, 1, 0);
+            break;
+          }
+
+          // Mark as loaded before cleanup to ensure idempotency on retry
+          contentTracker.markContentAsLoaded(entry, effectiveResourceType,
+              subsetInternal.getAbbreviation(), subsetInternal.getPublisher(),
+              subsetInternal.getVersion(), syndicationClient.getSyndicationUrl());
+
+          // Cleanup other versions should not be fatal
+          try {
+            TerminologyUtility.removeOtherSubsetVersions(searchService, subsetInternal,
+                allowedVersions);
+          } catch (final Exception e) {
+            logger.warn("Cleanup failed removing other versions for {}: {}",
+                subsetInternal.getAbbreviation(), e.getMessage());
+          }
+          results.addResults(effectiveResourceType, 1, 0);
           break;
-        case "ConceptMap":
-          ConceptMapLoaderUtil.loadConceptMap(searchService, file,
-              org.hl7.fhir.r5.model.ConceptMap.class, new DefaultProgressListener());
-          results.incrementConceptMapsLoaded();
+        case CONCEPTMAP:
+          final org.hl7.fhir.r5.model.ConceptMap loadedConceptMap = ConceptMapLoaderUtil
+              .loadConceptMap(searchService, file, org.hl7.fhir.r5.model.ConceptMap.class,
+                  new DefaultProgressListener(), Boolean.TRUE);
           logger.info("Successfully loaded ConceptMap from file: {}", filePath);
-          // Mark as loaded in tracker
-          contentTracker.markContentAsLoaded(entry.getId(), entry.getContentItemIdentifier(),
-              entry.getContentItemVersion(), resourceType, entry.getTitle(),
-              syndicationClient.getSyndicationUrl());
+
+          // Ensure a fresh reader view for newly indexed mapsets
+          LuceneDataAccess.clearReaderForClass(Mapset.class);
+          final String versionNormalizedMapset = normalizeVersion(loadedConceptMap.getVersion());
+          final Mapset mapsetInternal = getMapsetWithRetry(loadedConceptMap.getTitle(),
+              loadedConceptMap.getPublisher(), versionNormalizedMapset);
+          if (mapsetInternal == null) {
+            logger.warn(
+                "Loaded mapset not immediately searchable; proceeding with known values: {} | {} | {}",
+                loadedConceptMap.getTitle(), loadedConceptMap.getPublisher(),
+                versionNormalizedMapset);
+            contentTracker.markContentAsLoaded(entry, effectiveResourceType,
+                loadedConceptMap.getTitle(), loadedConceptMap.getPublisher(),
+                versionNormalizedMapset, syndicationClient.getSyndicationUrl());
+            results.addResults(effectiveResourceType, 1, 0);
+            break;
+          }
+
+          // Mark as loaded before cleanup to ensure idempotency on retry
+          contentTracker.markContentAsLoaded(entry, effectiveResourceType,
+              mapsetInternal.getAbbreviation(), mapsetInternal.getPublisher(),
+              mapsetInternal.getVersion(), syndicationClient.getSyndicationUrl());
+
+          // Cleanup other versions should not be fatal
+          try {
+            TerminologyUtility.removeOtherMapsetVersions(searchService, mapsetInternal,
+                allowedVersions);
+          } catch (final Exception e) {
+            logger.warn("Cleanup failed removing other versions for {}: {}",
+                mapsetInternal.getAbbreviation(), e.getMessage());
+          }
+          results.addResults(effectiveResourceType, 1, 0);
           break;
         default:
           throw new IllegalArgumentException(
-              "Unsupported resource type: " + resourceType + " for " + entry.getTitle());
+              "Unsupported resource type: " + effectiveResourceType + " for " + entry.getTitle());
       }
       results.incrementTotalLoaded();
 
@@ -502,6 +628,85 @@ public class SyndicationContentLoader {
       logger.warn("Error checking if file is ZIP: {}", file.getName(), e);
       return false;
     }
+  }
+
+  /**
+   * Retry helper for terminology lookup.
+   *
+   * @param abbr the abbr
+   * @param publisher the publisher
+   * @param version the version
+   * @return the terminology with retry
+   * @throws Exception the exception
+   */
+  private Terminology getTerminologyWithRetry(final String abbr, final String publisher,
+    final String version) throws Exception {
+    for (int i = 0; i < 5; i++) {
+      try {
+        LuceneDataAccess.clearReaderForClass(Terminology.class);
+        final Terminology t =
+            TerminologyUtility.getTerminology(searchService, abbr, publisher, version);
+        if (t != null) {
+          return t;
+        }
+        Thread.sleep(150);
+      } catch (final Exception e) {
+        Thread.sleep(150);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Retry helper for subset lookup.
+   *
+   * @param title the title
+   * @param publisher the publisher
+   * @param version the version
+   * @return the subset with retry
+   * @throws Exception the exception
+   */
+  private Subset getSubsetWithRetry(final String title, final String publisher,
+    final String version) throws Exception {
+    for (int i = 0; i < 5; i++) {
+      try {
+        LuceneDataAccess.clearReaderForClass(Subset.class);
+        final Subset s = TerminologyUtility.getSubset(searchService, title, publisher, version);
+        if (s != null) {
+          return s;
+        }
+        Thread.sleep(150);
+      } catch (final Exception e) {
+        Thread.sleep(150);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Retry helper for mapset lookup.
+   *
+   * @param title the title
+   * @param publisher the publisher
+   * @param version the version
+   * @return the mapset with retry
+   * @throws Exception the exception
+   */
+  private Mapset getMapsetWithRetry(final String title, final String publisher,
+    final String version) throws Exception {
+    for (int i = 0; i < 5; i++) {
+      try {
+        LuceneDataAccess.clearReaderForClass(Mapset.class);
+        final Mapset m = TerminologyUtility.getMapset(searchService, title, publisher, version);
+        if (m != null) {
+          return m;
+        }
+        Thread.sleep(150);
+      } catch (final Exception e) {
+        Thread.sleep(150);
+      }
+    }
+    return null;
   }
 
   /**
@@ -582,6 +787,85 @@ public class SyndicationContentLoader {
       }
 
       throw new Exception("Unable to find resourceType field");
+    }
+  }
+
+  /**
+   * Builds the feed version map.
+   *
+   * @param entries the entries
+   * @return the map
+   */
+  private Map<FeedKey, Set<String>> buildFeedVersionMap(final List<SyndicationFeedEntry> entries) {
+    final Map<FeedKey, Set<String>> map = new HashMap<>();
+    for (final SyndicationFeedEntry entry : entries) {
+      map.computeIfAbsent(FeedKey.from(entry), key -> new LinkedHashSet<>())
+          .add(entry.getContentItemVersion());
+    }
+    return map;
+  }
+
+  /**
+   * The Class FeedKey.
+   */
+  private static final class FeedKey {
+
+    /** The type. */
+    private final SyndicationContentType type;
+
+    /** The identifier. */
+    private final String identifier;
+
+    /**
+     * Instantiates a new feed key.
+     *
+     * @param type the type
+     * @param identifier the identifier
+     */
+    private FeedKey(final SyndicationContentType type, final String identifier) {
+      this.type = type;
+      this.identifier = identifier;
+    }
+
+    /**
+     * From.
+     *
+     * @param entry the entry
+     * @return the feed key
+     */
+    static FeedKey from(final SyndicationFeedEntry entry) {
+      final SyndicationContentType type =
+          SyndicationContentType.fromDownloadUrl(entry.getZipLink().getHref());
+      final String identifier = entry.getContentItemIdentifier();
+      return new FeedKey(type, identifier);
+    }
+
+    /**
+     * Equals.
+     *
+     * @param obj the obj
+     * @return true, if successful
+     */
+    @Override
+    public boolean equals(final Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (!(obj instanceof FeedKey)) {
+        return false;
+      }
+      final FeedKey other = (FeedKey) obj;
+      return type == other.type && Objects.equals(identifier, other.identifier);
+    }
+
+    /**
+     * Hash code.
+     *
+     * @return the int
+     */
+    @Override
+    public int hashCode() {
+      return Objects.hash(type, identifier);
     }
   }
 }

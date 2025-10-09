@@ -17,6 +17,8 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -32,6 +34,10 @@ import com.wci.termhub.util.test.TestUtils;
 @AutoConfigureMockMvc
 public class TutorialUnitTest extends AbstractTerminologyServerTest {
 
+  /** The logger. */
+  @SuppressWarnings("unused")
+  private final Logger logger = LoggerFactory.getLogger(TutorialUnitTest.class);
+
   /** The rest template. */
   @Autowired
   private TestRestTemplate restTemplate;
@@ -44,6 +50,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
    */
   @BeforeAll
   public static void beforeAll() {
+    // NOTE: all curl commands in the tutorial need to be on a single line for this
     tutorialResources =
         TestUtils.getUrlsFromMarkdown("doc/TUTORIAL1.md", "Testing the Terminology API");
   }
@@ -380,6 +387,31 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
     assertThat(body).isNotNull();
     assertThat((Integer) JsonPath.read(body, "$.total")).isGreaterThan(0);
     tutorialResources.remove(url);
+  }
+
+  // test for: curl -s -X POST \
+  // "http://localhost:8080/concept/bulk?terminology=SNOMEDCT_US&limit=1&active=true'
+  /**
+   * Test find concepts bulk search.
+   */
+  // -H 'accept: application/json' -H 'Content-Type: text/plain' --data-binary $'heart\nprocedure"
+  @Test
+  void testFindConceptsBulkSearch() {
+    final String url = "/concept/bulk?terminology=SNOMEDCT_US&limit=1&active=true";
+    final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+    headers.add("Accept", "application/json");
+    headers.add("Content-Type", "text/plain");
+    final org.springframework.http.HttpEntity<String> entity =
+        new org.springframework.http.HttpEntity<>("heart\nprocedure", headers);
+
+    final ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final String body = response.getBody();
+    assertThat(body).isNotNull();
+    assertThat((Integer) JsonPath.read(body, "$.length()")).isEqualTo(2);
+
+    // Remove any tutorial entry that starts with the URL (handles appended headers/body)
+    tutorialResources.removeIf(s -> s.startsWith(url));
   }
 
   /**

@@ -14,6 +14,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -26,6 +28,7 @@ import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfigurati
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.core.env.Environment;
 
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.HasId;
@@ -44,7 +47,7 @@ import com.wci.termhub.util.ModelUtility;
 })
 @EnableCaching
 @EnableScheduling
-public class Application extends SpringBootServletInitializer {
+public class Application extends SpringBootServletInitializer implements ApplicationRunner {
 
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(Application.class);
@@ -56,6 +59,10 @@ public class Application extends SpringBootServletInitializer {
   /** The content tracker. */
   @Autowired(required = false)
   private SyndicationContentTracker contentTracker;
+
+  /** The environment. */
+  @Autowired
+  private Environment environment;
 
   /**
    * The main method.
@@ -69,11 +76,7 @@ public class Application extends SpringBootServletInitializer {
     // https://stackoverflow.com/questions/13482020/
     // encoded-slash-2f-with-spring-requestmapping-path-param-gives-http-400
     System.setProperty("org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH", "true");
-    final Application app =
-        SpringApplication.run(Application.class, args).getBean(Application.class);
-
-    // Bootstrap indexes
-    app.bootstrap();
+    SpringApplication.run(Application.class, args);
 
     if (System.getenv().get("ADHOC") != null) {
       AdhocUtility.execute(System.getenv("ADHOC"));
@@ -83,6 +86,22 @@ public class Application extends SpringBootServletInitializer {
     logger.info("OPEN TERMHUB TERMINOLOGY APPLICATION START");
     logMemory();
 
+  }
+
+  /**
+   * Run after application context is initialized but before ApplicationReadyEvent.
+   * Ensures indexes are created before any startup listeners execute.
+   */
+  @Override
+  public void run(final ApplicationArguments args) throws Exception {
+    final String[] profiles = environment.getActiveProfiles();
+    for (final String profile : profiles) {
+      if ("test".equals(profile)) {
+        logger.info("Skipping bootstrap in test profile");
+        return;
+      }
+    }
+    bootstrap();
   }
 
   /**

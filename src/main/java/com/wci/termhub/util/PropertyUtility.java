@@ -59,7 +59,7 @@ public class PropertyUtility {
         .map(ps -> ((EnumerablePropertySource) ps).getPropertyNames()).flatMap(Arrays::stream)
         .distinct().forEach(prop -> properties.setProperty(prop, env.getProperty(prop)));
 
-    logger.info("Loaded properties: {}", properties);
+    // logger.info("Loaded properties: {}", properties);
   }
 
   /**

@@ -175,7 +175,7 @@ public final class IndexUtility {
             break;
           case Keyword:
             indexableFields.add(
-                new TextField(indexName, stringValue, org.apache.lucene.document.Field.Store.NO));
+                new StringField(indexName, stringValue, org.apache.lucene.document.Field.Store.NO));
             if (isCollection) {
               indexableFields
                   .add(new SortedSetDocValuesField(indexName, new BytesRef(stringValue)));

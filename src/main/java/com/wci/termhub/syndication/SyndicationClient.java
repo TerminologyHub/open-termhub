@@ -55,6 +55,12 @@ public class SyndicationClient {
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(SyndicationClient.class);
 
+  /** The Constant MAX_DOWNLOAD_ATTEMPTS. */
+  private static final int MAX_DOWNLOAD_ATTEMPTS = 10;
+
+  /** The Constant INITIAL_RETRY_DELAY_MS. */
+  private static final long INITIAL_RETRY_DELAY_MS = 5000L;
+
   /** The rest template. */
   private final RestTemplate restTemplate;
 
@@ -135,8 +141,8 @@ public class SyndicationClient {
     try {
       // Strip Atom namespace to simplify unmarshalling
       final String xmlBody = xml.replace("xmlns=\"http://www.w3.org/2005/Atom\"", "");
-      final SyndicationFeed feed =
-          (SyndicationFeed) jaxbContext.createUnmarshaller().unmarshal(new StringReader(xmlBody));
+      final SyndicationFeed feed = (SyndicationFeed) jaxbContext.createUnmarshaller()
+          .unmarshal(new StringReader(xmlBody));
 
       logger.debug("Parsed syndication feed successfully. Found {} entries",
           feed.getEntries().size());
@@ -213,43 +219,63 @@ public class SyndicationClient {
               packageEntry.getFirst().getContentItemVersion(), packageLink.getHref(),
               normalizedUrl);
 
-          // Test credentials and download link using OPTIONS request
-          final HttpHeaders headers = new HttpHeaders();
-          headers.setBearerAuth(syndicationCredentials);
-          headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
-          logger.debug("Testing credentials with OPTIONS request to: {}", normalizedUrl);
-          logger.debug("Using credentials: {}", syndicationCredentials != null ? "***"
-              + syndicationCredentials.substring(Math.max(0, syndicationCredentials.length() - 4))
-              : "null");
-          restTemplate.exchange(normalizedUrl, HttpMethod.OPTIONS, new HttpEntity<Void>(headers),
-              Void.class);
+          final File[] outputFileHolder = new File[1];
+          boolean downloaded = false;
+          for (int attempt = 1; attempt <= MAX_DOWNLOAD_ATTEMPTS && !downloaded; attempt++) {
+            try {
+              final HttpHeaders headers = new HttpHeaders();
+              headers.setBearerAuth(syndicationCredentials);
+              headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
+              logger.debug("Testing credentials with OPTIONS request to: {}", normalizedUrl);
+              logger
+                  .debug("Using credentials: {}",
+                      syndicationCredentials != null
+                          ? "***" + syndicationCredentials
+                              .substring(Math.max(0, syndicationCredentials.length() - 4))
+                          : "null");
+              restTemplate.exchange(normalizedUrl, HttpMethod.OPTIONS,
+                  new HttpEntity<Void>(headers), Void.class);
 
-          final File outputFile =
-              Files.createTempFile(UUID.randomUUID().toString(), ".zip").toFile();
-          restTemplate.execute(normalizedUrl, HttpMethod.GET, request -> {
-            request.getHeaders().setBearerAuth(syndicationCredentials);
-            request.getHeaders()
-                .setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
-          }, clientHttpResponse -> {
-            try (final FileOutputStream outputStream = new FileOutputStream(outputFile)) {
-              final String lengthString = packageLink.getLength();
-              int length;
-              if (lengthString == null || lengthString.isEmpty()) {
-                length = 1024 * 500;
-              } else {
-                length = Integer.parseInt(lengthString.replace(",", ""));
+              final File targetFile = Files.createTempFile(UUID.randomUUID().toString(), ".zip").toFile();
+              outputFileHolder[0] = targetFile;
+              restTemplate.execute(normalizedUrl, HttpMethod.GET, request -> {
+                request.getHeaders().setBearerAuth(syndicationCredentials);
+                request.getHeaders()
+                    .setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
+              }, clientHttpResponse -> {
+                try (final FileOutputStream outputStream = new FileOutputStream(targetFile)) {
+                  final String lengthString = packageLink.getLength();
+                  int length;
+                  if (lengthString == null || lengthString.isEmpty()) {
+                    length = 1024 * 500;
+                  } else {
+                    length = Integer.parseInt(lengthString.replace(",", ""));
+                  }
+                  StreamUtility.copyWithProgress(clientHttpResponse.getBody(), outputStream, length,
+                      "Download progress = ");
+                }
+                return targetFile;
+              });
+              targetFile.deleteOnExit();
+              packageFilePaths.add(targetFile.getAbsolutePath());
+              downloaded = true;
+            } catch (final HttpClientErrorException e) {
+              if (outputFileHolder[0] != null && outputFileHolder[0].exists()) {
+                outputFileHolder[0].delete();
               }
-              try {
-                StreamUtility.copyWithProgress(clientHttpResponse.getBody(), outputStream, length,
-                    "Download progress = ");
-              } catch (final Exception e) {
-                logger.error("Failed to download file from syndication service.", e);
+              throw e;
+            } catch (final Exception e) {
+              if (outputFileHolder[0] != null && outputFileHolder[0].exists()) {
+                outputFileHolder[0].delete();
               }
+              logger.warn("Download attempt {}/{} failed for {}: {}", attempt,
+                  MAX_DOWNLOAD_ATTEMPTS, normalizedUrl, e.getMessage());
+              if (attempt == MAX_DOWNLOAD_ATTEMPTS) {
+                throw e;
+              }
+              sleepBeforeRetry(attempt);
             }
-            return outputFile;
-          });
-          outputFile.deleteOnExit();
-          packageFilePaths.add(outputFile.getAbsolutePath());
+          }
         }
       } catch (final HttpClientErrorException e) {
         logger.error("HTTP error downloading package: Status={}, Response={}",
@@ -274,6 +300,23 @@ public class SyndicationClient {
     }
     // Convert format=R5 to format=r5 and format=R4 to format=r4
     return url.replaceAll("format=R([45])", "format=r$1");
+  }
+
+  /**
+   * Sleep before retry.
+   *
+   * @param attempt the attempt
+   */
+  private void sleepBeforeRetry(final int attempt) {
+    if (attempt >= MAX_DOWNLOAD_ATTEMPTS) {
+      return;
+    }
+    final long delay = INITIAL_RETRY_DELAY_MS * (1L << (attempt - 1));
+    try {
+      Thread.sleep(delay);
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   /**

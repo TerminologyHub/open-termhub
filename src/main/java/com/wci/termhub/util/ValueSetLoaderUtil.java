@@ -83,7 +83,8 @@ public final class ValueSetLoaderUtil {
   }
 
   /**
-   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember, and persists.
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
+   * and persists.
    *
    * @param <T> the generic type
    * @param service the repository service
@@ -93,9 +94,27 @@ public final class ValueSetLoaderUtil {
    * @return the Subset id
    * @throws Exception on error
    */
-  @SuppressWarnings("unchecked")
   public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
     final Class<T> type, final ProgressListener listener) throws Exception {
+    return loadValueSet(service, file, type, listener, false);
+  }
+
+  /**
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
+   * and persists.
+   *
+   * @param <T> the generic type
+   * @param service the repository service
+   * @param file the file
+   * @param type the type
+   * @param listener the listener
+   * @param isSyndicated the is syndicated
+   * @return the Subset id
+   * @throws Exception on error
+   */
+  @SuppressWarnings("unchecked")
+  public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
+    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated) throws Exception {
 
     LOGGER.info("Loading Subset from JSON, isR5={}", type == org.hl7.fhir.r5.model.ValueSet.class);
 
@@ -103,12 +122,12 @@ public final class ValueSetLoaderUtil {
       final IParser parser = contextR4.newJsonParser();
       final org.hl7.fhir.r4.model.ValueSet vs = parser.parseResource(
           org.hl7.fhir.r4.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-      return (T) indexValueSetR4(service, vs, listener);
+      return (T) indexValueSetR4(service, vs, listener, isSyndicated);
     }
     final IParser parser = contextR5.newJsonParser();
     final org.hl7.fhir.r5.model.ValueSet vs = parser.parseResource(
         org.hl7.fhir.r5.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-    return (T) indexValueSetR5(service, vs, listener);
+    return (T) indexValueSetR5(service, vs, listener, isSyndicated);
   }
 
   /**
@@ -117,12 +136,13 @@ public final class ValueSetLoaderUtil {
    * @param service the service
    * @param valueSet the value set
    * @param listener the listener
+   * @param isSyndicated the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   private static org.hl7.fhir.r4.model.ValueSet indexValueSetR4(
     final EntityRepositoryService service, final org.hl7.fhir.r4.model.ValueSet valueSet,
-    final ProgressListener listener) throws Exception {
+    final ProgressListener listener, final Boolean isSyndicated) throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
@@ -333,6 +353,9 @@ public final class ValueSetLoaderUtil {
       subset = service.get(subset.getId(), Subset.class, false);
       // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
+      if (isSyndicated != null && isSyndicated) {
+        subset.getAttributes().put("syndicated", "true");
+      }
       service.update(Subset.class, subset.getId(), subset);
 
       // Set listener to 100%
@@ -352,12 +375,13 @@ public final class ValueSetLoaderUtil {
    * @param service the service
    * @param valueSet the value set
    * @param listener the listener
+   * @param isSyndicated the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   private static org.hl7.fhir.r5.model.ValueSet indexValueSetR5(
     final EntityRepositoryService service, final org.hl7.fhir.r5.model.ValueSet valueSet,
-    final ProgressListener listener) throws Exception {
+    final ProgressListener listener, final Boolean isSyndicated) throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
@@ -560,6 +584,9 @@ public final class ValueSetLoaderUtil {
       subset = service.get(subset.getId(), Subset.class, false);
       // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
+      if (isSyndicated != null && isSyndicated) {
+        subset.getAttributes().put("syndicated", "true");
+      }
       service.update(Subset.class, subset.getId(), subset);
 
       // Set listener to 100%
