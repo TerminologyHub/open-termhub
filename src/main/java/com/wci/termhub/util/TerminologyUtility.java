@@ -161,25 +161,26 @@ public final class TerminologyUtility {
    * @param terminology the terminology
    * @param publisher the publisher
    * @param version the version
+   * @param filterUnloaded the filter unloaded
    * @return the terminology
    * @throws Exception the exception
    */
   public static Terminology getTerminology(final EntityRepositoryService searchService,
-                                           final String terminology, final String publisher, final String version, final boolean filterUnloaded) throws Exception {
+    final String terminology, final String publisher, final String version,
+    final boolean filterUnloaded) throws Exception {
 
     final String terminologyQuery = getTerminologyAbbrQuery(terminology, publisher, version);
     SearchParameters searchParameters = new SearchParameters(terminologyQuery, 2, 0);
     searchParameters.setFilterUnloaded(filterUnloaded);
     logger.info("  terminology query = " + terminologyQuery);
-    final ResultList<Terminology> tlist =
-            searchService.find(searchParameters, Terminology.class);
+    final ResultList<Terminology> tlist = searchService.find(searchParameters, Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
     }
     if (tlist.getItems().size() > 1) {
       throw new Exception(
-              "Too many terminology matches = " + terminology + ", " + publisher + ", " + version);
+          "Too many terminology matches = " + terminology + ", " + publisher + ", " + version);
     }
 
     return tlist.getItems().get(0);

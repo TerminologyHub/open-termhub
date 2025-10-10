@@ -361,11 +361,11 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
    */
   private ValueSet createValueSet(final ValueSet vs) throws Exception {
     try {
-      MethodOutcome out = provider
+      final MethodOutcome out = provider
           .createValueSet(context.newJsonParser().encodeResourceToString(vs).getBytes("UTF-8"));
       return (ValueSet) out.getResource();
 
-    } catch (FHIRServerResponseException fe) {
+    } catch (final FHIRServerResponseException fe) {
       return null;
     }
   }

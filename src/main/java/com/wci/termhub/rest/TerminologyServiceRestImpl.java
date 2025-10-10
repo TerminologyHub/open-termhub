@@ -859,7 +859,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Mechanism to support alternative search algorithms.  Current options include:"
               + "<ul><li>&lt;blank&gt; or 'default' - uses exactly the query passed in</li>"
               + "<li>'wildcard' - splits on spaces and uses a wildcard search for each word</li>"
-              + "<li>'browser' (recommeneded) - builds a more complex query used by embedded terminology browser</li></ul>",
+              + "<li>'browser' (recommended) - builds a more complex query used by embedded "
+              + "terminology browser</li></ul>",
           required = false, schema = @Schema(implementation = String.class))
   })
   public ResponseEntity<ResultListConcept> findTerminologyConcepts(
@@ -1035,7 +1036,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "Mechanism to support alternative search algorithms.  Current options include:"
               + "<ul><li>&lt;blank&gt; or 'default' - uses exactly the query passed in</li>"
               + "<li>'wildcard' - splits on spaces and uses a wildcard search for each word</li>"
-              + "<li>'browser' (recommeneded) - builds a more complex query used by embedded terminology browser</li></ul>",
+              + "<li>'browser' (recommended) - builds a more complex query used by embedded "
+              + "terminology browser</li></ul>",
           required = false, schema = @Schema(implementation = String.class))
   })
   @RequestBody(description = "Newline-separated lines of text, one line for each query",

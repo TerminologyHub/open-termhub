@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.wci.termhub.model.HasAttributes;
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -58,6 +57,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.model.BaseModel;
+import com.wci.termhub.model.HasAttributes;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -763,8 +763,8 @@ public class LuceneDataAccess {
     updateDocumentInIndex(writer, id, existingEntity);
     clearReaderForClass(clazz);
     if (logger.isDebugEnabled()) {
-      logger.debug("Successfully added field: {} to document with id: {} for index: {}",
-          fieldName, id, writer.getDirectory());
+      logger.debug("Successfully added field: {} to document with id: {} for index: {}", fieldName,
+          id, writer.getDirectory());
     }
   }
 
@@ -967,7 +967,7 @@ public class LuceneDataAccess {
       synchronized (READER_MAP) {
         if (!READER_MAP.containsKey(canonicalClassName)) {
           synchronized (READER_MAP) {
-            if(logger.isTraceEnabled()){
+            if (logger.isTraceEnabled()) {
               logger.trace("Creating new IndexReader for class: {}", canonicalClassName);
             }
             final File indexDir = getIndexDirectory(clazz);
