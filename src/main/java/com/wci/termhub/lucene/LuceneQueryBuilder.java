@@ -48,6 +48,7 @@ import com.wci.termhub.util.ModelUtility;
 public final class LuceneQueryBuilder {
 
   /** The logger. */
+  @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(LuceneQueryBuilder.class);
 
   /**
@@ -99,7 +100,6 @@ public final class LuceneQueryBuilder {
    * @param modelClass the model class
    * @return the field analyzers
    */
-  @SuppressWarnings("resource")
   public static Map<String, Analyzer> getFieldAnalyzers(final Class<?> modelClass) {
     if (FIELD_ANALYZERS_CACHE.containsKey(modelClass)) {
       return FIELD_ANALYZERS_CACHE.get(modelClass);
@@ -117,14 +117,14 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Recursively collects analyzers for fields on a model class and nested model
-   * classes based on ElasticSearch annotations. Uses a dotted prefix for nested
-   * objects/collections.
+   * Recursively collects analyzers for fields on a model class and nested model classes based on
+   * ElasticSearch annotations. Uses a dotted prefix for nested objects/collections.
    *
    * @param modelClass the model class
    * @param prefix the field path prefix, or null for top-level
    * @param fieldAnalyzers the output map of field path to analyzer
    */
+  @SuppressWarnings("resource")
   private static void collectAnalyzersForClass(final Class<?> modelClass, final String prefix,
     final Map<String, Analyzer> fieldAnalyzers) {
 
@@ -203,8 +203,8 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Determines if a class is a model eligible for nested recursion. Models
-   * should be annotated with @Document, but HasId is allowed as a fallback.
+   * Determines if a class is a model eligible for nested recursion. Models should be annotated
+   * with @Document, but HasId is allowed as a fallback.
    *
    * @param clazz the class
    * @return true, if the class is a model
@@ -249,9 +249,8 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Returns the list of searchable fields for a given model class. Uses
-   * reflection to find String or List<String> fields, or those annotated
-   * with @Field(type = FieldType.Text) or MultiField.
+   * Returns the list of searchable fields for a given model class. Uses reflection to find String
+   * or List<String> fields, or those annotated with @Field(type = FieldType.Text) or MultiField.
    *
    * @param modelClass the model class
    * @return the searchable fields
