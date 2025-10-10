@@ -98,6 +98,23 @@ public class Application extends SpringBootServletInitializer implements Applica
     final String[] profiles = environment.getActiveProfiles();
     for (final String profile : profiles) {
       if ("test".equals(profile)) {
+        logger.info("Skipping bootstrap in test profile");
+        return;
+      }
+    }
+    bootstrap();
+  }
+
+  /**
+   * Log memory.
+   *
+   * @throws Exception the exception
+   */
+  @Override
+  public void run(final ApplicationArguments args) throws Exception {
+    final String[] profiles = environment.getActiveProfiles();
+    for (final String profile : profiles) {
+      if ("test".equals(profile)) {
         logger.debug("Skipping bootstrap in test profile");
         return;
       }

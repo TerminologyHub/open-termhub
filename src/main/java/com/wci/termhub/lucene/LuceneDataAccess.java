@@ -671,6 +671,18 @@ public class LuceneDataAccess {
           }
         }
       }
+      if (searchParameters.getFilterUnloaded() == null || searchParameters.getFilterUnloaded()) {
+        // Any partially loaded objects are skipped
+        if (obj instanceof HasAttributes) {
+          Map<String, String> attributes = ((HasAttributes) obj).getAttributes();
+          if (attributes != null) {
+            String loaded = attributes.get("loaded");
+            if (loaded != null && loaded.equals("false")) {
+              continue;
+            }
+          }
+        }
+      }
       results.getItems().add(obj);
     }
     results.setTotal(topDocs.totalHits.value);
@@ -955,8 +967,8 @@ public class LuceneDataAccess {
       synchronized (READER_MAP) {
         if (!READER_MAP.containsKey(canonicalClassName)) {
           synchronized (READER_MAP) {
-            if(logger.isTraceEnabled()){
-              logger.trace("Creating new IndexReader for class: {}", canonicalClassName);
+            if(LOGGER.isTraceEnabled()){
+              LOGGER.trace("Creating new IndexReader for class: {}", canonicalClassName);
             }
             final File indexDir = getIndexDirectory(clazz);
             final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
