@@ -124,27 +124,6 @@ public final class CodeSystemLoaderUtil {
       final boolean computeTreePositions, final Class<T> type, final ProgressListener listener,
       final Boolean isSyndicated) throws Exception {
 
-    Application.logMemory();
-    return indexCodeSystem(service, file, computeTreePositions, type, listener, isSyndicated);
-  }
-
-  /**
-   * Load concepts from CodeSystem format JSON.
-   *
-   * @param <T>                  the generic type
-   * @param service              the service
-   * @param file                 the file
-   * @param computeTreePositions whether to compute tree positions
-   * @param type                 the type
-   * @param listener             the listener
-   * @param isSyndicated         the is syndicated
-   * @return the string
-   * @throws Exception the exception
-   */
-  public static <T> T loadCodeSystem(final EntityRepositoryService service, final File file,
-      final boolean computeTreePositions, final Class<T> type, final ProgressListener listener,
-      final Boolean isSyndicated) throws Exception {
-
     SystemReportUtility.logMemory();
     return indexCodeSystem(service, file, computeTreePositions, type, listener, isSyndicated);
   }
