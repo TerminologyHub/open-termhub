@@ -143,7 +143,7 @@ public class BrowserQueryBuilder implements QueryBuilder {
         }
 
         // Other matches, lower quality -- for now exclude these
-        // clauses.add("terms.stemName:(" + stemQuery + ")");
+        clauses.add("terms.stemName:(" + stemQuery + ")");
       }
 
       // Favor shorter things
