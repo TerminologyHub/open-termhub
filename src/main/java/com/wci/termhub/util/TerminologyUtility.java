@@ -214,34 +214,6 @@ public final class TerminologyUtility {
   }
 
   /**
-   * Gets the subset.
-   *
-   * @param searchService the search service
-   * @param abbreviation the abbreviation
-   * @param publisher the publisher
-   * @param version the version
-   * @return the subset
-   * @throws Exception the exception
-   */
-  public static Subset getSubset(final EntityRepositoryService searchService,
-    final String abbreviation, final String publisher, final String version) throws Exception {
-
-    final ResultList<Subset> tlist = searchService.find(
-        new SearchParameters(getTerminologyQuery(abbreviation, publisher, version), 2, 0),
-        Subset.class);
-
-    if (tlist.getItems().isEmpty()) {
-      return null;
-    }
-    if (tlist.getItems().size() > 1) {
-      throw new Exception(
-          "Too many subset matches = " + abbreviation + ", " + publisher + ", " + version);
-    }
-
-    return tlist.getItems().get(0);
-  }
-
-  /**
    * Gets the mapset.
    *
    * @param searchService the search service

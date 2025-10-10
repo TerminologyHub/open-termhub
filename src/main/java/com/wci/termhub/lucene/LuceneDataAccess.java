@@ -955,8 +955,8 @@ public class LuceneDataAccess {
       synchronized (READER_MAP) {
         if (!READER_MAP.containsKey(canonicalClassName)) {
           synchronized (READER_MAP) {
-            if(LOGGER.isTraceEnabled()){
-              LOGGER.trace("Creating new IndexReader for class: {}", canonicalClassName);
+            if(logger.isTraceEnabled()){
+              logger.trace("Creating new IndexReader for class: {}", canonicalClassName);
             }
             final File indexDir = getIndexDirectory(clazz);
             final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
