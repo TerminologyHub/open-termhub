@@ -31,7 +31,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.wci.termhub.Application;
 import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.algo.TerminologyCache;
@@ -125,7 +124,7 @@ public final class CodeSystemLoaderUtil {
       final boolean computeTreePositions, final Class<T> type, final ProgressListener listener,
       final Boolean isSyndicated) throws Exception {
 
-    Application.logMemory();
+    SystemReportUtility.logMemory();
     return indexCodeSystem(service, file, computeTreePositions, type, listener, isSyndicated);
   }
 
@@ -295,7 +294,7 @@ public final class CodeSystemLoaderUtil {
                 service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
                 conceptBatch.clear();
                 LOGGER.info("  concept count: {}", conceptCount);
-                Application.logMemory();
+                SystemReportUtility.logMemory();
 
                 // Progress update
                 listener.updateProgress(new ProgressEvent(
@@ -353,7 +352,7 @@ public final class CodeSystemLoaderUtil {
         computeConceptTreePositions(service, terminology, listener2);
       }
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
-      Application.logMemory();
+      SystemReportUtility.logMemory();
 
       // Get the terminology again because the tree position computer would've changed it
       terminology = service.get(terminology.getId(), Terminology.class, false);

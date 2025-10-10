@@ -51,9 +51,9 @@ java {
     }
 }
 
-//configurations.all {
-//   exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
-//}
+configurations.all {
+   exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
+}
 
 // Ensure Spring Boot's dependency management is explicitly configured
 dependencyManagement {
@@ -74,6 +74,7 @@ dependencies {
   // NOTE: "spring-boot-starter-web" must be the first dependency
   implementation "org.springframework.boot:spring-boot-starter-web"
   implementation "org.springframework.boot:spring-boot-starter-actuator"
+  implementation "org.springframework.boot:spring-boot-starter-log4j2"
 
   implementation 'org.springframework:spring-core:6.2.11'
 
@@ -115,7 +116,7 @@ dependencies {
 	    attribute(Attribute.of('org.gradle.jvm.environment', String),'standard-jvm')
 	  }
   }
-  implementation 'org.apache.logging.log4j:log4j-core'
+
 
   // FHIR libraries
   // The guava exclusion is to avoid things like

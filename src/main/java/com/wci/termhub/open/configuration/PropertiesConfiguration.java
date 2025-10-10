@@ -41,7 +41,6 @@ public class PropertiesConfiguration {
   @ConfigurationProperties
   @Bean
   public ApplicationProperties applicationProperties() {
-    logger.info("CREATE ApplicationProperties");
     final ApplicationProperties prop = new ApplicationProperties();
     logger.info("Loaded properties: {}", prop);
     return prop;

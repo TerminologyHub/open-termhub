@@ -76,7 +76,7 @@ public class LuceneDataAccess {
   /**
    * The logger.
    */
-  private static final Logger LOGGER = LoggerFactory.getLogger(LuceneDataAccess.class);
+  private static Logger logger = LoggerFactory.getLogger(LuceneDataAccess.class);
 
   /** The application properties. */
   @Autowired
@@ -116,8 +116,8 @@ public class LuceneDataAccess {
     // Create only if the index does not exist
     final File indexDir = getIndexDirectory(clazz);
     if (indexDir.exists()) {
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.debug("Index already exists: {}", indexDir.getAbsolutePath());
+      if (logger.isTraceEnabled()) {
+        logger.trace("Index already exists: {}", indexDir.getAbsolutePath());
       }
       return;
     }
@@ -145,7 +145,7 @@ public class LuceneDataAccess {
     final String indexDirectory = clazz.getCanonicalName();
     // Use File for better cross-platform path handling
     final File indexDir = getIndexDirectory(clazz);
-    LOGGER.info("Deleting index {} from {}", indexDirectory, indexDir.getAbsolutePath());
+    logger.info("Deleting index {} from {}", indexDirectory, indexDir.getAbsolutePath());
     if (indexDir.exists()) {
       clearReaderForClass(clazz);
       // need to close writer first
@@ -202,8 +202,8 @@ public class LuceneDataAccess {
     Class<?> currentClass = entity.getClass();
 
     while (currentClass != null) {
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("Add: Current class: {}", currentClass.getName());
+      if (logger.isTraceEnabled()) {
+        logger.trace("Add: Current class: {}", currentClass.getName());
       }
 
       for (final java.lang.reflect.Field field : currentClass.getDeclaredFields()) {
@@ -215,8 +215,8 @@ public class LuceneDataAccess {
         }
 
         final Field annotation = field.getAnnotation(Field.class);
-        if (LOGGER.isTraceEnabled()) {
-          LOGGER.trace("Field: {}, value: {}, annotation: {}", field.getName(), fieldValue,
+        if (logger.isTraceEnabled()) {
+          logger.trace("Field: {}, value: {}, annotation: {}", field.getName(), fieldValue,
               annotation);
         }
 
@@ -234,8 +234,8 @@ public class LuceneDataAccess {
                 document.add(indexableField);
               }
             } else {
-              if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Add: field instance of NOT Object OR Collection");
+              if (logger.isTraceEnabled()) {
+                logger.trace("Add: field instance of NOT Object OR Collection");
               }
               final List<IndexableField> indexableFieldsList = IndexUtility
                   .getIndexableFields(entity, field, null, fieldValue instanceof Collection);
@@ -246,8 +246,8 @@ public class LuceneDataAccess {
 
           } else if (fieldType == FieldType.Object && fieldValue instanceof Collection) {
 
-            if (LOGGER.isTraceEnabled()) {
-              LOGGER.trace("Add: object field instance of Collection");
+            if (logger.isTraceEnabled()) {
+              logger.trace("Add: object field instance of Collection");
             }
             final Collection<?> collection = (Collection<?>) fieldValue;
             final List<IndexableField> indexableFieldsList =
@@ -258,8 +258,8 @@ public class LuceneDataAccess {
 
           } else if (fieldType == FieldType.Object && fieldValue instanceof BaseModel) {
 
-            if (LOGGER.isTraceEnabled()) {
-              LOGGER.trace("Add: object field instance of BaseModel");
+            if (logger.isTraceEnabled()) {
+              logger.trace("Add: object field instance of BaseModel");
             }
             final Object refEntity = fieldValue;
             Class<?> refClass = refEntity.getClass();
@@ -280,8 +280,8 @@ public class LuceneDataAccess {
 
         } else {
 
-          if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("Add: object field instance of MultiField");
+          if (logger.isTraceEnabled()) {
+            logger.trace("Add: object field instance of MultiField");
           }
           final List<IndexableField> indexableFieldsList =
               IndexUtility.getIndexableFields(entity, field, null, false);
@@ -294,8 +294,8 @@ public class LuceneDataAccess {
       currentClass = currentClass.getSuperclass();
     }
 
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Adding document: {}", document);
+    if (logger.isTraceEnabled()) {
+      logger.trace("Adding document: {}", document);
     }
     return document;
   }
@@ -339,23 +339,23 @@ public class LuceneDataAccess {
     // Parse the existing entity from JSON
     final HasId existingEntity = parseEntityFromDocument(entityField, clazz);
 
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Retrieved existing entity: {}", existingEntity);
-      LOGGER.debug("New entity: {}", entity);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Retrieved existing entity: {}", existingEntity);
+      logger.debug("New entity: {}", entity);
     }
 
     // Compare entities and update only changed fields
     final boolean hasChanges = updateChangedFields(existingEntity, entity);
 
     if (!hasChanges) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("No changes detected for entity with id: {}", id);
+      if (logger.isDebugEnabled()) {
+        logger.debug("No changes detected for entity with id: {}", id);
       }
       return;
     }
 
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Changes detected, updating document for entity with id: {}", id);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Changes detected, updating document for entity with id: {}", id);
     }
 
     // Now delete the old document and add the updated one using the same
@@ -363,8 +363,8 @@ public class LuceneDataAccess {
     // full reindexing
     updateDocumentInIndex(writer, id, existingEntity);
     clearReaderForClass(clazz);
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Successfully updated document with id: {} for index: {}", id,
+    if (logger.isDebugEnabled()) {
+      logger.debug("Successfully updated document with id: {} for index: {}", id,
           writer.getDirectory());
     }
   }
@@ -392,11 +392,11 @@ public class LuceneDataAccess {
       final HasId entity = entry.getValue();
 
       if (id == null) {
-        LOGGER.warn("Skipping entity with null id in bulk update");
+        logger.warn("Skipping entity with null id in bulk update");
         continue;
       }
       if (entity == null) {
-        LOGGER.warn("Skipping null entity with id: {} in bulk update", id);
+        logger.warn("Skipping null entity with id: {} in bulk update", id);
         continue;
       }
 
@@ -404,30 +404,30 @@ public class LuceneDataAccess {
         // First, retrieve the existing document to get the current entity
         final Document existingDoc = getExistingDocument(writer, id);
         if (existingDoc == null) {
-          LOGGER.warn("Document with id {} not found in bulk update, skipping", id);
+          logger.warn("Document with id {} not found in bulk update, skipping", id);
           continue;
         }
 
         // Get the entity field which contains the JSON representation
         final StoredField entityField = (StoredField) existingDoc.getField("entity");
         if (entityField == null) {
-          LOGGER.warn("Entity field not found in document with id {} in bulk update, skipping", id);
+          logger.warn("Entity field not found in document with id {} in bulk update, skipping", id);
           continue;
         }
 
         // Parse the existing entity from JSON
         final HasId existingEntity = parseEntityFromDocument(entityField, clazz);
 
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Processing bulk update for entity with id: {}", id);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Processing bulk update for entity with id: {}", id);
         }
 
         // Compare entities and update only changed fields
         final boolean hasChanges = updateChangedFields(existingEntity, entity);
 
         if (!hasChanges) {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("No changes detected for entity with id: {} in bulk update", id);
+          if (logger.isDebugEnabled()) {
+            logger.debug("No changes detected for entity with id: {} in bulk update", id);
           }
           continue;
         }
@@ -435,12 +435,12 @@ public class LuceneDataAccess {
         // Delete the old document and add the updated one
         updateDocumentInIndex(writer, id, existingEntity);
 
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Updated entity with id: {} in bulk update", id);
+        if (logger.isDebugEnabled()) {
+          logger.debug("Updated entity with id: {} in bulk update", id);
         }
 
       } catch (final Exception e) {
-        LOGGER.error("Error updating entity with id: {} in bulk update", id, e);
+        logger.error("Error updating entity with id: {} in bulk update", id, e);
         // Continue with other entities instead of failing the entire batch
       }
     }
@@ -448,7 +448,7 @@ public class LuceneDataAccess {
     // Commit all changes at once
     writer.commit();
     clearReaderForClass(clazz);
-    LOGGER.debug("Successfully completed bulk update for {} entities in index: {}", entities.size(),
+    logger.debug("Successfully completed bulk update for {} entities in index: {}", entities.size(),
         writer.getDirectory());
   }
 
@@ -489,8 +489,8 @@ public class LuceneDataAccess {
 
           // Compare values and update if different
           if (!Objects.equals(existingValue, newValue)) {
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("Field '{}' changed from '{}' to '{}'", field.getName(), existingValue,
+            if (logger.isDebugEnabled()) {
+              logger.debug("Field '{}' changed from '{}' to '{}'", field.getName(), existingValue,
                   newValue);
             }
 
@@ -499,7 +499,7 @@ public class LuceneDataAccess {
           }
 
         } catch (final Exception e) {
-          LOGGER.warn("Error comparing field '{}' in entity class '{}'", field.getName(),
+          logger.warn("Error comparing field '{}' in entity class '{}'", field.getName(),
               currentClass.getName(), e);
           // Continue with other fields instead of failing the entire update
         }
@@ -541,8 +541,8 @@ public class LuceneDataAccess {
     final IndexWriter writer = getIndexWriter(clazz);
 
     for (final String id : ids) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Removing id: {} for index:{}", id, writer.getDirectory());
+      if (logger.isDebugEnabled()) {
+        logger.debug("Removing id: {} for index:{}", id, writer.getDirectory());
       }
       deleteDocumentById(writer, id);
     }
@@ -614,8 +614,8 @@ public class LuceneDataAccess {
 
     IndexSearcher searcher = null;
 
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("indexRootDirectory is {}; index is {}", getIndexRootDirectory(),
+    if (logger.isTraceEnabled()) {
+      logger.trace("indexRootDirectory is {}; index is {}", getIndexRootDirectory(),
           clazz.getCanonicalName());
     }
 
@@ -634,15 +634,15 @@ public class LuceneDataAccess {
     final int start = searchParameters.getOffset();
     final int end = searchParameters.getLimit() + (searchParameters.getOffset());
 
-    if (LOGGER.isDebugEnabled() && searchParameters.getLuceneQuery() != null) {
-      LOGGER.debug("  lucene = {} [{}, {}, {}, {}]", searchParameters.getLuceneQuery(), start, end,
+    if (logger.isDebugEnabled() && searchParameters.getLuceneQuery() != null) {
+      logger.debug("  lucene = {} [{}, {}, {}, {}]", searchParameters.getLuceneQuery(), start, end,
           searchParameters.getSort(), clazz.getName());
     }
 
     final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
         : searcher.search(queryBuilder, end);
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Query topDocs: {}", topDocs.totalHits.value);
+    if (logger.isTraceEnabled()) {
+      logger.trace("Query topDocs: {}", topDocs.totalHits.value);
     }
 
     final ResultList<T> results = new ResultList<>();
@@ -650,14 +650,26 @@ public class LuceneDataAccess {
     for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
 
       final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("Score: {}", scoreDoc.score);
+      if (logger.isTraceEnabled()) {
+        logger.trace("Score: {}", scoreDoc.score);
       }
       final Document doc = searcher.storedFields().document(scoreDoc.doc);
       final String jsonEntityString = doc.get("entity");
       final T obj = mapper.readValue(jsonEntityString, clazz);
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("search result: {}", obj);
+      if (logger.isTraceEnabled()) {
+        logger.trace("search result: {}", obj);
+      }
+      if (searchParameters.getFilterUnloaded() == null || searchParameters.getFilterUnloaded()) {
+        // Any partially loaded objects are skipped
+        if (obj instanceof HasAttributes) {
+          Map<String, String> attributes = ((HasAttributes) obj).getAttributes();
+          if (attributes != null) {
+            String loaded = attributes.get("loaded");
+            if (loaded != null && loaded.equals("false")) {
+              continue;
+            }
+          }
+        }
       }
       if (searchParameters.getFilterUnloaded() == null || searchParameters.getFilterUnloaded()) {
         // Any partially loaded objects are skipped
@@ -720,8 +732,8 @@ public class LuceneDataAccess {
     // Parse the existing entity from JSON
     final HasId existingEntity = parseEntityFromDocument(entityField, clazz);
 
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.debug("Retrieved existing entity: {}", existingEntity);
+    if (logger.isTraceEnabled()) {
+      logger.trace("Retrieved existing entity: {}", existingEntity);
     }
 
     // Get the field value from the new entity using reflection
@@ -734,15 +746,15 @@ public class LuceneDataAccess {
     field.setAccessible(true);
     final Object fieldValue = field.get(entity);
     if (fieldValue == null) {
-      LOGGER.warn("Field value is null for field: {} in entity: {}", fieldName, entity);
+      logger.warn("Field value is null for field: {} in entity: {}", fieldName, entity);
       return;
     }
 
     // Set the new field value on the existing entity
     field.set(existingEntity, fieldValue);
 
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.debug("Updated existing entity with new field value: {} = {}", fieldName, fieldValue);
+    if (logger.isTraceEnabled()) {
+      logger.trace("Updated existing entity with new field value: {} = {}", fieldName, fieldValue);
     }
 
     // Now delete the old document and add the updated one using the same
@@ -750,8 +762,10 @@ public class LuceneDataAccess {
     // full reindexing
     updateDocumentInIndex(writer, id, existingEntity);
     clearReaderForClass(clazz);
-    LOGGER.debug("Successfully updated field: {} in document with id: {} for index: {}", fieldName,
-        id, writer.getDirectory());
+    if (logger.isDebugEnabled()) {
+      logger.debug("Successfully added field: {} to document with id: {} for index: {}",
+          fieldName, id, writer.getDirectory());
+    }
   }
 
   /**
@@ -953,8 +967,8 @@ public class LuceneDataAccess {
       synchronized (READER_MAP) {
         if (!READER_MAP.containsKey(canonicalClassName)) {
           synchronized (READER_MAP) {
-            if(LOGGER.isTraceEnabled()){
-              LOGGER.trace("Creating new IndexReader for class: {}", canonicalClassName);
+            if(logger.isTraceEnabled()){
+              logger.trace("Creating new IndexReader for class: {}", canonicalClassName);
             }
             final File indexDir = getIndexDirectory(clazz);
             final FSDirectory fsDirectory = FSDirectory.open(indexDir.toPath());
