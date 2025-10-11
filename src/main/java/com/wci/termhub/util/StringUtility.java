@@ -721,6 +721,8 @@ public final class StringUtility {
    * @return true, if is fielded query
    */
   public static boolean isFieldedQuery(final String query) {
-    return query != null && query.matches(".*[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^:]*.*");
+    return query != null && (query.matches(".*[a-zA-Z_]+[a-z]\\:.*")
+        || query.matches(".*attributes.[a-zA-Z_]+\\:.*"));
+    // query.matches(".*[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^:]*.*");
   }
 }

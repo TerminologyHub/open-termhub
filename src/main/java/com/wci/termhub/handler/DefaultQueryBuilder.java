@@ -67,7 +67,7 @@ public class DefaultQueryBuilder implements QueryBuilder {
       return query;
     }
 
-    return StringUtility.escapeQuery(query);
+    return StringUtility.escapeQueryNoSpace(query);
   }
 
   /* see superclass */
@@ -88,26 +88,10 @@ public class DefaultQueryBuilder implements QueryBuilder {
   /* see superclass */
   @Override
   public String buildEscapedQuery(final String query) {
-    if (StringUtility.isEmpty(query) || query.equals("*") || query.equals("*:*")) {
-      return "*:*";
-    }
 
-    // Handle name field queries for partial matching (same as buildQuery)
-    if (query.matches("name\\s*:\\s*.*")) {
-      final String searchTerm = query.replaceFirst("name\\s*:\\s*", "").trim();
-      if (!searchTerm.isEmpty()) {
-        // Use normName field for partial matching (works for both Concept and Term)
-        return "normName:" + StringUtility.escapeQuery(searchTerm);
-      }
-    }
+    return (StringUtility.isEmpty(query) || query.equals("*")) ? "*:*"
+        : ("\"" + StringUtility.escapeQueryNoSpace(query) + "\"");
 
-    if (StringUtility.isFieldedQuery(query)) {
-      StringUtility.escapeQuery(query);
-    }
-
-    // Non-fielded query - add partial matching for name fields
-    return "(" + StringUtility.escapeQuery(query) + ") OR (normName:"
-        + StringUtility.escapeQuery(query) + ")";
   }
 
 }
