@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="info">
 	<Properties>
-		<Property name="LOG_LEVEL">${env:LOG_LEVEL:-INFO}</Property>
+		<Property name="AP_LOG_LEVEL">${env:LOG_LEVEL:-INFO}</Property>
 	</Properties>
     <Appenders>
 		<Console name="Console" target="SYSTEM_OUT">
@@ -15,7 +15,7 @@
         <Root level="info">
             <AppenderRef ref="Console" />
         </Root>
-        <Logger name="com.wci.termhub" level="${LOG_LEVEL}" additivity="false">
+        <Logger name="com.wci.termhub" level="${AP_LOG_LEVEL}" additivity="false">
             <AppenderRef ref="Console" />
         </Logger>
         <Logger name="org.springframework" level="warn" additivity="false">
@@ -28,7 +28,7 @@
             <AppenderRef ref="Console" />
         </Logger>
 		<!-- See JsonLoggingFilter -->
-        <Logger name="HttpLogger" level="${LOG_LEVEL}" additivity="false">
+        <Logger name="HttpLogger" level="${AP_LOG_LEVEL}" additivity="false">
             <AppenderRef ref="HttpConsole" />
         </Logger>
 	</Loggers>

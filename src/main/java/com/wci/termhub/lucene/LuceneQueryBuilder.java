@@ -15,20 +15,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.Tokenizer;
-import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene.analysis.ngram.NGramTokenFilter;
-import org.apache.lucene.analysis.pattern.PatternReplaceFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
@@ -61,8 +53,11 @@ public final class LuceneQueryBuilder {
   /** The Constant SEARCHABLE_FIELDS_CACHE. */
   private static final Map<Class<?>, String[]> SEARCHABLE_FIELDS_CACHE = new HashMap<>();
 
-  /** The Constant FIELD_ANALYZERS_CACHE. */
-  private static final Map<Class<?>, Map<String, Analyzer>> FIELD_ANALYZERS_CACHE = new HashMap<>();
+  /**
+   * Cache of analyzer "types" per class/field to avoid reflection every time.
+   */
+  private static final Map<Class<?>, Map<String, AnalyzerType>> FIELD_ANALYZER_TYPES_CACHE =
+      new HashMap<>();
 
   /**
    * Parses the query for a specific model class.
@@ -75,8 +70,12 @@ public final class LuceneQueryBuilder {
   public static Query parse(final String queryText, final Class<?> modelClass)
     throws ParseException {
 
-    // Get field-specific analyzers based on annotations
-    final Map<String, Analyzer> fieldAnalyzers = getFieldAnalyzers(modelClass);
+    // Build analyzers from cached types
+    final Map<String, AnalyzerType> analyzerTypes = getFieldAnalyzerTypes(modelClass);
+    final Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
+    for (final Map.Entry<String, AnalyzerType> entry : analyzerTypes.entrySet()) {
+      fieldAnalyzers.put(entry.getKey(), entry.getValue().newInstance());
+    }
     final String[] searchableFields = getSearchableFields(modelClass);
 
     // Create PerFieldAnalyzerWrapper with field-specific analyzers
@@ -95,38 +94,53 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Gets field-specific analyzers for a given model class based on ElasticSearch annotations.
+   * Gets field-specific analyzers for a given model class based on
+   * ElasticSearch annotations.
    *
    * @param modelClass the model class
    * @return the field analyzers
    */
   public static Map<String, Analyzer> getFieldAnalyzers(final Class<?> modelClass) {
-    if (FIELD_ANALYZERS_CACHE.containsKey(modelClass)) {
-      return FIELD_ANALYZERS_CACHE.get(modelClass);
+    final Map<String, AnalyzerType> types = getFieldAnalyzerTypes(modelClass);
+    final Map<String, Analyzer> analyzers = new HashMap<>();
+    for (final Map.Entry<String, AnalyzerType> e : types.entrySet()) {
+      analyzers.put(e.getKey(), e.getValue().newInstance());
     }
-
-    final Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
-
-    // Recursively collect analyzers for this model and any nested
-    // @Document/HasId
-    // models
-    collectAnalyzersForClass(modelClass, null, fieldAnalyzers);
-
-    FIELD_ANALYZERS_CACHE.put(modelClass, fieldAnalyzers);
-    return fieldAnalyzers;
+    return analyzers;
   }
 
   /**
-   * Recursively collects analyzers for fields on a model class and nested model classes based on
-   * ElasticSearch annotations. Uses a dotted prefix for nested objects/collections.
+   * Returns cached analyzer types (not instances) by field for a model class.
+   *
+   * @param modelClass the model class
+   * @return the field analyzer types
+   */
+  public static Map<String, AnalyzerType> getFieldAnalyzerTypes(final Class<?> modelClass) {
+    if (FIELD_ANALYZER_TYPES_CACHE.containsKey(modelClass)) {
+      return FIELD_ANALYZER_TYPES_CACHE.get(modelClass);
+    }
+
+    final Map<String, AnalyzerType> fieldAnalyzerTypes = new HashMap<>();
+
+    // Recursively collect analyzer types for this model and any nested models
+    collectAnalyzerTypesForClass(modelClass, null, fieldAnalyzerTypes);
+
+    FIELD_ANALYZER_TYPES_CACHE.put(modelClass, fieldAnalyzerTypes);
+    return fieldAnalyzerTypes;
+  }
+
+  /**
+   * Recursively collects analyzers for fields on a model class and nested model
+   * classes based on ElasticSearch annotations. Uses a dotted prefix for nested
+   * objects/collections.
    *
    * @param modelClass the model class
    * @param prefix the field path prefix, or null for top-level
-   * @param fieldAnalyzers the output map of field path to analyzer
+   * @param fieldAnalyzerTypes the field analyzer types
    */
   @SuppressWarnings("resource")
-  private static void collectAnalyzersForClass(final Class<?> modelClass, final String prefix,
-    final Map<String, Analyzer> fieldAnalyzers) {
+  private static void collectAnalyzerTypesForClass(final Class<?> modelClass, final String prefix,
+    final Map<String, AnalyzerType> fieldAnalyzerTypes) {
 
     final List<Field> allFields = ModelUtility.getAllFields(modelClass);
 
@@ -139,18 +153,14 @@ public final class LuceneQueryBuilder {
       final MultiField multiField = field.getAnnotation(MultiField.class);
       if (multiField != null) {
         // Main field
-        final Analyzer mainAnalyzer = getAnalyzerForFieldType(multiField.mainField().type());
-        if (mainAnalyzer != null) {
-          fieldAnalyzers.put(fieldPath, mainAnalyzer);
-        }
+        final AnalyzerType mainType = getAnalyzerTypeForFieldType(multiField.mainField().type());
+        fieldAnalyzerTypes.put(fieldPath, mainType);
         // Inner fields
         for (final InnerField innerField : multiField.otherFields()) {
           final String subFieldPath = fieldPath + "." + innerField.suffix();
-          final Analyzer subFieldAnalyzer = ("ngram".equals(innerField.suffix()))
-              ? getNgramAnalyzer() : getAnalyzerForFieldType(innerField.type());
-          if (subFieldAnalyzer != null) {
-            fieldAnalyzers.put(subFieldPath, subFieldAnalyzer);
-          }
+          final AnalyzerType subType = ("ngram".equals(innerField.suffix())) ? AnalyzerType.NGRAM
+              : getAnalyzerTypeForFieldType(innerField.type());
+          fieldAnalyzerTypes.put(subFieldPath, subType);
         }
       }
 
@@ -159,10 +169,8 @@ public final class LuceneQueryBuilder {
           field.getAnnotation(org.springframework.data.elasticsearch.annotations.Field.class);
       if (esField != null) {
         // Map analyzer for this concrete field
-        final Analyzer analyzer = getAnalyzerForFieldType(esField.type());
-        if (analyzer != null) {
-          fieldAnalyzers.put(fieldPath, analyzer);
-        }
+        final AnalyzerType type = getAnalyzerTypeForFieldType(esField.type());
+        fieldAnalyzerTypes.put(fieldPath, type);
 
         // If it's an object, recurse into nested model types
         if (esField.type() == FieldType.Object) {
@@ -178,7 +186,7 @@ public final class LuceneQueryBuilder {
                 if (elementType instanceof Class) {
                   final Class<?> elementClass = (Class<?>) elementType;
                   if (isDocumentModel(elementClass)) {
-                    collectAnalyzersForClass(elementClass, fieldPath, fieldAnalyzers);
+                    collectAnalyzerTypesForClass(elementClass, fieldPath, fieldAnalyzerTypes);
                   }
                 }
               }
@@ -188,7 +196,7 @@ public final class LuceneQueryBuilder {
           } else {
             final Class<?> nestedClass = field.getType();
             if (isDocumentModel(nestedClass)) {
-              collectAnalyzersForClass(nestedClass, fieldPath, fieldAnalyzers);
+              collectAnalyzerTypesForClass(nestedClass, fieldPath, fieldAnalyzerTypes);
             }
           }
         }
@@ -197,7 +205,7 @@ public final class LuceneQueryBuilder {
       // If there are no annotations but it's a String, default to
       // StandardAnalyzer
       if (multiField == null && esField == null && field.getType().equals(String.class)) {
-        fieldAnalyzers.put(fieldPath, new StandardAnalyzer());
+        fieldAnalyzerTypes.put(fieldPath, AnalyzerType.STANDARD);
       }
     }
   }
@@ -214,37 +222,17 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * The ngram analyzer.
-   *
-   * @return the ngram analyzer
-   */
-  private static Analyzer getNgramAnalyzer() {
-    return new Analyzer() {
-      @SuppressWarnings("resource")
-      @Override
-      protected TokenStreamComponents createComponents(final String fieldName) {
-        final Tokenizer tokenizer = new StandardTokenizer();
-        final TokenStream lower = new LowerCaseFilter(tokenizer);
-        final TokenStream cleaned =
-            new PatternReplaceFilter(lower, Pattern.compile("[^a-z0-9]+"), "", true);
-        final TokenStream ngrams = new NGramTokenFilter(cleaned, 3, 20, false);
-        return new TokenStreamComponents(tokenizer, ngrams);
-      }
-    };
-  }
-
-  /**
    * Gets the analyzer for a specific field type.
    *
    * @param fieldType the field type
    * @return the analyzer
    */
-  private static Analyzer getAnalyzerForFieldType(final FieldType fieldType) {
+  private static AnalyzerType getAnalyzerTypeForFieldType(final FieldType fieldType) {
     switch (fieldType) {
       case Keyword:
-        return new KeywordAnalyzer();
+        return AnalyzerType.KEYWORD;
       default:
-        return new StandardAnalyzer();
+        return AnalyzerType.STANDARD;
     }
   }
 

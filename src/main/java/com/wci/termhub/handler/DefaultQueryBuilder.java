@@ -62,15 +62,12 @@ public class DefaultQueryBuilder implements QueryBuilder {
     if (StringUtility.isEmpty(query) || query.equals("*") || query.equals("*:*")) {
       return "*:*";
     }
-
-    // Handle non-fielded queries to include partial matching on name fields
-    // This ensures non-fielded queries like "cancer" also search in name fields
-    if (!query.matches(".*\\w+:.*")) {
-      // Non-fielded query - add partial matching for name fields
+    // Fielded queries should be left alone
+    else if (StringUtility.isFieldedQuery(query)) {
       return query;
     }
 
-    return query;
+    return StringUtility.escapeQuery(query);
   }
 
   /* see superclass */
@@ -104,15 +101,13 @@ public class DefaultQueryBuilder implements QueryBuilder {
       }
     }
 
-    // Handle non-fielded queries to include partial matching on name fields (same as buildQuery)
-    if (!query.matches(".*\\w+:.*")) {
-      // Non-fielded query - add partial matching for name fields
-      return "(" + StringUtility.escapeQuery(query) + ") OR (normName:"
-          + StringUtility.escapeQuery(query) + ")";
+    if (StringUtility.isFieldedQuery(query)) {
+      StringUtility.escapeQuery(query);
     }
 
-    // For other fielded queries, escape with quotes and escape colons
-    return StringUtility.escapeQuery(query);
+    // Non-fielded query - add partial matching for name fields
+    return "(" + StringUtility.escapeQuery(query) + ") OR (normName:"
+        + StringUtility.escapeQuery(query) + ")";
   }
 
 }

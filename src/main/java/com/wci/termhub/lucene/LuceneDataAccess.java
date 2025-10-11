@@ -829,16 +829,21 @@ public class LuceneDataAccess {
    */
   @SuppressWarnings("resource")
   private Analyzer buildPerFieldAnalyzer(final Class<? extends HasId> clazz) throws Exception {
+    // Build a fresh set of Analyzer instances to avoid reusing any cached
+    // analyzers
+    // that may have been closed as part of previous writer/query lifecycles.
+    final Map<String, AnalyzerType> analyzerTypes = LuceneQueryBuilder.getFieldAnalyzerTypes(clazz);
+    final Map<String, Analyzer> freshFieldAnalyzers = new HashMap<>();
+    for (final Map.Entry<String, AnalyzerType> entry : analyzerTypes.entrySet()) {
+      freshFieldAnalyzers.put(entry.getKey(), entry.getValue().newInstance());
+    }
 
-    final Map<String, Analyzer> fieldAnalyzers = LuceneQueryBuilder.getFieldAnalyzers(clazz);
-
-    fieldAnalyzers.put("name.ngram", createNgramAnalyzer());
-
-    fieldAnalyzers.put("name", new StandardAnalyzer());
+    // Ensure standard fields are present with fresh analyzers
+    freshFieldAnalyzers.put("name.ngram", createNgramAnalyzer());
+    freshFieldAnalyzers.put("name", new StandardAnalyzer());
 
     final Analyzer defaultAnalyzer = new StandardAnalyzer();
-
-    return new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
+    return new PerFieldAnalyzerWrapper(defaultAnalyzer, freshFieldAnalyzers);
   }
 
   /**
