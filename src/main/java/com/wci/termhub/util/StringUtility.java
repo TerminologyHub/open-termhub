@@ -713,4 +713,14 @@ public final class StringUtility {
     }
     return salt.toString();
   }
+
+  /**
+   * Checks if is fielded query.
+   *
+   * @param query the query matches(".*[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^:]*.*")
+   * @return true, if is fielded query
+   */
+  public static boolean isFieldedQuery(final String query) {
+    return query != null && query.matches(".*[a-zA-Z][a-zA-Z0-9_.]*\\s*:\\s*[^:]*.*");
+  }
 }
