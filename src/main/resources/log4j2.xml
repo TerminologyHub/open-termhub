@@ -1,28 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Debugging logging configuration -->
-<Configuration status="WARN">
+<Configuration status="info">
 	<Properties>
-		<!-- Default to INFO if LOG_LEVEL env var is not set -->
-		<Property name="LOG_LEVEL">${env:LOG_LEVEL:-INFO}</Property>
+		<Property name="AP_LOG_LEVEL">${env:LOG_LEVEL:-INFO}</Property>
 	</Properties>
-	<Appenders>
+    <Appenders>
 		<Console name="Console" target="SYSTEM_OUT">
-			<PatternLayout
-				pattern="%d{yyyy-MM-dd'T'HH:mm:ssXXX} %-5p : %m%n" />
+			<PatternLayout pattern="%d{yyyy-MM-dd'T'HH:mm:ssXXX} %-5p : %m%n" />
+		</Console>
+		<Console name="HttpConsole" target="SYSTEM_OUT">
+			<PatternLayout pattern="%d{yyyy-MM-dd'T'HH:mm:ssXXX} %-5p : %m req-querystring=%X{req-querystring} http-version=%X{http-version} remote-address=%X{remote-address} referer=%X{referer} user-agent=%X{user-agent} status-code=%X{status-code} duration-ms=%X{duration-ms}%n" />
 		</Console>
 	</Appenders>
 	<Loggers>
-		<Root level="${LOG_LEVEL}">
-			<AppenderRef ref="Console" />
-		</Root>
-		<Logger name="com.wci.termhub" level="${LOG_LEVEL}" additivity="false">
-			<AppenderRef ref="Console" />
-		</Logger>
-		<Logger name="org" level="warn" additivity="false">
-			<AppenderRef ref="Console" />
-		</Logger>
-		<Logger name="org.springframework" level="${LOG_LEVEL}" additivity="false">
-			<AppenderRef ref="Console" />
-		</Logger>
+        <Root level="info">
+            <AppenderRef ref="Console" />
+        </Root>
+        <Logger name="com.wci.termhub" level="${AP_LOG_LEVEL}" additivity="false">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="org.springframework" level="warn" additivity="false">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="org.hibernate" level="info" additivity="false">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="org" level="warn" additivity="false">
+            <AppenderRef ref="Console" />
+        </Logger>
+		<!-- See JsonLoggingFilter -->
+        <Logger name="HttpLogger" level="${AP_LOG_LEVEL}" additivity="false">
+            <AppenderRef ref="HttpConsole" />
+        </Logger>
 	</Loggers>
 </Configuration>

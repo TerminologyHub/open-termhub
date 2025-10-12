@@ -79,7 +79,9 @@ public class SearchParameters extends BaseModel {
   /** The leaf. */
   private Boolean leaf;
 
+  /** The filter unloaded. */
   private Boolean filterUnloaded;
+
   /**
    * Instantiates an empty {@link SearchParameters}.
    */
@@ -159,8 +161,8 @@ public class SearchParameters extends BaseModel {
   }
 
   /**
-   * Instantiates a {@link SearchParameters} from the specified parameters. This
-   * is a helper constructor so it can be easily constructed for "find" methods.
+   * Instantiates a {@link SearchParameters} from the specified parameters. This is a helper
+   * constructor so it can be easily constructed for "find" methods.
    *
    * @param query the query
    * @param offset the offset
@@ -487,6 +489,7 @@ public class SearchParameters extends BaseModel {
   public Boolean getFilterUnloaded() {
     return filterUnloaded;
   }
+
   /**
    * Sets the include unloaded.
    *
@@ -530,7 +533,8 @@ public class SearchParameters extends BaseModel {
         && Objects.equals(leaf, other.leaf) && Objects.equals(limit, other.limit)
         && Objects.equals(offset, other.offset) && Objects.equals(query, other.query)
         && Objects.equals(sort, other.sort) && Objects.equals(terminology, other.terminology)
-        && Objects.equals(luceneQuery, other.luceneQuery) && Objects.equals(filterUnloaded, other.filterUnloaded);
+        && Objects.equals(luceneQuery, other.luceneQuery)
+        && Objects.equals(filterUnloaded, other.filterUnloaded);
   }
 
 }

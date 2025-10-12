@@ -36,6 +36,7 @@ import com.wci.termhub.open.configuration.ApplicationProperties;
 import com.wci.termhub.syndication.SyndicationContentTracker;
 import com.wci.termhub.util.AdhocUtility;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.SystemReportUtility;
 
 /**
  * The Application entry point.
@@ -84,24 +85,8 @@ public class Application extends SpringBootServletInitializer implements Applica
 
     // Log start of application
     logger.info("OPEN TERMHUB TERMINOLOGY APPLICATION START");
-    logMemory();
+    SystemReportUtility.logMemory();
 
-  }
-
-  /**
-   * Run after application context is initialized but before ApplicationReadyEvent.
-   * Ensures indexes are created before any startup listeners execute.
-   */
-  @Override
-  public void run(final ApplicationArguments args) throws Exception {
-    final String[] profiles = environment.getActiveProfiles();
-    for (final String profile : profiles) {
-      if ("test".equals(profile)) {
-        logger.info("Skipping bootstrap in test profile");
-        return;
-      }
-    }
-    bootstrap();
   }
 
   /**
@@ -109,10 +94,16 @@ public class Application extends SpringBootServletInitializer implements Applica
    *
    * @throws Exception the exception
    */
-  public static void logMemory() throws Exception {
-    logger.info("  MEMORY (" + Runtime.getRuntime().totalMemory() + " - "
-        + Runtime.getRuntime().freeMemory() + ") = "
-        + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+  @Override
+  public void run(final ApplicationArguments args) throws Exception {
+    final String[] profiles = environment.getActiveProfiles();
+    for (final String profile : profiles) {
+      if ("test".equals(profile)) {
+        logger.debug("Skipping bootstrap in test profile");
+        return;
+      }
+    }
+    bootstrap();
   }
 
   /**

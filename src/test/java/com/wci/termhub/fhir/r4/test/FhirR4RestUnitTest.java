@@ -9,6 +9,11 @@
  */
 package com.wci.termhub.fhir.r4.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -20,8 +25,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import com.wci.termhub.fhir.util.FhirUtility;
-import com.wci.termhub.util.ValueSetLoaderUtil;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
@@ -55,6 +58,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -63,11 +67,10 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ThreadLocalMapper;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4 endpoints, CodeSystem,
@@ -260,7 +263,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(1)
   @Disabled
   public void testCodeSystemNotLoaded() throws Exception {
-    Terminology terminology = FhirUtility.getTerminology(searchService, "SNOMEDCT_US", "SANDBOX", "20240301");
+    final Terminology terminology =
+        FhirUtility.getTerminology(searchService, "SNOMEDCT_US", "SANDBOX", "20240301");
     try {
       // Arrange
       final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM;
@@ -272,22 +276,23 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
       final String content = this.restTemplate.getForObject(endpoint, String.class);
       final Bundle data = parser.parseResource(Bundle.class, content);
       final List<Resource> codeSystems =
-              data.getEntry().stream().map(BundleEntryComponent::getResource).toList();
+          data.getEntry().stream().map(BundleEntryComponent::getResource).toList();
 
       // Verify expected code systems
       final Set<String> expectedTitles =
-              new HashSet<>(Set.of("ICD10CM", "LNC", "RXNORM", "SNOMEDCT"));
+          new HashSet<>(Set.of("ICD10CM", "LNC", "RXNORM", "SNOMEDCT"));
       final Set<String> expectedPublishers = new HashSet<>(Set.of("SANDBOX"));
 
-      //assert that codesystems titles are all in expectedTitles in no particular order
-      assertEquals(expectedTitles, codeSystems.stream().map(r->((CodeSystem)r).getTitle()).collect(Collectors.toSet()));
-      assertEquals(expectedPublishers, codeSystems.stream().map(r->((CodeSystem)r).getPublisher()).collect(Collectors.toSet()));
+      // assert that codesystems titles are all in expectedTitles in no particular order
+      assertEquals(expectedTitles,
+          codeSystems.stream().map(r -> ((CodeSystem) r).getTitle()).collect(Collectors.toSet()));
+      assertEquals(expectedPublishers, codeSystems.stream()
+          .map(r -> ((CodeSystem) r).getPublisher()).collect(Collectors.toSet()));
 
       // Assert code systems
       assertFalse(codeSystems.isEmpty());
       assertEquals(4, codeSystems.size());
-    }
-    finally {
+    } finally {
       setTerminologyLoaded(terminology, true);
     }
   }
@@ -721,13 +726,17 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     // designation");
   }
 
+  /**
+   * Test valueset not loaded.
+   *
+   * @throws Exception the exception
+   */
   @Test
   @Disabled
   public void testValuesetNotLoaded() throws Exception {
-    final String vsId =
-            ValueSetLoaderUtil.mapOriginalId("6729e634-e4ed-4adb-b8f7-7bb7861861bf");
+    final String vsId = ValueSetLoaderUtil.mapOriginalId("6729e634-e4ed-4adb-b8f7-7bb7861861bf");
 
-    Subset subset = searchService.get(vsId, Subset.class);
+    final Subset subset = searchService.get(vsId, Subset.class);
     try {
       // Arrange
       final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId;
@@ -735,24 +744,22 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
       // Act
       String content = this.restTemplate.getForObject(endpoint, String.class);
-      ValueSet valueSet = parser.parseResource(ValueSet.class, content);
+      final ValueSet valueSet = parser.parseResource(ValueSet.class, content);
 
       // Assert
       assertNotNull(valueSet);
 
       setValuesetLoaded(subset, false);
       content = this.restTemplate.getForObject(endpoint, String.class);
-      OperationOutcome outcome = parser.parseResource(OperationOutcome.class, content);
+      final OperationOutcome outcome = parser.parseResource(OperationOutcome.class, content);
 
       // Assert
       assertEquals(1, outcome.getIssue().size());
-      assertTrue(outcome.getIssueFirstRep().getDiagnostics().contains("not found") );
-    }
-    finally {
+      assertTrue(outcome.getIssueFirstRep().getDiagnostics().contains("not found"));
+    } finally {
       setValuesetLoaded(subset, true);
     }
   }
-
 
   /**
    * Test ValueSet search.
@@ -1259,10 +1266,15 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertEquals(1, subsets.getTotal());
   }
 
+  /**
+   * Test concept map not loaded.
+   *
+   * @throws Exception the exception
+   */
   @Test
   @Disabled
   public void testConceptMapNotLoaded() throws Exception {
-    List<Mapset> mapsets = FhirUtility.lookupMapsets(searchService);
+    final List<Mapset> mapsets = FhirUtility.lookupMapsets(searchService);
     try {
       // Arrange
       final String endpoint = LOCALHOST + port + FHIR_CONCEPTMAP;
@@ -1272,18 +1284,16 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
       String content = this.restTemplate.getForObject(endpoint, String.class);
       Bundle data = parser.parseResource(Bundle.class, content);
       List<Resource> codeSystems =
-              data.getEntry().stream().map(BundleEntryComponent::getResource).toList();
+          data.getEntry().stream().map(BundleEntryComponent::getResource).toList();
       assertEquals(1, codeSystems.size());
 
       setMapsetLoaded(mapsets.get(0), false);
       FhirUtility.clearCaches();
       content = this.restTemplate.getForObject(endpoint, String.class);
       data = parser.parseResource(Bundle.class, content);
-      codeSystems =
-              data.getEntry().stream().map(BundleEntryComponent::getResource).toList();
+      codeSystems = data.getEntry().stream().map(BundleEntryComponent::getResource).toList();
       assertTrue(codeSystems.isEmpty());
-    }
-    finally {
+    } finally {
       setMapsetLoaded(mapsets.get(0), true);
     }
   }
@@ -1580,6 +1590,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     }
   }
 
+  /**
+   * Teardown.
+   */
   @AfterAll
   public static void teardown() {
     // There are tests that delete content. So any subsequent tests should re-setup the data

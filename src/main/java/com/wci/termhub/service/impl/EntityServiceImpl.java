@@ -154,7 +154,8 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
   /* see superclass */
   @Override
-  public <T extends HasId> T get(final String id, final Class<T> clazz, boolean filterUnloaded) throws Exception {
+  public <T extends HasId> T get(final String id, final Class<T> clazz,
+    final boolean filterUnloaded) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final SearchParameters searchParameters = new SearchParameters();
