@@ -88,10 +88,8 @@ public class DefaultQueryBuilder implements QueryBuilder {
   /* see superclass */
   @Override
   public String buildEscapedQuery(final String query) {
-
     return (StringUtility.isEmpty(query) || query.equals("*")) ? "*:*"
-        : ("\"" + StringUtility.escapeQueryNoSpace(query) + "\"");
-
+        : ("\"" + StringUtility.escapeQuery(query) + "\"");
   }
 
 }

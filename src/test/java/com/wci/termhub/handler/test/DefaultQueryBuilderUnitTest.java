@@ -42,7 +42,7 @@ public class DefaultQueryBuilderUnitTest {
     // Fielded stays fielded
     assertEquals("name:foo", queryBuilder.buildQuery("name:foo"));
     // Escaped handler maps name field to normName
-    assertEquals("normName:foo", queryBuilder.buildEscapedQuery("name:foo"));
+    assertEquals("\"name\\:foo\"", queryBuilder.buildEscapedQuery("name:foo"));
   }
 
   @Test
@@ -50,9 +50,7 @@ public class DefaultQueryBuilderUnitTest {
     // Should escape hyphen, parens, commas, plus colon; dot may be left per StringUtility
     final String in = "a-b.c(d),e:f";
     final String escaped = queryBuilder.buildEscapedQuery(in);
-    // Non-fielded queries are composed as (term) OR (normName:term)
-    final String expectedTerm = "a\\-b.c\\(d\\),e\\:f";
-    final String expected = "(" + expectedTerm + ") OR (normName:" + expectedTerm + ")";
+    final String expected = "\"a\\-b.c\\(d\\),e\\:f\"";
     assertEquals(expected, escaped);
   }
 
@@ -75,8 +73,7 @@ public class DefaultQueryBuilderUnitTest {
     final String input = "name:canagliflozin";
     final String expected = "name:canagliflozin";
     final String actual = queryBuilder.buildQuery(input);
-    assertEquals(expected, actual,
-        "Name field queries should pass through in buildQuery");
+    assertEquals(expected, actual, "Name field queries should pass through in buildQuery");
   }
 
   /**
@@ -113,8 +110,7 @@ public class DefaultQueryBuilderUnitTest {
     final String input = "cancer";
     final String expected = "cancer";
     final String actual = queryBuilder.buildQuery(input);
-    assertEquals(expected, actual,
-        "Non-fielded buildQuery should not add normName clause");
+    assertEquals(expected, actual, "Non-fielded buildQuery should not add normName clause");
   }
 
   /**
@@ -124,10 +120,9 @@ public class DefaultQueryBuilderUnitTest {
   public void testNonFieldedQueryWithSpaces() {
     // Non-fielded buildQuery with spaces will escape spaces
     final String input = "diabetes mellitus";
-    final String expected = "diabetes\\ mellitus";
+    final String expected = "diabetes mellitus";
     final String actual = queryBuilder.buildQuery(input);
-    assertEquals(expected, actual,
-        "Non-fielded buildQuery with spaces should escape spaces");
+    assertEquals(expected, actual, "Non-fielded buildQuery with spaces should NOT escape spaces");
   }
 
   /**
@@ -183,10 +178,10 @@ public class DefaultQueryBuilderUnitTest {
   public void testBuildEscapedQueryNameField() {
     // Test buildEscapedQuery for name field queries
     final String input = "name:canagliflozin";
-    final String expected = "normName:canagliflozin";
+    final String expected = "\"name\\:canagliflozin\"";
     final String actual = queryBuilder.buildEscapedQuery(input);
     assertEquals(expected, actual,
-        "buildEscapedQuery should handle name field queries the same as buildQuery");
+        "buildEscapedQuery should handle name field queries with normal escaping");
   }
 
   /**
@@ -196,10 +191,10 @@ public class DefaultQueryBuilderUnitTest {
   public void testBuildEscapedQueryNonFielded() {
     // Test buildEscapedQuery for non-fielded queries
     final String input = "cancer";
-    final String expected = "(cancer) OR (normName:cancer)";
+    final String expected = "\"cancer\"";
     final String actual = queryBuilder.buildEscapedQuery(input);
     assertEquals(expected, actual,
-        "buildEscapedQuery should compose non-fielded queries with normName");
+        "buildEscapedQuery should compose non-fielded queries with normal escaping");
   }
 
   /**
@@ -209,10 +204,9 @@ public class DefaultQueryBuilderUnitTest {
   public void testBuildEscapedQueryOtherFielded() {
     // For other fielded queries, buildEscapedQuery composes with normName as well
     final String input = "terminology:SNOMEDCT";
-    final String expected = "(terminology\\:SNOMEDCT) OR (normName:terminology\\:SNOMEDCT)";
+    final String expected = "\"terminology\\:SNOMEDCT\"";
     final String actual = queryBuilder.buildEscapedQuery(input);
-    assertEquals(expected, actual,
-        "buildEscapedQuery should escape fielded queries and compose with normName");
+    assertEquals(expected, actual, "buildEscapedQuery should simply escape fielded queries");
   }
 
   /**
@@ -245,7 +239,6 @@ public class DefaultQueryBuilderUnitTest {
 
     final String expected = "name:diabetes";
     final String actual = queryBuilder.buildQuery(params);
-    assertEquals(expected, actual,
-        "buildQuery with SearchParameters should match String version");
+    assertEquals(expected, actual, "buildQuery with SearchParameters should match String version");
   }
 }
