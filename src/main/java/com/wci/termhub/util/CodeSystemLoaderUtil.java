@@ -41,6 +41,7 @@ import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.Definition;
 import com.wci.termhub.model.MetaModel;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
@@ -592,6 +593,9 @@ public final class CodeSystemLoaderUtil {
     final List<Term> terms = createTerms(terminology, concept, conceptNode);
     concept.getTerms().addAll(terms);
 
+    final List<Definition> definitions = createDefinitions(terminology, concept, conceptNode);
+    concept.getDefinitions().addAll(definitions);
+
     // Process common properties
     final JsonNode properties = conceptNode.path("property");
     for (final JsonNode property : properties) {
@@ -871,6 +875,41 @@ public final class CodeSystemLoaderUtil {
     }
 
     return terms;
+  }
+
+  /**
+   * Creates the definitions.
+   *
+   * @param terminology the terminology
+   * @param concept the concept
+   * @param conceptNode the concept node
+   * @return the list
+   */
+  private static List<Definition> createDefinitions(final Terminology terminology,
+      final Concept concept, final JsonNode conceptNode) {
+
+    final List<Definition> definitions = new ArrayList<>();
+    final JsonNode definitionNode = conceptNode.path("definition");
+
+    if (definitionNode.isMissingNode()) {
+      return definitions; // Empty list if no definition
+    }
+
+    final Definition definition = new Definition();
+    definition.setId(UUID.randomUUID().toString());
+    definition.setActive(true);
+    definition.setDefinition(definitionNode.asText());
+
+    // Set terminology metadata
+    definition.setTerminology(terminology.getAbbreviation());
+    definition.setVersion(terminology.getVersion());
+    definition.setPublisher(terminology.getPublisher());
+
+    // Set default language
+    definition.getLocaleMap().put("en", true);
+
+    definitions.add(definition);
+    return definitions;
   }
 
   /**
