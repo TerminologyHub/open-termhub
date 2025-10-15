@@ -43,9 +43,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.model.Mapset;
@@ -1189,6 +1195,90 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
     mapsets = searchService.find(params, Mapset.class);
     assertEquals(0, mapsets.getTotal());
+  }
+
+  /**
+   * Test bundle loading using the bulk load endpoint.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(17)
+  public void testBundleWithCsCmVsTransaction() throws Exception {
+    // Arrange
+    final String endpoint = LOCALHOST + port + "/fhir/Bundle/$load";
+    LOGGER.info("endpoint = {}", endpoint);
+
+    // Load the bundle file as raw JSON
+    final String bundleJson = new String(getClass().getClassLoader()
+        .getResourceAsStream("data/test-bundle-cs-cm-vs-r5.json").readAllBytes());
+
+    // Create multipart request for bulk load endpoint
+    final MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+    body.add("resource", new ByteArrayResource(bundleJson.getBytes()) {
+      @Override
+      public String getFilename() {
+        return "test-bundle-cs-cm-vs-r5.json";
+      }
+    });
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+    final HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+    // Act
+    final ResponseEntity<String> response = this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    // Assert
+    assertEquals(HttpStatus.OK, response.getStatusCode(), "Bundle POST should succeed");
+    assertNotNull(response.getBody(), "Response should not be null");
+
+    LOGGER.info("Bundle transaction test completed successfully");
+  }
+
+    /**
+   * Test bundle loading using the bulk load endpoint.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(18)
+  public void testBundleWithCmVsTransaction() throws Exception {
+    // Arrange
+    final String endpoint = LOCALHOST + port + "/fhir/Bundle/$load";
+    LOGGER.info("endpoint = {}", endpoint);
+
+    // Load the bundle file as raw JSON
+    final String bundleJson = new String(getClass().getClassLoader()
+        .getResourceAsStream("data/test-bundle-cm-vs-r5.json").readAllBytes());
+
+    // Create multipart request for bulk load endpoint
+    final MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+    body.add("resource", new ByteArrayResource(bundleJson.getBytes()) {
+      @Override
+      public String getFilename() {
+        return "test-bundle-cm-vs-r5.json";
+      }
+    });
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+    final HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+    // Act
+    final ResponseEntity<String> response = this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    // Assert
+    assertEquals(HttpStatus.OK, response.getStatusCode(), "Bundle POST should succeed");
+    assertNotNull(response.getBody(), "Response should not be null");
+
+    LOGGER.info("Bundle transaction test completed successfully");
   }
 
   @AfterAll
