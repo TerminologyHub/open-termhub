@@ -256,7 +256,76 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
       assertEquals(codeSystemUri, cs.getUrl());
       assertTrue("SNOMEDCT".equals(cs.getTitle()) || "SNOMEDCT_US".equals(cs.getTitle()));
     }
+  }
 
+  /**
+   * Test CodeSystem lookup with definition.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(1)
+  public void testCodeSystemLookupWithDefinition() throws Exception {
+    // Arrange
+    final String system =
+        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b");
+    final String code = "723277005"; // Concept with definition
+    final String lookupParams = "/$lookup?code=" + code;
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + system + lookupParams;
+    LOGGER.info("endpoint = {}", endpoint);
+
+    // Act
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final Parameters result = parser.parseResource(Parameters.class, content);
+
+    // Assert
+    assertNotNull(result, "Parameters response should not be null");
+    LOGGER.info("Parameters = {}", parser.encodeResourceToString(result));
+
+    // Verify code parameter
+    assertTrue(result.hasParameter("code"), "Should have code parameter");
+    assertEquals(code, result.getParameter("code").getValue().toString());
+
+    // Verify system parameter
+    assertTrue(result.hasParameter("system"), "Should have system parameter");
+    assertEquals("http://snomed.info/sct", result.getParameter("system").getValue().toString());
+
+    // Verify name parameter
+    assertTrue(result.hasParameter("name"), "Should have name parameter");
+    assertEquals("SNOMEDCT", result.getParameter("name").getValue().toString());
+
+    // Verify display parameter
+    assertTrue(result.hasParameter("display"), "Should have display parameter");
+    assertEquals("Nonconformance to editorial policy component",
+        result.getParameter("display").getValue().toString());
+
+    // Verify definition property exists
+    final List<Parameters.ParametersParameterComponent> properties =
+        result.getParameter().stream().filter(p -> "property".equals(p.getName())).toList();
+    assertFalse(properties.isEmpty(), "Should have properties");
+
+    // Find definition property
+    final boolean hasDefinition = properties.stream()
+        .anyMatch(p -> p.getPart().stream().anyMatch(part ->
+            "code".equals(part.getName()) && "definition".equals(part.getValue().toString())));
+    assertTrue(hasDefinition, "Should have definition property");
+
+    // Get the definition value
+    final String definition = properties.stream()
+        .filter(p -> p.getPart().stream().anyMatch(part ->
+            "code".equals(part.getName()) && "definition".equals(part.getValue().toString())))
+        .findFirst()
+        .orElseThrow(() -> new AssertionError("Definition property not found"))
+        .getPart().stream()
+        .filter(part -> "value".equals(part.getName()))
+        .findFirst()
+        .orElseThrow(() -> new AssertionError("Definition value not found"))
+        .getValue().toString();
+
+    assertEquals("A component that fails to comply with the current editorial guidance.",
+        definition);
+
+    LOGGER.info("Successfully verified definition in FHIR R5 lookup: {}", definition);
   }
 
   /**

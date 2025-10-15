@@ -430,6 +430,51 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
+   * Test get concept with definition.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetConceptWithDefinition() throws Exception {
+    final String code = "723277005";
+    final String terminology = "SNOMEDCT";
+    final String url = baseUrl + "/concept/" + terminology + "/" + code;
+    LOGGER.info("Testing url - {}", url);
+
+    final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+
+    assertThat(content).isNotNull();
+    final Concept concept = objectMapper.readValue(content, Concept.class);
+    assertThat(concept).isNotNull();
+
+    // Verify basic concept properties
+    assertEquals(code, concept.getCode());
+    assertEquals(terminology, concept.getTerminology());
+    assertEquals("Nonconformance to editorial policy component", concept.getName());
+
+    // Verify definition was loaded
+    assertNotNull(concept.getDefinitions(), "Definitions list should not be null");
+    assertFalse(concept.getDefinitions().isEmpty(), "Should have loaded definition");
+    assertEquals(1, concept.getDefinitions().size(), "Should have exactly one definition");
+
+    final com.wci.termhub.model.Definition definition = concept.getDefinitions().get(0);
+    assertNotNull(definition, "Definition should not be null");
+    assertEquals("A component that fails to comply with the current editorial guidance.",
+        definition.getDefinition());
+    assertEquals("SNOMEDCT", definition.getTerminology());
+    assertEquals("20240101", definition.getVersion());
+    assertEquals("SANDBOX", definition.getPublisher());
+    assertTrue(definition.getActive(), "Definition should be active");
+    assertTrue(definition.getLocaleMap().containsKey("en"), "Should have English locale");
+    assertTrue(definition.getLocaleMap().get("en"), "English should be preferred");
+
+    LOGGER.info("Successfully verified definition in REST API: {}", definition.getDefinition());
+  }
+
+  /**
    * Test find concepts.
    *
    * @throws Exception the exception
