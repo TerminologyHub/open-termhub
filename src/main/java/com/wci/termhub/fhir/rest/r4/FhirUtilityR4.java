@@ -751,14 +751,16 @@ public final class FhirUtilityR4 {
     valueSet.setUrl(subset.getUri());
     valueSet.setPublisher(subset.getPublisher());
     valueSet.setVersion(subset.getVersion());
-    // Parse the full date string with timezone information
+    // Parse the full date string with timezone information (if present)
     final String releaseDate = subset.getReleaseDate();
-    if (releaseDate != null && releaseDate.contains("T")) {
-      // Full ISO 8601 date string with timezone
-      valueSet.setDate(Date.from(Instant.parse(releaseDate)));
-    } else {
-      // Fallback to date-only format
-      valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+    if (releaseDate != null) {
+      if (releaseDate.contains("T")) {
+        // Full ISO 8601 date string with timezone
+        valueSet.setDate(Date.from(Instant.parse(releaseDate)));
+      } else {
+        // Fallback to date-only format
+        valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+      }
     }
 
     valueSet.setName(subset.getName());

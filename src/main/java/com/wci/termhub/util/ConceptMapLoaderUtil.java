@@ -144,10 +144,16 @@ public final class ConceptMapLoaderUtil {
             HttpServletResponse.SC_BAD_REQUEST);
       }
 
-      // check for existing
+      // check for existing (require key fields)
       final String abbreviation = conceptMap.path("title").asText();
       final String publisher = conceptMap.path("publisher").asText();
       final String version = conceptMap.path("version").asText();
+      if (abbreviation == null || abbreviation.isEmpty() || publisher == null
+          || publisher.isEmpty() || version == null || version.isEmpty()) {
+        throw FhirUtilityR4.exception(
+            "ConceptMap requires title, publisher, and version for import (missing one or more)",
+            IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+      }
       Mapset mapset = findMapset(service, abbreviation, publisher, version);
       if (mapset != null) {
         throw FhirUtilityR4.exception(
@@ -332,8 +338,14 @@ public final class ConceptMapLoaderUtil {
     final String publisher, final String version) throws Exception {
 
     final SearchParameters searchParams = new SearchParameters();
-    searchParams
-        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
+    if (abbreviation == null || abbreviation.isEmpty() || publisher == null
+        || publisher.isEmpty() || version == null || version.isEmpty()) {
+      throw FhirUtilityR4.exception(
+          "ConceptMap requires title, publisher, and version for import (missing one or more)",
+          IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+    }
+    searchParams.setQuery(
+        TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
     final ResultList<Mapset> mapset = service.find(searchParams, Mapset.class);
 
     return (mapset.getItems().isEmpty()) ? null : mapset.getItems().get(0);
