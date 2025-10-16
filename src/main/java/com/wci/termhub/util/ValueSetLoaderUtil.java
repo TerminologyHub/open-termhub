@@ -143,6 +143,8 @@ public final class ValueSetLoaderUtil {
     final EntityRepositoryService service, final org.hl7.fhir.r4.model.ValueSet valueSet,
     final ProgressListener listener, final Boolean isSyndicated) throws Exception {
 
+    SystemReportUtility.logMemory();
+
     final long startTime = System.currentTimeMillis();
 
     try {
@@ -388,6 +390,8 @@ public final class ValueSetLoaderUtil {
     final EntityRepositoryService service, final org.hl7.fhir.r5.model.ValueSet valueSet,
     final ProgressListener listener, final Boolean isSyndicated) throws Exception {
 
+    SystemReportUtility.logMemory();
+
     final long startTime = System.currentTimeMillis();
 
     try {
@@ -466,6 +470,8 @@ public final class ValueSetLoaderUtil {
           subset.setFromTerminology(fromRef.getAbbreviation());
           subset.setFromPublisher(fromRef.getPublisher());
           subset.setFromVersion(fromRef.getVersion());
+          // Save the URI that goes with the from stuff.
+          subset.getAttributes().put("fhirIncludesUri", fromRef.getUri());
         }
       }
 

@@ -13,7 +13,9 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -58,6 +60,9 @@ public final class ConceptMapLoaderUtil {
         }
       };
 
+  /** The Constant BATCH_SIZE. */
+  private static final int DEFAULT_BATCH_SIZE = 10000;
+
   /**
    * Instantiates a new concept map loader.
    */
@@ -94,18 +99,18 @@ public final class ConceptMapLoaderUtil {
   /**
    * Load concept map.
    *
-   * @param <T>          the generic type
-   * @param service      the service
-   * @param file         the file
-   * @param type         the type
-   * @param listener     the listener
+   * @param <T> the generic type
+   * @param service the service
+   * @param file the file
+   * @param type the type
+   * @param listener the listener
    * @param isSyndicated the is syndicated
    * @return the t
    * @throws Exception the exception
    */
   public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
-      final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
-      throws Exception {
+    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
+    throws Exception {
     return indexConceptMap(service, file, type, listener, isSyndicated);
   }
 
@@ -123,17 +128,20 @@ public final class ConceptMapLoaderUtil {
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexConceptMap(final EntityRepositoryService service, final File file,
-      final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
-      throws Exception {
+    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
+    throws Exception {
+
+    SystemReportUtility.logMemory();
 
     final long startTime = System.currentTimeMillis();
-
-    // Use JSON as a way to handle both R4 and R5
-    final JsonNode conceptMap = ThreadLocalMapper.get().readTree(file);
 
     try {
       // Set listener to 0%
       listener.updateProgress(new ProgressEvent(0));
+
+      // Use JSON as a way to handle both R4 and R5
+      final JsonNode conceptMap = getRootWithoutGroups(file);
+      final List<Mapping> mappingBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
 
       LOGGER.info("Indexing ConceptMap {} = {}", conceptMap.path("title"), conceptMap.path("url"));
 
@@ -148,8 +156,8 @@ public final class ConceptMapLoaderUtil {
       final String abbreviation = conceptMap.path("title").asText();
       final String publisher = conceptMap.path("publisher").asText();
       final String version = conceptMap.path("version").asText();
-      if (abbreviation == null || abbreviation.isEmpty() || publisher == null
-          || publisher.isEmpty() || version == null || version.isEmpty()) {
+      if (abbreviation == null || abbreviation.isEmpty() || publisher == null || publisher.isEmpty()
+          || version == null || version.isEmpty()) {
         throw FhirUtilityR4.exception(
             "ConceptMap requires title, publisher, and version for import (missing one or more)",
             IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
@@ -199,101 +207,130 @@ public final class ConceptMapLoaderUtil {
 
       int mappingCount = 0;
 
-      // process concept map array
-      final JsonNode groupArray = conceptMap.path("group");
-      int totalCt = groupArray.size();
-      for (final JsonNode groupNode : groupArray) {
+      int totalCt = conceptMap.get("groupCt").asInt();
 
-        for (final JsonNode elementNode : groupNode.path("element")) {
-          final String sourceCode = elementNode.get("code").asText();
-          final String sourceName = elementNode.get("display").asText();
+      try (final JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
 
-          // Set source concept
-          final Concept existingFromConcept =
-              TerminologyUtility.getConcept(service, mapset.getFromTerminology(),
-                  mapset.getFromPublisher(), mapset.getFromVersion(), sourceCode);
-          ConceptRef fromConcept = null;
-          if (existingFromConcept == null) {
-            fromConcept = new ConceptRef();
-            fromConcept.setCode(sourceCode);
-            fromConcept.setName(sourceName);
-            fromConcept.setTerminology(mapset.getFromTerminology());
-            fromConcept.setPublisher(mapset.getFromPublisher());
-            fromConcept.setVersion(mapset.getFromVersion());
-          } else {
-            fromConcept = new Concept(existingFromConcept);
-          }
+        // You can iterate through the tokens one by one
+        while (parser.nextToken() != null) {
 
-          for (final JsonNode targetNode : elementNode.path("target")) {
+          // Get the current token
+          final JsonToken token = parser.currentToken();
 
-            final String targetCode =
-                targetNode.has("code") ? targetNode.get("code").asText() : null;
-            final String targetName = targetNode.has("display") ? targetNode.get("display").asText()
-                : "Unable to determine name";
+          // Example: Find the start of a nested JSON array
+          if (token == JsonToken.START_ARRAY && "group".equals(parser.currentName())) {
 
-            // Create mapping
-            final Mapping mapping = new Mapping();
-            mapping.setId(UUID.randomUUID().toString());
-            mapping.setActive(true);
-            mapping.setMapset(new MapsetRef(mapset.getCode(), mapset.getAbbreviation(),
-                mapset.getPublisher(), mapset.getVersion()));
+            // Process each object within the array without loading the whole array into memory
+            while (parser.nextToken() != JsonToken.END_ARRAY) {
 
-            mapping.setFrom(fromConcept);
+              // Use ObjectMapper to read the sub-object as a JsonNode
+              final JsonNode groupNode = parser.readValueAsTree();
 
-            // Set target concept
-            final Concept existingToConcept = (targetCode == null || targetCode.equals("NOCODE"))
-                ? null : TerminologyUtility.getConcept(service, mapset.getToTerminology(),
-                    mapset.getToPublisher(), mapset.getToVersion(), targetCode);
+              for (final JsonNode elementNode : groupNode.path("element")) {
+                final String sourceCode = elementNode.get("code").asText();
+                final String sourceName = elementNode.get("display").asText();
 
-            ConceptRef toConcept = null;
-            if (existingToConcept == null) {
-              toConcept = new ConceptRef();
-              toConcept.setCode(targetCode);
-              toConcept.setName(
-                  targetCode != null && targetCode.equals("NOCODE") ? "No target" : targetName);
-              toConcept.setTerminology(mapset.getToTerminology());
-              toConcept.setPublisher(mapset.getToPublisher());
-              toConcept.setVersion(mapset.getToVersion());
-            } else {
-              toConcept = new ConceptRef(existingToConcept);
-            }
-            mapping.setTo(toConcept);
+                // Set source concept
+                final Concept existingFromConcept =
+                    TerminologyUtility.getConcept(service, mapset.getFromTerminology(),
+                        mapset.getFromPublisher(), mapset.getFromVersion(), sourceCode);
+                ConceptRef fromConcept = null;
+                if (existingFromConcept == null) {
+                  fromConcept = new ConceptRef();
+                  fromConcept.setCode(sourceCode);
+                  fromConcept.setName(sourceName);
+                  fromConcept.setTerminology(mapset.getFromTerminology());
+                  fromConcept.setPublisher(mapset.getFromPublisher());
+                  fromConcept.setVersion(mapset.getFromVersion());
+                } else {
+                  fromConcept = new ConceptRef(existingFromConcept);
+                }
 
-            if (targetNode.has("equivalence")) {
-              mapping.setType(targetNode.get("equivalence").asText());
-            } else {
-              mapping.setType(targetNode.get("relationship").asText());
-            }
+                for (final JsonNode targetNode : elementNode.path("target")) {
 
-            // Set mapping attributes from extensions
-            for (final JsonNode extension : targetNode.get("extension")) {
+                  final String targetCode =
+                      targetNode.has("code") ? targetNode.get("code").asText() : null;
+                  final String targetName = targetNode.has("display")
+                      ? targetNode.get("display").asText() : "Unable to determine name";
 
-              final String url = extension.get("url").asText();
-              final String valueString = extension.get("valueString").asText();
+                  // Create mapping
+                  final Mapping mapping = new Mapping();
+                  mapping.setId(UUID.randomUUID().toString());
+                  mapping.setActive(true);
+                  mapping.setMapset(new MapsetRef(mapset.getCode(), mapset.getAbbreviation(),
+                      mapset.getPublisher(), mapset.getVersion()));
 
-              if (url.endsWith("concept-map-group")) {
-                mapping.getAttributes().put("group", valueString);
-              } else if (url.endsWith("concept-map-rule")) {
-                mapping.getAttributes().put("rule", valueString);
-              } else if (url.endsWith("concept-map-priority")) {
-                mapping.getAttributes().put("priority", valueString);
-              } else if (url.endsWith("concept-map-advice")) {
-                mapping.getAttributes().put("advice", valueString);
+                  mapping.setFrom(fromConcept);
+
+                  // Set target concept
+                  final Concept existingToConcept =
+                      (targetCode == null || targetCode.equals("NOCODE")) ? null
+                          : TerminologyUtility.getConcept(service, mapset.getToTerminology(),
+                              mapset.getToPublisher(), mapset.getToVersion(), targetCode);
+
+                  ConceptRef toConcept = null;
+                  if (existingToConcept == null) {
+                    toConcept = new ConceptRef();
+                    toConcept.setCode(targetCode);
+                    toConcept.setName(targetCode != null && targetCode.equals("NOCODE")
+                        ? "No target" : targetName);
+                    toConcept.setTerminology(mapset.getToTerminology());
+                    toConcept.setPublisher(mapset.getToPublisher());
+                    toConcept.setVersion(mapset.getToVersion());
+                  } else {
+                    toConcept = new ConceptRef(existingToConcept);
+                  }
+                  mapping.setTo(toConcept);
+
+                  if (targetNode.has("equivalence")) {
+                    mapping.setType(targetNode.get("equivalence").asText());
+                  } else {
+                    mapping.setType(targetNode.get("relationship").asText());
+                  }
+
+                  // Set mapping attributes from extensions
+                  for (final JsonNode extension : targetNode.get("extension")) {
+
+                    final String url = extension.get("url").asText();
+                    final String valueString = extension.get("valueString").asText();
+
+                    if (url.endsWith("concept-map-group")) {
+                      mapping.getAttributes().put("group", valueString);
+                    } else if (url.endsWith("concept-map-rule")) {
+                      mapping.getAttributes().put("rule", valueString);
+                    } else if (url.endsWith("concept-map-priority")) {
+                      mapping.getAttributes().put("priority", valueString);
+                    } else if (url.endsWith("concept-map-advice")) {
+                      mapping.getAttributes().put("advice", valueString);
+                    }
+                  }
+
+                  // Add concept to batch
+                  mappingBatch.add(mapping);
+                  mappingCount++;
+                  if (mappingBatch.size() == DEFAULT_BATCH_SIZE) {
+                    service.addBulk(Mapping.class, new ArrayList<>(mappingBatch));
+                    mappingBatch.clear();
+                    LOGGER.info("  mapping count: {}", mappingCount);
+                    SystemReportUtility.logMemory();
+
+                    // Progress update
+                    listener
+                        .updateProgress(new ProgressEvent((int) (mappingCount * 1.0 / totalCt)));
+                  }
+
+                }
               }
-            }
 
-            // Save mapping
-            service.add(Mapping.class, mapping);
-            if (++mappingCount % 5000 == 0) {
-              LOGGER.info("  count: {}", mappingCount);
-              listener.updateProgress(new ProgressEvent((int) (mappingCount * 1.0 / totalCt)));
-            }
-            // Too much info
-            if (LOGGER.isDebugEnabled()) {
-              LOGGER.debug("    Created mapping: {}", mapping);
-            }
+            } // end while
+
           }
         }
+      }
+
+      if (!mappingBatch.isEmpty()) {
+        service.addBulk(Mapping.class, new ArrayList<>(mappingBatch));
+        LOGGER.info("  mapping count: {}", mappingCount);
       }
 
       LOGGER.info("  final counts - mapsets: {}, mappings: {}", 1, mappingCount);
@@ -338,14 +375,14 @@ public final class ConceptMapLoaderUtil {
     final String publisher, final String version) throws Exception {
 
     final SearchParameters searchParams = new SearchParameters();
-    if (abbreviation == null || abbreviation.isEmpty() || publisher == null
-        || publisher.isEmpty() || version == null || version.isEmpty()) {
+    if (abbreviation == null || abbreviation.isEmpty() || publisher == null || publisher.isEmpty()
+        || version == null || version.isEmpty()) {
       throw FhirUtilityR4.exception(
           "ConceptMap requires title, publisher, and version for import (missing one or more)",
           IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
     }
-    searchParams.setQuery(
-        TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
+    searchParams
+        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
     final ResultList<Mapset> mapset = service.find(searchParams, Mapset.class);
 
     return (mapset.getItems().isEmpty()) ? null : mapset.getItems().get(0);
@@ -425,7 +462,7 @@ public final class ConceptMapLoaderUtil {
 
     // Extract abbreviations from title field
     final String title = root.path("title").asText();
-    String[] titleParts = title.split("-");
+    final String[] titleParts = title.split("-");
     final String fromAbbreviation = titleParts.length > 0 ? titleParts[0] : fromTerminology;
     final String toAbbreviation = titleParts.length > 1 ? titleParts[1] : toTerminology;
 
@@ -474,9 +511,11 @@ public final class ConceptMapLoaderUtil {
    * @throws Exception the exception
    */
   @SuppressWarnings({
-      "resource", "unused"
+      "resource"
   })
   private static JsonNode getRootWithoutGroups(final File file) throws Exception {
+
+    int groupCt = 0;
 
     // Use try-with-resources to ensure the parser is closed
     try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
@@ -496,12 +535,31 @@ public final class ConceptMapLoaderUtil {
         parser.nextToken();
 
         if ("group".equals(fieldName)) {
-          // We found the large array. The next token should be START_ARRAY.
-          // The skipChildren() method is the key to low memory usage.
+          // // We found the large array. The next token should be START_ARRAY.
+          // // The skipChildren() method is the key to low memory usage.
+          // if (parser.currentToken() == JsonToken.START_ARRAY) {
+          // parser.skipChildren();
+          // }
+          // // Do nothing with the skipped data; it's just gone.
+
+          // Check if the value is the expected START_ARRAY
           if (parser.currentToken() == JsonToken.START_ARRAY) {
-            parser.skipChildren();
+
+            // Iterate only through the tokens within the array
+            // The loop breaks when END_ARRAY is encountered
+            while (parser.nextToken() != JsonToken.END_ARRAY) {
+
+              // Check for the start of a new object.
+              // Each START_OBJECT token marks a new array entry.
+              if (parser.currentToken() == JsonToken.START_OBJECT) {
+                groupCt++;
+
+                // Skip the children of the current object.
+                parser.skipChildren();
+              }
+            }
           }
-          // Do nothing with the skipped data; it's just gone.
+
         } else {
           // For all other fields, read the entire value as a JsonNode
           // and add it to our new root object.
@@ -510,7 +568,10 @@ public final class ConceptMapLoaderUtil {
         }
       }
 
+      // Add the groupCt;
+      ((ObjectNode) newRoot).put("groupCt", groupCt);
       return newRoot;
     }
   }
+
 }

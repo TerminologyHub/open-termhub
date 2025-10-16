@@ -90,27 +90,30 @@ With a "Project API Key" in hand, run the docker image using the code shown belo
 * Use `PROJECT_API_KEY` obtained from your project, this will allow the container to syndicate your content directly to the server.
 * If you want to use the embedded browser to see hierarchies, use `ENABLE_POST_LOAD_COMPUTATIONS=true` instead of `false` as this computes tree position data used by the hierarchy browser. 
 
+
+### REMOVE THIS BEFORE FINISHING
+
 ```
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 # On Windows if running within wsl use export INDEX_DIR=/mnt/c/tmp/opentermhub/index
-export INDEX_DIR=/tmp/opentermhub/index
 export PROJECT_API_KEY="<your copied project api key>"
+export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
-  -e JAVA_OPTS=-Xmx2g \
+  -e JAVA_OPTS=-Xmx4g \
   -e ENABLE_POST_LOAD_COMPUTATIONS=false \
   -e PROJECT_API_KEY=$PROJECT_API_KEY \
   -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
 ```
 
-With full terminologies, this process can take a little while.  For the configuration described above on a standard Macbook pro, total runtime was about 40 min and the index volume used a total of Xxx MB of disk space.
+For the configuration described above on a standard Macbook pro, total runtime was about 40 min and the index volume used under 10GB of disk space.  The actual requirements depend on exactly what content you have configured to syndicate into the container.
 
 **[Back to top](#step-by-step-instructions-to-deploy-terminologies-with-termhub)**
 
 
 ## View API Documentation
 
-All three of the above options will yield a running server and you should now you should be able to access the Swagger UI pages:
+The prior step yields a running server and you should now you should be able to access the Swagger UI pages:
 * Swagger [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 * FHIR R4 Swagger [http://localhost:8080/fhir/r4/swagger-ui/index.html](http://localhost:8080/fhir/r4/swagger-ui/index.html)
 * FHIR R5 Swagger [http://localhost:8080/fhir/r5/swagger-ui/index.html](http://localhost:8080/fhir/r5/swagger-ui/index.html)
@@ -120,9 +123,11 @@ All three of the above options will yield a running server and you should now yo
 
 ## View Loaded Data with Embedded Browser
 
-Once data is loaded, you can visualize it within the embedded terminology browser.
+Additionally, now that data is loaded, you can visualize it within the embedded terminology browser.
 
 See [http://localhost:8080/index.html](http://localhost:8080/index.html)
+
+<img width="800px" src="images/browser-view.png">
 
 This is a locally-available version of the TermHub browser that lets you interact with the
 content loaded into the open termhub container. The hierarchy stuff will only work

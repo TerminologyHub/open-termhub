@@ -111,21 +111,20 @@ public final class CodeSystemLoaderUtil {
   /**
    * Load concepts from CodeSystem format JSON.
    *
-   * @param <T>                  the generic type
-   * @param service              the service
-   * @param file                 the file
+   * @param <T> the generic type
+   * @param service the service
+   * @param file the file
    * @param enablePostLoadComputations whether to compute tree positions
-   * @param type                 the type
-   * @param listener             the listener
-   * @param isSyndicated         the is syndicated
+   * @param type the type
+   * @param listener the listener
+   * @param isSyndicated the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   public static <T> T loadCodeSystem(final EntityRepositoryService service, final File file,
-      final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener,
-      final Boolean isSyndicated) throws Exception {
+    final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener,
+    final Boolean isSyndicated) throws Exception {
 
-    SystemReportUtility.logMemory();
     return indexCodeSystem(service, file, enablePostLoadComputations, type, listener, isSyndicated);
   }
 
@@ -138,14 +137,16 @@ public final class CodeSystemLoaderUtil {
    * @param enablePostLoadComputations whether to compute tree positions
    * @param type the type
    * @param listener the listener
-   * @param isSyndicated         the is syndicated
+   * @param isSyndicated the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexCodeSystem(final EntityRepositoryService service, final File file,
-      final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener,
-      final Boolean isSyndicated) throws Exception {
+    final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener,
+    final Boolean isSyndicated) throws Exception {
+
+    SystemReportUtility.logMemory();
 
     final long startTime = System.currentTimeMillis();
     final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
@@ -827,8 +828,8 @@ public final class CodeSystemLoaderUtil {
       }
 
       if ("relationship".equals(propertyType)) {
-        final ConceptRelationship relationship = createRelationship(propertyNode, concept, terminology,
-            terminologyCache);
+        final ConceptRelationship relationship =
+            createRelationship(propertyNode, concept, terminology, terminologyCache);
 
         // ECL clauses removed per requirements
 
@@ -886,7 +887,7 @@ public final class CodeSystemLoaderUtil {
    * @return the list
    */
   private static List<Definition> createDefinitions(final Terminology terminology,
-      final Concept concept, final JsonNode conceptNode) {
+    final Concept concept, final JsonNode conceptNode) {
 
     final List<Definition> definitions = new ArrayList<>();
     final JsonNode definitionNode = conceptNode.path("definition");
