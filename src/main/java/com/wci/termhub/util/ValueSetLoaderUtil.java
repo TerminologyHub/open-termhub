@@ -83,8 +83,7 @@ public final class ValueSetLoaderUtil {
   }
 
   /**
-   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
-   * and persists.
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember, and persists.
    *
    * @param <T> the generic type
    * @param service the repository service
@@ -100,8 +99,7 @@ public final class ValueSetLoaderUtil {
   }
 
   /**
-   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
-   * and persists.
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember, and persists.
    *
    * @param <T> the generic type
    * @param service the repository service
@@ -114,7 +112,8 @@ public final class ValueSetLoaderUtil {
    */
   @SuppressWarnings("unchecked")
   public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
-    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated) throws Exception {
+    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
+    throws Exception {
 
     LOGGER.info("Loading Subset from JSON, isR5={}", type == org.hl7.fhir.r5.model.ValueSet.class);
 
@@ -162,8 +161,8 @@ public final class ValueSetLoaderUtil {
       final String abbreviation = valueSet.getTitle();
       final String publisher = valueSet.getPublisher();
       final String version = valueSet.getVersion();
-      if (abbreviation == null || abbreviation.isEmpty() || publisher == null
-          || publisher.isEmpty() || version == null || version.isEmpty()) {
+      if (abbreviation == null || abbreviation.isEmpty() || publisher == null || publisher.isEmpty()
+          || version == null || version.isEmpty()) {
         throw FhirUtilityR4.exception(
             "ValueSet requires title, publisher, and version for import (missing one or more)",
             IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
@@ -393,7 +392,7 @@ public final class ValueSetLoaderUtil {
 
     try {
 
-      LOGGER.info("Indexing ValueSet R4 {} = {}", valueSet.getTitle(), valueSet.getUrl());
+      LOGGER.info("Indexing ValueSet R5 {} = {}", valueSet.getTitle(), valueSet.getUrl());
       // Basic checks
       // Validate required fields
       if (valueSet.getUrl() == null) {
