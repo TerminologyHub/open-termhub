@@ -12,6 +12,7 @@ package com.wci.termhub;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -22,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
     "com.wci.termhub.algo", "com.wci.termhub.fhir", "com.wci.termhub.handler",
     "com.wci.termhub.loader", "com.wci.termhub.lucene", "com.wci.termhub.util"
 })
+@EnableAsync
 public class AppConfig {
 
   /**

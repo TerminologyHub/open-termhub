@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.wci.termhub.lucene.eventing.Write;
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.search.Query;
 import org.hl7.fhir.r5.model.BooleanType;
@@ -506,6 +507,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @throws Exception if creating fails
    */
   @Create
+  @Write
   public MethodOutcome createValueSet(@ResourceParam final byte[] bytes) throws Exception {
 
     try {
@@ -555,6 +557,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @throws Exception the exception
    */
   @Delete
+  @Write
   public void deleteValueSet(final HttpServletRequest request, final ServletRequestDetails details,
     @IdParam final IdType id) throws Exception {
 
