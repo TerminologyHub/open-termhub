@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
@@ -556,8 +557,17 @@ public final class ConceptMapLoaderUtil {
               if (parser.currentToken() == JsonToken.START_OBJECT) {
                 groupCt++;
 
-                // Skip the children of the current object.
-                parser.skipChildren();
+                // Keep the first group but skip the others. We need it for source/target info
+                if (groupCt == 1) {
+                  final JsonNode node = parser.readValueAsTree();
+                  final JsonNode groupsNode = ThreadLocalMapper.get().createArrayNode();
+                  ((ArrayNode) groupsNode).add(node);
+                  ((ObjectNode) newRoot).set("group", groupsNode);
+                }
+                // Skip other children of the current object.
+                else {
+                  parser.skipChildren();
+                }
               }
             }
           }
