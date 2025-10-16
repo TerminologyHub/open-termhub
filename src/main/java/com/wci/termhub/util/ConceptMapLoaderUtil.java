@@ -289,19 +289,21 @@ public final class ConceptMapLoaderUtil {
                   }
 
                   // Set mapping attributes from extensions
-                  for (final JsonNode extension : targetNode.get("extension")) {
+                  if (targetNode.has("extension")) {
+                    for (final JsonNode extension : targetNode.get("extension")) {
 
-                    final String url = extension.get("url").asText();
-                    final String valueString = extension.get("valueString").asText();
+                      final String url = extension.get("url").asText();
+                      final String valueString = extension.get("valueString").asText();
 
-                    if (url.endsWith("concept-map-group")) {
-                      mapping.getAttributes().put("group", valueString);
-                    } else if (url.endsWith("concept-map-rule")) {
-                      mapping.getAttributes().put("rule", valueString);
-                    } else if (url.endsWith("concept-map-priority")) {
-                      mapping.getAttributes().put("priority", valueString);
-                    } else if (url.endsWith("concept-map-advice")) {
-                      mapping.getAttributes().put("advice", valueString);
+                      if (url.endsWith("concept-map-group")) {
+                        mapping.getAttributes().put("group", valueString);
+                      } else if (url.endsWith("concept-map-rule")) {
+                        mapping.getAttributes().put("rule", valueString);
+                      } else if (url.endsWith("concept-map-priority")) {
+                        mapping.getAttributes().put("priority", valueString);
+                      } else if (url.endsWith("concept-map-advice")) {
+                        mapping.getAttributes().put("advice", valueString);
+                      }
                     }
                   }
 
@@ -312,7 +314,7 @@ public final class ConceptMapLoaderUtil {
                     service.addBulk(Mapping.class, new ArrayList<>(mappingBatch));
                     mappingBatch.clear();
                     LOGGER.info("  mapping count: {}", mappingCount);
-                    SystemReportUtility.logMemory();
+                    // SystemReportUtility.logMemory();
 
                     // Progress update
                     listener
