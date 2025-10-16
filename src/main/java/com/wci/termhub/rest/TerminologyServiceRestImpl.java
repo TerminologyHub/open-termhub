@@ -855,6 +855,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + "termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
           required = false),
+      @Parameter(name = "handler",
+          description = "Mechanism to support alternative search algorithms.  Current options include:"
+              + "<ul><li>&lt;blank&gt; or 'default' - uses exactly the query passed in</li>"
+              + "<li>'wildcard' - splits on spaces and uses a wildcard search for each word</li>"
+              + "<li>'browser' (recommended) - builds a more complex query used by embedded "
+              + "terminology browser</li></ul>",
+          required = false, schema = @Schema(implementation = String.class))
   })
   public ResponseEntity<ResultListConcept> findTerminologyConcepts(
     @RequestParam(value = "terminology", required = false) final String terminology,
@@ -954,7 +961,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // limit return objects to 1000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
 
-      logger.info("query for term: {}", query2);
+      if (logger.isDebugEnabled()) {
+        logger.debug("query for term: {}", query2);
+      }
 
       final SearchParameters searchParams =
           new SearchParameters(query2, offset, maxLimit, sort, ascending);
@@ -1022,7 +1031,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + "subsets, terms, treePositions " + "<a href='https://github.com/TerminologyHub/"
               + "termhub-in-5-minutes/blob/main/doc/INCLUDE.md' "
               + "target='_blank'>See here for detailed information</a>.",
-          required = false)
+          required = false),
+      @Parameter(name = "handler",
+          description = "Mechanism to support alternative search algorithms.  Current options include:"
+              + "<ul><li>&lt;blank&gt; or 'default' - uses exactly the query passed in</li>"
+              + "<li>'wildcard' - splits on spaces and uses a wildcard search for each word</li>"
+              + "<li>'browser' (recommended) - builds a more complex query used by embedded "
+              + "terminology browser</li></ul>",
+          required = false, schema = @Schema(implementation = String.class))
   })
   @RequestBody(description = "Newline-separated lines of text, one line for each query",
       required = true, content = @Content(schema = @Schema(implementation = String.class),
@@ -1137,9 +1153,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       searchParams.setLeaf(true);
     }
 
-    logger.info("  query = " + query);
-    logger.info("    expression = " + expression);
-    logger.info("    params = " + searchParams);
     if (logger.isDebugEnabled()) {
       logger.debug("  query = " + query);
       logger.debug("    expression = " + expression);
@@ -1922,9 +1935,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam("version") final String version) throws Exception {
 
     try {
-
-      logger.info("Computing tree positions for terminology: {}, publisher: {}, version: {}",
-          terminology, publisher, version);
 
       // Look up the terminology to make sure it exists
       final Terminology term =
@@ -2900,7 +2910,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           .add(ngramQuery, BooleanClause.Occur.MUST).add(terminologyQuery, BooleanClause.Occur.MUST)
           .add(lengthQuery, BooleanClause.Occur.MUST).build();
 
-      logger.info("Autocomplete search query: {}", finalQuery);
+      if (logger.isDebugEnabled()) {
+        logger.debug("Autocomplete search query: {}", finalQuery);
+      }
       final Integer maxLimit = (limit == null) ? 10 : Math.min(limit, 1000);
       final SearchParameters params = new SearchParameters(finalQuery, 0, maxLimit * 2, null, null);
       final ResultList<Term> list =

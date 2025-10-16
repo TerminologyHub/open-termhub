@@ -23,6 +23,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -56,6 +58,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -64,6 +67,7 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ThreadLocalMapper;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -248,6 +252,49 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     // Verify all expected values were found
     assertTrue(expectedTitles.isEmpty(), "Missing code systems: " + expectedTitles);
     assertTrue(expectedPublishers.isEmpty(), "Missing publishers: " + expectedPublishers);
+  }
+
+  /**
+   * Test code system search.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(1)
+  @Disabled
+  public void testCodeSystemNotLoaded() throws Exception {
+    final Terminology terminology =
+        FhirUtility.getTerminology(searchService, "SNOMEDCT_US", "SANDBOX", "20240301");
+    try {
+      // Arrange
+      final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM;
+      LOGGER.info("endpoint = {}", endpoint);
+
+      setTerminologyLoaded(terminology, false);
+
+      // Act
+      final String content = this.restTemplate.getForObject(endpoint, String.class);
+      final Bundle data = parser.parseResource(Bundle.class, content);
+      final List<Resource> codeSystems =
+          data.getEntry().stream().map(BundleEntryComponent::getResource).toList();
+
+      // Verify expected code systems
+      final Set<String> expectedTitles =
+          new HashSet<>(Set.of("ICD10CM", "LNC", "RXNORM", "SNOMEDCT"));
+      final Set<String> expectedPublishers = new HashSet<>(Set.of("SANDBOX"));
+
+      // assert that codesystems titles are all in expectedTitles in no particular order
+      assertEquals(expectedTitles,
+          codeSystems.stream().map(r -> ((CodeSystem) r).getTitle()).collect(Collectors.toSet()));
+      assertEquals(expectedPublishers, codeSystems.stream()
+          .map(r -> ((CodeSystem) r).getPublisher()).collect(Collectors.toSet()));
+
+      // Assert code systems
+      assertFalse(codeSystems.isEmpty());
+      assertEquals(4, codeSystems.size());
+    } finally {
+      setTerminologyLoaded(terminology, true);
+    }
   }
 
   /**
@@ -677,6 +724,111 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     // && p.getValue().toString().contains("900000000000003001")));
     // assertTrue(hasFullySpecifiedName, "Should have fully specified name
     // designation");
+  }
+
+  /**
+   * Test CodeSystem lookup with definition.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(1)
+  public void testCodeSystemLookupWithDefinition() throws Exception {
+    // Arrange
+    final String system =
+        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b");
+    final String code = "723277005"; // Concept with definition
+    final String lookupParams = "/$lookup?code=" + code;
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + system + lookupParams;
+    LOGGER.info("endpoint = {}", endpoint);
+
+    // Act
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final Parameters result = parser.parseResource(Parameters.class, content);
+
+    // Assert
+    assertNotNull(result, "Parameters response should not be null");
+    LOGGER.info("Parameters = {}", parser.encodeResourceToString(result));
+
+    // Verify code parameter
+    assertTrue(result.hasParameter("code"), "Should have code parameter");
+    assertEquals(code, result.getParameter("code").getValue().toString());
+
+    // Verify system parameter
+    assertTrue(result.hasParameter("system"), "Should have system parameter");
+    assertEquals("http://snomed.info/sct", result.getParameter("system").getValue().toString());
+
+    // Verify name parameter
+    assertTrue(result.hasParameter("name"), "Should have name parameter");
+    assertEquals("SNOMEDCT", result.getParameter("name").getValue().toString());
+
+    // Verify display parameter
+    assertTrue(result.hasParameter("display"), "Should have display parameter");
+    assertEquals("Nonconformance to editorial policy component",
+        result.getParameter("display").getValue().toString());
+
+    // Verify definition property exists
+    final List<Parameters.ParametersParameterComponent> properties =
+        result.getParameter().stream().filter(p -> "property".equals(p.getName())).toList();
+    assertFalse(properties.isEmpty(), "Should have properties");
+
+    // Find definition property
+    final boolean hasDefinition = properties.stream()
+        .anyMatch(p -> p.getPart().stream().anyMatch(part ->
+            "code".equals(part.getName()) && "definition".equals(part.getValue().toString())));
+    assertTrue(hasDefinition, "Should have definition property");
+
+    // Get the definition value
+    final String definition = properties.stream()
+        .filter(p -> p.getPart().stream().anyMatch(part ->
+            "code".equals(part.getName()) && "definition".equals(part.getValue().toString())))
+        .findFirst()
+        .orElseThrow(() -> new AssertionError("Definition property not found"))
+        .getPart().stream()
+        .filter(part -> "value".equals(part.getName()))
+        .findFirst()
+        .orElseThrow(() -> new AssertionError("Definition value not found"))
+        .getValue().toString();
+
+    assertEquals("A component that fails to comply with the current editorial guidance.",
+        definition);
+
+    LOGGER.info("Successfully verified definition in FHIR R4 lookup: {}", definition);
+  }
+
+  /**
+   * Test valueset not loaded.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Disabled
+  public void testValuesetNotLoaded() throws Exception {
+    final String vsId = ValueSetLoaderUtil.mapOriginalId("6729e634-e4ed-4adb-b8f7-7bb7861861bf");
+
+    final Subset subset = searchService.get(vsId, Subset.class);
+    try {
+      // Arrange
+      final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId;
+      LOGGER.info("endpoint = {}", endpoint);
+
+      // Act
+      String content = this.restTemplate.getForObject(endpoint, String.class);
+      final ValueSet valueSet = parser.parseResource(ValueSet.class, content);
+
+      // Assert
+      assertNotNull(valueSet);
+
+      setValuesetLoaded(subset, false);
+      content = this.restTemplate.getForObject(endpoint, String.class);
+      final OperationOutcome outcome = parser.parseResource(OperationOutcome.class, content);
+
+      // Assert
+      assertEquals(1, outcome.getIssue().size());
+      assertTrue(outcome.getIssueFirstRep().getDiagnostics().contains("not found"));
+    } finally {
+      setValuesetLoaded(subset, true);
+    }
   }
 
   /**
@@ -1185,6 +1337,38 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
+   * Test concept map not loaded.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Disabled
+  public void testConceptMapNotLoaded() throws Exception {
+    final List<Mapset> mapsets = FhirUtility.lookupMapsets(searchService);
+    try {
+      // Arrange
+      final String endpoint = LOCALHOST + port + FHIR_CONCEPTMAP;
+      LOGGER.info("endpoint = {}", endpoint);
+
+      // Act
+      String content = this.restTemplate.getForObject(endpoint, String.class);
+      Bundle data = parser.parseResource(Bundle.class, content);
+      List<Resource> codeSystems =
+          data.getEntry().stream().map(BundleEntryComponent::getResource).toList();
+      assertEquals(1, codeSystems.size());
+
+      setMapsetLoaded(mapsets.get(0), false);
+      FhirUtility.clearCaches();
+      content = this.restTemplate.getForObject(endpoint, String.class);
+      data = parser.parseResource(Bundle.class, content);
+      codeSystems = data.getEntry().stream().map(BundleEntryComponent::getResource).toList();
+      assertTrue(codeSystems.isEmpty());
+    } finally {
+      setMapsetLoaded(mapsets.get(0), true);
+    }
+  }
+
+  /**
    * Test delete concept map.
    *
    * @throws Exception the exception
@@ -1476,6 +1660,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     }
   }
 
+  /**
+   * Teardown.
+   */
   @AfterAll
   public static void teardown() {
     // There are tests that delete content. So any subsequent tests should re-setup the data

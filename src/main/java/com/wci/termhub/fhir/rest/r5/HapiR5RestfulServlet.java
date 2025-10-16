@@ -18,11 +18,11 @@ import com.wci.termhub.fhir.r5.CodeSystemProviderR5;
 import com.wci.termhub.fhir.r5.ConceptMapProviderR5;
 import com.wci.termhub.fhir.r5.FHIRMetadataProviderR5;
 import com.wci.termhub.fhir.r5.FHIRTerminologyCapabilitiesR5;
+import com.wci.termhub.fhir.r5.SystemTransactionProviderR5;
 import com.wci.termhub.fhir.r5.ValueSetProviderR5;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;
-import ca.uhn.fhir.parser.StrictErrorHandler;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import ca.uhn.fhir.rest.server.RestfulServer;
 import jakarta.servlet.ServletException;
@@ -51,24 +51,7 @@ public class HapiR5RestfulServlet extends RestfulServer {
     setDefaultResponseEncoding(EncodingEnum.JSON);
 
     final FhirContext fhirContext = FhirContext.forR5();
-    final LenientErrorHandler delegateHandler = new LenientErrorHandler();
-    fhirContext.setParserErrorHandler(new StrictErrorHandler() {
-      @Override
-      public void unknownAttribute(final IParseLocation theLocation,
-        final String theAttributeName) {
-        delegateHandler.unknownAttribute(theLocation, theAttributeName);
-      }
-
-      @Override
-      public void unknownElement(final IParseLocation theLocation, final String theElementName) {
-        delegateHandler.unknownElement(theLocation, theElementName);
-      }
-
-      @Override
-      public void unknownReference(final IParseLocation theLocation, final String theReference) {
-        delegateHandler.unknownReference(theLocation, theReference);
-      }
-    });
+    fhirContext.setParserErrorHandler(new LenientErrorHandler());
     setFhirContext(fhirContext);
 
     /*
@@ -93,6 +76,9 @@ public class HapiR5RestfulServlet extends RestfulServer {
 
     // Register interceptors
     registerInterceptor(new TermhubOpenApiInterceptorR5());
+
+    // Register system-level transaction provider
+    registerProvider(applicationContext.getBean(SystemTransactionProviderR5.class));
 
     logger.info("FHIR Resource providers and interceptors registered");
   }

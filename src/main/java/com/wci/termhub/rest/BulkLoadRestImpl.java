@@ -720,28 +720,27 @@ public class BulkLoadRestImpl {
               logger.info("  resource = " + resourceType);
 
               final File tmpResourceFile = File.createTempFile("tmp", ".json");
-              FileUtils.writeStringToFile(tmpResourceFile, entryNode.get("resource").asText(),
-                  "UTF-8");
+              ThreadLocalMapper.get().writeValue(tmpResourceFile, entryNode.get("resource"));
 
               switch (resourceType) {
                 case "CodeSystem":
                   final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService,
-                      file, enablePostLoadComputations.isEnabled(), CodeSystem.class,
+                      tmpResourceFile, enablePostLoadComputations.isEnabled(), CodeSystem.class,
                       new DefaultProgressListener());
                   results.add("CodeSystem/" + codeSystem.getId());
                   break;
 
                 case "ValueSet":
                   // Use existing loader utility
-                  final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService, file,
-                      ValueSet.class, new DefaultProgressListener());
+                  final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService,
+                      tmpResourceFile, ValueSet.class, new DefaultProgressListener());
                   results.add("ValueSet/" + valueSet.getId());
                   break;
 
                 case "ConceptMap":
                   // Use existing loader utility
                   final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService,
-                      file, ConceptMap.class, new DefaultProgressListener());
+                      tmpResourceFile, ConceptMap.class, new DefaultProgressListener());
                   results.add("ConceptMap/" + conceptMap.getId());
                   break;
 

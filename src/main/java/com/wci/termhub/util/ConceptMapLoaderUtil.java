@@ -88,7 +88,25 @@ public final class ConceptMapLoaderUtil {
    */
   public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
     final Class<T> type, final ProgressListener listener) throws Exception {
-    return indexConceptMap(service, file, type, listener);
+    return loadConceptMap(service, file, type, listener, null);
+  }
+
+  /**
+   * Load concept map.
+   *
+   * @param <T>          the generic type
+   * @param service      the service
+   * @param file         the file
+   * @param type         the type
+   * @param listener     the listener
+   * @param isSyndicated the is syndicated
+   * @return the t
+   * @throws Exception the exception
+   */
+  public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
+      final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
+      throws Exception {
+    return indexConceptMap(service, file, type, listener, isSyndicated);
   }
 
   /**
@@ -99,12 +117,14 @@ public final class ConceptMapLoaderUtil {
    * @param file the file
    * @param type the type
    * @param listener the listener
+   * @param isSyndicated the is syndicated
    * @return the t
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexConceptMap(final EntityRepositoryService service, final File file,
-    final Class<T> type, final ProgressListener listener) throws Exception {
+      final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
+      throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
@@ -124,10 +144,16 @@ public final class ConceptMapLoaderUtil {
             HttpServletResponse.SC_BAD_REQUEST);
       }
 
-      // check for existing
+      // check for existing (require key fields)
       final String abbreviation = conceptMap.path("title").asText();
       final String publisher = conceptMap.path("publisher").asText();
       final String version = conceptMap.path("version").asText();
+      if (abbreviation == null || abbreviation.isEmpty() || publisher == null
+          || publisher.isEmpty() || version == null || version.isEmpty()) {
+        throw FhirUtilityR4.exception(
+            "ConceptMap requires title, publisher, and version for import (missing one or more)",
+            IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+      }
       Mapset mapset = findMapset(service, abbreviation, publisher, version);
       if (mapset != null) {
         throw FhirUtilityR4.exception(
@@ -274,9 +300,12 @@ public final class ConceptMapLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       // Get the mapset again because the tree position computer would've changed it
-      mapset = service.get(mapset.getId(), Mapset.class);
+      mapset = service.get(mapset.getId(), Mapset.class, false);
       // Set loaded to true and save it again
       mapset.getAttributes().put("loaded", "true");
+      if (isSyndicated != null && isSyndicated) {
+        mapset.getAttributes().put("syndicated", "true");
+      }
       service.update(Mapset.class, mapset.getId(), mapset);
 
       // Set listener to 100%
@@ -309,8 +338,14 @@ public final class ConceptMapLoaderUtil {
     final String publisher, final String version) throws Exception {
 
     final SearchParameters searchParams = new SearchParameters();
-    searchParams
-        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
+    if (abbreviation == null || abbreviation.isEmpty() || publisher == null
+        || publisher.isEmpty() || version == null || version.isEmpty()) {
+      throw FhirUtilityR4.exception(
+          "ConceptMap requires title, publisher, and version for import (missing one or more)",
+          IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+    }
+    searchParams.setQuery(
+        TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
     final ResultList<Mapset> mapset = service.find(searchParams, Mapset.class);
 
     return (mapset.getItems().isEmpty()) ? null : mapset.getItems().get(0);

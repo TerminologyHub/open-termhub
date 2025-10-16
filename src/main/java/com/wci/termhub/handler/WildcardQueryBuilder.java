@@ -96,7 +96,7 @@ public class WildcardQueryBuilder implements QueryBuilder {
       sb.append("*");
     }
     // Fielded queries should be left alone
-    else if (query.matches(".*[a-zA-Z]+[a-z]\\:.*")) {
+    else if (StringUtility.isFieldedQuery(query)) {
       sb.append(query);
     }
     // Otherwise, split on whitespace, escape each word and add a *

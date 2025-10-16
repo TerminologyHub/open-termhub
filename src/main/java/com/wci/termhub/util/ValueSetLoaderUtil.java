@@ -57,10 +57,10 @@ public final class ValueSetLoaderUtil {
       };
 
   /** The Constant contextR4. */
-  private static FhirContext contextR4 = FhirContext.forR4();
+  private static final FhirContext FHIR_CONTEXT_R4 = FhirContext.forR4();
 
   /** The Constant contextR5. */
-  private static FhirContext contextR5 = FhirContext.forR5();
+  private static final FhirContext FHIR_CONTEXT_R5 = FhirContext.forR5();
 
   /** The Constant JSON_SUBSET_CODE. */
   private static final String JSON_SUBSET_CODE = "https://terminologyhub.com/model/subset/code";
@@ -83,7 +83,8 @@ public final class ValueSetLoaderUtil {
   }
 
   /**
-   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember, and persists.
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
+   * and persists.
    *
    * @param <T> the generic type
    * @param service the repository service
@@ -93,22 +94,40 @@ public final class ValueSetLoaderUtil {
    * @return the Subset id
    * @throws Exception on error
    */
-  @SuppressWarnings("unchecked")
   public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
     final Class<T> type, final ProgressListener listener) throws Exception {
+    return loadValueSet(service, file, type, listener, false);
+  }
+
+  /**
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
+   * and persists.
+   *
+   * @param <T> the generic type
+   * @param service the repository service
+   * @param file the file
+   * @param type the type
+   * @param listener the listener
+   * @param isSyndicated the is syndicated
+   * @return the Subset id
+   * @throws Exception on error
+   */
+  @SuppressWarnings("unchecked")
+  public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
+    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated) throws Exception {
 
     LOGGER.info("Loading Subset from JSON, isR5={}", type == org.hl7.fhir.r5.model.ValueSet.class);
 
     if (type == org.hl7.fhir.r4.model.ValueSet.class) {
-      final IParser parser = contextR4.newJsonParser();
+      final IParser parser = FHIR_CONTEXT_R4.newJsonParser();
       final org.hl7.fhir.r4.model.ValueSet vs = parser.parseResource(
           org.hl7.fhir.r4.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-      return (T) indexValueSetR4(service, vs, listener);
+      return (T) indexValueSetR4(service, vs, listener, isSyndicated);
     }
-    final IParser parser = contextR5.newJsonParser();
+    final IParser parser = FHIR_CONTEXT_R5.newJsonParser();
     final org.hl7.fhir.r5.model.ValueSet vs = parser.parseResource(
         org.hl7.fhir.r5.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-    return (T) indexValueSetR5(service, vs, listener);
+    return (T) indexValueSetR5(service, vs, listener, isSyndicated);
   }
 
   /**
@@ -117,12 +136,13 @@ public final class ValueSetLoaderUtil {
    * @param service the service
    * @param valueSet the value set
    * @param listener the listener
+   * @param isSyndicated the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   private static org.hl7.fhir.r4.model.ValueSet indexValueSetR4(
     final EntityRepositoryService service, final org.hl7.fhir.r4.model.ValueSet valueSet,
-    final ProgressListener listener) throws Exception {
+    final ProgressListener listener, final Boolean isSyndicated) throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
@@ -138,10 +158,16 @@ public final class ValueSetLoaderUtil {
             HttpServletResponse.SC_BAD_REQUEST);
       }
 
-      // check for existing
+      // check for existing (require key fields)
       final String abbreviation = valueSet.getTitle();
       final String publisher = valueSet.getPublisher();
       final String version = valueSet.getVersion();
+      if (abbreviation == null || abbreviation.isEmpty() || publisher == null
+          || publisher.isEmpty() || version == null || version.isEmpty()) {
+        throw FhirUtilityR4.exception(
+            "ValueSet requires title, publisher, and version for import (missing one or more)",
+            IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+      }
       Subset subset = findSubset(service, abbreviation, publisher, version);
       if (subset != null) {
         throw FhirUtilityR4.exception(
@@ -330,9 +356,12 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       // Get the subset again because the tree position computer would've changed it
-      subset = service.get(subset.getId(), Subset.class);
+      subset = service.get(subset.getId(), Subset.class, false);
       // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
+      if (isSyndicated != null && isSyndicated) {
+        subset.getAttributes().put("syndicated", "true");
+      }
       service.update(Subset.class, subset.getId(), subset);
 
       // Set listener to 100%
@@ -352,12 +381,13 @@ public final class ValueSetLoaderUtil {
    * @param service the service
    * @param valueSet the value set
    * @param listener the listener
+   * @param isSyndicated the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   private static org.hl7.fhir.r5.model.ValueSet indexValueSetR5(
     final EntityRepositoryService service, final org.hl7.fhir.r5.model.ValueSet valueSet,
-    final ProgressListener listener) throws Exception {
+    final ProgressListener listener, final Boolean isSyndicated) throws Exception {
 
     final long startTime = System.currentTimeMillis();
 
@@ -557,9 +587,12 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       // Get the subset again because the tree position computer would've changed it
-      subset = service.get(subset.getId(), Subset.class);
+      subset = service.get(subset.getId(), Subset.class, false);
       // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
+      if (isSyndicated != null && isSyndicated) {
+        subset.getAttributes().put("syndicated", "true");
+      }
       service.update(Subset.class, subset.getId(), subset);
 
       // Set listener to 100%
@@ -588,8 +621,9 @@ public final class ValueSetLoaderUtil {
     final String publisher, final String version) throws Exception {
 
     final SearchParameters searchParams = new SearchParameters();
-    searchParams
-        .setQuery(TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, version));
+    final String versionForQuery = (version == null || version.isEmpty()) ? "*" : version;
+    searchParams.setQuery(
+        TerminologyUtility.getTerminologyAbbrQuery(abbreviation, publisher, versionForQuery));
     final ResultList<Subset> subset = service.find(searchParams, Subset.class);
 
     return (subset.getItems().isEmpty()) ? null : subset.getItems().get(0);

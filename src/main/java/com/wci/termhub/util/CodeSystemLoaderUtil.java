@@ -31,7 +31,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.wci.termhub.Application;
 import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.algo.TerminologyCache;
@@ -42,6 +41,7 @@ import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.Definition;
 import com.wci.termhub.model.MetaModel;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
@@ -105,10 +105,28 @@ public final class CodeSystemLoaderUtil {
     final boolean computeTreePositions, final Class<T> type, final ProgressListener listener)
     throws Exception {
 
-    // Application.logMemory();
-    // final JsonNode jsonContent = ThreadLocalMapper.get().readTree(content);
-    Application.logMemory();
-    return indexCodeSystem(service, file, computeTreePositions, type, listener);
+    return loadCodeSystem(service, file, computeTreePositions, type, listener, null);
+  }
+
+  /**
+   * Load concepts from CodeSystem format JSON.
+   *
+   * @param <T>                  the generic type
+   * @param service              the service
+   * @param file                 the file
+   * @param computeTreePositions whether to compute tree positions
+   * @param type                 the type
+   * @param listener             the listener
+   * @param isSyndicated         the is syndicated
+   * @return the string
+   * @throws Exception the exception
+   */
+  public static <T> T loadCodeSystem(final EntityRepositoryService service, final File file,
+      final boolean computeTreePositions, final Class<T> type, final ProgressListener listener,
+      final Boolean isSyndicated) throws Exception {
+
+    SystemReportUtility.logMemory();
+    return indexCodeSystem(service, file, computeTreePositions, type, listener, isSyndicated);
   }
 
   /**
@@ -120,13 +138,14 @@ public final class CodeSystemLoaderUtil {
    * @param computeTreePositions whether to compute tree positions
    * @param type the type
    * @param listener the listener
+   * @param isSyndicated         the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexCodeSystem(final EntityRepositoryService service, final File file,
-    final boolean computeTreePositions, final Class<T> type, final ProgressListener listener)
-    throws Exception {
+      final boolean computeTreePositions, final Class<T> type, final ProgressListener listener,
+      final Boolean isSyndicated) throws Exception {
 
     final long startTime = System.currentTimeMillis();
     final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
@@ -276,7 +295,7 @@ public final class CodeSystemLoaderUtil {
                 service.addBulk(Concept.class, new ArrayList<>(conceptBatch));
                 conceptBatch.clear();
                 LOGGER.info("  concept count: {}", conceptCount);
-                Application.logMemory();
+                SystemReportUtility.logMemory();
 
                 // Progress update
                 listener.updateProgress(new ProgressEvent(
@@ -334,12 +353,15 @@ public final class CodeSystemLoaderUtil {
         computeConceptTreePositions(service, terminology, listener2);
       }
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
-      Application.logMemory();
+      SystemReportUtility.logMemory();
 
       // Get the terminology again because the tree position computer would've changed it
-      terminology = service.get(terminology.getId(), Terminology.class);
+      terminology = service.get(terminology.getId(), Terminology.class, false);
       // Set loaded to true and save it again
       terminology.getAttributes().put("loaded", "true");
+      if (isSyndicated != null && isSyndicated) {
+        terminology.getAttributes().put("syndicated", "true");
+      }
       service.update(Terminology.class, terminology.getId(), terminology);
 
       // Set listener to 100%
@@ -570,6 +592,9 @@ public final class CodeSystemLoaderUtil {
 
     final List<Term> terms = createTerms(terminology, concept, conceptNode);
     concept.getTerms().addAll(terms);
+
+    final List<Definition> definitions = createDefinitions(terminology, concept, conceptNode);
+    concept.getDefinitions().addAll(definitions);
 
     // Process common properties
     final JsonNode properties = conceptNode.path("property");
@@ -802,8 +827,8 @@ public final class CodeSystemLoaderUtil {
       }
 
       if ("relationship".equals(propertyType)) {
-        final ConceptRelationship relationship =
-            createRelationship(propertyNode, concept, terminology, terminologyCache);
+        final ConceptRelationship relationship = createRelationship(propertyNode, concept, terminology,
+            terminologyCache);
 
         // ECL clauses removed per requirements
 
@@ -850,6 +875,41 @@ public final class CodeSystemLoaderUtil {
     }
 
     return terms;
+  }
+
+  /**
+   * Creates the definitions.
+   *
+   * @param terminology the terminology
+   * @param concept the concept
+   * @param conceptNode the concept node
+   * @return the list
+   */
+  private static List<Definition> createDefinitions(final Terminology terminology,
+      final Concept concept, final JsonNode conceptNode) {
+
+    final List<Definition> definitions = new ArrayList<>();
+    final JsonNode definitionNode = conceptNode.path("definition");
+
+    if (definitionNode.isMissingNode()) {
+      return definitions; // Empty list if no definition
+    }
+
+    final Definition definition = new Definition();
+    definition.setId(UUID.randomUUID().toString());
+    definition.setActive(true);
+    definition.setDefinition(definitionNode.asText());
+
+    // Set terminology metadata
+    definition.setTerminology(terminology.getAbbreviation());
+    definition.setVersion(terminology.getVersion());
+    definition.setPublisher(terminology.getPublisher());
+
+    // Set default language
+    definition.getLocaleMap().put("en", true);
+
+    definitions.add(definition);
+    return definitions;
   }
 
   /**

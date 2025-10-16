@@ -136,6 +136,13 @@ curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=name:di
 
 # Find concepts using an ECL Expression for this subset
 curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&expression=%5E731000124108&include=minimal" | jq
+
+# Find concept using bulk search
+# NOTE: Must have carriage return between each term and content type must be text/plain
+# NOTE: Limit is the number of results to return for each term
+# NOTE: the handler=browser does a form of search that matches what the embedded browser does (leave blank for default lookup)
+curl -s -X POST "http://localhost:8080/concept/bulk?terminology=SNOMEDCT_US&limit=1&active=true&handler=browser" \
+  -H 'Content-Type: text/plain'  --data-binary $'heart\nprocedure' | jq
 ```
 
 ### Testing the FHIR R4 API

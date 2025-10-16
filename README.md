@@ -4,6 +4,8 @@ local sandbox terminology data provided for testing. This runtime
 container works seamlessly with terminology content provided by 
 [TermHub](https://www.terminologyhub.com) which has a library of code systems, value sets, and concept mappings.
 
+[Video Overview of Open TermHub](https://youtu.be/bHPNpIndyUk)
+
 ## Table of Contents
 
 1. [Step-by-step instructions with Sandbox data](doc/TUTORIAL1.md)

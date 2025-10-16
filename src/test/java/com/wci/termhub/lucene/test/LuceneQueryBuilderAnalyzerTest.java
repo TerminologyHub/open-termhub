@@ -33,9 +33,10 @@ public class LuceneQueryBuilderAnalyzerTest {
   @Test
   public void testTopLevelKeywordAnalyzerMapping() {
     final Map<String, Analyzer> analyzers = LuceneQueryBuilder.getFieldAnalyzers(Concept.class);
-    final Analyzer analyzer = analyzers.get("stemName.keyword");
-    assertNotNull(analyzer);
-    assertTrue(analyzer instanceof KeywordAnalyzer);
+    try (Analyzer analyzer = analyzers.get("stemName.keyword")) {
+      assertNotNull(analyzer);
+      assertTrue(analyzer instanceof KeywordAnalyzer);
+    }
   }
 
   /**
@@ -44,9 +45,10 @@ public class LuceneQueryBuilderAnalyzerTest {
   @Test
   public void testNestedKeywordAnalyzerMapping() {
     final Map<String, Analyzer> analyzers = LuceneQueryBuilder.getFieldAnalyzers(Concept.class);
-    final Analyzer analyzer = analyzers.get("terms.stemName.keyword");
-    assertNotNull(analyzer);
-    assertTrue(analyzer instanceof KeywordAnalyzer);
+    try (Analyzer analyzer = analyzers.get("terms.stemName.keyword")) {
+      assertNotNull(analyzer);
+      assertTrue(analyzer instanceof KeywordAnalyzer);
+    }
   }
 
   /**
@@ -55,10 +57,11 @@ public class LuceneQueryBuilderAnalyzerTest {
   @Test
   public void testNestedTextAndNgramAnalyzerMappings() {
     final Map<String, Analyzer> analyzers = LuceneQueryBuilder.getFieldAnalyzers(Concept.class);
-    final Analyzer textAnalyzer = analyzers.get("terms.name");
-    final Analyzer ngramAnalyzer = analyzers.get("terms.name.ngram");
-    assertNotNull(textAnalyzer);
-    assertTrue(textAnalyzer instanceof StandardAnalyzer);
-    assertNotNull(ngramAnalyzer);
+    try (Analyzer textAnalyzer = analyzers.get("terms.name");
+        final Analyzer ngramAnalyzer = analyzers.get("terms.name.ngram");) {
+      assertNotNull(textAnalyzer);
+      assertTrue(textAnalyzer instanceof StandardAnalyzer);
+      assertNotNull(ngramAnalyzer);
+    }
   }
 }

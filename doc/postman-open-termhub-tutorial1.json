@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "760bbd9f-bbe5-49b9-9c2d-d6f29e8e755b",
-		"name": "Open Termhub Collection",
+		"_postman_id": "466b739a-2e2a-4a9a-b90a-cc4880ed5ec7",
+		"name": "Open Termhub APIs",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "11076096"
 	},
@@ -1013,6 +1013,7 @@
 			"script": {
 				"type": "text/javascript",
 				"packages": {},
+				"requests": {},
 				"exec": [
 					""
 				]
@@ -1023,6 +1024,7 @@
 			"script": {
 				"type": "text/javascript",
 				"packages": {},
+				"requests": {},
 				"exec": [
 					""
 				]
@@ -1032,8 +1034,7 @@
 	"variable": [
 		{
 			"key": "API_URL",
-			"value": "http://localhost:8080",
-			"type": "string"
+			"value": "http://localhost:8080"
 		}
 	]
 }

@@ -25,6 +25,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.wci.termhub.fhir.util.FhirUtility;
+import com.wci.termhub.model.Mapset;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.test.AbstractServerTest;
 
@@ -101,4 +105,51 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
     setupOnce = true;
   }
 
+  /**
+   * Sets the terminology loaded.
+   *
+   * @param terminology the terminology
+   * @param flag the flag
+   * @throws Exception the exception
+   */
+  protected void setTerminologyLoaded(final Terminology terminology, final boolean flag) throws Exception {
+    if (terminology == null) {
+      throw new Exception("Terminology cannot be null");
+    }
+    terminology.getAttributes().put("loaded", Boolean.toString(flag));
+    searchService.update(Terminology.class, terminology.getId(), terminology);
+    FhirUtility.clearCaches();
+  }
+
+  /**
+   * Sets the mapset loaded.
+   *
+   * @param mapset the mapset
+   * @param flag the flag
+   * @throws Exception the exception
+   */
+  protected void setMapsetLoaded(final Mapset mapset, final boolean flag) throws Exception {
+    if (mapset == null) {
+      throw new Exception("Terminology cannot be null");
+    }
+    mapset.getAttributes().put("loaded", Boolean.toString(flag));
+    searchService.update(Mapset.class, mapset.getId(), mapset);
+    FhirUtility.clearCaches();
+  }
+
+  /**
+   * Sets the valueset loaded.
+   *
+   * @param subset the subset
+   * @param flag the flag
+   * @throws Exception the exception
+   */
+  protected void setValuesetLoaded(final Subset subset, final boolean flag) throws Exception {
+    if (subset == null) {
+      throw new Exception("Terminology cannot be null");
+    }
+    subset.getAttributes().put("loaded", Boolean.toString(flag));
+    searchService.update(Subset.class, subset.getId(), subset);
+    FhirUtility.clearCaches();
+  }
 }

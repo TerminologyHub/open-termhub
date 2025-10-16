@@ -48,8 +48,9 @@ public class JsonLoggingFilter implements Filter {
     public void doFilter(final ServletRequest req, final ServletResponse res,
         final FilterChain chain) throws ServletException, IOException {
 
-        HttpServletRequest hreq = (HttpServletRequest) req;
-        HttpServletResponse hres = (HttpServletResponse) res;
+        final HttpServletRequest hreq = (HttpServletRequest) req;
+        final HttpServletResponse hres = (HttpServletResponse) res;
+        final long startNanos = System.nanoTime();
         chain.doFilter(req, res);
 
         // Post-requets logging
@@ -58,20 +59,32 @@ public class JsonLoggingFilter implements Filter {
             return;
         }
 
-        // Handle things computed by RootServiceRestImpl
-        for (final String key : new String[] {
-                "http-version", "remote-address", "correlation-id", "req-uri", "req-method",
-                "req-querystring", "user-id", "referer", "user-agent"
-        }) {
-            if (ThreadContext.get(key) == null) {
-                ThreadContext.put(key, "");
-            }
+        final String reqUri = hreq.getRequestURI();
+        if ("/favicon.ico".equals(reqUri)) {
+            return;
         }
 
-        ThreadContext.put("status-code", String.valueOf(hres.getStatus()));
-        // NO good way to get the content length here
+        final String httpVersion = hreq.getProtocol();
+        final String reqMethod = hreq.getMethod();
+        final String reqQuerystring = hreq.getQueryString();
+        final String referer = hreq.getHeader("referer");
+        final String userAgent = hreq.getHeader("user-agent");
+        final long durationMs = (System.nanoTime() - startNanos) / 1_000_000L;
 
-        // remote-address - handled by RootServiceRestImpl
+        final String xff = hreq.getHeader("X-Forwarded-For");
+        final String xri = hreq.getHeader("X-Real-IP");
+        final String clientIp = xff != null && !xff.isEmpty() ? xff.split(",")[0].trim()
+            : (xri != null && !xri.isEmpty() ? xri : hreq.getRemoteAddr());
+
+        ThreadContext.put("http-version", httpVersion != null ? httpVersion : "");
+        ThreadContext.put("remote-address", clientIp != null ? clientIp : "");
+        ThreadContext.put("req-uri", reqUri != null ? reqUri : "");
+        ThreadContext.put("req-method", reqMethod != null ? reqMethod : "");
+        ThreadContext.put("req-querystring", reqQuerystring != null ? reqQuerystring : "");
+        ThreadContext.put("referer", referer != null ? referer : "");
+        ThreadContext.put("user-agent", userAgent != null ? userAgent : "");
+        ThreadContext.put("status-code", String.valueOf(hres.getStatus()));
+        ThreadContext.put("duration-ms", String.valueOf(durationMs));
         LoggerFactory.getLogger("HttpLogger").info(hreq.getMethod() + " " + hreq.getRequestURI());
         ThreadContext.clearAll();
 

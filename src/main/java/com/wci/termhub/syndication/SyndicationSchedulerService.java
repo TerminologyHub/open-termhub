@@ -14,13 +14,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 /**
  * Service for scheduled syndication checks.
  */
 @Service
+@Profile("!test")
 @ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${syndication.token:}')")
 public class SyndicationSchedulerService {
 
@@ -31,29 +34,33 @@ public class SyndicationSchedulerService {
   @Autowired
   private SyndicationManager syndicationManager;
 
-  /** The syndication check interval. */
-  @Value("${syndication.check.interval}")
-  private String syndicationCheckInterval;
+  /** The syndication check cron (overrides interval when present). */
+  @Value("${syndication.check.cron:}")
+  private String syndicationCheckCron;
 
-  /** The syndication completed flag file. */
-  private static final String SYNDICATION_COMPLETED_FILE = "syndication.completed";
+  /** Whether to trigger a syndication check on application startup. */
+  @Value("${syndication.check.on-startup:#{null}}")
+  private Boolean syndicationCheckOnStartup;
 
   /**
-   * Scheduled syndication check using fixed rate interval. This method runs at
-   * the configured
-   * interval for testing purposes.
+   * Syndication check triggered by scheduler (when configured) or manually.
    */
-  @Scheduled(fixedRateString = "${syndication.check.interval}", initialDelayString = "0")
-  public void checkSyndicationFixedRate() {
-    // Check if syndication was already completed (persistent check)
-    if (isSyndicationCompleted()) {
-      logger.debug("Initial syndication already completed, skipping scheduled check");
-      return;
-    }
-
-    logger.info("Starting initial syndication check (fixed rate: {})", syndicationCheckInterval);
+  public void checkSyndicationCron() {
+    logger.info("Starting scheduled syndication check (cron: {})", syndicationCheckCron);
     performSyndicationCheck();
-    setSyndicationCompleted();
+  }
+
+  /**
+   * Trigger a syndication check on application startup.
+   */
+  @EventListener(ApplicationReadyEvent.class)
+  public void onApplicationReady() {
+    if (Boolean.TRUE.equals(syndicationCheckOnStartup)) {
+      logger.info("Syndication check triggered at application startup");
+      performSyndicationCheck();
+    } else {
+      logger.info("Syndication check on startup disabled or not set");
+    }
   }
 
   /**
@@ -68,9 +75,14 @@ public class SyndicationSchedulerService {
 
       if (results.isSuccess()) {
         logger.info(
-            "Syndication check completed successfully - Processed: {}, Loaded: {}, Errors: {}, Duration: {} ms",
+            "Syndication check completed successfully - Processed: {}, Loaded: {}, Errors: {}, Duration: {} ms "
+            + "| CodeSystems: loaded={}, errors={} "
+            + "| ValueSets: loaded={}, errors={} "
+            + "| ConceptMaps: loaded={}, errors={}",
             results.getTotalProcessed(), results.getTotalLoaded(), results.getTotalErrors(),
-            results.getDurationMs());
+            results.getDurationMs(), results.getCodeSystemLoaded(), results.getCodeSystemErrors(),
+            results.getValueSetLoaded(), results.getValueSetErrors(), results.getConceptMapLoaded(),
+            results.getConceptMapErrors());
       } else {
         if ("Syndication check already in progress".equals(results.getMessage())) {
           logger.info("Syndication check skipped - already in progress");
@@ -89,7 +101,7 @@ public class SyndicationSchedulerService {
    * programmatically or via REST
    * endpoint.
    */
-  public void triggerSyndicationCheck() {
+  public void syndicationCheck() {
     logger.info("Manual syndication check triggered");
     performSyndicationCheck();
   }
@@ -103,31 +115,4 @@ public class SyndicationSchedulerService {
     return syndicationManager.getSyndicationStatus();
   }
 
-  /**
-   * Check if syndication was already completed (persistent check).
-   *
-   * @return true if syndication was completed
-   */
-  private boolean isSyndicationCompleted() {
-    try {
-      return new java.io.File(SYNDICATION_COMPLETED_FILE).exists();
-    } catch (final Exception e) {
-      logger.warn("Error checking syndication completion status", e);
-      return false;
-    }
-  }
-
-  /**
-   * Mark syndication as completed (persistent).
-   */
-  private void setSyndicationCompleted() {
-    // NOTE: it should not be necessary to mark this
-    // especially with syndication
-    // try {
-    // new java.io.File(SYNDICATION_COMPLETED_FILE).createNewFile();
-    // logger.info("Syndication completion marked as persistent");
-    // } catch (final Exception e) {
-    // logger.error("Error marking syndication as completed", e);
-    // }
-  }
 }

@@ -9,7 +9,11 @@
  */
 package com.wci.termhub.syndication;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -66,7 +70,7 @@ public class SyndicationContentTracker {
     }
 
     try {
-      final String query = "entryId:" + StringUtility.escapeQuery(entryId);
+      final String query = "entryId:\"" + StringUtility.escapeQuery(entryId) + "\"";
       final SearchParameters searchParams = new SearchParameters(query, 1, 0);
       final ResultList<SyndicatedContent> results =
           searchService.find(searchParams, SyndicatedContent.class);
@@ -125,41 +129,54 @@ public class SyndicationContentTracker {
   /**
    * Mark content as loaded.
    *
-   * @param entryId the syndication feed entry ID (UUID)
-   * @param contentItemIdentifier the content item identifier
-   * @param contentItemVersion the content item version
+   * @param entry the entry
    * @param contentType the content type
-   * @param title the content title
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
    * @param syndicationFeedUrl the syndication feed URL
    */
-  public void markContentAsLoaded(final String entryId, final String contentItemIdentifier,
-    final String contentItemVersion, final String contentType, final String title,
-    final String syndicationFeedUrl) {
+  public void markContentAsLoaded(final SyndicationFeedEntry entry,
+    final SyndicationContentType contentType, final String terminology, final String publisher,
+    final String version, final String syndicationFeedUrl) {
 
-    if (entryId == null || entryId.trim().isEmpty()) {
+    if (entry == null) {
+      logger.warn("Cannot mark content as loaded - entry is null");
+      return;
+    }
+
+    if (contentType == null) {
+      logger.warn("Cannot mark content as loaded - content type is null");
+      return;
+    }
+
+    if (entry.getId() == null || entry.getId().isBlank()) {
       logger.warn("Cannot mark content as loaded - entry ID is null or empty");
       return;
     }
 
-    if (contentItemIdentifier == null || contentItemVersion == null) {
+    if (entry.getContentItemIdentifier() == null || entry.getContentItemVersion() == null) {
       logger.warn(
           "Cannot mark content as loaded - missing required parameters: identifier={}, version={}",
-          contentItemIdentifier, contentItemVersion);
+          entry.getContentItemIdentifier(), entry.getContentItemVersion());
       return;
     }
 
     try {
-      final SyndicatedContent content = new SyndicatedContent(entryId, contentItemIdentifier,
-          contentItemVersion, contentType, title);
+      final SyndicatedContent content =
+          new SyndicatedContent(entry.getId(), entry.getContentItemIdentifier(),
+              entry.getContentItemVersion(), contentType.getResourceType(), entry.getTitle());
       content.setId(UUID.randomUUID().toString());
       content.setSyndicationFeedUrl(syndicationFeedUrl);
+      content.setTerminology(terminology);
+      content.setPublisher(publisher);
 
       searchService.add(SyndicatedContent.class, content);
-      logger.info("Marked content as loaded: {} ({} v{})", title, contentItemIdentifier,
-          contentItemVersion);
+      logger.info("Marked content as loaded: {} ({} v{})", entry.getTitle(),
+          entry.getContentItemIdentifier(), entry.getContentItemVersion());
     } catch (final Exception e) {
-      logger.error("Failed to mark content as loaded: {} ({} v{})", title, contentItemIdentifier,
-          contentItemVersion, e);
+      logger.error("Failed to mark content as loaded: {} ({} v{})", entry.getTitle(),
+          entry.getContentItemIdentifier(), entry.getContentItemVersion(), e);
     }
   }
 
@@ -171,7 +188,7 @@ public class SyndicationContentTracker {
    */
   public SyndicatedContent getContentItemInfo(final String entryId) {
     try {
-      final String query = "entryId:" + StringUtility.escapeQuery(entryId);
+      final String query = "entryId:\"" + StringUtility.escapeQuery(entryId) + "\"";
       final SearchParameters searchParams = new SearchParameters(query, 1, 0);
       final ResultList<SyndicatedContent> results =
           searchService.find(searchParams, SyndicatedContent.class);
@@ -213,6 +230,53 @@ public class SyndicationContentTracker {
     } catch (final Exception e) {
       logger.debug("No syndicated content found in index", e);
       return 0;
+    }
+  }
+
+  /**
+   * Returns set of resource keys (identifier|version) for all loaded syndicated
+   * content.
+   *
+   * @return the set of resource keys
+   */
+  public Set<String> getLoadedResourceKeys() {
+    try {
+      final SearchParameters searchParams = new SearchParameters("*:*", 1000, 0);
+      final ResultList<SyndicatedContent> results =
+          searchService.find(searchParams, SyndicatedContent.class);
+      final Set<String> keys = new HashSet<>();
+      for (final SyndicatedContent sc : results.getItems()) {
+        keys.add(sc.getResourceKey());
+      }
+      return keys;
+    } catch (final Exception e) {
+      logger.error("Error getting loaded resource keys", e);
+      return Collections.emptySet();
+    }
+  }
+
+  /**
+   * Returns list of loaded syndicated content not present in the provided feed
+   * keys.
+   *
+   * @param feedKeys set of keys from current feed (identifier|version)
+   * @return list of SyndicatedContent that are loaded but not in feed
+   */
+  public List<SyndicatedContent> getLoadedContentNotInFeed(final Set<String> feedKeys) {
+    try {
+      final SearchParameters searchParams = new SearchParameters("*:*", 2000, 0);
+      final ResultList<SyndicatedContent> results =
+          searchService.find(searchParams, SyndicatedContent.class);
+      final List<SyndicatedContent> notInFeed = new ArrayList<>();
+      for (final SyndicatedContent sc : results.getItems()) {
+        if (!feedKeys.contains(sc.getResourceKey())) {
+          notInFeed.add(sc);
+        }
+      }
+      return notInFeed;
+    } catch (final Exception e) {
+      logger.error("Error computing loaded content not in feed", e);
+      return Collections.emptyList();
     }
   }
 

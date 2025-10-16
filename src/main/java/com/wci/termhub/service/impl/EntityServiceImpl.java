@@ -149,9 +149,17 @@ public class EntityServiceImpl implements EntityRepositoryService {
   /* see superclass */
   @Override
   public <T extends HasId> T get(final String id, final Class<T> clazz) throws Exception {
+    return get(id, clazz, true);
+  }
+
+  /* see superclass */
+  @Override
+  public <T extends HasId> T get(final String id, final Class<T> clazz,
+    final boolean filterUnloaded) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     final SearchParameters searchParameters = new SearchParameters();
+    searchParameters.setFilterUnloaded(filterUnloaded);
     searchParameters.setQuery("id:" + id);
     final ResultList<T> results = luceneDataAccess.find(clazz, searchParameters);
 

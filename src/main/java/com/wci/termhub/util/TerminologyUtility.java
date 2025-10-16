@@ -30,11 +30,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.wci.termhub.ecl.EclToLuceneConverter;
+import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ConceptTreePosition;
+import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.IncludeParam;
 import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
@@ -149,10 +151,29 @@ public final class TerminologyUtility {
   public static Terminology getTerminology(final EntityRepositoryService searchService,
     final String terminology, final String publisher, final String version) throws Exception {
 
+    return getTerminology(searchService, terminology, publisher, version, true);
+  }
+
+  /**
+   * Gets the terminology.
+   *
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @param publisher the publisher
+   * @param version the version
+   * @param filterUnloaded the filter unloaded
+   * @return the terminology
+   * @throws Exception the exception
+   */
+  public static Terminology getTerminology(final EntityRepositoryService searchService,
+    final String terminology, final String publisher, final String version,
+    final boolean filterUnloaded) throws Exception {
+
     final String terminologyQuery = getTerminologyAbbrQuery(terminology, publisher, version);
+    SearchParameters searchParameters = new SearchParameters(terminologyQuery, 2, 0);
+    searchParameters.setFilterUnloaded(filterUnloaded);
     logger.info("  terminology query = " + terminologyQuery);
-    final ResultList<Terminology> tlist =
-        searchService.find(new SearchParameters(terminologyQuery, 2, 0), Terminology.class);
+    final ResultList<Terminology> tlist = searchService.find(searchParameters, Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
       return null;
@@ -160,6 +181,34 @@ public final class TerminologyUtility {
     if (tlist.getItems().size() > 1) {
       throw new Exception(
           "Too many terminology matches = " + terminology + ", " + publisher + ", " + version);
+    }
+
+    return tlist.getItems().get(0);
+  }
+
+  /**
+   * Gets the subset.
+   *
+   * @param searchService the search service
+   * @param abbreviation the abbreviation
+   * @param publisher the publisher
+   * @param version the version
+   * @return the subset
+   * @throws Exception the exception
+   */
+  public static Subset getSubset(final EntityRepositoryService searchService,
+    final String abbreviation, final String publisher, final String version) throws Exception {
+
+    final ResultList<Subset> tlist = searchService.find(
+        new SearchParameters(getTerminologyQuery(abbreviation, publisher, version), 2, 0),
+        Subset.class);
+
+    if (tlist.getItems().isEmpty()) {
+      return null;
+    }
+    if (tlist.getItems().size() > 1) {
+      throw new Exception(
+          "Too many subset matches = " + abbreviation + ", " + publisher + ", " + version);
     }
 
     return tlist.getItems().get(0);
@@ -179,7 +228,7 @@ public final class TerminologyUtility {
     final String abbreviation, final String publisher, final String version) throws Exception {
 
     final ResultList<Mapset> tlist = searchService.find(
-        new SearchParameters(getTerminologyAbbrQuery(abbreviation, publisher, version), 2, 0),
+        new SearchParameters(getTerminologyQuery(abbreviation, publisher, version), 2, 0),
         Mapset.class);
 
     if (tlist.getItems().isEmpty()) {
@@ -187,7 +236,7 @@ public final class TerminologyUtility {
     }
     if (tlist.getItems().size() > 1) {
       throw new Exception(
-          "Too many terminology matches = " + abbreviation + ", " + publisher + ", " + version);
+          "Too many mapset matches = " + abbreviation + ", " + publisher + ", " + version);
     }
 
     return tlist.getItems().get(0);
@@ -1294,166 +1343,223 @@ public final class TerminologyUtility {
    * Removes the terminology and related concepts, relationships, etc.
    *
    * @param searchService the search service
-   * @param id the id
+   * @param terminology the terminology
+   * @param allowedVersions the allowed versions
    * @throws Exception the exception
    */
-  public static void removeTerminology(final EntityRepositoryService searchService, final String id)
-    throws Exception {
-
-    final Terminology terminology = searchService.get(id, Terminology.class);
+  public static void removeOtherTerminologyVersions(final EntityRepositoryService searchService,
+    final Terminology terminology, final Set<String> allowedVersions) throws Exception {
     if (terminology == null) {
-      throw new Exception("Unable to find terminology with id = " + id);
+      return;
+    }
+    final String q = StringUtility.composeQuery("AND",
+        "abbreviation:\"" + StringUtility.escapeQuery(terminology.getAbbreviation()) + "\"",
+        "publisher:\"" + terminology.getPublisher() + "\"");
+    final SearchParameters params = new SearchParameters(q, null, null, null, null);
+    final ResultList<Terminology> list = searchService.find(params, Terminology.class);
+    for (final Terminology candidate : list.getItems()) {
+      if (candidate.getId().equals(terminology.getId())) {
+        continue;
+      }
+      if (allowedVersions != null && allowedVersions.contains(candidate.getVersion())) {
+        continue;
+      }
+      candidate.getAttributes().put("loaded", "false");
+      searchService.update(Terminology.class, candidate.getId(), candidate);
+      removeTerminology(searchService, candidate.getId());
+    }
+  }
+
+  /**
+   * Removes the other mapset versions.
+   *
+   * @param searchService the search service
+   * @param mapset the mapset
+   * @param allowedVersions the allowed versions
+   * @throws Exception the exception
+   */
+  public static void removeOtherMapsetVersions(final EntityRepositoryService searchService,
+    final Mapset mapset, final Set<String> allowedVersions) throws Exception {
+    if (mapset == null) {
+      return;
+    }
+    final SearchParameters params = new SearchParameters(
+        getTerminologyQuery(mapset.getAbbreviation(), mapset.getPublisher(), "*"), null, null, null,
+        null);
+    final ResultList<Mapset> list = searchService.find(params, Mapset.class);
+    for (final Mapset candidate : list.getItems()) {
+      if (candidate.getId().equals(mapset.getId())) {
+        continue;
+      }
+      if (allowedVersions != null && allowedVersions.contains(candidate.getVersion())) {
+        continue;
+      }
+      candidate.getAttributes().put("loaded", "false");
+      searchService.update(Mapset.class, candidate.getId(), candidate);
+      removeMapset(searchService, candidate.getId());
+    }
+  }
+
+  /**
+   * Removes the other subset versions.
+   *
+   * @param searchService the search service
+   * @param subset the subset
+   * @param allowedVersions the allowed versions
+   * @throws Exception the exception
+   */
+  public static void removeOtherSubsetVersions(final EntityRepositoryService searchService,
+    final Subset subset, final Set<String> allowedVersions) throws Exception {
+    if (subset == null) {
+      return;
+    }
+    final SearchParameters params = new SearchParameters(
+        getTerminologyQuery(subset.getAbbreviation(), subset.getPublisher(), "*"), null, null, null,
+        null);
+    final ResultList<Subset> list = searchService.find(params, Subset.class);
+    for (final Subset candidate : list.getItems()) {
+      if (candidate.getId().equals(subset.getId())) {
+        continue;
+      }
+      if (allowedVersions != null && allowedVersions.contains(candidate.getVersion())) {
+        continue;
+      }
+      candidate.getAttributes().put("loaded", "false");
+      searchService.update(Subset.class, candidate.getId(), candidate);
+      removeSubset(searchService, candidate.getId());
+    }
+  }
+
+  /**
+   * Removes the terminology and related concepts, relationships, etc.
+   *
+   * @param searchService the search service
+   * @param terminologyId the terminology id
+   * @throws Exception the exception
+   */
+  public static void removeTerminology(final EntityRepositoryService searchService,
+    final String terminologyId) throws Exception {
+
+    logger.info("Removing terminology: {}", terminologyId);
+
+    final Terminology terminology = searchService.get(terminologyId, Terminology.class);
+    if (terminology == null) {
+      throw new Exception("Unable to find terminology with id = " + terminologyId);
     }
 
-    final int batchSize = 5000;
+    // Set loaded=false before removal so any subsequent logic can still find
+    // the
+    // entity
+    terminology.getAttributes().put("loaded", "false");
+    searchService.update(Terminology.class, terminology.getId(), terminology);
+
     final String query = getTerminologyQuery(terminology.getAbbreviation(),
         terminology.getPublisher(), terminology.getVersion());
-    final SearchParameters params = new SearchParameters(query, 0, batchSize, null, null);
 
-    // delete terminology concepts in batches
-    int offset = 0;
-    while (true) {
-      params.setOffset(offset);
-      final ResultList<String> conceptIds = searchService.findIds(params, Concept.class);
-      if (conceptIds.getItems().isEmpty()) {
-        break;
-      }
-      searchService.removeBulk(conceptIds.getItems(), Concept.class);
-      // No need to increment, next call will find the first BATCH_SIZE
-      // offset += batchSize;
+    final List<Class<? extends HasId>> classesToDelete = List.of(Concept.class, Term.class,
+        ConceptRelationship.class, ConceptTreePosition.class, Metadata.class);
+    for (final Class<? extends HasId> clazz : classesToDelete) {
+      removeEntity(searchService, query, clazz);
+      LuceneDataAccess.clearReaderForClass(clazz);
     }
-
-    // delete terminology terms in batches
-    offset = 0;
-    while (true) {
-      params.setOffset(offset);
-      final ResultList<String> termIds = searchService.findIds(params, Term.class);
-      if (termIds.getItems().isEmpty()) {
-        break;
-      }
-      searchService.removeBulk(termIds.getItems(), Term.class);
-      // No need to increment, next call will find the first BATCH_SIZE
-      // offset += batchSize;
-    }
-
-    // delete concept relationships in batches
-    offset = 0;
-    while (true) {
-      params.setOffset(offset);
-      final ResultList<String> conceptRelIds =
-          searchService.findIds(params, ConceptRelationship.class);
-      if (conceptRelIds.getItems().isEmpty()) {
-        break;
-      }
-      searchService.removeBulk(conceptRelIds.getItems(), ConceptRelationship.class);
-      // No need to increment, next call will find the first BATCH_SIZE
-      // offset += batchSize;
-    }
-
-    // delete concept trees in batches
-    offset = 0;
-    while (true) {
-      params.setOffset(offset);
-      final ResultList<String> conceptTreePositionIds =
-          searchService.findIds(params, ConceptTreePosition.class);
-      if (conceptTreePositionIds.getItems().isEmpty()) {
-        break;
-      }
-      searchService.removeBulk(conceptTreePositionIds.getItems(), ConceptTreePosition.class);
-      // No need to increment, next call will find the first BATCH_SIZE
-      // offset += batchSize;
-    }
-
-    // delete terminology metadata in batches
-    offset = 0;
-    while (true) {
-      params.setOffset(offset);
-      final ResultList<String> metadataIds = searchService.findIds(params, Metadata.class);
-      if (metadataIds.getItems().isEmpty()) {
-        break;
-      }
-      searchService.removeBulk(metadataIds.getItems(), Metadata.class);
-      // No need to increment, next call will find the first BATCH_SIZE
-      // offset += batchSize;
-    }
-    // delete the terminology
-    searchService.remove(id, Terminology.class);
-
+    // Finally remove the terminology itself
+    searchService.remove(terminologyId, Terminology.class);
+    LuceneDataAccess.clearReaderForClass(Terminology.class);
   }
 
   /**
    * Removes the Mapset and related mappings.
    *
    * @param searchService the search service
-   * @param id the id
+   * @param mapsetId the mapset id
    * @throws Exception the exception
    */
-  public static void removeMapset(final EntityRepositoryService searchService, final String id)
-    throws Exception {
+  public static void removeMapset(final EntityRepositoryService searchService,
+    final String mapsetId) throws Exception {
 
-    // find the mapset
-    final Mapset mapset = searchService.get(id, Mapset.class);
+    logger.info("Removing mapset: {}", mapsetId);
+
+    final Mapset mapset = searchService.get(mapsetId, Mapset.class);
     if (mapset == null) {
-      throw new Exception("Unable to find mapset with id = " + id);
+      throw new Exception("Unable to find mapset with id = " + mapsetId);
     }
 
-    final int batchSize = 5000;
-    final String query = getTerminologyAbbrQuery(mapset.getAbbreviation(), mapset.getPublisher(),
-        mapset.getVersion());
-    final SearchParameters params = new SearchParameters(query, null, batchSize, null, null);
+    // setting loaded to false before removal
+    mapset.getAttributes().put("loaded", "false");
+    searchService.update(Mapset.class, mapset.getId(), mapset);
 
-    int offset = 0;
-    while (true) {
-      params.setOffset(offset);
-      final ResultList<String> mappingIds = searchService.findIds(params, Mapping.class);
-      if (mappingIds.getItems().isEmpty()) {
-        break;
-      }
-      searchService.removeBulk(mappingIds.getItems(), Mapping.class);
-
-      // NO need to change batch size, just delete first page
-      // offset += batchSize;
+    // Build a valid query against Mapping documents using the embedded mapset
+    // fields
+    final String query = StringUtility.composeQuery("AND",
+        "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
+        "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
+        "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion()));
+    final List<Class<? extends HasId>> classesToDelete = List.of(Mapping.class);
+    for (final Class<? extends HasId> clazz : classesToDelete) {
+      removeEntity(searchService, query, clazz);
     }
-    searchService.remove(id, Mapset.class);
+    // delete the mapset
+    searchService.remove(mapsetId, Mapset.class);
   }
 
   /**
    * Removes the subset and related subset members.
    *
    * @param searchService the search service
-   * @param id the id
+   * @param subsetId the subset id
    * @throws Exception the exception
    */
-  public static void removeSubset(final EntityRepositoryService searchService, final String id)
-    throws Exception {
+  public static void removeSubset(final EntityRepositoryService searchService,
+    final String subsetId) throws Exception {
 
-    logger.info("Removing subset: {}", id);
+    logger.info("Removing subset: {}", subsetId);
 
-    // find the subset/value set
-    final Subset subset = searchService.get(id, Subset.class);
+    final Subset subset = searchService.get(subsetId, Subset.class);
     if (subset == null) {
-      throw new Exception("Unable to find subset with id = " + id);
+      throw new Exception("Unable to find subset with id = " + subsetId);
     }
 
-    final int batchSize = 5000;
-    final String query = getTerminologyAbbrQuery(subset.getAbbreviation(), subset.getPublisher(),
-        subset.getVersion());
-    final SearchParameters params = new SearchParameters(query, null, batchSize, null, null);
+    subset.getAttributes().put("loaded", "false");
+    searchService.update(Subset.class, subset.getId(), subset);
 
-    // delete value set entries in batches
+    final String query =
+        getTerminologyQuery(subset.getAbbreviation(), subset.getPublisher(), subset.getVersion());
+    final List<Class<? extends HasId>> classesToDelete = List.of(SubsetMember.class);
+    for (final Class<? extends HasId> clazz : classesToDelete) {
+      removeEntity(searchService, query, clazz);
+    }
+    searchService.remove(subsetId, Subset.class);
+  }
+
+  /**
+   * Removes the class entries.
+   *
+   * @param searchService the search service
+   * @param query the query
+   * @param clazz the clazz
+   * @throws Exception the exception
+   */
+  private static void removeEntity(final EntityRepositoryService searchService, final String query,
+    final Class<? extends HasId> clazz) throws Exception {
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("Removing items from class: {}; query: {}", clazz, query);
+    }
+
+    // find the class
+    final int batchSize = 5000;
+    final SearchParameters params = new SearchParameters(query, 0, batchSize, null, null);
+
     int offset = 0;
     while (true) {
       params.setOffset(offset);
-      final ResultList<String> subsetMemberIds = searchService.findIds(params, SubsetMember.class);
-      if (subsetMemberIds.getItems().isEmpty()) {
+      final ResultList<String> ids = searchService.findIds(params, clazz);
+      if (ids.getItems().isEmpty()) {
         break;
       }
-      searchService.removeBulk(subsetMemberIds.getItems(), SubsetMember.class);
-
-      // NO need to change batch size, just delete first page
-      // offset += batchSize;
+      searchService.removeBulk(ids.getItems(), clazz);
+      offset += batchSize;
     }
-    searchService.remove(id, Subset.class);
   }
 
 }
