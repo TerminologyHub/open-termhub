@@ -96,7 +96,7 @@ With a "Project API Key" in hand, run the docker image using the code shown belo
 ```
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 # On Windows if running within wsl use export INDEX_DIR=/mnt/c/tmp/opentermhub/index
-export PROJECT_API_KEY="<your copied project api key>"
+export PROJECT_API_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJI...bfUQbjkpX8ivQlpg_30
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
 docker run -d --rm --name open-termhub \
