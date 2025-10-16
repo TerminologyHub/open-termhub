@@ -77,7 +77,7 @@ import com.wci.termhub.util.ConceptMapLoaderUtil;
 @TestMethodOrder(OrderAnnotation.class)
 public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServerTest {
 
-  /** The logger. */
+  /** The LOGGER. */
   private static final Logger LOGGER =
       LoggerFactory.getLogger(TerminologyServiceRestImplUnitTest.class);
 
@@ -100,6 +100,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
   /** The Constant DELETE. */
   private static final int DELETE = 20;
+
+  /** The Constant ERROR_FIELDS. */
+  private static final String[] ERROR_FIELDS = new String[] {
+      "status", "error", "message", "local", "timestamp"
+  };
 
   /**
    * Sets the up.
@@ -2498,5 +2503,247 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
     // Verify that the fake ConceptMap was loaded
     assertTrue(foundFakeMapset, "Fake ConceptMap (CPT-HCPCS) should be loaded");
+  }
+
+  /**
+   * Autocomplete without required query parameter should return 400.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testAutocompleteMissingQueryReturnsBadRequest() throws Exception {
+    final String url = "/autocomplete?terminology=SNOMEDCT";
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isBadRequest()).andReturn();
+  }
+
+  /**
+   * Tree positions for a non-existent concept id should return 404.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindTreePositionsNotFound() throws Exception {
+    final String fakeConceptId = "00000000-0000-0000-0000-00000000ffff";
+    final String url = "/concept/" + fakeConceptId + "/trees";
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
+  }
+
+  /**
+   * Tree children for a non-existent concept id should return 404.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindTreePositionChildrenNotFound() throws Exception {
+    final String fakeConceptId = "00000000-0000-0000-0000-00000000ffff";
+    final String url = "/concept/" + fakeConceptId + "/trees/children";
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isNotFound()).andReturn();
+  }
+
+  /**
+   * Mapset mappings for an unknown mapset id/abbreviation should return 417.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindMapsetMappingsUnknownMapsetReturnsExpectationFailed() throws Exception {
+    final String url = "/mapset/DOES_NOT_EXIST/mapping";
+    LOGGER.info("Testing url - {}", url);
+    mockMvc.perform(get(url)).andExpect(status().isExpectationFailed()).andReturn();
+  }
+
+  /**
+   * Concept bulk with empty body should return a default "No match" entry.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testConceptBulkEmptyBodyReturnsNoMatch() throws Exception {
+    final String url = "/concept/bulk?terminology=LNC&limit=5";
+    LOGGER.info("Testing url - {}", url);
+
+    final MvcResult result =
+        mockMvc.perform(post(url).contentType(MediaType.TEXT_PLAIN).content(""))
+            .andExpect(status().isOk()).andReturn();
+
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+
+    final List<ResultListConcept> lists =
+        objectMapper.readValue(content, new TypeReference<List<ResultListConcept>>() {
+          // n/a
+        });
+
+    assertThat(lists).isNotNull();
+    assertThat(lists.size()).isGreaterThanOrEqualTo(1);
+    final ResultListConcept first = lists.get(0);
+    assertThat(first.getItems()).isNotNull();
+    assertThat(first.getItems().size()).isGreaterThanOrEqualTo(1);
+
+    final Concept c = first.getItems().get(0);
+    assertThat(c).isNotNull();
+    assertThat(c.getName()).isEqualTo("No match");
+  }
+
+  /**
+   * Unknown terminology/code should return 417 with standard error JSON keys.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testErrorBodyForUnknownTerminologyAndCode() throws Exception {
+    final String url = "/concept/DOES_NOT_EXIST/DOES_NOT_EXIST";
+    LOGGER.info("Testing url - {}", url);
+
+    final MvcResult result =
+        mockMvc.perform(get(url)).andExpect(status().isExpectationFailed()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+
+    final Map<String, Object> body =
+        objectMapper.readValue(content, new TypeReference<Map<String, Object>>() {
+          // n/a
+        });
+
+    assertThat(body).isNotNull();
+    assertThat(body).containsKeys("status", "error", "message");
+    // local and timestamp are produced by our RestException/Error model
+    assertThat(body).containsKeys("local", "timestamp");
+  }
+
+  /**
+   * Unknown mapset mapping should return 417 with standard error JSON keys.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testErrorBodyForUnknownMapsetMapping() throws Exception {
+    final String url = "/mapset/DOES_NOT_EXIST/mapping";
+    LOGGER.info("Testing url - {}", url);
+
+    final MvcResult result =
+        mockMvc.perform(get(url)).andExpect(status().isExpectationFailed()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+
+    final Map<String, Object> body =
+        objectMapper.readValue(content, new TypeReference<Map<String, Object>>() {
+          // n/a
+        });
+
+    assertThat(body).isNotNull();
+    assertThat(body).containsKeys(ERROR_FIELDS);
+  }
+
+  /**
+   * Unknown subset members should return 417 with standard error JSON keys.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testErrorBodyForUnknownSubsetMembers() throws Exception {
+    final String url = "/subset/DOES_NOT_EXIST/member";
+    LOGGER.info("Testing url - {}", url);
+
+    final MvcResult result =
+        mockMvc.perform(get(url)).andExpect(status().isExpectationFailed()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+
+    final Map<String, Object> body =
+        objectMapper.readValue(content, new TypeReference<Map<String, Object>>() {
+          // n/a
+        });
+
+    assertThat(body).isNotNull();
+    assertThat(body).containsKeys(ERROR_FIELDS);
+  }
+
+  /**
+   * Missing codes parameter should return 400 with standard error JSON keys.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testErrorBodyForMissingRequiredParameter() throws Exception {
+    final String url = "/concept/LNC"; // no codes param
+    LOGGER.info("Testing url - {}", url);
+
+    final MvcResult result =
+        mockMvc.perform(get(url)).andExpect(status().isBadRequest()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+
+    final Map<String, Object> body =
+        objectMapper.readValue(content, new TypeReference<Map<String, Object>>() {
+          // n/a
+        });
+
+    assertThat(body).isNotNull();
+    LOGGER.info(" body = {}", body);
+    assertThat(body).containsKeys("timestamp", "message", "status", "error");
+  }
+
+  /**
+   * Missing codes parameter should return 417 with standard error JSON keys.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testErrorBodyForEmptyCodesParameter() throws Exception {
+    final String url = "/concept/LNC?codes=";
+    LOGGER.info("Testing url - {}", url);
+
+    final MvcResult result =
+        mockMvc.perform(get(url)).andExpect(status().isExpectationFailed()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+
+    final Map<String, Object> body =
+        objectMapper.readValue(content, new TypeReference<Map<String, Object>>() {
+          // n/a
+        });
+
+    assertThat(body).isNotNull();
+    assertThat(body).containsKeys(ERROR_FIELDS);
+  }
+
+  /**
+   * Expression with multiple terminologies should return 417 and standard error
+   * JSON keys.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testErrorBodyForExpressionWithMultipleTerminologies() throws Exception {
+    final String url = "/concept?terminology=SNOMEDCT,LNC&expression=%3C%3C128927009";
+    LOGGER.info("Testing url - {}", url);
+
+    final MvcResult result =
+        mockMvc.perform(get(url)).andExpect(status().isExpectationFailed()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    LOGGER.info(" content = {}", content);
+
+    final Map<String, Object> body =
+        objectMapper.readValue(content, new TypeReference<Map<String, Object>>() {
+          // n/a
+        });
+
+    assertThat(body).isNotNull();
+    assertThat(body).containsKeys(ERROR_FIELDS);
   }
 }
