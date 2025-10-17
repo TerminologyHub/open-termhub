@@ -2,7 +2,7 @@
 
 Instructions on using data from a TermHub project to Open Termhub up and running within 5 minutes.
 
-[Tutorial Training Video (TBD)](TBD)
+[Tutorial Training Video](https://youtu.be/EhEzIK2p1jE)
 
 ## Prerequisites/Setup
 * Docker installed
