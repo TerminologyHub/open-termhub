@@ -13,9 +13,9 @@ import java.io.File;
 
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeSystem;
+import org.hl7.fhir.r4.model.ConceptMap;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
-import org.hl7.fhir.r4.model.ConceptMap;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,17 +25,16 @@ import org.springframework.stereotype.Component;
 import com.wci.termhub.EnablePostLoadComputations;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
-import com.wci.termhub.util.ThreadLocalMapper;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
+import com.wci.termhub.util.ThreadLocalMapper;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.annotation.Transaction;
 import ca.uhn.fhir.rest.annotation.TransactionParam;
 import jakarta.servlet.http.HttpServletResponse;
-
-import com.wci.termhub.service.EntityRepositoryService;
 
 /**
  * System-level transaction provider for R4.
@@ -73,8 +72,7 @@ public class SystemTransactionProviderR4 {
     if (bundle == null || (bundle.getType() != Bundle.BundleType.TRANSACTION
         && bundle.getType() != Bundle.BundleType.BATCH)) {
       final OperationOutcome oo = new OperationOutcome();
-      oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR)
-          .setCode(IssueType.INVALID)
+      oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR).setCode(IssueType.INVALID)
           .setDiagnostics("Bundle.type must be 'transaction' or 'batch'");
       final Bundle.BundleEntryComponent entry = new Bundle.BundleEntryComponent();
       entry.setResource(oo);
@@ -106,13 +104,15 @@ public class SystemTransactionProviderR4 {
               HttpServletResponse.SC_BAD_REQUEST);
         }
 
-        final String json = FHIR_CONTEXT_R4.newJsonParser().encodeResourceToString(in.getResource());
+        final String json =
+            FHIR_CONTEXT_R4.newJsonParser().encodeResourceToString(in.getResource());
         final File tmp = File.createTempFile("txn", ".json");
         ThreadLocalMapper.get().writeValue(tmp, ThreadLocalMapper.get().readTree(json));
 
         if ("CodeSystem".equals(resourceType)) {
           final CodeSystem cs = CodeSystemLoaderUtil.loadCodeSystem(searchService, tmp,
-              enablePostLoadComputations.isEnabled(), CodeSystem.class, new DefaultProgressListener());
+              enablePostLoadComputations.isEnabled(), CodeSystem.class,
+              new DefaultProgressListener());
           out.setResource(cs);
           out.getResponse().setStatus("200");
         } else if ("ValueSet".equals(resourceType)) {
@@ -120,18 +120,19 @@ public class SystemTransactionProviderR4 {
               new DefaultProgressListener());
           out.setResource(vs);
           out.getResponse().setStatus("200");
-        } else {
+        } else if ("ConceptMap".equals(resourceType)) {
           final ConceptMap cm = ConceptMapLoaderUtil.loadConceptMap(searchService, tmp,
               ConceptMap.class, new DefaultProgressListener());
           out.setResource(cm);
           out.getResponse().setStatus("200");
+        } else {
+          logger.info("    SKIP unhandled resource type = " + resourceType);
         }
-
       } catch (final Exception e) {
         logger.error("Transaction entry failed: {} {}", verb, url, e);
         final OperationOutcome oo = new OperationOutcome();
-        oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR)
-            .setCode(IssueType.EXCEPTION).setDiagnostics(e.getMessage());
+        oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR).setCode(IssueType.EXCEPTION)
+            .setDiagnostics(e.getMessage());
         out.setResource(oo);
         out.getResponse().setStatus(String.valueOf(HttpServletResponse.SC_BAD_REQUEST));
       }
@@ -141,5 +142,3 @@ public class SystemTransactionProviderR4 {
     return response;
   }
 }
-
-
