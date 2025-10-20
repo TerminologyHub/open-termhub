@@ -10,6 +10,7 @@
 package com.wci.termhub.rest;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -254,8 +255,8 @@ public class BulkLoadRestImpl {
 
       // Write to a file so we can re-open streams against it
       final File file = File.createTempFile("tmp", ".json");
-      try (var in = resourceFile.getInputStream(); var out = FileUtils.openOutputStream(file)) {
-        in.transferTo(out);
+      try (final InputStream is = resourceFile.getInputStream()) {
+        FileUtils.copyInputStreamToFile(is, file);
       }
 
       // If not running in the background -> load and return the resource
@@ -348,7 +349,9 @@ public class BulkLoadRestImpl {
 
       // Write to a file so we can re-open streams against it
       final File file = File.createTempFile("tmp", ".json");
-      FileUtils.writeByteArrayToFile(file, resourceFile.getBytes());
+      try (final InputStream is = resourceFile.getInputStream()) {
+        FileUtils.copyInputStreamToFile(is, file);
+      }
 
       // If not running in the background -> load and return the resource
       if (!background) {
@@ -463,7 +466,9 @@ public class BulkLoadRestImpl {
 
       // Write to a file so we can re-open streams against it
       final File file = File.createTempFile("tmp", ".json");
-      FileUtils.writeByteArrayToFile(file, resourceFile.getBytes());
+      try (final InputStream is = resourceFile.getInputStream()) {
+        FileUtils.copyInputStreamToFile(is, file);
+      }
 
       // If not running in the background -> load and return the resource
       if (!background) {
@@ -580,7 +585,10 @@ public class BulkLoadRestImpl {
 
       // Write to a file so we can re-open streams against it
       final File file = File.createTempFile("tmp", ".json");
-      FileUtils.writeByteArrayToFile(file, resourceFile.getBytes());
+      try (final InputStream is = resourceFile.getInputStream()) {
+        FileUtils.copyInputStreamToFile(is, file);
+      }
+
       final List<String> results = new ArrayList<>();
 
       if (!background) {

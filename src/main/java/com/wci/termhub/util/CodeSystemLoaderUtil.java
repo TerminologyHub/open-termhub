@@ -95,38 +95,37 @@ public final class CodeSystemLoaderUtil {
    * @param <T> the generic type
    * @param service the service
    * @param file the file
-   * @param computeTreePositions whether to compute tree positions
+   * @param enablePostLoadComputations whether to compute tree positions
    * @param type the type
    * @param listener the listener
    * @return the string
    * @throws Exception the exception
    */
   public static <T> T loadCodeSystem(final EntityRepositoryService service, final File file,
-    final boolean computeTreePositions, final Class<T> type, final ProgressListener listener)
+    final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener)
     throws Exception {
 
-    return loadCodeSystem(service, file, computeTreePositions, type, listener, null);
+    return loadCodeSystem(service, file, enablePostLoadComputations, type, listener, null);
   }
 
   /**
    * Load concepts from CodeSystem format JSON.
    *
-   * @param <T>                  the generic type
-   * @param service              the service
-   * @param file                 the file
-   * @param computeTreePositions whether to compute tree positions
-   * @param type                 the type
-   * @param listener             the listener
-   * @param isSyndicated         the is syndicated
+   * @param <T> the generic type
+   * @param service the service
+   * @param file the file
+   * @param enablePostLoadComputations whether to compute tree positions
+   * @param type the type
+   * @param listener the listener
+   * @param isSyndicated the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   public static <T> T loadCodeSystem(final EntityRepositoryService service, final File file,
-      final boolean computeTreePositions, final Class<T> type, final ProgressListener listener,
-      final Boolean isSyndicated) throws Exception {
+    final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener,
+    final Boolean isSyndicated) throws Exception {
 
-    SystemReportUtility.logMemory();
-    return indexCodeSystem(service, file, computeTreePositions, type, listener, isSyndicated);
+    return indexCodeSystem(service, file, enablePostLoadComputations, type, listener, isSyndicated);
   }
 
   /**
@@ -135,17 +134,19 @@ public final class CodeSystemLoaderUtil {
    * @param <T> the generic type
    * @param service the service
    * @param file the file
-   * @param computeTreePositions whether to compute tree positions
+   * @param enablePostLoadComputations whether to compute tree positions
    * @param type the type
    * @param listener the listener
-   * @param isSyndicated         the is syndicated
+   * @param isSyndicated the is syndicated
    * @return the string
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexCodeSystem(final EntityRepositoryService service, final File file,
-      final boolean computeTreePositions, final Class<T> type, final ProgressListener listener,
-      final Boolean isSyndicated) throws Exception {
+    final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener,
+    final Boolean isSyndicated) throws Exception {
+
+    SystemReportUtility.logMemory();
 
     final long startTime = System.currentTimeMillis();
     final List<Concept> conceptBatch = new ArrayList<>(DEFAULT_BATCH_SIZE);
@@ -159,7 +160,7 @@ public final class CodeSystemLoaderUtil {
 
       // Set listener to 0%
       listener.updateProgress(new ProgressEvent(0));
-      final int progressDenominator = computeTreePositions ? 50 : 100;
+      final int progressDenominator = enablePostLoadComputations ? 50 : 100;
       final float progressScale = 100.0f * progressDenominator / 100.0f;
 
       LOGGER.info("Indexing CodeSystem {} = {}", jsonContent.path("title"),
@@ -189,7 +190,7 @@ public final class CodeSystemLoaderUtil {
       }
 
       // Create the terminology
-      terminology = createTerminology(service, jsonContent, computeTreePositions);
+      terminology = createTerminology(service, jsonContent, enablePostLoadComputations);
 
       // Extract metadata from root
       final List<Metadata> metadataList = createMetadata(terminology, jsonContent);
@@ -330,7 +331,7 @@ public final class CodeSystemLoaderUtil {
       termBatch.clear();
 
       // compute tree positions if required
-      if (computeTreePositions) {
+      if (enablePostLoadComputations) {
 
         // Set listener to 51%
         listener.updateProgress(new ProgressEvent(51));
@@ -413,12 +414,12 @@ public final class CodeSystemLoaderUtil {
    *
    * @param service the service
    * @param root the root
-   * @param computeTreePositions the compute tree positions
+   * @param enablePostLoadComputations the compute tree positions
    * @return the terminology
    * @throws Exception the exception
    */
   private static Terminology createTerminology(final EntityRepositoryService service,
-    final JsonNode root, final boolean computeTreePositions) throws Exception {
+    final JsonNode root, final boolean enablePostLoadComputations) throws Exception {
 
     // Validate that this is a CodeSystem resource
     if (!root.has("resourceType") || !"CodeSystem".equals(root.get("resourceType").asText())) {
@@ -471,7 +472,7 @@ public final class CodeSystemLoaderUtil {
     }
     attributes.put("fhirVersion", root.path("version").asText());
     attributes.put(Terminology.Attributes.treePositions.property(),
-        Boolean.toString(computeTreePositions));
+        Boolean.toString(enablePostLoadComputations));
     terminology.setAttributes(attributes);
 
     if (LOGGER.isDebugEnabled()) {
@@ -827,8 +828,8 @@ public final class CodeSystemLoaderUtil {
       }
 
       if ("relationship".equals(propertyType)) {
-        final ConceptRelationship relationship = createRelationship(propertyNode, concept, terminology,
-            terminologyCache);
+        final ConceptRelationship relationship =
+            createRelationship(propertyNode, concept, terminology, terminologyCache);
 
         // ECL clauses removed per requirements
 
@@ -886,7 +887,7 @@ public final class CodeSystemLoaderUtil {
    * @return the list
    */
   private static List<Definition> createDefinitions(final Terminology terminology,
-      final Concept concept, final JsonNode conceptNode) {
+    final Concept concept, final JsonNode conceptNode) {
 
     final List<Definition> definitions = new ArrayList<>();
     final JsonNode definitionNode = conceptNode.path("definition");

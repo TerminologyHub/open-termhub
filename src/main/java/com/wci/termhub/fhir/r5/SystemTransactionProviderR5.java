@@ -72,8 +72,7 @@ public class SystemTransactionProviderR5 {
     if (bundle == null || (bundle.getType() != Bundle.BundleType.TRANSACTION
         && bundle.getType() != Bundle.BundleType.BATCH)) {
       final OperationOutcome oo = new OperationOutcome();
-      oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR)
-          .setCode(IssueType.INVALID)
+      oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR).setCode(IssueType.INVALID)
           .setDiagnostics("Bundle.type must be 'transaction' or 'batch'");
       final Bundle.BundleEntryComponent entry = new Bundle.BundleEntryComponent();
       entry.setResource(oo);
@@ -105,13 +104,15 @@ public class SystemTransactionProviderR5 {
               HttpServletResponse.SC_BAD_REQUEST);
         }
 
-        final String json = FHIR_CONTEXT_R5.newJsonParser().encodeResourceToString(in.getResource());
+        final String json =
+            FHIR_CONTEXT_R5.newJsonParser().encodeResourceToString(in.getResource());
         final File tmp = File.createTempFile("txn", ".json");
         ThreadLocalMapper.get().writeValue(tmp, ThreadLocalMapper.get().readTree(json));
 
         if ("CodeSystem".equals(resourceType)) {
           final CodeSystem cs = CodeSystemLoaderUtil.loadCodeSystem(searchService, tmp,
-              enablePostLoadComputations.isEnabled(), CodeSystem.class, new DefaultProgressListener());
+              enablePostLoadComputations.isEnabled(), CodeSystem.class,
+              new DefaultProgressListener());
           out.setResource(cs);
           out.getResponse().setStatus("200");
         } else if ("ValueSet".equals(resourceType)) {
@@ -119,18 +120,20 @@ public class SystemTransactionProviderR5 {
               new DefaultProgressListener());
           out.setResource(vs);
           out.getResponse().setStatus("200");
-        } else {
+        } else if ("ConceptMap".equals(resourceType)) {
           final ConceptMap cm = ConceptMapLoaderUtil.loadConceptMap(searchService, tmp,
               ConceptMap.class, new DefaultProgressListener());
           out.setResource(cm);
           out.getResponse().setStatus("200");
+        } else {
+          logger.info("    SKIP unhandled resource type = " + resourceType);
         }
 
       } catch (final Exception e) {
         logger.error("Transaction entry failed: {} {}", verb, url, e);
         final OperationOutcome oo = new OperationOutcome();
-        oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR)
-            .setCode(IssueType.EXCEPTION).setDiagnostics(e.getMessage());
+        oo.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR).setCode(IssueType.EXCEPTION)
+            .setDiagnostics(e.getMessage());
         out.setResource(oo);
         out.getResponse().setStatus(String.valueOf(HttpServletResponse.SC_BAD_REQUEST));
       }
@@ -140,5 +143,3 @@ public class SystemTransactionProviderR5 {
     return response;
   }
 }
-
-
