@@ -254,7 +254,8 @@ public final class CodeSystemLoaderUtil {
               // Use ObjectMapper to read the sub-object as a JsonNode
               final JsonNode conceptNode = parser.readValueAsTree();
 
-              final Concept concept = createConcept(conceptNode, terminology, terminologyCache);
+              final Concept concept = createConcept(conceptNode, terminology, terminologyCache,
+                enablePostLoadComputations);
               computeParentsChildren(concept, terminologyCache);
               final JsonNode relationships = conceptNode.path("property");
               final List<ConceptRelationship> conceptRelationships =
@@ -271,14 +272,16 @@ public final class CodeSystemLoaderUtil {
                 LOGGER.info("  relationships count: {}", relationshipCount);
               }
 
-              // Process terms
-              for (final Term term : concept.getTerms()) {
-                termBatch.add(term);
-                termCount++;
-                if (termBatch.size() == DEFAULT_BATCH_SIZE) {
-                  service.addBulk(Term.class, new ArrayList<>(termBatch));
-                  termBatch.clear();
-                  LOGGER.info("  terms count: {}", termCount);
+              // Process terms (only when enabled)
+              if (enablePostLoadComputations) {
+                for (final Term term : concept.getTerms()) {
+                  termBatch.add(term);
+                  termCount++;
+                  if (termBatch.size() == DEFAULT_BATCH_SIZE) {
+                    service.addBulk(Term.class, new ArrayList<>(termBatch));
+                    termBatch.clear();
+                    LOGGER.info("  terms count: {}", termCount);
+                  }
                 }
               }
 
@@ -311,7 +314,7 @@ public final class CodeSystemLoaderUtil {
         service.addBulk(ConceptRelationship.class, new ArrayList<>(relationshipBatch));
         LOGGER.info("  relationships count: {}", relationshipCount);
       }
-      if (!termBatch.isEmpty()) {
+      if (enablePostLoadComputations && !termBatch.isEmpty()) {
         service.addBulk(Term.class, new ArrayList<>(termBatch));
         LOGGER.info("  terms count: {}", termCount);
       }
@@ -556,11 +559,12 @@ public final class CodeSystemLoaderUtil {
    * @param conceptNode the concept node
    * @param terminology the terminology
    * @param cache the cache
+   * @param enablePostLoadComputations the enable post load computations
    * @return the concept
    * @throws Exception the exception
    */
   private static Concept createConcept(final JsonNode conceptNode, final Terminology terminology,
-    final TerminologyCache cache) throws Exception {
+    final TerminologyCache cache, final boolean enablePostLoadComputations) throws Exception {
 
     final Concept concept = new Concept();
 
