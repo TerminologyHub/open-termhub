@@ -26,12 +26,14 @@ import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
+import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.SubsetRef;
+import com.wci.termhub.model.Terminology;
 import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 
@@ -263,10 +265,18 @@ public final class ValueSetLoaderUtil {
           }
 
           final TerminologyRef ref = new TerminologyRef();
-          ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
           ref.setUri(includes.getSystem());
           ref.setPublisher(subset.getPublisher());
           ref.setVersion(subset.getVersion());
+
+          // Look up terminology abbreviation from database
+          String termAbbreviation = lookupTerminologyFromUri(service, includes.getSystem(),
+              subset.getPublisher(), subset.getVersion());
+          if (termAbbreviation == null) {
+            // Fallback to title-based extraction
+            termAbbreviation = valueSet.getTitle().split("-")[0];
+          }
+          ref.setAbbreviation(termAbbreviation);
 
           for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
@@ -318,10 +328,19 @@ public final class ValueSetLoaderUtil {
 
           if (!map.containsKey(c.getSystem())) {
             final TerminologyRef ref = new TerminologyRef();
-            ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
             ref.setUri(c.getSystem());
             ref.setPublisher(subset.getPublisher());
             ref.setVersion(subset.getVersion());
+
+            // Look up terminology abbreviation from database
+            String termAbbreviation = lookupTerminologyFromUri(service, c.getSystem(),
+                subset.getPublisher(), subset.getVersion());
+            if (termAbbreviation == null) {
+              // Fallback to title-based extraction
+              termAbbreviation = valueSet.getTitle().split("-")[0];
+            }
+            ref.setAbbreviation(termAbbreviation);
+
             map.put(c.getSystem(), ref);
           }
           final TerminologyRef ref = map.get(c.getSystem());
@@ -502,10 +521,18 @@ public final class ValueSetLoaderUtil {
           }
 
           final TerminologyRef ref = new TerminologyRef();
-          ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
           ref.setUri(includes.getSystem());
           ref.setPublisher(subset.getPublisher());
           ref.setVersion(subset.getVersion());
+
+          // Look up terminology abbreviation from database
+          String termAbbreviation = lookupTerminologyFromUri(service, includes.getSystem(),
+              subset.getPublisher(), subset.getVersion());
+          if (termAbbreviation == null) {
+            // Fallback to title-based extraction
+            termAbbreviation = valueSet.getTitle().split("-")[0];
+          }
+          ref.setAbbreviation(termAbbreviation);
 
           for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : includes
               .getConcept()) {
@@ -554,10 +581,19 @@ public final class ValueSetLoaderUtil {
 
           if (!map.containsKey(c.getSystem())) {
             final TerminologyRef ref = new TerminologyRef();
-            ref.setAbbreviation(valueSet.getTitle().split("-")[0]);
             ref.setUri(c.getSystem());
             ref.setPublisher(subset.getPublisher());
             ref.setVersion(subset.getVersion());
+
+            // Look up terminology abbreviation from database
+            String termAbbreviation = lookupTerminologyFromUri(service, c.getSystem(),
+                subset.getPublisher(), subset.getVersion());
+            if (termAbbreviation == null) {
+              // Fallback to title-based extraction
+              termAbbreviation = valueSet.getTitle().split("-")[0];
+            }
+            ref.setAbbreviation(termAbbreviation);
+
             map.put(c.getSystem(), ref);
           }
           final TerminologyRef ref = map.get(c.getSystem());
@@ -632,5 +668,39 @@ public final class ValueSetLoaderUtil {
     final ResultList<Subset> subset = service.find(searchParams, Subset.class);
 
     return (subset.getItems().isEmpty()) ? null : subset.getItems().get(0);
+  }
+
+  /**
+   * Looks up terminology abbreviation from system URI using database.
+   *
+   * @param searchService the search service
+   * @param systemUri the system URI
+   * @param publisher the publisher
+   * @param version the version
+   * @return the terminology abbreviation or null if not found
+   */
+  private static String lookupTerminologyFromUri(final EntityRepositoryService searchService,
+    final String systemUri, final String publisher, final String version) {
+    try {
+      // First try with URI, publisher, and version for exact match
+      final String query = StringUtility.composeQuery("AND",
+          StringUtility.escapeKeywordField("uri", systemUri),
+          StringUtility.escapeKeywordField("publisher", publisher),
+          StringUtility.escapeKeywordField("version", version));
+
+      final SearchParameters params = new SearchParameters(query, null, 10, null, null);
+      final ResultList<Terminology> results = searchService.find(params, Terminology.class);
+
+      if (results.getTotal() == 1) {
+        return results.getItems().get(0).getAbbreviation();
+      }
+
+      // If exact match fails, try just URI (might return multiple)
+      return FhirUtility.lookupTerminology(searchService, systemUri);
+
+    } catch (final Exception e) {
+      LOGGER.warn("Failed to lookup terminology for URI {}: {}", systemUri, e.getMessage());
+      return null;
+    }
   }
 }
