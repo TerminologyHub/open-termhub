@@ -194,7 +194,7 @@ class BulkLoaderServiceImplTest extends AbstractServerTest {
         bulkLoaderService.startAsyncCodeSystemLoad(
                 processId, tempTestFile1, mockListener, processResultMap, processProgressMap, processExceptionMap);
         // Wait a brief moment to ensure the async load has started
-        Thread.sleep(500);
+        Thread.sleep(100);
         // 2. Act
         Exception syncLoadException = null;
         try {

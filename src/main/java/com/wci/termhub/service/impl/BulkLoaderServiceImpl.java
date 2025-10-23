@@ -41,13 +41,14 @@ public class BulkLoaderServiceImpl implements BulkLoaderService {
     @Override
     @Write
     public CodeSystem doCodeSystemLoad(File file) throws Exception {
+        logger.info("Synchronous Load code system");
         // Use existing loader utility
         final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
                 enablePostLoadComputations.isEnabled(), CodeSystem.class,
                 new DefaultProgressListener());
 
         FileUtils.delete(file);
-
+        logger.info("Synchronous Load complete");
         return codeSystem;
     }
 
@@ -66,7 +67,7 @@ public class BulkLoaderServiceImpl implements BulkLoaderService {
             processResultMap.put(processId, new ArrayList<>());
             processResultMap.get(processId)
                     .add("CodeSystem/" + codeSystem.getId());
-
+            logger.info("Async Load complete");
         } catch (final Exception e) {
             processProgressMap.put(processId, -1L);
             processExceptionMap.put(processId, e);
