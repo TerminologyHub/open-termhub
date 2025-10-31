@@ -1,0 +1,110 @@
+{
+  "resourceType": "ValueSet",
+  "id": "4c2a7181-43e0-40ad-bf41-f351c51547xx",
+  "url": "http://snomed.info/sct?fhir_vs=900000000000999999",
+  "identifier": [ {
+    "system": "https://terminologyhub.com/model/subset/code",
+    "value": "900000000000999999"
+  } ],
+  "version": "20240331",
+  "name": "SNOMEDCT and HL7 Role Code concepts",
+  "title": "SNOMEDCT_HL7_COMBINED_TEST",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-03-01T00:00:00+00:00",
+  "publisher": "SANDBOX",
+  "description": "SNOMED CT core",
+  "compose": {
+    "include": [ {
+      "system": "http://snomed.info/sct",
+      "concept": [ {
+        "code": "105724001",
+        "display": "Disease related state"
+      }, {
+        "code": "105789008",
+        "display": "Cannula, tube AND/OR catheter"
+      }, {
+        "code": "106063007",
+        "display": "Cardiovascular finding"
+      }, {
+        "code": "107907001",
+        "display": "Operative procedure on digestive system"
+      }, {
+        "code": "107957009",
+        "display": "Operative procedure on digestive organ"
+      }, {
+        "code": "108273007",
+        "display": "Radiographic imaging procedure by site"
+      }]
+    },
+    {
+      "system": "http://hl7.org/fhir/v3/RoleCode",
+      "concept": [
+          {
+              "code": "AUNT",
+              "display": "aunt"
+          },
+          {
+              "code": "CHILD",
+              "display": "child"
+          },
+          {
+              "code": "CHLDADOPT",
+              "display": "adopted child"
+          },
+          {
+              "code": "CHLDFOST",
+              "display": "foster child"
+          },
+          {
+              "code": "CHLDINLAW",
+              "display": "child in-law"
+          },
+          {
+              "code": "COUSN",
+              "display": "cousin"
+          },
+          {
+              "code": "DAU",
+              "display": "natural daughter"
+          },
+          {
+              "code": "DAUADOPT",
+              "display": "adopted daughter"
+          },
+          {
+              "code": "DAUC",
+              "display": "daughter"
+          },
+          {
+              "code": "DAUFOST",
+              "display": "foster daughter"
+          },
+          {
+              "code": "DAUINLAW",
+              "display": "daughter in-law"
+          },
+          {
+              "code": "DOMPART",
+              "display": "domestic partner"
+          },
+          {
+              "code": "FAMMEMB",
+              "display": "family member"
+          },
+          {
+              "code": "FRND",
+              "display": "unrelated friend"
+          },
+          {
+              "code": "FTH",
+              "display": "father"
+          },
+          {
+              "code": "FTHINLAW",
+              "display": "father-in-law"
+          }
+      ]
+  } ]
+  }
+}

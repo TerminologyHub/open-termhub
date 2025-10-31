@@ -65,7 +65,8 @@ public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
   /** List of FHIR Code System files to load. */
   protected static final List<String> VALUE_SET_FILES =
       List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json",
-          "ValueSet-snomedct_us-723264001-sandbox-20240301-r5.json");
+          "ValueSet-snomedct_us-723264001-sandbox-20240301-r5.json",
+          "ValueSet-combined-test-20240301-r5.json");
 
   /** The setup once. */
   private static boolean setupOnce = false;

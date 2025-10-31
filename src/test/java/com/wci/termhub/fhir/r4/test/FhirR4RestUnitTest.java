@@ -1312,6 +1312,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(DELETE)
   public void testDeleteValueSet() throws Exception {
     LOGGER.info("Testing delete ValueSet endpoint");
+    final String valueSetName = "Lateralizable body structure reference set";
 
     // Get Id of loaded terminology
     String testId = "";
@@ -1322,7 +1323,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     ResultList<Subset> subsets = searchService.find(params, Subset.class);
     for (final Subset s : subsets.getItems()) {
       LOGGER.info("Subset: {} - {}", s.getName(), s.getVersion());
-      if ("Lateralizable body structure reference set".equals(s.getName())) {
+      if (valueSetName.equals(s.getName())) {
         testId = s.getId();
       }
     }
@@ -1340,12 +1341,15 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     final ResponseEntity<String> response2 =
         restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
 
-    assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
     subsets = searchService.find(params, Subset.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
+
     // Verify the specific subset/value set was deleted
     final String finalTestId = testId;
     assertTrue(subsets.getItems().stream().noneMatch(s -> s.getId().equals(finalTestId)),
         "Deleted subset/value set should not be found");
+
   }
 
   /**
