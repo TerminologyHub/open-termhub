@@ -11,6 +11,7 @@ package com.wci.termhub.fhir.r4;
 
 import java.io.File;
 
+import com.wci.termhub.lucene.eventing.Write;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.ConceptMap;
@@ -64,6 +65,7 @@ public class SystemTransactionProviderR4 {
    * @throws Exception the exception
    */
   @Transaction
+  @Write
   public Bundle transaction(@TransactionParam final Bundle bundle) throws Exception {
 
     final Bundle response = new Bundle();

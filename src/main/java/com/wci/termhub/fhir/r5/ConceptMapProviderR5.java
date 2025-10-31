@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.wci.termhub.lucene.eventing.Write;
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeType;
@@ -591,6 +592,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
    * @throws Exception the exception
    */
   @Delete
+  @Write
   public void deleteConceptMap(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
@@ -774,6 +776,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
    * @throws Exception the exception
    */
   @Create
+  @Write
   public MethodOutcome createConceptMap(@ResourceParam final byte[] bytes) throws Exception {
     try {
 

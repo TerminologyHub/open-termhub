@@ -15,6 +15,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.hl7.fhir.r4.model.OperationOutcome;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
@@ -28,7 +30,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Aspect
 @Component
 public class WriteAspect {
-
+  private static Logger logger = LoggerFactory.getLogger(WriteAspect.class);
   /** The write in progress. */
   private final AtomicBoolean writeInProgress = new AtomicBoolean(false);
 
@@ -39,8 +41,11 @@ public class WriteAspect {
    * @return the object
    * @throws Throwable the throwable
    */
-  @Around("@annotation(ca.uhn.fhir.rest.annotation.Create) || @annotation(ca.uhn.fhir.rest.annotation.Delete)")
+  @Around("@annotation(com.wci.termhub.lucene.eventing.Write)")
   public Object aroundWrite(final ProceedingJoinPoint pjp) throws Throwable {
+    if(logger.isTraceEnabled()){
+      logger.trace("Write operation started");
+    }
     if (!writeInProgress.compareAndSet(false, true)) {
       throw FhirUtilityR4.exception(
           "A write operation is already in progress, please wait until it completes",
@@ -49,6 +54,9 @@ public class WriteAspect {
     try {
       final Object result = pjp.proceed();
       LuceneDataAccess.clearReaders();
+      if(logger.isTraceEnabled()){
+        logger.trace("Write operation completed");
+      }
       return result;
     } finally {
       writeInProgress.set(false);
