@@ -100,6 +100,12 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   /** The fhir VS path. */
   private static final String FHIR_VALUESET = "/fhir/r5/ValueSet";
 
+  /** The Constant FIND. */
+  private static final int FIND = 10;
+
+  /** The Constant DELETE. */
+  private static final int DELETE = 20;
+
   /** The parser. */
   private static IParser parser;
 
@@ -137,7 +143,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testMetadata() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + FHIR_METADATA;
@@ -163,7 +169,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemSearch() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM;
@@ -235,7 +241,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * Test code system search by url.
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemSearchByUrl() {
 
     // Arrange
@@ -270,7 +276,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemLookupWithDefinition() throws Exception {
     // Arrange
     final String system =
@@ -340,7 +346,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemById() throws Exception {
     // Arrange
     final String csId = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
@@ -379,7 +385,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemSearchOperation() throws Exception {
     // Arrange
     final String searchParams = "/_search?title=SNOMEDCT&_count=50";
@@ -412,7 +418,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemValidateCode() throws Exception {
     // Arrange
     final String code = "385487005";
@@ -469,7 +475,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemValidateCodeById() throws Exception {
     // Arrange
     final String csId = CodeSystemLoaderUtil.mapOriginalId("177f2263-fe04-4f1f-b0e6-9b351ab8baa9");
@@ -498,7 +504,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemSubsumes() throws Exception {
     // Arrange
     final String codeA = "73211009";
@@ -530,7 +536,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemSubsumesById() throws Exception {
     // Arrange
     final String csId = CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b");
@@ -558,7 +564,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemLookup() throws Exception {
     // Arrange
     final String code = "73211009";
@@ -643,7 +649,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testCodeSystemLookupById() throws Exception {
     // Arrange
     final String system =
@@ -729,7 +735,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testValueSetSearch() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + FHIR_VALUESET;
@@ -766,7 +772,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testValueSetById() throws Exception {
     // Arrange
     final String vsId =
@@ -798,7 +804,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testValueSetSearchOperation() throws Exception {
     // Arrange
     final String searchParams = "/_search?title=SNOMEDCT&_count=50";
@@ -830,7 +836,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testValueSetRead() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + FHIR_VALUESET;
@@ -880,7 +886,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testValueSetValidateCode() throws Exception {
     // Arrange
     final String code = "73211009";
@@ -913,7 +919,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testValueSetValidateCodeById() throws Exception {
     // Arrange
     final String vsId =
@@ -947,7 +953,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testValueSetExpand() throws Exception {
 
     // Arrange
@@ -989,7 +995,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(1)
+  @Order(FIND)
   public void testValueSetExpandById() throws Exception {
     // Arrange
     final String vsId =
@@ -1052,7 +1058,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(10)
+  @Order(DELETE)
   public void testDeleteNonExistentCodeSystem() throws Exception {
 
     LOGGER.info("Testing delete NonExistent CodeSystem endpoint");
@@ -1071,7 +1077,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(11)
+  @Order(DELETE)
   public void testDeleteNonExistentValueSet() throws Exception {
 
     LOGGER.info("Testing delete NonExistent ValueSet endpoint");
@@ -1090,7 +1096,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(12)
+  @Order(DELETE)
   public void testDeleteNonExistentConceptMap() throws Exception {
 
     LOGGER.info("Testing delete NonExistent ConceptMap endpoint");
@@ -1109,7 +1115,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(13)
+  @Order(DELETE)
   public void testDeleteImplicitValueSet() throws Exception {
 
     LOGGER.info("Testing delete implicit ValueSet (should not be allowed)");
@@ -1145,7 +1151,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(14)
+  @Order(DELETE)
   public void testDeleteCodeSystem() throws Exception {
     LOGGER.info("Testing delete CodeSystem endpoint");
 
@@ -1190,7 +1196,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(15)
+  @Order(DELETE)
   public void testDeleteValueSet() throws Exception {
     LOGGER.info("Testing delete ValueSet endpoint");
     final String valueSetName = "Lateralizable body structure reference set";
@@ -1223,10 +1229,13 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
         restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
 
     subsets = searchService.find(params, Subset.class);
-
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
-    // assert none is "Lateralizable body structure reference set"
-    assertTrue(subsets.getItems().stream().noneMatch(s -> valueSetName.equals(s.getName())));
+
+    // Verify the specific subset/value set was deleted
+    final String finalTestId = testId;
+    assertTrue(subsets.getItems().stream().noneMatch(s -> s.getId().equals(finalTestId)),
+        "Deleted subset/value set should not be found");
+
   }
 
   /**
@@ -1235,7 +1244,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(16)
+  @Order(DELETE)
   public void testDeleteConceptMap() throws Exception {
     LOGGER.info("Testing delete ConceptMap endpoint");
 
@@ -1266,7 +1275,10 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
     mapsets = searchService.find(params, Mapset.class);
-    assertEquals(0, mapsets.getTotal());
+    // Verify the specific concept map was deleted
+    final String finalTestId = testId;
+    assertTrue(mapsets.getItems().stream().noneMatch(m -> m.getId().equals(finalTestId)),
+        "Deleted concept map should not be found");
   }
 
   /**
@@ -1275,7 +1287,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    * @throws Exception the exception
    */
   @Test
-  @Order(17)
+  @Order(DELETE)
   public void testBundleWithCsCmVsTransaction() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + "/fhir/Bundle/$load";
@@ -1311,13 +1323,13 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     LOGGER.info("Bundle transaction test completed successfully");
   }
 
-    /**
+  /**
    * Test bundle loading using the bulk load endpoint.
    *
    * @throws Exception the exception
    */
   @Test
-  @Order(18)
+  @Order(DELETE)
   public void testBundleWithCmVsTransaction() throws Exception {
     // Arrange
     final String endpoint = LOCALHOST + port + "/fhir/Bundle/$load";
@@ -1353,6 +1365,270 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     LOGGER.info("Bundle transaction test completed successfully");
   }
 
+  /**
+   * Test CodeSystem $lookup with missing code parameter returns 400.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemLookupMissingCodeReturnsBadRequest() throws Exception {
+    final String endpoint = LOCALHOST + port + "/fhir/r5/CodeSystem/$lookup";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.set("Content-Type", "application/fhir+json");
+    final HttpEntity<String> requestEntity = new HttpEntity<>("", headers);
+
+    final ResponseEntity<String> response =
+        this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(),
+        "Missing code parameter should return 400");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+    assertTrue(response.getBody().contains("issue"), "Response should contain issue");
+  }
+
+  /**
+   * Test CodeSystem $lookup with invalid code returns 400.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemLookupInvalidCodeReturnsBadRequest() throws Exception {
+    final String endpoint = LOCALHOST + port
+        + "/fhir/r5/CodeSystem/$lookup?code=INVALID_CODE&system=http://snomed.info/sct";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.set("Accept", "application/fhir+json");
+    final HttpEntity<String> requestEntity = new HttpEntity<>("", headers);
+
+    final ResponseEntity<String> response =
+        this.restTemplate.exchange(endpoint, HttpMethod.GET, requestEntity, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(),
+        "Invalid code should return 400");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test CodeSystem read with unknown ID returns 404.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemReadUnknownIdReturnsNotFound() throws Exception {
+    final String endpoint = LOCALHOST + port + "/fhir/r5/CodeSystem/UNKNOWN_ID";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(endpoint, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode(), "Unknown ID should return 404");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test ValueSet $expand with missing URL parameter returns 400.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetExpandMissingUrlReturnsBadRequest() throws Exception {
+    final String endpoint = LOCALHOST + port + "/fhir/r5/ValueSet/$expand";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.set("Content-Type", "application/fhir+json");
+    final HttpEntity<String> requestEntity = new HttpEntity<>("", headers);
+
+    final ResponseEntity<String> response =
+        this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(),
+        "Missing URL parameter should return 400");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test ValueSet $validate-code with missing parameters returns 400.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetValidateCodeMissingParametersReturnsBadRequest() throws Exception {
+    final String endpoint = LOCALHOST + port + "/fhir/r5/ValueSet/$validate-code";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.set("Content-Type", "application/fhir+json");
+    final HttpEntity<String> requestEntity = new HttpEntity<>("", headers);
+
+    final ResponseEntity<String> response =
+        this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(),
+        "Missing parameters should return 400");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test ValueSet read with unknown ID returns 404.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetReadUnknownIdReturnsNotFound() throws Exception {
+    final String endpoint = LOCALHOST + port + "/fhir/r5/ValueSet/UNKNOWN_ID";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(endpoint, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode(), "Unknown ID should return 404");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test ConceptMap $translate with missing parameters returns 400.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testConceptMapTranslateMissingParametersReturnsBadRequest() throws Exception {
+    final String endpoint = LOCALHOST + port + "/fhir/r5/ConceptMap/$translate";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.set("Content-Type", "application/fhir+json");
+    final HttpEntity<String> requestEntity = new HttpEntity<>("", headers);
+
+    final ResponseEntity<String> response =
+        this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(),
+        "Missing parameters should return 400");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test ConceptMap read with unknown ID returns 404.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testConceptMapReadUnknownIdReturnsNotFound() throws Exception {
+    final String endpoint = LOCALHOST + port + "/fhir/r5/ConceptMap/UNKNOWN_ID";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(endpoint, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode(), "Unknown ID should return 404");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test Bundle $transaction with invalid bundle type returns 400.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testBundleTransactionInvalidTypeReturnsBadRequest() throws Exception {
+    final String endpoint = LOCALHOST + port + "/fhir/r5/$transaction";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final String requestBody = "{\"resourceType\":\"Bundle\",\"type\":\"invalid-type\"}";
+    final HttpHeaders headers = new HttpHeaders();
+    headers.set("Content-Type", "application/fhir+json");
+    final HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
+
+    final ResponseEntity<String> response =
+        this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(),
+        "Invalid bundle type should return 400");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test that error responses never return 500 status.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testErrorResponsesNeverReturn500() throws Exception {
+    final String[] endpoints = {
+        LOCALHOST + port + "/fhir/r5/CodeSystem/$lookup",
+        LOCALHOST + port + "/fhir/r5/ValueSet/$expand",
+        LOCALHOST + port + "/fhir/r5/ConceptMap/$translate",
+        LOCALHOST + port + "/fhir/r5/CodeSystem/UNKNOWN_ID",
+        LOCALHOST + port + "/fhir/r5/ValueSet/UNKNOWN_ID",
+        LOCALHOST + port + "/fhir/r5/ConceptMap/UNKNOWN_ID"
+    };
+
+    for (final String endpoint : endpoints) {
+      LOGGER.info("Testing endpoint: {}", endpoint);
+
+      final HttpHeaders headers = new HttpHeaders();
+      headers.set("Content-Type", "application/fhir+json");
+      final HttpEntity<String> requestEntity = new HttpEntity<>("", headers);
+
+      final ResponseEntity<String> response =
+          this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+      LOGGER.info("Response status for {}: {}", endpoint, response.getStatusCode());
+
+      assertTrue(response.getStatusCode().is4xxClientError(), "Endpoint " + endpoint
+          + " should return 4xx, not 5xx. Status: " + response.getStatusCode());
+    }
+  }
+
+  /**
+   * Teardown.
+   */
   @AfterAll
   public static void teardown() {
     // There are tests that delete content. So any subsequent tests should re-setup the data
