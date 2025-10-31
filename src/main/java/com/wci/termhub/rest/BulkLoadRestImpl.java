@@ -82,8 +82,9 @@ public class BulkLoadRestImpl {
   @Autowired
   private EnablePostLoadComputations enablePostLoadComputations;
 
+  /** The bulk loader service. */
   @Autowired
-    private com.wci.termhub.service.BulkLoaderService bulkLoaderService;
+  private com.wci.termhub.service.BulkLoaderService bulkLoaderService;
 
   /** The process resource map. */
   private static Map<String, List<String>> processResultMap = new HashMap<>();
@@ -289,7 +290,8 @@ public class BulkLoadRestImpl {
             }
           }
         };
-        bulkLoaderService.startAsyncCodeSystemLoad(processId, file, listener, processResultMap, processProgressMap, processExceptionMap);
+        bulkLoaderService.startAsyncCodeSystemLoad(processId, file, listener, processResultMap,
+            processProgressMap, processExceptionMap);
 
         // Return the process id
         return new ResponseEntity<>(processId, null, 200);

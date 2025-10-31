@@ -30,7 +30,10 @@ import jakarta.servlet.http.HttpServletResponse;
 @Aspect
 @Component
 public class WriteAspect {
+
+  /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(WriteAspect.class);
+
   /** The write in progress. */
   private final AtomicBoolean writeInProgress = new AtomicBoolean(false);
 
@@ -43,7 +46,7 @@ public class WriteAspect {
    */
   @Around("@annotation(com.wci.termhub.lucene.eventing.Write)")
   public Object aroundWrite(final ProceedingJoinPoint pjp) throws Throwable {
-    if(logger.isTraceEnabled()){
+    if (logger.isTraceEnabled()) {
       logger.trace("Write operation started");
     }
     if (!writeInProgress.compareAndSet(false, true)) {
@@ -54,7 +57,7 @@ public class WriteAspect {
     try {
       final Object result = pjp.proceed();
       LuceneDataAccess.clearReaders();
-      if(logger.isTraceEnabled()){
+      if (logger.isTraceEnabled()) {
         logger.trace("Write operation completed");
       }
       return result;

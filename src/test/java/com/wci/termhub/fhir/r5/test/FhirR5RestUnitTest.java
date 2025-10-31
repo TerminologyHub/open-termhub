@@ -317,22 +317,16 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertFalse(properties.isEmpty(), "Should have properties");
 
     // Find definition property
-    final boolean hasDefinition = properties.stream()
-        .anyMatch(p -> p.getPart().stream().anyMatch(part ->
-            "code".equals(part.getName()) && "definition".equals(part.getValue().toString())));
+    final boolean hasDefinition = properties.stream().anyMatch(p -> p.getPart().stream().anyMatch(
+        part -> "code".equals(part.getName()) && "definition".equals(part.getValue().toString())));
     assertTrue(hasDefinition, "Should have definition property");
 
     // Get the definition value
-    final String definition = properties.stream()
-        .filter(p -> p.getPart().stream().anyMatch(part ->
-            "code".equals(part.getName()) && "definition".equals(part.getValue().toString())))
-        .findFirst()
-        .orElseThrow(() -> new AssertionError("Definition property not found"))
-        .getPart().stream()
-        .filter(part -> "value".equals(part.getName()))
-        .findFirst()
-        .orElseThrow(() -> new AssertionError("Definition value not found"))
-        .getValue().toString();
+    final String definition = properties.stream().filter(p -> p.getPart().stream().anyMatch(
+        part -> "code".equals(part.getName()) && "definition".equals(part.getValue().toString())))
+        .findFirst().orElseThrow(() -> new AssertionError("Definition property not found"))
+        .getPart().stream().filter(part -> "value".equals(part.getName())).findFirst()
+        .orElseThrow(() -> new AssertionError("Definition value not found")).getValue().toString();
 
     assertEquals("A component that fails to comply with the current editorial guidance.",
         definition);
@@ -1294,6 +1288,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     LOGGER.info("endpoint = {}", endpoint);
 
     // Load the bundle file as raw JSON
+    @SuppressWarnings("resource")
     final String bundleJson = new String(getClass().getClassLoader()
         .getResourceAsStream("data/test-bundle-cs-cm-vs-r5.json").readAllBytes());
 
@@ -1312,7 +1307,8 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     final HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
     // Act
-    final ResponseEntity<String> response = this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+    final ResponseEntity<String> response =
+        this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
     LOGGER.info("Response status: {}", response.getStatusCode());
     LOGGER.info("Response body: {}", response.getBody());
 
@@ -1336,6 +1332,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     LOGGER.info("endpoint = {}", endpoint);
 
     // Load the bundle file as raw JSON
+    @SuppressWarnings("resource")
     final String bundleJson = new String(getClass().getClassLoader()
         .getResourceAsStream("data/test-bundle-cm-vs-r5.json").readAllBytes());
 
@@ -1354,7 +1351,8 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     final HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
     // Act
-    final ResponseEntity<String> response = this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
+    final ResponseEntity<String> response =
+        this.restTemplate.postForEntity(endpoint, requestEntity, String.class);
     LOGGER.info("Response status: {}", response.getStatusCode());
     LOGGER.info("Response body: {}", response.getBody());
 

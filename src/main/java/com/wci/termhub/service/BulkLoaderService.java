@@ -9,15 +9,39 @@
  */
 package com.wci.termhub.service;
 
-import com.wci.termhub.algo.ProgressListener;
-import org.hl7.fhir.r5.model.CodeSystem;
-
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-public interface BulkLoaderService {
-    CodeSystem doCodeSystemLoad(File file) throws Exception;
+import org.hl7.fhir.r5.model.CodeSystem;
 
-    void startAsyncCodeSystemLoad(String processId, File file, ProgressListener listener, Map<String, List<String>> processResultMap, Map<String, Long> processProgressMap, Map<String, Exception> processExceptionMap);
+import com.wci.termhub.algo.ProgressListener;
+
+/**
+ * The Interface BulkLoaderService.
+ */
+public interface BulkLoaderService {
+
+  /**
+   * Do code system load.
+   *
+   * @param file the file
+   * @return the code system
+   * @throws Exception the exception
+   */
+  CodeSystem doCodeSystemLoad(File file) throws Exception;
+
+  /**
+   * Start async code system load.
+   *
+   * @param processId the process id
+   * @param file the file
+   * @param listener the listener
+   * @param processResultMap the process result map
+   * @param processProgressMap the process progress map
+   * @param processExceptionMap the process exception map
+   */
+  void startAsyncCodeSystemLoad(String processId, File file, ProgressListener listener,
+    Map<String, List<String>> processResultMap, Map<String, Long> processProgressMap,
+    Map<String, Exception> processExceptionMap);
 }

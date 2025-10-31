@@ -10,4 +10,5 @@
 package com.wci.termhub.lucene.eventing;
 
 public @interface Write {
+  // n/a
 }
