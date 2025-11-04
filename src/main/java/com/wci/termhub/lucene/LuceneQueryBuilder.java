@@ -67,6 +67,7 @@ public final class LuceneQueryBuilder {
    * @return the query
    * @throws ParseException the parse exception
    */
+  @SuppressWarnings("resource")
   public static Query parse(final String queryText, final Class<?> modelClass)
     throws ParseException {
 
@@ -94,12 +95,12 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Gets field-specific analyzers for a given model class based on
-   * ElasticSearch annotations.
+   * Gets field-specific analyzers for a given model class based on ElasticSearch annotations.
    *
    * @param modelClass the model class
    * @return the field analyzers
    */
+  @SuppressWarnings("resource")
   public static Map<String, Analyzer> getFieldAnalyzers(final Class<?> modelClass) {
     final Map<String, AnalyzerType> types = getFieldAnalyzerTypes(modelClass);
     final Map<String, Analyzer> analyzers = new HashMap<>();
@@ -130,15 +131,13 @@ public final class LuceneQueryBuilder {
   }
 
   /**
-   * Recursively collects analyzers for fields on a model class and nested model
-   * classes based on ElasticSearch annotations. Uses a dotted prefix for nested
-   * objects/collections.
+   * Recursively collects analyzers for fields on a model class and nested model classes based on
+   * ElasticSearch annotations. Uses a dotted prefix for nested objects/collections.
    *
    * @param modelClass the model class
    * @param prefix the field path prefix, or null for top-level
    * @param fieldAnalyzerTypes the field analyzer types
    */
-  @SuppressWarnings("resource")
   private static void collectAnalyzerTypesForClass(final Class<?> modelClass, final String prefix,
     final Map<String, AnalyzerType> fieldAnalyzerTypes) {
 

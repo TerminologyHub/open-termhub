@@ -47,6 +47,7 @@ public enum AnalyzerType {
     @Override
     public Analyzer newInstance() {
       return new Analyzer() {
+        @SuppressWarnings("resource")
         @Override
         protected TokenStreamComponents createComponents(final String fieldName) {
           final Tokenizer tokenizer = new StandardTokenizer();

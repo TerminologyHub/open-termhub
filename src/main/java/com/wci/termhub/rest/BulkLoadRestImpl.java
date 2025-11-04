@@ -82,6 +82,10 @@ public class BulkLoadRestImpl {
   @Autowired
   private EnablePostLoadComputations enablePostLoadComputations;
 
+  /** The bulk loader service. */
+  @Autowired
+  private com.wci.termhub.service.BulkLoaderService bulkLoaderService;
+
   /** The process resource map. */
   private static Map<String, List<String>> processResultMap = new HashMap<>();
 
@@ -259,9 +263,7 @@ public class BulkLoadRestImpl {
       // If not running in the background -> load and return the resource
       if (!background) {
         // Use existing loader utility
-        final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
-            enablePostLoadComputations.isEnabled(), CodeSystem.class,
-            new DefaultProgressListener());
+        final CodeSystem codeSystem = bulkLoaderService.doCodeSystemLoad(file);
 
         FileUtils.delete(file);
 
@@ -288,31 +290,8 @@ public class BulkLoadRestImpl {
             }
           }
         };
-
-        final Thread t = new Thread(new Runnable() {
-
-          /* see superclass */
-          @Override
-          public void run() {
-            try {
-              // Use existing loader utility
-              final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
-                  enablePostLoadComputations.isEnabled(), CodeSystem.class, listener);
-
-              FileUtils.delete(file);
-
-              BulkLoadRestImpl.processResultMap.put(processId, new ArrayList<>());
-              BulkLoadRestImpl.processResultMap.get(processId)
-                  .add("CodeSystem/" + codeSystem.getId());
-
-            } catch (final Exception e) {
-              processProgressMap.put(processId, -1L);
-              processExceptionMap.put(processId, e);
-
-            }
-          }
-        });
-        t.start();
+        bulkLoaderService.startAsyncCodeSystemLoad(processId, file, listener, processResultMap,
+            processProgressMap, processExceptionMap);
 
         // Return the process id
         return new ResponseEntity<>(processId, null, 200);
