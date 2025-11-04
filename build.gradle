@@ -99,7 +99,7 @@ dependencies {
   implementation 'jakarta.ws.rs:jakarta.ws.rs-api:4.0.0'
 
   // OpenAPI/Swagger UI - Using HAPI FHIR's built-in support
-  implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0") {
+  implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14") {
     // Remove slf4j-api 2+
     exclude group: "org.slf4j", module: "slf4j-simple"
     exclude group: "org.slf4j", module: "slf4j-api"
