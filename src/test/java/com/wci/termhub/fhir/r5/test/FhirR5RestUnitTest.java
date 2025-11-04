@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,7 +25,10 @@ import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
 import org.hl7.fhir.r5.model.CapabilityStatement;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
+import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r5.model.IdType;
+import org.hl7.fhir.r5.model.Identifier;
 import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.ResourceType;
@@ -54,10 +58,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
@@ -1139,49 +1141,43 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     LOGGER.info("Delete implicit ValueSet returned 405 as expected");
   }
 
-  /**
-   * Test delete code system.
-   *
-   * @throws Exception the exception
-   */
   @Test
   @Order(14)
-  public void testDeleteCodeSystem() throws Exception {
-    LOGGER.info("Testing delete CodeSystem endpoint");
+  public void testCreateReadDeleteCodeSystem() throws Exception {
+    // 1. Create a new CodeSystem
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM;
+    CodeSystem newCs = new CodeSystem();
+    newCs.setName("TestCS");
+    newCs.setTitle("Test CodeSystem");
+    newCs.setStatus(PublicationStatus.ACTIVE);
+    newCs.setPublisher("TEST");
+    newCs.setHierarchyMeaning(CodeSystemHierarchyMeaning.ISA);
+    newCs.setVersion("1.0");
+    newCs.setUrl("http://example.org/fhir/CodeSystem/test-codesystem");
+    newCs.setDate(new Date());
 
-    // Get Id of loaded terminology
-    String testId = "";
-    final SearchParameters params = new SearchParameters();
-    params.setQuery("*:*");
-    params.setLimit(100);
+    final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+    headers.set("Content-Type", "application/fhir+json");
+    String csJson = parser.encodeResourceToString(newCs);
+    final org.springframework.http.HttpEntity<String> entity =
+            new org.springframework.http.HttpEntity<>(csJson, headers);
 
-    ResultList<Terminology> terminologies = searchService.find(params, Terminology.class);
-    for (final Terminology t : terminologies.getItems()) {
-      LOGGER.info("Terminology: {} - {}", t.getName(), t.getVersion());
-      testId = t.getId();
-    }
+    ResponseEntity<String> createResponse = restTemplate.postForEntity(endpoint, entity, String.class);
+    CodeSystem createdCodeSystem = parser.parseResource(CodeSystem.class, createResponse.getBody());
+    assertEquals(HttpStatus.CREATED, createResponse.getStatusCode());
 
-    assertNotNull(testId);
+    // 2. Read the created CodeSystem
+    String getUrl = endpoint+ "/" + createdCodeSystem.getIdPart();
+    ResponseEntity<String> getResponse = restTemplate.getForEntity(getUrl, String.class);
+    assertEquals(HttpStatus.OK, getResponse.getStatusCode());
 
-    // Try to delete the code system
-    final String deleteUrl = LOCALHOST + port + FHIR_CODESYSTEM + "/" + testId;
-    LOGGER.info("Delete codes system URL {}", deleteUrl);
-    final ResponseEntity<String> response =
-        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
-    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+    // 3. Delete the CodeSystem
+    ResponseEntity<String> deleteResponse = restTemplate.exchange(getUrl, HttpMethod.DELETE, null, String.class);
+    assertEquals(HttpStatus.NO_CONTENT, deleteResponse.getStatusCode());
 
-    // Verify the code system is deleted by attempting to delete it again
-    final ResponseEntity<String> response2 =
-        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
-
-    assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
-    terminologies = searchService.find(params, Terminology.class);
-
-    assertNotNull(terminologies);
-    // assert testId not in terminologies
-    final String finalTestId = testId;
-    assertTrue(terminologies.getItems().stream().noneMatch(t -> t.getId().equals(finalTestId)),
-        "Deleted terminology should not be found");
+    // 4. Verify deletion
+    ResponseEntity<String> getAfterDelete = restTemplate.getForEntity(getUrl, String.class);
+    assertEquals(HttpStatus.NOT_FOUND, getAfterDelete.getStatusCode());
   }
 
   /**
@@ -1191,39 +1187,48 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    */
   @Test
   @Order(15)
-  public void testDeleteValueSet() throws Exception {
+  public void testCreateAndDeleteValueSet() throws Exception {
     LOGGER.info("Testing delete ValueSet endpoint");
 
-    // Get Id of loaded terminology
-    String testId = "";
-    final SearchParameters params = new SearchParameters();
-    params.setQuery("*:*");
-    params.setLimit(100);
+    ValueSet valueSet = new ValueSet();
+    valueSet.setTitle("Test ValueSet");
+    valueSet.setPublisher("Test Publisher");
+    valueSet.setVersion("1.0.0");
+    valueSet.setUrl("http://example.org/fhir/ValueSet/" + valueSet.getIdPart());
+    valueSet.setDate(new Date());
 
-    ResultList<Subset> subsets = searchService.find(params, Subset.class);
-    for (final Subset s : subsets.getItems()) {
-      LOGGER.info("Subset: {} - {}", s.getName(), s.getVersion());
-      if ("Lateralizable body structure reference set".equals(s.getName())) {
-        testId = s.getId();
-      }
-    }
+    final String json = parser.encodeResourceToString(valueSet);
+    final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+    headers.set("Content-Type", "application/fhir+json");
+    final org.springframework.http.HttpEntity<String> entity =
+            new org.springframework.http.HttpEntity<>(json, headers);
+    ResponseEntity<String> response =
+            restTemplate.postForEntity(LOCALHOST + port + FHIR_VALUESET, entity, String.class);
+    ValueSet createdValueSet = parser.parseResource(ValueSet.class, response.getBody());
+    String strTestId = createdValueSet.getIdPart();
+    assertNotNull(strTestId);
 
-    assertNotNull(testId);
+    final String findUrl = LOCALHOST + port + FHIR_VALUESET + "/" + strTestId;
+    LOGGER.info("Find value set URL {}", findUrl);
+    response = restTemplate.getForEntity(findUrl, String.class);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    valueSet = parser.parseResource(ValueSet.class, response.getBody());
+    assertNotNull(valueSet, "ValueSet should not be null");
 
     // Try to delete the value set
-    final String deleteUrl = LOCALHOST + port + FHIR_VALUESET + "/" + testId;
+    final String deleteUrl = LOCALHOST + port + FHIR_VALUESET + "/" + strTestId;
     LOGGER.info("Delete value set URL {}", deleteUrl);
-    final ResponseEntity<String> response =
-        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    response =
+            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
     // Verify the value set is deleted by attempting to delete it again
     final ResponseEntity<String> response2 =
-        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
-
+            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
-    subsets = searchService.find(params, Subset.class);
-    assertEquals(1, subsets.getTotal());
+
+    response = restTemplate.getForEntity(findUrl, String.class);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
   }
 
   /**
@@ -1233,37 +1238,41 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    */
   @Test
   @Order(16)
-  public void testDeleteConceptMap() throws Exception {
-    LOGGER.info("Testing delete ConceptMap endpoint");
+  public void testCreateAndDeleteConceptMap() throws Exception {
+    LOGGER.info("Testing create, read and delete ConceptMap endpoint");
 
-    // Get Id of loaded terminology
-    String testId = "";
-    final SearchParameters params = new SearchParameters();
-    params.setQuery("*:*");
-    params.setLimit(100);
-
-    ResultList<Mapset> mapsets = searchService.find(params, Mapset.class);
-    for (final Mapset m : mapsets.getItems()) {
-      LOGGER.info("Terminology: {} - {}", m.getName(), m.getVersion());
-      testId = m.getId();
-    }
-
+    ConceptMap conceptMap = new ConceptMap();
+    conceptMap.setTitle("Test ConceptMap");
+    conceptMap.setPublisher("Test Publisher");
+    conceptMap.setVersion("1.0.0");
+    conceptMap.setUrl("http://example.org/fhir/ConceptMap/" + conceptMap.getIdPart());
+    conceptMap.setSourceScope(new IdType("CodeSystem/source-cs"));
+    conceptMap.setTargetScope(new IdType("CodeSystem/target-cs"));
+    conceptMap.setDate(new Date());
+    conceptMap.setIdentifier(List.of(new Identifier().setSystem("http://example.org/fhir/ids").setValue("cm-1")));
+    final String json = parser.encodeResourceToString(conceptMap);
+    final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+    headers.set("Content-Type", "application/fhir+json");
+    final org.springframework.http.HttpEntity<String> entity =
+            new org.springframework.http.HttpEntity<>(json, headers);
+    ResponseEntity<String> response =
+            restTemplate.postForEntity(LOCALHOST + port + FHIR_CONCEPTMAP, entity, String.class);
+    ConceptMap createdMapset = parser.parseResource(ConceptMap.class, response.getBody());
+    String testId = createdMapset.getIdPart();
     assertNotNull(testId);
 
     // Try to delete the concept map
     final String deleteUrl = LOCALHOST + port + FHIR_CONCEPTMAP + "/" + testId;
     LOGGER.info("Delete concept map URL {}", deleteUrl);
-    final ResponseEntity<String> response =
-        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    response =
+            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
     // Verify the concept map is deleted by attempting to delete it again
     final ResponseEntity<String> response2 =
-        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
 
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
-    mapsets = searchService.find(params, Mapset.class);
-    assertEquals(0, mapsets.getTotal());
   }
 
   /**
