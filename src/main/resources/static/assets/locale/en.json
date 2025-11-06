@@ -87,7 +87,9 @@
     "loadNumL": "Load",
     "loadNumR": "more",
     "close": "Close",
-    "relationships": "Relationships"
+    "relationships": "Relationships",
+    "desc": "Descriptions",
+    "attribs": "Attributes"
   },
   "mapset": {
     "mapset": "Mapset",

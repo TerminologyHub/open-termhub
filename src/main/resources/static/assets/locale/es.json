@@ -87,7 +87,9 @@
     "loadNumL": "Cargar",
     "loadNumR": "más",
     "close": "Cerrar",
-    "relationships": "Relaciones"
+    "relationships": "Relaciones",
+    "desc": "Descripciones",
+    "attribs": "Atributos"
   },
   "mapset": {
     "mapset": "Mapa de Conjuntos",
