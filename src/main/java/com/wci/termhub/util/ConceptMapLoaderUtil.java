@@ -450,7 +450,7 @@ public final class ConceptMapLoaderUtil {
     if (root.has("targetScopeUri")) {
       toTerminology = root.path("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
     } else if (root.has("targetUri")) {
-      fromTerminology = root.path("targetUri").asText();
+      toTerminology = root.path("targetUri").asText();
     } else if (root.has("group") && (root.get("group").isArray())) {
       toTerminology = root.path("group").get(0).path("target").asText();
     }
@@ -486,9 +486,10 @@ public final class ConceptMapLoaderUtil {
     // Use the identifier as the code, otherwise use the id
     // NOTE: termhub generated files will have a single id
     // with a system matching this value.
-    if ("https://terminologyhub.com/model/mapset/code"
-        .equals(root.path("identifier").get(0).path("system").asText())) {
-      mapset.setCode(root.path("identifier").get(0).path("value").asText());
+    JsonNode identifierNode = root.path("identifier").isArray() ? root.path("identifier").get(0) : root.path("identifier");
+    if (identifierNode != null && "https://terminologyhub.com/model/mapset/code"
+            .equals(identifierNode.path("system").asText())) {
+      mapset.setCode(identifierNode.path("value").asText());
     }
     if (StringUtility.isEmpty(mapset.getCode())) {
       mapset.setCode(mapset.getId());
