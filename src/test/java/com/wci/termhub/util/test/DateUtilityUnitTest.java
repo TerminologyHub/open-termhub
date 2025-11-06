@@ -55,8 +55,8 @@ public class DateUtilityUnitTest {
     final String expectedParisOffset = now.withZoneSameInstant(parisZone).getOffset().getId();
 
     // Test with known time zones
-    assertEquals(expectedEDTOffset, DateUtility.getTimeZoneOffsetLabel("EDT", new Date()));
-    assertEquals(expectedPDTOffset, DateUtility.getTimeZoneOffsetLabel("PDT", new Date()));
+    assertEquals(expectedEDTOffset, DateUtility.getTimeZoneOffsetLabel("EST", new Date()));
+    assertEquals(expectedPDTOffset, DateUtility.getTimeZoneOffsetLabel("PST", new Date()));
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel("UTC", new Date()));
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel(null, new Date()));
 

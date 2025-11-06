@@ -107,12 +107,15 @@ import jakarta.servlet.http.HttpServletRequest;
  * Terminology service rest implementation.
  */
 @OpenAPIDefinition(info = @Info(title = "Open TermHub Terminology API", version = "1.0.0",
-    description = "API documentation for the interacting with terminologies and concepts. "
-        + "<p>For more information, see our github project "
+    description = "API documentation for interacting with terminologies (code systems), "
+        + "concepts, mapsets (concept maps), and subsets (value sets). "
+        + "<p>For more information on Cloud Termhub, visit "
+        + "<a href=\"https://www.terminologyhub.com\">" + "https://www.terminologyhub.com</a></p>"
+        + "<p>For more information on Open Termhub, visit "
         + "<a href=\"https://github.com/terminologyhub/open-termhub\">"
-        + "https://github.com/terminologyhub/termhub-in-5-minutes</a></p>"
-        + "<p>See <a href=\"/fhir/r4/swagger-ui/index.html\" target=\"_blank\">FHIR R4 API</a></p>"
-        + "<p>See <a href=\"/fhir/r5/swagger-ui/index.html\" target=\"_blank\">FHIR R5 API</a></p>",
+        + "https://github.com/terminologyhub/open-termhub</a></p>"
+        + "<p>Also see <a href=\"/fhir/r4/swagger-ui/index.html\">FHIR R4 API</a></p>"
+        + "<p>Also see <a href=\"/fhir/r5/swagger-ui/index.html\">FHIR R5 API</a></p>",
     contact = @Contact(name = "API Support", url = "https://www.terminologyhub.com",
         email = "info@terminologyhub.com")),
     tags = {
