@@ -1,0 +1,538 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "2528912",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2021-08-19T13:48:41.472+00:00",
+    "source": "#tOOJ2udYKVyV6scX"
+  },
+  "text": {
+    "status": "extensions",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h2>null (http://fhir.msal.gob.ar/core/ConceptMap/NomivacSnomedCM)</h2><p>Mapping from http://fhir.msal.gob.ar/core/CodeSystem/NomivacVacunasCS to http://snomed.info/sct/11000221109</p><p>DRAFT. Published on Jul 31, 2021, 1:04:01 PM by DNSIS - Ministerio de Salud - Rep. Argentina / HL7 Argentina (DNSIS - Ministerio de Salud - Rep. Argentina / HL7 Argentina: <a href=\"https://www.argentina.gob.ar/salud/digital\">https://www.argentina.gob.ar/s...</a>, <a href=\"mailto:privadadngiss@msal.gov.ar\">privadadngiss@msal.gov.ar</a>). </p><br/><table class=\"grid\"><tr><td><b>Source Code</b></td><td><b>Relationship</b></td><td><b>Destination Code</b></td></tr><tr><td>127</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>871822003</td></tr><tr><td>128</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>1861000221106</td></tr><tr><td>129</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>1871000221102</td></tr><tr><td>130</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>384341000221104</td></tr><tr><td>131</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2071000221100</td></tr><tr><td>132</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>1051000221104</td></tr><tr><td>133</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2061000221109</td></tr><tr><td>134</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2241000221103</td></tr><tr><td>135</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>871751006</td></tr><tr><td>136</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2051000221107</td></tr><tr><td>137</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>871817003</td></tr><tr><td>138</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>1991000221106</td></tr><tr><td>139</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>871717007</td></tr><tr><td>140</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>1111000221101</td></tr><tr><td>141</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2031000221103</td></tr><tr><td>142</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>1911000221104</td></tr><tr><td>143</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>376371000221108</td></tr><tr><td>144</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>384311000221103</td></tr><tr><td>147</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2121000221100</td></tr><tr><td>161</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>384251000221105</td></tr><tr><td>162</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>7121000087107</td></tr><tr><td>165</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2141000221109</td></tr><tr><td>167</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2171000221104</td></tr><tr><td>168</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>971000221109</td></tr><tr><td>169</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2181000221101</td></tr><tr><td>171</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2191000221103</td></tr><tr><td>172</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2201000221100</td></tr><tr><td>173</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>384361000221100</td></tr><tr><td>175</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>951000221102</td></tr><tr><td>176</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>384351000221102</td></tr><tr><td>177</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>871803007</td></tr><tr><td>178</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2041000221105</td></tr><tr><td>182</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>1801000221105</td></tr><tr><td>183</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2001000221108</td></tr><tr><td>184</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>871742003</td></tr><tr><td>185</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>777050007</td></tr><tr><td>186</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>776184002</td></tr><tr><td>187</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>777389008</td></tr><tr><td>188</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>777919007</td></tr><tr><td>189</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>777724003</td></tr><tr><td>190</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>776947000</td></tr><tr><td>191</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>1981000221108</td></tr><tr><td>194</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>384241000221108</td></tr><tr><td>195</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>2261000221104</td></tr><tr><td>196</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>871908002</td></tr></table></div>"
+  },
+  "url": "http://fhir.msal.gob.ar/core/ConceptMap/NomivacSnomedCM",
+  "version": "0.5.0",
+  "status": "draft",
+  "date": "2021-07-31T13:04:01-03:00",
+  "publisher": "DNSIS - Ministerio de Salud - Rep. Argentina / HL7 Argentina",
+  "contact": [
+    {
+      "name": "DNSIS - Ministerio de Salud - Rep. Argentina / HL7 Argentina",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://www.argentina.gob.ar/salud/digital"
+        },
+        {
+          "system": "email",
+          "value": "privadadngiss@msal.gov.ar"
+        }
+      ]
+    }
+  ],
+  "sourceCanonical": "http://fhir.msal.gob.ar/core/CodeSystem/NomivacVacunasCS",
+  "targetCanonical": "http://fhir.msal.gob.ar/core/ValueSet/SnomedVacunasVS",
+  "group": [
+    {
+      "source": "http://fhir.msal.gob.ar/core/CodeSystem/NomivacVacunasCS",
+      "target": "http://fhir.msal.gob.ar/core/ValueSet/SnomedVacunasVS",
+      "element": [
+        {
+          "code": "127",
+          "display": "Hepatitis B",
+          "target": [
+            {
+              "code": "871822003",
+              "display": "vacuna que contiene antígeno de virus Hepatitis B como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "128",
+          "display": "BCG",
+          "target": [
+            {
+              "code": "1861000221106",
+              "display": "producto que contiene solamente antígeno de bacilo Calmette-Guerin vivo atenuado (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "129",
+          "display": "Neumococo Conjugada VCN 13",
+          "target": [
+            {
+              "code": "1871000221102",
+              "display": "producto que contiene exactamente antígenos de polisacárido conjugado de neumococo 13 serotipos, 1, 3, 4, 5, 6A, 7F, 9V, 14, 18C, 19A, 19F y 23F, 6B, 1 dosis/vial, suspensión inyectable de liberación convencional (fármaco de uso clínico)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "130",
+          "display": "Quintuple",
+          "target": [
+            {
+              "code": "384341000221104",
+              "display": "vacuna pediátrica que contiene antígenos de B. pertussis células enteras, toxoides diftérico y tetánico, antígeno polisacárido capsular conjugado de H. influenzae tipo B y antígeno de superficie de virus Hepatitis B recombinante, 1 dosis/vial, suspensión inyectable (fármaco de uso clínico)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "131",
+          "display": "Cuádruple Bacteriana",
+          "target": [
+            {
+              "code": "2071000221100",
+              "display": "producto que contiene solamente antígenos Bordetella pertussis células enteras + toxoide diftérico + toxoide tetánico + polisacárido capsular conjugado de Haemophilus influenzae tipo B para uso pediátrico (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "132",
+          "display": "OPV Sabin",
+          "target": [
+            {
+              "code": "1051000221104",
+              "display": "producto que contiene solamente antígenos de poliovirus serotipos 1, 3 vivo atenuado para administración oral (forma farmacéutica de producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "133",
+          "display": "Triple Bacteriana Celular",
+          "target": [
+            {
+              "code": "2061000221109",
+              "display": "producto que contiene solamente antígenos de Bordetella pertussis células enteras + toxoide diftérico + toxoide tetánico para uso pediátrico (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "134",
+          "display": "Triple Viral",
+          "target": [
+            {
+              "code": "2241000221103",
+              "display": "producto que contiene solamente antígenos de virus de parotiditis + virus de rubéola + virus de sarampión vivos atenuados (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "135",
+          "display": "Hepatitis A",
+          "target": [
+            {
+              "code": "871751006",
+              "display": "vacuna que contiene antígeno de virus Hepatitis A como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "136",
+          "display": "Triple Bacteriana Acelular",
+          "target": [
+            {
+              "code": "2051000221107",
+              "display": "producto que contiene solamente antígenos de Bordetella pertussis acelular + toxoide diftérico + toxoide tetánico para uso en adultos (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "137",
+          "display": "Doble Viral",
+          "target": [
+            {
+              "code": "871817003",
+              "display": "vacuna que contiene antígenos de Morbilivirus del sarampión y virus de la Rubéola como únicos ingredientes (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "138",
+          "display": "VPH Bivalente",
+          "target": [
+            {
+              "code": "1991000221106",
+              "display": "producto que contiene solamente antígenos de papilomavirus humano tipos 16,18 (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "139",
+          "display": "Fiebre Amarilla",
+          "target": [
+            {
+              "code": "871717007",
+              "display": "vacuna que contiene antígeno de virus de la fiebre amarilla como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "140",
+          "display": "Fiebre Hemorrágica  Argentina",
+          "target": [
+            {
+              "code": "1111000221101",
+              "display": "producto que contiene solamente antígeno de virus Junín vivo atenuado (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "141",
+          "display": "Doble Bacteriana",
+          "target": [
+            {
+              "code": "2031000221103",
+              "display": "producto que contiene solamente antígenos de toxoide diftérico + toxoide tetánico para uso en adultos (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "142",
+          "display": "Neumococo Polisacarida 23 Valente",
+          "target": [
+            {
+              "code": "1911000221104",
+              "display": "producto que contiene exactamente antígenos de polisacárido capsular no conjugado de neumococo 23 serotipos, 1, 2, 3, 4, 5, 6B, 7F, 8, 9N, 9V, 10A, 11A, 12F, 14, 15B, 17F, 18C, 19A, 19F, 20, 22F, 23F, 33F, 1 dosis/vial, solución inyectable de liberación convencional (fármaco de uso clínico)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "143",
+          "display": "Antigripal",
+          "target": [
+            {
+              "code": "376371000221108",
+              "display": "vacuna que contiene antígenos de virus Influenza A subtipos H1N1 y H3N2 y virus Influenza B como únicos ingredientes (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "144",
+          "display": "IPV SALK",
+          "target": [
+            {
+              "code": "384311000221103",
+              "display": "vacuna que contiene antígenos de Poliovirus humano serotipos 1, 2 y 3 enteros inactivados en forma farmacéutica para administración parenteral (forma farmacéutica de producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "147",
+          "display": "Rotavirus Monovalente",
+          "target": [
+            {
+              "code": "2121000221100",
+              "display": "producto que contiene solamente antígeno de rotavirus G1 P8 vivo atenuado (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "161",
+          "display": "Varicela",
+          "target": [
+            {
+              "code": "384251000221105",
+              "display": "vacuna para prevención de varicela que contiene antígeno de Alfaherpesvirus humano 3 como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "162",
+          "display": "Meningocócica Tetravalente Conjugada",
+          "target": [
+            {
+              "code": "7121000087107",
+              "display": "vacuna que contiene antígenos conjugados de Neisseria meningitidis serogrupos A, C, W135 y Y como únicos ingredientes (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "165",
+          "display": "Rotavirus Pentavalente",
+          "target": [
+            {
+              "code": "2141000221109",
+              "display": "producto que contiene solamente antígenos de rotavirus serotipos G1, G2, G3, G4, P1 vivo atenuado (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "167",
+          "display": "Fiebre Tifoidea Parenteral",
+          "target": [
+            {
+              "code": "2171000221104",
+              "display": "producto que contiene solamente antígeno polisacárido de Salmonella Typhi en forma farmacéutica para administración parenteral (forma farmacéutica de producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "168",
+          "display": "Fiebre Tifoidea Oral",
+          "target": [
+            {
+              "code": "971000221109",
+              "display": "producto que contiene solamente antígeno de Salmonella Typhi vivo atenuado en forma farmacéutica para administración oral (forma farmacéutica de producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "169",
+          "display": "Colera Oral",
+          "target": [
+            {
+              "code": "2181000221101",
+              "display": "producto que contiene solamente antígeno de cólera en forma farmacéutica para administración oral (forma farmacéutica de producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "171",
+          "display": "Antirrábica Cultivo en Lineas Celulares",
+          "target": [
+            {
+              "code": "2191000221103",
+              "display": "producto que contiene solamente antígeno de virus de la rabia inactivado cultivado en células Vero (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "172",
+          "display": "Antirrábica Fuenzalida Palacios",
+          "target": [
+            {
+              "code": "2201000221100",
+              "display": "producto que contiene solamente antígeno de virus de la rabia inactivado cultivado en tejido nervioso (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "173",
+          "display": "Séxtuple Acelular",
+          "target": [
+            {
+              "code": "384361000221100",
+              "display": "vacuna pediátrica que contiene antígenos de B. pertussis acelular, toxoides diftérico y tetánico, antígeno polisacárido capsular conjugado de H. influenzae tipo B, proteína de superficie recombinante de hepatitis B y antígenos de poliovirus humano inactivado serotipoas 1,2 y 3, 1 dosis/vial, suspensión inyectable (fármaco de uso clínico)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "175",
+          "display": "Meningocócica Monovalente Conjugada Grupo C",
+          "target": [
+            {
+              "code": "951000221102",
+              "display": "vacuna que contiene antígeno conjugado polisacárido capsular de Neisseria meningitidis serogrupo C como únicos ingredientes (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "176",
+          "display": "Quintuple Acelular",
+          "target": [
+            {
+              "code": "384351000221102",
+              "display": "vacuna pediátrica que contiene antígenos de B. pertussis acelular, toxoides diftérico y tetánico, antígeno polisacárido capsular conjugado de H. influenzae tipo B y antígenos de poliovirus humano inactivado serotipoas 1,2 y 3, 1 dosis/vial, suspensión inyectable (fármaco de uso clínico)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "177",
+          "display": "Hepatitis A y B",
+          "target": [
+            {
+              "code": "871803007",
+              "display": "vacuna que contiene antígenos de virus Hepatitis A y Hepatitis B como únicos ingredientes (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "178",
+          "display": "Haemophilus Influenzae tipo b",
+          "target": [
+            {
+              "code": "2041000221105",
+              "display": "producto que contiene solamente antígeno de polisacárido capsular conjugado de Haemophilus influenzae tipo B (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "182",
+          "display": "Neumococo Conjugada",
+          "target": [
+            {
+              "code": "1801000221105",
+              "display": "vacuna que contiene antígeno conjugado de polisacárido capsular de Streptococcus pneumoniae como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "183",
+          "display": "VPH Cuadrivalente",
+          "target": [
+            {
+              "code": "2001000221108",
+              "display": "producto que contiene solamente antígenos de papilomavirus humano tipos 6, 11, 16, 18 (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "184",
+          "display": "Antitetánica",
+          "target": [
+            {
+              "code": "871742003",
+              "display": "vacuna que contiene antígeno de Clostridium tetani como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "185",
+          "display": "Palivizumab",
+          "target": [
+            {
+              "code": "777050007",
+              "display": "producto que contiene palivizumab como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "186",
+          "display": "Inmunoglobulina Antihepatitis B",
+          "target": [
+            {
+              "code": "776184002",
+              "display": "producto que contiene inmunoglobulina contra antígeno de superficie de virus Hepatitis B como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "187",
+          "display": "Inmunoglobulina Antirrábica Humana",
+          "target": [
+            {
+              "code": "777389008",
+              "display": "producto que contiene inmunoglobulina antirrábica humana como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "188",
+          "display": "Inmunoglobulina Antivaricela Zoster",
+          "target": [
+            {
+              "code": "777919007",
+              "display": "producto que contiene anticuerpo contra virus Varicela-zóster como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "189",
+          "display": "Inmunoglobulina Hiperinmune Antitetánica",
+          "target": [
+            {
+              "code": "777724003",
+              "display": "producto que contiene inmunoglobulina antitetánica humana como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "190",
+          "display": "Inmunoglobulina Polivalente",
+          "target": [
+            {
+              "code": "776947000",
+              "display": "producto que contiene inmunoglobulina humana normal como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "191",
+          "display": "Meningococica Multicomponente del grupo B",
+          "target": [
+            {
+              "code": "1981000221108",
+              "display": "producto que contiene solamente antígeno de meningococo grupo B (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "194",
+          "display": "Herpes Zoster",
+          "target": [
+            {
+              "code": "384241000221108",
+              "display": "vacuna para prevención de herpes zoster que contiene antígeno de Alfaherpesvirus humano 3 como único ingrediente (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "195",
+          "display": "Antigripal Cuadrivalente",
+          "target": [
+            {
+              "code": "2261000221104",
+              "display": "vacuna que contiene antígenos de virus Influenza A subtipos H1N1 y H3N2 y virus Influenza B linajes Victoria y Yamagata como únicos ingredientes (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "196",
+          "display": "Cuádruple Viral",
+          "target": [
+            {
+              "code": "871908002",
+              "display": "vacuna que contiene antígenos de Alfaherpesvirus humano 3, Morbilivirus del sarampión, Ortorubulavirus de las paperas y virus de la rubéola como únicos ingredientes (producto medicinal)",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

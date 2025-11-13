@@ -1,0 +1,66 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "2693531",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2021-11-25T00:32:45.726+00:00",
+    "source": "#3SM7htKCS4sVFLZa"
+  },
+  "url": "http://example.org/fhir/ConceptMap/101",
+  "status": "active",
+  "sourceUri": "http://example.org/fhir/test-source",
+  "targetUri": "http://example.org/fhir/test-target",
+  "group": [
+    {
+      "source": "http://hl7.org/fhir/administrative-gender",
+      "target": "http://hl7.org/fhir/v2/0001",
+      "element": [
+        {
+          "code": "male",
+          "display": "Male",
+          "target": [
+            {
+              "code": "M",
+              "display": "Male",
+              "equivalence": "equal"
+            }
+          ]
+        },
+        {
+          "code": "female",
+          "display": "Female",
+          "target": [
+            {
+              "code": "F",
+              "display": "Female",
+              "equivalence": "equal"
+            }
+          ]
+        },
+        {
+          "code": "other",
+          "display": "Other",
+          "target": [
+            {
+              "code": "A",
+              "display": "Ambiguous",
+              "equivalence": "wider"
+            }
+          ]
+        },
+        {
+          "code": "unknown",
+          "display": "Unknown",
+          "target": [
+            {
+              "code": "U",
+              "display": "Unknown",
+              "equivalence": "equal",
+              "comment": "test"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

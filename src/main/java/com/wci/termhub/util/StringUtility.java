@@ -569,6 +569,9 @@ public final class StringUtility {
    * @return the string
    */
   public static String escapeKeywordField(final String field, final String value) {
+    if (StringUtility.isEmpty(value)) {
+      return "";
+    }
     final StringBuilder sb = new StringBuilder();
     sb.append(field).append(":").append(escapeQuery(value));
     return sb.toString();

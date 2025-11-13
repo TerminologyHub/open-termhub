@@ -1,0 +1,269 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "48132573",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2025-07-03T15:13:23.303+00:00",
+    "source": "#J4S4apTv4dKi8mqB"
+  },
+  "url": "http://mi-laboratorio.com/fhir/ConceptMap/analisis-simple-to-loinc",
+  "version": "1.2.0",
+  "name": "MapeoAnalisisSimpleLOINC",
+  "title": "Mapeo de Códigos de Análisis Simple de Laboratorio a LOINC",
+  "status": "active",
+  "date": "2023-10-28T09:00:00-05:00",
+  "publisher": "Laboratorio Clínico Central",
+  "description": "Este ConceptMap traduce los códigos de pruebas de laboratorio internos (ID Analisis Simple) al estándar internacional LOINC. Versión actualizada para reflejar cambios en descripciones.",
+  "sourceCanonical": "http://mi-laboratorio.com/fhir/CodeSystem/analisis-simple",
+  "targetCanonical": "http://loinc.org",
+  "group": [
+    {
+      "source": "http://mi-laboratorio.com/fhir/CodeSystem/analisis-simple",
+      "target": "http://loinc.org",
+      "element": [
+        {
+          "code": "TP_U",
+          "display": "PROTEINURIA",
+          "target": [
+            {
+              "code": "2888-6",
+              "display": "Protein [Mass/volume] in Urine",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "ALB_U",
+          "display": "ALBUMINA EN ORINA",
+          "target": [
+            {
+              "code": "14957-5",
+              "display": "Albumin [Mass/volume] in Urine",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "AL_CR_S",
+          "display": "MICROALBUMINURIA / CREATININA",
+          "target": [
+            {
+              "code": "9318-7",
+              "display": "Albumin/Creatinine [Mass Ratio] in Urine",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "CR2_U",
+          "display": "CREATININA (ORINA SIMPLE)",
+          "target": [
+            {
+              "code": "2161-8",
+              "display": "Creatinine [Mass/volume] in Urine",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "UA_S",
+          "display": "ACIDO URICO",
+          "target": [
+            {
+              "code": "3084-1",
+              "display": "Urate [Mass/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "CA_S",
+          "display": "CALCIO",
+          "target": [
+            {
+              "code": "17861-6",
+              "display": "Calcium [Mass/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "CPK_S",
+          "display": "CPK (CREATIN FOSFOKINASA)",
+          "target": [
+            {
+              "code": "2157-6",
+              "display": "Creatine kinase [Enzymatic activity/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "CR_S",
+          "display": "CREATININA SERICA",
+          "target": [
+            {
+              "code": "2160-0",
+              "display": "Creatinine [Mass/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "GLU_S",
+          "display": "GLUCOSA",
+          "target": [
+            {
+              "code": "2345-7",
+              "display": "Glucose [Mass/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "K_S",
+          "display": "POTASIO",
+          "target": [
+            {
+              "code": "2823-3",
+              "display": "Potassium [Moles/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "NA_S",
+          "display": "SODIO",
+          "target": [
+            {
+              "code": "2951-2",
+              "display": "Sodium [Moles/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "GOT_S",
+          "display": "TRANSAMINASA TGO (AST)",
+          "target": [
+            {
+              "code": "1920-8",
+              "display": "Aspartate aminotransferase [Enzymatic activity/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "GPT_S",
+          "display": "TRANSAMINASA TGP (ALT)",
+          "target": [
+            {
+              "code": "1742-6",
+              "display": "Alanine aminotransferase [Enzymatic activity/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "CHOL_S",
+          "display": "COLESTEROL TOTAL",
+          "target": [
+            {
+              "code": "2093-3",
+              "display": "Cholesterol [Mass/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "HDL_S",
+          "display": "COLESTEROL HDL",
+          "target": [
+            {
+              "code": "2085-9",
+              "display": "Cholesterol in HDL [Mass/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "LDL_S",
+          "display": "COLESTEROL LDL",
+          "target": [
+            {
+              "code": "13457-7",
+              "display": "Cholesterol in LDL [Mass/volume] in Serum or Plasma by calculation",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "TRIG_S",
+          "display": "TRIGLICERIDOS",
+          "target": [
+            {
+              "code": "2571-8",
+              "display": "Triglyceride [Mass/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "TSH_S",
+          "display": "TSH",
+          "target": [
+            {
+              "code": "11580-8",
+              "display": "Thyrotropin [Units/volume] in Serum or Plasma",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "HBA1C_S",
+          "display": "HEMOGLOBINA GLICOSILADA (A1C)",
+          "target": [
+            {
+              "code": "4548-4",
+              "display": "Hemoglobin A1c/Hemoglobin.total in Blood",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "HCT_B",
+          "display": "HEMATOCRITO",
+          "target": [
+            {
+              "code": "4544-3",
+              "display": "Hematocrit [Volume Fraction] of Blood by Automated count",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "PLT_B",
+          "display": "RECUENTO DE PLAQUETAS",
+          "target": [
+            {
+              "code": "777-3",
+              "display": "Platelets [#/volume] in Blood by Automated count",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "GLU-FQ_U",
+          "display": "GLUCOSA",
+          "target": [
+            {
+              "code": "25428-4",
+              "display": "Glucose [Mass/volume] in Urine by Test strip",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
