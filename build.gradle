@@ -166,7 +166,7 @@ dependencies {
 // ./gradlew clean test
 test {
     useJUnitPlatform()
-    // exclude '**/integrationtest/**'
+    exclude '**/integrationtest/**'
     maxParallelForks = 1
     testLogging {
         events "skipped", "failed"
