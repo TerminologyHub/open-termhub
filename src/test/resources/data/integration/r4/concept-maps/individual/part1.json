@@ -1,0 +1,28 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "2806779",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2022-02-01T19:24:22.783+00:00",
+    "source": "#r46O4HyrR3jCzIs5"
+  },
+  "url": "http://example.com/ConceptMap/part1",
+  "status": "draft",
+  "group": [
+    {
+      "source": "http://loinc.org",
+      "target": "http://snomed.info/sct",
+      "element": [
+        {
+          "code": "code3",
+          "target": [
+            {
+              "code": "sno-code3",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
