@@ -23,6 +23,7 @@ import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,14 @@ public final class LuceneQueryBuilder {
   /** The logger. */
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(LuceneQueryBuilder.class);
+
+
+  /** The max clause count. */
+  public static final int MAX_CLAUSE_COUNT = 32768;
+
+  static {
+    IndexSearcher.setMaxClauseCount(MAX_CLAUSE_COUNT);
+  }
 
   /**
    * Instantiates a new lucene query builder.

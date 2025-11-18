@@ -1,0 +1,170 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "CodeSystem",
+        "id": "340c926f-9ad6-4f1b-b230-dc4ca14575ab",
+        "url": "http://snomed.info/sct",
+        "version": "http://snomed.info/sct/731000124108/version/20240301",
+        "title": "SNOMEDCT_US",
+        "status": "active",
+        "date": "2024-01-01T00:00:00+00:00",
+        "publisher": "CS-CM-VS-CS-CM-VS-BUNDLE_TEST",
+        "content": "fragment",
+        "concept": [
+          {
+            "code": "170499009",
+            "display": "Isolation of infection contact"
+          },
+          {
+            "code": "609330002",
+            "display": "Map category value"
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "CodeSystem",
+        "id": "177f2263-fe04-4f1f-b0e6-9b351ab8baa9",
+        "url": "http://hl7.org/fhir/sid/icd-10-cm",
+        "version": "2023",
+        "title": "ICD10CM",
+        "status": "active",
+        "date": "2024-01-01T00:00:00+00:00",
+        "publisher": "CS-CM-VS-BUNDLE_TEST",
+        "content": "fragment",
+        "concept": [
+          {
+            "code": "E11",
+            "display": "Type 2 diabetes mellitus"
+          },
+          {
+            "code": "E11.9",
+            "display": "Type 2 diabetes mellitus without complications"
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "ConceptMap",
+        "id": "2a545e12-04eb-48ee-b988-c17346b4e05f",
+        "identifier": [
+          {
+            "system": "https://terminologyhub.com/model/mapset/code",
+            "value": "6011000124106"
+          }
+        ],
+        "url": "http://snomed.info/sct?fhir_cm=6011000124106",
+        "version": "20240301",
+        "title": "SNOMEDCT_US-ICD10CM",
+        "status": "active",
+        "date": "2024-03-01T00:00:00+00:00",
+        "publisher": "CS-CM-VS-BUNDLE_TEST",
+        "group": [
+          {
+            "source": "http://snomed.info/sct",
+            "target": "http://hl7.org/fhir/sid/icd-10-cm",
+            "element": [
+              {
+                "code": "290073004",
+                "display": "Lesion of breast",
+                "target": [ {
+                  "extension": [ {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                    "valueString": "1"
+                  }, {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                    "valueString": "TRUE"
+                  }, {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                    "valueString": "1"
+                  }, {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+                    "valueString": "ALWAYS N64.9 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
+                  } ],
+                  "code": "N64.9",
+                  "display": "Unable to determine name",
+                  "equivalence": "relatedto"
+                } ]
+              },
+              {
+                "code": "73211009",
+                "display": "Diabetes mellitus",
+                "target": [ {
+                  "extension": [ {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                    "valueString": "1"
+                  }, {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                    "valueString": "OTHERWISE TRUE"
+                  }, {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                    "valueString": "2"
+                  }, {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+                    "valueString": "ALWAYS E11.9 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
+                  } ],
+                  "code": "E11.9",
+                  "display": "Type 2 diabetes mellitus without complications",
+                  "equivalence": "relatedto"
+                }, {
+                  "extension": [ {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                    "valueString": "1"
+                  }, {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                    "valueString": "IFA 445518008 | Age at onset of clinical finding (observable entity) | >= 1.0 year AND IFA 445518008 | Age at onset of clinical finding (observable entity) | < 18.0 years"
+                  }, {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                    "valueString": "1"
+                  }, {
+                    "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+                    "valueString": "IF AGE AT ONSET OF CLINICAL FINDING ON OR AFTER 1.0 YEAR AND IF AGE AT ONSET OF CLINICAL FINDING BEFORE 18.0 YEARS CHOOSE E10.9 | DESCENDANTS NOT EXHAUSTIVELY MAPPED | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+                  } ],
+                  "code": "E10.9",
+                  "display": "Type 1 diabetes mellitus without complications",
+                  "equivalence": "relatedto"
+                } ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "ValueSet",
+        "id": "dd01be90-f9dd-4531-abb4-810f2090ba17",
+        "url": "http://snomed.info/sct?fhir_vs=731000124108",
+        "version": "20240301",
+        "title": "SNOMEDCT_US-EXTENSION",
+        "status": "active",
+        "date": "2024-03-01T00:00:00+00:00",
+        "publisher": "CS-CM-VS-BUNDLE_TEST",
+        "compose": {
+          "include": [
+            {
+              "system": "http://snomed.info/sct",
+              "concept": [
+                {
+                  "code": "5991000124107",
+                  "display": "SNOMED CT to ICD-10-CM rule-based mapping module"
+                },
+                {
+                  "code": "6011000124106",
+                  "display": "ICD-10-CM complex map reference set"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+
+

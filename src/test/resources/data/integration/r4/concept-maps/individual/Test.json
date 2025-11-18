@@ -1,0 +1,33 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "1697103",
+  "meta": {
+    "versionId": "2",
+    "lastUpdated": "2021-08-27T07:37:50.774+00:00",
+    "source": "#floN8yi6n64Zl6hI"
+  },
+  "url": "http://healtwerk.eu/ConceptMap/Test",
+  "name": "Test",
+  "title": "Test",
+  "status": "draft",
+  "purpose": "Okay",
+  "sourceCanonical": "http:clinfhir.com/fhir/ValueSet/support-factor-value",
+  "targetCanonical": "http://hapi.fhir.org/baseR4/ValueSet/1444251",
+  "group": [
+    {
+      "source": "http:clinfhir.com/fhir/ValueSet/support-factor-value",
+      "target": "http://hapi.fhir.org/baseR4/ValueSet/1444251",
+      "element": [
+        {
+          "code": "1",
+          "target": [
+            {
+              "code": "1",
+              "equivalence": "equal"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

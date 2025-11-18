@@ -154,20 +154,34 @@ public final class ConceptMapLoaderUtil {
       }
 
       // check for existing (require key fields)
-      final String abbreviation = conceptMap.path("title").asText();
+      final String abbreviation = conceptMap.has("title") ? conceptMap.path("title").asText()
+          : conceptMap.path("name").asText();
+
       final String publisher = conceptMap.path("publisher").asText();
       final String version = conceptMap.path("version").asText();
       if (abbreviation == null || abbreviation.isEmpty() || publisher == null || publisher.isEmpty()
           || version == null || version.isEmpty()) {
+        final List<String> missing = new ArrayList<>();
+        if (abbreviation == null || abbreviation.isEmpty()) {
+          missing.add(conceptMap.has("title") ? "title" : "name");
+        }
+        if (publisher == null || publisher.isEmpty()) {
+          missing.add("publisher");
+        }
+        if (version == null || version.isEmpty()) {
+          missing.add("version");
+        }
         throw FhirUtilityR4.exception(
-            "ConceptMap requires title, publisher, and version for import (missing one or more)",
+            "ConceptMap requires title (or name), publisher, and version for import. Missing: "
+                + String.join(", ", missing) + ". url: " + conceptMap.path("url").asText(),
             IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
       }
       Mapset mapset = findMapset(service, abbreviation, publisher, version);
       if (mapset != null) {
         throw FhirUtilityR4.exception(
             "Can not create multiple ConceptMap resources the same title, publisher,"
-                + " and version. duplicate = " + mapset.getId(),
+                + " and version. title: " + abbreviation + ", publisher: " + publisher
+                + ", version: " + version + ", duplicate = " + mapset.getId(),
             IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
       mapset = createMapset(service, conceptMap);
@@ -228,8 +242,8 @@ public final class ConceptMapLoaderUtil {
               final JsonNode groupNode = parser.readValueAsTree();
 
               for (final JsonNode elementNode : groupNode.path("element")) {
-                final String sourceCode = elementNode.get("code").asText();
-                final String sourceName = elementNode.get("display").asText();
+                final String sourceCode = elementNode.path("code").asText();
+                final String sourceName = elementNode.path("display").asText();
 
                 // Set source concept
                 final Concept existingFromConcept =
@@ -284,9 +298,9 @@ public final class ConceptMapLoaderUtil {
                   mapping.setTo(toConcept);
 
                   if (targetNode.has("equivalence")) {
-                    mapping.setType(targetNode.get("equivalence").asText());
+                    mapping.setType(targetNode.path("equivalence").asText());
                   } else {
-                    mapping.setType(targetNode.get("relationship").asText());
+                    mapping.setType(targetNode.path("relationship").asText());
                   }
 
                   // Set mapping attributes from extensions
@@ -427,7 +441,14 @@ public final class ConceptMapLoaderUtil {
     mapset.setPublisher(root.path("publisher").asText());
     final String version = root.path("version").asText();
     mapset.setVersion(version);
-    mapset.setReleaseDate(root.path("date").asText().substring(0, 10));
+    // Use date if available, otherwise fall back to meta.lastUpdated
+    String dateStr = root.path("date").asText();
+    if (dateStr == null || dateStr.isEmpty() || dateStr.length() < 10) {
+      dateStr = root.path("meta").path("lastUpdated").asText();
+    }
+    if (dateStr != null && !dateStr.isEmpty() && dateStr.length() >= 10) {
+      mapset.setReleaseDate(dateStr.substring(0, 10));
+    }
 
     String fromTerminology = null;
     if (root.has("sourceScopeUri")) {
@@ -486,12 +507,19 @@ public final class ConceptMapLoaderUtil {
     // Use the identifier as the code, otherwise use the id
     // NOTE: termhub generated files will have a single id
     // with a system matching this value.
-    JsonNode identifierNode = root.path("identifier").isArray() ? root.path("identifier").get(0)
-        : root.path("identifier");
-    if (identifierNode != null && "https://terminologyhub.com/model/mapset/code"
-        .equals(identifierNode.path("system").asText())) {
-      mapset.setCode(identifierNode.path("value").asText());
+    final JsonNode identifier = root.path("identifier");
+    if (identifier.isArray() && identifier.size() > 0) {
+      final JsonNode firstId = identifier.get(0);
+      if (firstId != null && firstId.path("system").asText().contains("/model/mapset/code")) {
+        mapset.setCode(firstId.path("value").asText());
+      }
     }
+    //JsonNode identifierNode = root.path("identifier").isArray() ? root.path("identifier").get(0)
+    //    : root.path("identifier");
+    //if (identifierNode != null && "https://terminologyhub.com/model/mapset/code"
+    //    .equals(identifierNode.path("system").asText())) {
+    //  mapset.setCode(identifierNode.path("value").asText());
+
     if (StringUtility.isEmpty(mapset.getCode())) {
       mapset.setCode(mapset.getId());
     }
