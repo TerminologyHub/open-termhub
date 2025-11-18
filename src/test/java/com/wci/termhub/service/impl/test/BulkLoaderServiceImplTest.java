@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.service.impl;
+package com.wci.termhub.service.impl.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -44,6 +44,7 @@ import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.service.BulkLoaderService;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.service.impl.BulkLoaderServiceImpl;
 import com.wci.termhub.test.AbstractServerTest;
 
 /**
