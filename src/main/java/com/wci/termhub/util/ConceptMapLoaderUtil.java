@@ -486,9 +486,10 @@ public final class ConceptMapLoaderUtil {
     // Use the identifier as the code, otherwise use the id
     // NOTE: termhub generated files will have a single id
     // with a system matching this value.
-    JsonNode identifierNode = root.path("identifier").isArray() ? root.path("identifier").get(0) : root.path("identifier");
+    JsonNode identifierNode = root.path("identifier").isArray() ? root.path("identifier").get(0)
+        : root.path("identifier");
     if (identifierNode != null && "https://terminologyhub.com/model/mapset/code"
-            .equals(identifierNode.path("system").asText())) {
+        .equals(identifierNode.path("system").asText())) {
       mapset.setCode(identifierNode.path("value").asText());
     }
     if (StringUtility.isEmpty(mapset.getCode())) {

@@ -58,10 +58,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
@@ -1167,19 +1165,21 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     headers.set("Content-Type", "application/fhir+json");
     String csJson = parser.encodeResourceToString(newCs);
     final org.springframework.http.HttpEntity<String> entity =
-            new org.springframework.http.HttpEntity<>(csJson, headers);
+        new org.springframework.http.HttpEntity<>(csJson, headers);
 
-    ResponseEntity<String> createResponse = restTemplate.postForEntity(endpoint, entity, String.class);
+    ResponseEntity<String> createResponse =
+        restTemplate.postForEntity(endpoint, entity, String.class);
     CodeSystem createdCodeSystem = parser.parseResource(CodeSystem.class, createResponse.getBody());
     assertEquals(HttpStatus.CREATED, createResponse.getStatusCode());
 
     // 2. Read the created CodeSystem
-    String getUrl = endpoint+ "/" + createdCodeSystem.getIdPart();
+    String getUrl = endpoint + "/" + createdCodeSystem.getIdPart();
     ResponseEntity<String> getResponse = restTemplate.getForEntity(getUrl, String.class);
     assertEquals(HttpStatus.OK, getResponse.getStatusCode());
 
     // 3. Delete the CodeSystem
-    ResponseEntity<String> deleteResponse = restTemplate.exchange(getUrl, HttpMethod.DELETE, null, String.class);
+    ResponseEntity<String> deleteResponse =
+        restTemplate.exchange(getUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NO_CONTENT, deleteResponse.getStatusCode());
 
     // 4. Verify deletion
@@ -1208,9 +1208,9 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
     headers.set("Content-Type", "application/fhir+json");
     final org.springframework.http.HttpEntity<String> entity =
-            new org.springframework.http.HttpEntity<>(json, headers);
+        new org.springframework.http.HttpEntity<>(json, headers);
     ResponseEntity<String> response =
-            restTemplate.postForEntity(LOCALHOST + port + FHIR_VALUESET, entity, String.class);
+        restTemplate.postForEntity(LOCALHOST + port + FHIR_VALUESET, entity, String.class);
     ValueSet createdValueSet = parser.parseResource(ValueSet.class, response.getBody());
     String strTestId = createdValueSet.getIdPart();
     assertNotNull(strTestId);
@@ -1225,18 +1225,18 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     // Try to delete the value set
     final String deleteUrl = LOCALHOST + port + FHIR_VALUESET + "/" + strTestId;
     LOGGER.info("Delete value set URL {}", deleteUrl);
-    response =
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    response = restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
     // Verify the value set is deleted by attempting to delete it again
     final ResponseEntity<String> response2 =
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
 
     response = restTemplate.getForEntity(findUrl, String.class);
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
   }
+
   /**
    * Test delete concept map.
    *
@@ -1255,14 +1255,15 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     conceptMap.setSourceScope(new IdType("CodeSystem/source-cs"));
     conceptMap.setTargetScope(new IdType("CodeSystem/target-cs"));
     conceptMap.setDate(new Date());
-    conceptMap.setIdentifier(List.of(new Identifier().setSystem("http://example.org/fhir/ids").setValue("cm-1")));
+    conceptMap.setIdentifier(
+        List.of(new Identifier().setSystem("http://example.org/fhir/ids").setValue("cm-1")));
     final String json = parser.encodeResourceToString(conceptMap);
     final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
     headers.set("Content-Type", "application/fhir+json");
     final org.springframework.http.HttpEntity<String> entity =
-            new org.springframework.http.HttpEntity<>(json, headers);
+        new org.springframework.http.HttpEntity<>(json, headers);
     ResponseEntity<String> response =
-            restTemplate.postForEntity(LOCALHOST + port + FHIR_CONCEPTMAP, entity, String.class);
+        restTemplate.postForEntity(LOCALHOST + port + FHIR_CONCEPTMAP, entity, String.class);
     ConceptMap createdMapset = parser.parseResource(ConceptMap.class, response.getBody());
     String testId = createdMapset.getIdPart();
     assertNotNull(testId);
@@ -1270,16 +1271,16 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     // Try to delete the concept map
     final String deleteUrl = LOCALHOST + port + FHIR_CONCEPTMAP + "/" + testId;
     LOGGER.info("Delete concept map URL {}", deleteUrl);
-    response =
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    response = restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
     // Verify the concept map is deleted by attempting to delete it again
     final ResponseEntity<String> response2 =
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
 
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
   }
+
   /**
    * Test bundle loading using the bulk load endpoint.
    *
