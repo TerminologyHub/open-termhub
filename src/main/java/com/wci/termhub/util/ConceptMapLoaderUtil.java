@@ -514,6 +514,12 @@ public final class ConceptMapLoaderUtil {
         mapset.setCode(firstId.path("value").asText());
       }
     }
+    //JsonNode identifierNode = root.path("identifier").isArray() ? root.path("identifier").get(0)
+    //    : root.path("identifier");
+    //if (identifierNode != null && "https://terminologyhub.com/model/mapset/code"
+    //    .equals(identifierNode.path("system").asText())) {
+    //  mapset.setCode(identifierNode.path("value").asText());
+
     if (StringUtility.isEmpty(mapset.getCode())) {
       mapset.setCode(mapset.getId());
     }

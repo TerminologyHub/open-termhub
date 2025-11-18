@@ -48,7 +48,7 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
 
   /** The search service. */
   @Autowired
-  private EntityRepositoryService searchService;
+  public EntityRepositoryService searchService;
 
   /** The index directory. */
   @Value("${lucene.index.directory}")
@@ -73,6 +73,11 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
   /** The setup once. */
   private static boolean setupOnce = false;
 
+  /**
+   * Sets the setup once.
+   *
+   * @param flag the new setup once
+   */
   public static void setSetupOnce(final boolean flag) {
     setupOnce = flag;
   }
