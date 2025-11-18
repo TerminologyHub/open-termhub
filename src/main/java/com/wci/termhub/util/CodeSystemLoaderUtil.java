@@ -169,13 +169,6 @@ public final class CodeSystemLoaderUtil {
         LOGGER.debug("  batch size: {}, limit: {}", DEFAULT_BATCH_SIZE);
       }
 
-      // Basic checks
-      // Validate required fields
-      if (jsonContent.get("url").isMissingNode()) {
-        throw FhirUtilityR4.exception("CodeSystem.url is required", IssueType.INVALID,
-            HttpServletResponse.SC_BAD_REQUEST);
-      }
-
       // check for existing
       final String abbreviation = jsonContent.path("title").asText();
       final String publisher = jsonContent.path("publisher").asText();
