@@ -206,7 +206,7 @@ public class SyndicationContentTracker {
    */
   public List<SyndicatedContent> getAllLoadedContent() {
     try {
-      final SearchParameters searchParams = new SearchParameters("*:*", 1000, 0);
+      final SearchParameters searchParams = new SearchParameters("*:*", 2000, 0);
       final ResultList<SyndicatedContent> results =
           searchService.find(searchParams, SyndicatedContent.class);
       return results.getItems();
@@ -241,7 +241,7 @@ public class SyndicationContentTracker {
    */
   public Set<String> getLoadedResourceKeys() {
     try {
-      final SearchParameters searchParams = new SearchParameters("*:*", 1000, 0);
+      final SearchParameters searchParams = new SearchParameters("*:*", 2000, 0);
       final ResultList<SyndicatedContent> results =
           searchService.find(searchParams, SyndicatedContent.class);
       final Set<String> keys = new HashSet<>();

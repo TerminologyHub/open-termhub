@@ -240,8 +240,8 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
         throw FhirUtilityR4.exception("_count parameter must be non-negative", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
       }
-      if (countValue > 1000) {
-        throw FhirUtilityR4.exception("_count parameter cannot exceed 1000", IssueType.INVALID,
+      if (countValue > 2000) {
+        throw FhirUtilityR4.exception("_count parameter cannot exceed 2000", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
       }
     }
@@ -510,7 +510,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
     }
 
     // Set reasonable limits for performance
-    questionnaireParams.setLimit(1000);
+    questionnaireParams.setLimit(2000);
     questionnaireParams.setOffset(0);
 
     if (logger.isDebugEnabled()) {

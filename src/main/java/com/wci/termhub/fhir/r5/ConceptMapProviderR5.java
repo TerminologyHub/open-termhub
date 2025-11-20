@@ -706,7 +706,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
               // mapset clauses
               "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
               "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
-              "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 1000, null, null),
+              "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 2000, null, null),
           Mapping.class).getItems();
 
       if (logger.isDebugEnabled()) {

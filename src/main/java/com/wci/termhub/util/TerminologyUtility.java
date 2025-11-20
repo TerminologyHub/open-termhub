@@ -647,7 +647,7 @@ public final class TerminologyUtility {
     final Concept concept) throws Exception {
 
     final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-        StringUtility.escapeKeywordField("from.code", concept.getCode())), 0, 1000, "", true);
+        StringUtility.escapeKeywordField("from.code", concept.getCode())), 0, 2000, "", true);
 
     final ResultList<ConceptRelationship> list =
         searchService.find(params, ConceptRelationship.class);
@@ -669,7 +669,7 @@ public final class TerminologyUtility {
     final Concept concept) throws Exception {
 
     final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-        StringUtility.escapeKeywordField("to.code", concept.getCode())), 0, 1000, "", true);
+        StringUtility.escapeKeywordField("to.code", concept.getCode())), 0, 2000, "", true);
 
     final ResultList<ConceptRelationship> list =
         searchService.find(params, ConceptRelationship.class);
@@ -694,7 +694,7 @@ public final class TerminologyUtility {
         StringUtility.composeQuery("AND",
             StringUtility.escapeKeywordField("terminology", terminology.getAbbreviation()),
             StringUtility.escapeKeywordField("concept.code", concept.getCode())),
-        0, 1000, "", true);
+        0, 2000, "", true);
 
     final ResultList<ConceptTreePosition> list =
         searchService.find(params, ConceptTreePosition.class);
@@ -717,7 +717,7 @@ public final class TerminologyUtility {
     final List<ConceptRef> list = new ArrayList<>();
     final Query expression = getExpressionQuery("<" + concept.getCode());
 
-    final SearchParameters params = new SearchParameters(expression, 0, 1000, "code", null);
+    final SearchParameters params = new SearchParameters(expression, 0, 2000, "code", null);
 
     final int ct = 0;
     while (true) {
