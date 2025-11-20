@@ -695,7 +695,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
     final Query expressionQuery = getExpressionQuery(url == null ? null : url.getValue());
     final Query booleanQuery =
         getAndQuery(terminologyQuery, subsetQuery, filterQuery, expressionQuery);
-    final int ct = count < 0 ? 0 : (count > 1000 ? 1000 : count);
+    final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
     final SearchParameters params = new SearchParameters(booleanQuery, offset, ct, null, null);
     if (activeOnly) {
       params.setActive(activeOnly);
