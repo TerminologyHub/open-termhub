@@ -178,7 +178,7 @@ public final class FhirUtility {
     }
 
     final String query = "uri:" + StringUtility.escapeQuery(codeSystemUri);
-    final SearchParameters params = new SearchParameters(query, null, 1000, null, null);
+    final SearchParameters params = new SearchParameters(query, null, 2000, null, null);
     logger.debug("lookupTerminology: query: {}", query);
     final ResultList<Terminology> tlist = searchService.find(params, Terminology.class);
 
@@ -790,7 +790,7 @@ public final class FhirUtility {
 
     if (mapsets == null) {
       // then do a find on the query
-      final SearchParameters params = new SearchParameters(query, null, 1000, null, null);
+      final SearchParameters params = new SearchParameters(query, null, 2000, null, null);
       final ResultList<Mapset> results = searchService.find(params, Mapset.class);
       mapsets = results.getItems();
 

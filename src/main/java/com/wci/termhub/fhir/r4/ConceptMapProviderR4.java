@@ -206,13 +206,13 @@ public class ConceptMapProviderR4 implements IResourceProvider {
                                   sourceSystem.getValue())
                               + " AND from.code:"
                               + StringUtility.escapeQuery(sourceCode.getValue()),
-                          null, 1000, null, null), Mapping.class)
+                          null, 2000, null, null), Mapping.class)
                       .getItems().stream().map(m -> m.getMapset().getCode())
                       .collect(Collectors.toSet()));
         } else {
           mapsetsMatchingSourceCodes.addAll(searchService
               .find(new SearchParameters(
-                  "from.code:" + StringUtility.escapeQuery(sourceCode.getValue()), null, 1000, null,
+                  "from.code:" + StringUtility.escapeQuery(sourceCode.getValue()), null, 2000, null,
                   null), Mapping.class)
               .getItems().stream().map(m -> m.getMapset().getCode()).collect(Collectors.toSet()));
         }
@@ -229,13 +229,13 @@ public class ConceptMapProviderR4 implements IResourceProvider {
                               + FhirUtility.lookupTerminology(searchService,
                                   targetSystem.getValue())
                               + " AND to.code:" + StringUtility.escapeQuery(targetCode.getValue()),
-                          null, 1000, null, null), Mapping.class)
+                          null, 2000, null, null), Mapping.class)
                       .getItems().stream().map(m -> m.getMapset().getCode())
                       .collect(Collectors.toSet()));
         } else {
           mapsetsMatchingTargetCodes.addAll(searchService
               .find(new SearchParameters(
-                  "to.code:" + StringUtility.escapeQuery(targetCode.getValue()), null, 1000, null,
+                  "to.code:" + StringUtility.escapeQuery(targetCode.getValue()), null, 2000, null,
                   null), Mapping.class)
               .getItems().stream().map(m -> m.getMapset().getCode()).collect(Collectors.toSet()));
         }
@@ -730,7 +730,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
           // TODO: how do we include publisher?, needs to be in concept map
           "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
           "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
-          "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 1000, null, null);
+          "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 2000, null, null);
 
       final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
 

@@ -536,7 +536,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false, schema = @Schema(implementation = String.class)),
@@ -554,8 +554,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
       final SearchParameters searchParams =
           new SearchParameters(query, offset, maxLimit, sort, ascending);
       final ResultList<Terminology> list = searchService.find(searchParams, Terminology.class);
@@ -833,7 +833,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false, schema = @Schema(implementation = String.class)),
@@ -888,8 +888,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // Build a query from the handler and use it in findHelper
       final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       // Handler applied, send null handler below
       final ResultList<Concept> list = findConceptsHelper(tlist, query2, expression, offset,
@@ -932,7 +932,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false, schema = @Schema(implementation = String.class)),
@@ -961,8 +961,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // Build a query from the handler and use it in findHelper
       final String query2 = QueryBuilder.findBuilder(builders, handler).buildQuery(query);
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       if (logger.isDebugEnabled()) {
         logger.debug("query for term: {}", query2);
@@ -1202,7 +1202,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false),
@@ -1266,7 +1266,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false),
@@ -1293,8 +1293,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
       }
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND",
@@ -1344,7 +1344,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false),
@@ -1366,8 +1366,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND", "terminology:" + StringUtility.escapeQuery(terminology),
@@ -1412,7 +1412,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false),
@@ -1440,8 +1440,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
       }
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND",
@@ -1493,7 +1493,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false),
@@ -1515,8 +1515,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND", "terminology:" + StringUtility.escapeQuery(terminology),
@@ -1561,7 +1561,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false),
@@ -1593,8 +1593,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final Terminology terminology = getTerminology(map, concept);
       terminologyHasTreePositions(terminology);
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND",
@@ -1652,7 +1652,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false),
@@ -1675,8 +1675,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // validate terminology - throw exception if not found
       final Terminology term = lookupTerminology(terminology);
       terminologyHasTreePositions(term);
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND", "terminology:" + StringUtility.escapeQuery(terminology),
@@ -1729,7 +1729,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false),
@@ -1768,8 +1768,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           "concept.code:" + StringUtility.escapeQuery(concept.getCode()),
           QueryBuilder.findBuilder(builders, handler).buildQuery(query)));
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       final ResultList<ConceptTreePosition> list =
           searchService.find(searchParams, ConceptTreePosition.class);
@@ -1836,7 +1836,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false),
@@ -1869,8 +1869,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           "terminology:" + StringUtility.escapeQuery(terminology),
           "concept.code:" + StringUtility.escapeQuery(code)));
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       final ResultList<ConceptTreePosition> list =
           searchService.find(searchParams, ConceptTreePosition.class);
@@ -1998,7 +1998,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false, schema = @Schema(implementation = String.class)),
@@ -2026,8 +2026,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapset> mapsets = lookupMapsets(mapset, true);
 
       // Build a query from the handler and use it in findHelper
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       // Handler applied, send null handler below
       final ResultList<Mapping> list =
@@ -2065,7 +2065,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false, schema = @Schema(implementation = String.class)),
@@ -2093,8 +2093,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Subset> subsets = lookupSubsets(mapset, true);
 
       // Build a query from the handler and use it in findHelper
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       // Handler applied, send null handler below
       final ResultList<SubsetMember> list =
@@ -2131,7 +2131,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false, schema = @Schema(implementation = String.class)),
@@ -2163,8 +2163,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Mapset> mapsets = lookupMapsets(mapsetId, false);
 
       // Build a query from the handler and use it in findHelper
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       // Handler applied, send null handler below
       final ResultList<Mapping> list =
@@ -2640,7 +2640,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false, schema = @Schema(implementation = String.class)),
@@ -2658,8 +2658,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       // Limit to loaded mapsets
       final SearchParameters searchParams = new SearchParameters(
@@ -2695,7 +2695,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false, schema = @Schema(implementation = String.class)),
@@ -2713,8 +2713,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
 
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       // Limit to loaded subsets
       final SearchParameters searchParams = new SearchParameters(
@@ -2791,7 +2791,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "offset", description = "Start index for search results", required = false,
           schema = @Schema(implementation = Integer.class), example = "0"),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
       @Parameter(name = "sort", description = "Comma-separated list of fields to sort on",
           required = false, schema = @Schema(implementation = String.class)),
@@ -2819,8 +2819,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final List<Subset> subsets = lookupSubsets(subsetId, false);
 
       // Build a query from the handler and use it in findHelper
-      // limit return objects to 1000 regardless of user request
-      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 1000);
+      // limit return objects to 2000 regardless of user request
+      final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
 
       // Handler applied, send null handler below
       final ResultList<SubsetMember> list =
@@ -2864,7 +2864,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           required = false),
       @Parameter(name = "query", description = "Search text", required = true),
       @Parameter(name = "limit",
-          description = "Limit of results to return (hard limit of 1000 regardless of value)",
+          description = "Limit of results to return (hard limit of 2000 regardless of value)",
           required = false, schema = @Schema(implementation = Integer.class), example = "10"),
   })
   public ResponseEntity<List<String>> autocomplete(
@@ -2916,7 +2916,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       if (logger.isDebugEnabled()) {
         logger.debug("Autocomplete search query: {}", finalQuery);
       }
-      final Integer maxLimit = (limit == null) ? 10 : Math.min(limit, 1000);
+      final Integer maxLimit = (limit == null) ? 10 : Math.min(limit, 2000);
       final SearchParameters params = new SearchParameters(finalQuery, 0, maxLimit * 2, null, null);
       final ResultList<Term> list =
           searchService.findFields(params, ModelUtility.asList("name"), Term.class);

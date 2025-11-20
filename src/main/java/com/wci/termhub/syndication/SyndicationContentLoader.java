@@ -598,7 +598,7 @@ public class SyndicationContentLoader {
   private void logAllSyndicatedContentRecords() {
     try {
       logger.info("ALL SYNDICATED CONTENT RECORDS ===");
-      final SearchParameters searchParams = new SearchParameters("*", 1000, 0);
+      final SearchParameters searchParams = new SearchParameters("*", 2000, 0);
       final ResultList<SyndicatedContent> results =
           searchService.find(searchParams, SyndicatedContent.class);
 

@@ -134,7 +134,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
   /**
    * Find code systems.
-   * 
+   *
    * <pre>
    * Parameters for all resources
    *   used: _id
@@ -200,7 +200,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
         if (code != null) {
           mapsetsMatchingCodes.addAll(searchService
               .find(new SearchParameters("to.code:" + StringUtility.escapeQuery(code.getValue()),
-                  null, 1000, null, null), Concept.class, null)
+                  null, 2000, null, null), Concept.class, null)
               .getItems().stream().map(c -> c.getCode()).collect(Collectors.toSet()));
         }
 
