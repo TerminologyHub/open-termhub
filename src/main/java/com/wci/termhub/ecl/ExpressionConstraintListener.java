@@ -74,6 +74,7 @@ public class ExpressionConstraintListener extends EclLogListener {
   /* see superclass */
   @Override
   public void enterSubexpressionconstraint(final ECLParser.SubexpressionconstraintContext ctx) {
+    super.enterSubexpressionconstraint(ctx);
     String text = ctx.getText();
 
     if (ctx.historysupplement() != null) {
@@ -89,44 +90,37 @@ public class ExpressionConstraintListener extends EclLogListener {
     final String conceptId = focusconcept.eclconceptreference().conceptid().getText();
     final ECLParser.ConstraintoperatorContext constraintoperator = ctx.constraintoperator();
     if (constraintoperator == null) {
-      final boolean isAdditionalType = ctx.getParent() instanceof ECLParser.EclattributenameContext;
-      final TermQuery termQuery =
-          new TermQuery(new Term(isAdditionalType ? "additionalType" : "code", conceptId));
+      boolean isAdditionalType = ctx.getParent() instanceof ECLParser.EclattributenameContext;
+      TermQuery termQuery = new TermQuery(new Term(isAdditionalType ? "additionalType" : "code", conceptId));
       queries.put(text, termQuery);
     } else {
       if (constraintoperator.childof() != null) {
-        final TermQuery parentQuery = new TermQuery(new Term("parent.code", conceptId));
-        queries.put(text, parentQuery);
+        queries.put(text, new TermQuery(new Term("parents.code", conceptId)));
+      } else if (constraintoperator.childorselfof() != null) {
+        queries.put(text, getSelfOfQuery("parents.code", conceptId));
       } else if (constraintoperator.parentof() != null) {
-        final TermQuery childrenQuery = new TermQuery(new Term("children.code", conceptId));
-        queries.put(text, childrenQuery);
+        queries.put(text, new TermQuery(new Term("children.code", conceptId)));
+      } else if (constraintoperator.parentorselfof() != null) {
+        queries.put(text, getSelfOfQuery("children.code", conceptId));
       } else if (constraintoperator.descendantof() != null) {
-        final TermQuery ancestorsQuery = new TermQuery(new Term("ancestors.code", conceptId));
-        queries.put(text, ancestorsQuery);
+        queries.put(text, new TermQuery(new Term("ancestors.code", conceptId)));
       } else if (constraintoperator.descendantorselfof() != null) {
-        final TermQuery ancestorsTermQuery = new TermQuery(new Term("ancestors.code", conceptId));
-        final TermQuery selfTermQuery = new TermQuery(new Term("code", conceptId));
-        final BooleanQuery selfAncestorsQuery =
-            new BooleanQuery.Builder().add(ancestorsTermQuery, BooleanClause.Occur.SHOULD)
-                .add(selfTermQuery, BooleanClause.Occur.SHOULD).build();
-        queries.put(text, selfAncestorsQuery);
+        queries.put(text, getSelfOfQuery("ancestors.code", conceptId));
       } else if (constraintoperator.ancestorof() != null) {
-        final TermQuery descendantsTermQuery =
-            new TermQuery(new Term("descendants.code", conceptId));
-        queries.put(text, descendantsTermQuery);
+        queries.put(text, new TermQuery(new Term("descendants.code", conceptId)));
       } else if (constraintoperator.ancestororselfof() != null) {
-        final TermQuery descendantsTermQuery =
-            new TermQuery(new Term("descendants.code", conceptId));
-        final TermQuery selfTermQuery = new TermQuery(new Term("code", conceptId));
-        final BooleanQuery selfDescendantsQuery =
-            new BooleanQuery.Builder().add(descendantsTermQuery, BooleanClause.Occur.SHOULD)
-                .add(selfTermQuery, BooleanClause.Occur.SHOULD).build();
-        queries.put(text, selfDescendantsQuery);
+        queries.put(text, getSelfOfQuery("descendants.code", conceptId));
       }
     }
     if (ctx.historysupplement() != null) {
       addHistorical(ctx.historysupplement());
     }
+  }
+
+  private BooleanQuery getSelfOfQuery(String field, String conceptId) {
+    TermQuery termQuery = new TermQuery(new Term(field, conceptId));
+    TermQuery selfTermQuery = new TermQuery(new Term("code", conceptId));
+    return new BooleanQuery.Builder().add(termQuery, BooleanClause.Occur.SHOULD).add(selfTermQuery, BooleanClause.Occur.SHOULD).build();
   }
 
   /**
