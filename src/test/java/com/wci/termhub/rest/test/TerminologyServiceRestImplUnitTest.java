@@ -1386,7 +1386,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
      *
      * @throws Exception the exception
      */
-    // TODO: bring this test back
     @Test
     @Order(FIND)
     public void testConceptSearchWithBrowserHandlerAndLNCConceptName() throws Exception {

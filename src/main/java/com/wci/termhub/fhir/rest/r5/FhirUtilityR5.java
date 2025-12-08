@@ -565,18 +565,6 @@ public final class FhirUtilityR5 {
       parameters.addParameter(new Parameters.ParametersParameterComponent()
           .setName("sufficientlyDefined").setValue(new BooleanType(concept.getDefined())));
     }
-    // TODO: review where the value comes from
-    // if (codeSystem.getTitle().startsWith("SNOMED")) {
-    // if (properties == null || properties.contains("effectiveTime")) {
-    // parameters.addParameter(createProperty("effectiveTime",
-    // DateUtility.DATE_YYYYMMDD.format(concept.getModified()), false));
-    // }
-    // } else {
-    // if (properties == null || properties.contains("modified")) {
-    // parameters.addParameter(createProperty("modified", concept.getModified(),
-    // false));
-    // }
-    // }
 
     // Definitions
     if (properties == null || properties.contains("definition")) {
@@ -672,8 +660,6 @@ public final class FhirUtilityR5 {
         parameters.addParameter(createProperty("child", coding, false));
       }
     }
-
-    // TODO: what do we do with regular relationships?
 
     return parameters;
   }

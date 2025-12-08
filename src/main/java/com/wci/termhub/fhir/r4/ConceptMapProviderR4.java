@@ -727,7 +727,6 @@ public class ConceptMapProviderR4 implements IResourceProvider {
           terminology == null ? null
               : ("from.terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation())),
           // mapset clauses
-          // TODO: how do we include publisher?, needs to be in concept map
           "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
           "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
           "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 2000, null, null);
