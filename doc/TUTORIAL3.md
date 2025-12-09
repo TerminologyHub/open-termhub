@@ -85,17 +85,67 @@ page (which is where the project creation flow above leaves off)
 
 ## Deploy the Container with a PROJECT_API_KEY
 
-With a "Project API Key" in hand, run the docker image using the code shown below. 
-* Choose an `INDEX_DIR` that is a volume you have permissions for and can mount to the container.  This volume will get populated with index data as terminology artifacts are loaded.
-* Use `PROJECT_API_KEY` obtained from your project, this will allow the container to syndicate your content directly to the server.
-* If you want to use the embedded browser to see hierarchies, use `ENABLE_POST_LOAD_COMPUTATIONS=true` instead of `false` as this computes tree position data used by the hierarchy browser. 
+With a "Project API Key" in hand, you have two options for loading data into the container:
 
+1. **Pre-loading (Recommended for Production)**: Load data first, then start the server
+2. **Startup Syndication**: Load data when the server starts
 
-### REMOVE THIS BEFORE FINISHING
+### Option 1: Pre-loading Data (Recommended)
 
-```
+Pre-loading data before starting the server provides better control and allows you to verify data loading succeeded before deployment.
+
+**Step 1: Prepare the Index Directory**
+
+```bash
 # On Windows use export INDEX_DIR=c:/tmp/opentermhub/index
 # On Windows if running within wsl use export INDEX_DIR=/mnt/c/tmp/opentermhub/index
+export PROJECT_API_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJI...bfUQbjkpX8ivQlpg_30
+export INDEX_DIR=/tmp/opentermhub/index
+/bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
+```
+
+**Step 2: Run the Syndication Loader**
+
+```bash
+docker run --rm \
+  -e PROJECT_API_KEY=$PROJECT_API_KEY \
+  -e JAVA_OPTS=-Xmx4g \
+  -v "$INDEX_DIR":/index \
+  wcinformatics/open-termhub:latest \
+  /srv/rt/syndicate.sh
+```
+
+This will download and load all content from your project. The container will exit when complete with:
+- **Exit code 0**: Success
+- **Exit code 1**: Syndication errors
+- **Exit code 2**: Configuration error (missing API key)
+
+**Step 3: Verify Success**
+
+```bash
+echo $?  # Should be 0 if successful
+```
+
+**Step 4: Start the Server**
+
+Now that data is pre-loaded, start the server without syndication:
+
+```bash
+docker run -d --rm --name open-termhub \
+  -e JAVA_OPTS=-Xmx4g \
+  -e ENABLE_POST_LOAD_COMPUTATIONS=false \
+  -v "$INDEX_DIR":/index \
+  -p 8080:8080 \
+  wcinformatics/open-termhub:latest
+```
+
+Note: We **do not** set `PROJECT_API_KEY` or `SYNDICATION_CHECK_ON_STARTUP` because data is already loaded.
+
+### Option 2: Startup Syndication
+
+Alternatively, you can load data when the server starts:
+
+```bash
 export PROJECT_API_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJI...bfUQbjkpX8ivQlpg_30
 export INDEX_DIR=/tmp/opentermhub/index
 /bin/rm -rf $INDEX_DIR/*; mkdir -p $INDEX_DIR; chmod -R a+rwx $INDEX_DIR
@@ -103,10 +153,30 @@ docker run -d --rm --name open-termhub \
   -e JAVA_OPTS=-Xmx4g \
   -e ENABLE_POST_LOAD_COMPUTATIONS=false \
   -e PROJECT_API_KEY=$PROJECT_API_KEY \
-  -v "$INDEX_DIR":/index -p 8080:8080 wcinformatics/open-termhub:latest
+  -e SYNDICATION_CHECK_ON_STARTUP=true \
+  -v "$INDEX_DIR":/index \
+  -p 8080:8080 \
+  wcinformatics/open-termhub:latest
 ```
 
-For the configuration described above on a standard Macbook pro, total runtime was about 40 min and the index volume used under 10GB of disk space.  The actual requirements depend on exactly what content you have configured to syndicate into the container.
+**Note:** With startup syndication, the server starts immediately but may take time to load data. Use `docker logs -f open-termhub` to monitor progress.
+
+### Debugging
+
+To enable debug logging during syndication (either method), set the `DEBUG` environment variable:
+
+```bash
+-e DEBUG=true
+```
+
+### Performance Notes
+
+For the configuration described above on a standard Macbook Pro:
+- Total runtime: ~40 minutes
+- Index volume: ~10GB disk space (without `ENABLE_POST_LOAD_COMPUTATIONS`)
+- Index volume: ~20GB disk space (with `ENABLE_POST_LOAD_COMPUTATIONS=true`)
+
+Actual requirements depend on the content configured in your project.
 
 **[Back to top](#step-by-step-instructions-to-deploy-terminologies-with-termhub)**
 

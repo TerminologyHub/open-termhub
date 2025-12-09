@@ -49,6 +49,10 @@ RUN chown -R ${RUNTIME_USER}:${RUNTIME_USER} /srv/rt
 ADD run.sh /srv/rt/
 RUN chmod +x /srv/rt/run.sh
 
+# Copy the syndication data loader script
+ADD syndicate.sh /srv/rt/
+RUN chmod +x /srv/rt/syndicate.sh
+
 # Switch to the runtime user and copy the product in.
 USER $RUNTIME_USER
 COPY --from=gradle-build --chown=server:server /home/gradle/project/build/libs/ /srv/rt/
