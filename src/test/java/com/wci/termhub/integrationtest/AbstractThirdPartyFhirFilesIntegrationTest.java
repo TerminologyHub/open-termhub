@@ -47,8 +47,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.test.AbstractServerTest;
 
 /**
- * Abstract base for tests that load third-party FHIR resource files via
- * endpoints.
+ * Abstract base for tests that load third-party FHIR resource files via endpoints.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -280,6 +279,7 @@ public abstract class AbstractThirdPartyFhirFilesIntegrationTest extends Abstrac
    * @return the resource type
    * @throws Exception the exception
    */
+  @SuppressWarnings("resource")
   protected static String getResourceType(final Path file) throws Exception {
     final JsonFactory jf = new JsonFactory();
     try (final JsonParser p = jf.createParser(file.toFile())) {

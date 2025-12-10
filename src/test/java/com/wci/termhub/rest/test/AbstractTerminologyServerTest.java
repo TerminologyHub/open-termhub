@@ -48,7 +48,7 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
 
   /** The search service. */
   @Autowired
-  EntityRepositoryService searchService;
+  public EntityRepositoryService searchService;
 
   /** The index directory. */
   @Value("${lucene.index.directory}")

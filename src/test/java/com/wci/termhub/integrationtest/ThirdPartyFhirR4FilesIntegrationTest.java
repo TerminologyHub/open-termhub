@@ -44,8 +44,8 @@ import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ThreadLocalMapper;
 
 /**
- * Loads all R4 files via FHIR endpoints and verifies basic queries. Collects
- * failures and logs them at the end of each test run.
+ * Loads all R4 files via FHIR endpoints and verifies basic queries. Collects failures and logs them
+ * at the end of each test run.
  */
 @TestMethodOrder(OrderAnnotation.class)
 public class ThirdPartyFhirR4FilesIntegrationTest
@@ -73,6 +73,7 @@ public class ThirdPartyFhirR4FilesIntegrationTest
   /** Track loaded resources by key (title/publisher/version). */
   private final Set<String> loadedResources = new HashSet<>();
 
+  /** The Constant BASE_FILE_PATH. */
   private static final String BASE_FILE_PATH = "src/test/resources/data/integration/r4/";
 
   /**
