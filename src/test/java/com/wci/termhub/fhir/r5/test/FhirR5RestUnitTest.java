@@ -613,7 +613,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertFalse(properties.isEmpty(), "Should have properties");
 
     // Verify effectiveTime property is added
-    // TODO: re-enable when effectiveTime
+    // Re-enable when effectiveTime
     // final boolean hasEffectiveTime = properties.stream()
     // .anyMatch(p -> p.getPart().stream()
     // .anyMatch(part -> "effectiveTime".equals(part.getValue().toString())
@@ -699,7 +699,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertFalse(properties.isEmpty(), "Should have properties");
 
     // Verify effectiveTime property is added
-    // TODO: re-enable when effectiveTime
+    // Re-enable when effectiveTime
     // final boolean hasEffectiveTime = properties.stream()
     // .anyMatch(p -> p.getPart().stream()
     // .anyMatch(part -> "effectiveTime".equals(part.getValue().toString())

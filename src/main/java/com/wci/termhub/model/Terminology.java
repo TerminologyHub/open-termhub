@@ -57,10 +57,7 @@ public class Terminology extends TerminologyRef implements HasAttributes {
 
     /** The show sty. */
     showSty("show-sty"),
-    /**
-     * The hierarchy sort style. TODO: rather than this ConceptTreePosition shoudl have a sort
-     * field.
-     */
+    /** The hierarchy sort style. */
     hierarchySortStyle("hierarchy-sort-style"),
     /** The polyhierarchy. */
     polyhierarchy("polyhierarchy"),

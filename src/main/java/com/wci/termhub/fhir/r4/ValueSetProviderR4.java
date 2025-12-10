@@ -629,7 +629,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
       throw FhirUtilityR4.exception("Failed to find matching value set",
           OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
     }
-    // TODO: this is possible if there is a value set across multiple terminologies
     if (valueSets.size() > 1) {
       throw FhirUtilityR4.exception("Too many matching value sets found",
           OperationOutcome.IssueType.MULTIPLEMATCHES, HttpServletResponse.SC_EXPECTATION_FAILED);
@@ -748,8 +747,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
           }
         }
       }
-
-      // TODO: support "property" parameter on expand and add that info here
 
       expansion.addContains(code);
     }

@@ -621,8 +621,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
   private ValueSet getExpandedValueSet(final IdType id, final UriType url, final StringType version,
     final StringType filter, final int offset, final int count, final boolean activeOnly,
     final Set<String> languages) throws Exception {
-    // Look up implicit value sets for code systems
 
+    // Look up implicit value sets for code systems
     final List<ValueSet> valueSets = findPossibleValueSets(true, id, url, version);
 
     // Expect a single value set
@@ -630,11 +630,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
       throw FhirUtilityR5.exception("Failed to find matching value set",
           OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
     }
-    // TODO: this is possible if there is a value set across multiple terminologies
     if (valueSets.size() > 1) {
       throw FhirUtilityR5.exception("Too many matching value sets found",
           OperationOutcome.IssueType.MULTIPLEMATCHES, HttpServletResponse.SC_EXPECTATION_FAILED);
-
     }
 
     final ValueSet vs = valueSets.get(0);
@@ -744,8 +742,6 @@ public class ValueSetProviderR5 implements IResourceProvider {
           }
         }
       }
-
-      // TODO: support "property" parameter on expand and add that info here
 
       expansion.addContains(code);
     }

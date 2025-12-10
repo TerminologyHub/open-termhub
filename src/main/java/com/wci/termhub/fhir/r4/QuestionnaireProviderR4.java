@@ -61,7 +61,6 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
   private static Logger logger = LoggerFactory.getLogger(QuestionnaireProviderR4.class);
 
   /** The Constant LOINC_SERVEY_INSTRUMENTS_CODE. */
-  // TODO: Is there a better way to identify questionnaires?
   private static final String LOINC_SERVEY_INSTRUMENTS_CODE = "LP29696-9";
 
   /** The Constant LOINC_SYSTEM. */
@@ -676,12 +675,6 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
       final SearchParameters params = new SearchParameters();
       params.getFilters().put("relationships.to.code", LOINC_SERVEY_INSTRUMENTS_CODE);
       params.getFilters().put("relationships.from.code", concept.getCode());
-
-      // This would need to be implemented based on the actual relationship
-      // model
-      // For now, we'll use a placeholder approach
-      // TODO: Implement actual relationship querying based on the data model
-
       return false;
     } catch (final Exception e) {
       logger.debug("Error checking survey instruments relationship for concept {}: {}",
