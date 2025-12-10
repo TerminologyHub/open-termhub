@@ -1,0 +1,93 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "48504088",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2025-07-31T04:55:14.108+00:00",
+    "source": "#QKJQ8GzbSTZ8e8k6"
+  },
+  "url": "http://example.org/fhir/ConceptMap/custom-marital-status-map",
+  "version": "1.0.0",
+  "name": "CustomToFhirMaritalStatusMap",
+  "title": "Custom to FHIR Marital Status Map",
+  "status": "active",
+  "date": "2025-07-31",
+  "publisher": "Example Healthcare Organization",
+  "contact": [
+    {
+      "name": "Support",
+      "telecom": [
+        {
+          "system": "email",
+          "value": "support@example.org"
+        }
+      ]
+    }
+  ],
+  "description": "A concept map to translate marital status codes from a custom code system to HL7 FHIR v3-MaritalStatus codes.",
+  "sourceUri": "http://example.org/fhir/CodeSystem/custom-marital-status",
+  "targetUri": "http://terminology.hl7.org/CodeSystem/v3-MaritalStatus",
+  "group": [
+    {
+      "source": "http://example.org/fhir/CodeSystem/custom-marital-status",
+      "target": "http://terminology.hl7.org/CodeSystem/v3-MaritalStatus",
+      "element": [
+        {
+          "code": "S",
+          "display": "Single",
+          "target": [
+            {
+              "code": "S",
+              "display": "Never Married",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "M",
+          "display": "Married",
+          "target": [
+            {
+              "code": "M",
+              "display": "Married",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "D",
+          "display": "Divorced",
+          "target": [
+            {
+              "code": "D",
+              "display": "Divorced",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "W",
+          "display": "Widowed",
+          "target": [
+            {
+              "code": "W",
+              "display": "Widowed",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "U",
+          "display": "Unknown",
+          "target": [
+            {
+              "code": "UNK",
+              "display": "Unknown",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

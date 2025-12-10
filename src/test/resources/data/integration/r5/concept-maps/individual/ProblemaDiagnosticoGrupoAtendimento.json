@@ -1,0 +1,5359 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "2550672",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2021-09-11T19:44:32.329+00:00",
+    "source": "#44NOsUGhNimA3wWz"
+  },
+  "url": "https://ipes.tech/fhir/r4/ConceptMap/ProblemaDiagnosticoGrupoAtendimento",
+  "version": "202110",
+  "name": "Mapeamento de problemas e diagnósticos elegíveis para grupo de atendimento prioritário para vacinação contra COVID-19",
+  "status": "active",
+  "experimental": false,
+  "publisher": "iPES",
+  "group": [
+    {
+      "source": "2.16.840.1.113883.6.139",
+      "target": "http://www.saude.gov.br/fhir/r4/CodeSystem/BRGrupoAtendimento",
+      "element": [
+        {
+          "code": "K74",
+          "display": "Doença cardíaca isquémica com angina",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K75",
+          "display": "Infarto ou Enfarte agudo miocárdio",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K76",
+          "display": "Doença cardíaca isquémica sem angina",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K77",
+          "display": "Insuficiência cardíaca",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K78",
+          "display": "Fibrilação/flutter auricular/ atrial",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K79",
+          "display": "Taquicardia Paroxística",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K80",
+          "display": "Arritmia cardíaca NE",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K82",
+          "display": "Doença cardiopulmonar",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K83",
+          "display": "Doença valvular cardíaca NE",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K84",
+          "display": "Outras doenças cardíacas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K89",
+          "display": "Isquêmia/ acidente cerebral transitória(o)",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K90",
+          "display": "Trombose/acidente vascular cerebral",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K91",
+          "display": "Doença vascular cerebral",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K92",
+          "display": "Aterosclerose/doença vascular periférica",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "K99",
+          "display": "Outras doenças do aparelho circulatório",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "R95",
+          "display": "Doença pulmonar obstrutiva crónica",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "T89",
+          "display": "Diabetes insulino-dependente",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "T90",
+          "display": "Diabetes não insulino-dependente",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "U88",
+          "display": "Glomerulonefrite/ sindrome nefrótica",
+          "target": [
+            {
+              "code": "000105",
+              "display": "Doença Renal Crônica"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "2.16.840.1.113883.6.3",
+      "target": "http://www.saude.gov.br/fhir/r4/CodeSystem/BRGrupoAtendimento",
+      "element": [
+        {
+          "code": "B20",
+          "display": "Doença pelo HIV resultando em doenças infecciosas e parasitárias",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B200",
+          "display": "Doença pelo HIV resultando em infecções micobacterianas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B201",
+          "display": "Doença pelo HIV resultando em outras infecções bacterianas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B202",
+          "display": "Doença pelo HIV resultando em doença citomegálica",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B203",
+          "display": "Doença pelo HIV resultando em outras infecções virais",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B204",
+          "display": "Doença pelo HIV resultando em candidíase",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B205",
+          "display": "Doença pelo HIV resultando em outras micoses",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B206",
+          "display": "Doença pelo HIV resultando em pneumonia por Pneumocystis jirovecii",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B207",
+          "display": "Doença pelo HIV resultando em infecções múltiplas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B208",
+          "display": "Doença pelo HIV resultando em outras doenças infecciosas e parasitárias",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B209",
+          "display": "Doença pelo HIV resultando em doença infecciosa ou parasitária não especificada",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B21",
+          "display": "Doença pelo HIV resultando em neoplasias malígnas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B213",
+          "display": "Doença pelo HIV resultando em outras neoplasias malignas dos tecidos linf., hematopoét. e correlato",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B217",
+          "display": "Doença pelo HIV resultando em múltiplas neoplasias malignas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B218",
+          "display": "Doença pelo HIV resultando em outras neoplasias malignas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B219",
+          "display": "Doença pelo HIV resultando em neoplasia maligna não especificada",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B22",
+          "display": "Doença pelo HIV resultando em doenças especificadas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B220",
+          "display": "Doença pelo HIV resultando em encefalopatia",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B221",
+          "display": "Doença pelo HIV resultando em pneumonite intersticial linfática",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B222",
+          "display": "Doença pelo HIV resultando em síndrome de emaciação",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B227",
+          "display": "Doença pelo HIV resultando em doenças múltiplas classificadas em outra parte",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B23",
+          "display": "Doença pelo HIV resultando em outras doenças especificadas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B230",
+          "display": "Síndrome de infecção aguda pelo hiv",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B231",
+          "display": "Doença pelo HIV resultando em linfadenopatias generalizadas (persistentes)",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B232",
+          "display": "Doença pelo HIV resultando em anomalias hematológicas e imunológicas não classificada em out. parte",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B238",
+          "display": "Doença pelo HIV resultando em outra afecções especificadas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B24",
+          "display": "Doença pelo vírus da imunodeficiência humana [HIV] não especificada",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "B90",
+          "display": "Sequelas de tuberculose",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "B900",
+          "display": "Seqüelas de tuberculose do sistema nervoso central",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "B901",
+          "display": "Seqüelas de tuberculose geniturinária",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "B902",
+          "display": "Seqüelas de tuberculose óssea e das articulações",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "B908",
+          "display": "Seqüelas de tuberculose de outros órgãos",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "B909",
+          "display": "Seqüelas de tuberculose das vias respiratórias e de órgãos não especificados",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "C96",
+          "display": "Out neoplasias malígnas e as não especificadas tecidos linfático hematopoético e tecidos correlatos",
+          "target": [
+            {
+              "code": "000102",
+              "display": "Neoplasias"
+            }
+          ]
+        },
+        {
+          "code": "C967",
+          "display": "Outras neoplasias malignas especificadas dos tecidos linfático, hematopoético e tecidos correlatos",
+          "target": [
+            {
+              "code": "000102",
+              "display": "Neoplasias"
+            }
+          ]
+        },
+        {
+          "code": "C969",
+          "display": "Neoplasia maligna dos tecidos linfático, hematopoético e tecidos correlatos, não especificada",
+          "target": [
+            {
+              "code": "000102",
+              "display": "Neoplasias"
+            }
+          ]
+        },
+        {
+          "code": "D47",
+          "display": "Out neoplasias comport incerto ou desconhecido tecidos linfático hematopoético e tecidos correlatos",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D470",
+          "display": "Tumores de comportamento incerto ou desconhecido de mastócitos e células histiocíticas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D471",
+          "display": "Doença mieloproliferativa crônica",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D472",
+          "display": "Gamopatia monoclonal",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D473",
+          "display": "Trombocitemia essencial (hemorrágica)",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D477",
+          "display": "Outras neoplasias especif. de comport. incerto ou desc. dos tecidos linf., hematop. e relacionados",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D479",
+          "display": "Neoplasia de comportamento incerto ou desconh. dos tec. linf., hematop. e correlatos,ñ especificada",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D56",
+          "display": "Talassemia",
+          "target": [
+            {
+              "code": "000101",
+              "display": "Anemia Falciforme"
+            }
+          ]
+        },
+        {
+          "code": "D560",
+          "display": "Talassemia Alfa",
+          "target": [
+            {
+              "code": "000101",
+              "display": "Anemia Falciforme"
+            }
+          ]
+        },
+        {
+          "code": "D561",
+          "display": "Talassemia Beta",
+          "target": [
+            {
+              "code": "000101",
+              "display": "Anemia Falciforme"
+            }
+          ]
+        },
+        {
+          "code": "D562",
+          "display": "Talassemia Delta-Beta",
+          "target": [
+            {
+              "code": "000101",
+              "display": "Anemia Falciforme"
+            }
+          ]
+        },
+        {
+          "code": "D568",
+          "display": "Outras talassemias",
+          "target": [
+            {
+              "code": "000101",
+              "display": "Anemia Falciforme"
+            }
+          ]
+        },
+        {
+          "code": "D569",
+          "display": "Talassemia não especificada",
+          "target": [
+            {
+              "code": "000101",
+              "display": "Anemia Falciforme"
+            }
+          ]
+        },
+        {
+          "code": "D57",
+          "display": "Transtornos falciformes",
+          "target": [
+            {
+              "code": "000101",
+              "display": "Anemia Falciforme"
+            }
+          ]
+        },
+        {
+          "code": "D570",
+          "display": "Anemia falciforme com crise",
+          "target": [
+            {
+              "code": "000101",
+              "display": "Anemia Falciforme"
+            }
+          ]
+        },
+        {
+          "code": "D582",
+          "display": "Outras hemoglobinopatias",
+          "target": [
+            {
+              "code": "000101",
+              "display": "Anemia Falciforme"
+            }
+          ]
+        },
+        {
+          "code": "D800",
+          "display": "Hipogamaglobulinemia hereditária",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D801",
+          "display": "Hipogamaglobulinemia não familiar",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D803",
+          "display": "Deficiência seletiva de subclasses de imunoglobulina G [IGG]",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D805",
+          "display": "Imunodeficiência com aumento de imunoglobulina M [IGM]",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D806",
+          "display": "Deficiência de anticorpos com imunoglobulinas próximas do normal ou com hiperimunoglobulinemia",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D807",
+          "display": "Hipogamaglobulinemia transitória da infância",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D808",
+          "display": "Outras imunodeficiências com predominância de defeitos de anticorpos",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D830",
+          "display": "Imunodeficiência comum variável com predominância de anormal. do número e da função das células B",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D832",
+          "display": "Imunodeficiência comum variável com auto-anticorpos às células B ou T",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D838",
+          "display": "Outras imunodeficiências comuns variáveis",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D84",
+          "display": "Outras imunodeficiências",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D840",
+          "display": "Defeito do antígeno-1 da função de linfócito [LFA-1]",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D841",
+          "display": "Defeitos no sistema complemento",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D848",
+          "display": "Outras imunodeficiências especificadas",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "D849",
+          "display": "Imunodeficiência não especificada",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "E10",
+          "display": "Diabetes mellitus insulino-dependente",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E102",
+          "display": "Diabetes Mellitus insulino-dependente - com complicações renais",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E103",
+          "display": "Diabetes Mellitus insulino-dependente - com complicações oftálmicas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E104",
+          "display": "Diabetes Mellitus insulino-dependente - com complicações neurológicas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E105",
+          "display": "Diabetes Mellitus insulino-dependente - com complicações circulatórias periféricas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E106",
+          "display": "Diabetes Mellitus insulino-dependente - com outras complicações especificadas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E107",
+          "display": "Diabetes Mellitus insulino-dependente - com complicações múltiplas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E108",
+          "display": "Diabetes Mellitus insulino-dependente - com complicações não especificadas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E11",
+          "display": "Diabetes mellitus não-insulino-dependente",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E112",
+          "display": "Diabetes Mellitus não-insulino-dependente - com complicações renais",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E113",
+          "display": "Diabetes Mellitus não-insulino-dependente - com complicações oftálmicas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E114",
+          "display": "Diabetes Mellitus não-insulino-dependente - com complicações neurológicas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E115",
+          "display": "Diabetes Mellitus não-insulino-dependente - com complicações circulatórias periféricas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E116",
+          "display": "Diabetes Mellitus não-insulino-dependente - com outras complicações especificadas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E117",
+          "display": "Diabetes Mellitus não-insulino-dependente - com complicações múltiplas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E118",
+          "display": "Diabetes Mellitus não-insulino-dependente - com complicações não especificadas",
+          "target": [
+            {
+              "code": "000103",
+              "display": "Diabetes Mellitus"
+            }
+          ]
+        },
+        {
+          "code": "E66",
+          "display": "Obesidade",
+          "target": [
+            {
+              "code": "000109",
+              "display": "Obesidade Grave (Imc≥40)"
+            }
+          ]
+        },
+        {
+          "code": "E84",
+          "display": "Fibrose cistica",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "E840",
+          "display": "Fibrose cística com manifestações pulmonares",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "E841",
+          "display": "Fibrose cística com manifestações intestinais",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "E848",
+          "display": "Fibrose cística com outras manifestações",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "E849",
+          "display": "Fibrose cística não especificada",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "F01",
+          "display": "Demência vascular",
+          "target": [
+            {
+              "code": "000115",
+              "display": "Doença neurológica crônica"
+            }
+          ]
+        },
+        {
+          "code": "F022",
+          "display": "Demência na doença de Huntington",
+          "target": [
+            {
+              "code": "000115",
+              "display": "Doença neurológica crônica"
+            }
+          ]
+        },
+        {
+          "code": "F024",
+          "display": "Demência na doença pelo vírus da imunodeficiência humana [HIV]",
+          "target": [
+            {
+              "code": "000115",
+              "display": "Doença neurológica crônica"
+            }
+          ]
+        },
+        {
+          "code": "F72",
+          "display": "Retardo mental grave",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F720",
+          "display": "Retardo mental grave - menção de ausência de ou de comprometimento mínimo do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F721",
+          "display": "Retardo mental grave - comprometimento signif. do comportamento, requerendo vigilância ou tratamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F728",
+          "display": "Retardo mental grave - outros comprometimentos do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F729",
+          "display": "Retardo mental grave - sem menção de comprometimento do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F73",
+          "display": "Retardo mental profundo",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F730",
+          "display": "Retardo mental profundo - menção de ausência de ou de comprometimento mínimo do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F731",
+          "display": "Retardo mental profundo - comprometimento signif. do comport., requerendo vigilância ou tratamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F738",
+          "display": "Retardo mental profundo - outros comprometimentos do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F739",
+          "display": "Retardo mental profundo - sem menção de comprometimento do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F78",
+          "display": "Outro retardo mental",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F780",
+          "display": "Outro retardo mental - menção de ausência de ou de comprometimento mínimo do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F781",
+          "display": "Outro retardo mental - comprometimento signif. do comportamento, requerendo vigilância ou tratamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F788",
+          "display": "Outro retardo mental - outros comprometimentos do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F789",
+          "display": "Outro retardo mental - sem menção de comprometimento do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F79",
+          "display": "Retardo mental não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F790",
+          "display": "Retardo mental não especificado - menção de ausência ou de comprometimento mínimo do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F791",
+          "display": "Retardo mental não especificado - compromet. signif. comportam., requerendo vigilância ou tratamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F798",
+          "display": "Retardo mental não especificado - outros comprometimentos do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F799",
+          "display": "Retardo mental não especificado - sem menção de comprometimento do comportamento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F84",
+          "display": "Transtornos globais do desenvolvimento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F840",
+          "display": "Autismo infantil",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F841",
+          "display": "Autismo atípico",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F842",
+          "display": "Síndrome de Rett",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F843",
+          "display": "Outro transtorno desintegrativo da infância",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F844",
+          "display": "Transtorno com hipercinesia associada a retardo mental e a movimentos estereotipados",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F844",
+          "display": "Transtorno com hipercinesia associada a retardo mental e a movimentos estereotipados",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F845",
+          "display": "Síndrome de asperger",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F848",
+          "display": "Outros transtornos globais do desenvolvimento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F849",
+          "display": "Transtornos globais não especificados do desenvolvimento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "F99",
+          "display": "Transtorno mental não especificado em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G04",
+          "display": "Encefalite mielite e encefalomielite",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G040",
+          "display": "Encefalite aguda disseminada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G041",
+          "display": "Paraplegia espástica tropical",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G042",
+          "display": "Meningoencefalite e meningomielite bacterianas não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G048",
+          "display": "Outras encefalites, mielites e encefalomielites",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G049",
+          "display": "Encefalite, mielite e encefalomielite não especificada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G10",
+          "display": "Doença de Huntington",
+          "target": [
+            {
+              "code": "000115",
+              "display": "Doença neurológica crônica"
+            }
+          ]
+        },
+        {
+          "code": "G11",
+          "display": "Ataxia hereditária",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G110",
+          "display": "Ataxia congênita não-progressiva",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G111",
+          "display": "Ataxia cerebelar de início precoce",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G112",
+          "display": "Ataxia cerebelar de início tardio",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G113",
+          "display": "Ataxia cerebelar com déficit na reparação do dna",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G114",
+          "display": "Paraplegia espástica hereditária",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G118",
+          "display": "Outras ataxias hereditárias",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G119",
+          "display": "Ataxia hereditária não especificada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G35",
+          "display": "Esclerose múltipla",
+          "target": [
+            {
+              "code": "000115",
+              "display": "Doença neurológica crônica"
+            }
+          ]
+        },
+        {
+          "code": "G45",
+          "display": "Acidentes vasculares cerebrais isquêmicos transitórios e síndromes correlatas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "G46",
+          "display": "Síndromes vasculares cerebrais que ocorrem em doenças cerebrovasculares",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "G80",
+          "display": "Paralisia cerebral",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G800",
+          "display": "Paralisia cerebral quadriplágica espástica",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G801",
+          "display": "Paralisia cerebral diplégica espástica",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G802",
+          "display": "Paralisia cerebral hemiplégica espástica",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G803",
+          "display": "Paralisia cerebral discinética",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G804",
+          "display": "Paralisia cerebral atáxica",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G808",
+          "display": "Outras formas de paralisia cerebral",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G809",
+          "display": "Paralisia cerebral não especificada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G81",
+          "display": "Hemiplegia",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G810",
+          "display": "Hemiplegia flácida",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G811",
+          "display": "Hemiplegia espástica",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G819",
+          "display": "Hemiplegia não especificada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G82",
+          "display": "Paraplegia e tetraplegia",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G82",
+          "display": "Paraplegia e tetraplegia",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G820",
+          "display": "Paraplegia flácida",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G820",
+          "display": "Paraplegia flácida",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G821",
+          "display": "Paraplegia espástica",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G821",
+          "display": "Paraplegia espástica",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G822",
+          "display": "Paraplegia não especificada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G822",
+          "display": "Paraplegia não especificada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G823",
+          "display": "Tetraplegia flácida",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G823",
+          "display": "Tetraplegia flácida",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G824",
+          "display": "Tetraplegia espástica",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G824",
+          "display": "Tetraplegia espástica",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G825",
+          "display": "Tetraplegia não especificada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "G825",
+          "display": "Tetraplegia não especificada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H47",
+          "display": "Transtornos do nervo optico e das vias opticas",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H53",
+          "display": "Disturbios visuais",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H530",
+          "display": "Ambliopia por anopsia",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H531",
+          "display": "Distúrbios visuais subjetivos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H532",
+          "display": "Diplopia",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H533",
+          "display": "Outros transtornos da visão binocular",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H534",
+          "display": "Defeitos do campo visual",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H535",
+          "display": "Deficiências da visão cromática",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H536",
+          "display": "Cegueira noturna",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H538",
+          "display": "Outros distúrbios visuais",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H539",
+          "display": "Distúrbio visual não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H54",
+          "display": "Cegueira e visão subnormal",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H540",
+          "display": "Cegueira, ambos os olhos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H541",
+          "display": "Cegueira em um olho e visão subnormal em outro",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H542",
+          "display": "Visão subnormal de ambos os olhos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H543",
+          "display": "Perda não qualificada da visão em ambos os olhos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H544",
+          "display": "Cegueira em um olho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H545",
+          "display": "Visão subnormal em um olho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H546",
+          "display": "Perda não qualificada da visão em um olho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H547",
+          "display": "Perda não especificada da visão",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H90",
+          "display": "Perda de audição por transtorno de condução e/ou neuro-sensorial",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H91",
+          "display": "Outras perdas de audição",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H92",
+          "display": "Otalgia e secreção auditiva",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H93",
+          "display": "Transtornos do ouvido não classificados em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H94",
+          "display": "Outros transtornos do ouvido em doenças classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "H95",
+          "display": "Transtornos do ouvido e da apofise mastóide pós-procedimentos não classificados em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "I08",
+          "display": "Doenças de multiplas valvas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I080",
+          "display": "Transtornos de valvas mitral e aórtica",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I081",
+          "display": "Transtornos de ambas as valvas mitral e tricúspide",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I082",
+          "display": "Transtornos de ambas as valvas aórtica e tricúspide",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I083",
+          "display": "Transtornos das valvas mitral, aórtica e tricúspide",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I088",
+          "display": "Outras doenças de múltiplas valvas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I089",
+          "display": "Doença não especificada de múltiplas valvas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I11",
+          "display": "Doença cardíaca hipertensiva",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I110",
+          "display": "Doença cardíaca hipertensiva com insuficiência cardíaca (congestiva)",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I119",
+          "display": "Doença cardíaca hipertensiva sem insuficiência cardíaca (congestiva)",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I13",
+          "display": "Doença cardíaca e renal hipertensiva",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I130",
+          "display": "Doença cardíaca e renal hipertensiva com insuficiência cardíaca (congestiva)",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I131",
+          "display": "Doença cardíaca e renal hipertensiva com insuficiência renal",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I132",
+          "display": "Doença cardíaca e renal hipertensiva com insuficiência cardíaca (congestiva) e insuficiência renal",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I139",
+          "display": "Doença cardíaca e renal hipertensiva, não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I20",
+          "display": "Angina pectoris",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I21",
+          "display": "Infarto agudo do miocárdio",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I22",
+          "display": "Infarto do miocárdio recorrente",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I220",
+          "display": "Infarto do miocárdio recorrente da parede anterior",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I221",
+          "display": "Infarto do miocárdio recorrente da parede inferior",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I228",
+          "display": "Infarto do miocárdio recorrente de outras localizações",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I229",
+          "display": "Infarto do miocárdio recorrente de localização não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I23",
+          "display": "Algumas complicações atuais subsequentes ao infarto agudo do miocárdio",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I24",
+          "display": "Doenças isquemicas agudas do coração",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I240",
+          "display": "Trombose coronária que não resulta em infarto do miocárdio",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I241",
+          "display": "Síndrome de dressler",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I249",
+          "display": "Doença isquêmica aguda do coração não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I25",
+          "display": "Doença isquemica crônica do coração",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I250",
+          "display": "Doença cardiovascular aterosclerótica, descrita desta maneira",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I251",
+          "display": "Doença aterosclerótica do coração",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I252",
+          "display": "Infarto antigo do miocárdio",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I253",
+          "display": "Aneurisma cardíaco",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I254",
+          "display": "Aneurisma de artéria coronária",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I255",
+          "display": "Miocardiopatia isquêmica",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I256",
+          "display": "Isquemia miocárdica silenciosa",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I258",
+          "display": "Outras formas de doença isquêmica crônica do coração",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I259",
+          "display": "Doença isquêmica crônica do coração não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I34",
+          "display": "Transtornos não-reumáticos da valva mitral",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I35",
+          "display": "Transtornos não-reumáticos da valva aórtica",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I36",
+          "display": "Transtornos não-reumáticos da valva tricúspide",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I37",
+          "display": "Transtornos da valva pulmonar",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I42",
+          "display": "Cardiomiopatias",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I420",
+          "display": "Cardiomiopatia dilatada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I429",
+          "display": "Cardiomiopatia não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I43",
+          "display": "Cardiomiopatia em doenças classificadas em outra parte",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I44",
+          "display": "Bloqueio atrioventricular e do ramo esquerdo",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I45",
+          "display": "Transtornos de condução",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I46",
+          "display": "Parada cardíaca",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I47",
+          "display": "Taquicardia paroxistica",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I48",
+          "display": "Flutter e fibrilação atrial",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I49",
+          "display": "Outras arritmias cardíacas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I490",
+          "display": "Flutter e fibrilação ventricular",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I491",
+          "display": "Despolarização atrial prematura",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I492",
+          "display": "Despolarização juncional prematura",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I493",
+          "display": "Despolarização ventricular prematura",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I494",
+          "display": "Outras formas de despolarização prematura e as não especificadas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I495",
+          "display": "Síndrome do nó sinusal",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I498",
+          "display": "Outras arritmias cardíacas especificadas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I499",
+          "display": "Arritmia cardíaca não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I50",
+          "display": "Insuficiência cardíaca",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I500",
+          "display": "Insuficiência cardíaca congestiva",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I501",
+          "display": "Insuficiência ventricular esquerda",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I509",
+          "display": "Insuficiência cardíaca não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I51",
+          "display": "Doenças cardíacas maldefinidas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I517",
+          "display": "Cardiomegalia",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I52",
+          "display": "Outras afecções cardíacas em doenças classificadas em outra parte",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I60",
+          "display": "Hemorragia subaracnóide",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I61",
+          "display": "Hemorragia intracerebral",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I619",
+          "display": "Hemorragia intracerebral não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I62",
+          "display": "Outras hemorragias intracranianas não-traumáticas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I63",
+          "display": "Infarto cerebral",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I639",
+          "display": "Infarto cerebral não especificado",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I64",
+          "display": "Acidente vascular cerebral, não especificado como hemorrágico ou isquêmico",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I65",
+          "display": "Oclusão e estenose de artérias pre-cerebrais que naoresultam em infarto cerebral",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I652",
+          "display": "Oclusão e estenose da artéria carótida",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I66",
+          "display": "Oclusão e estenose de artérias cerebrais que não resultam em infarto cerebral",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I67",
+          "display": "Doenças cerebrovasculares",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I670",
+          "display": "Dissecção de artérias cerebrais, sem ruptura",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I671",
+          "display": "Aneurisma cerebral não-roto",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I672",
+          "display": "Aterosclerose cerebral",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I673",
+          "display": "Leucoencefalopatia vascular progressiva",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I675",
+          "display": "Doença de moyamoya",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I676",
+          "display": "Trombose não-piogênica do sistema venoso intracraniano",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I677",
+          "display": "Arterite cerebral não classificada em outra parte",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I678",
+          "display": "Outras doenças cerebrovasculares especificadas",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I679",
+          "display": "Doença cerebrovascular não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I68",
+          "display": "Transtornos cerebrovasculares em doenças classificadas em outra parte",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I69",
+          "display": "Doenças cerebrovasculares",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I70",
+          "display": "Aterosclerose",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I700",
+          "display": "Aterosclerose da aorta",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I701",
+          "display": "Aterosclerose da artéria renal",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I702",
+          "display": "Aterosclerose das artérias das extremidades",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I708",
+          "display": "Aterosclerose de outras artérias",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I709",
+          "display": "Aterosclerose generalizada e a não especificada",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I71",
+          "display": "Aneurisma e dissecção da aorta",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I710",
+          "display": "Aneurisma dissecante da aorta [qualquer porção]",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I713",
+          "display": "Aneurisma da aorta abdominal, roto",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I714",
+          "display": "Aneurisma da aorta abdominal, sem menção de ruptura",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I715",
+          "display": "Aneurisma da aorta tóraco-abdominal, roto",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I716",
+          "display": "Aneurisma da aorta toráco-abdominal, sem menção de ruptura",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "I719",
+          "display": "Aneurisma aórtico de localização não especificada, sem menção de ruptura",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "J44",
+          "display": "Doenças pulmonares obstrutivas crônicas",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "J440",
+          "display": "Doença pulmonar obstrutiva crônica com infecção respiratória aguda do trato respiratório inferior",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "J441",
+          "display": "Doença pulmonar obstrutiva crônica com exacerbação aguda não especificada",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "J448",
+          "display": "Outras formas especificadas de doença pulmonar obstrutiva crônica",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "J449",
+          "display": "Doença pulmonar obstrutiva crônica não especificada",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "J63",
+          "display": "Outras poeiras inorgânicas",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "J64",
+          "display": "Pneumoconiose não especificada",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "J65",
+          "display": "Pneumoconiose associada com tuberculose",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "J841",
+          "display": "Outras doenças pulmonares intersticiais com fibrose",
+          "target": [
+            {
+              "code": "000104",
+              "display": "Pneumopatias Crônicas Graves"
+            }
+          ]
+        },
+        {
+          "code": "K703",
+          "display": "Cirrose hepática alcoólica",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "K717",
+          "display": "Doença hepática tóxica com fibrose e cirrose hepáticas",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "K74",
+          "display": "Fibrose e cirrose hepáticas",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "K740",
+          "display": "Fibrose hepática",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "K741",
+          "display": "Esclerose hepática",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "K742",
+          "display": "Fibrose hepática com esclerose hepática",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "K743",
+          "display": "Cirrose biliar primária",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "K744",
+          "display": "Cirrose biliar secundária",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "K745",
+          "display": "Cirrose biliar, sem outra especificação",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "K746",
+          "display": "Outras formas de cirrose hepática e as não especificadas",
+          "target": [
+            {
+              "code": "000114",
+              "display": "Cirrose hepática"
+            }
+          ]
+        },
+        {
+          "code": "M21",
+          "display": "Outras deformidades adquiridas dos membros",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M210",
+          "display": "Deformidade em valgo não classificada em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M211",
+          "display": "Deformidade em varo não classificada em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M212",
+          "display": "Deformidade em flexão",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M213",
+          "display": "Mão (pulso) ou pé pendente (adquirido)",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M214",
+          "display": "Pé chato [pé plano] (adquirido)",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M215",
+          "display": "Mão e pé em garra e mão e pé tortos adquiridos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M216",
+          "display": "Outras deformidades adquiridas do tornozelo e do pé",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M217",
+          "display": "Desigualdade (adquirida) do comprimento dos membros",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M218",
+          "display": "Outras deformidades adquiridas especificadas dos membros",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "M219",
+          "display": "Deformidade adquirida não especificada de membro",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "N04",
+          "display": "Síndrome nefrótica",
+          "target": [
+            {
+              "code": "000105",
+              "display": "Doença Renal Crônica"
+            }
+          ]
+        },
+        {
+          "code": "N18",
+          "display": "Insuficiência renal crônica",
+          "target": [
+            {
+              "code": "000105",
+              "display": "Doença Renal Crônica"
+            }
+          ]
+        },
+        {
+          "code": "N180",
+          "display": "Doença renal em estádio final",
+          "target": [
+            {
+              "code": "000105",
+              "display": "Doença Renal Crônica"
+            }
+          ]
+        },
+        {
+          "code": "N188",
+          "display": "Outra insuficiência renal crônica",
+          "target": [
+            {
+              "code": "000105",
+              "display": "Doença Renal Crônica"
+            }
+          ]
+        },
+        {
+          "code": "N189",
+          "display": "Insuficiência renal crônica não especificada",
+          "target": [
+            {
+              "code": "000105",
+              "display": "Doença Renal Crônica"
+            }
+          ]
+        },
+        {
+          "code": "Q00",
+          "display": "Anencefalia e malformações similares",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q01",
+          "display": "Encefalocele",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q02",
+          "display": "Microcefalia",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q03",
+          "display": "Hidrocefalia congênita",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q04",
+          "display": "Outras malformações congênitas do cerebro",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q05",
+          "display": "Espinha bifida",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q06",
+          "display": "Outras malformações congênitas da medula espinhal",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q07",
+          "display": "Outras malformações congênitas do sistema nervoso",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q10",
+          "display": "Malformações congênitas das pálpebrass do aparelho lacrimal e da órbita",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q11",
+          "display": "Anoftalmia microftalmia e macroftalmia",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q12",
+          "display": "Malformações congênitas do cristalino",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q13",
+          "display": "Malformações congênitas da camara anterior do olho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q14",
+          "display": "Malformações congênitas da camara posterior do olho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q15",
+          "display": "Outras malformações congênitas do olho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q16",
+          "display": "Malformações congênitas do ouvido causando comprometimento da audição",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q17",
+          "display": "Outras malformações congênitas da orelha",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q18",
+          "display": "Outras malformações congênitas da face e do pescoço",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q20",
+          "display": "Malformações congênitas das camaras e das comunicações cardíacas",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q21",
+          "display": "Malformações congênitas dos septos cardiacos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q213",
+          "display": "Tetralogia de fallot",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q22",
+          "display": "Malformações congênitas das valvas pulmonar e tricúspide",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q23",
+          "display": "Malformações congênitas das valvas aórtica e mitral",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q24",
+          "display": "Outras malformações congênitas do coração",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q24",
+          "display": "Outras malformações congênitas do coração",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q240",
+          "display": "Dextrocardia",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q241",
+          "display": "Levocardia",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q242",
+          "display": "Cor triatriatum",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q243",
+          "display": "Estenose do infundíbulo pulmonar",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q244",
+          "display": "Estenose subaórtica congênita",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q245",
+          "display": "Malformações dos vasos coronários",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q246",
+          "display": "Bloqueio congênito do coração",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q249",
+          "display": "Malformação não especificada do coração",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q25",
+          "display": "Malformações congênitas das grandes artérias",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q25",
+          "display": "Malformações congênitas das grandes artérias",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q250",
+          "display": "Permeabilidade do canal arterial",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q251",
+          "display": "Coartação da aorta",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q252",
+          "display": "Atresia da aorta",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q253",
+          "display": "Estenose da aorta",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q254",
+          "display": "Outras malformações congênitas da aorta",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q255",
+          "display": "Atresia da artéria pulmonar",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q256",
+          "display": "Estenose da artéria pulmonar",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q257",
+          "display": "Outras malformações congênitas da artéria pulmonar",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q258",
+          "display": "Outras malformações congênitas das grandes artérias",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q259",
+          "display": "Malformação congênita não especificada das grandes artérias",
+          "target": [
+            {
+              "code": "000106",
+              "display": "Doenças Cardiovasculares e Cerebrovasculares"
+            }
+          ]
+        },
+        {
+          "code": "Q26",
+          "display": "Malformações congênitas das grandes veias",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q27",
+          "display": "Outras malformações congênitas do sistema vascular periferico",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q28",
+          "display": "Outras malformações congênitas do aparelho circulatório",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q30",
+          "display": "Malformação congênita do nariz",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q31",
+          "display": "Malformações congênitas da laringe",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q32",
+          "display": "Malformações congênitas da traqueia e dos bronquios",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q33",
+          "display": "Malformações congênitas do pulmão",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q34",
+          "display": "Outras malformações congênitas do aparelho respiratório",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q35",
+          "display": "Fenda palatina",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q36",
+          "display": "Fenda labial",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q37",
+          "display": "Fenda labial com fenda palatina",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q38",
+          "display": "Outras malformações congênitas da língua da boca e da faringe",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q39",
+          "display": "Malformações congênitas do esôfago",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q40",
+          "display": "Outras malformações congênitas do trato digestivo superior",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q41",
+          "display": "Ausência atresia e estenose congênita do intestino delgado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q42",
+          "display": "Ausência atresia e estenose congênita do colon",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q43",
+          "display": "Outras malformações congênitas do intestino",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q44",
+          "display": "Malformações congênitas da vesícula biliar das vias biliares e do fígado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q45",
+          "display": "Outras malformações congênitas do aparelho digestivo",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q50",
+          "display": "Malformações congênitas dos ovários das trompas de falopio e dos ligamentos largos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q51",
+          "display": "Malformações congênitas do útero e do colo do utero",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q52",
+          "display": "Outras malformações congênitas dos orgãos genitais femininos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q53",
+          "display": "Testiculo não-descido",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q54",
+          "display": "Hipospadias",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q55",
+          "display": "Outras malformações congênitas dos orgãos genitais masculinos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q56",
+          "display": "Sexo indeterminado e pseudo-hermafroditismo",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q60",
+          "display": "Agenesia renal e outros defeitos de redução do rim",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q61",
+          "display": "Doenças cisticas do rim",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q62",
+          "display": "Anomalias congênitas obstrutivas da pelve renal e malformações congênitas do ureter",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q63",
+          "display": "Outras malformações congênitas do rim",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q64",
+          "display": "Outras malformações congênitas do aparelho urinário",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q65",
+          "display": "Malformações congênitas do quadril",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q66",
+          "display": "Deformidades congênitas do pe",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q67",
+          "display": "Deformidades osteomusculares congênitas da cabeca da face da coluna e do torax",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q68",
+          "display": "Outras deformidades osteomusculares congênitas",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q69",
+          "display": "Polidactilia",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q70",
+          "display": "Sindactilia",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q71",
+          "display": "Defeitos por redução do membro superior",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q72",
+          "display": "Defeitos por redução do membro inferior",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q73",
+          "display": "Defeitos por redução de membro não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q74",
+          "display": "Outras malformações congênitas dos membros",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q75",
+          "display": "Outras malformações congênitas dos ossos do cranio e da face",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q76",
+          "display": "Malformações congênitas da coluna vertebral e dos ossos do torax",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q77",
+          "display": "Osteocondrodisplasia com anomalias de crescimento dos ossos longos e da coluna vertebral",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q78",
+          "display": "Outras osteocondrodisplasias",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q79",
+          "display": "Malformações congênitas do sistema osteomuscular não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q80",
+          "display": "Ictiose congênita",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q81",
+          "display": "Epidermolise bolhosa",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q82",
+          "display": "Outras malformações congênitas da pele",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q83",
+          "display": "Malformações congênitas da mama",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q84",
+          "display": "Outras malformações congênitas do tegumento",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q85",
+          "display": "Facomatoses não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q86",
+          "display": "Síndromes c/ malformações congênitas devidas a causas exogenas conhecidas ncop",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q87",
+          "display": "Outras síndromes com malformações congênitas que acometem múltiplos sistemas",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q87",
+          "display": "Outras síndromes com malformações congênitas que acometem múltiplos sistemas",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q870",
+          "display": "Síndromes com malformações congênitas afetando predominantemente o aspecto da face",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q871",
+          "display": "Síndromes com malformações congênitas associadas predominantemente com nanismo",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q872",
+          "display": "Síndromes com malformações congênitas afetando predominantemente os membros",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q873",
+          "display": "Síndromes com malformações congênitas com hipercrescimento precoce",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q874",
+          "display": "Síndrome de marfan",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q875",
+          "display": "Outras síndromes com malformações congênitas com outras alterações do esqueleto",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q878",
+          "display": "Outras síndromes com malformações congênitas especificadas, não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q89",
+          "display": "Outras malformações congênitas não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q900",
+          "display": "Trissomia 21, não-disjunção meiótica",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q901",
+          "display": "Trissomia 21, mosaicismo (não-disjunção mitótica)",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q902",
+          "display": "Trissomia 21, translocação",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q91",
+          "display": "Síndrome de Edwards e síndrome de Patau",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q910",
+          "display": "Trissomia 18, não-disjunção meiótica",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q911",
+          "display": "Trissomia 18, mosaicismo cromossômico (não-disjunção mitótica)",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q912",
+          "display": "Trissomia 18, translocação",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q914",
+          "display": "Trissomia 13, não-disjunção meiótica",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q915",
+          "display": "Trissomia 13, mosaicismo cromossômico (não-disjunção mitótica)",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q916",
+          "display": "Trissomia 13, translocação",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q92",
+          "display": "Outras trissomias e trissomias parciais dos autossomos não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q92",
+          "display": "Outras trissomias e trissomias parciais dos autossomos não classificadas em outra parte",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q920",
+          "display": "Trissomia de um cromossomo inteiro, não-disjunção meiótica",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q921",
+          "display": "Trissomia de um cromossomo inteiro, mosaicismo cromossômico (não-disjunção mitótica)",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q922",
+          "display": "Trissomia parcial major",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q923",
+          "display": "Trissomia parcial minor",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q928",
+          "display": "Outras trissomias especificadas e trissomias parciais dos autossomos",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q929",
+          "display": "Trissomia e trissomia parcial não especificada dos autossomos",
+          "target": [
+            {
+              "code": "000110",
+              "display": "Síndrome de Down"
+            }
+          ]
+        },
+        {
+          "code": "Q93",
+          "display": "Monossomias e deleções dos autossomos não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q95",
+          "display": "Rearranjos equilibrados e marcadores estruturais não classificados em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q96",
+          "display": "Síndrome de Turner",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q97",
+          "display": "Outras anomalias dos cromossomos sexuais fenotipo feminino não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q98",
+          "display": "Outras anomalias dos cromossomos sexuais fenotipo masculino não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "Q99",
+          "display": "Outras anomalias dos cromossomos não classificadas em outra parte",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S48",
+          "display": "Amputação traumática do ombro e do braço",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S480",
+          "display": "Amputação traumática da articulação do ombro",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S481",
+          "display": "Amputação traumática de localização entre o ombro e o cotovelo",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S489",
+          "display": "Amputação traumática do ombro e do braço, de localização não especificada",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S58",
+          "display": "Amputação traumática do cotovelo e do antebraço",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S580",
+          "display": "Amputação traumática ao nível do cotovelo",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S581",
+          "display": "Amputação traumática do antebraço entre o cotovelo e o punho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S589",
+          "display": "Amputação traumática do antebraço, nível não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S68",
+          "display": "Amputação traumática ao nível do punho e da mão",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S680",
+          "display": "Amputação traumática do polegar (completa) (parcial)",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S681",
+          "display": "Amputação traumática de um outro dedo apenas (completa) (parcial)",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S682",
+          "display": "Amputação traumática de dois ou mais dedos somente (completa) (parcial)",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S683",
+          "display": "Amputação traumática combinada de (partes de) dedo(s) associada a outras partes do punho e da mão",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S684",
+          "display": "Amputação traumática da mão ao nível do punho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S688",
+          "display": "Amputação traumática de outras partes do punho e da mão",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S689",
+          "display": "Amputação traumática do punho e da mão, nível não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S78",
+          "display": "Amputação traumática do quadril e da coxa",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S780",
+          "display": "Amputação traumática na articulação do quadril",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S781",
+          "display": "Amputação traumática localizada entre o joelho e o quadril",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S789",
+          "display": "Amputação traumática do quadril e coxa nível não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S88",
+          "display": "Amputação traumática da perna",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S880",
+          "display": "Amputação traumática ao nível do joelho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S881",
+          "display": "Amputação traumática entre o joelho e o tornozelo",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S889",
+          "display": "Amputação traumática da perna ao nível não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S98",
+          "display": "Amputação traumática do tornozelo e do pé",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S980",
+          "display": "Amputação traumática do pé ao nível do tornozelo",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S981",
+          "display": "Amputação traumática de apenas um artelho",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S982",
+          "display": "Amputação traumática de dois ou mais artelhos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S983",
+          "display": "Amputação traumática de outras partes do pé",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "S984",
+          "display": "Amputação traumática do pé ao nível não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T050",
+          "display": "Amputação traumática de ambas as mãos",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T051",
+          "display": "Amputação traumática de uma mão e de um outro braço [qualquer nível, exceto mão]",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T052",
+          "display": "Amputação traumática de ambos os braços [qualquer nível]",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T053",
+          "display": "Amputação traumática de ambos os pés",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T054",
+          "display": "Amputação traumática de um pé e outra perna [qualquer nível, exceto pé]",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T055",
+          "display": "Amputação traumática de ambas as pernas [qualquer nível]",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T056",
+          "display": "Amputação traumática de membros superiores e inferiores, qualquer combinação [qualquer nível]",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T096",
+          "display": "Amputação traumática do tronco, nível não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T116",
+          "display": "Amputação traumática do membro superior, nível não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T136",
+          "display": "Amputação traumática de membro inferior, nível não especificado",
+          "target": [
+            {
+              "code": "001102",
+              "display": "Pessoas com Deficiência Permanente"
+            }
+          ]
+        },
+        {
+          "code": "T86",
+          "display": "Falha e rejeição de orgãos e tecidos transplantados",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "T868",
+          "display": "Outra insuficiência ou rejeição de outros órgãos ou tecidos transplantados",
+          "target": [
+            {
+              "code": "000111",
+              "display": "Outros Imunossuprimidos"
+            }
+          ]
+        },
+        {
+          "code": "Z94",
+          "display": "orgãos e tecidos transplantados",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z940",
+          "display": "Rim transplantado",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z941",
+          "display": "Coração transplantado",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z942",
+          "display": "Pulmão transplantado",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z943",
+          "display": "Coração e pulmões transplantados",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z944",
+          "display": "Fígado transplantado",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z945",
+          "display": "Pele transplantada",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z946",
+          "display": "Osso transplantado",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z947",
+          "display": "Córnea transplantada",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z948",
+          "display": "Outros órgãos e tecidos transplantados",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z949",
+          "display": "Órgão e tecido não especificado transplantado",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        },
+        {
+          "code": "Z954",
+          "display": "Presença de outras substituições valvares cardíacas",
+          "target": [
+            {
+              "code": "000108",
+              "display": "Indivíduos Transplantados de Órgão Sólido"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

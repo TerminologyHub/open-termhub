@@ -1,0 +1,71 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "48307405",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2025-07-17T22:58:16.718+00:00",
+    "source": "#RZaFQYGZYTPkKjdl"
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: ConceptMap cm-administrative-gender-v3</b></p><a name=\"cm-administrative-gender-v3\"> </a><a name=\"hccm-administrative-gender-v3\"> </a><a name=\"cm-administrative-gender-v3-en-US\"> </a><p>Mapping from <a href=\"valueset-administrative-gender.html\">AdministrativeGender</a> to <a href=\"http://terminology.hl7.org/6.5.0/ValueSet-v3-AdministrativeGender.html\">AdministrativeGender</a></p><br/><p><b>Group 1 </b>Mapping from <a href=\"codesystem-administrative-gender.html\">AdministrativeGender</a> to <a href=\"http://terminology.hl7.org/6.5.0/CodeSystem-v3-AdministrativeGender.html\">AdministrativeGender</a></p><table class=\"grid\"><tr><td><b>Source Code</b></td><td><b>Relationship</b></td><td><b>Target Code</b></td></tr><tr><td>male</td><td><a href=\"codesystem-concept-map-relationship.html#equivalent\" title=\"equivalent\">is equivalent to</a></td><td>M (Male)</td></tr><tr><td>female</td><td><a href=\"codesystem-concept-map-relationship.html#equivalent\" title=\"equivalent\">is equivalent to</a></td><td>F (Female)</td></tr><tr><td>other</td><td><a href=\"codesystem-concept-map-relationship.html#source-is-narrower-than-target\" title=\"source-is-narrower-than-target\">is narrower than</a></td><td>UN (Undifferentiated)</td></tr><tr><td>unknown</td><td><a href=\"codesystem-concept-map-relationship.html#equivalent\" title=\"equivalent\">is equivalent to</a></td><td>UNK</td></tr></table></div>"
+  },
+  "url": "https://hapi.fhir.org/baseR4/ConceptMap/accuro-gender-v3",
+  "version": "6.0.0-ballot2",
+  "name": "v3.AdministrativeGender",
+  "title": "v3 map for AdministrativeGender",
+  "status": "draft",
+  "experimental": false,
+  "date": "2025-07-11T16:31:22+00:00",
+  "publisher": "Accuro (FHIR Project)",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://accuro-api.com"
+        }
+      ]
+    }
+  ],
+  "group": [
+    {
+      "source": "http://accuro-api/gender",
+      "target": "http://hl7.org/fhir/ValueSet/administrative-gender",
+      "element": [
+        {
+          "code": "1",
+          "target": [
+            {
+              "code": "male"
+            }
+          ]
+        },
+        {
+          "code": "2",
+          "target": [
+            {
+              "code": "female"
+            }
+          ]
+        },
+        {
+          "code": "other",
+          "target": [
+            {
+              "code": "UN"
+            }
+          ]
+        },
+        {
+          "code": "unknown",
+          "target": [
+            {
+              "code": "UNK"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

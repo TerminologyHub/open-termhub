@@ -1,0 +1,59 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "who-svc-map-icd11-sct-vaccines",
+  "meta": {
+    "versionId": "3",
+    "lastUpdated": "2021-07-15T12:11:36.262+00:00",
+    "source": "#RzJRer52mDkM4sVx"
+  },
+  "text": {
+    "status": "extensions",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><h2>ICD-11 to SNOMED CT mappings for COVID-19 vaccines (http://fhir.org/guides/who/svc-rc1/ConceptMap/who-svc-map-icd11-sct-vaccines)</h2><p>Mapping from http://id.who.int/icd11/mms to <a href=\"http://terminology.hl7.org/2.1.0/CodeSystem-v3-snomed-CT.html\">http://snomed.info/sct</a></p><p>DRAFT (not intended for production usage). Published on 2021-04-23 by World Health Organization (WHO) (<a href=\"https://www.who.int\">https://www.who.int</a>). </p><div><p>Rule-based mappings between ICD-11 and SNOMED CT for COVID-19 Vaccines</p>\n</div><br/><table class=\"grid\"><tr><td><b>Source Code</b></td><td><b>Relationship</b></td><td><b>Destination Code</b></td></tr><tr><td>XM68M6</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>111930505</td></tr><tr><td>XM0GQ8</td><td><a href=\"http://hl7.org/fhir/R4/codesystem-concept-map-equivalence.html#equivalent\">is equivalent to</a></td><td>1119349007 (Severe acute respiratory syndrome coronavirus 2 mRNA only vaccine product)</td></tr></table></div>"
+  },
+  "url": "http://fhir.org/guides/who/svc-rc1/ConceptMap/who-svc-map-icd11-sct-vaccines",
+  "version": "0.2.0",
+  "name": "ICD-11 to SNOMED CT mappings for COVID-19 vaccines",
+  "status": "draft",
+  "experimental": true,
+  "date": "2021-04-23",
+  "publisher": "World Health Organization (WHO)",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "https://www.who.int"
+        }
+      ]
+    }
+  ],
+  "description": "Rule-based mappings between ICD-11 and SNOMED CT for COVID-19 Vaccines",
+  "sourceCanonical": "http://id.who.int/icd11/mms",
+  "targetCanonical": "http://snomed.info/sct",
+  "group": [
+    {
+      "source": "http://id.who.int/icd11/mms",
+      "target": "http://snomed.info/sct",
+      "element": [
+        {
+          "code": "XM68M6",
+          "target": [
+            {
+              "code": "111930505",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "XM0GQ8",
+          "target": [
+            {
+              "code": "1119349007",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

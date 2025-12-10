@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 
 import com.wci.termhub.lucene.eventing.Write;
 import org.apache.commons.io.FileUtils;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.Query;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -676,17 +679,51 @@ public class ValueSetProviderR5 implements IResourceProvider {
         TerminologyUtility.getTerminologyQuery(fromTerminology, fromPublisher, fromVersion),
         Concept.class);
 
-    final Query subsetQuery =
-        !terminologyFlag ? LuceneQueryBuilder.parse(
-            StringUtility.composeQuery("OR",
-                searchService
-                    .find(
-                        new SearchParameters(TerminologyUtility.getTerminologyQuery(fromTerminology,
-                            fromPublisher, fromVersion), 0, 1000000, null, null),
-                        SubsetMember.class)
-                    .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
-                    .toList()),
-            Concept.class) : null;
+    final Query subsetQuery;
+    if (!terminologyFlag) {
+      final List<String> memberClauses =
+          searchService
+              .find(
+                  new SearchParameters(TerminologyUtility.getTerminologyQuery(fromTerminology,
+                      fromPublisher, fromVersion), 0, 1000000, null, null),
+                  SubsetMember.class)
+              .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
+              .toList();
+//      if (memberClauses.isEmpty()) {
+//        final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
+//        expansion.setId(UUID.randomUUID().toString());
+//        expansion.setTimestamp(new Date());
+//        expansion.setTotal(0);
+//        expansion.setOffset(offset);
+//        expansion.addParameter(new ValueSetExpansionParameterComponent()
+//            .setName("count")
+//            .setValue(new IntegerType(count < 0 ? 0 : (count > 1000 ? 1000 : count))));
+//        if (version != null) {
+//          expansion.addParameter(new ValueSetExpansionParameterComponent()
+//              .setName("version")
+//              .setValue(new StringType(version.getValue())));
+//        }
+//        vs.setExpansion(expansion);
+//        vs.setMeta(null);
+//        return vs;
+//      }
+      if (memberClauses.size() > LuceneQueryBuilder.MAX_CLAUSE_COUNT) {
+        final BooleanQuery.Builder subsetQueryBuilder = new BooleanQuery.Builder();
+        for (int i = 0; i < memberClauses.size(); i += LuceneQueryBuilder.MAX_CLAUSE_COUNT) {
+          final int end = Math.min(i + LuceneQueryBuilder.MAX_CLAUSE_COUNT, memberClauses.size());
+          final List<String> chunk = memberClauses.subList(i, end);
+          final String memberQuery = StringUtility.composeQuery("OR", chunk);
+          final Query chunkQuery = LuceneQueryBuilder.parse(memberQuery, Concept.class);
+          subsetQueryBuilder.add(new ConstantScoreQuery(chunkQuery), BooleanClause.Occur.SHOULD);
+        }
+        subsetQuery = subsetQueryBuilder.build();
+      } else {
+        final String memberQuery = StringUtility.composeQuery("OR", memberClauses);
+        subsetQuery = LuceneQueryBuilder.parse(memberQuery, Concept.class);
+      }
+    } else {
+      subsetQuery = null;
+    }
     final Query filterQuery = LuceneQueryBuilder.parse(
         new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
         Concept.class);

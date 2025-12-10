@@ -1,0 +1,17 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "2437639",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2021-07-21T09:53:20.777+00:00",
+    "source": "#sS8DExXnymveBl6o"
+  },
+  "language": "English",
+  "url": "http://localhost:8080/hapi-fhir-jpaserver/fhir",
+  "identifier": {
+    "use": "old",
+    "system": "http://localhost:8080/hapi-fhir-jpaserver/fhir",
+    "value": "23432"
+  },
+  "status": "draft"
+}
