@@ -12,6 +12,10 @@ container works seamlessly with terminology content provided by
 2. [Step-by-step instructions with Sandbox data using syndication](doc/TUTORIAL2.md)
 3. [More information on building and deploying with real data](doc/DEPLOY.md)
 
+[FAQ - Frequently Asked Questions](doc/FAQ.md)
+
+
+
 ## Contributing
 
 1. [Build and Test](doc/BUILD.md)
