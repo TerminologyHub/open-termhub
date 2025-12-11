@@ -33,7 +33,7 @@ public class FhirServiceRestImpl extends RootServiceRestImpl {
 
   /** The request. */
   @SuppressWarnings("unused")
-  @Autowired
+  @Autowired(required = false)
   private HttpServletRequest request;
 
   /**

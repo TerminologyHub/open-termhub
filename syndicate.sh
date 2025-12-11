@@ -19,8 +19,8 @@ else
     export LOG_LEVEL=INFO
 fi
 
-echo "java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -cp open-termhub-*.jar com.wci.termhub.syndication.SyndicationDataLoader 2>&1"
-java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -cp open-termhub-*.jar com.wci.termhub.syndication.SyndicationDataLoader 2>&1
+echo "java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -Dloader.main=com.wci.termhub.syndication.SyndicationDataLoader -jar open-termhub-*.jar 2>&1"
+java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -Dloader.main=com.wci.termhub.syndication.SyndicationDataLoader -jar open-termhub-*.jar 2>&1
 
 # Capture the exit code from the Java process
 EXIT_CODE=$?

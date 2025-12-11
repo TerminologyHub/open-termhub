@@ -294,9 +294,8 @@ bootRun {
 
 bootJar {
   mainClass = 'com.wci.termhub.Application'
-  // Ensure the manifest allows running other main classes via -cp
   manifest {
-    attributes 'Main-Class': 'org.springframework.boot.loader.launch.JarLauncher'
+    attributes 'Main-Class': 'org.springframework.boot.loader.launch.PropertiesLauncher'
   }
 }
 

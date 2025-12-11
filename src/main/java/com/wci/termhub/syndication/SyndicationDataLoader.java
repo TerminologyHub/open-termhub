@@ -35,6 +35,7 @@ import org.springframework.util.StringUtils;
     SecurityAutoConfiguration.class, JmxAutoConfiguration.class, MailSenderAutoConfiguration.class
 })
 @ComponentScan(basePackages = "com.wci.termhub")
+
 public class SyndicationDataLoader {
 
   /** The logger. */
