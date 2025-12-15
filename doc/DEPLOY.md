@@ -148,6 +148,7 @@ chmod -R a+rwx $INDEX_DIR
 docker run --rm \
   -e PROJECT_API_KEY=your-api-key-here \
   -e JAVA_OPTS=-Xmx4g \
+  -e SYNDICATION_CHECK_ON_STARTUP=false \
   -v "$INDEX_DIR":/index \
   wcinformatics/open-termhub:latest \
   /srv/rt/syndicate.sh
@@ -157,6 +158,8 @@ The loader will:
 - Download and load all content from your TermHub project
 - Exit with code 0 on success, non-zero on failure
 - Always stop (never run indefinitely)
+
+Note: Adjust `JAVA_OPTS` as needed based on the size of your data and docker has memory limitations as well that may need to be configured on the host system.
 
 **Step 3: Verify the results**
 

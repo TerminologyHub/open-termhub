@@ -81,6 +81,9 @@ public class SyndicationDataLoader {
       // Disable scheduling to prevent cron jobs from running
       System.setProperty("spring.scheduling.enabled", "false");
 
+      // Disable syndication check on startup since we're explicitly running it
+      System.setProperty("syndication.check.on-startup", "false");
+
       // Initialize Spring context
       logger.info("Initializing Spring application context...");
       final SpringApplication app = new SpringApplication(SyndicationDataLoader.class);

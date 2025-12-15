@@ -133,7 +133,8 @@ public class SyndicationManager {
       logger.info("Step 3: Loading new content");
       final SyndicationResults loadingResults = contentLoader.loadContent(newEntries, feed);
 
-      // Ensure readers are fresh after load before any removal
+      // Ensure reade
+      // rs are fresh after load before any removal
       LuceneDataAccess.clearReaders();
 
       // Post-load removal of content no longer in the feed
