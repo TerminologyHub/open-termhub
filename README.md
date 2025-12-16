@@ -12,9 +12,9 @@ container works seamlessly with terminology content provided by
 2. [Step-by-step instructions with Sandbox data using syndication](doc/TUTORIAL2.md)
 3. [Step-by-step instructions to Deploy Terminologies with TermHub](doc/TUTORIAL3.md)
 
-[FAQ - Frequently Asked Questions](doc/FAQ.md)
-
-[More details on building and deploying with real data](doc/DEPLOY.md)
+## Other Resources
+* [FAQ - Frequently Asked Questions](doc/FAQ.md)
+* [More details on building and deploying with real data](doc/DEPLOY.md)
 
 
 ## Contributing
