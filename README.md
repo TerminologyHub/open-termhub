@@ -13,6 +13,7 @@ container works seamlessly with terminology content provided by
 3. [Step-by-step instructions to Deploy Terminologies with TermHub](doc/TUTORIAL3.md)
 
 [FAQ - Frequently Asked Questions](doc/FAQ.md)
+
 [More details on building and deploying with real data](doc/DEPLOY.md)
 
 
