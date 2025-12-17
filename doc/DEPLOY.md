@@ -292,7 +292,7 @@ The following are issues you may encounter and information on how to resolve the
 
 **Encountering "out of memory" errors**
 
-In this situation, use the `JAVA_OPTS` environment variable to set the available memory higher (e.g. `JAVA_OPTS=-Xmx8g`.  In practice, we have found that 4g is sufficient.
+In this situation, use the `JAVA_OPTS` environment variable to set the available memory higher (e.g. `JAVA_OPTS=-Xmx8g`.  In practice, we have found that 4g is sufficient even for large files.
 
 
 **[Back to top](#deploying-open-termhub-with-full-terminologies-from-termhub)**
