@@ -70,6 +70,11 @@ dependencyManagement {
     }
 }
 
+// Configure Spring Boot to use Application as the main class
+springBoot {
+    mainClass = 'com.wci.termhub.Application'
+}
+
 dependencies {
   // NOTE: "spring-boot-starter-web" must be the first dependency
   implementation "org.springframework.boot:spring-boot-starter-web"
@@ -289,6 +294,9 @@ bootRun {
 
 bootJar {
   mainClass = 'com.wci.termhub.Application'
+  manifest {
+    attributes 'Main-Class': 'org.springframework.boot.loader.launch.PropertiesLauncher'
+  }
 }
 
 jacoco {

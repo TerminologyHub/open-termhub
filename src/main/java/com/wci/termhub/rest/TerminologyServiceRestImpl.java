@@ -154,7 +154,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   /** The request. */
   @SuppressWarnings("unused")
-  @Autowired
+  @Autowired(required = false)
   private HttpServletRequest request;
 
   /** The operations service. */

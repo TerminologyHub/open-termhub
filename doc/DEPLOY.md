@@ -127,7 +127,91 @@ This option is recommended for situations where you want to control terminology 
 
 This option is NOT recommended if you want to use "latest" versions and have the container automatically "update" content. This option is NOT recommended if you need to make write calls to the container and intend to have multiple pods running.
 
-Pre-loading a volume can use either of the "syndication" or "direct load" strategies discussed below.  The difference is that you run this process on your own separately from the deployment and then shut down the container, package up the index directory data and prepare it to be mounted as a volume to containers to be deployed either directly (via something like EC2 or Fargate) or as part of an orchestration platform (via something like Kubernetes)
+There are two approaches to pre-loading a volume:
+
+#### Option 1: Using the Standalone Syndication Loader (Recommended)
+
+The standalone syndication loader (`syndicate.sh`) is a dedicated script that loads data and exits, making it ideal for pre-loading scenarios. This approach provides better control and error handling compared to startup syndication.
+
+**Step 1: Prepare the index directory**
+
+```bash
+export INDEX_DIR=/path/to/index/folder
+/bin/rm -rf $INDEX_DIR/*
+mkdir -p $INDEX_DIR
+chmod -R a+rwx $INDEX_DIR
+```
+
+**Step 2: Run the syndication loader**
+
+```bash
+docker run --rm \
+  -e PROJECT_API_KEY=your-api-key-here \
+  -e JAVA_OPTS=-Xmx4g \
+  -e SYNDICATION_CHECK_ON_STARTUP=false \
+  -v "$INDEX_DIR":/index \
+  wcinformatics/open-termhub:latest \
+  /srv/rt/syndicate.sh
+```
+
+The loader will:
+- Download and load all content from your TermHub project
+- Exit with code 0 on success, non-zero on failure
+- Always stop (never run indefinitely)
+
+Note: Adjust `JAVA_OPTS` as needed based on the size of your data and docker has memory limitations as well that may need to be configured on the host system.
+
+**Step 3: Verify the results**
+
+Check the exit code:
+```bash
+echo $?
+```
+
+If the exit code is 0, data was loaded successfully.
+
+**Step 4: Deploy the server**
+
+Now deploy the server without syndication:
+
+```bash
+docker run -d --rm --name open-termhub \
+  -e JAVA_OPTS=-Xmx1g \
+  -e ENABLE_POST_LOAD_COMPUTATIONS=false \
+  -v "$INDEX_DIR":/index \
+  -p 8080:8080 \
+  wcinformatics/open-termhub:latest
+```
+
+Note: Since data is pre-loaded, you can use less memory (`-Xmx1g`) and don't need `PROJECT_API_KEY` or `SYNDICATION_CHECK_ON_STARTUP`.
+
+**Error Handling**
+
+The standalone loader will:
+- Exit code 0: Success
+- Exit code 1: Syndication errors
+- Exit code 2: Configuration errors (e.g., missing `PROJECT_API_KEY`)
+
+Enable debug logging with `-e DEBUG=true` for troubleshooting.
+
+For a complete tutorial on pre-loading, see [TUTORIAL_PRELOAD.md](TUTORIAL_PRELOAD.md).
+
+#### Option 2: Using Startup Syndication
+
+Alternatively, you can use the server's startup syndication feature to pre-load data:
+
+```bash
+docker run --rm \
+  -e PROJECT_API_KEY=your-api-key-here \
+  -e SYNDICATION_CHECK_ON_STARTUP=true \
+  -e JAVA_OPTS=-Xmx4g \
+  -v "$INDEX_DIR":/index \
+  wcinformatics/open-termhub:latest
+```
+
+After data loads, stop the container and redeploy without syndication settings.
+
+**Note**: The standalone loader (Option 1) is preferred because it provides better error handling and clearer separation between data loading and server operation.
 
 
 ### Loading Data with Syndication
@@ -208,7 +292,7 @@ The following are issues you may encounter and information on how to resolve the
 
 **Encountering "out of memory" errors**
 
-In this situation, use the `JAVA_OPTS` environment variable to set the available memory higher (e.g. `JAVA_OPTS=-Xmx8g`.  In practice, we have found that 4g is sufficient.
+In this situation, use the `JAVA_OPTS` environment variable to set the available memory higher (e.g. `JAVA_OPTS=-Xmx8g`.  In practice, we have found that 4g is sufficient even for large files.
 
 
 **[Back to top](#deploying-open-termhub-with-full-terminologies-from-termhub)**

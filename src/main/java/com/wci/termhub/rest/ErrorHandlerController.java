@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.util.ThreadLocalMapper;
@@ -45,16 +46,8 @@ public class ErrorHandlerController implements ErrorController {
   private static Logger logger = LoggerFactory.getLogger(ErrorHandlerController.class);
 
   /** The error attributes. */
-  private final ErrorAttributes errorAttributes;
-
-  /**
-   * Basic error controller.
-   *
-   * @param errorAttributes the error attributes
-   */
-  public ErrorHandlerController(final ErrorAttributes errorAttributes) {
-    this.errorAttributes = errorAttributes;
-  }
+  @Autowired(required = false)
+  private ErrorAttributes errorAttributes;
 
   /**
    * Handle error.
