@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import com.wci.termhub.fhir.util.FHIRServerResponseException;
+import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
+import ca.uhn.fhir.context.FhirContext;
 
 /**
  * REST exception handler for certain exception types.
@@ -44,6 +47,51 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     final RestException re = (RestException) ex;
     return handleExceptionInternal(re, re.getError(), new HttpHeaders(),
         HttpStatus.valueOf(re.getError().getStatus()), request);
+  }
+
+  /**
+   * Handle FHIR server response exceptions.
+   *
+   * @param ex the FHIR server response exception
+   * @param request the request
+   * @return the response entity
+   */
+  @ExceptionHandler({
+      FHIRServerResponseException.class
+  })
+  protected ResponseEntity<Object> handleFHIRServerResponseException(
+      final FHIRServerResponseException ex, final WebRequest request) {
+
+    final int statusCode = ex.getStatusCode();
+    final IBaseOperationOutcome operationOutcome = ex.getOperationOutcome();
+
+    // Detect FHIR version and use appropriate parser
+    // R4 OperationOutcome is from org.hl7.fhir.r4.model.OperationOutcome
+    // R5 OperationOutcome is from org.hl7.fhir.r5.model.OperationOutcome
+    final FhirContext fhirContext;
+    if (operationOutcome instanceof org.hl7.fhir.r4.model.OperationOutcome) {
+      fhirContext = FhirContext.forR4();
+    } else if (operationOutcome instanceof org.hl7.fhir.r5.model.OperationOutcome) {
+      fhirContext = FhirContext.forR5();
+    } else {
+      // Fallback: try to detect from class name or default to R5
+      final String className = operationOutcome.getClass().getName();
+      if (className.contains(".r4.")) {
+        fhirContext = FhirContext.forR4();
+      } else {
+        fhirContext = FhirContext.forR5();
+      }
+    }
+
+    // Convert OperationOutcome to JSON string
+    final String jsonBody = fhirContext.newJsonParser().encodeResourceToString(operationOutcome);
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+
+    // Return ResponseEntity directly instead of using handleExceptionInternal
+    // This prevents Spring Boot's default error handling from intercepting it
+    return new ResponseEntity<>(jsonBody, headers, HttpStatus.valueOf(statusCode));
   }
 
   /* see superclass - handle 400 */
