@@ -171,7 +171,8 @@ public final class CodeSystemLoaderUtil {
 
       // Basic checks
       // Validate required fields
-      if (jsonContent.get("url").isMissingNode()) {
+      final JsonNode urlNode = jsonContent.get("url");
+      if (urlNode == null || urlNode.isMissingNode()) {
         throw FhirUtilityR4.exception("CodeSystem.url is required", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
       }
@@ -183,9 +184,12 @@ public final class CodeSystemLoaderUtil {
       Terminology terminology = findTerminology(service, abbreviation, publisher, version);
 
       if (terminology != null) {
+        LOGGER.error("Can not create multiple CodeSystem resources the same title, publisher,"
+            + " and version. terminology: {}, publisher: {}, version: {}", abbreviation, publisher, version);
         throw FhirUtilityR4.exception(
             "Can not create multiple CodeSystem resources the same title, publisher,"
-                + " and version. duplicate = " + terminology.getId(),
+                + " and version. title: " + abbreviation + ", publisher: " + publisher
+                + ", version: " + version + ", duplicate = " + terminology.getId(),
             IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
 
@@ -512,7 +516,14 @@ public final class CodeSystemLoaderUtil {
       // MorphologicAbnormality","type":"string"}
 
       final String uri = property.path("uri").asText();
+      if (StringUtility.isEmpty(uri) || !uri.contains("/")) {
+        continue;
+      }
       final String[] uriParts = FieldedStringTokenizer.split(uri, "/");
+
+      if (uriParts.length < 4) {
+        continue;
+      }
 
       // e.g. modelType is "concept"
       final String modelType = uriParts[uriParts.length - 3];

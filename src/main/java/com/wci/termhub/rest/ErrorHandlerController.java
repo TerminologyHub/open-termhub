@@ -27,6 +27,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.util.ThreadLocalMapper;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -133,6 +134,12 @@ public class ErrorHandlerController implements ErrorController {
       body.put("error", ((RestException) error).getError().getError());
       body.put("message", ((RestException) error).getError().getMessage());
       body.put("status", ((RestException) error).getError().getStatus() + "");
+    } else if (error instanceof FHIRServerResponseException) {
+      // Handle FHIRServerResponseException - extract status code
+      final FHIRServerResponseException fhirEx = (FHIRServerResponseException) error;
+      body.put("status", fhirEx.getStatusCode() + "");
+      body.put("error", HttpStatus.valueOf(fhirEx.getStatusCode()).getReasonPhrase());
+      body.put("message", fhirEx.getMessage());
     } else {
       body.put("message", error == null ? "No message" : error.getMessage());
     }

@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 
 import com.wci.termhub.lucene.eventing.Write;
 import org.apache.commons.io.FileUtils;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.Query;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -621,8 +624,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
   private ValueSet getExpandedValueSet(final IdType id, final UriType url, final StringType version,
     final StringType filter, final int offset, final int count, final boolean activeOnly,
     final Set<String> languages) throws Exception {
-    // Look up implicit value sets for code systems
 
+    // Look up implicit value sets for code systems
     final List<ValueSet> valueSets = findPossibleValueSets(true, id, url, version);
 
     // Expect a single value set
@@ -630,11 +633,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
       throw FhirUtilityR5.exception("Failed to find matching value set",
           OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
     }
-    // TODO: this is possible if there is a value set across multiple terminologies
     if (valueSets.size() > 1) {
       throw FhirUtilityR5.exception("Too many matching value sets found",
           OperationOutcome.IssueType.MULTIPLEMATCHES, HttpServletResponse.SC_EXPECTATION_FAILED);
-
     }
 
     final ValueSet vs = valueSets.get(0);
@@ -678,17 +679,51 @@ public class ValueSetProviderR5 implements IResourceProvider {
         TerminologyUtility.getTerminologyQuery(fromTerminology, fromPublisher, fromVersion),
         Concept.class);
 
-    final Query subsetQuery =
-        !terminologyFlag ? LuceneQueryBuilder.parse(
-            StringUtility.composeQuery("OR",
-                searchService
-                    .find(
-                        new SearchParameters(TerminologyUtility.getTerminologyQuery(fromTerminology,
-                            fromPublisher, fromVersion), 0, 1000000, null, null),
-                        SubsetMember.class)
-                    .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
-                    .toList()),
-            Concept.class) : null;
+    final Query subsetQuery;
+    if (!terminologyFlag) {
+      final List<String> memberClauses =
+          searchService
+              .find(
+                  new SearchParameters(TerminologyUtility.getTerminologyQuery(fromTerminology,
+                      fromPublisher, fromVersion), 0, 1000000, null, null),
+                  SubsetMember.class)
+              .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
+              .toList();
+//      if (memberClauses.isEmpty()) {
+//        final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
+//        expansion.setId(UUID.randomUUID().toString());
+//        expansion.setTimestamp(new Date());
+//        expansion.setTotal(0);
+//        expansion.setOffset(offset);
+//        expansion.addParameter(new ValueSetExpansionParameterComponent()
+//            .setName("count")
+//            .setValue(new IntegerType(count < 0 ? 0 : (count > 1000 ? 1000 : count))));
+//        if (version != null) {
+//          expansion.addParameter(new ValueSetExpansionParameterComponent()
+//              .setName("version")
+//              .setValue(new StringType(version.getValue())));
+//        }
+//        vs.setExpansion(expansion);
+//        vs.setMeta(null);
+//        return vs;
+//      }
+      if (memberClauses.size() > LuceneQueryBuilder.MAX_CLAUSE_COUNT) {
+        final BooleanQuery.Builder subsetQueryBuilder = new BooleanQuery.Builder();
+        for (int i = 0; i < memberClauses.size(); i += LuceneQueryBuilder.MAX_CLAUSE_COUNT) {
+          final int end = Math.min(i + LuceneQueryBuilder.MAX_CLAUSE_COUNT, memberClauses.size());
+          final List<String> chunk = memberClauses.subList(i, end);
+          final String memberQuery = StringUtility.composeQuery("OR", chunk);
+          final Query chunkQuery = LuceneQueryBuilder.parse(memberQuery, Concept.class);
+          subsetQueryBuilder.add(new ConstantScoreQuery(chunkQuery), BooleanClause.Occur.SHOULD);
+        }
+        subsetQuery = subsetQueryBuilder.build();
+      } else {
+        final String memberQuery = StringUtility.composeQuery("OR", memberClauses);
+        subsetQuery = LuceneQueryBuilder.parse(memberQuery, Concept.class);
+      }
+    } else {
+      subsetQuery = null;
+    }
     final Query filterQuery = LuceneQueryBuilder.parse(
         new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
         Concept.class);
@@ -744,8 +779,6 @@ public class ValueSetProviderR5 implements IResourceProvider {
           }
         }
       }
-
-      // TODO: support "property" parameter on expand and add that info here
 
       expansion.addContains(code);
     }

@@ -621,7 +621,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertFalse(properties.isEmpty(), "Should have properties");
 
     // Verify effectiveTime property
-    // TODO: re-enable when effectiveTime is added
+    // Re-enable when effectiveTime is added
     // final boolean hasEffectiveTime = properties.stream()
     // .anyMatch(p -> p.getPart().stream()
     // .anyMatch(part -> "effectiveTime".equals(part.getValue().toString())
@@ -630,7 +630,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     // value 20020131");
 
     // Verify normalForm parameter
-    // TODO: re-enable when normalForm is added
+    // Re-enable when normalForm is added
     // assertTrue(result.hasParameter("normalForm"), "Should have normalForm
     // parameter");
     // assertTrue(result.getParameter("normalForm").getValue().toString()
@@ -710,7 +710,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertFalse(properties.isEmpty(), "Should have properties");
 
     // Verify effectiveTime property is added
-    // TODO: re-enable when effectiveTime
+    // Re-enable when effectiveTime
     // final boolean hasEffectiveTime = properties.stream()
     // .anyMatch(p -> p.getPart().stream()
     // .anyMatch(part -> "effectiveTime".equals(part.getValue().toString())

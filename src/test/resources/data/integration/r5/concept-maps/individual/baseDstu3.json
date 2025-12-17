@@ -1,0 +1,12 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "2528794",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2021-08-19T06:38:30.541+00:00",
+    "source": "#C9ywkVHkGOGSmDWU"
+  },
+  "language": "English",
+  "url": "http://hapi.fhir.org/baseDstu3",
+  "status": "active"
+}

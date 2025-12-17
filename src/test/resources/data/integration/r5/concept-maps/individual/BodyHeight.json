@@ -1,0 +1,54 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "48871550",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2025-08-25T07:42:46.209+00:00",
+    "source": "#030oay9OGsJq592l"
+  },
+  "url": "https://testConceptMap/BodyHeight",
+  "identifier": {
+    "system": "urn:ietf:rfc:3986",
+    "value": "urn:uuid:53cd62ee-033e-414c-9f58-3ca97b5ffc3b"
+  },
+  "version": "1.0.0",
+  "description": "A mapping between concept vi-foo-a and loinc",
+  "sourceUri": "http://loinc.org",
+  "targetUri": "SNOMED-CT",
+  "group": [
+    {
+      "source": "http://loinc.org",
+      "sourceVersion": "2.77",
+      "target": "SNOMED-CT",
+      "element": [
+        {
+          "code": "8302-2",
+          "display": "Body Height",
+          "target": [
+            {
+              "code": "50373000",
+              "display": "Body height measure",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "8302-2-Trigger",
+          "display": "Body Height",
+          "target": [
+            {
+              "code": "50373000",
+              "display": "Body height measure",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ],
+      "unmapped": {
+        "mode": "fixed",
+        "code": "temp",
+        "display": "temp"
+      }
+    }
+  ]
+}

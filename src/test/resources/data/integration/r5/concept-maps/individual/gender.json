@@ -1,0 +1,87 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "XPERTDAYS2025CONCEPTMAP",
+  "meta": {
+    "versionId": "6",
+    "lastUpdated": "2025-08-25T14:36:35.745+00:00",
+    "source": "#ogfd2uN9wswEPsPU"
+  },
+  "url": "http://xpert-days-2025/workshop/fhir/conceptmap/gender",
+  "sourceUri": "http://xpert-days-2025/workshop/fhir/valueset/gender",
+  "targetUri": "http://hl7.org/fhir/ValueSet/administrative-gender",
+  "group": [
+    {
+      "source": "http://xpert-days-2025/workshop/fhir/codesystem/gender",
+      "target": "http://hl7.org/fhir/administrative-gender",
+      "targetVersion": "4.0.1",
+      "element": [
+        {
+          "code": "F",
+          "display": "Female",
+          "target": [
+            {
+              "code": "female",
+              "display": "Female",
+              "equivalence": "equal"
+            }
+          ]
+        },
+        {
+          "code": "M",
+          "display": "Male",
+          "target": [
+            {
+              "code": "male",
+              "display": "Male",
+              "equivalence": "equal"
+            }
+          ]
+        },
+        {
+          "code": "O",
+          "display": "Other",
+          "target": [
+            {
+              "code": "other",
+              "display": "Other",
+              "equivalence": "equal"
+            }
+          ]
+        },
+        {
+          "code": "U",
+          "display": "Unknown",
+          "target": [
+            {
+              "code": "unknown",
+              "display": "Unknown",
+              "equivalence": "equal"
+            }
+          ]
+        },
+        {
+          "code": "A",
+          "display": "Ambiguos",
+          "target": [
+            {
+              "code": "other",
+              "display": "Other",
+              "equivalence": "wider"
+            }
+          ]
+        },
+        {
+          "code": "N",
+          "display": "Not applicable",
+          "target": [
+            {
+              "code": "unknown",
+              "display": "Unknown",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

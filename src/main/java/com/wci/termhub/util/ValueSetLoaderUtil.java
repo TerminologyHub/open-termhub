@@ -175,7 +175,8 @@ public final class ValueSetLoaderUtil {
       if (subset != null) {
         throw FhirUtilityR4.exception(
             "Can not create multiple ValueSet resources the same title, publisher,"
-                + " and version. duplicate = " + subset.getId(),
+                + " and version. title: " + abbreviation + ", publisher: " + publisher
+                + ", version: " + version + ", duplicate = " + subset.getId(),
             IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
 
@@ -431,7 +432,8 @@ public final class ValueSetLoaderUtil {
       if (subset != null) {
         throw FhirUtilityR4.exception(
             "Can not create multiple ValueSet resources the same title, publisher,"
-                + " and version. duplicate = " + subset.getId(),
+                + " and version. title: " + abbreviation + ", publisher: " + publisher
+                + ", version: " + version + ", duplicate = " + subset.getId(),
             IssueType.INVALID, HttpServletResponse.SC_CONFLICT);
       }
 

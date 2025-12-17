@@ -89,12 +89,11 @@ public final class TreePositionUtility {
   /**
    * Exclude these standard non-defining types for performance (and they are HIGH volume). NOTE:
    * keep LOINC "answer_to" and some others
-   * 
+   *
    * @param type the type
    * @return true, if successful
    */
   public static boolean excludeRelationshipFromEcl(final String type) {
-    // TODO: this should be done by the "terminology semantics handler"
     if (type.equals("answer_to") || type.equals("component_of") || type.equals("divisor_of")) {
       return false;
     }
@@ -118,7 +117,6 @@ public final class TreePositionUtility {
    * @return true, if successful
    */
   public static boolean excludeRelationshipFromGraph(final String type) {
-    // TODO: this should be done by the "terminology semantics handler"
     if (type.equals("component_of") || type.equals("divisor_of")) {
       return true;
     }

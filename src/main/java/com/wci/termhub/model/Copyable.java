@@ -30,11 +30,4 @@ public interface Copyable<T> {
    */
   public void patchFrom(T other);
 
-  /**
-   * Patch from to support deletes.
-   *
-   * @param node the node
-   */
-  // TODO
-  // public void patchFrom(JsonNode node);
 }

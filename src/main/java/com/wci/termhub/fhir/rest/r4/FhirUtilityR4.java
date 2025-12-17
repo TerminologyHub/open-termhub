@@ -541,19 +541,6 @@ public final class FhirUtilityR4 {
           .setName("sufficientlyDefined").setValue(new BooleanType(concept.getDefined())));
     }
 
-    // TODO: review where the value comes from
-    // if (codeSystem.getTitle().startsWith("SNOMED")) {
-    // if (properties == null || properties.contains("effectiveTime")) {
-    // parameters.addParameter(createProperty("effectiveTime",
-    // DateUtility.DATE_YYYYMMDD.format(concept.getModified()), false));
-    // }
-    // } else {
-    // if (properties == null || properties.contains("modified")) {
-    // parameters.addParameter(createProperty("modified", concept.getModified(),
-    // false));
-    // }
-    // }
-
     // Definitions
     if (properties == null || properties.contains("definition")) {
       for (final Definition def : concept.getDefinitions()) {
@@ -649,7 +636,6 @@ public final class FhirUtilityR4 {
       }
     }
 
-    // TODO: what do we do with regular relationships?
     return parameters;
   }
 
@@ -868,12 +854,14 @@ public final class FhirUtilityR4 {
 
     // Parse the full date string with timezone information
     final String releaseDate = terminology.getReleaseDate();
-    if (releaseDate != null && releaseDate.contains("T")) {
-      // Full ISO 8601 date string with timezone
-      cs.setDate(Date.from(Instant.parse(releaseDate)));
-    } else {
-      // Fallback to date-only format
-      cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+    if (releaseDate != null && !releaseDate.isEmpty()) {
+      if (releaseDate.contains("T")) {
+        // Full ISO 8601 date string with timezone
+        cs.setDate(Date.from(Instant.parse(releaseDate)));
+      } else {
+        // Fallback to date-only format
+        cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+      }
     }
 
     // Set version - prefer fhirVersion attribute if available, otherwise use

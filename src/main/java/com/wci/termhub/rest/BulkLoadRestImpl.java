@@ -265,8 +265,6 @@ public class BulkLoadRestImpl {
         // Use existing loader utility
         final CodeSystem codeSystem = bulkLoaderService.doCodeSystemLoad(file);
 
-        FileUtils.delete(file);
-
         return new ResponseEntity<>(
             FhirContext.forR5().newJsonParser().encodeResourceToString(codeSystem), null, 200);
 
