@@ -171,7 +171,8 @@ public final class CodeSystemLoaderUtil {
 
       // Basic checks
       // Validate required fields
-      if (jsonContent.get("url").isMissingNode()) {
+      final JsonNode urlNode = jsonContent.get("url");
+      if (urlNode == null || urlNode.isMissingNode()) {
         throw FhirUtilityR4.exception("CodeSystem.url is required", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
       }
