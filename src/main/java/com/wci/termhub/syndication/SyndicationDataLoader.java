@@ -25,9 +25,9 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.util.StringUtils;
 
 /**
- * Standalone application for loading syndication data.
- * This class performs syndication and then exits, without starting a web server.
- * It is designed to be run as a one-time data loading operation.
+ * Standalone application for loading syndication data. This class performs syndication and then
+ * exits, without starting a web server. It is designed to be run as a one-time data loading
+ * operation.
  */
 @SpringBootApplication(exclude = {
     DataSourceAutoConfiguration.class, QuartzAutoConfiguration.class,
@@ -39,7 +39,7 @@ import org.springframework.util.StringUtils;
 public class SyndicationDataLoader {
 
   /** The logger. */
-  private static final Logger logger = LoggerFactory.getLogger(SyndicationDataLoader.class);
+  private static Logger logger = LoggerFactory.getLogger(SyndicationDataLoader.class);
 
   /** Exit code for successful completion. */
   private static final int EXIT_SUCCESS = 0;
@@ -68,7 +68,8 @@ public class SyndicationDataLoader {
       final String apiKey = System.getenv("PROJECT_API_KEY");
       if (!StringUtils.hasText(apiKey)) {
         logger.error("PROJECT_API_KEY environment variable is not set or is empty");
-        logger.error("Syndication requires a valid API key to authenticate with the syndication service");
+        logger.error(
+            "Syndication requires a valid API key to authenticate with the syndication service");
         logger.error("Please set PROJECT_API_KEY and try again");
         System.exit(EXIT_CONFIGURATION_ERROR);
       }
@@ -97,7 +98,8 @@ public class SyndicationDataLoader {
       final com.wci.termhub.open.configuration.ApplicationProperties applicationProperties =
           context.getBean(com.wci.termhub.open.configuration.ApplicationProperties.class);
 
-      logger.info("Index directory: {}", applicationProperties.getProperty("lucene.index.directory"));
+      logger.info("Index directory: {}",
+          applicationProperties.getProperty("lucene.index.directory"));
 
       final java.util.List<Class<? extends com.wci.termhub.model.HasId>> indexedObjects =
           com.wci.termhub.util.ModelUtility.getIndexedObjects();

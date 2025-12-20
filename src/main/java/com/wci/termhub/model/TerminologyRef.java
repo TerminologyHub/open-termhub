@@ -50,6 +50,10 @@ public class TerminologyRef extends AbstractHasModified
   @Field(type = FieldType.Keyword)
   private String publisher;
 
+  /** The license - e.g. "UMLS", "SNOMEDCT", "AMA". */
+  @Field(type = FieldType.Keyword)
+  private String license;
+
   /** The release date. */
   @Field(type = FieldType.Keyword)
   private String releaseDate;
@@ -112,6 +116,7 @@ public class TerminologyRef extends AbstractHasModified
     latest = other.getLatest();
     loaded = other.getLoaded();
     publisher = other.getPublisher();
+    license = other.getLicense();
     releaseDate = other.getReleaseDate();
     uri = other.getUri();
 
@@ -142,6 +147,9 @@ public class TerminologyRef extends AbstractHasModified
     }
     if (other.getPublisher() != null) {
       publisher = other.getPublisher();
+    }
+    if (other.getLicense() != null) {
+      license = other.getLicense();
     }
     if (other.getReleaseDate() != null) {
       releaseDate = other.getReleaseDate();
@@ -254,7 +262,7 @@ public class TerminologyRef extends AbstractHasModified
   }
 
   /**
-   * Returns the publisher.
+   * Returns the publisher. This will correspond to a PublisherInfo "type".
    *
    * @return the publisher
    */
@@ -270,6 +278,25 @@ public class TerminologyRef extends AbstractHasModified
    */
   public void setPublisher(final String publisher) {
     this.publisher = publisher;
+  }
+
+  /**
+   * Gets the license. This will correspond to a LicenseInfo "type".
+   *
+   * @return the license
+   */
+  @Schema(description = "Terminology license, e.g. \"UMLS\"")
+  public String getLicense() {
+    return license;
+  }
+
+  /**
+   * Sets the license.
+   *
+   * @param license the new license
+   */
+  public void setLicense(final String license) {
+    this.license = license;
   }
 
   /**

@@ -6,6 +6,8 @@
 <suppressions>
 	<suppress checks="."
 		files="com[\\/]wci[\\/]termhub[\\/]ecl[\\/]" />
+	<suppress checks="HideUtilityClassConstructor"
+		files="SyndicationDataLoader.java" />
 	<suppress checks="ParameterNumber" files="(ProviderR4|ProviderR5).java" />
 	<suppress checks="AvoidNestedBlocks" 
 		files="(FhirUtility|TermhubOpenApiInterceptorR4|TermhubOpenApiInterceptorR5).java" />
