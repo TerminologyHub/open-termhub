@@ -509,8 +509,38 @@ public class SyndicationClient {
       return false;
     }
 
-    return resourceType.getResourceType().equalsIgnoreCase(category);
+    final String resourceTypeStr = resourceType.getResourceType();
+
+    // Check new OntoServer-standard categories first
+    if ("FHIR_CodeSystem".equals(category) && "CodeSystem".equals(resourceTypeStr)) {
+      return true;
+    }
+    if ("FHIR_ConceptMap".equals(category) && "ConceptMap".equals(resourceTypeStr)) {
+      return true;
+    }
+    if ("FHIR_ValueSet".equals(category) && "ValueSet".equals(resourceTypeStr)) {
+      return true;
+    }
+    // LOINC and SCT_RF2_SNAPSHOT are CodeSystem types
+    if (("LOINC".equals(category) || "SCT_RF2_SNAPSHOT".equals(category))
+        && "CodeSystem".equals(resourceTypeStr)) {
+      return true;
+    }
+
+    // Fallback: use URL-based detection for backwards compatibility with old category format
+    // Old format was like "ICD10CM_FHIRR5_ALL" which doesn't match resource type strings
+    final SyndicationLink zipLink = entry.getZipLink();
+    if (zipLink != null && zipLink.getHref() != null) {
+      final SyndicationContentType urlBasedType = SyndicationContentType.fromDownloadUrl(zipLink.getHref());
+      if (urlBasedType != null && urlBasedType.equals(resourceType)) {
+        return true;
+      }
+    }
+
+    // Legacy: direct comparison (in case old format somehow matched)
+    return resourceTypeStr.equalsIgnoreCase(category);
   }
+
 
   /**
    * Check if an entry is new (not already loaded).
