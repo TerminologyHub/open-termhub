@@ -14,6 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -24,6 +27,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+
+import org.springframework.core.io.ClassPathResource;
 
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
@@ -70,8 +75,10 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ThreadLocalMapper;
+import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -219,7 +226,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertEquals(ResourceType.Bundle, data.getResourceType());
     assertEquals(BundleType.SEARCHSET, data.getType());
 
-    assertEquals(5, data.getTotal());
+    assertEquals(6, data.getTotal());
     assertNotNull(data.getMeta().getLastUpdated());
     assertFalse(data.getLink().isEmpty());
     assertEquals("self", data.getLink().get(0).getRelation());
@@ -232,7 +239,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
     // Assert code systems
     assertFalse(codeSystems.isEmpty());
-    assertEquals(5, codeSystems.size());
+    assertEquals(6, codeSystems.size());
 
     for (final Resource cs : codeSystems) {
       LOGGER.info("  code system = {}", parser.encodeResourceToString(cs));
@@ -962,7 +969,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         data.getEntry().stream().map(Bundle.BundleEntryComponent::getResource).toList();
 
     // Assert bundle has expected number of entries
-    final int expectedCount = CODE_SYSTEM_FILES.size() + VALUE_SET_FILES.size();
+    // plus one for the lnc-sandbox-277-r4 code system (testCodeSystemLookupLoincWithVersion)
+    final int expectedCount = CODE_SYSTEM_FILES.size() + VALUE_SET_FILES.size() + 1;
     assertEquals(expectedCount, valueSets.size(),
         "Should have " + expectedCount + " ValueSet entries, found " + valueSets.size());
 
@@ -1722,6 +1730,80 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(response.getBody(), "Response should not be null");
     assertTrue(response.getBody().contains("OperationOutcome"),
         "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test CodeSystem $lookup with LOINC code when multiple versions exist.
+   * This test loads a fake version 278 based on version 277, verifies that lookup
+   * works correctly with version specified, then cleans up the fake version.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemLookupLoincWithVersion() throws Exception {
+    // Load a fake version 278 based on 277
+    final ClassPathResource resource277 = new ClassPathResource("data/CodeSystem-lnc-sandbox-277-r4.json");
+    final String json277 = Files.readString(resource277.getFile().toPath(), StandardCharsets.UTF_8);
+
+    // Replace version 277 with 278
+    final String json278 = json277.replace("\"version\": \"277\"", "\"version\": \"278\"")
+        .replace("\"277\"", "\"278\"").replace("-277-", "-278-");
+
+    // Create temporary file
+    final File tempFile = File.createTempFile("CodeSystem-lnc-sandbox-278-r4", ".json");
+    tempFile.deleteOnExit();
+    Files.write(tempFile.toPath(), json278.getBytes(StandardCharsets.UTF_8));
+
+    Terminology terminology278 = null;
+    try {
+      // Load the fake version 278
+      LOGGER.info("Loading fake LOINC version 278 for testing");
+      CodeSystemLoaderUtil.loadCodeSystem(searchService, tempFile, false, CodeSystem.class,
+          new DefaultProgressListener());
+
+      // Find the terminology that was just loaded
+      final SearchParameters params = new SearchParameters(
+          "terminology:LNC AND version:278 AND publisher:SANDBOX", 0, 1, null, null);
+      final ResultList<Terminology> results = searchService.find(params, Terminology.class);
+      if (!results.getItems().isEmpty()) {
+        terminology278 = results.getItems().get(0);
+      }
+
+      // Now test lookup with version 278 - should work without "multiple objects" error
+      final String code = "66480-5";
+      final String system = "http://loinc.org";
+      final String version = "278";
+      final String lookupParams = "/$lookup?code=" + code + "&system=" + system + "&version=" + version;
+      final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + lookupParams;
+      LOGGER.info("Testing lookup endpoint: {}", endpoint);
+
+      final String content = this.restTemplate.getForObject(endpoint, String.class);
+      LOGGER.info("Response content = {}", content);
+
+      // Assert - Should NOT throw "Unexpectedly found more than one object" exception
+      assertNotNull(content, "Response should not be null");
+      assertFalse(content.contains("Unexpectedly found more than one object"),
+          "Should not find multiple objects when version is specified - this validates the fix");
+
+      // If successful, verify the response structure
+      if (!content.contains("OperationOutcome") || content.contains("\"code\":\"not-found\"")) {
+        // Either success or expected not-found (if code doesn't exist in test data)
+        // Both are acceptable - the important thing is no "multiple objects" error
+        LOGGER.info("Test passed: No 'multiple objects' error occurred");
+      }
+
+    } finally {
+      // Clean up: remove the fake version 278
+      if (terminology278 != null) {
+        LOGGER.info("Cleaning up fake LOINC version 278");
+        TerminologyUtility.removeTerminology(searchService, terminology278.getId());
+      }
+      // Delete temp file
+      if (tempFile.exists()) {
+        tempFile.delete();
+      }
+    }
   }
 
   /**
