@@ -632,10 +632,17 @@ public class CodeSystemProviderR4 implements IResourceProvider {
   private Parameters lookupHelper(final Terminology terminology, final String code,
     final Set<CodeType> properties) throws Exception {
 
-    // Lookup concept (only code is needed because we have terminology index)
-    final SearchParameters params =
-        new SearchParameters("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
-            + StringUtility.escapeQuery(terminology.getAbbreviation()), 0, 2, null, null);
+    // Lookup concept (include version and publisher to ensure uniqueness)
+    final StringBuilder queryBuilder = new StringBuilder();
+    queryBuilder.append("code:").append(StringUtility.escapeQuery(code));
+    queryBuilder.append(" AND terminology:").append(StringUtility.escapeQuery(terminology.getAbbreviation()));
+    if (terminology.getVersion() != null) {
+      queryBuilder.append(" AND version:").append(StringUtility.escapeQuery(terminology.getVersion()));
+    }
+    if (terminology.getPublisher() != null) {
+      queryBuilder.append(" AND publisher:").append(StringUtility.escapeQuery(terminology.getPublisher()));
+    }
+    final SearchParameters params = new SearchParameters(queryBuilder.toString(), 0, 2, null, null);
     final Concept concept = searchService.findSingle(params, Concept.class);
     if (concept == null) {
       throw FhirUtilityR4.exception("Unable to find code for system/version = " + code,
@@ -672,10 +679,25 @@ public class CodeSystemProviderR4 implements IResourceProvider {
   private Parameters validateHelper(final Terminology terminology, final String code,
     final StringType display) throws Exception {
 
-    // Lookup concept
-    final SearchParameters params =
-        new SearchParameters("code:" + StringUtility.escapeQuery(code) + " AND terminology:"
-            + StringUtility.escapeQuery(terminology.getAbbreviation()), 0, 2, null, null);
+    // Lookup concept (include version and publisher to ensure uniqueness)
+    final StringBuilder queryBuilder = new StringBuilder();
+    
+    if (!StringUtility.isEmpty(code)) {
+      queryBuilder.append("code:").append(StringUtility.escapeQuery(code));
+    }  
+    if (!StringUtility.isEmpty(terminology.getAbbreviation())) {
+      if (queryBuilder.length() > 0) {
+        queryBuilder.append(" AND ");
+      }
+      queryBuilder.append(" terminology:").append(StringUtility.escapeQuery(terminology.getAbbreviation()));
+    }
+    if (terminology.getVersion() != null) {
+      queryBuilder.append(" AND version:").append(StringUtility.escapeQuery(terminology.getVersion()));
+    }
+    if (terminology.getPublisher() != null) {
+      queryBuilder.append(" AND publisher:").append(StringUtility.escapeQuery(terminology.getPublisher()));
+    }
+    final SearchParameters params = new SearchParameters(queryBuilder.toString(), 0, 2, null, null);
 
     final Concept concept = searchService.findSingle(params, Concept.class);
 
