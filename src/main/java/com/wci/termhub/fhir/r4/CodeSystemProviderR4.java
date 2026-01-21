@@ -681,21 +681,24 @@ public class CodeSystemProviderR4 implements IResourceProvider {
 
     // Lookup concept (include version and publisher to ensure uniqueness)
     final StringBuilder queryBuilder = new StringBuilder();
-    
+
     if (!StringUtility.isEmpty(code)) {
       queryBuilder.append("code:").append(StringUtility.escapeQuery(code));
-    }  
+    }
     if (!StringUtility.isEmpty(terminology.getAbbreviation())) {
       if (queryBuilder.length() > 0) {
         queryBuilder.append(" AND ");
       }
-      queryBuilder.append(" terminology:").append(StringUtility.escapeQuery(terminology.getAbbreviation()));
+      queryBuilder.append(" terminology:")
+          .append(StringUtility.escapeQuery(terminology.getAbbreviation()));
     }
     if (terminology.getVersion() != null) {
-      queryBuilder.append(" AND version:").append(StringUtility.escapeQuery(terminology.getVersion()));
+      queryBuilder.append(" AND version:")
+          .append(StringUtility.escapeQuery(terminology.getVersion()));
     }
     if (terminology.getPublisher() != null) {
-      queryBuilder.append(" AND publisher:").append(StringUtility.escapeQuery(terminology.getPublisher()));
+      queryBuilder.append(" AND publisher:")
+          .append(StringUtility.escapeQuery(terminology.getPublisher()));
     }
     final SearchParameters params = new SearchParameters(queryBuilder.toString(), 0, 2, null, null);
 
