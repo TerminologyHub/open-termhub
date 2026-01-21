@@ -67,7 +67,8 @@ public class DefaultQueryBuilder implements QueryBuilder {
       return query;
     }
 
-    return StringUtility.escapeQueryNoSpace(query);
+    // Use escape that preserves wildcards (* and ?)
+    return StringUtility.escapeQueryPreserveWildcards(query);
   }
 
   /* see superclass */
