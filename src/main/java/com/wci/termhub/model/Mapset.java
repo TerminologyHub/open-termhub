@@ -233,20 +233,15 @@ public class Mapset extends MapsetRef implements TerminologyComponent, HasAttrib
     this.statistics = statistics;
   }
 
-  /**
-   * Gets the license.
-   *
-   * @return the license
-   */
+  /* see superclass */
+  @Override
+  @Schema(description = "License for usage of this subset (e.g. \"TERMHUB\")")
   public String getLicense() {
     return license;
   }
 
-  /**
-   * Sets the license.
-   *
-   * @param license the new license
-   */
+  /* see superclass */
+  @Override
   public void setLicense(final String license) {
     this.license = license;
   }

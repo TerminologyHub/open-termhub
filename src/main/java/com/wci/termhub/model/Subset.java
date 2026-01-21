@@ -35,8 +35,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class Subset extends SubsetRef implements TerminologyComponent, HasAttributes {
 
   /**
-   * Attribute keys that can be associated with a terminology (and their
-   * descriptions) rendered as terminology attributes when building a data set.
+   * Attribute keys that can be associated with a terminology (and their descriptions) rendered as
+   * terminology attributes when building a data set.
    */
   public enum Attributes {
 
@@ -234,21 +234,15 @@ public class Subset extends SubsetRef implements TerminologyComponent, HasAttrib
     this.terminology = terminology;
   }
 
-  /**
-   * Gets the license.
-   *
-   * @return the license
-   */
+  /* see superclass */
+  @Override
   @Schema(description = "License for usage of this subset (e.g. \"TERMHUB\")")
   public String getLicense() {
     return license;
   }
 
-  /**
-   * Sets the license.
-   *
-   * @param license the new license
-   */
+  /* see superclass */
+  @Override
   public void setLicense(final String license) {
     this.license = license;
   }
