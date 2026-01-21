@@ -639,7 +639,10 @@ public class LuceneDataAccess {
           searchParameters.getSort(), clazz.getName());
     }
 
-    final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, end, sort)
+    // When sort is present, use a large number to get accurate total count
+    // Otherwise totalHits may be limited by the 'end' parameter
+    final int maxHitsToCollect = (sort != null) ? Integer.MAX_VALUE : end;
+    final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, maxHitsToCollect, sort)
         : searcher.search(queryBuilder, end);
     if (logger.isTraceEnabled()) {
       logger.trace("Query topDocs: {}", topDocs.totalHits.value);

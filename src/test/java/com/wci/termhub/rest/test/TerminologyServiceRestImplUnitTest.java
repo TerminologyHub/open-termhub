@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 West Coast Informatics - All Rights Reserved.
+ * Copyright 2026 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -2777,5 +2777,178 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
     assertThat(body).isNotNull();
     assertThat(body).containsKeys(ERROR_FIELDS);
+  }
+
+  /**
+   * Test that different wildcard patterns for "all" return consistent results.
+   * Tests query=*, query=*:*, query=*;*, no query parameter, with/without sort.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindMapsetMappingsWildcardConsistency() throws Exception {
+    final String mapset = "SNOMEDCT_US-ICD10CM";
+    final String baseUrlPattern = "/mapset/" + mapset + "/mapping";
+
+    LOGGER.info("Testing wildcard consistency for {}", mapset);
+
+    // Test 1: query=* with sort
+    final String url1 =
+        baseUrlPattern + "?query=*&offset=0&limit=20&sort=from.code,group,priority&ascending=true";
+    LOGGER.info("Testing url1 - {}", url1);
+    final MvcResult result1 = mockMvc.perform(get(url1)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list1 =
+        objectMapper.readValue(result1.getResponse().getContentAsString(), ResultListMapping.class);
+    final long total1 = list1.getTotal();
+    LOGGER.info("  query=* with sort: total={}", total1);
+
+    // Test 2: query=* without sort
+    final String url2 = baseUrlPattern + "?query=*&offset=0&limit=20";
+    LOGGER.info("Testing url2 - {}", url2);
+    final MvcResult result2 = mockMvc.perform(get(url2)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list2 =
+        objectMapper.readValue(result2.getResponse().getContentAsString(), ResultListMapping.class);
+    final long total2 = list2.getTotal();
+    LOGGER.info("  query=* without sort: total={}", total2);
+
+    // Test 3: query=*:* with sort
+    final String url3 = baseUrlPattern
+        + "?query=*:*&offset=0&limit=20&sort=from.code,group,priority&ascending=true";
+    LOGGER.info("Testing url3 - {}", url3);
+    final MvcResult result3 = mockMvc.perform(get(url3)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list3 =
+        objectMapper.readValue(result3.getResponse().getContentAsString(), ResultListMapping.class);
+    final long total3 = list3.getTotal();
+    LOGGER.info("  query=*:* with sort: total={}", total3);
+
+    // Test 4: query=*;* with sort
+    final String url4 = baseUrlPattern
+        + "?query=*;*&offset=0&limit=20&sort=from.code,group,priority&ascending=true";
+    LOGGER.info("Testing url4 - {}", url4);
+    final MvcResult result4 = mockMvc.perform(get(url4)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list4 =
+        objectMapper.readValue(result4.getResponse().getContentAsString(), ResultListMapping.class);
+    final long total4 = list4.getTotal();
+    LOGGER.info("  query=*;* with sort: total={}", total4);
+
+    // Test 5: no query parameter with sort
+    final String url5 =
+        baseUrlPattern + "?offset=0&limit=20&sort=from.code,group,priority&ascending=true";
+    LOGGER.info("Testing url5 - {}", url5);
+    final MvcResult result5 = mockMvc.perform(get(url5)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list5 =
+        objectMapper.readValue(result5.getResponse().getContentAsString(), ResultListMapping.class);
+    final long total5 = list5.getTotal();
+    LOGGER.info("  no query with sort: total={}", total5);
+
+    // Test 6: no query parameter, no sort
+    final String url6 = baseUrlPattern + "?offset=0&limit=20";
+    LOGGER.info("Testing url6 - {}", url6);
+    final MvcResult result6 = mockMvc.perform(get(url6)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list6 =
+        objectMapper.readValue(result6.getResponse().getContentAsString(), ResultListMapping.class);
+    final long total6 = list6.getTotal();
+    LOGGER.info("  no query, no sort: total={}", total6);
+
+    // All totals should be the same
+    LOGGER.info("Comparing totals: {}, {}, {}, {}, {}, {}", total1, total2, total3, total4, total5,
+        total6);
+    assertEquals(total1, total2, "query=* with sort vs without sort should return same total");
+    assertEquals(total1, total3, "query=* vs query=*:* should return same total");
+    assertEquals(total1, total4, "query=* vs query=*;* should return same total");
+    assertEquals(total1, total5, "query=* vs no query (with sort) should return same total");
+    assertEquals(total1, total6, "query=* vs no query (no sort) should return same total");
+
+    // Verify we got the expected number of results (sandbox data has 64
+    // mappings)
+    assertEquals(64, total1, "Expected 64 total mappings in sandbox data");
+    LOGGER.info("Wildcard consistency test passed with total={}", total1);
+  }
+
+  /**
+   * Test that a code with a trailing wildcard works correctly. Tests
+   * query=40733004* to find mappings starting with that code.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindMapsetMappingsWithTrailingWildcard() throws Exception {
+    final String mapset = "SNOMEDCT_US-ICD10CM";
+    final String baseUrlPattern = "/mapset/" + mapset + "/mapping";
+
+    LOGGER.info("Testing trailing wildcard for {}", mapset);
+
+    // Test 1: Exact match query (this should work)
+    final String url1 = baseUrlPattern + "?query=from.code:40733004&offset=0&limit=20";
+    LOGGER.info("Testing url1 - {}", url1);
+    final MvcResult result1 = mockMvc.perform(get(url1)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list1 =
+        objectMapper.readValue(result1.getResponse().getContentAsString(), ResultListMapping.class);
+    final long exactTotal = list1.getTotal();
+    LOGGER.info("  Exact match total={}", exactTotal);
+    assertThat(exactTotal).isGreaterThan(0);
+
+    // Test 2: Code with trailing wildcard (fielded query)
+    final String url2 = baseUrlPattern + "?query=from.code:40733*&offset=0&limit=100";
+    LOGGER.info("Testing url2 - {}", url2);
+    final MvcResult result2 = mockMvc.perform(get(url2)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list2 =
+        objectMapper.readValue(result2.getResponse().getContentAsString(), ResultListMapping.class);
+    final long wildcardTotal = list2.getTotal();
+    LOGGER.info("  Wildcard match total={}", wildcardTotal);
+
+    // Wildcard should match at least as many as exact match
+    assertThat(wildcardTotal).isGreaterThanOrEqualTo(exactTotal);
+
+    // Verify all results match the pattern
+    for (final Mapping mapping : list2.getItems()) {
+      final String code = mapping.getFrom().getCode();
+      assertThat(code).startsWith("40733");
+      LOGGER.info("    Found code: {}", code);
+    }
+
+    LOGGER.info("Trailing wildcard test passed: exact={}, wildcard={}", exactTotal, wildcardTotal);
+  }
+
+  /**
+   * Test that a bare code search (without field prefix) works. This is what the
+   * browser sends when a user types just a code.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testFindMapsetMappingsBareCodeSearch() throws Exception {
+    final String mapset = "SNOMEDCT_US-ICD10CM";
+    final String baseUrlPattern = "/mapset/" + mapset + "/mapping";
+
+    LOGGER.info("Testing bare code search for {}", mapset);
+
+    // Test 1: Fielded query (known to work)
+    final String url1 = baseUrlPattern + "?query=from.code:40733004&offset=0&limit=20";
+    LOGGER.info("Testing url1 - {}", url1);
+    final MvcResult result1 = mockMvc.perform(get(url1)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list1 =
+        objectMapper.readValue(result1.getResponse().getContentAsString(), ResultListMapping.class);
+    final long fieldedTotal = list1.getTotal();
+    LOGGER.info("  Fielded query total={}", fieldedTotal);
+    assertThat(fieldedTotal).isGreaterThan(0);
+
+    // Test 2: Bare code (what browser might send)
+    final String url2 = baseUrlPattern + "?query=40733004&offset=0&limit=20";
+    LOGGER.info("Testing url2 - {}", url2);
+    final MvcResult result2 = mockMvc.perform(get(url2)).andExpect(status().isOk()).andReturn();
+    final ResultListMapping list2 =
+        objectMapper.readValue(result2.getResponse().getContentAsString(), ResultListMapping.class);
+    final long bareTotal = list2.getTotal();
+    LOGGER.info("  Bare code total={}", bareTotal);
+
+    // Bare code search should find at least the same results as fielded
+    // (it might find more if the code appears in other fields)
+    assertThat(bareTotal).isGreaterThanOrEqualTo(fieldedTotal);
+
+    LOGGER.info("Bare code search test passed: fielded={}, bare={}", fieldedTotal, bareTotal);
   }
 }

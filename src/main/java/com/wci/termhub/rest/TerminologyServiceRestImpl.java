@@ -2158,7 +2158,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "active", required = false) final Boolean active) throws Exception {
 
     try {
-
       // Allow mapset to be blank here
       final List<Mapset> mapsets = lookupMapsets(mapsetId, false);
 
@@ -3143,9 +3142,13 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     }
 
     final Query mapsetQuery = mapsetQueryBuilder.build();
-    final String query2 = QueryBuilder.findBuilder(builders, null).buildQuery(query);
-    final Query keywordQuery =
-        StringUtility.isEmpty(query) ? null : LuceneQueryBuilder.parse(query2, Mapping.class);
+    // Normalize query: treat *, *:*, *;*, and empty string as null (all should
+    // match everything)
+    final String normalizedQuery = (query == null || query.isEmpty() || query.equals("*")
+        || query.equals("*:*") || query.equals("*;*")) ? null : query;
+    final String query2 = QueryBuilder.findBuilder(builders, null).buildQuery(normalizedQuery);
+    final Query keywordQuery = StringUtility.isEmpty(normalizedQuery) ? null
+        : LuceneQueryBuilder.parse(query2, Mapping.class);
     final Query booleanQuery =
         ModelUtility.isEmpty(mapsets) ? keywordQuery : getAndQuery(mapsetQuery, keywordQuery);
     final SearchParameters searchParams =
@@ -3213,9 +3216,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       }
     }
     final Query subsetQuery = subsetQueryBuilder.build();
-    final String query2 = QueryBuilder.findBuilder(builders, null).buildQuery(query);
-    final Query keywordQuery = LuceneQueryBuilder.parse(query2, SubsetMember.class);
-    final Query booleanQuery = getAndQuery(subsetQuery, keywordQuery);
+    // Normalize query: treat *, *:*, *;*, and empty string as null (all should
+    // match everything)
+    final String normalizedQuery = (query == null || query.isEmpty() || query.equals("*")
+        || query.equals("*:*") || query.equals("*;*")) ? null : query;
+    final String query2 = QueryBuilder.findBuilder(builders, null).buildQuery(normalizedQuery);
+    final Query keywordQuery = StringUtility.isEmpty(normalizedQuery) ? null
+        : LuceneQueryBuilder.parse(query2, SubsetMember.class);
+    final Query booleanQuery =
+        ModelUtility.isEmpty(subsets) ? keywordQuery : getAndQuery(subsetQuery, keywordQuery);
     final SearchParameters searchParams =
         new SearchParameters(booleanQuery, offset, limit, sort, ascending);
 
