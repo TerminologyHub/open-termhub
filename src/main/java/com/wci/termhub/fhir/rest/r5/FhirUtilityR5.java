@@ -586,16 +586,26 @@ public final class FhirUtilityR5 {
       designation.addPart().setName("language")
           .setValue(new CodeType(term.computeSingleLanguage()));
       // Term Type
-      if (displayMap.containsKey(term.getType())) {
-        final Coding coding = new Coding();
-        coding.setCode(term.getType());
-        coding.setDisplay(displayMap.get(term.getType()));
-        designation.addPart().setName("use").setValue(coding);
-      } else {
-        final Coding coding = new Coding();
-        coding.setCode(term.getType());
-        designation.addPart().setName("use").setValue(coding);
+      final Coding coding = new Coding();
+      coding.setCode(term.getType());
+
+      // Use stored system and display from term attributes if available
+      final String useSystem = term.getAttributes().get("designationUseSystem");
+      if (useSystem != null) {
+        coding.setSystem(useSystem);
       }
+
+      if (displayMap.containsKey(term.getType())) {
+        coding.setDisplay(displayMap.get(term.getType()));
+      } else {
+        // Fallback to stored display from term attributes if available
+        final String useDisplay = term.getAttributes().get("designationUseDisplay");
+        if (useDisplay != null) {
+          coding.setDisplay(useDisplay);
+        }
+      }
+
+      designation.addPart().setName("use").setValue(coding);
       designation.addPart().setName("value").setValue(new StringType(term.getName()));
       parameters.addParameter(designation);
       // for (String preferredLangRefset :

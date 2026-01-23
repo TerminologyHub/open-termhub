@@ -950,6 +950,15 @@ public final class CodeSystemLoaderUtil {
     // Safely set term type with null checks
     if (designation.has("use") && designation.path("use").has("code")) {
       term.setType(designation.path("use").path("code").asText());
+
+      // Store designation.use.system and display in term attributes for FHIR output
+      final JsonNode useNode = designation.path("use");
+      if (useNode.has("system")) {
+        term.getAttributes().put("designationUseSystem", useNode.path("system").asText());
+      }
+      if (useNode.has("display")) {
+        term.getAttributes().put("designationUseDisplay", useNode.path("display").asText());
+      }
     } else {
       // Default to PT (Preferred Term) if no type is specified
       term.setType("PT");
