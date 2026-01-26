@@ -63,6 +63,8 @@ import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
+import com.wci.termhub.model.ResultList;
+import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.DateUtility;
@@ -520,6 +522,22 @@ public final class FhirUtilityR4 {
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children)
     throws Exception {
+    return toR4(codeSystem, concept, properties, displayMap, relationships, children, null);
+  }
+
+  public static Parameters toR4(final CodeSystem codeSystem, final Concept concept,
+    final Set<String> properties, final Map<String, String> displayMap,
+    final List<ConceptRelationship> relationships, final List<ConceptRef> children,
+    final Map<String, String> conceptNameMap) throws Exception {
+    return toR4(codeSystem, concept, properties, displayMap, relationships, children,
+        conceptNameMap, null);
+  }
+
+  public static Parameters toR4(final CodeSystem codeSystem, final Concept concept,
+    final Set<String> properties, final Map<String, String> displayMap,
+    final List<ConceptRelationship> relationships, final List<ConceptRef> children,
+    final Map<String, String> conceptNameMap, final EntityRepositoryService searchService)
+    throws Exception {
     final Parameters parameters = new Parameters();
 
     // Properties to include by default from
@@ -604,12 +622,52 @@ public final class FhirUtilityR4 {
       if (properties != null && !properties.contains(key)) {
         continue;
       }
+
       final String value = concept.getAttributes().get(key);
       // Check for boolean value
       if ("true".equals(value) || "false".equals(value)) {
         parameters.addParameter(createProperty(key, Boolean.valueOf(value), false));
       }
-      // Check for coding
+      // Check if property value can be looked up in conceptNameMap to create
+      // valueCoding
+      // This transforms property values that match concept names into
+      // valueCoding format
+      String conceptCode = null;
+      if (conceptNameMap != null && conceptNameMap.containsKey(value)) {
+        conceptCode = conceptNameMap.get(value);
+      }
+      // Fallback: search for concept by name if not found in map and
+      // searchService is available
+      else if (searchService != null && value != null && !value.isEmpty()) {
+        try {
+          final SearchParameters nameParams = new SearchParameters(2, 0);
+          nameParams.setQuery(StringUtility.composeQuery("AND", "active:true",
+              "name:" + StringUtility.escapeQuery(value),
+              "terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
+              concept.getVersion() != null
+                  ? "version:" + StringUtility.escapeQuery(concept.getVersion()) : null,
+              concept.getPublisher() != null
+                  ? "publisher:" + StringUtility.escapeQuery(concept.getPublisher()) : null));
+          final ResultList<Concept> nameResults =
+              searchService.findFields(nameParams, ModelUtility.asList("code"), Concept.class);
+          if (!nameResults.getItems().isEmpty()) {
+            conceptCode = nameResults.getItems().get(0).getCode();
+          }
+        } catch (final Exception e) {
+          // Ignore search errors, fall through to string value
+        }
+      }
+
+      if (conceptCode != null) {
+        final Coding coding = new Coding();
+        coding.setCode(conceptCode);
+        // Use the codeSystem URL as the system (for LOINC this will be
+        // "http://loinc.org")
+        coding.setSystem(codeSystem.getUrl());
+        coding.setDisplay(value);
+        parameters.addParameter(createProperty(key, coding, false));
+      }
+      // Check for coding in displayMap (existing logic)
       else if (displayMap.containsKey(value)) {
         final Coding coding = new Coding();
         coding.setCode(value);
@@ -617,7 +675,6 @@ public final class FhirUtilityR4 {
         coding.setDisplay(displayMap.get(value));
         parameters.addParameter(createProperty(key, coding, false));
       }
-
       // otherwise just a string
       else {
         parameters.addParameter(createProperty(key, value, false));
@@ -1108,8 +1165,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Converts a LOINC Concept to a FHIR R4 Questionnaire. This is the primary method for creating
-   * questionnaires from LOINC concepts.
+   * Converts a LOINC Concept to a FHIR R4 Questionnaire. This is the primary
+   * method for creating questionnaires from LOINC concepts.
    *
    * @param concept the LOINC Concept
    * @param searchService the search service
@@ -1176,8 +1233,9 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Populates a Questionnaire with questions and answers based on LOINC relationships. This method
-   * uses the concept's existing relationships to create questionnaire items.
+   * Populates a Questionnaire with questions and answers based on LOINC
+   * relationships. This method uses the concept's existing relationships to
+   * create questionnaire items.
    *
    * @param questionnaire the Questionnaire to populate
    * @param searchService the search service for data access
@@ -1503,8 +1561,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Finds answer options for a question via has_answers relationships. Follows LOINC structure:
-   * Question --has_answers--> LL Code <--parent-- LA Codes
+   * Finds answer options for a question via has_answers relationships. Follows
+   * LOINC structure: Question --has_answers--> LL Code <--parent-- LA Codes
    *
    * @param questionCode the question LOINC code
    * @param searchService the search service
@@ -1656,8 +1714,9 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Gets the system URI for a terminology based on its abbreviation, publisher, and version. This
-   * method uses TerminologyUtility to get the actual URI from the database.
+   * Gets the system URI for a terminology based on its abbreviation, publisher,
+   * and version. This method uses TerminologyUtility to get the actual URI from
+   * the database.
    *
    * @param searchService the search service
    * @param terminology the terminology abbreviation
@@ -1684,8 +1743,9 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Determines if a concept should be included as a main question based on its properties. Filters
-   * out variant concepts that are overly specific or descriptive.
+   * Determines if a concept should be included as a main question based on its
+   * properties. Filters out variant concepts that are overly specific or
+   * descriptive.
    *
    * @param conceptCode the LOINC concept code to check
    * @param searchService the search service to query concept properties

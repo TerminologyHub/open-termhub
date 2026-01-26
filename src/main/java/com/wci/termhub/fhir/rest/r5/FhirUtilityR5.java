@@ -58,11 +58,14 @@ import com.wci.termhub.model.Definition;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
+import com.wci.termhub.model.ResultList;
+import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.DateUtility;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.StringUtility;
 
 import ca.uhn.fhir.rest.param.NumberParam;
 import jakarta.servlet.http.HttpServletRequest;
@@ -407,7 +410,8 @@ public final class FhirUtilityR5 {
    * Recover code.
    *
    * @param code the code
-   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the string
+   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the
+   *          string
    * @return the string
    */
   public static String recoverCode(final CodeType code, final Coding coding) {
@@ -545,6 +549,22 @@ public final class FhirUtilityR5 {
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children)
     throws Exception {
+    return toR5(codeSystem, concept, properties, displayMap, relationships, children, null);
+  }
+
+  public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
+    final Set<String> properties, final Map<String, String> displayMap,
+    final List<ConceptRelationship> relationships, final List<ConceptRef> children,
+    final Map<String, String> conceptNameMap) throws Exception {
+    return toR5(codeSystem, concept, properties, displayMap, relationships, children,
+        conceptNameMap, null);
+  }
+
+  public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
+    final Set<String> properties, final Map<String, String> displayMap,
+    final List<ConceptRelationship> relationships, final List<ConceptRef> children,
+    final Map<String, String> conceptNameMap, final EntityRepositoryService searchService)
+    throws Exception {
     final Parameters parameters = new Parameters();
 
     // Properties to include by default from
@@ -629,12 +649,52 @@ public final class FhirUtilityR5 {
       if (properties != null && !properties.contains(key)) {
         continue;
       }
+
       final String value = concept.getAttributes().get(key);
       // Check for boolean value
       if ("true".equals(value) || "false".equals(value)) {
         parameters.addParameter(createProperty(key, Boolean.valueOf(value), false));
       }
-      // Check for coding
+      // Check if property value can be looked up in conceptNameMap to create
+      // valueCoding
+      // This transforms property values that match concept names into
+      // valueCoding format
+      String conceptCode = null;
+      if (conceptNameMap != null && conceptNameMap.containsKey(value)) {
+        conceptCode = conceptNameMap.get(value);
+      }
+      // Fallback: search for concept by name if not found in map and
+      // searchService is available
+      else if (searchService != null && value != null && !value.isEmpty()) {
+        try {
+          final SearchParameters nameParams = new SearchParameters(2, 0);
+          nameParams.setQuery(StringUtility.composeQuery("AND", "active:true",
+              "name:" + StringUtility.escapeQuery(value),
+              "terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
+              concept.getVersion() != null
+                  ? "version:" + StringUtility.escapeQuery(concept.getVersion()) : null,
+              concept.getPublisher() != null
+                  ? "publisher:" + StringUtility.escapeQuery(concept.getPublisher()) : null));
+          final ResultList<Concept> nameResults =
+              searchService.findFields(nameParams, ModelUtility.asList("code"), Concept.class);
+          if (!nameResults.getItems().isEmpty()) {
+            conceptCode = nameResults.getItems().get(0).getCode();
+          }
+        } catch (final Exception e) {
+          // Ignore search errors, fall through to string value
+        }
+      }
+
+      if (conceptCode != null) {
+        final Coding coding = new Coding();
+        coding.setCode(conceptCode);
+        // Use the codeSystem URL as the system (for LOINC this will be
+        // "http://loinc.org")
+        coding.setSystem(codeSystem.getUrl());
+        coding.setDisplay(value);
+        parameters.addParameter(createProperty(key, coding, false));
+      }
+      // Check for coding in displayMap (existing logic)
       else if (displayMap.containsKey(value)) {
         final Coding coding = new Coding();
         coding.setCode(value);
@@ -642,7 +702,6 @@ public final class FhirUtilityR5 {
         coding.setDisplay(displayMap.get(value));
         parameters.addParameter(createProperty(key, coding, false));
       }
-
       // otherwise just a string
       else {
         parameters.addParameter(createProperty(key, value, false));
@@ -929,7 +988,8 @@ public final class FhirUtilityR5 {
           new Meta().addTag("originalId", terminology.getAttributes().get("originalId"), null));
     }
 
-    // logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
+    // logger.info("Converted terminology to CodeSystem: id={}, name={},
+    // version={}", cs.getId(),
     // cs.getName(), cs.getVersion());
 
     return cs;
@@ -951,7 +1011,8 @@ public final class FhirUtilityR5 {
     final ConceptMap cm = new ConceptMap();
 
     // Debug logging for Mapset data
-    // logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
+    // logger.info("Converting Mapset: id={}, fromTerminology={},
+    // toTerminology={}", mapset.getId(),
     // mapset.getFromTerminology(), mapset.getToTerminology());
 
     // Set other fields

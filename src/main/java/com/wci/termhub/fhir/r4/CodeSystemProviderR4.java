@@ -659,12 +659,20 @@ public class CodeSystemProviderR4 implements IResourceProvider {
 
     // Look up metadata
     final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService, terminology);
+    // Build concept name map (name -> code) for property lookups
+    Map<String, String> conceptNameMap = null;
+    try {
+      conceptNameMap = FhirUtility.getConceptNameMap(searchService, terminology);
+    } catch (final Exception e) {
+      logger.debug("Failed to get concept name map: {}", e.getMessage());
+    }
 
     return FhirUtilityR4.toR4(FhirUtilityR4.toR4(terminology), concept,
         properties == null ? null
             : properties.stream().map(c -> c.getValue()).collect(Collectors.toSet()),
         displayMap, relationships, children == null ? null
-            : children.stream().map(r -> r.getFrom()).collect(Collectors.toList()));
+            : children.stream().map(r -> r.getFrom()).collect(Collectors.toList()),
+        conceptNameMap, searchService);
   }
 
   /**
