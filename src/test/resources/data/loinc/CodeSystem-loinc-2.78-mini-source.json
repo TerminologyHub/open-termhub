@@ -1,0 +1,1024 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "07823d73-aeea-4b26-8614-57807161b3b0",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2024-08-06T00:00:00.000+00:00"
+  },
+  "url": "http://loinc.org",
+  "identifier": [ {
+    "system": "urn:ietf:rfc:3986",
+    "value": "urn:oid:2.16.840.1.113883.6.1"
+  } ],
+  "version": "2.78",
+  "name": "Logical Observation Identifiers Names and Codes",
+  "title": "LOINC",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-08-06T00:00:00+00:00",
+  "publisher": "Regenstrief Institute, Inc.",
+  "contact": [ {
+    "telecom": [ {
+      "system": "url",
+      "value": "http://loinc.org"
+    } ]
+  } ],
+  "description": "TBD.",
+  "copyright": "This material contains content from LOINC (http://loinc.org). LOINC is copyright Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc.",
+  "caseSensitive": false,
+  "valueSet": "http://loinc.org/vs",
+  "hierarchyMeaning": "is-a",
+  "compositional": false,
+  "versionNeeded": false,
+  "content": "complete",
+  "count": 1,
+  "property": [ {
+    "code": "polyhierarchy",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/polyhierarchy",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "autocomplete",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/autocomplete",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "hierarchical",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/hierarchical",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "description",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/description",
+    "description": "TBD.",
+    "type": "string"
+  }, {
+    "code": "tree-positions",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/tree-positions",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "unidirectional-rels",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/unidirectional-rels",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "ecl",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/ecl",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "has_rad-reason-for-exam",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-reason-for-exam",
+    "description": "rad-reason-for-exam",
+    "type": "string"
+  }, {
+    "code": "child",
+    "uri": "https://terminologyhub.com/model/relationship/type/Child",
+    "description": "From child to parent",
+    "type": "string"
+  }, {
+    "code": "has_rad-pharmaceutical-substance-given",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-pharmaceutical-substance-given",
+    "description": "rad-pharmaceutical-substance-given",
+    "type": "string"
+  }, {
+    "code": "has_document-setting",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-setting",
+    "description": "document-setting",
+    "type": "string"
+  }, {
+    "code": "has_rad-modality-subtype",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-modality-subtype",
+    "description": "rad-modality-subtype",
+    "type": "string"
+  }, {
+    "code": "has_search",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasSearch",
+    "description": "search",
+    "type": "string"
+  }, {
+    "code": "has_rad-modality-type",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-modality-type",
+    "description": "rad-modality-type",
+    "type": "string"
+  }, {
+    "code": "has_component",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasComponent",
+    "description": "COMPONENT",
+    "type": "string"
+  }, {
+    "code": "has_member",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasMember",
+    "description": "member",
+    "type": "string"
+  }, {
+    "code": "has_rad-pharmaceutical-route",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-pharmaceutical-route",
+    "description": "rad-pharmaceutical-route",
+    "type": "string"
+  }, {
+    "code": "has_answers",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnswers",
+    "description": "answers",
+    "type": "string"
+  }, {
+    "code": "has_analyte-divisor",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-divisor",
+    "description": "analyte-divisor",
+    "type": "string"
+  }, {
+    "code": "has_adjustment",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAdjustment",
+    "description": "adjustment",
+    "type": "string"
+  }, {
+    "code": "has_document-subject-matter-domain",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-subject-matter-domain",
+    "description": "document-subject-matter-domain",
+    "type": "string"
+  }, {
+    "code": "has_challenge",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasChallenge",
+    "description": "challenge",
+    "type": "string"
+  }, {
+    "code": "has_rad-anatomic-location-imaging-focus",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-anatomic-location-imaging-focus",
+    "description": "rad-anatomic-location-imaging-focus",
+    "type": "string"
+  }, {
+    "code": "has_rad-anatomic-location-laterality",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-anatomic-location-laterality",
+    "description": "rad-anatomic-location-laterality",
+    "type": "string"
+  }, {
+    "code": "has_analyte-core",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-core",
+    "description": "analyte-core",
+    "type": "string"
+  }, {
+    "code": "has_analyte-numerator",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-numerator",
+    "description": "analyte-numerator",
+    "type": "string"
+  }, {
+    "code": "has_class",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasClass",
+    "description": "CLASS",
+    "type": "string"
+  }, {
+    "code": "has_document-kind",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-kind",
+    "description": "document-kind",
+    "type": "string"
+  }, {
+    "code": "has_time-modifier",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasTime-modifier",
+    "description": "time-modifier",
+    "type": "string"
+  }, {
+    "code": "has_super-system",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasSuper-system",
+    "description": "super-system",
+    "type": "string"
+  }, {
+    "code": "has_time_aspct",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasTimeAspct",
+    "description": "TIME_ASPCT",
+    "type": "string"
+  }, {
+    "code": "has_rad-guidance-for-action",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-guidance-for-action",
+    "description": "rad-guidance-for-action",
+    "type": "string"
+  }, {
+    "code": "other",
+    "uri": "https://terminologyhub.com/model/relationship/type/Other",
+    "description": "otherwise related",
+    "type": "string"
+  }, {
+    "code": "has_count",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasCount",
+    "description": "count",
+    "type": "string"
+  }, {
+    "code": "has_analyte",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte",
+    "description": "analyte",
+    "type": "string"
+  }, {
+    "code": "has_analyte-suffix",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-suffix",
+    "description": "analyte-suffix",
+    "type": "string"
+  }, {
+    "code": "has_rad-anatomic-location-laterality-presence",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-anatomic-location-laterality-presence",
+    "description": "rad-anatomic-location-laterality-presence",
+    "type": "string"
+  }, {
+    "code": "map_to",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/MapTo",
+    "description": "Mapping from retired code to active code",
+    "type": "string"
+  }, {
+    "code": "has_rad-view-view-type",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-view-view-type",
+    "description": "rad-view-view-type",
+    "type": "string"
+  }, {
+    "code": "has_rad-view-aggregation",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-view-aggregation",
+    "description": "rad-view-aggregation",
+    "type": "string"
+  }, {
+    "code": "has_rad-guidance-for-presence",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-guidance-for-presence",
+    "description": "rad-guidance-for-presence",
+    "type": "string"
+  }, {
+    "code": "has_category",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasCategory",
+    "description": "category",
+    "type": "string"
+  }, {
+    "code": "has_rad-guidance-for-approach",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-guidance-for-approach",
+    "description": "rad-guidance-for-approach",
+    "type": "string"
+  }, {
+    "code": "has_document-role",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-role",
+    "description": "document-role",
+    "type": "string"
+  }, {
+    "code": "has_rad-anatomic-location-region-imaged",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-anatomic-location-region-imaged",
+    "description": "rad-anatomic-location-region-imaged",
+    "type": "string"
+  }, {
+    "code": "has_analyte-gene",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-gene",
+    "description": "analyte-gene",
+    "type": "string"
+  }, {
+    "code": "has_method_typ",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasMethodTyp",
+    "description": "METHOD_TYP",
+    "type": "string"
+  }, {
+    "code": "has_analyte-divisor-suffix",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-divisor-suffix",
+    "description": "analyte-divisor-suffix",
+    "type": "string"
+  }, {
+    "code": "has_time-core",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasTime-core",
+    "description": "time-core",
+    "type": "string"
+  }, {
+    "code": "has_rad-maneuver-maneuver-type",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-maneuver-maneuver-type",
+    "description": "rad-maneuver-maneuver-type",
+    "type": "string"
+  }, {
+    "code": "has_rad-guidance-for-object",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-guidance-for-object",
+    "description": "rad-guidance-for-object",
+    "type": "string"
+  }, {
+    "code": "has_scale_typ",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasScaleTyp",
+    "description": "SCALE_TYP",
+    "type": "string"
+  }, {
+    "code": "has_rad-subject",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-subject",
+    "description": "rad-subject",
+    "type": "string"
+  }, {
+    "code": "has_system-core",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasSystem-core",
+    "description": "system-core",
+    "type": "string"
+  }, {
+    "code": "COMMENT",
+    "uri": "https://terminologyhub.com/model/relationship/attribute/Comment",
+    "description": "Comment",
+    "type": "string"
+  }, {
+    "code": "has_system",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasSystem",
+    "description": "SYSTEM",
+    "type": "string"
+  }, {
+    "code": "has_rad-timing",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-timing",
+    "description": "rad-timing",
+    "type": "string"
+  }, {
+    "code": "has_document-type-of-service",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-type-of-service",
+    "description": "document-type-of-service",
+    "type": "string"
+  }, {
+    "code": "has_property",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasProperty",
+    "description": "PROPERTY",
+    "type": "string"
+  }, {
+    "code": "Answer",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Answer",
+    "type": "string"
+  }, {
+    "code": "count",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Count",
+    "type": "string"
+  }, {
+    "code": "property",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Property",
+    "type": "string"
+  }, {
+    "code": "document.setting",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.setting",
+    "type": "string"
+  }, {
+    "code": "rad.modality.modality type",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.modality.modalityType",
+    "type": "string"
+  }, {
+    "code": "document.kind",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.kind",
+    "type": "string"
+  }, {
+    "code": "rad.view.view type",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.view.viewType",
+    "type": "string"
+  }, {
+    "code": "Answer List",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/AnswerList",
+    "type": "string"
+  }, {
+    "code": "rad.anatomic location.laterality.presence",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.anatomicLocation.laterality.presence",
+    "type": "string"
+  }, {
+    "code": "super system",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/SuperSystem",
+    "type": "string"
+  }, {
+    "code": "document.typeofservice",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.typeofservice",
+    "type": "string"
+  }, {
+    "code": "rad.anatomic location.region imaged",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.anatomicLocation.regionImaged",
+    "type": "string"
+  }, {
+    "code": "challenge",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Challenge",
+    "type": "string"
+  }, {
+    "code": "divisors",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Divisors",
+    "type": "string"
+  }, {
+    "code": "rad.guidance for.approach",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.guidanceFor.approach",
+    "type": "string"
+  }, {
+    "code": "method",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Method",
+    "type": "string"
+  }, {
+    "code": "rad.subject",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.subject",
+    "type": "string"
+  }, {
+    "code": "component",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Component",
+    "type": "string"
+  }, {
+    "code": "Group",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Group",
+    "type": "string"
+  }, {
+    "code": "suffix",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Suffix",
+    "type": "string"
+  }, {
+    "code": "rad.anatomic location.imaging focus",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.anatomicLocation.imagingFocus",
+    "type": "string"
+  }, {
+    "code": "rad.guidance for.object",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.guidanceFor.object",
+    "type": "string"
+  }, {
+    "code": "rad.pharmaceutical.route",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.pharmaceutical.route",
+    "type": "string"
+  }, {
+    "code": "rad.timing",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.timing",
+    "type": "string"
+  }, {
+    "code": "rad.maneuver.maneuver type",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.maneuver.maneuverType",
+    "type": "string"
+  }, {
+    "code": "scale",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Scale",
+    "type": "string"
+  }, {
+    "code": "system",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/System",
+    "type": "string"
+  }, {
+    "code": "document.subjectmatterdomain",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.subjectmatterdomain",
+    "type": "string"
+  }, {
+    "code": "rad.view.aggregation",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.view.aggregation",
+    "type": "string"
+  }, {
+    "code": "rad.guidance for.action",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.guidanceFor.action",
+    "type": "string"
+  }, {
+    "code": "Part",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Part",
+    "type": "string"
+  }, {
+    "code": "rad.anatomic location.laterality",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.anatomicLocation.laterality",
+    "type": "string"
+  }, {
+    "code": "class",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Class",
+    "type": "string"
+  }, {
+    "code": "rad.reason for exam",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.reasonForExam",
+    "type": "string"
+  }, {
+    "code": "document.role",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.role",
+    "type": "string"
+  }, {
+    "code": "adjustment",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Adjustment",
+    "type": "string"
+  }, {
+    "code": "rad.modality.modality subtype",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.modality.modalitySubtype",
+    "type": "string"
+  }, {
+    "code": "rad.pharmaceutical.substance given",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.pharmaceutical.substanceGiven",
+    "type": "string"
+  }, {
+    "code": "time",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Time",
+    "type": "string"
+  }, {
+    "code": "time modifier",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/TimeModifier",
+    "type": "string"
+  }, {
+    "code": "gene",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Gene",
+    "type": "string"
+  }, {
+    "code": "rad.guidance for.presence",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.guidanceFor.presence",
+    "type": "string"
+  }, {
+    "code": "Observation",
+    "uri": "https://terminologyhub.com/model/concept/semanticType/Observation",
+    "type": "string"
+  }, {
+    "code": "fr-BE",
+    "uri": "https://terminologyhub.com/model/term/language/Fr-be",
+    "description": "fr-BE",
+    "type": "string"
+  }, {
+    "code": "pl-PL",
+    "uri": "https://terminologyhub.com/model/term/language/Pl-pl",
+    "description": "pl-PL",
+    "type": "string"
+  }, {
+    "code": "tr-TR",
+    "uri": "https://terminologyhub.com/model/term/language/Tr-tr",
+    "description": "tr-TR",
+    "type": "string"
+  }, {
+    "code": "ko-KR",
+    "uri": "https://terminologyhub.com/model/term/language/Ko-kr",
+    "description": "ko-KR",
+    "type": "string"
+  }, {
+    "code": "ConsumerName",
+    "uri": "https://terminologyhub.com/model/term/type/Consumername",
+    "description": "Consumer Name",
+    "type": "string"
+  }, {
+    "code": "de-AT",
+    "uri": "https://terminologyhub.com/model/term/language/De-at",
+    "description": "de-AT",
+    "type": "string"
+  }, {
+    "code": "ru-RU",
+    "uri": "https://terminologyhub.com/model/term/language/Ru-ru",
+    "description": "ru-RU",
+    "type": "string"
+  }, {
+    "code": "it-IT",
+    "uri": "https://terminologyhub.com/model/term/language/It-it",
+    "description": "it-IT",
+    "type": "string"
+  }, {
+    "code": "SHORTNAME",
+    "uri": "https://terminologyhub.com/model/term/type/Shortname",
+    "description": "Shortname",
+    "type": "string"
+  }, {
+    "code": "CODE_TEXT",
+    "uri": "https://terminologyhub.com/model/term/type/CodeText",
+    "description": "Code Text",
+    "type": "string"
+  }, {
+    "code": "es-MX",
+    "uri": "https://terminologyhub.com/model/term/language/Es-mx",
+    "description": "es-MX",
+    "type": "string"
+  }, {
+    "code": "es-ES",
+    "uri": "https://terminologyhub.com/model/term/language/Es-es",
+    "description": "es-ES",
+    "type": "string"
+  }, {
+    "code": "uk-UA",
+    "uri": "https://terminologyhub.com/model/term/language/Uk-ua",
+    "description": "uk-UA",
+    "type": "string"
+  }, {
+    "code": "FullySpecifiedName",
+    "uri": "https://terminologyhub.com/model/term/type/FullySpecifiedName",
+    "description": "Fully Specified Name",
+    "type": "string"
+  }, {
+    "code": "es-AR",
+    "uri": "https://terminologyhub.com/model/term/language/Es-ar",
+    "description": "es-AR",
+    "type": "string"
+  }, {
+    "code": "ParentGroup",
+    "uri": "https://terminologyhub.com/model/term/type/Parentgroup",
+    "description": "Parent Group",
+    "type": "string"
+  }, {
+    "code": "PartName",
+    "uri": "https://terminologyhub.com/model/term/type/Partname",
+    "description": "Part Name",
+    "type": "string"
+  }, {
+    "code": "de-DE",
+    "uri": "https://terminologyhub.com/model/term/language/De-de",
+    "description": "de-DE",
+    "type": "string"
+  }, {
+    "code": "et-EE",
+    "uri": "https://terminologyhub.com/model/term/language/Et-ee",
+    "description": "et-EE",
+    "type": "string"
+  }, {
+    "code": "fr-CA",
+    "uri": "https://terminologyhub.com/model/term/language/Fr-ca",
+    "description": "fr-CA",
+    "type": "string"
+  }, {
+    "code": "DisplayName",
+    "uri": "https://terminologyhub.com/model/term/type/Displayname",
+    "description": "Display Name",
+    "type": "string"
+  }, {
+    "code": "PartDisplayName",
+    "uri": "https://terminologyhub.com/model/term/type/Partdisplayname",
+    "description": "Part Display Name",
+    "type": "string"
+  }, {
+    "code": "nl-NL",
+    "uri": "https://terminologyhub.com/model/term/language/Nl-nl",
+    "description": "nl-NL",
+    "type": "string"
+  }, {
+    "code": "zh-CN",
+    "uri": "https://terminologyhub.com/model/term/language/Zh-cn",
+    "description": "zh-CN",
+    "type": "string"
+  }, {
+    "code": "DisplayText",
+    "uri": "https://terminologyhub.com/model/term/type/Displaytext",
+    "description": "Display Text",
+    "type": "string"
+  }, {
+    "code": "pt-BR",
+    "uri": "https://terminologyhub.com/model/term/language/Pt-br",
+    "description": "pt-BR",
+    "type": "string"
+  }, {
+    "code": "en",
+    "uri": "https://terminologyhub.com/model/term/language/En",
+    "description": "English",
+    "type": "string"
+  }, {
+    "code": "AnswerListName",
+    "uri": "https://terminologyhub.com/model/term/type/Answerlistname",
+    "description": "Answer List Name",
+    "type": "string"
+  }, {
+    "code": "LONG_COMMON_NAME",
+    "uri": "https://terminologyhub.com/model/term/type/LongCommonName",
+    "description": "Long Common Name",
+    "type": "string"
+  }, {
+    "code": "parent",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/parent",
+    "description": "Parent",
+    "type": "Coding"
+  }, {
+    "code": "active",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/active",
+    "description": "Active",
+    "type": "boolean"
+  }, {
+    "code": "sufficientlyDefined",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/sufficientlyDefined",
+    "description": "Sufficiently defined",
+    "type": "boolean"
+  }, {
+    "code": "relationship",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/relationship",
+    "description": "Relationship",
+    "type": "Coding"
+  }, {
+    "code": "semanticType",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/semanticType",
+    "description": "Indicates the concept's semantic category",
+    "type": "string"
+  } ],
+  "concept": [
+    {
+      "code": "10-9",
+      "display": "Amdinocillin [Susceptibility] by Serum bactericidal titer",
+      "designation": [ {
+        "language": "en",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "LONG_COMMON_NAME",
+          "display": "Long Common Name"
+        },
+        "value": "Amdinocillin [Susceptibility] by Serum bactericidal titer"
+      }, {
+        "language": "en",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "Amdinocillin:Titr:Pt:Isolate+Ser:SemiQn:SBT"
+      }, {
+        "language": "en",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "SHORTNAME",
+          "display": "Shortname"
+        },
+        "value": "Amdinocillin Titr SBT"
+      }, {
+        "language": "en",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "DisplayName",
+          "display": "Display Name"
+        },
+        "value": "Amdinocillin SBT (Isol+S)"
+      }, {
+        "language": "es-ES",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "Amdinocillina:Titulo / Factor de dilución:Punto temporal:Aislado y Suero:Semicuantitativo:Títulos séricos bactericidas"
+      }, {
+        "language": "ko-KR",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "Amdinocillin:감수성:검사시점:분리주+혈청:순위척도:혈청 살균 역가"
+      }, {
+        "language": "fr-CA",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "Amdinocilline:Titre:Temps ponctuel:Isolat+Sérum:SemiQn:Pouvoir bactéricide du sérum"
+      }, {
+        "language": "zh-CN",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "氮卓脒青霉素:滴定度:时间点:分离株+血清:半定量型:血清杀菌滴度法"
+      }, {
+        "language": "it-IT",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "Amdinocillina:Titr:Pt:Isolato+Siero:SemiQn:SBT"
+      }, {
+        "language": "pt-BR",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "SHORTNAME",
+          "display": "Shortname"
+        },
+        "value": "Amdinocillin Titr SBT"
+      }, {
+        "language": "pt-BR",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "Amdinocilina:Título:Pt:Isolado/Soro:Qn:Teste bactericida do soro"
+      }, {
+        "language": "es-MX",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "LONG_COMMON_NAME",
+          "display": "Long Common Name"
+        },
+        "value": "Amdinocilina: Aislado y suero : Punto temporal: Título: Cuantitativo: Título bactericida en suero"
+      }, {
+        "language": "es-MX",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "Amdinocilina:Título:Punto temporal:Aislado y suero:Cuantitativo:Título bactericida en suero"
+      }, {
+        "language": "nl-NL",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "LONG_COMMON_NAME",
+          "display": "Long Common Name"
+        },
+        "value": "Amdinocilline [titer] in isolaat en serum d.m.v. serum bacteriocide titer"
+      }, {
+        "language": "nl-NL",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "amdinocilline:titer:moment:isolaat en serum:semikwantitatief:serum bacteriocide titer"
+      }, {
+        "language": "es-AR",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "SHORTNAME",
+          "display": "Shortname"
+        },
+        "value": "amdinocilina:susceptibilidad:punto en el tiempo:cepa clínica+suero:ordinal:determinación de título bactericida en suero"
+      }, {
+        "language": "es-AR",
+        "use": {
+          "system": "http://loinc.org",
+          "code": "FullySpecifiedName",
+          "display": "FullySpecifiedName"
+        },
+        "value": "amdinocilina:susceptibilidad:punto en el tiempo:cepa clínica+suero:ordinal:determinación de título bactericida en suero"
+      } ],
+      "property": [ {
+        "code": "active",
+        "valueBoolean": true
+      }, {
+        "code": "semanticType",
+        "valueString": "Observation"
+      }, {
+        "code": "SYSTEM",
+        "valueString": "Isolate+Ser"
+      }, {
+        "code": "CLASSTYPE",
+        "valueString": "1"
+      }, {
+        "code": "COMMON_TEST_RANK",
+        "valueString": "0"
+      }, {
+        "code": "TIME_ASPCT",
+        "valueString": "Pt"
+      }, {
+        "code": "PROPERTY",
+        "valueString": "Titr"
+      }, {
+        "code": "METHOD_TYP",
+        "valueString": "SBT"
+      }, {
+        "code": "SCALE_TYP",
+        "valueString": "SemiQn"
+      }, {
+        "code": "CLASS",
+        "valueString": "ABXBACT"
+      }, {
+        "code": "VersionLastChanged",
+        "valueString": "2.75"
+      }, {
+        "code": "COMMON_ORDER_RANK",
+        "valueString": "0"
+      }, {
+        "code": "STATUS",
+        "valueString": "ACTIVE"
+      }, {
+        "code": "VersionFirstReleased",
+        "valueString": "1.0"
+      }, {
+        "code": "CHNG_TYPE",
+        "valueString": "MAJ"
+      }, {
+        "code": "RELATEDNAMES2",
+        "valueString": "Amdinocillin pivoxil; ANTIBIOTIC SUSCEPTIBILITIES; Dilution factor; Dilution Factor (Titer); ID; Infectious Disease; InfectiousDisease; Islt; Isol; Mecillinam; Pivmecilliam; Point in time; Random; Selexid; Sequence based typing; Serum; SERUM BACTERICIDAL TITER; Serum killing test; SmQn; SR; Titer; Titered; Titre; Ttr"
+      }, {
+        "code": "EXAMPLE_UNITS",
+        "valueString": "titer"
+      }, {
+        "code": "COMPONENT",
+        "valueString": "Amdinocillin"
+      }, {
+        "code": "EXAMPLE_UCUM_UNITS",
+        "valueString": "{titer}"
+      }, {
+        "code": "ORDER_OBS",
+        "valueString": "Observation"
+      }, {
+        "code": "has_system",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP7371-0",
+          "display": "Isolate and Serum"
+        }
+      }, {
+        "code": "parent",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP380471-5",
+          "display": "Amdinocillin | Isolate and Serum | Antibiotic susceptibilities"
+        }
+      }, {
+        "code": "has_scale_typ",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP436123-6",
+          "display": "SemiQn"
+        }
+      }, {
+        "code": "has_component",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP14523-2",
+          "display": "Amdinocillin"
+        }
+      }, {
+        "code": "has_class",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP7755-4",
+          "display": "Antibiotic susceptibilities"
+        }
+      }, {
+        "code": "has_category",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP343406-7",
+          "display": "Microbiology and Antimicrobial susceptibility"
+        }
+      }, {
+        "code": "has_analyte-core",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP14523-2",
+          "display": "Amdinocillin"
+        }
+      }, {
+        "code": "has_analyte",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP14523-2",
+          "display": "Amdinocillin"
+        }
+      }, {
+        "code": "has_property",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP6881-9",
+          "display": "Titer"
+        }
+      }, {
+        "code": "has_scale_typ",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP436123-6",
+          "display": "SemiQn"
+        }
+      }, {
+        "code": "has_method_typ",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP6501-3",
+          "display": "Serum bactericidal titer"
+        }
+      }, {
+        "code": "has_category",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP29693-6",
+          "display": "Laboratory"
+        }
+      }, {
+        "code": "has_system-core",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP7371-0",
+          "display": "Isolate and Serum"
+        }
+      }, {
+        "code": "has_category",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP7755-4",
+          "display": "Antibiotic susceptibilities"
+        }
+      }, {
+        "code": "has_method_typ",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP6501-3",
+          "display": "Serum bactericidal titer"
+        }
+      }, {
+        "code": "has_search",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP7370-2",
+          "display": "Isolate"
+        }
+      }, {
+        "code": "has_time-core",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP6960-1",
+          "display": "Point in time (spot)"
+        }
+      }, {
+        "code": "has_property",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP6881-9",
+          "display": "Titer"
+        }
+      }, {
+        "code": "has_category",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP415704-8",
+          "display": "InfectiousDisease"
+        }
+      }, {
+        "code": "has_search",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP7567-3",
+          "display": "Serum"
+        }
+      }, {
+        "code": "has_time_aspct",
+        "valueCoding": {
+          "system": "http://loinc.org",
+          "code": "LP6960-1",
+          "display": "Point in time (spot)"
+        }
+      } ]
+    }
+  ]
+}

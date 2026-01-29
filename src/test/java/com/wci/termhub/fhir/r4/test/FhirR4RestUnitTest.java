@@ -68,6 +68,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.ResultList;
@@ -1802,6 +1803,293 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
       // Delete temp file
       if (tempFile.exists()) {
         tempFile.delete();
+      }
+    }
+  }
+
+  /**
+   * Test CodeSystem $lookup for LOINC code 10-9 using source and validation
+   * JSON files. Ensures that all nodes and sub-nodes from the validation file
+   * are present in the API response.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemLookupLoincJsonStructure() throws Exception {
+    Terminology terminology = null;
+    try {
+      // Arrange - load source CodeSystem file
+      final ClassPathResource sourceResource =
+          new ClassPathResource("data/loinc/CodeSystem-loinc-2.78-mini-source.json");
+      final File sourceFile = sourceResource.getFile();
+
+      LOGGER.info("Loading LOINC CodeSystem from: {}", sourceFile.getPath());
+      CodeSystemLoaderUtil.loadCodeSystem(searchService, sourceFile, false, CodeSystem.class,
+          new DefaultProgressListener());
+
+      // Parse source to get code and version
+      final String sourceJson = Files.readString(sourceFile.toPath(), StandardCharsets.UTF_8);
+      final CodeSystem sourceCodeSystem = parser.parseResource(CodeSystem.class, sourceJson);
+
+      assertNotNull(sourceCodeSystem);
+      assertFalse(sourceCodeSystem.getConcept().isEmpty());
+
+      final String version = sourceCodeSystem.getVersion();
+      final String code = sourceCodeSystem.getConceptFirstRep().getCode();
+      LOGGER.info("Loaded CodeSystem version: {}, testing code: {}", version, code);
+
+      // Find the terminology that was just loaded for cleanup
+      final SearchParameters params =
+          new SearchParameters("terminology:LNC AND version:" + version, 0, 1, null, null);
+      final ResultList<Terminology> results = searchService.find(params, Terminology.class);
+      if (!results.getItems().isEmpty()) {
+        terminology = results.getItems().get(0);
+      }
+
+      // Load expected validation JSON
+      final ClassPathResource validationResource =
+          new ClassPathResource("data/loinc/CodeSystem-loinc-2.78-mini-fhir-validation.json");
+      final String expectedJson =
+          Files.readString(validationResource.getFile().toPath(), StandardCharsets.UTF_8);
+
+      final JsonNode expectedNode = objectMapper.readTree(expectedJson);
+
+      // Build lookup endpoint using system, code, and version from the source
+      // file
+      final String system = "http://loinc.org";
+      final String lookupParams =
+          "/$lookup?system=" + system + "&code=" + code + "&version=" + version;
+      final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + lookupParams;
+      LOGGER.info("Testing LOINC lookup endpoint: {}", endpoint);
+
+      // Act
+      final String content = this.restTemplate.getForObject(endpoint, String.class);
+      assertNotNull(content, "Lookup response should not be null");
+      LOGGER.info("Actual response JSON: {}", content);
+      LOGGER.info("Expected validation JSON: {}", expectedJson);
+
+      // Verify we got a successful response, not an error
+      assertFalse(content.contains("OperationOutcome") && content.contains("error"),
+          "Lookup should succeed, not return an error. Response: " + content);
+
+      final JsonNode actualNode = objectMapper.readTree(content);
+
+      // Assert - compare only designations and properties using semantic keys
+      final List<String> missingItems = new ArrayList<>();
+
+      final JsonNode expectedParams = expectedNode.get("parameter");
+      final JsonNode actualParams = actualNode.get("parameter");
+
+      if (expectedParams != null && expectedParams.isArray() && actualParams != null
+          && actualParams.isArray()) {
+
+        // Build sets of actual designation/property keys (order-insensitive)
+        final Set<String> actualDesignationKeys = new HashSet<>();
+        final Set<String> actualPropertyKeys = new HashSet<>();
+
+        for (final JsonNode actualParam : actualParams) {
+          if (actualParam.has("name")) {
+            final String name = actualParam.get("name").asText();
+            if ("designation".equals(name)) {
+              final String key = buildDesignationKey(actualParam);
+              if (key != null) {
+                actualDesignationKeys.add(key);
+              }
+            } else if ("property".equals(name)) {
+              final String key = buildPropertyKey(actualParam);
+              if (key != null) {
+                actualPropertyKeys.add(key);
+              }
+            }
+          }
+        }
+
+        // Compare expected designations/properties against actual sets
+        for (final JsonNode expectedParam : expectedParams) {
+          if (expectedParam.has("name")) {
+            final String name = expectedParam.get("name").asText();
+
+            if ("designation".equals(name)) {
+              final String key = buildDesignationKey(expectedParam);
+              if (key != null && !actualDesignationKeys.contains(key)) {
+                missingItems.add("designation: " + key);
+              }
+            } else if ("property".equals(name)) {
+              final String key = buildPropertyKey(expectedParam);
+              if (key != null && !actualPropertyKeys.contains(key)) {
+                missingItems.add("property: " + key);
+              }
+            }
+          }
+        }
+      }
+
+      // Fail if more than 1 missing item
+      if (missingItems.size() > 1) {
+        LOGGER.error("Missing {} designations/properties (by semantic key):", missingItems.size());
+        for (final String item : missingItems) {
+          LOGGER.error("  {}", item);
+        }
+        assertTrue(false,
+            "Missing " + missingItems.size() + " designations/properties. See logs for details.");
+      }
+    } finally {
+      // Clean up: remove the loaded terminology
+      if (terminology != null) {
+        LOGGER.info("Cleaning up loaded LOINC terminology");
+        TerminologyUtility.removeTerminology(searchService, terminology.getId());
+      }
+    }
+  }
+
+  /**
+   * Build a semantic key for a designation parameter, ignoring {@code part}
+   * order.
+   *
+   * @param param the designation parameter
+   * @return a key of the form {@code language|use|value}, or {@code null} if it
+   *         cannot be built
+   */
+  private String buildDesignationKey(final JsonNode param) {
+    if (!param.has("part") || !param.get("part").isArray()) {
+      return null;
+    }
+    String language = "";
+    String use = "";
+    String value = "";
+
+    for (final JsonNode part : param.get("part")) {
+      if (!part.has("name")) {
+        continue;
+      }
+      final String partName = part.get("name").asText();
+      if ("language".equals(partName) && part.has("valueCode")) {
+        language = part.get("valueCode").asText();
+      } else if ("use".equals(partName) && part.has("valueCoding")) {
+        final JsonNode coding = part.get("valueCoding");
+        if (coding.has("code")) {
+          use = coding.get("code").asText();
+        } else if (coding.has("display")) {
+          use = coding.get("display").asText();
+        }
+      } else if ("value".equals(partName) && part.has("valueString")) {
+        value = part.get("valueString").asText();
+      }
+    }
+
+    if (value.isEmpty()) {
+      return null;
+    }
+    return language + "|" + use + "|" + value;
+  }
+
+  /**
+   * Build a semantic key for a property parameter, ignoring {@code part} order.
+   *
+   * @param param the property parameter
+   * @return a key of the form {@code code|value}, or {@code null} if it cannot
+   *         be built
+   */
+  private String buildPropertyKey(final JsonNode param) {
+    if (!param.has("part") || !param.get("part").isArray()) {
+      return null;
+    }
+    String code = "";
+    String value = "";
+
+    for (final JsonNode part : param.get("part")) {
+      if (!part.has("name")) {
+        continue;
+      }
+      final String partName = part.get("name").asText();
+      if ("code".equals(partName) && part.has("valueCode")) {
+        code = part.get("valueCode").asText();
+      } else if ("value".equals(partName)) {
+        if (part.has("valueString")) {
+          value = part.get("valueString").asText();
+        } else if (part.has("valueCoding")) {
+          final JsonNode coding = part.get("valueCoding");
+          if (coding.has("code")) {
+            value = coding.get("code").asText();
+          } else if (coding.has("display")) {
+            value = coding.get("display").asText();
+          }
+        }
+      }
+    }
+
+    if (code.isEmpty() || value.isEmpty()) {
+      return null;
+    }
+    return code + "|" + value;
+  }
+
+  /**
+   * Assert that all fields and values in the expected JSON tree are present in
+   * the actual tree. Object fields must exist and match recursively, and array
+   * elements must have at least one matching element (order-insensitive).
+   *
+   * @param expected the expected JSON node
+   * @param actual the actual JSON node
+   * @param path the JSON path for error reporting
+   */
+  private void assertJsonContains(final JsonNode expected, final JsonNode actual,
+    final String path) {
+    assertNotNull(actual, "Actual JSON node should not be null at path: " + path);
+
+    if (expected.isObject()) {
+      expected.fieldNames().forEachRemaining(fieldName -> {
+        final String fieldPath = path.isEmpty() ? fieldName : path + "." + fieldName;
+        if (!actual.has(fieldName)) {
+          final StringBuilder errorMsg = new StringBuilder("Missing field: ").append(fieldPath);
+          if (actual.isObject()) {
+            errorMsg.append("\nActual fields present: ");
+            actual.fieldNames().forEachRemaining(f -> errorMsg.append(f).append(", "));
+          }
+          assertTrue(false, errorMsg.toString());
+        }
+        assertJsonContains(expected.get(fieldName), actual.get(fieldName), fieldPath);
+      });
+    } else if (expected.isArray()) {
+      for (int i = 0; i < expected.size(); i++) {
+        final JsonNode expectedElement = expected.get(i);
+        final String elementPath = path + "[" + i + "]";
+        boolean matched = false;
+        for (int j = 0; j < actual.size(); j++) {
+          final JsonNode actualElement = actual.get(j);
+          try {
+            assertJsonContains(expectedElement, actualElement, elementPath);
+            matched = true;
+            break;
+          } catch (final AssertionError e) {
+            // Try next element
+          }
+        }
+        if (!matched) {
+          final StringBuilder errorMsg = new StringBuilder("Missing array element at ")
+              .append(elementPath).append(": ").append(expectedElement.toString())
+              .append("\nActual array has ").append(actual.size()).append(" elements");
+          if (actual.isArray() && actual.size() > 0 && actual.get(0).isObject()
+              && actual.get(0).has("name")) {
+            errorMsg.append("\nActual parameter names: ");
+            for (int k = 0; k < Math.min(actual.size(), 20); k++) {
+              final JsonNode param = actual.get(k);
+              if (param.has("name")) {
+                errorMsg.append(param.get("name").asText()).append(", ");
+              }
+            }
+            if (actual.size() > 20) {
+              errorMsg.append("... (showing first 20)");
+            }
+          }
+          assertTrue(false, errorMsg.toString());
+        }
+      }
+    } else {
+      if (!expected.equals(actual)) {
+        assertTrue(false, "Value mismatch at path " + path + ": expected=" + expected.toString()
+            + ", actual=" + actual.toString());
       }
     }
   }
