@@ -72,6 +72,7 @@ public final class CodeSystemLoaderUtil {
   /** The Constant BATCH_SIZE. */
   private static final int DEFAULT_BATCH_SIZE = 10000;
 
+
   /**
    * Instantiates a new code system loader util.
    */
@@ -624,6 +625,48 @@ public final class CodeSystemLoaderUtil {
         value = property.path("valueBoolean").asText();
       }
 
+      // Handle has_* properties with valueCoding
+      // Store the valueCoding code and display in attributes for later use
+      // Primary properties (has_system, has_property, etc.) are stored once (duplicates ignored)
+      // Multi-valued properties (has_category, has_search) are stored with index suffix
+      if (code.startsWith("has_") && property.has("valueCoding")) {
+        final JsonNode valueCoding = property.path("valueCoding");
+        if (valueCoding.has("code")) {
+          final String codingCode = valueCoding.path("code").asText();
+          // Primary properties that should only be stored once
+          final boolean isPrimary = "has_system".equals(code) || "has_property".equals(code)
+              || "has_component".equals(code) || "has_class".equals(code)
+              || "has_method_typ".equals(code) || "has_scale_typ".equals(code)
+              || "has_time_aspct".equals(code);
+          if (isPrimary) {
+            // Skip if already exists (duplicate primary property)
+            if (concept.getAttributes().containsKey(code)) {
+              continue;
+            }
+            // Store primary property without index
+            concept.getAttributes().put(code, codingCode);
+            if (valueCoding.has("display")) {
+              final String display = valueCoding.path("display").asText();
+              concept.getAttributes().put(code + "_display", display);
+            }
+          } else {
+            // Multi-valued properties: store with index suffix if needed
+            int index = 0;
+            String keyWithIndex = code;
+            while (concept.getAttributes().containsKey(keyWithIndex)) {
+              index++;
+              keyWithIndex = code + "_" + index;
+            }
+            concept.getAttributes().put(keyWithIndex, codingCode);
+            if (valueCoding.has("display")) {
+              final String display = valueCoding.path("display").asText();
+              concept.getAttributes().put(keyWithIndex + "_display", display);
+            }
+          }
+        }
+        continue;
+      }
+
       // Redirect semantic type
       if ("semanticType".equals(code)) {
         concept.getSemanticTypes().add(value);
@@ -950,6 +993,15 @@ public final class CodeSystemLoaderUtil {
     // Safely set term type with null checks
     if (designation.has("use") && designation.path("use").has("code")) {
       term.setType(designation.path("use").path("code").asText());
+
+      // Store designation.use.system and display in term attributes for FHIR output
+      final JsonNode useNode = designation.path("use");
+      if (useNode.has("system")) {
+        term.getAttributes().put("designationUseSystem", useNode.path("system").asText());
+      }
+      if (useNode.has("display")) {
+        term.getAttributes().put("designationUseDisplay", useNode.path("display").asText());
+      }
     } else {
       // Default to PT (Preferred Term) if no type is specified
       term.setType("PT");

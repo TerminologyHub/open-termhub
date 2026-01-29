@@ -64,8 +64,11 @@ public final class FhirUtility {
   /** The code system uri cache. */
   private static TimerCache<String> codeSystemUriCache = new TimerCache<>(1000, 10000);
 
-  /** The display map. */
-  private static Map<String, Map<String, String>> displayMap = new HashMap<>();
+  /** The display map cache. */
+  private static TimerCache<Map<String, String>> displayMapCache = new TimerCache<>(1000, 10000);
+
+  /** The concept name map cache. */
+  private static TimerCache<Map<String, String>> conceptNameMapCache = new TimerCache<>(1000, 10000);
 
   /**
    * Instantiates an empty {@link FhirUtility}.
@@ -655,20 +658,68 @@ public final class FhirUtility {
         terminology.getAbbreviation() + terminology.getPublisher() + terminology.getVersion();
 
     // Lazy initialize for the terminology
-    if (displayMap.containsKey(key)) {
-      return displayMap.get(key);
+    Map<String, String> map = displayMapCache.get(key);
+    if (map != null) {
+      return map;
     }
 
     // we need the query to avoid duplicate keys in the map
-    final Map<String, String> map = new HashMap<>();
+    map = new HashMap<>();
     for (final Metadata metadata : searchService.findAll(
         "active:true AND ((model:concept AND field:attribute) OR "
             + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))",
         null, Metadata.class).stream().collect(Collectors.toList())) {
       map.put(metadata.getCode(), metadata.getName());
     }
-    displayMap.put(key, map);
+    displayMapCache.put(key, map);
     return map;
+  }
+
+  /**
+   * Gets the concept name map (name -> code) and code map (code -> code) for
+   * property lookups. Returns a map that allows lookup by both concept name and
+   * concept code.
+   *
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @return the concept map (name -> code, code -> code)
+   * @throws Exception the exception
+   */
+  public static Map<String, String> getConceptNameMap(final EntityRepositoryService searchService,
+    final Terminology terminology) throws Exception {
+
+    final String key =
+        terminology.getAbbreviation() + terminology.getPublisher() + terminology.getVersion();
+
+    // Lazy initialize for the terminology
+    Map<String, String> nameMap = conceptNameMapCache.get(key);
+    if (nameMap != null) {
+      return nameMap;
+    }
+
+    nameMap = new HashMap<>();
+    final SearchParameters params = new SearchParameters(
+        StringUtility.composeQuery("AND", "active:true",
+            "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
+            terminology.getVersion() != null
+                ? "version:" + StringUtility.escapeQuery(terminology.getVersion()) : null,
+            terminology.getPublisher() != null
+                ? "publisher:" + StringUtility.escapeQuery(terminology.getPublisher()) : null),
+        null, 10000, null, null);
+    final ResultList<Concept> concepts =
+        searchService.findFields(params, ModelUtility.asList("code", "name"), Concept.class);
+    for (final Concept concept : concepts.getItems()) {
+      if (concept.getCode() != null) {
+        // Map code -> code (for direct code lookups)
+        nameMap.put(concept.getCode(), concept.getCode());
+        // Map name -> code (for name lookups)
+        if (concept.getName() != null) {
+          nameMap.put(concept.getName(), concept.getCode());
+        }
+      }
+    }
+    conceptNameMapCache.put(key, nameMap);
+    return nameMap;
   }
 
   /**
@@ -687,19 +738,20 @@ public final class FhirUtility {
     final String key = terminology + publisher + version;
 
     // Lazy initialize for the terminology
-    if (displayMap.containsKey(key)) {
-      return displayMap.get(key);
+    Map<String, String> map = displayMapCache.get(key);
+    if (map != null) {
+      return map;
     }
 
     // we need the query to avoid duplicate keys in the map
-    final Map<String, String> map = new HashMap<>();
+    map = new HashMap<>();
     for (final Metadata metadata : searchService.findAll(
         "active:true AND ((model:concept AND field:attribute) OR "
             + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))",
         null, Metadata.class).stream().collect(Collectors.toList())) {
       map.put(metadata.getCode(), metadata.getName());
     }
-    displayMap.put(key, map);
+    displayMapCache.put(key, map);
     return map;
   }
 
@@ -833,6 +885,7 @@ public final class FhirUtility {
     terminologyCache = new TimerCache<>(1000, 10000);
     mapsetCache = new TimerCache<>(1000, 10000);
     codeSystemUriCache = new TimerCache<>(1000, 10000);
-    displayMap = new HashMap<>();
+    displayMapCache = new TimerCache<>(1000, 10000);
+    conceptNameMapCache = new TimerCache<>(1000, 10000);
   }
 }

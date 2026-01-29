@@ -14,6 +14,7 @@ import static java.lang.String.format;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,11 +59,14 @@ import com.wci.termhub.model.Definition;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
+import com.wci.termhub.model.ResultList;
+import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.DateUtility;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.StringUtility;
 
 import ca.uhn.fhir.rest.param.NumberParam;
 import jakarta.servlet.http.HttpServletRequest;
@@ -76,6 +80,33 @@ public final class FhirUtilityR5 {
   /** The logger. */
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
+
+  /**
+   * Reverse mapping from property codes to has_* properties in priority order.
+   * Primary has_* properties are checked first, then alternatives.
+   */
+  private static final Map<String, List<String>> LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES =
+      new HashMap<>();
+  static {
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("SYSTEM",
+        List.of("has_system", "has_system-core", "has_search"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("PROPERTY", List.of("has_property"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("COMPONENT",
+        List.of("has_component", "has_analyte-core", "has_analyte"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("CLASS", List.of("has_class", "has_category"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("METHOD_TYP", List.of("has_method_typ"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("SCALE_TYP", List.of("has_scale_typ"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("TIME_ASPCT",
+        List.of("has_time_aspct", "has_time-core"));
+  }
+
+  /**
+   * Primary has_* properties that are internal only (used for lookup, not
+   * output).
+   */
+  private static final Set<String> LOINC_PRIMARY_HAS_PROPERTIES =
+      Set.of("has_system", "has_property", "has_component", "has_class", "has_method_typ",
+          "has_scale_typ", "has_time_aspct");
 
   /**
    * Instantiates an empty {@link FhirUtilityR5}.
@@ -407,7 +438,8 @@ public final class FhirUtilityR5 {
    * Recover code.
    *
    * @param code the code
-   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the string
+   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the
+   *          string
    * @return the string
    */
   public static String recoverCode(final CodeType code, final Coding coding) {
@@ -545,6 +577,49 @@ public final class FhirUtilityR5 {
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children)
     throws Exception {
+    return toR5(codeSystem, concept, properties, displayMap, relationships, children, null);
+  }
+
+  /**
+   * To R5.
+   *
+   * @param codeSystem the code system
+   * @param concept the concept
+   * @param properties the properties
+   * @param displayMap the display map
+   * @param relationships the relationships
+   * @param children the children
+   * @param conceptNameMap the concept name map
+   * @return the parameters
+   * @throws Exception the exception
+   */
+  public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
+    final Set<String> properties, final Map<String, String> displayMap,
+    final List<ConceptRelationship> relationships, final List<ConceptRef> children,
+    final Map<String, String> conceptNameMap) throws Exception {
+    return toR5(codeSystem, concept, properties, displayMap, relationships, children,
+        conceptNameMap, null);
+  }
+
+  /**
+   * To R5.
+   *
+   * @param codeSystem the code system
+   * @param concept the concept
+   * @param properties the properties
+   * @param displayMap the display map
+   * @param relationships the relationships
+   * @param children the children
+   * @param conceptNameMap the concept name map
+   * @param searchService the search service
+   * @return the parameters
+   * @throws Exception the exception
+   */
+  public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
+    final Set<String> properties, final Map<String, String> displayMap,
+    final List<ConceptRelationship> relationships, final List<ConceptRef> children,
+    final Map<String, String> conceptNameMap, final EntityRepositoryService searchService)
+    throws Exception {
     final Parameters parameters = new Parameters();
 
     // Properties to include by default from
@@ -586,16 +661,26 @@ public final class FhirUtilityR5 {
       designation.addPart().setName("language")
           .setValue(new CodeType(term.computeSingleLanguage()));
       // Term Type
-      if (displayMap.containsKey(term.getType())) {
-        final Coding coding = new Coding();
-        coding.setCode(term.getType());
-        coding.setDisplay(displayMap.get(term.getType()));
-        designation.addPart().setName("use").setValue(coding);
-      } else {
-        final Coding coding = new Coding();
-        coding.setCode(term.getType());
-        designation.addPart().setName("use").setValue(coding);
+      final Coding coding = new Coding();
+      coding.setCode(term.getType());
+
+      // Use stored system and display from term attributes if available
+      final String useSystem = term.getAttributes().get("designationUseSystem");
+      if (useSystem != null) {
+        coding.setSystem(useSystem);
       }
+
+      if (displayMap.containsKey(term.getType())) {
+        coding.setDisplay(displayMap.get(term.getType()));
+      } else {
+        // Fallback to stored display from term attributes if available
+        final String useDisplay = term.getAttributes().get("designationUseDisplay");
+        if (useDisplay != null) {
+          coding.setDisplay(useDisplay);
+        }
+      }
+
+      designation.addPart().setName("use").setValue(coding);
       designation.addPart().setName("value").setValue(new StringType(term.getName()));
       parameters.addParameter(designation);
       // for (String preferredLangRefset :
@@ -619,12 +704,134 @@ public final class FhirUtilityR5 {
       if (properties != null && !properties.contains(key)) {
         continue;
       }
+
+      // Skip internal helper attributes (_display suffixes)
+      if (key.endsWith("_display")) {
+        continue;
+      }
+
+      // Output alternative has_* properties as separate properties (remove has_ prefix)
+      if (key.startsWith("has_")) {
+        // Remove "has_" prefix and any index suffix (e.g., "has_category_1" -> "category")
+        String propertyName = key.substring(4);
+        String baseHasProperty = key;
+        // Check if there's an index suffix (last underscore followed by digits)
+        final int lastUnderscoreIndex = propertyName.lastIndexOf('_');
+        if (lastUnderscoreIndex > 0 && lastUnderscoreIndex < propertyName.length() - 1) {
+          final String suffix = propertyName.substring(lastUnderscoreIndex + 1);
+          if (suffix.matches("\\d+")) {
+            propertyName = propertyName.substring(0, lastUnderscoreIndex);
+            baseHasProperty = "has_" + propertyName;
+          }
+        }
+
+        // Skip primary has_* properties (they're internal, used for lookup
+        // only)
+        if (LOINC_PRIMARY_HAS_PROPERTIES.contains(baseHasProperty)) {
+          continue;
+        }
+        final String codingCode = concept.getAttributes().get(key);
+        if (codingCode != null) {
+          final Coding coding = new Coding();
+          coding.setCode(codingCode);
+          coding.setSystem(codeSystem.getUrl());
+          // Get display from stored _display attribute, fallback to displayMap, then code
+          String display = concept.getAttributes().get(key + "_display");
+          if (display == null) {
+            display = displayMap.get(codingCode);
+          }
+          if (display == null) {
+            display = codingCode;
+          }
+          coding.setDisplay(display);
+          parameters.addParameter(createProperty(propertyName, coding, false));
+        }
+        continue;
+      }
+
       final String value = concept.getAttributes().get(key);
       // Check for boolean value
       if ("true".equals(value) || "false".equals(value)) {
         parameters.addParameter(createProperty(key, Boolean.valueOf(value), false));
+        continue;
       }
-      // Check for coding
+
+      // For LOINC, check if this property has a corresponding valueCoding
+      // Check for new format (has_* properties stored as attributes) in priority order
+      final boolean isLoinc = codeSystem.getUrl() != null && codeSystem.getUrl().contains("loinc.org");
+      String codingCode = null;
+      if (isLoinc) {
+        // Check for new format: look up has_* properties in priority order
+        final List<String> hasProperties = LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.get(key);
+        if (hasProperties != null) {
+          for (final String hasProperty : hasProperties) {
+            final String hasValue = concept.getAttributes().get(hasProperty);
+            if (hasValue != null) {
+              codingCode = hasValue;
+              break;
+            }
+          }
+        }
+      }
+
+      // If we found a coding code, use it as valueCoding
+      if (codingCode != null) {
+        final Coding coding = new Coding();
+        coding.setCode(codingCode);
+        coding.setSystem(codeSystem.getUrl());
+        coding.setDisplay(value);
+        parameters.addParameter(createProperty(key, coding, false));
+        continue;
+      }
+
+      // For LOINC properties without relationships, keep as valueString
+      // This includes properties that should have relationships but don't,
+      // and properties that shouldn't have relationships at all
+      if (isLoinc) {
+        parameters.addParameter(createProperty(key, value, false));
+        continue;
+      }
+
+      // Check if property value can be looked up in conceptNameMap to create
+      // valueCoding
+      // This transforms property values that match concept names into
+      // valueCoding format
+      String conceptCode = null;
+      if (conceptNameMap != null && conceptNameMap.containsKey(value)) {
+        conceptCode = conceptNameMap.get(value);
+      }
+      // Fallback: search for concept by name if not found in map and
+      // searchService is available
+      else if (searchService != null && value != null && !value.isEmpty()) {
+        try {
+          final SearchParameters nameParams = new SearchParameters(2, 0);
+          nameParams.setQuery(StringUtility.composeQuery("AND", "active:true",
+              "name:" + StringUtility.escapeQuery(value),
+              "terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
+              concept.getVersion() != null
+                  ? "version:" + StringUtility.escapeQuery(concept.getVersion()) : null,
+              concept.getPublisher() != null
+                  ? "publisher:" + StringUtility.escapeQuery(concept.getPublisher()) : null));
+          final ResultList<Concept> nameResults =
+              searchService.findFields(nameParams, ModelUtility.asList("code"), Concept.class);
+          if (!nameResults.getItems().isEmpty()) {
+            conceptCode = nameResults.getItems().get(0).getCode();
+          }
+        } catch (final Exception e) {
+          // Ignore search errors, fall through to string value
+        }
+      }
+
+      if (conceptCode != null) {
+        final Coding coding = new Coding();
+        coding.setCode(conceptCode);
+        // Use the codeSystem URL as the system (for LOINC this will be
+        // "http://loinc.org")
+        coding.setSystem(codeSystem.getUrl());
+        coding.setDisplay(value);
+        parameters.addParameter(createProperty(key, coding, false));
+      }
+      // Check for coding in displayMap (existing logic)
       else if (displayMap.containsKey(value)) {
         final Coding coding = new Coding();
         coding.setCode(value);
@@ -632,7 +839,6 @@ public final class FhirUtilityR5 {
         coding.setDisplay(displayMap.get(value));
         parameters.addParameter(createProperty(key, coding, false));
       }
-
       // otherwise just a string
       else {
         parameters.addParameter(createProperty(key, value, false));
@@ -919,7 +1125,8 @@ public final class FhirUtilityR5 {
           new Meta().addTag("originalId", terminology.getAttributes().get("originalId"), null));
     }
 
-    // logger.info("Converted terminology to CodeSystem: id={}, name={}, version={}", cs.getId(),
+    // logger.info("Converted terminology to CodeSystem: id={}, name={},
+    // version={}", cs.getId(),
     // cs.getName(), cs.getVersion());
 
     return cs;
@@ -941,7 +1148,8 @@ public final class FhirUtilityR5 {
     final ConceptMap cm = new ConceptMap();
 
     // Debug logging for Mapset data
-    // logger.info("Converting Mapset: id={}, fromTerminology={}, toTerminology={}", mapset.getId(),
+    // logger.info("Converting Mapset: id={}, fromTerminology={},
+    // toTerminology={}", mapset.getId(),
     // mapset.getFromTerminology(), mapset.getToTerminology());
 
     // Set other fields
