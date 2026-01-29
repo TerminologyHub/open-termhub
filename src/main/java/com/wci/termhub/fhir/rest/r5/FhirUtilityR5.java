@@ -14,6 +14,7 @@ import static java.lang.String.format;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,6 +80,33 @@ public final class FhirUtilityR5 {
   /** The logger. */
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
+
+  /**
+   * Reverse mapping from property codes to has_* properties in priority order.
+   * Primary has_* properties are checked first, then alternatives.
+   */
+  private static final Map<String, List<String>> LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES =
+      new HashMap<>();
+  static {
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("SYSTEM",
+        List.of("has_system", "has_system-core", "has_search"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("PROPERTY", List.of("has_property"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("COMPONENT",
+        List.of("has_component", "has_analyte-core", "has_analyte"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("CLASS", List.of("has_class", "has_category"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("METHOD_TYP", List.of("has_method_typ"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("SCALE_TYP", List.of("has_scale_typ"));
+    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("TIME_ASPCT",
+        List.of("has_time_aspct", "has_time-core"));
+  }
+
+  /**
+   * Primary has_* properties that are internal only (used for lookup, not
+   * output).
+   */
+  private static final Set<String> LOINC_PRIMARY_HAS_PROPERTIES =
+      Set.of("has_system", "has_property", "has_component", "has_class", "has_method_typ",
+          "has_scale_typ", "has_time_aspct");
 
   /**
    * Instantiates an empty {@link FhirUtilityR5}.
@@ -552,6 +580,19 @@ public final class FhirUtilityR5 {
     return toR5(codeSystem, concept, properties, displayMap, relationships, children, null);
   }
 
+  /**
+   * To R5.
+   *
+   * @param codeSystem the code system
+   * @param concept the concept
+   * @param properties the properties
+   * @param displayMap the display map
+   * @param relationships the relationships
+   * @param children the children
+   * @param conceptNameMap the concept name map
+   * @return the parameters
+   * @throws Exception the exception
+   */
   public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children,
@@ -560,6 +601,20 @@ public final class FhirUtilityR5 {
         conceptNameMap, null);
   }
 
+  /**
+   * To R5.
+   *
+   * @param codeSystem the code system
+   * @param concept the concept
+   * @param properties the properties
+   * @param displayMap the display map
+   * @param relationships the relationships
+   * @param children the children
+   * @param conceptNameMap the concept name map
+   * @param searchService the search service
+   * @return the parameters
+   * @throws Exception the exception
+   */
   public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children,
@@ -650,11 +705,93 @@ public final class FhirUtilityR5 {
         continue;
       }
 
+      // Skip internal helper attributes (_display suffixes)
+      if (key.endsWith("_display")) {
+        continue;
+      }
+
+      // Output alternative has_* properties as separate properties (remove has_ prefix)
+      if (key.startsWith("has_")) {
+        // Remove "has_" prefix and any index suffix (e.g., "has_category_1" -> "category")
+        String propertyName = key.substring(4);
+        String baseHasProperty = key;
+        // Check if there's an index suffix (last underscore followed by digits)
+        final int lastUnderscoreIndex = propertyName.lastIndexOf('_');
+        if (lastUnderscoreIndex > 0 && lastUnderscoreIndex < propertyName.length() - 1) {
+          final String suffix = propertyName.substring(lastUnderscoreIndex + 1);
+          if (suffix.matches("\\d+")) {
+            propertyName = propertyName.substring(0, lastUnderscoreIndex);
+            baseHasProperty = "has_" + propertyName;
+          }
+        }
+
+        // Skip primary has_* properties (they're internal, used for lookup
+        // only)
+        if (LOINC_PRIMARY_HAS_PROPERTIES.contains(baseHasProperty)) {
+          continue;
+        }
+        final String codingCode = concept.getAttributes().get(key);
+        if (codingCode != null) {
+          final Coding coding = new Coding();
+          coding.setCode(codingCode);
+          coding.setSystem(codeSystem.getUrl());
+          // Get display from stored _display attribute, fallback to displayMap, then code
+          String display = concept.getAttributes().get(key + "_display");
+          if (display == null) {
+            display = displayMap.get(codingCode);
+          }
+          if (display == null) {
+            display = codingCode;
+          }
+          coding.setDisplay(display);
+          parameters.addParameter(createProperty(propertyName, coding, false));
+        }
+        continue;
+      }
+
       final String value = concept.getAttributes().get(key);
       // Check for boolean value
       if ("true".equals(value) || "false".equals(value)) {
         parameters.addParameter(createProperty(key, Boolean.valueOf(value), false));
+        continue;
       }
+
+      // For LOINC, check if this property has a corresponding valueCoding
+      // Check for new format (has_* properties stored as attributes) in priority order
+      final boolean isLoinc = codeSystem.getUrl() != null && codeSystem.getUrl().contains("loinc.org");
+      String codingCode = null;
+      if (isLoinc) {
+        // Check for new format: look up has_* properties in priority order
+        final List<String> hasProperties = LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.get(key);
+        if (hasProperties != null) {
+          for (final String hasProperty : hasProperties) {
+            final String hasValue = concept.getAttributes().get(hasProperty);
+            if (hasValue != null) {
+              codingCode = hasValue;
+              break;
+            }
+          }
+        }
+      }
+
+      // If we found a coding code, use it as valueCoding
+      if (codingCode != null) {
+        final Coding coding = new Coding();
+        coding.setCode(codingCode);
+        coding.setSystem(codeSystem.getUrl());
+        coding.setDisplay(value);
+        parameters.addParameter(createProperty(key, coding, false));
+        continue;
+      }
+
+      // For LOINC properties without relationships, keep as valueString
+      // This includes properties that should have relationships but don't,
+      // and properties that shouldn't have relationships at all
+      if (isLoinc) {
+        parameters.addParameter(createProperty(key, value, false));
+        continue;
+      }
+
       // Check if property value can be looked up in conceptNameMap to create
       // valueCoding
       // This transforms property values that match concept names into
