@@ -12,6 +12,7 @@ package com.wci.termhub.util.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.OffsetDateTime;
@@ -235,5 +236,34 @@ public class DateUtilityUnitTest {
     assertNotNull(dateEDT);
     // EDT should have negative offset
     assertTrue(dateEDT.getOffset().getTotalSeconds() < 0);
+  }
+
+  /**
+   * Test parseToUtcDate null or empty returns null.
+   */
+  @Test
+  public void testParseToUtcDateNullEmpty() {
+    assertNull(DateUtility.parseToUtcDate(null));
+    assertNull(DateUtility.parseToUtcDate(""));
+  }
+
+  /**
+   * Test parseToUtcDate date-only interpreted as midnight UTC.
+   */
+  @Test
+  public void testParseToUtcDateDateOnly() {
+    final Date date = DateUtility.parseToUtcDate("2022-04-11");
+    assertNotNull(date);
+    assertEquals("2022-04-11T00:00:00Z", date.toInstant().toString());
+  }
+
+  /**
+   * Test parseToUtcDate full ISO with timezone.
+   */
+  @Test
+  public void testParseToUtcDateFullIso() {
+    final Date date = DateUtility.parseToUtcDate("2022-04-11T17:01:52.685+00:00");
+    assertNotNull(date);
+    assertNotNull(date.toInstant());
   }
 }

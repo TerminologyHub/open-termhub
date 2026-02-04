@@ -940,6 +940,8 @@ public final class FhirUtilityR4 {
       set.setMeta(new Meta());
     }
     set.getMeta().addTag("originalId", terminology.getAttributes().get("originalId"), null);
+    set.getMeta().setVersionId("1");
+    set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getReleaseDate()));
 
     return set;
   }
@@ -1028,6 +1030,8 @@ public final class FhirUtilityR4 {
       valueSet.setMeta(new Meta());
     }
     valueSet.getMeta().addTag("originalId", subset.getAttributes().get("originalId"), null);
+    valueSet.getMeta().setVersionId("1");
+    valueSet.getMeta().setLastUpdated(DateUtility.parseToUtcDate(subset.getReleaseDate()));
 
     return valueSet;
   }
@@ -1133,11 +1137,14 @@ public final class FhirUtilityR4 {
       cs.setCopyright(copyright);
     }
 
-    // Add originalId as meta info
+    // Meta: versionId for _history, lastUpdated from release date (UTC)
+    final Meta csMeta = new Meta();
+    csMeta.setVersionId("1");
+    csMeta.setLastUpdated(DateUtility.parseToUtcDate(terminology.getReleaseDate()));
     if (terminology.getAttributes().containsKey("originalId")) {
-      cs.setMeta(
-          new Meta().addTag("originalId", terminology.getAttributes().get("originalId"), null));
+      csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }
+    cs.setMeta(csMeta);
 
     // logger.info("Converted terminology to CodeSystem: id={}, name={},
     // version={}", cs.getId(),
@@ -1198,10 +1205,14 @@ public final class FhirUtilityR4 {
       cm.setTarget(new UriType(mapset.getAttributes().get("fhirTargetUri")));
     }
 
-    // Add originalId as meta info
+    // Meta: versionId for _history, lastUpdated from release date (UTC)
+    final Meta cmMeta = new Meta();
+    cmMeta.setVersionId("1");
+    cmMeta.setLastUpdated(DateUtility.parseToUtcDate(mapset.getReleaseDate()));
     if (mapset.getAttributes().containsKey("originalId")) {
-      cm.setMeta(new Meta().addTag("originalId", mapset.getAttributes().get("originalId"), null));
+      cmMeta.addTag("originalId", mapset.getAttributes().get("originalId"), null);
     }
+    cm.setMeta(cmMeta);
 
     return cm;
   }
@@ -1305,18 +1316,21 @@ public final class FhirUtilityR4 {
     questionnaire.setStatus(PublicationStatus.ACTIVE);
     questionnaire
         .setDescription("Questionnaire representing the entire contents of this code system");
-    questionnaire.setDate(terminology.getReleaseDate() != null
-        ? Date.from(Instant.parse(terminology.getReleaseDate())) : null);
+    questionnaire.setDate(DateUtility.parseToUtcDate(terminology.getReleaseDate()));
     questionnaire.setPublisher(terminology.getPublisher());
 
-    // Add "from" info for members
+    // Meta: versionId for _history, lastUpdated from release date (UTC)
     if (metaFlag) {
       questionnaire
           .setMeta(new Meta().addTag("fromTerminology", terminology.getAbbreviation(), null)
               .addTag("fromPublisher", terminology.getPublisher(), null)
               .addTag("fromVersion", terminology.getVersion(), null)
               .addTag("includesUri", terminology.getUri(), null));
+    } else {
+      questionnaire.setMeta(new Meta());
     }
+    questionnaire.getMeta().setVersionId("1");
+    questionnaire.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getReleaseDate()));
 
     return questionnaire;
   }

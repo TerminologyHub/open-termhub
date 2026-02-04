@@ -133,6 +133,14 @@ public class ConceptMapProviderR4UnitTest extends AbstractFhirR4ServerTest {
     final boolean found = bundle.getEntry().stream()
         .anyMatch(e -> testMap.getUrl().equals(((ConceptMap) e.getResource()).getUrl()));
     assertTrue(found);
+
+    // Meta: versionId and lastUpdated on ConceptMap
+    for (final Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+      final ConceptMap cm = (ConceptMap) entry.getResource();
+      assertNotNull(cm.getMeta());
+      assertEquals("1", cm.getMeta().getVersionId());
+      assertNotNull(cm.getMeta().getLastUpdated());
+    }
   }
 
   /**

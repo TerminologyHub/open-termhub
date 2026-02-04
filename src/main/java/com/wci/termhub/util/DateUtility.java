@@ -126,6 +126,23 @@ public final class DateUtility {
   }
 
   /**
+   * Parses a date string to a Date in UTC. Date-only values (e.g. "2022-04-11")
+   * are interpreted as midnight UTC. Full ISO 8601 strings are parsed as given.
+   *
+   * @param dateString the date string (ISO 8601 or yyyy-MM-dd), or null
+   * @return the Date in UTC, or null if dateString is null or empty
+   */
+  public static Date parseToUtcDate(final String dateString) {
+    if (dateString == null || dateString.isEmpty()) {
+      return null;
+    }
+    if (dateString.contains("T")) {
+      return Date.from(Instant.parse(dateString));
+    }
+    return Date.from(Instant.parse(dateString + "T00:00:00Z"));
+  }
+
+  /**
    * Returns the time zone offset.
    *
    * @param tz the tz

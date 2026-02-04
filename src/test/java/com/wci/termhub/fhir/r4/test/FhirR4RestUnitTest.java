@@ -370,11 +370,14 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
     // Assert
     assertNotNull(codeSystem);
-    LOGGER.info("  code system = {}", parser.encodeResourceToString(codeSystem));
+    LOGGER.info("  testCodeSystemById code system = {}", parser.encodeResourceToString(codeSystem));
 
-    // Verify resource type and id
+    // Verify resource type and id (HAPI is appendding /_history/1 when meta.versionId is set)
     assertEquals(ResourceType.CodeSystem, codeSystem.getResourceType());
-    assertEquals("CodeSystem/" + csId, codeSystem.getId());
+    final String logicalId = "CodeSystem/" + csId;
+    assertTrue(codeSystem.getId().equals(logicalId)
+        || codeSystem.getId().equals(logicalId + "/_history/1"),
+        () -> "Expected " + logicalId + " or " + logicalId + "/_history/1 but was: " + codeSystem.getId());
 
     // Verify specific field values
     assertEquals("http://snomed.info/sct/731000124108/version/20240301", codeSystem.getVersion());
@@ -906,10 +909,13 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     final String content = this.restTemplate.getForObject(endpoint, String.class);
     final ValueSet valueSet = parser.parseResource(ValueSet.class, content);
 
-    // Assert
+    // Assert (HAPI may append /_history/1 when meta.versionId is set)
     assertNotNull(valueSet);
     assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
-    assertEquals("ValueSet/" + vsId, valueSet.getId());
+    final String vsLogicalId = "ValueSet/" + vsId;
+    assertTrue(valueSet.getId().equals(vsLogicalId)
+        || valueSet.getId().equals(vsLogicalId + "/_history/1"),
+        () -> "Expected " + vsLogicalId + " or " + vsLogicalId + "/_history/1 but was: " + valueSet.getId());
     assertNotNull(valueSet.getUrl());
     assertNotNull(valueSet.getVersion());
     assertNotNull(valueSet.getName());
@@ -1545,7 +1551,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         createCodeSystem("concurrent-cs-1", "http://example.org/concurrent-cs-1");
 
     final Callable<Boolean> deleteCodeSystem1 = () -> {
-      return deleteCodeSystem(codeSystem.getId());
+      // return deleteCodeSystem(codeSystem.getId());
+      return deleteCodeSystem(codeSystem.getIdPart());
     };
 
     final Callable<CodeSystem> createCodeSystem2 = () -> {
@@ -1566,7 +1573,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     Assertions.assertTrue(future1Result != null ^ future2Result,
         "Exactly one write should fail due to locking");
     if (future1Result != null) {
-      deleteCodeSystem(future1Result.getId());
+      // deleteCodeSystem(future1Result.getId());
+      deleteCodeSystem(future1Result.getIdPart());
     }
   }
 
