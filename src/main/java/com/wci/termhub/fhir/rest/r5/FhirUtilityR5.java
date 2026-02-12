@@ -948,7 +948,7 @@ public final class FhirUtilityR5 {
     }
     set.getMeta().addTag("originalId", terminology.getAttributes().get("originalId"), null);
     set.getMeta().setVersionId("1");
-    set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getReleaseDate()));
+    set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
 
     return set;
   }
@@ -1036,7 +1036,7 @@ public final class FhirUtilityR5 {
     }
     valueSet.getMeta().addTag("originalId", subset.getAttributes().get("originalId"), null);
     valueSet.getMeta().setVersionId("1");
-    valueSet.getMeta().setLastUpdated(DateUtility.parseToUtcDate(subset.getReleaseDate()));
+    valueSet.getMeta().setLastUpdated(DateUtility.parseToUtcDate(subset.getCreated()));
 
     return valueSet;
   }
@@ -1126,7 +1126,7 @@ public final class FhirUtilityR5 {
     // Meta: versionId for _history, lastUpdated from release date (UTC)
     final Meta csMeta = new Meta();
     csMeta.setVersionId("1");
-    csMeta.setLastUpdated(DateUtility.parseToUtcDate(terminology.getReleaseDate()));
+    csMeta.setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
     if (terminology.getAttributes().containsKey("originalId")) {
       csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }
@@ -1187,7 +1187,7 @@ public final class FhirUtilityR5 {
     // Meta: versionId for _history, lastUpdated from release date (UTC)
     final Meta cmMeta = new Meta();
     cmMeta.setVersionId("1");
-    cmMeta.setLastUpdated(DateUtility.parseToUtcDate(mapset.getReleaseDate()));
+    cmMeta.setLastUpdated(DateUtility.parseToUtcDate(mapset.getCreated()));
     if (mapset.getAttributes().containsKey("originalId")) {
       cmMeta.addTag("originalId", mapset.getAttributes().get("originalId"), null);
     }

@@ -12,6 +12,9 @@ package com.wci.termhub.fhir.r5.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,6 +50,7 @@ public class FhirUtilityR5MetaUnitTest {
     final Map<String, String> attrs = new HashMap<>();
     terminology.setAttributes(attrs);
     terminology.setConceptCt(10L);
+    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final CodeSystem cs = FhirUtilityR5.toR5(terminology);
     assertNotNull(cs.getMeta());
@@ -73,6 +77,7 @@ public class FhirUtilityR5MetaUnitTest {
     attrs.put("originalId", "orig-1");
     terminology.setAttributes(attrs);
     terminology.setConceptCt(10L);
+    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final ValueSet vs = FhirUtilityR5.toR5ValueSet(terminology, true);
     assertNotNull(vs.getMeta());
@@ -97,6 +102,7 @@ public class FhirUtilityR5MetaUnitTest {
     mapset.setPublisher("Test");
     final Map<String, String> attrs = new HashMap<>();
     mapset.setAttributes(attrs);
+    mapset.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final ConceptMap cm = FhirUtilityR5.toR5(mapset);
     assertNotNull(cm.getMeta());

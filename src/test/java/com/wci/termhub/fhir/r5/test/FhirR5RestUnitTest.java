@@ -389,7 +389,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertEquals("fragment", codeSystem.getContent().toString().toLowerCase());
     assertEquals(456, codeSystem.getCount());
 
-    // Meta: versionId for _history, lastUpdated from release date
+    // Meta: versionId and lastUpdated (persisted entities get created via @PrePersist)
     assertNotNull(codeSystem.getMeta());
     assertEquals("1", codeSystem.getMeta().getVersionId());
     assertNotNull(codeSystem.getMeta().getLastUpdated());
@@ -819,7 +819,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertNotNull(valueSet.getPublisher());
     assertNotNull(valueSet.getDescription());
 
-    // Meta: versionId and lastUpdated
+    // Meta: versionId and lastUpdated (persisted entities get created via @PrePersist)
     assertNotNull(valueSet.getMeta());
     assertEquals("1", valueSet.getMeta().getVersionId());
     assertNotNull(valueSet.getMeta().getLastUpdated());

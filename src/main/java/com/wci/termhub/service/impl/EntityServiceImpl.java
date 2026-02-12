@@ -10,6 +10,7 @@
 package com.wci.termhub.service.impl;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import com.wci.termhub.handler.QueryBuilder;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.model.HasId;
+import com.wci.termhub.model.HasModified;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.service.EntityRepositoryService;
@@ -59,6 +61,24 @@ public class EntityServiceImpl implements EntityRepositoryService {
     findAllPageSize = pageSize;
   }
 
+  /**
+   * Set created and modified to now when null on HasModified entities before add.
+   *
+   * @param entity the entity
+   */
+  private static void ensureTrackingDates(final HasId entity) {
+    if (entity instanceof HasModified) {
+      final HasModified mod = (HasModified) entity;
+      final Date now = new Date();
+      if (mod.getCreated() == null) {
+        mod.setCreated(now);
+      }
+      if (mod.getModified() == null) {
+        mod.setModified(now);
+      }
+    }
+  }
+
   /* see superclass */
   @Override
   public void createIndex(final Class<? extends HasId> clazz) throws Exception {
@@ -80,6 +100,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
   public void add(final Class<? extends HasId> clazz, final HasId entity) throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
+    ensureTrackingDates(entity);
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("    ADD {} entity to index {}", entity, clazz.getSimpleName());
     }
@@ -92,6 +113,9 @@ public class EntityServiceImpl implements EntityRepositoryService {
     throws Exception {
 
     checkIfEntityHasDocumentAnnotation(clazz);
+    for (final HasId e : entity) {
+      ensureTrackingDates(e);
+    }
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("    ADD {} entities to index: {}", clazz.getSimpleName(), entity.size());
     }

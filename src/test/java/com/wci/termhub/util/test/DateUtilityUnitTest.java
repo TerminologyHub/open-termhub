@@ -243,8 +243,9 @@ public class DateUtilityUnitTest {
    */
   @Test
   public void testParseToUtcDateNullEmpty() {
-    assertNull(DateUtility.parseToUtcDate(null));
+    assertNull(DateUtility.parseToUtcDate((String) null));
     assertNull(DateUtility.parseToUtcDate(""));
+    assertNull(DateUtility.parseToUtcDate((Date) null));
   }
 
   /**
@@ -265,5 +266,16 @@ public class DateUtilityUnitTest {
     final Date date = DateUtility.parseToUtcDate("2022-04-11T17:01:52.685+00:00");
     assertNotNull(date);
     assertNotNull(date.toInstant());
+  }
+
+  /**
+   * Test parseToUtcDate Date argument normalizes to UTC.
+   */
+  @Test
+  public void testParseToUtcDateDateArg() {
+    final Date input = DateUtility.parseToUtcDate("2022-04-11T17:01:52.685+00:00");
+    final Date result = DateUtility.parseToUtcDate(input);
+    assertNotNull(result);
+    assertEquals(input.toInstant(), result.toInstant());
   }
 }

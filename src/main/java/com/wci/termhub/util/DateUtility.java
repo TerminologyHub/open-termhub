@@ -143,6 +143,20 @@ public final class DateUtility {
   }
 
   /**
+   * Converts a Date to a UTC Date by formatting as ISO 8601 and parsing back.
+   * Use when a Date from another source should be normalized to UTC for FHIR.
+   *
+   * @param date the date, or null
+   * @return the Date in UTC, or null if date is null
+   */
+  public static Date parseToUtcDate(final Date date) {
+    if (date == null) {
+      return null;
+    }
+    return parseToUtcDate(date.toInstant().toString());
+  }
+
+  /**
    * Returns the time zone offset.
    *
    * @param tz the tz
