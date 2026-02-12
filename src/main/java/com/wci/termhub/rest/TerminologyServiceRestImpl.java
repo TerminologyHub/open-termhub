@@ -803,6 +803,59 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
   /* see superclass */
   @Override
+  @RequestMapping(value = "/concept/{terminology:[A-Z].*}/computeRemoveDescendants",
+      method = RequestMethod.GET)
+  @Operation(summary = "Compute removed descendants",
+      description = "Takes a list of codes and returns a sublist with ones removed that are descendants of any of the other ones in that very list.",
+      tags = {
+          "concept by code"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "List of codes with descendants removed"),
+      @ApiResponse(responseCode = "404", description = "Not found", content = @Content()),
+      @ApiResponse(responseCode = "417", description = "Expectation failed", content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "terminology",
+          description = "Terminology id or abbreviation." + " e.g. \"uuid1\" or \"ICD10CM\".",
+          required = true),
+      @Parameter(name = "codes",
+          description = "Comma-separated list of terminology codes, "
+              + "e.g. \"1119,1149\" or \"64572001,22298006 \"",
+          required = true)
+  })
+  public ResponseEntity<List<String>> computeRemoveDescendants(
+    @PathVariable("terminology") final String terminology,
+    @RequestParam(value = "codes", required = true) final String codes) throws Exception {
+
+    try {
+      final Terminology term = lookupTerminology(terminology);
+      if (StringUtility.isEmpty(codes)) {
+        throw new RestException(false, 417, "Expectation failed",
+            "Codes parameter must be specified");
+      }
+
+      final String[] codeArray = codes.split(",");
+      if (codeArray.length > 500) {
+        throw new RestException(false, 417, "Expecation failed",
+            "Too many codes specified in list (max is 500) = " + codeArray.length);
+      }
+
+      final List<String> result =
+          TerminologyUtility.removeDescendants(searchService, term, Arrays.asList(codeArray));
+
+      return new ResponseEntity<>(result, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to compute remove descendants for codes = " + codes);
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
   @RequestMapping(value = "/concept", method = RequestMethod.GET)
   @Operation(summary = "Find concepts across terminologies",
       description = "Finds concepts matching specified search criteria.", tags = {
@@ -864,7 +917,15 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + "<li>'wildcard' - splits on spaces and uses a wildcard search for each word</li>"
               + "<li>'browser' (recommended) - builds a more complex query used by embedded "
               + "terminology browser</li></ul>",
-          required = false, schema = @Schema(implementation = String.class))
+          required = false, schema = @Schema(implementation = String.class)),
+      @Parameter(name = "aggregate",
+          description = "Indicates whether to perform aggregation (e.g. remove descendants) on the results. "
+              + "If 'true', removes entries that are descendants of other entries in the result list.",
+          required = false, schema = @Schema(implementation = Boolean.class)),
+      @Parameter(name = "compute",
+        description = "Indicates the type of computation to perform if aggregate is true. "
+            + "Current options include: 'removeDescendants' (see documentation for more details).",
+        required = false, schema = @Schema(implementation = String.class))
   })
   public ResponseEntity<ResultListConcept> findTerminologyConcepts(
     @RequestParam(value = "terminology", required = false) final String terminology,
@@ -877,6 +938,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "active", required = false) final Boolean active,
     @RequestParam(name = "leaf", required = false) final Boolean leaf,
     @RequestParam(value = "include", required = false) final String include,
+    @RequestParam(name = "aggregate", required = false) final Boolean aggregate,
+    @RequestParam(name = "compute", required = false) final String compute,
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
 
@@ -894,6 +957,19 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       // Handler applied, send null handler below
       final ResultList<Concept> list = findConceptsHelper(tlist, query2, expression, offset,
           maxLimit, sort, ascending, active, leaf, ip);
+
+      // Handle aggregate
+      if (Boolean.TRUE.equals(aggregate) && tlist.size() == 1 && list.getTotal() > 0 && "removeDescendants".equalsIgnoreCase(compute)) {
+        final List<String> codes =
+            list.getItems().stream().map(c -> c.getCode()).collect(Collectors.toList());
+
+        final List<String> result =
+            TerminologyUtility.removeDescendants(searchService, tlist.get(0), codes);
+        final Set<String> validCodes = new HashSet<>(result);
+        final List<Concept> filtered = list.getItems().stream()
+            .filter(c -> validCodes.contains(c.getCode())).collect(Collectors.toList());
+        list.setItems(filtered);
+      }
 
       return new ResponseEntity<>(new ResultListConcept(list), new HttpHeaders(), HttpStatus.OK);
 

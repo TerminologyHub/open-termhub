@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -815,6 +817,82 @@ public final class TerminologyUtility {
             .toList();
 
     return clauses.size() == 1 ? clauses.get(0) : StringUtility.composeQuery("OR", clauses);
+  }
+
+  /**
+   * Remove codes that are descendants of other codes in the list.
+   *
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @param codes the list of codes
+   * @return the list of non-descendant codes
+   * @throws Exception the exception
+   */
+  public static List<String> removeDescendants(final EntityRepositoryService searchService,
+    final Terminology terminology, final List<String> codes) throws Exception {
+
+    if (codes == null || codes.isEmpty()) {
+      return new ArrayList<>();
+    }
+
+    // 1. Get all concepts to retrieve their ancestors
+    // Use a set for fast lookup of input codes
+    final Set<String> codeSet = new HashSet<>(codes);
+    final List<String> distinctCodes = new ArrayList<>(codeSet);
+    final Map<String, Set<String>> codeToAncestors = new HashMap<>();
+
+    // Fetch concepts in batches if necessary, but assuming reasonable size (e.g. < 1000)
+    // for this context. If size is large, performance will degrade legitimately.
+    if (!distinctCodes.isEmpty()) {
+      // Chunking to avoid too-long queries
+      int partitionSize = 500;
+      for (int i = 0; i < distinctCodes.size(); i += partitionSize) {
+        List<String> chunk = distinctCodes.subList(i,
+            Math.min(distinctCodes.size(), i + partitionSize));
+
+        String query = StringUtility.composeQuery("AND",
+            TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+                terminology.getPublisher(), terminology.getVersion()),
+            "code:(" + String.join(" OR ",
+                chunk.stream().map(StringUtility::escapeQuery).toList()) + ")");
+
+        // Fetch just code and ancestors
+        SearchParameters params = new SearchParameters(query, 0, chunk.size(), null, null);
+        ResultList<Concept> results = searchService.find(params, Concept.class);
+
+        for (Concept c : results.getItems()) {
+          Set<String> ancestors = c.getAncestors().stream().map(ConceptRef::getCode)
+              .collect(Collectors.toSet());
+          codeToAncestors.put(c.getCode(), ancestors);
+        }
+      }
+    }
+
+    // Filter
+    // Keep a code if none of its ancestors are in the 'codes' list.
+    List<String> result = new ArrayList<>();
+    for (String code : codes) {
+      Set<String> ancestors = codeToAncestors.get(code);
+      // If concept not found, keep it (cannot determine if descendant)
+      if (ancestors == null) {
+        result.add(code);
+        continue;
+      }
+
+      boolean isDescendant = false;
+      for (String ancestor : ancestors) {
+        if (codeSet.contains(ancestor)) {
+          isDescendant = true;
+          break;
+        }
+      }
+
+      if (!isDescendant) {
+        result.add(code);
+      }
+    }
+
+    return result;
   }
 
   /**
