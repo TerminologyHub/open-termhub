@@ -918,10 +918,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + "<li>'browser' (recommended) - builds a more complex query used by embedded "
               + "terminology browser</li></ul>",
           required = false, schema = @Schema(implementation = String.class)),
-      @Parameter(name = "aggregate",
-          description = "Indicates whether to perform aggregation (e.g. remove descendants) on the results. "
-              + "If 'true', removes entries that are descendants of other entries in the result list.",
-          required = false, schema = @Schema(implementation = Boolean.class)),
       @Parameter(name = "compute",
         description = "Indicates the type of computation to perform if aggregate is true. "
             + "Current options include: 'removeDescendants' (see documentation for more details).",
@@ -938,7 +934,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     @RequestParam(name = "active", required = false) final Boolean active,
     @RequestParam(name = "leaf", required = false) final Boolean leaf,
     @RequestParam(value = "include", required = false) final String include,
-    @RequestParam(name = "aggregate", required = false) final Boolean aggregate,
     @RequestParam(name = "compute", required = false) final String compute,
     @RequestParam(name = "handler", required = false)
     @Parameter(hidden = true) final String handler) throws Exception {
@@ -958,8 +953,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final ResultList<Concept> list = findConceptsHelper(tlist, query2, expression, offset,
           maxLimit, sort, ascending, active, leaf, ip);
 
-      // Handle aggregate
-      if (Boolean.TRUE.equals(aggregate) && tlist.size() == 1 && list.getTotal() > 0 && "removeDescendants".equalsIgnoreCase(compute)) {
+      // Handle compute
+      if (tlist.size() == 1 && list.getTotal() > 0 && "removeDescendants".equalsIgnoreCase(compute)) {
         final List<String> codes =
             list.getItems().stream().map(c -> c.getCode()).collect(Collectors.toList());
 
@@ -969,6 +964,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         final List<Concept> filtered = list.getItems().stream()
             .filter(c -> validCodes.contains(c.getCode())).collect(Collectors.toList());
         list.setItems(filtered);
+        list.setTotal(filtered.size());
       }
 
       return new ResponseEntity<>(new ResultListConcept(list), new HttpHeaders(), HttpStatus.OK);

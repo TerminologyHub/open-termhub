@@ -96,11 +96,11 @@ public class RemoveDescendantsUnitTest extends AbstractTerminologyTest {
     String query = "code:(" + parent.getCode() + " OR " + child.getCode() + ")";
     
     // Without aggregate
-    ResponseEntity<ResultListConcept> findResp = restService.findTerminologyConcepts("SNOMEDCT_US", query, null, null, null, null, null, null, null, null, null, null, null);
+    ResponseEntity<ResultListConcept> findResp = restService.findTerminologyConcepts("SNOMEDCT_US", query, null, null, null, null, null, null, null, null, null, null);
     assertEquals(2, findResp.getBody().getItems().size());
     
     // With aggregate
-    findResp = restService.findTerminologyConcepts("SNOMEDCT_US", query, null, null, null, null, null, null, null, null, true, "removeDescendants", null);
+    findResp = restService.findTerminologyConcepts("SNOMEDCT_US", query, null, null, null, null, null, null, null, null, "removeDescendants", null);
     List<Concept> items = findResp.getBody().getItems();
     List<String> itemCodes = items.stream().map(Concept::getCode).collect(Collectors.toList());
     
