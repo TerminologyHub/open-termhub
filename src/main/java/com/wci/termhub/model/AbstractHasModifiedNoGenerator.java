@@ -19,6 +19,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 
@@ -74,6 +75,18 @@ public abstract class AbstractHasModifiedNoGenerator extends AbstractHasIdNoGene
    */
   protected AbstractHasModifiedNoGenerator(final HasModified other) {
     populateFrom(other);
+  }
+
+  /** Set created and modified to now when null before persist. */
+  @PrePersist
+  public void ensureTrackingDates() {
+    final Date now = new Date();
+    if (created == null) {
+      created = now;
+    }
+    if (modified == null) {
+      modified = now;
+    }
   }
 
   /**

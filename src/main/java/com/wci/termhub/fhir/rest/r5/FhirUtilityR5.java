@@ -57,10 +57,10 @@ import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Definition;
 import com.wci.termhub.model.Mapset;
-import com.wci.termhub.model.Subset;
-import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
@@ -947,6 +947,8 @@ public final class FhirUtilityR5 {
       set.setMeta(new Meta());
     }
     set.getMeta().addTag("originalId", terminology.getAttributes().get("originalId"), null);
+    set.getMeta().setVersionId("1");
+    set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
 
     return set;
   }
@@ -1033,6 +1035,8 @@ public final class FhirUtilityR5 {
       valueSet.setMeta(new Meta());
     }
     valueSet.getMeta().addTag("originalId", subset.getAttributes().get("originalId"), null);
+    valueSet.getMeta().setVersionId("1");
+    valueSet.getMeta().setLastUpdated(DateUtility.parseToUtcDate(subset.getCreated()));
 
     return valueSet;
   }
@@ -1119,11 +1123,14 @@ public final class FhirUtilityR5 {
       cs.setCount(terminology.getConceptCt().intValue());
     }
 
-    // Add originalId as meta info
+    // Meta: versionId for _history, lastUpdated from release date (UTC)
+    final Meta csMeta = new Meta();
+    csMeta.setVersionId("1");
+    csMeta.setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
     if (terminology.getAttributes().containsKey("originalId")) {
-      cs.setMeta(
-          new Meta().addTag("originalId", terminology.getAttributes().get("originalId"), null));
+      csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }
+    cs.setMeta(csMeta);
 
     // logger.info("Converted terminology to CodeSystem: id={}, name={},
     // version={}", cs.getId(),
@@ -1177,10 +1184,14 @@ public final class FhirUtilityR5 {
       cm.setTargetScope(new UriType(mapset.getAttributes().get("fhirTargetUri") + "?fhir_vs"));
     }
 
-    // Add originalId as meta info
+    // Meta: versionId for _history, lastUpdated from release date (UTC)
+    final Meta cmMeta = new Meta();
+    cmMeta.setVersionId("1");
+    cmMeta.setLastUpdated(DateUtility.parseToUtcDate(mapset.getCreated()));
     if (mapset.getAttributes().containsKey("originalId")) {
-      cm.setMeta(new Meta().addTag("originalId", mapset.getAttributes().get("originalId"), null));
+      cmMeta.addTag("originalId", mapset.getAttributes().get("originalId"), null);
     }
+    cm.setMeta(cmMeta);
 
     return cm;
   }

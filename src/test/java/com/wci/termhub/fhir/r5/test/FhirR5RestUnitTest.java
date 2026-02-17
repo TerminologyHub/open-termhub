@@ -236,6 +236,11 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
       assertNotNull(css.getContent());
       assertTrue(css.getCount() > 0);
 
+      // Meta: versionId and lastUpdated
+      assertNotNull(css.getMeta());
+      assertEquals("1", css.getMeta().getVersionId());
+      assertNotNull(css.getMeta().getLastUpdated());
+
       // Verify expected values
       expectedTitles.remove(css.getTitle());
       expectedPublishers.remove(css.getPublisher());
@@ -362,11 +367,14 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
     // Assert
     assertNotNull(codeSystem);
-    LOGGER.info("  code system = {}", parser.encodeResourceToString(codeSystem));
+    LOGGER.info("  testCodeSystemById code system = {}", parser.encodeResourceToString(codeSystem));
 
-    // Verify resource type and id
+    // Verify resource type and id (HAPI is appendding /_history/1 when meta.versionId is set)
     assertEquals(ResourceType.CodeSystem, codeSystem.getResourceType());
-    assertEquals("CodeSystem/" + csId, codeSystem.getId());
+    final String logicalId = "CodeSystem/" + csId;
+    assertTrue(codeSystem.getId().equals(logicalId)
+        || codeSystem.getId().equals(logicalId + "/_history/1"),
+        () -> "Expected " + logicalId + " or " + logicalId + "/_history/1 but was: " + codeSystem.getId());
 
     // Verify specific field values
     assertEquals("http://snomed.info/sct/731000124108/version/20240301", codeSystem.getVersion());
@@ -380,6 +388,11 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertFalse(codeSystem.getCompositional());
     assertEquals("fragment", codeSystem.getContent().toString().toLowerCase());
     assertEquals(456, codeSystem.getCount());
+
+    // Meta: versionId and lastUpdated (persisted entities get created via @PrePersist)
+    assertNotNull(codeSystem.getMeta());
+    assertEquals("1", codeSystem.getMeta().getVersionId());
+    assertNotNull(codeSystem.getMeta().getLastUpdated());
   }
 
   /**
@@ -766,6 +779,9 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
       assertNotNull(valueSet.getTitle());
       assertEquals(PublicationStatus.ACTIVE, valueSet.getStatus());
       assertNotNull(valueSet.getPublisher());
+      assertNotNull(valueSet.getMeta());
+      assertEquals("1", valueSet.getMeta().getVersionId());
+      assertNotNull(valueSet.getMeta().getLastUpdated());
     }
   }
 
@@ -787,10 +803,13 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     final String content = this.restTemplate.getForObject(endpoint, String.class);
     final ValueSet valueSet = parser.parseResource(ValueSet.class, content);
 
-    // Assert
+    // Assert (HAPI may append /_history/1 when meta.versionId is set)
     assertNotNull(valueSet);
     assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
-    assertEquals("ValueSet/" + vsId, valueSet.getId());
+    final String vsLogicalId = "ValueSet/" + vsId;
+    assertTrue(valueSet.getId().equals(vsLogicalId)
+        || valueSet.getId().equals(vsLogicalId + "/_history/1"),
+        () -> "Expected " + vsLogicalId + " or " + vsLogicalId + "/_history/1 but was: " + valueSet.getId());
     assertNotNull(valueSet.getUrl());
     assertNotNull(valueSet.getVersion());
     assertNotNull(valueSet.getName());
@@ -799,6 +818,11 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertNotNull(valueSet.getDate());
     assertNotNull(valueSet.getPublisher());
     assertNotNull(valueSet.getDescription());
+
+    // Meta: versionId and lastUpdated (persisted entities get created via @PrePersist)
+    assertNotNull(valueSet.getMeta());
+    assertEquals("1", valueSet.getMeta().getVersionId());
+    assertNotNull(valueSet.getMeta().getLastUpdated());
   }
 
   /**
