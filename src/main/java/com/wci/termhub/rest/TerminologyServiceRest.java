@@ -125,6 +125,17 @@ public interface TerminologyServiceRest extends RootServiceRest {
     String include) throws Exception;
 
   /**
+   * Compute remove descendants.
+   *
+   * @param terminology the terminology
+   * @param codes the codes
+   * @return the list
+   * @throws Exception the exception
+   */
+  public ResponseEntity<List<String>> computeRemoveDescendants(String terminology, String codes)
+    throws Exception;
+
+  /**
    * Find concepts. GET /concept?terminology=uuid1,uuid2&query=... tag=concept
    *
    * @param terminology the terminology - if no terminologies are selected, it searches across all
@@ -138,13 +149,14 @@ public interface TerminologyServiceRest extends RootServiceRest {
    * @param active the active
    * @param leaf the leaf
    * @param include the include
+   * @param compute compute action
    * @param handler the handler
    * @return the response entity
    * @throws Exception the exception
    */
   public ResponseEntity<ResultListConcept> findTerminologyConcepts(String terminology, String query,
     String expression, Integer offset, Integer limit, String sort, Boolean ascending,
-    Boolean active, Boolean leaf, String include, String handler) throws Exception;
+    Boolean active, Boolean leaf, String include, String compute, String handler) throws Exception;
 
   /**
    * Find terms.
