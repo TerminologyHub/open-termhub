@@ -28,8 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import org.springframework.core.io.ClassPathResource;
-
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
@@ -61,14 +59,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.ResultList;
@@ -76,10 +76,9 @@ import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
-import com.wci.termhub.util.ThreadLocalMapper;
 import com.wci.termhub.util.TerminologyUtility;
+import com.wci.termhub.util.ThreadLocalMapper;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -135,7 +134,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
    */
   private static final String FHIR_VALUESET = "/fhir/r4/ValueSet";
 
-   /** The Constant FIND. */
+  /** The Constant FIND. */
   private static final int FIND = 10;
 
   /** The Constant DELETE. */
@@ -375,9 +374,11 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     // Verify resource type and id (HAPI is appendding /_history/1 when meta.versionId is set)
     assertEquals(ResourceType.CodeSystem, codeSystem.getResourceType());
     final String logicalId = "CodeSystem/" + csId;
-    assertTrue(codeSystem.getId().equals(logicalId)
-        || codeSystem.getId().equals(logicalId + "/_history/1"),
-        () -> "Expected " + logicalId + " or " + logicalId + "/_history/1 but was: " + codeSystem.getId());
+    assertTrue(
+        codeSystem.getId().equals(logicalId)
+            || codeSystem.getId().equals(logicalId + "/_history/1"),
+        () -> "Expected " + logicalId + " or " + logicalId + "/_history/1 but was: "
+            + codeSystem.getId());
 
     // Verify specific field values
     assertEquals("http://snomed.info/sct/731000124108/version/20240301", codeSystem.getVersion());
@@ -796,22 +797,16 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertFalse(properties.isEmpty(), "Should have properties");
 
     // Find definition property
-    final boolean hasDefinition = properties.stream()
-        .anyMatch(p -> p.getPart().stream().anyMatch(part ->
-            "code".equals(part.getName()) && "definition".equals(part.getValue().toString())));
+    final boolean hasDefinition = properties.stream().anyMatch(p -> p.getPart().stream().anyMatch(
+        part -> "code".equals(part.getName()) && "definition".equals(part.getValue().toString())));
     assertTrue(hasDefinition, "Should have definition property");
 
     // Get the definition value
-    final String definition = properties.stream()
-        .filter(p -> p.getPart().stream().anyMatch(part ->
-            "code".equals(part.getName()) && "definition".equals(part.getValue().toString())))
-        .findFirst()
-        .orElseThrow(() -> new AssertionError("Definition property not found"))
-        .getPart().stream()
-        .filter(part -> "value".equals(part.getName()))
-        .findFirst()
-        .orElseThrow(() -> new AssertionError("Definition value not found"))
-        .getValue().toString();
+    final String definition = properties.stream().filter(p -> p.getPart().stream().anyMatch(
+        part -> "code".equals(part.getName()) && "definition".equals(part.getValue().toString())))
+        .findFirst().orElseThrow(() -> new AssertionError("Definition property not found"))
+        .getPart().stream().filter(part -> "value".equals(part.getName())).findFirst()
+        .orElseThrow(() -> new AssertionError("Definition value not found")).getValue().toString();
 
     assertEquals("A component that fails to comply with the current editorial guidance.",
         definition);
@@ -913,9 +908,11 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(valueSet);
     assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
     final String vsLogicalId = "ValueSet/" + vsId;
-    assertTrue(valueSet.getId().equals(vsLogicalId)
-        || valueSet.getId().equals(vsLogicalId + "/_history/1"),
-        () -> "Expected " + vsLogicalId + " or " + vsLogicalId + "/_history/1 but was: " + valueSet.getId());
+    assertTrue(
+        valueSet.getId().equals(vsLogicalId)
+            || valueSet.getId().equals(vsLogicalId + "/_history/1"),
+        () -> "Expected " + vsLogicalId + " or " + vsLogicalId + "/_history/1 but was: "
+            + valueSet.getId());
     assertNotNull(valueSet.getUrl());
     assertNotNull(valueSet.getVersion());
     assertNotNull(valueSet.getName());
@@ -1290,7 +1287,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     params.setQuery("*:*");
     params.setLimit(100);
 
-    CodeSystem codeSystem = createCodeSystem("concurrent-cs-1", "http://example.org/concurrent-cs-1");
+    CodeSystem codeSystem =
+        createCodeSystem("concurrent-cs-1", "http://example.org/concurrent-cs-1");
     String testId = codeSystem.getIdPart();
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + testId;
     LOGGER.info("endpoint = {}", endpoint);
@@ -1326,9 +1324,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
     headers.set("Content-Type", "application/fhir+json");
     final org.springframework.http.HttpEntity<String> entity =
-            new org.springframework.http.HttpEntity<>(json, headers);
+        new org.springframework.http.HttpEntity<>(json, headers);
     ResponseEntity<String> response =
-            restTemplate.postForEntity(LOCALHOST + port + FHIR_VALUESET, entity, String.class);
+        restTemplate.postForEntity(LOCALHOST + port + FHIR_VALUESET, entity, String.class);
     ValueSet createdValueSet = parser.parseResource(ValueSet.class, response.getBody());
     String strTestId = createdValueSet.getIdPart();
     assertNotNull(strTestId);
@@ -1343,13 +1341,12 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     // Try to delete the value set
     final String deleteUrl = LOCALHOST + port + FHIR_VALUESET + "/" + strTestId;
     LOGGER.info("Delete value set URL {}", deleteUrl);
-    response =
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    response = restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
     // Verify the value set is deleted by attempting to delete it again
     final ResponseEntity<String> response2 =
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
 
     response = restTemplate.getForEntity(findUrl, String.class);
@@ -1406,14 +1403,15 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     conceptMap.setSource(new IdType("CodeSystem/source-cs"));
     conceptMap.setTarget(new IdType("CodeSystem/target-cs"));
     conceptMap.setDate(new Date());
-    conceptMap.setIdentifier(new Identifier().setSystem("http://example.org/fhir/ids").setValue("cm-1"));
+    conceptMap
+        .setIdentifier(new Identifier().setSystem("http://example.org/fhir/ids").setValue("cm-1"));
     final String json = parser.encodeResourceToString(conceptMap);
     final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
     headers.set("Content-Type", "application/fhir+json");
     final org.springframework.http.HttpEntity<String> entity =
-            new org.springframework.http.HttpEntity<>(json, headers);
+        new org.springframework.http.HttpEntity<>(json, headers);
     ResponseEntity<String> response =
-            restTemplate.postForEntity(LOCALHOST + port + FHIR_CONCEPTMAP, entity, String.class);
+        restTemplate.postForEntity(LOCALHOST + port + FHIR_CONCEPTMAP, entity, String.class);
     ConceptMap createdMapset = parser.parseResource(ConceptMap.class, response.getBody());
     String testId = createdMapset.getIdPart();
     assertNotNull(testId);
@@ -1421,13 +1419,12 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     // Try to delete the concept map
     final String deleteUrl = LOCALHOST + port + FHIR_CONCEPTMAP + "/" + testId;
     LOGGER.info("Delete concept map URL {}", deleteUrl);
-    response =
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+    response = restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
 
     // Verify the concept map is deleted by attempting to delete it again
     final ResponseEntity<String> response2 =
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
 
     assertEquals(HttpStatus.NOT_FOUND, response2.getStatusCode());
   }
@@ -1620,9 +1617,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     final org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
     headers.set("Content-Type", "application/fhir+json");
     final org.springframework.http.HttpEntity<String> entity =
-            new org.springframework.http.HttpEntity<>(json, headers);
+        new org.springframework.http.HttpEntity<>(json, headers);
     final ResponseEntity<String> response =
-            restTemplate.postForEntity(LOCALHOST + port + FHIR_CODESYSTEM, entity, String.class);
+        restTemplate.postForEntity(LOCALHOST + port + FHIR_CODESYSTEM, entity, String.class);
 
     // if conflict, return null
     if (response.getStatusCode().value() == 409) {
@@ -1646,12 +1643,12 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     // delete code system
     final String deleteUrl = LOCALHOST + port + FHIR_CODESYSTEM + "/" + id;
     final ResponseEntity<String> response =
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
+        restTemplate.exchange(deleteUrl, HttpMethod.DELETE, null, String.class);
     if (response.getBody() != null && response.getBody().contains("OperationOutcome")) {
       final OperationOutcome operationOutcome =
-              parser.parseResource(OperationOutcome.class, response.getBody());
+          parser.parseResource(OperationOutcome.class, response.getBody());
       return !(operationOutcome.getIssue().stream()
-              .filter(i -> i.getCode().equals(OperationOutcome.IssueType.CONFLICT)).count() == 1);
+          .filter(i -> i.getCode().equals(OperationOutcome.IssueType.CONFLICT)).count() == 1);
     }
     return true;
   }
@@ -1666,25 +1663,26 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     final String content = this.restTemplate.getForObject(endpoint, String.class);
     if (content.contains("OperationOutcome")) {
       final OperationOutcome operationOutcome =
-              parser.parseResource(OperationOutcome.class, content);
+          parser.parseResource(OperationOutcome.class, content);
       if (operationOutcome.getIssue().stream()
-              .filter(i -> i.getDiagnostics().equals("Failed to find code systems")).count() == 1) {
+          .filter(i -> i.getDiagnostics().equals("Failed to find code systems")).count() == 1) {
         // No code systems to clean up
         return;
       }
     }
     final Bundle data = parser.parseResource(Bundle.class, content);
     final List<CodeSystem> codeSystems = data.getEntry().stream()
-            .map(BundleEntryComponent::getResource).map(r -> (CodeSystem) r).toList();
+        .map(BundleEntryComponent::getResource).map(r -> (CodeSystem) r).toList();
 
     for (final String uri : uris) {
       final CodeSystem codeSystem = codeSystems.stream()
-              .filter(resource -> resource.getUrl().equals(uri)).findFirst().orElse(null);
+          .filter(resource -> resource.getUrl().equals(uri)).findFirst().orElse(null);
       if (codeSystem != null) {
         deleteCodeSystem(codeSystem.getIdPart());
       }
     }
   }
+
   /**
    * Test CodeSystem $lookup with missing code parameter returns 400.
    *
@@ -1742,9 +1740,9 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
-   * Test CodeSystem $lookup with LOINC code when multiple versions exist.
-   * This test loads a fake version 278 based on version 277, verifies that lookup
-   * works correctly with version specified, then cleans up the fake version.
+   * Test CodeSystem $lookup with LOINC code when multiple versions exist. This test loads a fake
+   * version 278 based on version 277, verifies that lookup works correctly with version specified,
+   * then cleans up the fake version.
    *
    * @throws Exception the exception
    */
@@ -1752,7 +1750,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(FIND)
   public void testCodeSystemLookupLoincWithVersion() throws Exception {
     // Load a fake version 278 based on 277
-    final ClassPathResource resource277 = new ClassPathResource("data/CodeSystem-lnc-sandbox-277-r4.json");
+    final ClassPathResource resource277 =
+        new ClassPathResource("data/CodeSystem-lnc-sandbox-277-r4.json");
     final String json277 = Files.readString(resource277.getFile().toPath(), StandardCharsets.UTF_8);
 
     // Replace version 277 with 278
@@ -1783,7 +1782,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
       final String code = "66480-5";
       final String system = "http://loinc.org";
       final String version = "278";
-      final String lookupParams = "/$lookup?code=" + code + "&system=" + system + "&version=" + version;
+      final String lookupParams =
+          "/$lookup?code=" + code + "&system=" + system + "&version=" + version;
       final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + lookupParams;
       LOGGER.info("Testing lookup endpoint: {}", endpoint);
 
@@ -1816,9 +1816,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
-   * Test CodeSystem $lookup for LOINC code 10-9 using source and validation
-   * JSON files. Ensures that all nodes and sub-nodes from the validation file
-   * are present in the API response.
+   * Test CodeSystem $lookup for LOINC code 10-9 using source and validation JSON files. Ensures
+   * that all nodes and sub-nodes from the validation file are present in the API response.
    *
    * @throws Exception the exception
    */
@@ -1952,12 +1951,10 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
-   * Build a semantic key for a designation parameter, ignoring {@code part}
-   * order.
+   * Build a semantic key for a designation parameter, ignoring {@code part} order.
    *
    * @param param the designation parameter
-   * @return a key of the form {@code language|use|value}, or {@code null} if it
-   *         cannot be built
+   * @return a key of the form {@code language|use|value}, or {@code null} if it cannot be built
    */
   private String buildDesignationKey(final JsonNode param) {
     if (!param.has("part") || !param.get("part").isArray()) {
@@ -1996,8 +1993,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
    * Build a semantic key for a property parameter, ignoring {@code part} order.
    *
    * @param param the property parameter
-   * @return a key of the form {@code code|value}, or {@code null} if it cannot
-   *         be built
+   * @return a key of the form {@code code|value}, or {@code null} if it cannot be built
    */
   private String buildPropertyKey(final JsonNode param) {
     if (!param.has("part") || !param.get("part").isArray()) {
@@ -2034,14 +2030,15 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
-   * Assert that all fields and values in the expected JSON tree are present in
-   * the actual tree. Object fields must exist and match recursively, and array
-   * elements must have at least one matching element (order-insensitive).
+   * Assert that all fields and values in the expected JSON tree are present in the actual tree.
+   * Object fields must exist and match recursively, and array elements must have at least one
+   * matching element (order-insensitive).
    *
    * @param expected the expected JSON node
    * @param actual the actual JSON node
    * @param path the JSON path for error reporting
    */
+  @SuppressWarnings("unused")
   private void assertJsonContains(final JsonNode expected, final JsonNode actual,
     final String path) {
     assertNotNull(actual, "Actual JSON node should not be null at path: " + path);

@@ -806,7 +806,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   @RequestMapping(value = "/concept/{terminology:[A-Z].*}/computeRemoveDescendants",
       method = RequestMethod.GET)
   @Operation(summary = "Compute removed descendants",
-      description = "Takes a list of codes and returns a sublist with ones removed that are descendants of any of the other ones in that very list.",
+      description = "Takes a list of codes and returns a sublist with ones removed that "
+          + "are descendants of any of the other ones in that very list.",
       tags = {
           "concept by code"
       })
@@ -821,10 +822,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       @Parameter(name = "terminology",
           description = "Terminology id or abbreviation." + " e.g. \"uuid1\" or \"ICD10CM\".",
           required = true),
-      @Parameter(name = "codes",
-          description = "Comma-separated list of terminology codes, "
-              + "e.g. \"1119,1149\" or \"64572001,22298006 \"",
-          required = true)
+      @Parameter(name = "codes", description = "Comma-separated list of terminology codes, "
+          + "e.g. \"1119,1149\" or \"64572001,22298006 \"", required = true)
   })
   public ResponseEntity<List<String>> computeRemoveDescendants(
     @PathVariable("terminology") final String terminology,
@@ -919,9 +918,9 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
               + "terminology browser</li></ul>",
           required = false, schema = @Schema(implementation = String.class)),
       @Parameter(name = "compute",
-        description = "Indicates the type of computation to perform if aggregate is true. "
-            + "Current options include: 'removeDescendants' (see documentation for more details).",
-        required = false, schema = @Schema(implementation = String.class))
+          description = "Indicates the type of computation to perform if aggregate is true. "
+              + "Current options include: 'removeDescendants' (see documentation for more details).",
+          required = false, schema = @Schema(implementation = String.class))
   })
   public ResponseEntity<ResultListConcept> findTerminologyConcepts(
     @RequestParam(value = "terminology", required = false) final String terminology,
@@ -954,7 +953,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           maxLimit, sort, ascending, active, leaf, ip);
 
       // Handle compute
-      if (tlist.size() == 1 && list.getTotal() > 0 && "removeDescendants".equalsIgnoreCase(compute)) {
+      if (tlist.size() == 1 && list.getTotal() > 0
+          && "removeDescendants".equalsIgnoreCase(compute)) {
         final List<String> codes =
             list.getItems().stream().map(c -> c.getCode()).collect(Collectors.toList());
 
