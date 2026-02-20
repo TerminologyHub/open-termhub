@@ -26,6 +26,7 @@ import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.BundleLinkComponent;
 import org.hl7.fhir.r5.model.Bundle.BundleType;
 import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
+import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Coding;
@@ -499,6 +500,7 @@ public final class FhirUtilityR5 {
     component.setSeverity(OperationOutcome.IssueSeverity.ERROR);
     component.setCode(issueType);
     component.setDiagnostics(message);
+    component.setDetails(new CodeableConcept().setText(message));
     outcome.addIssue(component);
     return new FHIRServerResponseException(theStatusCode, message, outcome, e);
   }

@@ -113,11 +113,17 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @throws Exception the exception
    */
   @SuppressWarnings("null")
-  @Read
+  @Read(version = true)
   public ValueSet getValueSet(final HttpServletRequest request, final ServletRequestDetails details,
     @IdParam final IdType id) throws Exception {
 
     try {
+      if (id != null && id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
+        throw FhirUtilityR5.exception(
+            "Value set " + id.getIdPart() + " exists but does not have history version "
+                + id.getVersionIdPart(),
+            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+      }
       // 1. Check implicit ValueSets
       final ValueSet vs = findPossibleValueSets(false, id, null, null).stream()
           .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
