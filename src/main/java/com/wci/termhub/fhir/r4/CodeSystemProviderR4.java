@@ -97,11 +97,17 @@ public class CodeSystemProviderR4 implements IResourceProvider {
    * @return the code system
    * @throws Exception the exception
    */
-  @Read()
+  @Read(version = true)
   public CodeSystem getCodeSystem(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
+      if (id != null && id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
+        throw FhirUtilityR4.exception(
+            "CodeSystem " + id.getIdPart() + " exists but does not have history version "
+                + id.getVersionIdPart(),
+            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+      }
       if (logger.isDebugEnabled()) {
         logger.debug("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
       }

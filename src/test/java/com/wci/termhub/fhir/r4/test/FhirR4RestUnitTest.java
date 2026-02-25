@@ -39,6 +39,7 @@ import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ResourceType;
@@ -2118,6 +2119,56 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(response.getBody(), "Response should not be null");
     assertTrue(response.getBody().contains("OperationOutcome"),
         "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test CodeSystem vread with _history/1 returns 200 and valid CodeSystem.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemVreadHistoryVersion1ReturnsOk() throws Exception {
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/1";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final CodeSystem codeSystem = parser.parseResource(CodeSystem.class, content);
+
+    assertNotNull(codeSystem);
+    assertEquals(ResourceType.CodeSystem, codeSystem.getResourceType());
+    assertTrue(
+        codeSystem.getId().equals("CodeSystem/" + csId)
+            || codeSystem.getId().equals("CodeSystem/" + csId + "/_history/1"));
+  }
+
+  /**
+   * Test CodeSystem vread with non-existent history version returns 404 and OperationOutcome
+   * stating resource exists but does not have that history version.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemVreadHistoryVersionNonExistentReturnsNotFound() throws Exception {
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/22";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(endpoint, String.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    assertNotNull(response.getBody());
+    final OperationOutcome outcome = parser.parseResource(OperationOutcome.class, response.getBody());
+    assertNotNull(outcome.getIssue());
+    assertFalse(outcome.getIssue().isEmpty());
+    assertEquals(OperationOutcome.IssueSeverity.ERROR, outcome.getIssueFirstRep().getSeverity());
+    assertEquals(IssueType.NOTFOUND, outcome.getIssueFirstRep().getCode());
+    assertTrue(
+        outcome.getIssueFirstRep().getDiagnostics() != null
+            && outcome.getIssueFirstRep().getDiagnostics().contains("exists but does not have history version 22"),
+        "Diagnostics should state resource exists but does not have history version 22");
   }
 
   /**
