@@ -959,6 +959,51 @@ public final class FhirUtilityR5 {
     return set;
   }
 
+  /** Meta tag system for LOINC LL/LG value set id (used by ValueSetProvider for expand/validate). */
+  public static final String META_LOINC_LLLG_ID = "loincLllgId";
+
+  /**
+   * Builds a minimal R5 ValueSet for a LOINC LL/LG value set (metadata only; expansion is done in
+   * provider).
+   *
+   * @param terminology LOINC terminology
+   * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
+   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion and loincLllgId tags
+   * @return the value set
+   */
+  public static ValueSet toR5LllgValueSet(final Terminology terminology, final String lllgId,
+      final boolean metaFlag) {
+    final ValueSet set = new ValueSet();
+    set.setId(lllgId);
+    set.setUrl("http://loinc.org/vs/" + lllgId);
+    set.setVersion(terminology.getVersion());
+    set.setName("VS LOINC " + lllgId);
+    set.setTitle("LOINC " + lllgId);
+    set.setStatus(PublicationStatus.ACTIVE);
+    set.setDescription("LOINC value set " + lllgId);
+    if (terminology.getCreated() != null) {
+      set.setDate(Date.from(terminology.getCreated().toInstant()));
+    }
+    set.setPublisher(terminology.getPublisher());
+    if (terminology.getAttributes() != null && terminology.getAttributes().get("copyright") != null) {
+      set.setCopyright(terminology.getAttributes().get("copyright"));
+    }
+    if (metaFlag) {
+      set.setMeta(new Meta().addTag("fromTerminology", terminology.getAbbreviation(), null)
+          .addTag("fromPublisher", terminology.getPublisher(), null)
+          .addTag("fromVersion", terminology.getVersion(), null)
+          .addTag("includesUri", terminology.getUri(), null)
+          .addTag(META_LOINC_LLLG_ID, lllgId, null));
+    } else {
+      set.setMeta(new Meta().addTag(META_LOINC_LLLG_ID, lllgId, null));
+    }
+    if (set.getMeta() != null && terminology.getCreated() != null) {
+      set.getMeta().setVersionId("1");
+      set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
+    }
+    return set;
+  }
+
   /**
    * To R 5 value set.
    *
