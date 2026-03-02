@@ -478,6 +478,30 @@ public final class CodeSystemLoaderUtil {
       }
       attributes.put(property.path("code").asText(), property.path("description").asText());
     }
+    if (!root.path("description").isMissingNode()) {
+      attributes.put("description", root.path("description").asText());
+    }
+    if (!root.path("copyright").isMissingNode()) {
+      attributes.put("copyright", root.path("copyright").asText());
+    }
+    if (root.has("identifier") && root.get("identifier").isArray()) {
+      attributes.put("fhirIdentifier", root.get("identifier").toString());
+    }
+    if (!root.path("valueSet").isMissingNode()) {
+      attributes.put("valueSet", root.path("valueSet").asText());
+    }
+    if (root.has("contact") && root.get("contact").isArray()) {
+      attributes.put("fhirContact", root.get("contact").toString());
+    }
+    if (!root.path("caseSensitive").isMissingNode()) {
+      attributes.put("caseSensitive", Boolean.toString(root.path("caseSensitive").asBoolean()));
+    }
+    if (!root.path("versionNeeded").isMissingNode()) {
+      attributes.put("versionNeeded", Boolean.toString(root.path("versionNeeded").asBoolean()));
+    }
+    if (!root.path("compositional").isMissingNode()) {
+      attributes.put("fhirCompositional", Boolean.toString(root.path("compositional").asBoolean()));
+    }
     attributes.put("fhirVersion", root.path("version").asText());
     attributes.put(Terminology.Attributes.treePositions.property(),
         Boolean.toString(enablePostLoadComputations));
