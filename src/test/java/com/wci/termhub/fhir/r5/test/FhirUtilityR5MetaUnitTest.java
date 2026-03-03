@@ -10,7 +10,9 @@
 package com.wci.termhub.fhir.r5.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -56,6 +58,63 @@ public class FhirUtilityR5MetaUnitTest {
     assertNotNull(cs.getMeta());
     assertEquals("1", cs.getMeta().getVersionId());
     assertNotNull(cs.getMeta().getLastUpdated());
+  }
+
+  /**
+   * Test CodeSystem description, copyright, identifier, valueSet, contact, caseSensitive,
+   * versionNeeded round-trip from terminology attributes (LOINC-style).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testCodeSystemDescriptionCopyrightIdentifierValueSetContactCaseSensitiveVersionNeeded()
+      throws Exception {
+    final String description =
+        "LOINC is a freely available international standard for tests, measurements, and observations";
+    final String copyright =
+        "This material contains content from LOINC (http://loinc.org). LOINC is copyright Regenstrief Institute, Inc.";
+    final String fhirIdentifier =
+        "[{\"system\":\"urn:ietf:rfc:3986\",\"value\":\"urn:oid:2.16.840.1.113883.6.1\"}]";
+    final String valueSet = "http://loinc.org/?fhir_vs";
+    final String fhirContact =
+        "[{\"telecom\":[{\"system\":\"url\",\"value\":\"http://loinc.org\"}]}]";
+
+    final Terminology terminology = new Terminology();
+    terminology.setId("test-loinc");
+    terminology.setReleaseDate("2022-04-11");
+    terminology.setUri("http://loinc.org");
+    terminology.setVersion("2.78");
+    terminology.setName("Logical Observation Identifiers Names and Codes");
+    terminology.setAbbreviation("LOINC");
+    terminology.setPublisher("Regenstrief Institute, Inc.");
+    final Map<String, String> attrs = new HashMap<>();
+    attrs.put("description", description);
+    attrs.put("copyright", copyright);
+    attrs.put("fhirIdentifier", fhirIdentifier);
+    attrs.put("valueSet", valueSet);
+    attrs.put("fhirContact", fhirContact);
+    attrs.put("caseSensitive", "false");
+    attrs.put("versionNeeded", "false");
+    terminology.setAttributes(attrs);
+    terminology.setConceptCt(100L);
+    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final CodeSystem cs = FhirUtilityR5.toR5(terminology);
+
+    assertEquals(description, cs.getDescription());
+    assertEquals(copyright, cs.getCopyright());
+    assertNotNull(cs.getIdentifier());
+    assertTrue(cs.getIdentifier().size() >= 1);
+    assertEquals("urn:ietf:rfc:3986", cs.getIdentifier().get(0).getSystem());
+    assertEquals("urn:oid:2.16.840.1.113883.6.1", cs.getIdentifier().get(0).getValue());
+    assertEquals(valueSet, cs.getValueSet());
+    assertNotNull(cs.getContact());
+    assertTrue(cs.getContact().size() >= 1);
+    assertNotNull(cs.getContact().get(0).getTelecom());
+    assertTrue(cs.getContact().get(0).getTelecom().size() >= 1);
+    assertEquals("http://loinc.org", cs.getContact().get(0).getTelecom().get(0).getValue());
+    assertFalse(cs.getCaseSensitive());
+    assertFalse(cs.getVersionNeeded());
   }
 
   /**

@@ -29,6 +29,8 @@ import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
 import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
+import org.hl7.fhir.r5.model.ContactDetail;
+import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.DateTimeType;
@@ -65,9 +67,11 @@ import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.util.DateUtility;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
+import com.wci.termhub.util.ThreadLocalMapper;
 
 import ca.uhn.fhir.rest.param.NumberParam;
 import jakarta.servlet.http.HttpServletRequest;
@@ -1123,6 +1127,80 @@ public final class FhirUtilityR5 {
       cs.setCount(terminology.getStatistics().get("concepts"));
     } else if (terminology.getConceptCt() != null) {
       cs.setCount(terminology.getConceptCt().intValue());
+    }
+
+    final String copyright = terminology.getAttributes().get("copyright");
+    if (copyright != null) {
+      cs.setCopyright(copyright);
+    }
+
+    final String description = terminology.getAttributes().get("description");
+    if (description != null) {
+      cs.setDescription(description);
+    }
+
+    final String fhirIdentifier = terminology.getAttributes().get("fhirIdentifier");
+    if (fhirIdentifier != null && !fhirIdentifier.isEmpty()) {
+      try {
+        final JsonNode arr = ThreadLocalMapper.get().readTree(fhirIdentifier);
+        if (arr.isArray()) {
+          for (final JsonNode item : arr) {
+            final Identifier identifier = new Identifier();
+            if (!item.path("system").isMissingNode()) {
+              identifier.setSystem(item.path("system").asText());
+            }
+            if (!item.path("value").isMissingNode()) {
+              identifier.setValue(item.path("value").asText());
+            }
+            cs.addIdentifier(identifier);
+          }
+        }
+      } catch (final Exception e) {
+        LoggerFactory.getLogger(FhirUtilityR5.class).warn("Failed to parse fhirIdentifier", e);
+      }
+    }
+
+    final String valueSet = terminology.getAttributes().get("valueSet");
+    if (valueSet != null && !valueSet.isEmpty()) {
+      cs.setValueSet(valueSet);
+    }
+
+    final String fhirContact = terminology.getAttributes().get("fhirContact");
+    if (fhirContact != null && !fhirContact.isEmpty()) {
+      try {
+        final JsonNode arr = ThreadLocalMapper.get().readTree(fhirContact);
+        if (arr.isArray()) {
+          for (final JsonNode item : arr) {
+            final ContactDetail contact = new ContactDetail();
+            final JsonNode telecomArr = item.path("telecom");
+            if (telecomArr.isArray()) {
+              for (final JsonNode tp : telecomArr) {
+                final ContactPoint cp = new ContactPoint();
+                if (!tp.path("system").isMissingNode()) {
+                  cp.setSystem(ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
+                }
+                if (!tp.path("value").isMissingNode()) {
+                  cp.setValue(tp.path("value").asText());
+                }
+                contact.addTelecom(cp);
+              }
+            }
+            cs.addContact(contact);
+          }
+        }
+      } catch (final Exception e) {
+        LoggerFactory.getLogger(FhirUtilityR5.class).warn("Failed to parse fhirContact", e);
+      }
+    }
+
+    final String caseSensitive = terminology.getAttributes().get("caseSensitive");
+    if (caseSensitive != null) {
+      cs.setCaseSensitive(Boolean.parseBoolean(caseSensitive));
+    }
+
+    final String versionNeeded = terminology.getAttributes().get("versionNeeded");
+    if (versionNeeded != null) {
+      cs.setVersionNeeded(Boolean.parseBoolean(versionNeeded));
     }
 
     // Meta: versionId for _history, lastUpdated from release date (UTC)
