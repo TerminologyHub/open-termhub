@@ -39,6 +39,7 @@ import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.Identifier;
+import org.hl7.fhir.r5.model.IntegerType;
 import org.hl7.fhir.r5.model.Meta;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
@@ -50,6 +51,9 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
+import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionComponent;
+import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
+import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionParameterComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +75,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.util.DateUtility;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
+import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ThreadLocalMapper;
 
 import ca.uhn.fhir.rest.param.NumberParam;
@@ -112,6 +117,9 @@ public final class FhirUtilityR5 {
   private static final Set<String> LOINC_PRIMARY_HAS_PROPERTIES =
       Set.of("has_system", "has_property", "has_component", "has_class", "has_method_typ",
           "has_scale_typ", "has_time_aspct");
+
+  /** Meta tag system for LOINC LL/LG value set id (used by ValueSetProvider for expand/validate). */
+  public static final String META_LOINC_LLLG_ID = "loincLllgId";
 
   /**
    * Instantiates an empty {@link FhirUtilityR5}.
@@ -212,6 +220,15 @@ public final class FhirUtilityR5 {
       return list.get(0);
     }
     if (list.size() > 1) {
+      // If no explicit version was requested, pick the latest terminology version
+      // instead of failing.
+      if (version == null || version.isEmpty()) {
+        final Terminology latestTerminology = TerminologyUtility.getLatestTerminology(list);
+        if (latestTerminology != null) {
+          return latestTerminology;
+        }
+        return list.get(0);
+      }
       throw FhirUtilityR5.exception(
           "Too many code systems found matching '" + systemField + "' "
               + "parameter, please specify version as well to differentiate",
@@ -959,9 +976,6 @@ public final class FhirUtilityR5 {
     return set;
   }
 
-  /** Meta tag system for LOINC LL/LG value set id (used by ValueSetProvider for expand/validate). */
-  public static final String META_LOINC_LLLG_ID = "loincLllgId";
-
   /**
    * Builds a minimal R5 ValueSet for a LOINC LL/LG value set (metadata only; expansion is done in
    * provider).
@@ -975,16 +989,8 @@ public final class FhirUtilityR5 {
       final boolean metaFlag) {
     final ValueSet set = new ValueSet();
     set.setId(lllgId);
-    set.setUrl("http://loinc.org/vs/" + lllgId);
-    set.setVersion(terminology.getVersion());
-    set.setName("VS LOINC " + lllgId);
-    set.setTitle("LOINC " + lllgId);
+    set.setUrl(terminology.getUri() + "?fhir_vs=" + lllgId);
     set.setStatus(PublicationStatus.ACTIVE);
-    set.setDescription("LOINC value set " + lllgId);
-    if (terminology.getCreated() != null) {
-      set.setDate(Date.from(terminology.getCreated().toInstant()));
-    }
-    set.setPublisher(terminology.getPublisher());
     if (terminology.getAttributes() != null && terminology.getAttributes().get("copyright") != null) {
       set.setCopyright(terminology.getAttributes().get("copyright"));
     }
@@ -1001,6 +1007,76 @@ public final class FhirUtilityR5 {
       set.getMeta().setVersionId("1");
       set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
     }
+    return set;
+  }
+
+  /**
+   * Builds an R5 ValueSet for a LOINC LL/LG value set with compose but no expansion (for GET
+   * ValueSet/{id} when expansion should not be included).
+   *
+   * @param terminology LOINC terminology
+   * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
+   * @param members the concepts that are members of the value set
+   * @return the value set with compose.include set, no expansion
+   */
+  public static ValueSet toR5LllgValueSetWithComposeOnly(final Terminology terminology,
+      final String lllgId, final List<Concept> members) {
+    final ValueSet set = toR5LllgValueSet(terminology, lllgId, false);
+    final String systemUri = terminology.getUri();
+    if (systemUri == null || members == null) {
+      return set;
+    }
+    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
+    final ConceptSetComponent include = new ConceptSetComponent();
+    include.setSystem(systemUri);
+    for (final Concept c : members) {
+      include.addConcept(
+          new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
+    }
+    compose.addInclude(include);
+    set.setCompose(compose);
+    return set;
+  }
+
+  /**
+   * Builds an R5 ValueSet for a LOINC LL/LG value set with compose and expansion populated from
+   * the given members (for GET ValueSet/{id} to match fhir.loinc.org behavior).
+   *
+   * @param terminology LOINC terminology
+   * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
+   * @param members the concepts that are members of the value set
+   * @return the value set with compose.include and expansion.contains set
+   */
+  public static ValueSet toR5LllgValueSetWithMembers(final Terminology terminology,
+      final String lllgId, final List<Concept> members) {
+    final ValueSet set = toR5LllgValueSet(terminology, lllgId, false);
+    final String systemUri = terminology.getUri();
+    if (systemUri == null || members == null) {
+      return set;
+    }
+    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
+    final ConceptSetComponent include = new ConceptSetComponent();
+    include.setSystem(systemUri);
+    for (final Concept c : members) {
+      include.addConcept(
+          new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
+    }
+    compose.addInclude(include);
+    set.setCompose(compose);
+    final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
+    expansion.setId(UUID.randomUUID().toString());
+    expansion.setTimestamp(new Date());
+    expansion.setTotal(members.size());
+    expansion.setOffset(0);
+    expansion.addParameter(
+        new ValueSetExpansionParameterComponent().setName("offset").setValue(new IntegerType(0)));
+    expansion.addParameter(new ValueSetExpansionParameterComponent().setName("count")
+        .setValue(new IntegerType(members.size())));
+    for (final Concept c : members) {
+      expansion.addContains(new ValueSetExpansionContainsComponent()
+          .setSystem(systemUri).setCode(c.getCode()).setDisplay(c.getName()));
+    }
+    set.setExpansion(expansion);
     return set;
   }
 

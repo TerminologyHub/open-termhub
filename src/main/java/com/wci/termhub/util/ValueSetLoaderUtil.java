@@ -22,6 +22,7 @@ import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
@@ -385,6 +386,9 @@ public final class ValueSetLoaderUtil {
       }
       service.update(Subset.class, subset.getId(), subset);
 
+      // Mark latest terminology/mapset/subset version for this abbreviation/publisher
+      MarkLatestRunner.run(subset.getAbbreviation(), subset.getPublisher());
+
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
 
@@ -637,6 +641,9 @@ public final class ValueSetLoaderUtil {
         subset.getAttributes().put("syndicated", "true");
       }
       service.update(Subset.class, subset.getId(), subset);
+
+      // Mark latest terminology/mapset/subset version for this abbreviation/publisher
+      MarkLatestRunner.run(subset.getAbbreviation(), subset.getPublisher());
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));

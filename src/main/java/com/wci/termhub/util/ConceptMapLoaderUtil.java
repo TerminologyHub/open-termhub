@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
@@ -361,6 +362,9 @@ public final class ConceptMapLoaderUtil {
         mapset.getAttributes().put("syndicated", "true");
       }
       service.update(Mapset.class, mapset.getId(), mapset);
+
+      // Mark latest terminology/mapset/subset version for this abbreviation/publisher
+      MarkLatestRunner.run(mapset.getAbbreviation(), mapset.getPublisher());
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));

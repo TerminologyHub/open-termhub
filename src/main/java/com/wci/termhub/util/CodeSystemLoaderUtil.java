@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.algo.TerminologyCache;
@@ -372,6 +373,9 @@ public final class CodeSystemLoaderUtil {
         terminology.getAttributes().put("syndicated", "true");
       }
       service.update(Terminology.class, terminology.getId(), terminology);
+
+      // Mark latest terminology/mapset/subset version for this abbreviation/publisher
+      MarkLatestRunner.run(terminology.getAbbreviation(), terminology.getPublisher());
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
@@ -862,6 +866,15 @@ public final class CodeSystemLoaderUtil {
         if (property.has("valueCoding")) {
           cache.addParChd(property.get("valueCoding").get("code").asText(),
               conceptNode.path("code").asText());
+        }
+      }
+      // LOINC panel membership: relationship to LG code means concept is a panel member
+      else if ("relationship".equals(code)) {
+        if (property.has("valueCoding") && property.get("valueCoding").has("code")) {
+          final String toCode = property.get("valueCoding").get("code").asText();
+          if (toCode.startsWith("LG")) {
+            cache.addParChd(toCode, conceptNode.path("code").asText());
+          }
         }
       }
     }

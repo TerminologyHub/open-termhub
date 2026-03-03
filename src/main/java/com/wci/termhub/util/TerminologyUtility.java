@@ -1414,7 +1414,57 @@ public final class TerminologyUtility {
       }
     }
 
+    // If no parseable releaseDate found, return first match so lookup still succeeds
+    if (latestTerminology == null && !list.getItems().isEmpty()) {
+      latestTerminology = list.getItems().get(0);
+    }
     return latestTerminology;
+  }
+
+  /**
+   * Given a list of {@link Terminology} instances (typically multiple versions of the same
+   * terminology/publisher), returns the one with the most recent {@code releaseDate}. If no
+   * parseable release dates are found, the first entry in the list is returned.
+   *
+   * @param candidates the candidate terminologies
+   * @return the latest terminology or {@code null} if the list is null/empty
+   */
+  public static Terminology getLatestTerminology(final List<Terminology> candidates) {
+    if (candidates == null || candidates.isEmpty()) {
+      return null;
+    }
+
+    Terminology latestTerminology = null;
+    Date latestDate = null;
+
+    for (final Terminology term : candidates) {
+      final String releaseDate = term.getReleaseDate();
+      if (releaseDate == null) {
+        continue;
+      }
+      try {
+        final Date parsed;
+        if (releaseDate.contains("T")) {
+          // Full ISO 8601 date string with timezone
+          parsed = Date.from(java.time.Instant.parse(releaseDate));
+        } else {
+          // Fallback to date-only format
+          parsed = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
+        }
+        if (latestDate == null || parsed.after(latestDate)) {
+          latestDate = parsed;
+          latestTerminology = term;
+        }
+      } catch (final Exception e) {
+        logger.warn("Unable to parse release date: {}", releaseDate, e);
+      }
+    }
+
+    if (latestTerminology != null) {
+      return latestTerminology;
+    }
+    // Fallback if dates are missing or unparsable
+    return candidates.get(0);
   }
 
   /**
