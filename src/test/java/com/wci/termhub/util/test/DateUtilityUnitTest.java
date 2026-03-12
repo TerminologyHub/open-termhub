@@ -43,33 +43,41 @@ public class DateUtilityUnitTest {
    */
   @Test
   public void testTimeZoneOffsetLabel() throws Exception {
-    // Test with known time zones
-    final ZoneId edtZone = ZoneId.of("America/New_York");
-    final ZoneId pdtZone = ZoneId.of("America/Los_Angeles");
+    // Test with known time zones using proper ZoneIds
+    final ZoneId nyZone = ZoneId.of("America/New_York");
+    final ZoneId laZone = ZoneId.of("America/Los_Angeles");
     final ZoneId parisZone = ZoneId.of("Europe/Paris");
+    final ZoneId londonZone = ZoneId.of("Europe/London");
+    final ZoneId hongKongZone = ZoneId.of("Asia/Hong_Kong");
 
     final ZonedDateTime now = ZonedDateTime.now();
 
     // Calculate expected offsets dynamically
-    final String expectedEDTOffset = now.withZoneSameInstant(edtZone).getOffset().getId();
-    final String expectedPDTOffset = now.withZoneSameInstant(pdtZone).getOffset().getId();
+    final String expectedNYOffset = now.withZoneSameInstant(nyZone).getOffset().getId();
+    final String expectedLAOffset = now.withZoneSameInstant(laZone).getOffset().getId();
     final String expectedParisOffset = now.withZoneSameInstant(parisZone).getOffset().getId();
+    final String expectedLondonOffset = now.withZoneSameInstant(londonZone).getOffset().getId();
+    final String expectedHongKongOffset = now.withZoneSameInstant(hongKongZone).getOffset().getId();
 
-    // Test with known time zones
-    assertEquals(expectedEDTOffset, DateUtility.getTimeZoneOffsetLabel("EST", new Date()));
-    assertEquals(expectedPDTOffset, DateUtility.getTimeZoneOffsetLabel("PST", new Date()));
+    // Test with ZoneId format
+    assertEquals(expectedNYOffset,
+        DateUtility.getTimeZoneOffsetLabel("America/New_York", new Date()));
+    assertEquals(expectedLAOffset,
+        DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
+    assertEquals(expectedParisOffset,
+        DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
+    assertEquals(expectedLondonOffset,
+        DateUtility.getTimeZoneOffsetLabel("Europe/London", new Date()));
+    assertEquals(expectedHongKongOffset,
+        DateUtility.getTimeZoneOffsetLabel("Asia/Hong_Kong", new Date()));
+
+    // Test UTC
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel("UTC", new Date()));
     assertEquals("Z", DateUtility.getTimeZoneOffsetLabel(null, new Date()));
 
-    // Test with ZoneId format
-    assertEquals(expectedParisOffset,
-        DateUtility.getTimeZoneOffsetLabel("Europe/Paris", new Date()));
-
-    // Test with America/Los_Angeles
-    final ZoneId laZone = ZoneId.of("America/Los_Angeles");
-    final String expectedLAOffset = now.withZoneSameInstant(laZone).getOffset().getId();
-    assertEquals(expectedLAOffset,
-        DateUtility.getTimeZoneOffsetLabel("America/Los_Angeles", new Date()));
+    // Test with offset strings
+    assertEquals("-05:00", DateUtility.getTimeZoneOffsetLabel("-05:00", new Date()));
+    assertEquals("+08:00", DateUtility.getTimeZoneOffsetLabel("+08:00", new Date()));
   }
 
   /**
