@@ -16,8 +16,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 /**
- * Helper for running {@link MarkLatestAlgorithm} from static utility code after
- * load operations complete.
+ * Helper for running {@link MarkLatestAlgorithm} after load operations complete.
  */
 @Component
 public class MarkLatestRunner {
@@ -33,32 +32,13 @@ public class MarkLatestRunner {
    * Run the mark-latest algorithm for the specified terminology abbreviation
    * and publisher.
    *
-   * This method is intended to be called from static loader utilities. Any
-   * exceptions are logged but not propagated, so that load operations are not
-   * aborted solely due to mark-latest failures.
+   * Any exceptions are logged but not propagated, so that load operations are
+   * not aborted solely due to mark-latest failures.
    *
    * @param abbreviation the terminology/mapset/subset abbreviation
    * @param publisher the publisher
    */
-  public static void run(final String abbreviation, final String publisher) {
-
-    final MarkLatestRunner runner = ApplicationContextProvider.getBean(MarkLatestRunner.class);
-    if (runner == null) {
-      LOGGER.warn("MarkLatestRunner bean not available, skipping mark-latest for {}/{}",
-          abbreviation, publisher);
-      return;
-    }
-    runner.runInternal(abbreviation, publisher);
-  }
-
-  /**
-   * Internal execution method that obtains a fresh {@link MarkLatestAlgorithm}
-   * instance and runs it.
-   *
-   * @param abbreviation the abbreviation
-   * @param publisher the publisher
-   */
-  private void runInternal(final String abbreviation, final String publisher) {
+  public void run(final String abbreviation, final String publisher) {
 
     try {
       final MarkLatestAlgorithm algo = applicationContext.getBean(MarkLatestAlgorithm.class);

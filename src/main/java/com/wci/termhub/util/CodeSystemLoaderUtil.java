@@ -107,7 +107,7 @@ public final class CodeSystemLoaderUtil {
     final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener)
     throws Exception {
 
-    return loadCodeSystem(service, file, enablePostLoadComputations, type, listener, null);
+    return loadCodeSystem(service, file, enablePostLoadComputations, type, listener, null, null);
   }
 
   /**
@@ -120,14 +120,16 @@ public final class CodeSystemLoaderUtil {
    * @param type the type
    * @param listener the listener
    * @param isSyndicated the is syndicated
+   * @param markLatestRunner optional runner for mark-latest (null to skip)
    * @return the string
    * @throws Exception the exception
    */
   public static <T> T loadCodeSystem(final EntityRepositoryService service, final File file,
     final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener,
-    final Boolean isSyndicated) throws Exception {
+    final Boolean isSyndicated, final MarkLatestRunner markLatestRunner) throws Exception {
 
-    return indexCodeSystem(service, file, enablePostLoadComputations, type, listener, isSyndicated);
+    return indexCodeSystem(service, file, enablePostLoadComputations, type, listener, isSyndicated,
+        markLatestRunner);
   }
 
   /**
@@ -140,13 +142,14 @@ public final class CodeSystemLoaderUtil {
    * @param type the type
    * @param listener the listener
    * @param isSyndicated the is syndicated
+   * @param markLatestRunner the mark latest runner
    * @return the string
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexCodeSystem(final EntityRepositoryService service, final File file,
     final boolean enablePostLoadComputations, final Class<T> type, final ProgressListener listener,
-    final Boolean isSyndicated) throws Exception {
+    final Boolean isSyndicated, final MarkLatestRunner markLatestRunner) throws Exception {
 
     SystemReportUtility.logMemory();
 
@@ -186,8 +189,10 @@ public final class CodeSystemLoaderUtil {
       Terminology terminology = findTerminology(service, abbreviation, publisher, version);
 
       if (terminology != null) {
-        LOGGER.error("Can not create multiple CodeSystem resources the same title, publisher,"
-            + " and version. terminology: {}, publisher: {}, version: {}", abbreviation, publisher, version);
+        LOGGER.error(
+            "Can not create multiple CodeSystem resources the same title, publisher,"
+                + " and version. terminology: {}, publisher: {}, version: {}",
+            abbreviation, publisher, version);
         throw FhirUtilityR4.exception(
             "Can not create multiple CodeSystem resources the same title, publisher,"
                 + " and version. title: " + abbreviation + ", publisher: " + publisher
@@ -226,7 +231,8 @@ public final class CodeSystemLoaderUtil {
           // Example: Find the start of a nested JSON array
           if (token == JsonToken.START_ARRAY && "concept".equals(parser.currentName())) {
 
-            // Process each object within the array without loading the whole array into memory
+            // Process each object within the array without loading the whole
+            // array into memory
             while (parser.nextToken() != JsonToken.END_ARRAY) {
 
               // Use ObjectMapper to read the sub-object as a JsonNode
@@ -254,14 +260,15 @@ public final class CodeSystemLoaderUtil {
           // Example: Find the start of a nested JSON array
           if (token == JsonToken.START_ARRAY && "concept".equals(parser.currentName())) {
 
-            // Process each object within the array without loading the whole array into memory
+            // Process each object within the array without loading the whole
+            // array into memory
             while (parser.nextToken() != JsonToken.END_ARRAY) {
 
               // Use ObjectMapper to read the sub-object as a JsonNode
               final JsonNode conceptNode = parser.readValueAsTree();
 
               final Concept concept = createConcept(conceptNode, terminology, terminologyCache,
-                enablePostLoadComputations);
+                  enablePostLoadComputations);
               computeParentsChildren(concept, terminologyCache);
               final JsonNode relationships = conceptNode.path("property");
               final List<ConceptRelationship> conceptRelationships =
@@ -365,7 +372,8 @@ public final class CodeSystemLoaderUtil {
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
       SystemReportUtility.logMemory();
 
-      // Get the terminology again because the tree position computer would've changed it
+      // Get the terminology again because the tree position computer would've
+      // changed it
       terminology = service.get(terminology.getId(), Terminology.class, false);
       // Set loaded to true and save it again
       terminology.getAttributes().put("loaded", "true");
@@ -374,8 +382,11 @@ public final class CodeSystemLoaderUtil {
       }
       service.update(Terminology.class, terminology.getId(), terminology);
 
-      // Mark latest terminology/mapset/subset version for this abbreviation/publisher
-      MarkLatestRunner.run(terminology.getAbbreviation(), terminology.getPublisher());
+      // Mark latest terminology/mapset/subset version for this
+      // abbreviation/publisher
+      if (markLatestRunner != null) {
+        markLatestRunner.run(terminology.getAbbreviation(), terminology.getPublisher());
+      }
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));

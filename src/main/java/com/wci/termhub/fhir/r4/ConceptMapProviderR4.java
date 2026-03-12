@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.wci.termhub.algo.DefaultProgressListener;
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -84,6 +85,10 @@ public class ConceptMapProviderR4 implements IResourceProvider {
   @Autowired
   private EntityRepositoryService searchService;
 
+  /** The mark latest runner. */
+  @Autowired
+  private MarkLatestRunner markLatestRunner;
+
   /**
    * Gets the concept map.
    *
@@ -98,7 +103,11 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
-      if (id != null && id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
+      if (id == null) {
+        throw FhirUtilityR4.exception("Concept map id is required", IssueType.REQUIRED,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+      if (id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
         throw FhirUtilityR4.exception(
             "Concept map " + id.getIdPart() + " exists but does not have history version "
                 + id.getVersionIdPart(),
@@ -816,7 +825,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       FileUtils.writeByteArrayToFile(file, bytes);
 
       final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService, file,
-          ConceptMap.class, new DefaultProgressListener());
+          ConceptMap.class, new DefaultProgressListener(), null, markLatestRunner);
 
       FileUtils.delete(file);
 

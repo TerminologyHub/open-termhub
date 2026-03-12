@@ -77,6 +77,10 @@ public class SyndicationContentLoader {
   @Value("${enable.post.load.computations:false}")
   private boolean enablePostLoadComputations;
 
+  /** The mark latest runner. */
+  @Autowired
+  private com.wci.termhub.algo.MarkLatestRunner markLatestRunner;
+
   /**
    * Load syndication content from downloaded files.
    *
@@ -157,7 +161,8 @@ public class SyndicationContentLoader {
     logger.debug("Loading CodeSystem content");
 
     CodeSystemLoaderUtil.loadCodeSystem(searchService, file, enablePostLoadComputations,
-        org.hl7.fhir.r5.model.CodeSystem.class, new DefaultProgressListener());
+        org.hl7.fhir.r5.model.CodeSystem.class, new DefaultProgressListener(), null,
+        markLatestRunner);
   }
 
   /**
@@ -169,7 +174,7 @@ public class SyndicationContentLoader {
   private void loadValueSet(final File file) throws Exception {
     logger.debug("Loading ValueSet content");
     ValueSetLoaderUtil.loadValueSet(searchService, file, org.hl7.fhir.r5.model.ValueSet.class,
-        new DefaultProgressListener());
+        new DefaultProgressListener(), false, markLatestRunner);
   }
 
   /**
@@ -181,7 +186,7 @@ public class SyndicationContentLoader {
   private void loadConceptMap(final File file) throws Exception {
     logger.debug("Loading ConceptMap content");
     ConceptMapLoaderUtil.loadConceptMap(searchService, file, org.hl7.fhir.r5.model.ConceptMap.class,
-        new DefaultProgressListener());
+        new DefaultProgressListener(), null, markLatestRunner);
   }
 
   /**
@@ -467,7 +472,7 @@ public class SyndicationContentLoader {
           final org.hl7.fhir.r5.model.CodeSystem loadedCodeSystem =
               CodeSystemLoaderUtil.loadCodeSystem(searchService, file, enablePostLoadComputations,
                   org.hl7.fhir.r5.model.CodeSystem.class, new DefaultProgressListener(),
-                  Boolean.TRUE);
+                  Boolean.TRUE, markLatestRunner);
           logger.info("Successfully loaded CodeSystem from file: {}", filePath);
 
           // Ensure a fresh reader view for newly indexed terminology
@@ -504,7 +509,7 @@ public class SyndicationContentLoader {
         case VALUESET:
           final org.hl7.fhir.r5.model.ValueSet loadedSubset = ValueSetLoaderUtil.loadValueSet(
               searchService, file, org.hl7.fhir.r5.model.ValueSet.class,
-              new DefaultProgressListener(), Boolean.TRUE);
+              new DefaultProgressListener(), Boolean.TRUE, markLatestRunner);
           logger.info("Successfully loaded ValueSet from file: {}", filePath);
 
           // Ensure a fresh reader view for newly indexed subsets
@@ -541,7 +546,7 @@ public class SyndicationContentLoader {
         case CONCEPTMAP:
           final org.hl7.fhir.r5.model.ConceptMap loadedConceptMap = ConceptMapLoaderUtil
               .loadConceptMap(searchService, file, org.hl7.fhir.r5.model.ConceptMap.class,
-                  new DefaultProgressListener(), Boolean.TRUE);
+                  new DefaultProgressListener(), Boolean.TRUE, markLatestRunner);
           logger.info("Successfully loaded ConceptMap from file: {}", filePath);
 
           // Ensure a fresh reader view for newly indexed mapsets

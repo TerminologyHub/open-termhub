@@ -54,6 +54,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
 import com.wci.termhub.algo.DefaultProgressListener;
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -107,6 +108,10 @@ public class ValueSetProviderR4 implements IResourceProvider {
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
+
+  /** The mark latest runner. */
+  @Autowired
+  private MarkLatestRunner markLatestRunner;
 
   /** The LOINC LL/LG value set helper (Regenstrief mode). */
   @Autowired
@@ -565,7 +570,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       FileUtils.writeByteArrayToFile(file, bytes);
 
       final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService, file, ValueSet.class,
-          new DefaultProgressListener());
+          new DefaultProgressListener(), false, markLatestRunner);
       FileUtils.delete(file);
 
       valueSet.getCompose().getInclude().clear();

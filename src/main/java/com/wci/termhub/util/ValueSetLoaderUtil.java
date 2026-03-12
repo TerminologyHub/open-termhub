@@ -98,11 +98,12 @@ public final class ValueSetLoaderUtil {
    */
   public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
     final Class<T> type, final ProgressListener listener) throws Exception {
-    return loadValueSet(service, file, type, listener, false);
+    return loadValueSet(service, file, type, listener, false, null);
   }
 
   /**
-   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember, and persists.
+   * Loads a FHIR ValueSet (R4 or R5) from JSON, maps to Subset/SubsetMember,
+   * and persists.
    *
    * @param <T> the generic type
    * @param service the repository service
@@ -110,13 +111,14 @@ public final class ValueSetLoaderUtil {
    * @param type the type
    * @param listener the listener
    * @param isSyndicated the is syndicated
+   * @param markLatestRunner optional runner for mark-latest (null to skip)
    * @return the Subset id
    * @throws Exception on error
    */
   @SuppressWarnings("unchecked")
   public static <T> T loadValueSet(final EntityRepositoryService service, final File file,
-    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
-    throws Exception {
+    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated,
+    final MarkLatestRunner markLatestRunner) throws Exception {
 
     LOGGER.info("Loading Subset from JSON, isR5={}", type == org.hl7.fhir.r5.model.ValueSet.class);
 
@@ -124,12 +126,12 @@ public final class ValueSetLoaderUtil {
       final IParser parser = FHIR_CONTEXT_R4.newJsonParser();
       final org.hl7.fhir.r4.model.ValueSet vs = parser.parseResource(
           org.hl7.fhir.r4.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-      return (T) indexValueSetR4(service, vs, listener, isSyndicated);
+      return (T) indexValueSetR4(service, vs, listener, isSyndicated, markLatestRunner);
     }
     final IParser parser = FHIR_CONTEXT_R5.newJsonParser();
     final org.hl7.fhir.r5.model.ValueSet vs = parser.parseResource(
         org.hl7.fhir.r5.model.ValueSet.class, FileUtils.readFileToString(file, "UTF-8"));
-    return (T) indexValueSetR5(service, vs, listener, isSyndicated);
+    return (T) indexValueSetR5(service, vs, listener, isSyndicated, markLatestRunner);
   }
 
   /**
@@ -139,12 +141,14 @@ public final class ValueSetLoaderUtil {
    * @param valueSet the value set
    * @param listener the listener
    * @param isSyndicated the is syndicated
+   * @param markLatestRunner the mark latest runner
    * @return the string
    * @throws Exception the exception
    */
   private static org.hl7.fhir.r4.model.ValueSet indexValueSetR4(
     final EntityRepositoryService service, final org.hl7.fhir.r4.model.ValueSet valueSet,
-    final ProgressListener listener, final Boolean isSyndicated) throws Exception {
+    final ProgressListener listener, final Boolean isSyndicated,
+    final MarkLatestRunner markLatestRunner) throws Exception {
 
     SystemReportUtility.logMemory();
 
@@ -377,7 +381,8 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      // Get the subset again because the tree position computer would've changed it
+      // Get the subset again because the tree position computer would've
+      // changed it
       subset = service.get(subset.getId(), Subset.class, false);
       // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
@@ -386,8 +391,11 @@ public final class ValueSetLoaderUtil {
       }
       service.update(Subset.class, subset.getId(), subset);
 
-      // Mark latest terminology/mapset/subset version for this abbreviation/publisher
-      MarkLatestRunner.run(subset.getAbbreviation(), subset.getPublisher());
+      // Mark latest terminology/mapset/subset version for this
+      // abbreviation/publisher
+      if (markLatestRunner != null) {
+        markLatestRunner.run(subset.getAbbreviation(), subset.getPublisher());
+      }
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
@@ -407,12 +415,14 @@ public final class ValueSetLoaderUtil {
    * @param valueSet the value set
    * @param listener the listener
    * @param isSyndicated the is syndicated
+   * @param markLatestRunner the mark latest runner
    * @return the string
    * @throws Exception the exception
    */
   private static org.hl7.fhir.r5.model.ValueSet indexValueSetR5(
     final EntityRepositoryService service, final org.hl7.fhir.r5.model.ValueSet valueSet,
-    final ProgressListener listener, final Boolean isSyndicated) throws Exception {
+    final ProgressListener listener, final Boolean isSyndicated,
+    final MarkLatestRunner markLatestRunner) throws Exception {
 
     SystemReportUtility.logMemory();
 
@@ -633,7 +643,8 @@ public final class ValueSetLoaderUtil {
       LOGGER.info("  member count: {}", members.size());
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      // Get the subset again because the tree position computer would've changed it
+      // Get the subset again because the tree position computer would've
+      // changed it
       subset = service.get(subset.getId(), Subset.class, false);
       // Set loaded to true and save it again
       subset.getAttributes().put("loaded", "true");
@@ -642,8 +653,11 @@ public final class ValueSetLoaderUtil {
       }
       service.update(Subset.class, subset.getId(), subset);
 
-      // Mark latest terminology/mapset/subset version for this abbreviation/publisher
-      MarkLatestRunner.run(subset.getAbbreviation(), subset.getPublisher());
+      // Mark latest terminology/mapset/subset version for this
+      // abbreviation/publisher
+      if (markLatestRunner != null) {
+        markLatestRunner.run(subset.getAbbreviation(), subset.getPublisher());
+      }
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
