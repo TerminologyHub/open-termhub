@@ -104,16 +104,20 @@ public class ConceptMapProviderR4 implements IResourceProvider {
                 + id.getVersionIdPart(),
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
-      final List<ConceptMap> candidates = findCandidates();
-      for (final ConceptMap map : candidates) {
-        if (id != null && id.getIdPart().equals(map.getId())) {
-          return map;
-        }
+      final Mapset mapset = searchService.get(id.getIdPart(), Mapset.class);
+      if (mapset == null) {
+        throw FhirUtilityR4.exception(
+            "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
+            HttpServletResponse.SC_NOT_FOUND);
       }
-      throw FhirUtilityR4.exception(
-          "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
-          HttpServletResponse.SC_NOT_FOUND);
-
+      final SearchParameters params = new SearchParameters(
+          StringUtility.composeQuery("AND",
+              "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
+              "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
+              "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
+          null, 100000, null, null);
+      final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
+      return FhirUtilityR4.toR4(mapset, mappings);
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {

@@ -135,8 +135,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // 1. LOINC LL/LG first (before any other lookup) so GET ValueSet/LL1162-8
       // always uses this path
       final String idPart = id != null ? id.getIdPart() : null;
-      logger.info("GET ValueSet idPart={} isLllgId={} enabled={}", idPart,
-          idPart != null && loincValueSetHelper.isLllgId(idPart), loincValueSetHelper.isEnabled());
       if (idPart != null && loincValueSetHelper.isLllgId(idPart)) {
         if (!loincValueSetHelper.isEnabled()) {
           logger.info(
@@ -144,8 +142,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
               idPart);
         } else {
           final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
-          logger.info("GET ValueSet/{}: findLoincTerminology {} (abbreviation={})", idPart,
-              loinc != null ? "found" : "null", loinc != null ? loinc.getAbbreviation() : "n/a");
           if (loinc != null) {
             final int memberLimit = 10_000;
             final ResultList<Concept> list =
@@ -153,6 +149,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
             final List<Concept> items = list.getItems();
             if (loincValueSetHelper.isLlId(idPart)) {
               LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
+            } else if (loincValueSetHelper.isLllgId(idPart)) {
+              items.sort(Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
             }
             logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}",
                 idPart, items.size());
@@ -721,6 +719,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
       final List<Concept> items = list.getItems();
       if (loincValueSetHelper.isLlId(lllgId)) {
         LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
+      } else if (loincValueSetHelper.isLllgId(lllgId)) {
+        items.sort(Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
       }
       final String systemUri = terminology.getUri();
       if (systemUri != null) {

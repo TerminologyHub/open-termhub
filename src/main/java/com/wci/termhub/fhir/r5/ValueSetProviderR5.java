@@ -149,6 +149,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
             final List<Concept> items = list.getItems();
             if (loincValueSetHelper.isLlId(idPart)) {
               LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
+            } else if (loincValueSetHelper.isLllgId(idPart)) {
+              items.sort(Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
             }
             logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}", idPart,
                 items.size());
@@ -713,6 +715,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
       final List<Concept> items = list.getItems();
       if (loincValueSetHelper.isLlId(lllgId)) {
         LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
+      } else if (loincValueSetHelper.isLllgId(lllgId)) {
+        items.sort(Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
       }
       final String systemUri = terminology.getUri();
       if (systemUri != null) {

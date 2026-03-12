@@ -9,6 +9,7 @@
  */
 package com.wci.termhub.fhir.util;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -266,14 +267,21 @@ public class LoincValueSetHelper {
       if (term != null) {
         return term;
       }
-      final SearchParameters params = new SearchParameters("*:*", 50, 0);
-      final ResultList<Terminology> list = searchService.find(params, Terminology.class);
-      for (final Terminology t : list.getItems()) {
-        if (t.getUri() != null && t.getUri().contains("loinc.org")) {
-          return t;
-        }
+      term = TerminologyUtility.getLatestTerminologyVersion(searchService, LOINC_SYSTEM,
+          "Regenstrief Institute, Inc.");
+      if (term != null) {
+        return term;
       }
-      return null;
+      final SearchParameters params = new SearchParameters(
+          StringUtility.escapeKeywordField("abbreviation", LOINC_SYSTEM), 50, 0);
+      final ResultList<Terminology> list = searchService.find(params, Terminology.class);
+      final List<Terminology> loincTerms = list.getItems().stream()
+          .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
+          .toList();
+      if (loincTerms.isEmpty()) {
+        return null;
+      }
+      return TerminologyUtility.getLatestTerminology(loincTerms);
     } catch (final Exception e) {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("LOINC terminology not found: {}", e.getMessage());
@@ -341,11 +349,56 @@ public class LoincValueSetHelper {
     }
     final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
         terminology.getPublisher(), versionFilter == null ? "*" : versionFilter);
-    final String codeClause = "code:" + StringUtility.escapeQuery(baseLgCode);
-    final String query = StringUtility.composeQuery("AND", termQuery, codeClause);
+    final String parentClause = "parents.code:" + StringUtility.escapeQuery(baseLgCode);
+    final String excludeLgClause = "-code:" + StringUtility.escapeQuery(baseLgCode);
+    final String query =
+        StringUtility.composeQuery("AND", termQuery, parentClause, excludeLgClause);
     final int limit = count < 0 ? 1000 : count;
     final SearchParameters params = new SearchParameters(query, limit, offset);
-    return searchService.find(params, Concept.class);
+    ResultList<Concept> result = searchService.find(params, Concept.class);
+    result = filterOutLgConcept(result, baseLgCode);
+    if (!result.getItems().isEmpty()) {
+      return result;
+    }
+    final String relTermQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), versionFilter == null ? "*" : versionFilter);
+    final String toCodeClause = "to.code:" + StringUtility.escapeQuery(baseLgCode);
+    final String relQuery =
+        StringUtility.composeQuery("AND", relTermQuery, toCodeClause, "hierarchical:true");
+    final SearchParameters relParams = new SearchParameters(relQuery, limit, offset);
+    final ResultList<ConceptRelationship> relResult =
+        searchService.find(relParams, ConceptRelationship.class);
+    final List<Concept> concepts = new ArrayList<>();
+    for (final ConceptRelationship rel : relResult.getItems()) {
+      if (rel.getFrom() != null && rel.getFrom().getCode() != null
+          && !baseLgCode.equals(rel.getFrom().getCode())) {
+        final Concept c = TerminologyUtility.getConcept(searchService, terminology,
+            rel.getFrom().getCode());
+        if (c != null) {
+          concepts.add(c);
+        }
+      }
+    }
+    final ResultList<Concept> fallbackResult = new ResultList<>();
+    fallbackResult.setTotal(concepts.size());
+    fallbackResult.setItems(concepts);
+    return fallbackResult;
+  }
+
+  private ResultList<Concept> filterOutLgConcept(final ResultList<Concept> result,
+      final String lgCode) {
+    if (result == null || lgCode == null) {
+      return result;
+    }
+    final List<Concept> filtered =
+        result.getItems().stream().filter(c -> !lgCode.equals(c.getCode())).toList();
+    if (filtered.size() == result.getItems().size()) {
+      return result;
+    }
+    final ResultList<Concept> filteredResult = new ResultList<>();
+    filteredResult.setTotal(filtered.size());
+    filteredResult.setItems(filtered);
+    return filteredResult;
   }
 
   /**

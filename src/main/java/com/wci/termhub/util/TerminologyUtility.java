@@ -1386,39 +1386,64 @@ public final class TerminologyUtility {
       return null;
     }
 
-    Terminology latestTerminology = null;
+    if (list.getItems().size() == 1) {
+      return list.getItems().get(0);
+    }
+    final Terminology markedLatest =
+        list.getItems().stream().filter(t -> Boolean.TRUE.equals(t.getLatest())).findFirst().orElse(null);
+    if (markedLatest != null) {
+      return markedLatest;
+    }
+    return list.getItems().stream()
+        .max((a, b) -> compareVersionStrings(a.getVersion(), b.getVersion()))
+        .orElse(list.getItems().get(0));
+  }
 
-    // Find the terminology with the latest release date
-    Date latestDate = null;
-
-    for (final Terminology term : list.getItems()) {
-      final String releaseDate = term.getReleaseDate();
-      if (releaseDate != null) {
-        final Date date;
-        try {
-          if (releaseDate.contains("T")) {
-            // Full ISO 8601 date string with timezone
-            date = Date.from(java.time.Instant.parse(releaseDate));
-          } else {
-            // Fallback to date-only format
-            date = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
-          }
-
-          if (latestDate == null || date.compareTo(latestDate) > 0) {
-            latestDate = date;
-            latestTerminology = term;
-          }
-        } catch (final Exception e) {
-          logger.warn("Unable to parse release date: {}", releaseDate, e);
-        }
+  /**
+   * Compares version strings (e.g. 2.78 vs 2.81). Returns negative if a &lt; b, positive if a &gt; b,
+   * 0 if equal. Handles null and non-numeric segments.
+   *
+   * @param a the a
+   * @param b the b
+   * @return the int
+   */
+  private static int compareVersionStrings(final String a, final String b) {
+    if (a == null && b == null) {
+      return 0;
+    }
+    if (a == null) {
+      return -1;
+    }
+    if (b == null) {
+      return 1;
+    }
+    final String[] aParts = a.split("\\.");
+    final String[] bParts = b.split("\\.");
+    for (int i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      final int aVal = i < aParts.length ? parseVersionSegment(aParts[i]) : 0;
+      final int bVal = i < bParts.length ? parseVersionSegment(bParts[i]) : 0;
+      if (aVal != bVal) {
+        return Integer.compare(aVal, bVal);
       }
     }
+    return 0;
+  }
 
-    // If no parseable releaseDate found, return first match so lookup still succeeds
-    if (latestTerminology == null && !list.getItems().isEmpty()) {
-      latestTerminology = list.getItems().get(0);
+  /**
+   * Parses the version segment.
+   *
+   * @param s the s
+   * @return the int
+   */
+  private static int parseVersionSegment(final String s) {
+    if (s == null || s.isEmpty()) {
+      return 0;
     }
-    return latestTerminology;
+    try {
+      return Integer.parseInt(s.replaceAll("[^0-9].*", ""));
+    } catch (final NumberFormatException e) {
+      return 0;
+    }
   }
 
   /**
@@ -1433,38 +1458,17 @@ public final class TerminologyUtility {
     if (candidates == null || candidates.isEmpty()) {
       return null;
     }
-
-    Terminology latestTerminology = null;
-    Date latestDate = null;
-
-    for (final Terminology term : candidates) {
-      final String releaseDate = term.getReleaseDate();
-      if (releaseDate == null) {
-        continue;
-      }
-      try {
-        final Date parsed;
-        if (releaseDate.contains("T")) {
-          // Full ISO 8601 date string with timezone
-          parsed = Date.from(java.time.Instant.parse(releaseDate));
-        } else {
-          // Fallback to date-only format
-          parsed = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
-        }
-        if (latestDate == null || parsed.after(latestDate)) {
-          latestDate = parsed;
-          latestTerminology = term;
-        }
-      } catch (final Exception e) {
-        logger.warn("Unable to parse release date: {}", releaseDate, e);
-      }
+    if (candidates.size() == 1) {
+      return candidates.get(0);
     }
-
-    if (latestTerminology != null) {
-      return latestTerminology;
+    final Terminology markedLatest =
+        candidates.stream().filter(t -> Boolean.TRUE.equals(t.getLatest())).findFirst().orElse(null);
+    if (markedLatest != null) {
+      return markedLatest;
     }
-    // Fallback if dates are missing or unparsable
-    return candidates.get(0);
+    return candidates.stream()
+        .max((a, b) -> compareVersionStrings(a.getVersion(), b.getVersion()))
+        .orElse(candidates.get(0));
   }
 
   /**

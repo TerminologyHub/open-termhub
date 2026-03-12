@@ -102,36 +102,22 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       if (logger.isDebugEnabled()) {
         logger.debug("Getting concept map with id = {}", id);
       }
-      final List<ConceptMap> candidates = findCandidates();
-      if (logger.isDebugEnabled()) {
-        logger.debug("Found {} candidate concept maps", candidates.size());
+      final String requestedId = id.getIdPart();
+      final Mapset mapset = searchService.get(requestedId, Mapset.class);
+      if (mapset == null) {
+        logger.warn("No concept map found matching id={}", id);
+        throw FhirUtilityR5.exception(
+            "Concept map not found = " + (id == null ? "null" : requestedId), IssueType.NOTFOUND,
+            HttpServletResponse.SC_NOT_FOUND);
       }
-      for (final ConceptMap map : candidates) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("Checking candidate map: id={}, identifier={}, title={}", map.getId(),
-              map.getIdentifierFirstRep().getValue(), map.getTitle());
-        }
-        // Strip any resource prefix from the ID for comparison
-        final String requestedId = id.getIdPart();
-        String candidateId = map.getId();
-        if (candidateId.contains("/")) {
-          candidateId = candidateId.substring(candidateId.lastIndexOf("/") + 1);
-        }
-        if (logger.isDebugEnabled()) {
-          logger.debug("Comparing requested id {} with candidate id {}", requestedId, candidateId);
-        }
-        if (requestedId.equals(candidateId)) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Found matching concept map: id={}, title={}", map.getId(),
-                map.getTitle());
-          }
-          return map;
-        }
-      }
-      logger.warn("No concept map found matching id={}", id);
-      throw FhirUtilityR5.exception(
-          "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
-          HttpServletResponse.SC_NOT_FOUND);
+      final SearchParameters params = new SearchParameters(
+          StringUtility.composeQuery("AND",
+              "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
+              "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
+              "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
+          null, 100000, null, null);
+      final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
+      return FhirUtilityR5.toR5(mapset, mappings);
 
     } catch (final FHIRServerResponseException e) {
       logger.error("FHIR Server Response Exception", e);

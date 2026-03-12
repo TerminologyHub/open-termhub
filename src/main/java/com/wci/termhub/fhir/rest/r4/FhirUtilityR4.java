@@ -64,6 +64,7 @@ import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Definition;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Subset;
@@ -1406,6 +1407,79 @@ public final class FhirUtilityR4 {
       cmMeta.addTag("originalId", mapset.getAttributes().get("originalId"), null);
     }
     cm.setMeta(cmMeta);
+
+    return cm;
+  }
+
+  /**
+   * To R4 with groups and elements from mappings.
+   *
+   * @param mapset the mapset
+   * @param mappings the mappings (may be null or empty for metadata-only)
+   * @return the concept map
+   * @throws Exception the exception
+   */
+  public static ConceptMap toR4(final Mapset mapset, final List<Mapping> mappings)
+    throws Exception {
+
+    final ConceptMap cm = toR4(mapset);
+    if (mappings == null || mappings.isEmpty()) {
+      return cm;
+    }
+
+    final String sourceUri =
+        mapset.getAttributes().containsKey("fhirSourceUri")
+            ? mapset.getAttributes().get("fhirSourceUri")
+            : null;
+    final String targetUri =
+        mapset.getAttributes().containsKey("fhirTargetUri")
+            ? mapset.getAttributes().get("fhirTargetUri")
+            : null;
+    if (sourceUri == null || targetUri == null) {
+      return cm;
+    }
+
+    final ConceptMap.ConceptMapGroupComponent group = cm.addGroup();
+    group.setSource(sourceUri);
+    group.setTarget(targetUri);
+
+    final Map<String, List<Mapping>> bySourceCode = new HashMap<>();
+    for (final Mapping m : mappings) {
+      if (m.getFrom() != null && m.getFrom().getCode() != null) {
+        bySourceCode
+            .computeIfAbsent(m.getFrom().getCode(), k -> new ArrayList<>())
+            .add(m);
+      }
+    }
+
+    for (final Map.Entry<String, List<Mapping>> entry : bySourceCode.entrySet()) {
+      final List<Mapping> elementMappings = entry.getValue();
+      final Mapping first = elementMappings.get(0);
+      final ConceptMap.SourceElementComponent element = group.addElement();
+      element.setCode(first.getFrom().getCode());
+      element.setDisplay(
+          first.getFrom().getName() != null ? first.getFrom().getName() : first.getFrom().getCode());
+
+      for (final Mapping m : elementMappings) {
+        final ConceptMap.TargetElementComponent target = element.addTarget();
+        if (m.getTo() != null && m.getTo().getCode() != null) {
+          target.setCode(m.getTo().getCode());
+        }
+        target.setDisplay(
+            m.getTo() != null && m.getTo().getName() != null
+                ? m.getTo().getName()
+                : "Unable to determine name");
+        final String equiv =
+            m.getType() != null ? m.getType().toLowerCase().replace("-", "") : "relatedto";
+        try {
+          target.setEquivalence(
+              org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence.fromCode(equiv));
+        } catch (final Exception e) {
+          target.setEquivalence(
+              org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence.RELATEDTO);
+        }
+      }
+    }
 
     return cm;
   }
