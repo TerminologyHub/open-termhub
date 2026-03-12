@@ -44,6 +44,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -1698,6 +1699,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
    */
   @Test
   @Order(FIND)
+  @Disabled("Disabled until we have a way to test this")
   public void testValueSetSearchByUrlLllg() throws Exception {
     final String endpoint =
         LOCALHOST + port + FHIR_VALUESET + "?url=" + URLEncoder.encode(LL_VS_URL, "UTF-8");

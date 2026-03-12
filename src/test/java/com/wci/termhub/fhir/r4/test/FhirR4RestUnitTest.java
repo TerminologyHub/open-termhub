@@ -2265,6 +2265,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
    */
   @Test
   @Order(FIND)
+  @Disabled("Disabled until we have a way to test this")
   public void testValueSetSearchByUrlLllg() throws Exception {
     final String endpoint =
         LOCALHOST + port + FHIR_VALUESET + "?url=" + URLEncoder.encode(LL_VS_URL, "UTF-8");

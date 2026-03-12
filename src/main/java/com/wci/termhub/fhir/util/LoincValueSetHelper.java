@@ -272,12 +272,24 @@ public class LoincValueSetHelper {
       if (term != null) {
         return term;
       }
+      term = TerminologyUtility.getLatestTerminologyVersion(searchService, "LNC", null);
+      if (term != null && term.getUri() != null && term.getUri().contains("loinc.org")) {
+        return term;
+      }
       final SearchParameters params = new SearchParameters(
           StringUtility.escapeKeywordField("abbreviation", LOINC_SYSTEM), 50, 0);
-      final ResultList<Terminology> list = searchService.find(params, Terminology.class);
-      final List<Terminology> loincTerms = list.getItems().stream()
+      ResultList<Terminology> list = searchService.find(params, Terminology.class);
+      List<Terminology> loincTerms = list.getItems().stream()
           .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
           .toList();
+      if (loincTerms.isEmpty()) {
+        final SearchParameters lncParams = new SearchParameters(
+            StringUtility.escapeKeywordField("abbreviation", "LNC"), 50, 0);
+        list = searchService.find(lncParams, Terminology.class);
+        loincTerms = list.getItems().stream()
+            .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
+            .toList();
+      }
       if (loincTerms.isEmpty()) {
         return null;
       }
