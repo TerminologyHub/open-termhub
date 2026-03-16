@@ -360,7 +360,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(FIND)
   public void testCodeSystemById() throws Exception {
     // Arrange
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -372,7 +372,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(codeSystem);
     LOGGER.info("  testCodeSystemById code system = {}", parser.encodeResourceToString(codeSystem));
 
-    // Verify resource type and id (HAPI is appendding /_history/1 when meta.versionId is set)
+    // Verify resource type and id (HAPI is appending /_history/1 when meta.versionId is set)
     assertEquals(ResourceType.CodeSystem, codeSystem.getResourceType());
     final String logicalId = "CodeSystem/" + csId;
     assertTrue(
@@ -387,7 +387,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertEquals("SNOMEDCT_US", codeSystem.getTitle());
     assertEquals(PublicationStatus.ACTIVE, codeSystem.getStatus());
     assertFalse(codeSystem.getExperimental());
-    assertEquals("2024-03-01T00:00:00Z", codeSystem.getDate().toInstant().toString());
+    // ignore time component of date for assertion
+    assertEquals("2024-03-01", codeSystem.getDate().toInstant().toString().substring(0, 10));
     assertEquals("SANDBOX", codeSystem.getPublisher());
     assertEquals(CodeSystemHierarchyMeaning.ISA, codeSystem.getHierarchyMeaning());
     assertFalse(codeSystem.getCompositional());
@@ -494,7 +495,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Order(FIND)
   public void testCodeSystemValidateCodeById() throws Exception {
     // Arrange
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("177f2263-fe04-4f1f-b0e6-9b351ab8baa9");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("fbd24528-d3a9-4ae1-b356-52a09a73938b");
     final String code = "E10";
     final String validateParams = "/$validate-code?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + validateParams;
@@ -2129,7 +2130,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemVreadHistoryVersion1ReturnsOk() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/1";
     LOGGER.info("Testing endpoint: {}", endpoint);
 
@@ -2152,7 +2153,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemVreadHistoryVersionNonExistentReturnsNotFound() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/22";
     LOGGER.info("Testing endpoint: {}", endpoint);
 

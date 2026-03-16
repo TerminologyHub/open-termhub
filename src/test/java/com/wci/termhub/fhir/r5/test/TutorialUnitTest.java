@@ -135,7 +135,7 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @Order(4)
   void testConceptMapTranslate() {
     final String url =
-        "/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106"
+        "/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106-instance"
             + "&sourceSystem=http://snomed.info/sct&sourceCode=300862005";
     final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -195,11 +195,11 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
    * Test find explicit value set.
    */
   // Test for: curl -s
-  // 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
+  // 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108-instance' | jq
   @Test
   @Order(7)
   void testFindExplicitValueSet() {
-    final String url = "/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108";
+    final String url = "/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108-instance";
     final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     final String body = response.getBody();
@@ -207,7 +207,7 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("Bundle");
     assertThat((Integer) JsonPath.read(body, "$.total")).isEqualTo(1);
     assertThat((String) JsonPath.read(body, "$.entry[0].resource.url"))
-        .isEqualTo("http://snomed.info/sct?fhir_vs=731000124108");
+        .isEqualTo("http://snomed.info/sct?fhir_vs=731000124108-instance");
     tutorialResources.remove(url);
   }
 
@@ -260,19 +260,19 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
    * Test expand explicit value set.
    */
   // Test for: curl -s
-  // 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108'
+  // 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108-instance'
   // | jq
   @Test
   @Order(10)
   void testExpandExplicitValueSet() {
-    final String url = "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108";
+    final String url = "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108-instance";
     final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.resourceType")).isEqualTo("ValueSet");
     assertThat((String) JsonPath.read(body, "$.url"))
-        .isEqualTo("http://snomed.info/sct?fhir_vs=731000124108");
+        .isEqualTo("http://snomed.info/sct?fhir_vs=731000124108-instance");
     assertThat((Integer) JsonPath.read(body, "$.expansion.total")).isGreaterThan(0);
     tutorialResources.remove(url);
   }
@@ -301,13 +301,13 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
    * Test expand explicit value set with filter.
    */
   // Test for: curl -s
-  // 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108&filter=diabetes'
-  // | jq
+  // 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct
+  // ?fhir_vs=731000124108-instance&filter=diabetes' | jq
   @Test
   @Order(12)
   void testExpandExplicitValueSetWithFilter() {
     final String url =
-        "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108&filter=diabetes";
+        "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108-instance&filter=diabetes";
     final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     final String body = response.getBody();
