@@ -1,7 +1,7 @@
 {
   "resourceType": "ValueSet",
-  "id": "6729e634-e4ed-4adb-b8f7-7bb7861861bf",
-  "url": "http://snomed.info/sct?fhir_vs=723264001",
+  "id": "5c30ea9b-e793-4343-9335-75bfb254b69f",
+  "url": "http://snomed.info/sct?fhir_vs=723264001-instance",
   "identifier": [ {
     "system": "https://terminologyhub.com/model/subset/code",
     "value": "723264001"
@@ -11,7 +11,7 @@
   "title": "SNOMEDCT_US-723264001",
   "status": "active",
   "experimental": false,
-  "date": "2024-03-01T00:00:00+00:00",
+  "date": "2024-03-01T00:00:00-08:00",
   "publisher": "SANDBOX",
   "description": "Lateralizable body structure reference set",
   "compose": {

@@ -1,16 +1,33 @@
 {
   "resourceType": "CodeSystem",
-  "id": "177f2263-fe04-4f1f-b0e6-9b351ab8baa9",
+  "id": "fbd24528-d3a9-4ae1-b356-52a09a73938b",
+  "meta": {
+    "versionId": "1",
+    "lastUpdated": "2023-05-01T00:00:00.000-07:00"
+  },
   "url": "http://hl7.org/fhir/sid/icd-10-cm",
+  "identifier": [ {
+    "system": "urn:ietf:rfc:3986"
+  } ],
   "version": "2023",
   "name": "Mini version of ICD10CM for testing purposes",
   "title": "ICD10CM",
   "status": "active",
   "experimental": false,
-  "date": "2023-05-01T00:00:00+00:00",
+  "date": "2023-05-01T00:00:00-07:00",
   "publisher": "SANDBOX",
+  "contact": [ {
+    "telecom": [ {
+      "system": "url",
+      "value": "http://hl7.org/fhir/sid/icd-10-cm"
+    } ]
+  } ],
+  "description": "The tenth edition of the International Classification of Diseases or \"ICD-10\" is used to categorize and catalog health conditions and diseases with specific conditions, as well as subtly differentiated diseases that are associated with broader morbidities",
+  "caseSensitive": false,
+  "valueSet": "http://hl7.org/fhir/sid/icd-10-cm?fhir_vs",
   "hierarchyMeaning": "is-a",
   "compositional": false,
+  "versionNeeded": false,
   "content": "complete",
   "count": 10,
   "property": [ {
@@ -24,9 +41,9 @@
     "description": "true",
     "type": "string"
   }, {
-    "code": "hierarchical",
-    "uri": "https://terminologyhub.com/model/terminology/attributes/hierarchical",
-    "description": "true",
+    "code": "description",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/description",
+    "description": "The tenth edition of the International Classification of Diseases or \"ICD-10\" is used to categorize and catalog health conditions and diseases with specific conditions, as well as subtly differentiated diseases that are associated with broader morbidities",
     "type": "string"
   }, {
     "code": "tree-positions",
@@ -43,6 +60,21 @@
     "uri": "https://terminologyhub.com/model/terminology/attributes/ecl",
     "description": "true",
     "type": "string"
+  }, {
+    "code": "hierarchical",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/hierarchical",
+    "description": "true",
+    "type": "string"
+  }, {
+    "code": "parent",
+    "uri": "http://hl7.org/fhir/concept-properties#parent",
+    "description": "Parent concept",
+    "type": "code"
+  }, {
+    "code": "status",
+    "uri": "http://hl7.org/fhir/concept-properties#status",
+    "description": "Concept status",
+    "type": "code"
   }, {
     "code": "PT",
     "uri": "https://terminologyhub.com/model/term/type/Pt",
@@ -64,8 +96,9 @@
     "description": "Hierarchical term",
     "type": "string"
   }, {
-    "code": "ENG",
-    "uri": "https://terminologyhub.com/model/term/language/Eng",
+    "code": "en",
+    "uri": "https://terminologyhub.com/model/term/language/En",
+    "description": "English",
     "type": "string"
   }, {
     "code": "NOTE",
@@ -113,24 +146,20 @@
     "description": "has child relationship in a Metathesaurus source vocabulary ",
     "type": "string"
   }, {
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/",
-    "description": "No type, used for XR mappings.",
-    "type": "string"
-  }, {
-    "code": "parent",
-    "uri": "https://terminologyhub.com/model/terminology/attributes/parent",
-    "description": "Parent",
-    "type": "Coding"
-  }, {
     "code": "active",
     "uri": "https://terminologyhub.com/model/terminology/attributes/active",
     "description": "Active",
-    "type": "string"
+    "type": "boolean"
+  }, {
+    "code": "sufficientlyDefined",
+    "uri": "https://terminologyhub.com/model/terminology/attributes/sufficientlyDefined",
+    "description": "Sufficiently defined",
+    "type": "boolean"
   }, {
     "code": "relationship",
     "uri": "https://terminologyhub.com/model/terminology/attributes/relationship",
     "description": "Relationship",
-    "type": "Coding"
+    "type": "code"
   }, {
     "code": "semanticType",
     "uri": "https://terminologyhub.com/model/terminology/attributes/semanticType",
@@ -151,7 +180,10 @@
     } ],
     "property": [ {
       "code": "active",
-      "valueString": "true"
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
     }, {
       "code": "semanticType",
       "valueString": "Neoplastic Process"
@@ -160,14 +192,11 @@
       "valueString": "Functional activity; All neoplasms are classified in this chapter, whether they are functionally active or not. An additional code from Chapter 4 may be used, to identify functional activity associated with any neoplasm. Morphology [Histology]; Chapter 2 classifies neoplasms primarily by site (topography), with broad groupings for behavior, malignant, in situ, benign, etc. The Table of Neoplasms should be used to identify the correct topography code. In a few cases, such as for malignant melanoma and certain neuroendocrine tumors, the morphology (histologic type) is included in the category and codes. Primary malignant neoplasms overlapping site boundaries; A primary malignant neoplasm that overlaps two or more contiguous (next to each other) sites should be classified to the subcategory/code .8 ('overlapping lesion'), unless the combination is specifically indexed elsewhere. For multiple neoplasms of the same site that are not contiguous, such as tumors in different quadrants of the same breast, codes for each site should be assigned. Malignant neoplasm of ectopic tissue; Malignant neoplasms of ectopic tissue are to be coded to the site mentioned, e.g., ectopic pancreatic malignant neoplasms are coded to pancreas, unspecified (C25.9)."
     }, {
       "code": "parent",
-      "valueCoding": {
-        "code": "ICD-10-CM",
-        "display": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES"
-      }
+      "valueCode": "ICD-10-CM"
     } ]
   }, {
-    "code": "ICD-10-CM",
-    "display": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES",
+    "code": "C50-C50",
+    "display": "Malignant neoplasms of breast (C50)",
     "designation": [ {
       "language": "en",
       "use": {
@@ -175,14 +204,48 @@
         "code": "HT",
         "display": "Hierarchical term"
       },
-      "value": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES"
+      "value": "Malignant neoplasms of breast (C50)"
     } ],
     "property": [ {
       "code": "active",
-      "valueString": "true"
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
     }, {
       "code": "semanticType",
-      "valueString": "Intellectual Product"
+      "valueString": "Neoplastic Process"
+    }, {
+      "code": "parent",
+      "valueCode": "C00-D49"
+    } ]
+  }, {
+    "code": "E10.9",
+    "display": "Type 1 diabetes mellitus without complications",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "PT",
+        "display": "Designated preferred name"
+      },
+      "value": "Type 1 diabetes mellitus without complications"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "ORDER_NO",
+      "valueString": "04199"
+    }, {
+      "code": "parent",
+      "valueCode": "E10"
     } ]
   }, {
     "code": "E11",
@@ -222,7 +285,10 @@
     } ],
     "property": [ {
       "code": "active",
-      "valueString": "true"
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
     }, {
       "code": "semanticType",
       "valueString": "Disease or Syndrome"
@@ -243,38 +309,38 @@
       "valueString": "04200"
     }, {
       "code": "parent",
-      "valueCoding": {
-        "code": "E08-E13",
-        "display": "Diabetes mellitus (E08-E13)"
-      }
+      "valueCode": "E08-E13"
     } ]
   }, {
-    "code": "E11.9",
-    "display": "Type 2 diabetes mellitus without complications",
+    "code": "E00-E89",
+    "display": "Endocrine, nutritional and metabolic diseases (E00-E89)",
     "designation": [ {
       "language": "en",
       "use": {
         "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "PT",
-        "display": "Designated preferred name"
+        "code": "HT",
+        "display": "Hierarchical term"
       },
-      "value": "Type 2 diabetes mellitus without complications"
+      "value": "Endocrine, nutritional and metabolic diseases (E00-E89)"
     } ],
     "property": [ {
       "code": "active",
-      "valueString": "true"
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
     }, {
       "code": "semanticType",
       "valueString": "Disease or Syndrome"
     }, {
-      "code": "ORDER_NO",
-      "valueString": "04315"
+      "code": "EXCLUDES1",
+      "valueString": "transitory endocrine and metabolic disorders specific to newborn (P70-P74)"
+    }, {
+      "code": "NOTE",
+      "valueString": "All neoplasms, whether functionally active or not, are classified in Chapter 2. Appropriate codes in this chapter (i.e. E05.8, E07.0, E16-E31, E34.-) may be used as additional codes to indicate either functional activity by neoplasms and ectopic endocrine tissue or hyperfunction and hypofunction of endocrine glands associated with neoplasms and other conditions classified elsewhere."
     }, {
       "code": "parent",
-      "valueCoding": {
-        "code": "E11",
-        "display": "Type 2 diabetes mellitus"
-      }
+      "valueCode": "ICD-10-CM"
     } ]
   }, {
     "code": "C50",
@@ -314,7 +380,10 @@
     } ],
     "property": [ {
       "code": "active",
-      "valueString": "true"
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
     }, {
       "code": "semanticType",
       "valueString": "Disease or Syndrome"
@@ -335,14 +404,11 @@
       "valueString": "01812"
     }, {
       "code": "parent",
-      "valueCoding": {
-        "code": "C50-C50",
-        "display": "Malignant neoplasms of breast (C50)"
-      }
+      "valueCode": "C50-C50"
     } ]
   }, {
-    "code": "C50-C50",
-    "display": "Malignant neoplasms of breast (C50)",
+    "code": "ICD-10-CM",
+    "display": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES",
     "designation": [ {
       "language": "en",
       "use": {
@@ -350,20 +416,70 @@
         "code": "HT",
         "display": "Hierarchical term"
       },
-      "value": "Malignant neoplasms of breast (C50)"
+      "value": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES"
     } ],
     "property": [ {
       "code": "active",
-      "valueString": "true"
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
     }, {
       "code": "semanticType",
-      "valueString": "Neoplastic Process"
+      "valueString": "Intellectual Product"
+    } ]
+  }, {
+    "code": "E08-E13",
+    "display": "Diabetes mellitus (E08-E13)",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Diabetes mellitus (E08-E13)"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
     }, {
       "code": "parent",
-      "valueCoding": {
-        "code": "C00-D49",
-        "display": "Neoplasms (C00-D49)"
-      }
+      "valueCode": "E00-E89"
+    } ]
+  }, {
+    "code": "E11.9",
+    "display": "Type 2 diabetes mellitus without complications",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "PT",
+        "display": "Designated preferred name"
+      },
+      "value": "Type 2 diabetes mellitus without complications"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "ORDER_NO",
+      "valueString": "04315"
+    }, {
+      "code": "parent",
+      "valueCode": "E11"
     } ]
   }, {
     "code": "E10",
@@ -427,7 +543,10 @@
     } ],
     "property": [ {
       "code": "active",
-      "valueString": "true"
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
     }, {
       "code": "semanticType",
       "valueString": "Disease or Syndrome"
@@ -442,94 +561,7 @@
       "valueString": "04087"
     }, {
       "code": "parent",
-      "valueCoding": {
-        "code": "E08-E13",
-        "display": "Diabetes mellitus (E08-E13)"
-      }
-    } ]
-  }, {
-    "code": "E08-E13",
-    "display": "Diabetes mellitus (E08-E13)",
-    "designation": [ {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "HT",
-        "display": "Hierarchical term"
-      },
-      "value": "Diabetes mellitus (E08-E13)"
-    } ],
-    "property": [ {
-      "code": "active",
-      "valueString": "true"
-    }, {
-      "code": "semanticType",
-      "valueString": "Disease or Syndrome"
-    }, {
-      "code": "parent",
-      "valueCoding": {
-        "code": "E00-E89",
-        "display": "Endocrine, nutritional and metabolic diseases (E00-E89)"
-      }
-    } ]
-  }, {
-    "code": "E10.9",
-    "display": "Type 1 diabetes mellitus without complications",
-    "designation": [ {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "PT",
-        "display": "Designated preferred name"
-      },
-      "value": "Type 1 diabetes mellitus without complications"
-    } ],
-    "property": [ {
-      "code": "active",
-      "valueString": "true"
-    }, {
-      "code": "semanticType",
-      "valueString": "Disease or Syndrome"
-    }, {
-      "code": "ORDER_NO",
-      "valueString": "04199"
-    }, {
-      "code": "parent",
-      "valueCoding": {
-        "code": "E10",
-        "display": "Type 1 diabetes mellitus"
-      }
-    } ]
-  }, {
-    "code": "E00-E89",
-    "display": "Endocrine, nutritional and metabolic diseases (E00-E89)",
-    "designation": [ {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "HT",
-        "display": "Hierarchical term"
-      },
-      "value": "Endocrine, nutritional and metabolic diseases (E00-E89)"
-    } ],
-    "property": [ {
-      "code": "active",
-      "valueString": "true"
-    }, {
-      "code": "semanticType",
-      "valueString": "Disease or Syndrome"
-    }, {
-      "code": "EXCLUDES1",
-      "valueString": "transitory endocrine and metabolic disorders specific to newborn (P70-P74)"
-    }, {
-      "code": "NOTE",
-      "valueString": "All neoplasms, whether functionally active or not, are classified in Chapter 2. Appropriate codes in this chapter (i.e. E05.8, E07.0, E16-E31, E34.-) may be used as additional codes to indicate either functional activity by neoplasms and ectopic endocrine tissue or hyperfunction and hypofunction of endocrine glands associated with neoplasms and other conditions classified elsewhere."
-    }, {
-      "code": "parent",
-      "valueCoding": {
-        "code": "ICD-10-CM",
-        "display": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES"
-      }
+      "valueCode": "E08-E13"
     } ]
   }]
 }

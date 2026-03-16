@@ -1,7 +1,7 @@
 {
   "resourceType": "ValueSet",
-  "id": "4c2a7181-43e0-40ad-bf41-f351c51547ef",
-  "url": "http://snomed.info/sct?fhir_vs=900000000000207008",
+  "id": "07cd1e34-7d30-4105-a5d0-65bb1856ba6c",
+  "url": "http://snomed.info/sct?fhir_vs=900000000000207008-instance",
   "identifier": [ {
     "system": "https://terminologyhub.com/model/subset/code",
     "value": "900000000000207008"
@@ -11,7 +11,7 @@
   "title": "SNOMEDCT_US-CORE",
   "status": "active",
   "experimental": false,
-  "date": "2024-03-01T00:00:00+00:00",
+  "date": "2024-03-01T00:00:00-08:00",
   "publisher": "SANDBOX",
   "description": "SNOMED CT core",
   "compose": {

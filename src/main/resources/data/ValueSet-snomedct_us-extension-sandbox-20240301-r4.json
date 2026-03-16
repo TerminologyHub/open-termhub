@@ -1,7 +1,7 @@
 {
   "resourceType": "ValueSet",
-  "id": "dd01be90-f9dd-4531-abb4-810f2090ba17",
-  "url": "http://snomed.info/sct?fhir_vs=731000124108",
+  "id": "76fdd4ed-c1d8-4c8e-8b7f-b11a6e268cb1",
+  "url": "http://snomed.info/sct?fhir_vs=731000124108-instance",
   "identifier": [ {
     "system": "https://terminologyhub.com/model/subset/code",
     "value": "731000124108"
@@ -11,7 +11,7 @@
   "title": "SNOMEDCT_US-EXTENSION",
   "status": "active",
   "experimental": false,
-  "date": "2024-03-01T00:00:00+00:00",
+  "date": "2024-03-01T00:00:00-08:00",
   "publisher": "SANDBOX",
   "description": "US National Library of Medicine maintained module",
   "compose": {
