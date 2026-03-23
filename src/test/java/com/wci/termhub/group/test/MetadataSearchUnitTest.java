@@ -82,7 +82,7 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(93, metadata.getItems().size());
+    assertEquals(86, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -102,7 +102,7 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(78, metadata.getItems().size());
+    assertEquals(80, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());

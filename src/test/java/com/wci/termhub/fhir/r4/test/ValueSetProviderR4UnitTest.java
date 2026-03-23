@@ -96,7 +96,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
   /**
    * The Constant TEST_VALUESET_URL.
    */
-  private static final String TEST_VALUESET_URL = "http://snomed.info/sct?fhir_vs=731000124108";
+  private static final String TEST_VALUESET_URL = "http://snomed.info/sct?fhir_vs=731000124108-instance";
 
   /**
    * Setup.

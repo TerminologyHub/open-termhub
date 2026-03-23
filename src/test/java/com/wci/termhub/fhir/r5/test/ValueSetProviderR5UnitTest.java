@@ -68,7 +68,7 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
       List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json");
 
   /** The Constant TEST_VALUESET_URL. */
-  private static final String TEST_VALUESET_URL = "http://snomed.info/sct?fhir_vs=731000124108";
+  private static final String TEST_VALUESET_URL = "http://snomed.info/sct?fhir_vs=731000124108-instance";
 
   /**
    * Setup.

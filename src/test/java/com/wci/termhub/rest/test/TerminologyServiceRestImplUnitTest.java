@@ -160,7 +160,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyIcd10Cm() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("177f2263-fe04-4f1f-b0e6-9b351ab8baa9");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("fbd24528-d3a9-4ae1-b356-52a09a73938b");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -196,7 +196,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologySnomedCtUs() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -218,7 +218,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("340c926f-9ad6-4f1b-b230-dc4ca14575ab");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
     final String url = baseUrl + "/terminology/" + id + "/metadata";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -1165,7 +1165,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testFindMapsetById() throws Exception {
 
-    final String id = ConceptMapLoaderUtil.mapOriginalId("2a545e12-04eb-48ee-b988-c17346b4e05f");
+    final String id = ConceptMapLoaderUtil.mapOriginalId("126b4900-b236-41e9-a4c2-09963699ed17");
     final String url = baseUrl + "/mapset/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -2862,7 +2862,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
     // Verify we got the expected number of results (sandbox data has 64
     // mappings)
-    assertEquals(64, total1, "Expected 64 total mappings in sandbox data");
+    assertEquals(69, total1, "Expected 69 total mappings in sandbox data");
     LOGGER.info("Wildcard consistency test passed with total={}", total1);
   }
 
