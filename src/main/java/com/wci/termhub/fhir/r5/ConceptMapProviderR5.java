@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.wci.termhub.lucene.eventing.Write;
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeType;
@@ -36,6 +35,7 @@ import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
+import com.wci.termhub.lucene.eventing.Write;
 import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.SearchParameters;
@@ -94,9 +94,8 @@ public class ConceptMapProviderR5 implements IResourceProvider {
 
     try {
       if (id != null && id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
-        throw FhirUtilityR5.exception(
-            "Concept map " + id.getIdPart() + " exists but does not have history version "
-                + id.getVersionIdPart(),
+        throw FhirUtilityR5.exception("Concept map " + id.getIdPart()
+            + " exists but does not have history version " + id.getVersionIdPart(),
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
       if (logger.isDebugEnabled()) {
@@ -112,7 +111,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
               map.getIdentifierFirstRep().getValue(), map.getTitle());
         }
         // Strip any resource prefix from the ID for comparison
-        final String requestedId = id.getIdPart();
+        final String requestedId = id != null ? id.getIdPart() : "";
         String candidateId = map.getId();
         if (candidateId.contains("/")) {
           candidateId = candidateId.substring(candidateId.lastIndexOf("/") + 1);
@@ -695,7 +694,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       final String mapsetCode = map.getIdentifier().get(0).getValue();
       if (logger.isDebugEnabled()) {
         logger.debug("Processing concept map: id={}, code={}, url={}", map.getId(), mapsetCode,
-          map.getUrl());
+            map.getUrl());
       }
 
       final List<Mapping> mappings = searchService.find(

@@ -86,6 +86,16 @@ dependencies {
 
   // Vulnerability import
   //implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.44"
+  // These are needed to override dependencies from hapi-fhir-base (until it is fixed)
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.convertors:6.9.0"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2:6.9.0"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2016may:6.9.0"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:6.9.0"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4:6.9.0"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4b:6.9.0"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r5:6.9.0"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.utilities:6.9.0"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.validation:6.9.0"
 
   // prometheus
   implementation "io.micrometer:micrometer-registry-prometheus"
