@@ -13,6 +13,7 @@ import static com.wci.termhub.util.IndexUtility.getAndQuery;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.wci.termhub.lucene.eventing.Write;
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -40,7 +40,10 @@ import org.hl7.fhir.r5.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceDesignationComponent;
+import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
+import org.hl7.fhir.r5.model.ValueSet.ValueSetComposeComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionParameterComponent;
@@ -51,11 +54,14 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
 import com.wci.termhub.algo.DefaultProgressListener;
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
+import com.wci.termhub.fhir.util.LoincValueSetHelper;
 import com.wci.termhub.handler.BrowserQueryBuilder;
 import com.wci.termhub.lucene.LuceneQueryBuilder;
+import com.wci.termhub.lucene.eventing.Write;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -103,6 +109,14 @@ public class ValueSetProviderR5 implements IResourceProvider {
   @Autowired
   private EntityRepositoryService searchService;
 
+  /** The mark latest runner. */
+  @Autowired
+  private MarkLatestRunner markLatestRunner;
+
+  /** The LOINC LL/LG value set helper (Regenstrief mode). */
+  @Autowired
+  private LoincValueSetHelper loincValueSetHelper;
+
   /**
    * Gets the value set.
    *
@@ -119,20 +133,45 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
     try {
       if (id != null && id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
-        throw FhirUtilityR5.exception(
-            "Value set " + id.getIdPart() + " exists but does not have history version "
-                + id.getVersionIdPart(),
+        throw FhirUtilityR5.exception("Value set " + id.getIdPart()
+            + " exists but does not have history version " + id.getVersionIdPart(),
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
-      // 1. Check implicit ValueSets
+      // 1. LOINC LL/LG first (before any other lookup) so GET ValueSet/LL1162-8
+      // always uses this path
+      final String idPart = id != null ? id.getIdPart() : null;
+      if (idPart != null && loincValueSetHelper.isLllgId(idPart)) {
+        if (!loincValueSetHelper.isEnabled()) {
+          logger.debug(
+              "GET ValueSet/{}: LL/LG path skipped (fhir.loinc.lllg.valuesets.enabled=false)",
+              idPart);
+        } else {
+          final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
+          if (loinc != null) {
+            final int memberLimit = 10_000;
+            final ResultList<Concept> list =
+                loincValueSetHelper.findLllgMembers(searchService, loinc, idPart, 0, memberLimit);
+            final List<Concept> items = list.getItems();
+            if (loincValueSetHelper.isLlId(idPart)) {
+              LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
+            } else if (loincValueSetHelper.isLllgId(idPart)) {
+              items.sort(Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
+            }
+            logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}", idPart,
+                items.size());
+            return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loinc, idPart, items);
+          }
+          logger.debug("GET ValueSet/{}: LL/LG path skipped (LOINC terminology not found)", idPart);
+        }
+      }
+      // 2. Check implicit ValueSets
       final ValueSet vs = findPossibleValueSets(false, id, null, null).stream()
-          .filter(s -> s.getId().equals(id.getIdPart())).findFirst().orElse(null);
-      // If a terminology subset, simply return
+          .filter(s -> s.getId().equals(idPart)).findFirst().orElse(null);
       if (vs != null && vs.getId().endsWith("_entire")) {
         return vs;
       }
-      // 2. Check explicit subsets and load first 100 members
-      final Subset subset = searchService.get(id.getIdPart(), Subset.class);
+      // 3. Check explicit subsets
+      final Subset subset = idPart != null ? searchService.get(idPart, Subset.class) : null;
       if (subset != null) {
         // // Fetch members
         // final SearchParameters memberParams = new SearchParameters();
@@ -143,9 +182,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
         final ValueSet valueSet = FhirUtilityR5.toR5ValueSet(subset, new ArrayList<>(0), false);
         return valueSet;
       }
-      throw FhirUtilityR5.exception(
-          "Value set not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
-          HttpServletResponse.SC_NOT_FOUND);
+      throw FhirUtilityR5.exception("Value set not found = " + (idPart == null ? "null" : idPart),
+          IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
@@ -206,10 +244,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return")
-    @OptionalParam(name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page")
-    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
+    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
+        name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
+        name = "_offset") final NumberParam offset)
+    throws Exception {
 
     try {
 
@@ -527,7 +566,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       FileUtils.writeByteArrayToFile(file, bytes);
 
       final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService, file, ValueSet.class,
-          new DefaultProgressListener());
+          new DefaultProgressListener(), false, markLatestRunner);
 
       FileUtils.delete(file);
 
@@ -586,6 +625,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
             "Cannot delete implicit value set for code system = " + id.getIdPart(),
             IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
       }
+      if (valueSet != null && valueSet.getMeta() != null && valueSet.getMeta().getTag().stream()
+          .anyMatch(t -> FhirUtilityR5.META_LOINC_LLLG_ID.equals(t.getSystem()))) {
+        throw FhirUtilityR5.exception("Cannot delete LOINC LL/LG value set = " + id.getIdPart(),
+            IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+      }
 
       // Check if it's a loaded ValueSet (Subset)
       final Subset subset = searchService.get(id.getIdPart(), Subset.class);
@@ -639,12 +683,100 @@ public class ValueSetProviderR5 implements IResourceProvider {
       throw FhirUtilityR5.exception("Failed to find matching value set",
           OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
     }
+    final ValueSet vs;
     if (valueSets.size() > 1) {
-      throw FhirUtilityR5.exception("Too many matching value sets found",
-          OperationOutcome.IssueType.MULTIPLEMATCHES, HttpServletResponse.SC_EXPECTATION_FAILED);
+      // If no explicit ValueSet version is requested, choose the most recent
+      // terminology
+      // version instead of failing.
+      if (version == null || version.isEmpty()) {
+        final ValueSet latestVs = valueSets.stream().filter(v -> v.getDate() != null)
+            .max(Comparator.comparing(ValueSet::getDate)).orElse(valueSets.get(0));
+        vs = latestVs;
+      } else {
+        throw FhirUtilityR5.exception("Too many matching value sets found",
+            OperationOutcome.IssueType.MULTIPLEMATCHES, HttpServletResponse.SC_EXPECTATION_FAILED);
+      }
+    } else {
+      vs = valueSets.get(0);
     }
 
-    final ValueSet vs = valueSets.get(0);
+    // LOINC LL/LG expansion (Regenstrief mode)
+    if (loincValueSetHelper.isEnabled() && vs.getMeta() != null && vs.getMeta().getTag().stream()
+        .anyMatch(t -> FhirUtilityR5.META_LOINC_LLLG_ID.equals(t.getSystem()))) {
+      final String lllgId = vs.getMeta().getTag().stream()
+          .filter(t -> FhirUtilityR5.META_LOINC_LLLG_ID.equals(t.getSystem())).findFirst().get()
+          .getCode();
+      final String fromTerminology = vs.getMeta().getTag().stream()
+          .filter(t -> "fromTerminology".equals(t.getSystem())).findFirst().get().getCode();
+      final String fromPublisher = vs.getMeta().getTag().stream()
+          .filter(t -> "fromPublisher".equals(t.getSystem())).findFirst().get().getCode();
+      final String fromVersion = vs.getMeta().getTag().stream()
+          .filter(t -> "fromVersion".equals(t.getSystem())).findFirst().get().getCode();
+      final Terminology terminology = TerminologyUtility.getTerminology(searchService,
+          fromTerminology, fromPublisher, fromVersion);
+      final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
+      final ResultList<Concept> list =
+          loincValueSetHelper.findLllgMembers(searchService, terminology, lllgId, offset, ct);
+      final List<Concept> items = list.getItems();
+      if (loincValueSetHelper.isLlId(lllgId)) {
+        LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
+      } else if (loincValueSetHelper.isLllgId(lllgId)) {
+        items.sort(Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
+      }
+      final String systemUri = terminology.getUri();
+      if (systemUri != null) {
+        final ValueSetComposeComponent compose = new ValueSetComposeComponent();
+        final ConceptSetComponent include = new ConceptSetComponent();
+        include.setSystem(systemUri);
+        for (final Concept c : items) {
+          include.addConcept(
+              new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
+        }
+        compose.addInclude(include);
+        vs.setCompose(compose);
+      }
+      final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
+      expansion.setId(UUID.randomUUID().toString());
+      expansion.setTimestamp(new Date());
+      expansion.setTotal((int) list.getTotal());
+      expansion.setOffset(offset);
+      expansion.addParameter(new ValueSetExpansionParameterComponent().setName("offset")
+          .setValue(new IntegerType(offset)));
+      expansion.addParameter(
+          new ValueSetExpansionParameterComponent().setName("count").setValue(new IntegerType(ct)));
+      if (version != null) {
+        expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
+            .setValue(new StringType(version.getValue())));
+      }
+      for (final Concept concept : items) {
+        final ValueSetExpansionContainsComponent code =
+            new ValueSetExpansionContainsComponent().setSystem(terminology.getUri())
+                .setCode(concept.getCode()).setDisplay(concept.getName());
+        if (languages != null) {
+          for (final Term term : concept.getTerms()) {
+            if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
+              final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService,
+                  concept.getTerminology(), concept.getPublisher(), concept.getVersion());
+              final Coding coding = new Coding();
+              if (displayMap.containsKey(term.getType())) {
+                coding.setCode(term.getType());
+                coding.setDisplay(displayMap.get(term.getType()));
+              } else {
+                coding.setCode(term.getType());
+              }
+              code.addDesignation(new ConceptReferenceDesignationComponent()
+                  .setLanguage(
+                      Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
+                  .setUse(coding).setValue(term.getName()));
+            }
+          }
+        }
+        expansion.addContains(code);
+      }
+      vs.setExpansion(expansion);
+      vs.setMeta(null);
+      return vs;
+    }
 
     // Perform the expansion
     // "expansion": {
@@ -668,7 +800,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
     // } ]
     // }
 
-    // If terminology-based, set a terminology query (only things we create have ids ending in
+    // If terminology-based, set a terminology query (only things we create have
+    // ids ending in
     // "_entire"
     final boolean terminologyFlag = vs.getId().endsWith("_entire");
     final String fromTerminology = vs.getMeta().getTag().stream()
@@ -689,30 +822,30 @@ public class ValueSetProviderR5 implements IResourceProvider {
     if (!terminologyFlag) {
       final List<String> memberClauses =
           searchService
-              .find(
-                  new SearchParameters(TerminologyUtility.getTerminologyQuery(fromTerminology,
-                      fromPublisher, fromVersion), 0, 1000000, null, null),
-                  SubsetMember.class)
+              .find(new SearchParameters(TerminologyUtility.getTerminologyQuery(fromTerminology,
+                  fromPublisher, fromVersion), 0, 1000000, null, null), SubsetMember.class)
               .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
               .toList();
-//      if (memberClauses.isEmpty()) {
-//        final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
-//        expansion.setId(UUID.randomUUID().toString());
-//        expansion.setTimestamp(new Date());
-//        expansion.setTotal(0);
-//        expansion.setOffset(offset);
-//        expansion.addParameter(new ValueSetExpansionParameterComponent()
-//            .setName("count")
-//            .setValue(new IntegerType(count < 0 ? 0 : (count > 1000 ? 1000 : count))));
-//        if (version != null) {
-//          expansion.addParameter(new ValueSetExpansionParameterComponent()
-//              .setName("version")
-//              .setValue(new StringType(version.getValue())));
-//        }
-//        vs.setExpansion(expansion);
-//        vs.setMeta(null);
-//        return vs;
-//      }
+      // if (memberClauses.isEmpty()) {
+      // final ValueSetExpansionComponent expansion = new
+      // ValueSetExpansionComponent();
+      // expansion.setId(UUID.randomUUID().toString());
+      // expansion.setTimestamp(new Date());
+      // expansion.setTotal(0);
+      // expansion.setOffset(offset);
+      // expansion.addParameter(new ValueSetExpansionParameterComponent()
+      // .setName("count")
+      // .setValue(new IntegerType(count < 0 ? 0 : (count > 1000 ? 1000 :
+      // count))));
+      // if (version != null) {
+      // expansion.addParameter(new ValueSetExpansionParameterComponent()
+      // .setName("version")
+      // .setValue(new StringType(version.getValue())));
+      // }
+      // vs.setExpansion(expansion);
+      // vs.setMeta(null);
+      // return vs;
+      // }
       if (memberClauses.size() > LuceneQueryBuilder.MAX_CLAUSE_COUNT) {
         final BooleanQuery.Builder subsetQueryBuilder = new BooleanQuery.Builder();
         for (int i = 0; i < memberClauses.size(); i += LuceneQueryBuilder.MAX_CLAUSE_COUNT) {
@@ -873,6 +1006,44 @@ public class ValueSetProviderR5 implements IResourceProvider {
       }
 
       return parameters;
+    }
+
+    // LOINC LL/LG validate-code (Regenstrief mode)
+    if (loincValueSetHelper.isEnabled()) {
+      String lllgId = null;
+      if (url != null && loincValueSetHelper.isLllgValueSetUrl(url.getValue())) {
+        lllgId = loincValueSetHelper.parseIdFromUrl(url.getValue());
+      }
+      if (lllgId == null && id != null && loincValueSetHelper.isLllgId(id.getIdPart())) {
+        lllgId = id.getIdPart();
+      }
+      if (lllgId != null) {
+        final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
+        if (loinc != null) {
+          final Concept member =
+              loincValueSetHelper.findMemberByCode(searchService, loinc, lllgId, code);
+          final Parameters parameters = new Parameters();
+          if (member == null) {
+            parameters.addParameter(new ParametersParameterComponent().setName("result")
+                .setValue(new BooleanType(false)));
+            parameters.addParameter(new ParametersParameterComponent().setName("message").setValue(
+                new StringType("The code '" + code + "' was not found in this value set")));
+            return parameters;
+          }
+          parameters.addParameter(
+              new ParametersParameterComponent().setName("result").setValue(new BooleanType(true)));
+          parameters.addParameter(new ParametersParameterComponent().setName("display")
+              .setValue(new StringType(member.getName())));
+          if (display != null && member.getTerms().stream()
+              .filter(t -> display.getValue().equals(t.getName())).count() == 0) {
+            parameters.addParameter(new ParametersParameterComponent().setName("message")
+                .setValue(new StringType(
+                    "The code '" + code + "' was found in this value set, however the display '"
+                        + display + "' did not match any designations")));
+          }
+          return parameters;
+        }
+      }
     }
     return null;
   }
@@ -1097,6 +1268,50 @@ public class ValueSetProviderR5 implements IResourceProvider {
       }
       // No code filter for loaded sets
       list.add(set);
+    }
+
+    // --- LOINC LL/LG value sets (Regenstrief mode) ---
+    // Run when enabled or when search params indicate an LL/LG request (so ?code=LG51018-6-2.81
+    // returns the value set even if FHIR_LOINC_LLLG_VALUESETS_ENABLED is not set).
+    final boolean lllgRequested = (url != null && loincValueSetHelper.isLllgValueSetUrl(url.getValue()))
+        || (id != null && id.getValue() != null && loincValueSetHelper.isLllgId(id.getValue()))
+        || (code != null && code.getValue() != null && loincValueSetHelper.isLllgId(code.getValue()));
+    if (loincValueSetHelper.isEnabled() || lllgRequested) {
+      final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
+      if (loinc != null) {
+        String lllgId = null;
+        if (url != null && loincValueSetHelper.isLllgValueSetUrl(url.getValue())) {
+          lllgId = loincValueSetHelper.parseIdFromUrl(url.getValue());
+        }
+        if (lllgId == null && id != null && loincValueSetHelper.isLllgId(id.getValue())) {
+          lllgId = id.getValue();
+        }
+        if (lllgId == null && code != null && code.getValue() != null
+            && loincValueSetHelper.isLllgId(code.getValue())) {
+          lllgId = code.getValue();
+        }
+        if (lllgId != null) {
+          final ValueSet lllgVs = FhirUtilityR5.toR5LllgValueSet(loinc, lllgId, metaFlag);
+          final boolean idUrlMatch = (id == null || id.getValue().equals(lllgVs.getId()))
+              && (url == null || url.getValue().equals(lllgVs.getUrl()));
+          final boolean dateMatch = date == null || FhirUtility.compareDate(date, lllgVs.getDate());
+          final boolean versionMatch =
+              version == null || FhirUtility.compareString(version, lllgVs.getVersion());
+          final boolean nameMatch =
+              name == null || FhirUtility.compareString(name, lllgVs.getName());
+          final boolean publisherMatch =
+              publisher == null || FhirUtility.compareString(publisher, lllgVs.getPublisher());
+          final boolean titleMatch =
+              title == null || FhirUtility.compareString(title, lllgVs.getTitle());
+          final boolean descriptionMatch =
+              description == null
+                  || FhirUtility.compareString(description, lllgVs.getDescription());
+          if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch
+              && titleMatch && descriptionMatch) {
+            list.add(lllgVs);
+          }
+        }
+      }
     }
 
     return list;

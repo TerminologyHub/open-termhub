@@ -86,6 +86,10 @@ public class BulkLoadRestImpl {
   @Autowired
   private com.wci.termhub.service.BulkLoaderService bulkLoaderService;
 
+  /** The mark latest runner. */
+  @Autowired
+  private com.wci.termhub.algo.MarkLatestRunner markLatestRunner;
+
   /** The process resource map. */
   private static Map<String, List<String>> processResultMap = new HashMap<>();
 
@@ -357,7 +361,7 @@ public class BulkLoadRestImpl {
       if (!background) {
         // Use existing loader utility
         final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService, file,
-            ValueSet.class, new DefaultProgressListener());
+            ValueSet.class, new DefaultProgressListener(), false, markLatestRunner);
 
         FileUtils.delete(file);
 
@@ -393,7 +397,8 @@ public class BulkLoadRestImpl {
             try {
               // Use existing loader utility
               final ValueSet valueSet =
-                  ValueSetLoaderUtil.loadValueSet(searchService, file, ValueSet.class, listener);
+                  ValueSetLoaderUtil.loadValueSet(searchService, file, ValueSet.class, listener,
+                      false, markLatestRunner);
 
               FileUtils.delete(file);
 
@@ -474,7 +479,7 @@ public class BulkLoadRestImpl {
       if (!background) {
         // Use existing loader utility
         final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService, file,
-            ConceptMap.class, new DefaultProgressListener());
+            ConceptMap.class, new DefaultProgressListener(), null, markLatestRunner);
 
         FileUtils.delete(file);
 
@@ -510,7 +515,7 @@ public class BulkLoadRestImpl {
             try {
               // Use existing loader utility
               final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService, file,
-                  ConceptMap.class, listener);
+                  ConceptMap.class, listener, null, markLatestRunner);
 
               FileUtils.delete(file);
 
@@ -734,21 +739,23 @@ public class BulkLoadRestImpl {
                 case "CodeSystem":
                   final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService,
                       tmpResourceFile, enablePostLoadComputations.isEnabled(), CodeSystem.class,
-                      new DefaultProgressListener());
+                      new DefaultProgressListener(), null, markLatestRunner);
                   results.add("CodeSystem/" + codeSystem.getId());
                   break;
 
                 case "ValueSet":
                   // Use existing loader utility
                   final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService,
-                      tmpResourceFile, ValueSet.class, new DefaultProgressListener());
+                      tmpResourceFile, ValueSet.class, new DefaultProgressListener(), false,
+                      markLatestRunner);
                   results.add("ValueSet/" + valueSet.getId());
                   break;
 
                 case "ConceptMap":
                   // Use existing loader utility
                   final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService,
-                      tmpResourceFile, ConceptMap.class, new DefaultProgressListener());
+                      tmpResourceFile, ConceptMap.class, new DefaultProgressListener(), null,
+                      markLatestRunner);
                   results.add("ConceptMap/" + conceptMap.getId());
                   break;
 

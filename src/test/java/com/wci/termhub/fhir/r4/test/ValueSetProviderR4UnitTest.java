@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -316,7 +318,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
     vs1.setVersion("1.0");
     vs1.setPublisher("Unit Test");
     vs1.setTitle("Concurrent Value Set 1");
-    vs1.setDate(java.util.Date.from(java.time.Instant.now()));
+    vs1.setDate(Date.from(Instant.now()));
 
     final ValueSet vs2 = new ValueSet();
     vs2.setUrl("http://example.org/concurrent-vs-2");
@@ -324,7 +326,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
     vs2.setVersion("1.0");
     vs2.setPublisher("Unit Test");
     vs2.setTitle("Concurrent Value Set 2");
-    vs2.setDate(java.util.Date.from(java.time.Instant.now()));
+    vs2.setDate(Date.from(Instant.now()));
 
     final Callable<ValueSet> writeTask1 = () -> {
       return createValueSet(vs1);

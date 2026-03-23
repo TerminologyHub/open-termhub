@@ -54,6 +54,10 @@ public class SystemTransactionProviderR4 {
   @Autowired
   private EnablePostLoadComputations enablePostLoadComputations;
 
+  /** The mark latest runner. */
+  @Autowired
+  private com.wci.termhub.algo.MarkLatestRunner markLatestRunner;
+
   /** The context. */
   private static final FhirContext FHIR_CONTEXT_R4 = FhirContext.forR4();
 
@@ -114,17 +118,17 @@ public class SystemTransactionProviderR4 {
         if ("CodeSystem".equals(resourceType)) {
           final CodeSystem cs = CodeSystemLoaderUtil.loadCodeSystem(searchService, tmp,
               enablePostLoadComputations.isEnabled(), CodeSystem.class,
-              new DefaultProgressListener());
+              new DefaultProgressListener(), null, markLatestRunner);
           out.setResource(cs);
           out.getResponse().setStatus("200");
         } else if ("ValueSet".equals(resourceType)) {
           final ValueSet vs = ValueSetLoaderUtil.loadValueSet(searchService, tmp, ValueSet.class,
-              new DefaultProgressListener());
+              new DefaultProgressListener(), false, markLatestRunner);
           out.setResource(vs);
           out.getResponse().setStatus("200");
         } else if ("ConceptMap".equals(resourceType)) {
           final ConceptMap cm = ConceptMapLoaderUtil.loadConceptMap(searchService, tmp,
-              ConceptMap.class, new DefaultProgressListener());
+              ConceptMap.class, new DefaultProgressListener(), null, markLatestRunner);
           out.setResource(cm);
           out.getResponse().setStatus("200");
         } else {

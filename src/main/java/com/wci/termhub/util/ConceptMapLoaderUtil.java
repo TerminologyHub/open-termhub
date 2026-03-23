@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
@@ -94,7 +95,7 @@ public final class ConceptMapLoaderUtil {
    */
   public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
     final Class<T> type, final ProgressListener listener) throws Exception {
-    return loadConceptMap(service, file, type, listener, null);
+    return loadConceptMap(service, file, type, listener, null, null);
   }
 
   /**
@@ -106,13 +107,14 @@ public final class ConceptMapLoaderUtil {
    * @param type the type
    * @param listener the listener
    * @param isSyndicated the is syndicated
+   * @param markLatestRunner optional runner for mark-latest (null to skip)
    * @return the t
    * @throws Exception the exception
    */
   public static <T> T loadConceptMap(final EntityRepositoryService service, final File file,
-    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
-    throws Exception {
-    return indexConceptMap(service, file, type, listener, isSyndicated);
+    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated,
+    final MarkLatestRunner markLatestRunner) throws Exception {
+    return indexConceptMap(service, file, type, listener, isSyndicated, markLatestRunner);
   }
 
   /**
@@ -124,13 +126,14 @@ public final class ConceptMapLoaderUtil {
    * @param type the type
    * @param listener the listener
    * @param isSyndicated the is syndicated
+   * @param markLatestRunner the mark latest runner
    * @return the t
    * @throws Exception the exception
    */
   @SuppressWarnings("unchecked")
   private static <T> T indexConceptMap(final EntityRepositoryService service, final File file,
-    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated)
-    throws Exception {
+    final Class<T> type, final ProgressListener listener, final Boolean isSyndicated,
+    final MarkLatestRunner markLatestRunner) throws Exception {
 
     SystemReportUtility.logMemory();
 
@@ -235,7 +238,8 @@ public final class ConceptMapLoaderUtil {
           // Example: Find the start of a nested JSON array
           if (token == JsonToken.START_ARRAY && "group".equals(parser.currentName())) {
 
-            // Process each object within the array without loading the whole array into memory
+            // Process each object within the array without loading the whole
+            // array into memory
             while (parser.nextToken() != JsonToken.END_ARRAY) {
 
               // Use ObjectMapper to read the sub-object as a JsonNode
@@ -353,7 +357,8 @@ public final class ConceptMapLoaderUtil {
       LOGGER.info("  final counts - mapsets: {}, mappings: {}", 1, mappingCount);
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
-      // Get the mapset again because the tree position computer would've changed it
+      // Get the mapset again because the tree position computer would've
+      // changed it
       mapset = service.get(mapset.getId(), Mapset.class, false);
       // Set loaded to true and save it again
       mapset.getAttributes().put("loaded", "true");
@@ -361,6 +366,12 @@ public final class ConceptMapLoaderUtil {
         mapset.getAttributes().put("syndicated", "true");
       }
       service.update(Mapset.class, mapset.getId(), mapset);
+
+      // Mark latest terminology/mapset/subset version for this
+      // abbreviation/publisher
+      if (markLatestRunner != null) {
+        markLatestRunner.run(mapset.getAbbreviation(), mapset.getPublisher());
+      }
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));

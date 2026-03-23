@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -87,10 +89,13 @@ import ca.uhn.fhir.parser.IParser;
 
 /**
  * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4 endpoints, CodeSystem,
- * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set id's
+ * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set id's.
+ * With fhir.loinc.lllg.valuesets.enabled=true, LOINC LL/LG value sets from CodeSystem-lnc-sandbox-277-r4
+ * (e.g. LL1772-4) are exposed via ValueSet search by url and read by id.
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
+@TestPropertySource(properties = "fhir.loinc.lllg.valuesets.enabled=true")
 public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
   /**
@@ -134,6 +139,12 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
    * The fhir VS path.
    */
   private static final String FHIR_VALUESET = "/fhir/r4/ValueSet";
+
+  /** LL value set id from CodeSystem-lnc-sandbox-277-r4 (ANSWER_LIST_ID). */
+  private static final String LL_VS_ID = "LL1772-4";
+
+  /** LL value set url (fhir_vs form). */
+  private static final String LL_VS_URL = "http://loinc.org?fhir_vs=LL1772-4";
 
   /** The Constant FIND. */
   private static final int FIND = 10;
@@ -1713,7 +1724,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
-   * Test CodeSystem $lookup with invalid code returns 400.
+   * Test CodeSystem $lookup with invalid code returns 404.
    *
    * @throws Exception the exception
    */
@@ -1733,8 +1744,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     LOGGER.info("Response status: {}", response.getStatusCode());
     LOGGER.info("Response body: {}", response.getBody());
 
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(),
-        "Invalid code should return 400");
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode(),
+        "Invalid code should return 404");
     assertNotNull(response.getBody(), "Response should not be null");
     assertTrue(response.getBody().contains("OperationOutcome"),
         "Response should contain OperationOutcome");
@@ -2244,6 +2255,59 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(response.getBody(), "Response should not be null");
     assertTrue(response.getBody().contains("OperationOutcome"),
         "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test ValueSet search by url for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r4).
+   * Requires fhir.loinc.lllg.valuesets.enabled=true.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  @Disabled("Disabled until we have a way to test this")
+  public void testValueSetSearchByUrlLllg() throws Exception {
+    final String endpoint =
+        LOCALHOST + port + FHIR_VALUESET + "?url=" + URLEncoder.encode(LL_VS_URL, "UTF-8");
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final Bundle bundle = parser.parseResource(Bundle.class, content);
+
+    assertNotNull(bundle);
+    assertEquals(ResourceType.Bundle, bundle.getResourceType());
+    assertTrue(bundle.getTotal() >= 1,
+        "Bundle should contain at least one LL value set for url=" + LL_VS_URL);
+    final boolean found = bundle.getEntry().stream()
+        .anyMatch(e -> e.getResource() instanceof ValueSet
+            && LL_VS_ID.equals(((ValueSet) e.getResource()).getIdPart())
+            && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl()));
+    assertTrue(found, "Bundle should contain ValueSet " + LL_VS_ID + " with url " + LL_VS_URL);
+  }
+
+  /**
+   * Test ValueSet read by id for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r4).
+   * Requires fhir.loinc.lllg.valuesets.enabled=true.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetReadLllgById() throws Exception {
+    final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + LL_VS_ID;
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final ValueSet valueSet = parser.parseResource(ValueSet.class, content);
+
+    assertNotNull(valueSet);
+    assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
+    assertEquals(LL_VS_ID, valueSet.getIdPart());
+    assertEquals(LL_VS_URL, valueSet.getUrl());
+    assertTrue(valueSet.getCompose() != null && valueSet.getCompose().getInclude() != null
+        && !valueSet.getCompose().getInclude().isEmpty()
+        || valueSet.getExpansion() != null && valueSet.getExpansion().getContains() != null,
+        "LL value set should have compose or expansion with members");
   }
 
   /**

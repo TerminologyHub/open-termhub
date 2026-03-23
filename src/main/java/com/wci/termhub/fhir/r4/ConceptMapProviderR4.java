@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.wci.termhub.algo.DefaultProgressListener;
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -84,6 +85,10 @@ public class ConceptMapProviderR4 implements IResourceProvider {
   @Autowired
   private EntityRepositoryService searchService;
 
+  /** The mark latest runner. */
+  @Autowired
+  private MarkLatestRunner markLatestRunner;
+
   /**
    * Gets the concept map.
    *
@@ -98,22 +103,30 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
 
     try {
-      if (id != null && id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
+      if (id == null) {
+        throw FhirUtilityR4.exception("Concept map id is required", IssueType.REQUIRED,
+            HttpServletResponse.SC_BAD_REQUEST);
+      }
+      if (id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
         throw FhirUtilityR4.exception(
             "Concept map " + id.getIdPart() + " exists but does not have history version "
                 + id.getVersionIdPart(),
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
-      final List<ConceptMap> candidates = findCandidates();
-      for (final ConceptMap map : candidates) {
-        if (id != null && id.getIdPart().equals(map.getId())) {
-          return map;
-        }
+      final Mapset mapset = searchService.get(id.getIdPart(), Mapset.class);
+      if (mapset == null) {
+        throw FhirUtilityR4.exception(
+            "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
+            HttpServletResponse.SC_NOT_FOUND);
       }
-      throw FhirUtilityR4.exception(
-          "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
-          HttpServletResponse.SC_NOT_FOUND);
-
+      final SearchParameters params = new SearchParameters(
+          StringUtility.composeQuery("AND",
+              "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
+              "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
+              "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
+          null, 100000, null, null);
+      final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
+      return FhirUtilityR4.toR4(mapset, mappings);
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
@@ -812,7 +825,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       FileUtils.writeByteArrayToFile(file, bytes);
 
       final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService, file,
-          ConceptMap.class, new DefaultProgressListener());
+          ConceptMap.class, new DefaultProgressListener(), null, markLatestRunner);
 
       FileUtils.delete(file);
 

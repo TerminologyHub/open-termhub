@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import com.wci.termhub.EnablePostLoadComputations;
 import com.wci.termhub.algo.DefaultProgressListener;
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.lucene.eventing.Write;
 import com.wci.termhub.service.BulkLoaderService;
@@ -47,6 +48,10 @@ public class BulkLoaderServiceImpl implements BulkLoaderService {
   @Autowired
   private EnablePostLoadComputations enablePostLoadComputations;
 
+  /** The mark latest runner. */
+  @Autowired
+  private MarkLatestRunner markLatestRunner;
+
   /* see superclass */
   @Override
   @Write
@@ -54,7 +59,8 @@ public class BulkLoaderServiceImpl implements BulkLoaderService {
     logger.info("Synchronous Load code system");
     // Use existing loader utility
     final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
-        enablePostLoadComputations.isEnabled(), CodeSystem.class, new DefaultProgressListener());
+        enablePostLoadComputations.isEnabled(), CodeSystem.class, new DefaultProgressListener(),
+        null, markLatestRunner);
 
     FileUtils.delete(file);
     logger.info("Synchronous Load complete");
@@ -72,7 +78,7 @@ public class BulkLoaderServiceImpl implements BulkLoaderService {
       logger.info("Async Load code system");
       // Use existing loader utility
       final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
-          enablePostLoadComputations.isEnabled(), CodeSystem.class, listener);
+          enablePostLoadComputations.isEnabled(), CodeSystem.class, listener, null, markLatestRunner);
 
       FileUtils.delete(file);
 
