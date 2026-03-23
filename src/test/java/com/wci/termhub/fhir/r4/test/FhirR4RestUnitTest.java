@@ -62,12 +62,12 @@ import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,9 +89,10 @@ import ca.uhn.fhir.parser.IParser;
 
 /**
  * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4 endpoints, CodeSystem,
- * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set id's.
- * With fhir.loinc.lllg.valuesets.enabled=true, LOINC LL/LG value sets from CodeSystem-lnc-sandbox-277-r4
- * (e.g. LL1772-4) are exposed via ValueSet search by url and read by id.
+ * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set
+ * id's. With fhir.loinc.lllg.valuesets.enabled=true, LOINC LL/LG value sets from
+ * CodeSystem-lnc-sandbox-277-r4 (e.g. LL1772-4) are exposed via ValueSet search by url and read by
+ * id.
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
@@ -1745,8 +1746,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     LOGGER.info("Response status: {}", response.getStatusCode());
     LOGGER.info("Response body: {}", response.getBody());
 
-    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode(),
-        "Invalid code should return 404");
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode(), "Invalid code should return 404");
     assertNotNull(response.getBody(), "Response should not be null");
     assertTrue(response.getBody().contains("OperationOutcome"),
         "Response should contain OperationOutcome");
@@ -2150,9 +2150,8 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
     assertNotNull(codeSystem);
     assertEquals(ResourceType.CodeSystem, codeSystem.getResourceType());
-    assertTrue(
-        codeSystem.getId().equals("CodeSystem/" + csId)
-            || codeSystem.getId().equals("CodeSystem/" + csId + "/_history/1"));
+    assertTrue(codeSystem.getId().equals("CodeSystem/" + csId)
+        || codeSystem.getId().equals("CodeSystem/" + csId + "/_history/1"));
   }
 
   /**
@@ -2172,14 +2171,15 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     assertNotNull(response.getBody());
-    final OperationOutcome outcome = parser.parseResource(OperationOutcome.class, response.getBody());
+    final OperationOutcome outcome =
+        parser.parseResource(OperationOutcome.class, response.getBody());
     assertNotNull(outcome.getIssue());
     assertFalse(outcome.getIssue().isEmpty());
     assertEquals(OperationOutcome.IssueSeverity.ERROR, outcome.getIssueFirstRep().getSeverity());
     assertEquals(IssueType.NOTFOUND, outcome.getIssueFirstRep().getCode());
     assertTrue(
-        outcome.getIssueFirstRep().getDiagnostics() != null
-            && outcome.getIssueFirstRep().getDiagnostics().contains("exists but does not have history version 22"),
+        outcome.getIssueFirstRep().getDiagnostics() != null && outcome.getIssueFirstRep()
+            .getDiagnostics().contains("exists but does not have history version 22"),
         "Diagnostics should state resource exists but does not have history version 22");
   }
 
@@ -2279,16 +2279,15 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertEquals(ResourceType.Bundle, bundle.getResourceType());
     assertTrue(bundle.getTotal() >= 1,
         "Bundle should contain at least one LL value set for url=" + LL_VS_URL);
-    final boolean found = bundle.getEntry().stream()
-        .anyMatch(e -> e.getResource() instanceof ValueSet
-            && LL_VS_ID.equals(((ValueSet) e.getResource()).getIdPart())
+    final boolean found = bundle.getEntry().stream().anyMatch(
+        e -> e.getResource() instanceof ValueSet && LL_VS_ID.equals(e.getResource().getIdPart())
             && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl()));
     assertTrue(found, "Bundle should contain ValueSet " + LL_VS_ID + " with url " + LL_VS_URL);
   }
 
   /**
-   * Test ValueSet read by id for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r4).
-   * Requires fhir.loinc.lllg.valuesets.enabled=true.
+   * Test ValueSet read by id for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r4). Requires
+   * fhir.loinc.lllg.valuesets.enabled=true.
    *
    * @throws Exception the exception
    */
@@ -2305,9 +2304,10 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
     assertEquals(LL_VS_ID, valueSet.getIdPart());
     assertEquals(LL_VS_URL, valueSet.getUrl());
-    assertTrue(valueSet.getCompose() != null && valueSet.getCompose().getInclude() != null
-        && !valueSet.getCompose().getInclude().isEmpty()
-        || valueSet.getExpansion() != null && valueSet.getExpansion().getContains() != null,
+    assertTrue(
+        valueSet.getCompose() != null && valueSet.getCompose().getInclude() != null
+            && !valueSet.getCompose().getInclude().isEmpty()
+            || valueSet.getExpansion() != null && valueSet.getExpansion().getContains() != null,
         "LL value set should have compose or expansion with members");
   }
 

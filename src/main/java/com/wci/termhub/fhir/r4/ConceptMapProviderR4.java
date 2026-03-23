@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.wci.termhub.lucene.eventing.Write;
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
@@ -41,6 +40,7 @@ import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
+import com.wci.termhub.lucene.eventing.Write;
 import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.SearchParameters;
@@ -98,6 +98,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
    * @return the concept map
    * @throws Exception the exception
    */
+  @SuppressWarnings("null")
   @Read(version = true)
   public ConceptMap getConceptMap(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
@@ -108,9 +109,8 @@ public class ConceptMapProviderR4 implements IResourceProvider {
             HttpServletResponse.SC_BAD_REQUEST);
       }
       if (id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
-        throw FhirUtilityR4.exception(
-            "Concept map " + id.getIdPart() + " exists but does not have history version "
-                + id.getVersionIdPart(),
+        throw FhirUtilityR4.exception("Concept map " + id.getIdPart()
+            + " exists but does not have history version " + id.getVersionIdPart(),
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
       final Mapset mapset = searchService.get(id.getIdPart(), Mapset.class);

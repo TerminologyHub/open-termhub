@@ -93,6 +93,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
    * @return the concept map
    * @throws Exception the exception
    */
+  @SuppressWarnings("null")
   @Read(version = true)
   public ConceptMap getConceptMap(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
@@ -103,9 +104,8 @@ public class ConceptMapProviderR5 implements IResourceProvider {
             HttpServletResponse.SC_BAD_REQUEST);
       }
       if (id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
-        throw FhirUtilityR5.exception(
-            "Concept map " + id.getIdPart() + " exists but does not have history version "
-                + id.getVersionIdPart(),
+        throw FhirUtilityR5.exception("Concept map " + id.getIdPart()
+            + " exists but does not have history version " + id.getVersionIdPart(),
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
       if (logger.isDebugEnabled()) {

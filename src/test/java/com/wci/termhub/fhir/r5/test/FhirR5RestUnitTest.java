@@ -23,8 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.core.io.ClassPathResource;
-
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
@@ -57,34 +55,36 @@ import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
-import com.wci.termhub.util.ThreadLocalMapper;
 import com.wci.termhub.util.TerminologyUtility;
+import com.wci.termhub.util.ThreadLocalMapper;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
 /**
  * Class tests for FhirR5Tests. Tests the functionality of the FHIR R5 endpoints, CodeSystem,
- * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set id's.
- * With fhir.loinc.lllg.valuesets.enabled=true, LOINC LL/LG value sets from CodeSystem-lnc-sandbox-277-r5
- * (e.g. LL1772-4) are exposed via ValueSet search by url and read by id.
+ * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set
+ * id's. With fhir.loinc.lllg.valuesets.enabled=true, LOINC LL/LG value sets from
+ * CodeSystem-lnc-sandbox-277-r5 (e.g. LL1772-4) are exposed via ValueSet search by url and read by
+ * id.
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
@@ -386,9 +386,11 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     // Verify resource type and id (HAPI is appending /_history/1 when meta.versionId is set)
     assertEquals(ResourceType.CodeSystem, codeSystem.getResourceType());
     final String logicalId = "CodeSystem/" + csId;
-    assertTrue(codeSystem.getId().equals(logicalId)
-        || codeSystem.getId().equals(logicalId + "/_history/1"),
-        () -> "Expected " + logicalId + " or " + logicalId + "/_history/1 but was: " + codeSystem.getId());
+    assertTrue(
+        codeSystem.getId().equals(logicalId)
+            || codeSystem.getId().equals(logicalId + "/_history/1"),
+        () -> "Expected " + logicalId + " or " + logicalId + "/_history/1 but was: "
+            + codeSystem.getId());
 
     // Verify specific field values
     assertEquals("http://snomed.info/sct/731000124108/version/20240301", codeSystem.getVersion());
@@ -822,9 +824,11 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertNotNull(valueSet);
     assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
     final String vsLogicalId = "ValueSet/" + vsId;
-    assertTrue(valueSet.getId().equals(vsLogicalId)
-        || valueSet.getId().equals(vsLogicalId + "/_history/1"),
-        () -> "Expected " + vsLogicalId + " or " + vsLogicalId + "/_history/1 but was: " + valueSet.getId());
+    assertTrue(
+        valueSet.getId().equals(vsLogicalId)
+            || valueSet.getId().equals(vsLogicalId + "/_history/1"),
+        () -> "Expected " + vsLogicalId + " or " + vsLogicalId + "/_history/1 but was: "
+            + valueSet.getId());
     assertNotNull(valueSet.getUrl());
     assertNotNull(valueSet.getVersion());
     assertNotNull(valueSet.getName());
@@ -1465,17 +1469,16 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     LOGGER.info("Response status: {}", response.getStatusCode());
     LOGGER.info("Response body: {}", response.getBody());
 
-    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode(),
-        "Invalid code should return 404");
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode(), "Invalid code should return 404");
     assertNotNull(response.getBody(), "Response should not be null");
     assertTrue(response.getBody().contains("OperationOutcome"),
         "Response should contain OperationOutcome");
   }
 
   /**
-   * Test CodeSystem $lookup with LOINC code when multiple versions exist.
-   * This test loads a fake version 278 based on version 277, verifies that lookup
-   * works correctly with version specified, then cleans up the fake version.
+   * Test CodeSystem $lookup with LOINC code when multiple versions exist. This test loads a fake
+   * version 278 based on version 277, verifies that lookup works correctly with version specified,
+   * then cleans up the fake version.
    *
    * @throws Exception the exception
    */
@@ -1483,7 +1486,8 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Order(FIND)
   public void testCodeSystemLookupLoincWithVersion() throws Exception {
     // Load a fake version 278 based on 277
-    final ClassPathResource resource277 = new ClassPathResource("data/CodeSystem-lnc-sandbox-277-r5.json");
+    final ClassPathResource resource277 =
+        new ClassPathResource("data/CodeSystem-lnc-sandbox-277-r5.json");
     final String json277 = Files.readString(resource277.getFile().toPath(), StandardCharsets.UTF_8);
 
     // Replace version 277 with 278
@@ -1514,7 +1518,8 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
       final String code = "66480-5";
       final String system = "http://loinc.org";
       final String version = "278";
-      final String lookupParams = "/$lookup?code=" + code + "&system=" + system + "&version=" + version;
+      final String lookupParams =
+          "/$lookup?code=" + code + "&system=" + system + "&version=" + version;
       final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + lookupParams;
       LOGGER.info("Testing lookup endpoint: {}", endpoint);
 
@@ -1584,9 +1589,8 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
     assertNotNull(codeSystem);
     assertEquals(ResourceType.CodeSystem, codeSystem.getResourceType());
-    assertTrue(
-        codeSystem.getId().equals("CodeSystem/" + csId)
-            || codeSystem.getId().equals("CodeSystem/" + csId + "/_history/1"));
+    assertTrue(codeSystem.getId().equals("CodeSystem/" + csId)
+        || codeSystem.getId().equals("CodeSystem/" + csId + "/_history/1"));
   }
 
   /**
@@ -1606,14 +1610,15 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     assertNotNull(response.getBody());
-    final OperationOutcome outcome = parser.parseResource(OperationOutcome.class, response.getBody());
+    final OperationOutcome outcome =
+        parser.parseResource(OperationOutcome.class, response.getBody());
     assertNotNull(outcome.getIssue());
     assertFalse(outcome.getIssue().isEmpty());
     assertEquals(OperationOutcome.IssueSeverity.ERROR, outcome.getIssueFirstRep().getSeverity());
     assertEquals(IssueType.NOTFOUND, outcome.getIssueFirstRep().getCode());
     assertTrue(
-        outcome.getIssueFirstRep().getDiagnostics() != null
-            && outcome.getIssueFirstRep().getDiagnostics().contains("exists but does not have history version 22"),
+        outcome.getIssueFirstRep().getDiagnostics() != null && outcome.getIssueFirstRep()
+            .getDiagnostics().contains("exists but does not have history version 22"),
         "Diagnostics should state resource exists but does not have history version 22");
   }
 
@@ -1713,16 +1718,15 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertEquals(ResourceType.Bundle, bundle.getResourceType());
     assertTrue(bundle.getTotal() >= 1,
         "Bundle should contain at least one LL value set for url=" + LL_VS_URL);
-    final boolean found = bundle.getEntry().stream()
-        .anyMatch(e -> e.getResource() instanceof ValueSet
-            && LL_VS_ID.equals(((ValueSet) e.getResource()).getIdPart())
+    final boolean found = bundle.getEntry().stream().anyMatch(
+        e -> e.getResource() instanceof ValueSet && LL_VS_ID.equals(e.getResource().getIdPart())
             && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl()));
     assertTrue(found, "Bundle should contain ValueSet " + LL_VS_ID + " with url " + LL_VS_URL);
   }
 
   /**
-   * Test ValueSet read by id for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r5).
-   * Requires fhir.loinc.lllg.valuesets.enabled=true.
+   * Test ValueSet read by id for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r5). Requires
+   * fhir.loinc.lllg.valuesets.enabled=true.
    *
    * @throws Exception the exception
    */
@@ -1739,9 +1743,10 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
     assertEquals(LL_VS_ID, valueSet.getIdPart());
     assertEquals(LL_VS_URL, valueSet.getUrl());
-    assertTrue(valueSet.getCompose() != null && valueSet.getCompose().getInclude() != null
-        && !valueSet.getCompose().getInclude().isEmpty()
-        || valueSet.getExpansion() != null && valueSet.getExpansion().getContains() != null,
+    assertTrue(
+        valueSet.getCompose() != null && valueSet.getCompose().getInclude() != null
+            && !valueSet.getCompose().getInclude().isEmpty()
+            || valueSet.getExpansion() != null && valueSet.getExpansion().getContains() != null,
         "LL value set should have compose or expansion with members");
   }
 

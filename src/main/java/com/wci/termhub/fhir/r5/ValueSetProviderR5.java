@@ -126,7 +126,6 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the value set
    * @throws Exception the exception
    */
-  @SuppressWarnings("null")
   @Read(version = true)
   public ValueSet getValueSet(final HttpServletRequest request, final ServletRequestDetails details,
     @IdParam final IdType id) throws Exception {
@@ -155,10 +154,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
             if (loincValueSetHelper.isLlId(idPart)) {
               LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
             } else if (loincValueSetHelper.isLllgId(idPart)) {
-              items.sort(Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
+              items.sort(Comparator.comparing(Concept::getCode,
+                  Comparator.nullsFirst(Comparator.naturalOrder())));
             }
-            logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}", idPart,
-                items.size());
+            logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}",
+                idPart, items.size());
             return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loinc, idPart, items);
           }
           logger.debug("GET ValueSet/{}: LL/LG path skipped (LOINC terminology not found)", idPart);
@@ -244,11 +244,10 @@ public class ValueSetProviderR5 implements IResourceProvider {
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
-    @Description(shortDefinition = "Number of entries to return") @OptionalParam(
-        name = "_count") final NumberParam count,
-    @Description(shortDefinition = "Start offset, used when reading a next page") @OptionalParam(
-        name = "_offset") final NumberParam offset)
-    throws Exception {
+    @Description(shortDefinition = "Number of entries to return")
+    @OptionalParam(name = "_count") final NumberParam count,
+    @Description(shortDefinition = "Start offset, used when reading a next page")
+    @OptionalParam(name = "_offset") final NumberParam offset) throws Exception {
 
     try {
 
@@ -721,7 +720,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
       if (loincValueSetHelper.isLlId(lllgId)) {
         LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
       } else if (loincValueSetHelper.isLllgId(lllgId)) {
-        items.sort(Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
+        items.sort(Comparator.comparing(Concept::getCode,
+            Comparator.nullsFirst(Comparator.naturalOrder())));
       }
       final String systemUri = terminology.getUri();
       if (systemUri != null) {
@@ -1273,9 +1273,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
     // --- LOINC LL/LG value sets (Regenstrief mode) ---
     // Run when enabled or when search params indicate an LL/LG request (so ?code=LG51018-6-2.81
     // returns the value set even if FHIR_LOINC_LLLG_VALUESETS_ENABLED is not set).
-    final boolean lllgRequested = (url != null && loincValueSetHelper.isLllgValueSetUrl(url.getValue()))
-        || (id != null && id.getValue() != null && loincValueSetHelper.isLllgId(id.getValue()))
-        || (code != null && code.getValue() != null && loincValueSetHelper.isLllgId(code.getValue()));
+    final boolean lllgRequested =
+        (url != null && loincValueSetHelper.isLllgValueSetUrl(url.getValue()))
+            || (id != null && id.getValue() != null && loincValueSetHelper.isLllgId(id.getValue()))
+            || (code != null && code.getValue() != null
+                && loincValueSetHelper.isLllgId(code.getValue()));
     if (loincValueSetHelper.isEnabled() || lllgRequested) {
       final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
       if (loinc != null) {
@@ -1303,11 +1305,10 @@ public class ValueSetProviderR5 implements IResourceProvider {
               publisher == null || FhirUtility.compareString(publisher, lllgVs.getPublisher());
           final boolean titleMatch =
               title == null || FhirUtility.compareString(title, lllgVs.getTitle());
-          final boolean descriptionMatch =
-              description == null
-                  || FhirUtility.compareString(description, lllgVs.getDescription());
-          if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch
-              && titleMatch && descriptionMatch) {
+          final boolean descriptionMatch = description == null
+              || FhirUtility.compareString(description, lllgVs.getDescription());
+          if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch && titleMatch
+              && descriptionMatch) {
             list.add(lllgVs);
           }
         }

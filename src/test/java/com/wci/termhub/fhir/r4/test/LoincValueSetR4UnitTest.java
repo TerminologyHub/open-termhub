@@ -83,14 +83,16 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
-   * Test path-style LOINC value set URL (http://loinc.org/vs/LG51018-6-2.72).
-   * When FHIR_LOINC_LLLG_VALUESETS_ENABLED is true, version 2.72 is used for expansion.
+   * Test path-style LOINC value set URL (http://loinc.org/vs/LG51018-6-2.72). When
+   * FHIR_LOINC_LLLG_VALUESETS_ENABLED is true, version 2.72 is used for expansion.
    */
   @Test
   public void testParseIdFromPathStyleUrl() {
     assertTrue(loincValueSetHelper.isLllgValueSetUrl("http://loinc.org/vs/LG51018-6-2.72"));
-    assertEquals("LG51018-6-2.72", loincValueSetHelper.parseIdFromUrl("http://loinc.org/vs/LG51018-6-2.72"));
-    assertEquals("LG51018-6-2.72", loincValueSetHelper.parseIdFromUrl("https://loinc.org/vs/LG51018-6-2.72"));
+    assertEquals("LG51018-6-2.72",
+        loincValueSetHelper.parseIdFromUrl("http://loinc.org/vs/LG51018-6-2.72"));
+    assertEquals("LG51018-6-2.72",
+        loincValueSetHelper.parseIdFromUrl("https://loinc.org/vs/LG51018-6-2.72"));
     assertEquals("2.72", loincValueSetHelper.getVersionFromLllgId("LG51018-6-2.72"));
     assertEquals("LG51018-6", loincValueSetHelper.parseIdFromUrl("http://loinc.org/vs/LG51018-6"));
   }
@@ -110,7 +112,7 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
         bundle.getEntry().stream()
             .anyMatch(e -> e.getResource() instanceof ValueSet
                 && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl())
-                && LL_VS_ID.equals(((ValueSet) e.getResource()).getId())),
+                && LL_VS_ID.equals(e.getResource().getId())),
         "Bundle should contain LL value set for " + LL_VS_URL);
   }
 
@@ -180,12 +182,11 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
-   * Test validate code in LG value set by id. Verifies the LG path in
-   * validate-code (ValueSet/{id}/$validate-code). Returns valid Parameters
-   * with result parameter. With sandbox LOINC, the LG concept may or may not
-   * be found depending on index; with full LOINC and
-   * ENABLE_POST_LOAD_COMPUTATIONS=true, panel members (e.g. code 8867-4 in
-   * ValueSet LG33055-1) correctly return result true, matching fhir.loinc.org.
+   * Test validate code in LG value set by id. Verifies the LG path in validate-code
+   * (ValueSet/{id}/$validate-code). Returns valid Parameters with result parameter. With sandbox
+   * LOINC, the LG concept may or may not be found depending on index; with full LOINC and
+   * ENABLE_POST_LOAD_COMPUTATIONS=true, panel members (e.g. code 8867-4 in ValueSet LG33055-1)
+   * correctly return result true, matching fhir.loinc.org.
    *
    * @throws Exception the exception
    */
