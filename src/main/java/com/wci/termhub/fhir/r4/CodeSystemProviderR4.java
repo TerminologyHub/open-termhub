@@ -37,6 +37,7 @@ import org.springframework.stereotype.Component;
 
 import com.wci.termhub.EnablePostLoadComputations;
 import com.wci.termhub.algo.DefaultProgressListener;
+import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -87,6 +88,10 @@ public class CodeSystemProviderR4 implements IResourceProvider {
   /** The enable post load computations. */
   @Autowired
   private EnablePostLoadComputations enablePostLoadComputations;
+
+  /** The mark latest runner. */
+  @Autowired
+  private MarkLatestRunner markLatestRunner;
 
   /**
    * Gets the code system.
@@ -826,7 +831,8 @@ public class CodeSystemProviderR4 implements IResourceProvider {
 
       // Use existing loader utility
       final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService, file,
-          enablePostLoadComputations.isEnabled(), CodeSystem.class, new DefaultProgressListener());
+          enablePostLoadComputations.isEnabled(), CodeSystem.class, new DefaultProgressListener(),
+          null, markLatestRunner);
 
       FileUtils.delete(file);
 
