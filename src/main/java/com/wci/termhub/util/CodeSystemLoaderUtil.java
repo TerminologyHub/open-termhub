@@ -73,7 +73,6 @@ public final class CodeSystemLoaderUtil {
   /** The Constant BATCH_SIZE. */
   private static final int DEFAULT_BATCH_SIZE = 10000;
 
-
   /**
    * Instantiates a new code system loader util.
    */
@@ -878,8 +877,7 @@ public final class CodeSystemLoaderUtil {
           cache.addParChd(property.get("valueCoding").get("code").asText(),
               conceptNode.path("code").asText());
         } else if (property.has("valueCode")) {
-          cache.addParChd(property.get("valueCode").asText(),
-              conceptNode.path("code").asText());
+          cache.addParChd(property.get("valueCode").asText(), conceptNode.path("code").asText());
         }
       }
       // LOINC panel membership: relationship to LG code means concept is a panel member
@@ -939,19 +937,25 @@ public final class CodeSystemLoaderUtil {
           terminologyCache.addParChd(parentCode, concept.getCode());
         }
 
-        // ECL clauses removed per requirements
-
         relationships.add(relationship);
       }
 
-      if ("relationship".equals(propertyType)) {
+      // Support "relationship" - an older style of representing FHIR data
+      else if ("relationship".equals(propertyType)) {
         final ConceptRelationship relationship =
             createRelationship(propertyNode, concept, terminology, terminologyCache);
 
-        // ECL clauses removed per requirements
+        relationships.add(relationship);
+      }
+
+      // If the property node has a "valueCode" field, this is also a relationship
+      else if (propertyNode.has("valueCode")) {
+        final ConceptRelationship relationship =
+            createRelationship(propertyNode, concept, terminology, terminologyCache);
 
         relationships.add(relationship);
       }
+
     }
     return relationships;
   }
@@ -1145,11 +1149,22 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode extension : extensions) {
         final String url = extension.path("url").asText();
         if (url.endsWith("/additionalType")) {
-          final JsonNode valueCoding = extension.path("valueCoding");
-          if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-            relationship.setAdditionalType(valueCoding.path("code").asText());
-          } else if (!valueCoding.isMissingNode() && valueCoding.has("display")) {
-            relationship.setAdditionalType(valueCoding.path("display").asText());
+          // Support "valueCode"
+          if (extension.has("valueCode")) {
+            relationship.setAdditionalType(extension.get("valueCode").asText());
+          }
+          // Support "valueCoding"
+          else if (extension.has("valueCoding")) {
+            final JsonNode valueCoding = extension.path("valueCoding");
+            if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
+              relationship.setAdditionalType(valueCoding.path("code").asText());
+            } else if (!valueCoding.isMissingNode() && valueCoding.has("display")) {
+              relationship.setAdditionalType(valueCoding.path("display").asText());
+            }
+          }
+          // otherwise fail
+          else {
+            throw new Exception("Unexpected missing valueCode/valueCoding for additional type");
           }
         } else if (url.endsWith("/group")) {
           relationship.setGroup(extension.path("valueString").asText());
@@ -1181,9 +1196,10 @@ public final class CodeSystemLoaderUtil {
           terminology.getPublisher(), terminology.getAbbreviation(), terminology.getVersion());
       relationship.setTo(toRef);
     } else {
-      throw FhirUtilityR4.exception("Unexpected 'parent' property without valueCoding or valueCode = "
-          + fromConcept.getCode() + ", " + relationshipNode, IssueType.INVALID,
-          HttpServletResponse.SC_EXPECTATION_FAILED);
+      throw FhirUtilityR4.exception(
+          "Unexpected 'parent' property without valueCoding or valueCode = " + fromConcept.getCode()
+              + ", " + relationshipNode,
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
 
     // Set additional attributes
