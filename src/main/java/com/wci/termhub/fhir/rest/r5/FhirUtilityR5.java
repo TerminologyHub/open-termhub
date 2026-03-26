@@ -57,6 +57,8 @@ import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionParameterComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
+import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
@@ -71,6 +73,7 @@ import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
+import com.wci.termhub.model.Metadata;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.util.DateUtility;
@@ -1334,9 +1337,39 @@ public final class FhirUtilityR5 {
     }
     cs.setMeta(csMeta);
 
-    // logger.info("Converted terminology to CodeSystem: id={}, name={},
-    // version={}", cs.getId(),
-    // cs.getName(), cs.getVersion());
+    return cs;
+  }
+
+  /**
+   * To R5 with metadata-based properties.
+   *
+   * @param terminology the terminology
+   * @param metadataList the metadata list
+   * @return the code system
+   * @throws Exception the exception
+   */
+  public static CodeSystem toR5(final Terminology terminology,
+    final List<Metadata> metadataList) throws Exception {
+
+    final CodeSystem cs = toR5(terminology);
+
+    final List<CodeSystemMetadataProperty> properties =
+        CodeSystemMetadataPropertyUtility.buildProperties(terminology, metadataList);
+    for (final CodeSystemMetadataProperty property : properties) {
+      final CodeSystem.PropertyComponent pc = cs.addProperty();
+      pc.setCode(property.getCode());
+      if (property.getDescription() != null) {
+        pc.setDescription(property.getDescription());
+      }
+      if (property.getUri() != null) {
+        pc.setUri(property.getUri());
+      }
+      if ("string".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.STRING);
+      } else if ("code".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.CODE);
+      }
+    }
 
     return cs;
   }

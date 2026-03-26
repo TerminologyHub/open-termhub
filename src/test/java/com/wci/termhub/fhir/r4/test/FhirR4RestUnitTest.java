@@ -406,6 +406,18 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertFalse(codeSystem.getCompositional());
     assertEquals("fragment", codeSystem.getContent().toString().toLowerCase());
     assertEquals(456, codeSystem.getCount());
+
+    // Verify CodeSystem properties
+    assertFalse(codeSystem.getProperty().isEmpty());
+    // Standard properties
+    assertTrue(codeSystem.getProperty().stream()
+        .anyMatch(p -> "parent".equals(p.getCode())
+            && "http://hl7.org/fhir/concept-properties#parent".equals(p.getUri())
+            && CodeSystem.PropertyType.CODE.equals(p.getType())));
+    assertTrue(codeSystem.getProperty().stream()
+        .anyMatch(p -> "status".equals(p.getCode())
+            && "http://hl7.org/fhir/concept-properties#status".equals(p.getUri())
+            && CodeSystem.PropertyType.CODE.equals(p.getType())));
   }
 
   /**

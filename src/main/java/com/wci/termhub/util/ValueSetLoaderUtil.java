@@ -68,6 +68,9 @@ public final class ValueSetLoaderUtil {
   /** The Constant JSON_SUBSET_CODE. */
   private static final String JSON_SUBSET_CODE = "https://terminologyhub.com/model/subset/code";
 
+  /** Log and progress updates at this member interval during ValueSet indexing. */
+  private static final int VALUESET_MEMBER_PROGRESS_LOG_INTERVAL = 500;
+
   /**
    * Instantiates a new subset loader util.
    */
@@ -260,6 +263,8 @@ public final class ValueSetLoaderUtil {
           subset.getPublisher(), subset.getVersion());
       final List<SubsetMember> members = new ArrayList<>();
       subsetRef.setCode(subset.getCode());
+      final int memberTotalEstimateR4 = estimateValueSetMemberCountR4(valueSet);
+      int memberProcessedR4 = 0;
       // Compose.include
       if (valueSet.hasCompose()) {
         for (final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent includes : valueSet
@@ -312,6 +317,8 @@ public final class ValueSetLoaderUtil {
               existingConcept.getSubsets().add(subsetRef);
               service.update(Concept.class, existingConcept.getId(), existingConcept);
             }
+            memberProcessedR4++;
+            logValueSetMemberProgress(listener, memberProcessedR4, memberTotalEstimateR4);
           }
         }
       }
@@ -371,6 +378,8 @@ public final class ValueSetLoaderUtil {
             existingConcept.getSubsets().add(subsetRef);
             service.update(Concept.class, existingConcept.getId(), existingConcept);
           }
+          memberProcessedR4++;
+          logValueSetMemberProgress(listener, memberProcessedR4, memberTotalEstimateR4);
 
         }
       }
@@ -429,6 +438,7 @@ public final class ValueSetLoaderUtil {
     final long startTime = System.currentTimeMillis();
 
     try {
+      listener.updateProgress(new ProgressEvent(0));
 
       LOGGER.info("Indexing ValueSet R5 {} = {}", valueSet.getTitle(), valueSet.getUrl());
       // Basic checks
@@ -526,6 +536,8 @@ public final class ValueSetLoaderUtil {
           subset.getPublisher(), subset.getVersion());
       final List<SubsetMember> members = new ArrayList<>();
       subsetRef.setCode(subset.getCode());
+      final int memberTotalEstimateR5 = estimateValueSetMemberCountR5(valueSet);
+      int memberProcessedR5 = 0;
       // Compose.include
       if (valueSet.hasCompose()) {
         for (final org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent includes : valueSet
@@ -578,6 +590,8 @@ public final class ValueSetLoaderUtil {
               existingConcept.getSubsets().add(subsetRef);
               service.update(Concept.class, existingConcept.getId(), existingConcept);
             }
+            memberProcessedR5++;
+            logValueSetMemberProgress(listener, memberProcessedR5, memberTotalEstimateR5);
 
           }
         }
@@ -633,6 +647,8 @@ public final class ValueSetLoaderUtil {
           if (existingConcept != null) {
             service.addField(Concept.class, existingConcept.getId(), subsetRef, "subsets");
           }
+          memberProcessedR5++;
+          logValueSetMemberProgress(listener, memberProcessedR5, memberTotalEstimateR5);
 
         }
       }
@@ -669,6 +685,56 @@ public final class ValueSetLoaderUtil {
       throw e;
     }
 
+  }
+
+  private static int estimateValueSetMemberCountR4(
+      final org.hl7.fhir.r4.model.ValueSet valueSet) {
+    int n = 0;
+    if (valueSet.hasCompose()) {
+      for (final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent inc : valueSet.getCompose()
+          .getInclude()) {
+        if (inc.getConcept() != null) {
+          n += inc.getConcept().size();
+        }
+      }
+    }
+    if (valueSet.hasExpansion()) {
+      n += valueSet.getExpansion().getContains().size();
+    }
+    return n;
+  }
+
+  private static int estimateValueSetMemberCountR5(
+      final org.hl7.fhir.r5.model.ValueSet valueSet) {
+    int n = 0;
+    if (valueSet.hasCompose()) {
+      for (final org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent inc : valueSet.getCompose()
+          .getInclude()) {
+        if (inc.getConcept() != null) {
+          n += inc.getConcept().size();
+        }
+      }
+    }
+    if (valueSet.hasExpansion()) {
+      n += valueSet.getExpansion().getContains().size();
+    }
+    return n;
+  }
+
+  private static void logValueSetMemberProgress(final ProgressListener listener,
+      final int processed, final int totalEstimate) {
+    final boolean milestone = processed % VALUESET_MEMBER_PROGRESS_LOG_INTERVAL == 0;
+    final boolean atEnd = totalEstimate > 0 && processed == totalEstimate;
+    if (!milestone && !atEnd) {
+      return;
+    }
+    if (totalEstimate > 0) {
+      LOGGER.info("  ValueSet members processed: {}/{}", processed, totalEstimate);
+      listener.updateProgress(new ProgressEvent(
+          1 + (int) (98.0 * Math.min(processed, totalEstimate) / totalEstimate)));
+    } else {
+      LOGGER.info("  ValueSet members processed: {}", processed);
+    }
   }
 
   /**
