@@ -1,6 +1,6 @@
 {
   "resourceType": "CodeSystem",
-  "id": "fbd24528-d3a9-4ae1-b356-52a09a73938b",
+  "id": "ae64c3e9-f9c3-47b1-ad29-04fb29f30cc0",
   "meta": {
     "versionId": "1",
     "lastUpdated": "2023-05-01T00:00:00.000-07:00"
@@ -156,17 +156,157 @@
     "description": "Sufficiently defined",
     "type": "boolean"
   }, {
-    "code": "relationship",
-    "uri": "https://terminologyhub.com/model/terminology/attributes/relationship",
-    "description": "Relationship",
-    "type": "code"
-  }, {
     "code": "semanticType",
     "uri": "https://terminologyhub.com/model/terminology/attributes/semanticType",
     "description": "Indicates the concept's semantic category",
     "type": "string"
   } ],
   "concept": [ {
+    "code": "C50-C50",
+    "display": "Malignant neoplasms of breast (C50)",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Malignant neoplasms of breast (C50)"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
+    }, {
+      "code": "semanticType",
+      "valueString": "Neoplastic Process"
+    }, {
+      "code": "parent",
+      "valueCode": "C00-D49"
+    } ]
+  }, {
+    "code": "E08-E13",
+    "display": "Diabetes mellitus (E08-E13)",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Diabetes mellitus (E08-E13)"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "parent",
+      "valueCode": "E00-E89"
+    } ]
+  }, {
+    "code": "C50",
+    "display": "Malignant neoplasm of breast",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Malignant neoplasm of breast"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "Paget's disease of breast"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "Paget's disease of nipple"
+    }, {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "ET",
+        "display": "Entry term"
+      },
+      "value": "connective tissue of breast"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "semanticType",
+      "valueString": "Intellectual Product"
+    }, {
+      "code": "semanticType",
+      "valueString": "Neoplastic Process"
+    }, {
+      "code": "EXCLUDES1",
+      "valueString": "skin of breast (C44.501, C44.511, C44.521, C44.591)"
+    }, {
+      "code": "USE_ADDITIONAL",
+      "valueString": "code to identify estrogen receptor status (Z17.0, Z17.1)"
+    }, {
+      "code": "ORDER_NO",
+      "valueString": "01812"
+    }, {
+      "code": "parent",
+      "valueCode": "C50-C50"
+    } ]
+  }, {
+    "code": "E00-E89",
+    "display": "Endocrine, nutritional and metabolic diseases (E00-E89)",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "Endocrine, nutritional and metabolic diseases (E00-E89)"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
+    }, {
+      "code": "semanticType",
+      "valueString": "Disease or Syndrome"
+    }, {
+      "code": "EXCLUDES1",
+      "valueString": "transitory endocrine and metabolic disorders specific to newborn (P70-P74)"
+    }, {
+      "code": "NOTE",
+      "valueString": "All neoplasms, whether functionally active or not, are classified in Chapter 2. Appropriate codes in this chapter (i.e. E05.8, E07.0, E16-E31, E34.-) may be used as additional codes to indicate either functional activity by neoplasms and ectopic endocrine tissue or hyperfunction and hypofunction of endocrine glands associated with neoplasms and other conditions classified elsewhere."
+    }, {
+      "code": "parent",
+      "valueCode": "ICD-10-CM"
+    } ]
+  }, {
     "code": "C00-D49",
     "display": "Neoplasms (C00-D49)",
     "designation": [ {
@@ -193,31 +333,6 @@
     }, {
       "code": "parent",
       "valueCode": "ICD-10-CM"
-    } ]
-  }, {
-    "code": "C50-C50",
-    "display": "Malignant neoplasms of breast (C50)",
-    "designation": [ {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "HT",
-        "display": "Hierarchical term"
-      },
-      "value": "Malignant neoplasms of breast (C50)"
-    } ],
-    "property": [ {
-      "code": "active",
-      "valueBoolean": true
-    }, {
-      "code": "status",
-      "valueCode": "active"
-    }, {
-      "code": "semanticType",
-      "valueString": "Neoplastic Process"
-    }, {
-      "code": "parent",
-      "valueCode": "C00-D49"
     } ]
   }, {
     "code": "E10.9",
@@ -312,148 +427,6 @@
       "valueCode": "E08-E13"
     } ]
   }, {
-    "code": "E00-E89",
-    "display": "Endocrine, nutritional and metabolic diseases (E00-E89)",
-    "designation": [ {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "HT",
-        "display": "Hierarchical term"
-      },
-      "value": "Endocrine, nutritional and metabolic diseases (E00-E89)"
-    } ],
-    "property": [ {
-      "code": "active",
-      "valueBoolean": true
-    }, {
-      "code": "status",
-      "valueCode": "active"
-    }, {
-      "code": "semanticType",
-      "valueString": "Disease or Syndrome"
-    }, {
-      "code": "EXCLUDES1",
-      "valueString": "transitory endocrine and metabolic disorders specific to newborn (P70-P74)"
-    }, {
-      "code": "NOTE",
-      "valueString": "All neoplasms, whether functionally active or not, are classified in Chapter 2. Appropriate codes in this chapter (i.e. E05.8, E07.0, E16-E31, E34.-) may be used as additional codes to indicate either functional activity by neoplasms and ectopic endocrine tissue or hyperfunction and hypofunction of endocrine glands associated with neoplasms and other conditions classified elsewhere."
-    }, {
-      "code": "parent",
-      "valueCode": "ICD-10-CM"
-    } ]
-  }, {
-    "code": "C50",
-    "display": "Malignant neoplasm of breast",
-    "designation": [ {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "HT",
-        "display": "Hierarchical term"
-      },
-      "value": "Malignant neoplasm of breast"
-    }, {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "ET",
-        "display": "Entry term"
-      },
-      "value": "Paget's disease of breast"
-    }, {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "ET",
-        "display": "Entry term"
-      },
-      "value": "Paget's disease of nipple"
-    }, {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "ET",
-        "display": "Entry term"
-      },
-      "value": "connective tissue of breast"
-    } ],
-    "property": [ {
-      "code": "active",
-      "valueBoolean": true
-    }, {
-      "code": "status",
-      "valueCode": "active"
-    }, {
-      "code": "semanticType",
-      "valueString": "Disease or Syndrome"
-    }, {
-      "code": "semanticType",
-      "valueString": "Intellectual Product"
-    }, {
-      "code": "semanticType",
-      "valueString": "Neoplastic Process"
-    }, {
-      "code": "EXCLUDES1",
-      "valueString": "skin of breast (C44.501, C44.511, C44.521, C44.591)"
-    }, {
-      "code": "USE_ADDITIONAL",
-      "valueString": "code to identify estrogen receptor status (Z17.0, Z17.1)"
-    }, {
-      "code": "ORDER_NO",
-      "valueString": "01812"
-    }, {
-      "code": "parent",
-      "valueCode": "C50-C50"
-    } ]
-  }, {
-    "code": "ICD-10-CM",
-    "display": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES",
-    "designation": [ {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "HT",
-        "display": "Hierarchical term"
-      },
-      "value": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES"
-    } ],
-    "property": [ {
-      "code": "active",
-      "valueBoolean": true
-    }, {
-      "code": "status",
-      "valueCode": "active"
-    }, {
-      "code": "semanticType",
-      "valueString": "Intellectual Product"
-    } ]
-  }, {
-    "code": "E08-E13",
-    "display": "Diabetes mellitus (E08-E13)",
-    "designation": [ {
-      "language": "en",
-      "use": {
-        "system": "http://hl7.org/fhir/sid/icd-10-cm",
-        "code": "HT",
-        "display": "Hierarchical term"
-      },
-      "value": "Diabetes mellitus (E08-E13)"
-    } ],
-    "property": [ {
-      "code": "active",
-      "valueBoolean": true
-    }, {
-      "code": "status",
-      "valueCode": "active"
-    }, {
-      "code": "semanticType",
-      "valueString": "Disease or Syndrome"
-    }, {
-      "code": "parent",
-      "valueCode": "E00-E89"
-    } ]
-  }, {
     "code": "E11.9",
     "display": "Type 2 diabetes mellitus without complications",
     "designation": [ {
@@ -480,6 +453,28 @@
     }, {
       "code": "parent",
       "valueCode": "E11"
+    } ]
+  }, {
+    "code": "ICD-10-CM",
+    "display": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES",
+    "designation": [ {
+      "language": "en",
+      "use": {
+        "system": "http://hl7.org/fhir/sid/icd-10-cm",
+        "code": "HT",
+        "display": "Hierarchical term"
+      },
+      "value": "ICD-10-CM TABULAR LIST of DISEASES and INJURIES"
+    } ],
+    "property": [ {
+      "code": "active",
+      "valueBoolean": true
+    }, {
+      "code": "status",
+      "valueCode": "active"
+    }, {
+      "code": "semanticType",
+      "valueString": "Intellectual Product"
     } ]
   }, {
     "code": "E10",

@@ -160,7 +160,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyIcd10Cm() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("fbd24528-d3a9-4ae1-b356-52a09a73938b");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("ae64c3e9-f9c3-47b1-ad29-04fb29f30cc0");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -196,7 +196,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologySnomedCtUs() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -218,7 +218,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
     final String url = baseUrl + "/terminology/" + id + "/metadata";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -1165,7 +1165,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testFindMapsetById() throws Exception {
 
-    final String id = ConceptMapLoaderUtil.mapOriginalId("126b4900-b236-41e9-a4c2-09963699ed17");
+    // ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r4.json
+    final String id = ConceptMapLoaderUtil.mapOriginalId("b8ecaf1f-5ebd-4f9e-8375-645f2ec8f1ab");
     final String url = baseUrl + "/mapset/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -2780,8 +2781,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test that different wildcard patterns for "all" return consistent results.
-   * Tests query=*, query=*:*, query=*;*, no query parameter, with/without sort.
+   * Test that different wildcard patterns for "all" return consistent results. Tests query=*,
+   * query=*:*, query=*;*, no query parameter, with/without sort.
    *
    * @throws Exception the exception
    */
@@ -2867,8 +2868,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test that a code with a trailing wildcard works correctly. Tests
-   * query=40733004* to find mappings starting with that code.
+   * Test that a code with a trailing wildcard works correctly. Tests query=40733004* to find
+   * mappings starting with that code.
    *
    * @throws Exception the exception
    */
@@ -2913,8 +2914,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test that a bare code search (without field prefix) works. This is what the
-   * browser sends when a user types just a code.
+   * Test that a bare code search (without field prefix) works. This is what the browser sends when
+   * a user types just a code.
    *
    * @throws Exception the exception
    */

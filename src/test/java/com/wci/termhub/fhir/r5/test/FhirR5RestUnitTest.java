@@ -371,7 +371,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Order(FIND)
   public void testCodeSystemById() throws Exception {
     // Arrange
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -511,7 +511,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Order(FIND)
   public void testCodeSystemValidateCodeById() throws Exception {
     // Arrange
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("fbd24528-d3a9-4ae1-b356-52a09a73938b");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("ae64c3e9-f9c3-47b1-ad29-04fb29f30cc0");
     final String code = "E10";
     final String validateParams = "/$validate-code?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + validateParams;
@@ -1580,7 +1580,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemVreadHistoryVersion1ReturnsOk() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/1";
     LOGGER.info("Testing endpoint: {}", endpoint);
 
@@ -1602,7 +1602,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemVreadHistoryVersionNonExistentReturnsNotFound() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("ed5781df-3898-4ef4-bfa4-0d1542e2997d");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/22";
     LOGGER.info("Testing endpoint: {}", endpoint);
 

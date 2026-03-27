@@ -1137,12 +1137,17 @@ public final class CodeSystemLoaderUtil {
     // Get type
     final String relationshipType = relationshipNode.get("code").asText();
 
-    relationship.setType(relationshipType);
+    relationship.setType("relationship");
+    relationship.setAdditionalType(relationshipType);
     relationship.setHierarchical(false);
 
     if ("parent".equals(relationshipType)) {
       relationship.setType("isa");
       relationship.setHierarchical(true);
+      // TODO: magic value
+      if (relationship.getTerminology().startsWith("SNOMEDCT")) {
+        relationship.setAdditionalType("116680003");
+      }
     }
 
     // Process extensions to get additionalType, group, and historical flag

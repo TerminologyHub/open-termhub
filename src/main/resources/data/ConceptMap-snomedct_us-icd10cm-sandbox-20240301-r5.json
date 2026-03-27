@@ -1,6 +1,6 @@
 {
   "resourceType": "ConceptMap",
-  "id": "126b4900-b236-41e9-a4c2-09963699ed17",
+  "id": "b8ecaf1f-5ebd-4f9e-8375-645f2ec8f1ab",
   "url": "http://snomed.info/sct?fhir_cm=6011000124106-instance",
   "identifier": [ {
     "system": "https://terminologyhub.com/model/mapset/code",
@@ -146,27 +146,6 @@
         "relationship": "related-to"
       } ]
     }, {
-      "code": "255058005",
-      "display": "Neoplasm of thorax",
-      "target": [ {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "TRUE"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "ALWAYS D49.89 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
-        } ],
-        "code": "D49.89",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      } ]
-    }, {
       "code": "52645000",
       "display": "Functional disease present",
       "target": [ {
@@ -188,6 +167,27 @@
         "relationship": "related-to"
       } ]
     }, {
+      "code": "255058005",
+      "display": "Neoplasm of thorax",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "ALWAYS D49.89 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
+        } ],
+        "code": "D49.89",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      } ]
+    }, {
       "code": "64572001",
       "display": "Disease",
       "target": [ {
@@ -205,6 +205,27 @@
           "valueString": "MAP SOURCE CONCEPT CANNOT BE CLASSIFIED WITH AVAILABLE DATA"
         } ],
         "code": "NOCODE",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      } ]
+    }, {
+      "code": "126926005",
+      "display": "Neoplasm of breast",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "ALWAYS D49.3 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
+        } ],
+        "code": "D49.3",
         "display": "Unable to determine name",
         "relationship": "related-to"
       } ]
@@ -247,48 +268,6 @@
         "relationship": "related-to"
       } ]
     }, {
-      "code": "126926005",
-      "display": "Neoplasm of breast",
-      "target": [ {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "TRUE"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "ALWAYS D49.3 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
-        } ],
-        "code": "D49.3",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      } ]
-    }, {
-      "code": "440299000",
-      "display": "Mass of thoracic structure",
-      "target": [ {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "TRUE"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "ALWAYS R22.2 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
-        } ],
-        "code": "R22.2",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      } ]
-    }, {
       "code": "40733004",
       "display": "Infectious disease",
       "target": [ {
@@ -323,6 +302,27 @@
           "valueString": "IF AGE AT ONSET OF CLINICAL FINDING BEFORE 29.0 DAYS CHOOSE P39.9 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | DESCENDANTS NOT EXHAUSTIVELY MAPPED | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
         "code": "P39.9",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      } ]
+    }, {
+      "code": "440299000",
+      "display": "Mass of thoracic structure",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "ALWAYS R22.2 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
+        } ],
+        "code": "R22.2",
         "display": "Unable to determine name",
         "relationship": "related-to"
       } ]
@@ -395,35 +395,35 @@
       "target": [ {
         "extension": [ {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "2"
+          "valueString": "1"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
           "valueString": "IFA 119981000146107 | Dyspnea caused by SARS-CoV-2 |"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "3"
+          "valueString": "2"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF DYSPNEA CAUSED BY SARS-COV-2 CHOOSE R06.00 | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+          "valueString": "IF DYSPNEA CAUSED BY SARS-COV-2 CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
-        "code": "R06.00",
+        "code": "U07.1",
         "display": "Unable to determine name",
         "relationship": "related-to"
       }, {
         "extension": [ {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "2"
+          "valueString": "1"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "OTHERWISE TRUE"
+          "valueString": "IFA 1217296006 | SARS-CoV-2 breakthrough infection |"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "10"
+          "valueString": "3"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "MAP SOURCE CONCEPT CANNOT BE CLASSIFIED WITH AVAILABLE DATA"
+          "valueString": "IF SARS-COV-2 BREAKTHROUGH INFECTION CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
-        "code": "NOCODE",
+        "code": "U07.1",
         "display": "Unable to determine name",
         "relationship": "related-to"
       }, {
@@ -446,18 +446,35 @@
       }, {
         "extension": [ {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 119981000146107 | Dyspnea caused by SARS-CoV-2 |"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
           "valueString": "2"
         }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "IFA 894362851000119109 | Disease caused by severe acute respiratory syndrome coronavirus 2 during pregnancy |"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "7"
+        }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF DYSPNEA CAUSED BY SARS-COV-2 CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+          "valueString": "IF DISEASE CAUSED BY SEVERE ACUTE RESPIRATORY SYNDROME CORONAVIRUS 2 DURING PREGNANCY CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
         "code": "U07.1",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      }, {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "2"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "IFA 1217296006 | SARS-CoV-2 breakthrough infection |"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "4"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "IF SARS-COV-2 BREAKTHROUGH INFECTION CHOOSE T88.0XX? | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | EPISODE OF CARE INFORMATION NEEDED | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT | POSSIBLE REQUIREMENT FOR AN EXTERNAL CAUSE CODE"
+        } ],
+        "code": "T88.0",
         "display": "Unable to determine name",
         "relationship": "related-to"
       }, {
@@ -483,15 +500,32 @@
           "valueString": "2"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "OTHERWISE TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "10"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "MAP SOURCE CONCEPT CANNOT BE CLASSIFIED WITH AVAILABLE DATA"
+        } ],
+        "code": "NOCODE",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      }, {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
           "valueString": "IFA 894362851000119109 | Disease caused by severe acute respiratory syndrome coronavirus 2 during pregnancy |"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "7"
+          "valueString": "6"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF DISEASE CAUSED BY SEVERE ACUTE RESPIRATORY SYNDROME CORONAVIRUS 2 DURING PREGNANCY CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+          "valueString": "IF DISEASE CAUSED BY SEVERE ACUTE RESPIRATORY SYNDROME CORONAVIRUS 2 DURING PREGNANCY CHOOSE O98.519 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | CONSIDER TRIMESTER SPECIFICATION | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
-        "code": "U07.1",
+        "code": "O98.519",
         "display": "Unable to determine name",
         "relationship": "related-to"
       }, {
@@ -507,6 +541,57 @@
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
           "valueString": "IF INFECTION OF LOWER RESPIRATORY TRACT CAUSED BY SARS-COV-2 CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+        } ],
+        "code": "U07.1",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      }, {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "2"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "IFA 119751000146104 | Fever caused by SARS-CoV-2 |"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "IF FEVER CAUSED BY SARS-COV-2 CHOOSE R50.81 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+        } ],
+        "code": "R50.81",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      }, {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "2"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "IFA 119981000146107 | Dyspnea caused by SARS-CoV-2 |"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "3"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "IF DYSPNEA CAUSED BY SARS-COV-2 CHOOSE R06.00 | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+        } ],
+        "code": "R06.00",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      }, {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "IFA 1240541000000107 | Infection of upper respiratory tract caused by SARS-CoV-2 |"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "4"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "IF INFECTION OF UPPER RESPIRATORY TRACT CAUSED BY SARS-COV-2 CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
         "code": "U07.1",
         "display": "Unable to determine name",
@@ -534,49 +619,15 @@
           "valueString": "2"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 1240541000000107 | Infection of upper respiratory tract caused by SARS-CoV-2 |"
+          "valueString": "IFA 882784691000119100 | Pneumonia caused by SARS-CoV-2 |"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "5"
+          "valueString": "9"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF INFECTION OF UPPER RESPIRATORY TRACT CAUSED BY SARS-COV-2 CHOOSE J06.9 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+          "valueString": "IF PNEUMONIA CAUSED BY SARS-COV-2 CHOOSE J12.82 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
-        "code": "J06.9",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      }, {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "2"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 119751000146104 | Fever caused by SARS-CoV-2 |"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF FEVER CAUSED BY SARS-COV-2 CHOOSE R50.81 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
-        } ],
-        "code": "R50.81",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      }, {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "2"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 880529761000119102 | Infection of lower respiratory tract caused by SARS-CoV-2 |"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "6"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF INFECTION OF LOWER RESPIRATORY TRACT CAUSED BY SARS-COV-2 CHOOSE J22 | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
-        } ],
-        "code": "J22",
+        "code": "J12.82",
         "display": "Unable to determine name",
         "relationship": "related-to"
       }, {
@@ -585,15 +636,15 @@
           "valueString": "1"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 894362851000119109 | Disease caused by severe acute respiratory syndrome coronavirus 2 during pregnancy |"
+          "valueString": "IFA 138389411000119105 | Acute bronchitis caused by SARS-CoV-2 |"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "6"
+          "valueString": "7"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF DISEASE CAUSED BY SEVERE ACUTE RESPIRATORY SYNDROME CORONAVIRUS 2 DURING PREGNANCY CHOOSE O98.519 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | CONSIDER TRIMESTER SPECIFICATION | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+          "valueString": "IF ACUTE BRONCHITIS CAUSED BY SARS-COV-2 CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
-        "code": "O98.519",
+        "code": "U07.1",
         "display": "Unable to determine name",
         "relationship": "related-to"
       }, {
@@ -619,23 +670,6 @@
           "valueString": "1"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 1240541000000107 | Infection of upper respiratory tract caused by SARS-CoV-2 |"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "4"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF INFECTION OF UPPER RESPIRATORY TRACT CAUSED BY SARS-COV-2 CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
-        } ],
-        "code": "U07.1",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      }, {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
           "valueString": "IFA 119751000146104 | Fever caused by SARS-CoV-2 |"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
@@ -650,18 +684,18 @@
       }, {
         "extension": [ {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
+          "valueString": "2"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 138389411000119105 | Acute bronchitis caused by SARS-CoV-2 |"
+          "valueString": "IFA 880529761000119102 | Infection of lower respiratory tract caused by SARS-CoV-2 |"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "7"
+          "valueString": "6"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF ACUTE BRONCHITIS CAUSED BY SARS-COV-2 CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+          "valueString": "IF INFECTION OF LOWER RESPIRATORY TRACT CAUSED BY SARS-COV-2 CHOOSE J22 | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
-        "code": "U07.1",
+        "code": "J22",
         "display": "Unable to determine name",
         "relationship": "related-to"
       }, {
@@ -670,49 +704,15 @@
           "valueString": "2"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 882784691000119100 | Pneumonia caused by SARS-CoV-2 |"
+          "valueString": "IFA 1240541000000107 | Infection of upper respiratory tract caused by SARS-CoV-2 |"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "9"
+          "valueString": "5"
         }, {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF PNEUMONIA CAUSED BY SARS-COV-2 CHOOSE J12.82 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
+          "valueString": "IF INFECTION OF UPPER RESPIRATORY TRACT CAUSED BY SARS-COV-2 CHOOSE J06.9 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
         } ],
-        "code": "J12.82",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      }, {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "2"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 1217296006 | SARS-CoV-2 breakthrough infection |"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "4"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF SARS-COV-2 BREAKTHROUGH INFECTION CHOOSE T88.0XX? | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | EPISODE OF CARE INFORMATION NEEDED | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT | POSSIBLE REQUIREMENT FOR AN EXTERNAL CAUSE CODE"
-        } ],
-        "code": "T88.0",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      }, {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "IFA 1217296006 | SARS-CoV-2 breakthrough infection |"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "3"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "IF SARS-COV-2 BREAKTHROUGH INFECTION CHOOSE U07.1 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT"
-        } ],
-        "code": "U07.1",
+        "code": "J06.9",
         "display": "Unable to determine name",
         "relationship": "related-to"
       } ]
@@ -919,47 +919,9 @@
         "relationship": "related-to"
       } ]
     }, {
-      "code": "105724001",
-      "display": "Disease related state",
-      "target": [ {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "TRUE"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "ALWAYS Z78.9 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
-        } ],
-        "code": "Z78.9",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      } ]
-    }, {
       "code": "399981008",
       "display": "Neoplasm and/or hamartoma",
       "target": [ {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "2"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "TRUE"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "ALWAYS Q85.9 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
-        } ],
-        "code": "Q85.9",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      }, {
         "extension": [ {
           "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
           "valueString": "1"
@@ -974,6 +936,23 @@
           "valueString": "ALWAYS D49.9 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
         } ],
         "code": "D49.9",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      }, {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "2"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "ALWAYS Q85.9 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
+        } ],
+        "code": "Q85.9",
         "display": "Unable to determine name",
         "relationship": "related-to"
       } ]
@@ -995,6 +974,27 @@
           "valueString": "ALWAYS R69"
         } ],
         "code": "R69",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      } ]
+    }, {
+      "code": "105724001",
+      "display": "Disease related state",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "ALWAYS Z78.9 | CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
+        } ],
+        "code": "Z78.9",
         "display": "Unable to determine name",
         "relationship": "related-to"
       } ]
@@ -1062,27 +1062,6 @@
         "relationship": "related-to"
       } ]
     }, {
-      "code": "365275006",
-      "display": "General well-being finding",
-      "target": [ {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "TRUE"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "MAP SOURCE CONCEPT CANNOT BE CLASSIFIED WITH AVAILABLE DATA"
-        } ],
-        "code": "NOCODE",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      } ]
-    }, {
       "code": "79604008",
       "display": "Disorder of breast",
       "target": [ {
@@ -1100,6 +1079,27 @@
           "valueString": "ALWAYS N64.9 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
         } ],
         "code": "N64.9",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      } ]
+    }, {
+      "code": "365275006",
+      "display": "General well-being finding",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "MAP SOURCE CONCEPT CANNOT BE CLASSIFIED WITH AVAILABLE DATA"
+        } ],
+        "code": "NOCODE",
         "display": "Unable to determine name",
         "relationship": "related-to"
       } ]
@@ -1335,27 +1335,6 @@
         "relationship": "related-to"
       } ]
     }, {
-      "code": "118946009",
-      "display": "Disorder of thorax",
-      "target": [ {
-        "extension": [ {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-          "valueString": "TRUE"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-          "valueString": "1"
-        }, {
-          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
-          "valueString": "MAP SOURCE CONCEPT CANNOT BE CLASSIFIED WITH AVAILABLE DATA"
-        } ],
-        "code": "NOCODE",
-        "display": "Unable to determine name",
-        "relationship": "related-to"
-      } ]
-    }, {
       "code": "27619001",
       "display": "Disease caused by Coronaviridae",
       "target": [ {
@@ -1373,6 +1352,27 @@
           "valueString": "ALWAYS B97.29 | DESCENDANTS NOT EXHAUSTIVELY MAPPED"
         } ],
         "code": "B97.29",
+        "display": "Unable to determine name",
+        "relationship": "related-to"
+      } ]
+    }, {
+      "code": "118946009",
+      "display": "Disorder of thorax",
+      "target": [ {
+        "extension": [ {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+          "valueString": "TRUE"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+          "valueString": "1"
+        }, {
+          "url": "https://terminologyhub.com/fhir/StructureDefinition/concept-map-advice",
+          "valueString": "MAP SOURCE CONCEPT CANNOT BE CLASSIFIED WITH AVAILABLE DATA"
+        } ],
+        "code": "NOCODE",
         "display": "Unable to determine name",
         "relationship": "related-to"
       } ]
