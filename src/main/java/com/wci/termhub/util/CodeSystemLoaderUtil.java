@@ -14,7 +14,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -72,7 +71,6 @@ public final class CodeSystemLoaderUtil {
 
   /** The Constant BATCH_SIZE. */
   private static final int DEFAULT_BATCH_SIZE = 10000;
-
 
   /**
    * Instantiates a new code system loader util.
@@ -710,8 +708,8 @@ public final class CodeSystemLoaderUtil {
       if ("semanticType".equals(code)) {
         concept.getSemanticTypes().add(value);
       }
-      // redirect active
-      else if ("active".equals(code)) {
+      // redirect active and "status"
+      else if ("active".equals(code) || "status".equals(code)) {
         // already handled by cacheConcept
         continue;
         // concept.setActive(Boolean.valueOf(value));
@@ -730,8 +728,8 @@ public final class CodeSystemLoaderUtil {
         concept.setDefined("900000000000073002".equals(value));
         concept.getAttributes().put(code, value);
       }
-      // anything other than "parent" is just a property
-      else if (!"parent".equals(code)) {
+      // anything that has a value other than "valueCode" or "valueCoding" is a property
+      else if (!property.has("valueCode") && !property.has("valueCoding")) {
         concept.getAttributes().put(code, value);
       }
 
@@ -878,8 +876,7 @@ public final class CodeSystemLoaderUtil {
           cache.addParChd(property.get("valueCoding").get("code").asText(),
               conceptNode.path("code").asText());
         } else if (property.has("valueCode")) {
-          cache.addParChd(property.get("valueCode").asText(),
-              conceptNode.path("code").asText());
+          cache.addParChd(property.get("valueCode").asText(), conceptNode.path("code").asText());
         }
       }
       // LOINC panel membership: relationship to LG code means concept is a panel member
@@ -914,12 +911,17 @@ public final class CodeSystemLoaderUtil {
     // Process relationships
     for (final JsonNode propertyNode : relationshipArrayNode) {
 
-      final String propertyType =
-          propertyNode.has("code") ? propertyNode.path("code").asText() : "";
-
-      if (!Arrays.asList("parent", "relationship").contains(propertyType)) {
+      // The standard FHIR "status" property has a valueCode but is not a relationship
+      if (propertyNode.has("code") && propertyNode.get("code").asText().equals("status")) {
         continue;
       }
+      // If the value is not "valueCode" or "valueCoding", skip - not a relationship
+      if (!propertyNode.has("valueCode") && !propertyNode.has("valueCoding")) {
+        continue;
+      }
+
+      final String propertyType =
+          propertyNode.has("code") ? propertyNode.path("code").asText() : "";
 
       if ("parent".equals(propertyType)) {
         final ConceptRelationship relationship =
@@ -937,6 +939,10 @@ public final class CodeSystemLoaderUtil {
         }
         if (parentCode != null) {
           terminologyCache.addParChd(parentCode, concept.getCode());
+        } else {
+          throw FhirUtilityR4.exception(
+              "Unexpected inability to determine parent code = " + propertyNode, IssueType.INVALID,
+              HttpServletResponse.SC_EXPECTATION_FAILED);
         }
 
         // ECL clauses removed per requirements
@@ -944,7 +950,8 @@ public final class CodeSystemLoaderUtil {
         relationships.add(relationship);
       }
 
-      if ("relationship".equals(propertyType)) {
+      // Handle all other relationships
+      else {
         final ConceptRelationship relationship =
             createRelationship(propertyNode, concept, terminology, terminologyCache);
 
@@ -1168,22 +1175,23 @@ public final class CodeSystemLoaderUtil {
     relationship.setFrom(fromRef);
 
     // Set target concept reference from valueCoding (R4) or valueCode (R5)
-    String parentCode = null;
+    String relatedCode = null;
     final JsonNode valueCoding = relationshipNode.path("valueCoding");
     final JsonNode valueCode = relationshipNode.path("valueCode");
     if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-      parentCode = valueCoding.path("code").asText();
+      relatedCode = valueCoding.path("code").asText();
     } else if (!valueCode.isMissingNode()) {
-      parentCode = valueCode.asText();
+      relatedCode = valueCode.asText();
     }
-    if (parentCode != null) {
-      final ConceptRef toRef = terminologyCache.newConceptRef(parentCode,
+    if (relatedCode != null) {
+      final ConceptRef toRef = terminologyCache.newConceptRef(relatedCode,
           terminology.getPublisher(), terminology.getAbbreviation(), terminology.getVersion());
       relationship.setTo(toRef);
     } else {
-      throw FhirUtilityR4.exception("Unexpected 'parent' property without valueCoding or valueCode = "
-          + fromConcept.getCode() + ", " + relationshipNode, IssueType.INVALID,
-          HttpServletResponse.SC_EXPECTATION_FAILED);
+      throw FhirUtilityR4.exception(
+          "Unexpected 'relationship' property without valueCoding or valueCode = "
+              + fromConcept.getCode() + ", " + relationshipNode,
+          IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
 
     // Set additional attributes
