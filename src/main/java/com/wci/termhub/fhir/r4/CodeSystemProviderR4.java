@@ -45,10 +45,12 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
+import com.wci.termhub.model.Metadata;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
+import com.wci.termhub.fhir.util.CodeSystemMetadataLookupUtility;
 
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
@@ -118,7 +120,9 @@ public class CodeSystemProviderR4 implements IResourceProvider {
       }
 
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-        final CodeSystem cs = FhirUtilityR4.toR4(terminology);
+        final java.util.List<Metadata> metadata =
+            CodeSystemMetadataLookupUtility.getMetadataForTerminology(searchService, terminology);
+        final CodeSystem cs = FhirUtilityR4.toR4(terminology, metadata);
         if (logger.isDebugEnabled()) {
           logger.debug("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
         }
@@ -206,7 +210,9 @@ public class CodeSystemProviderR4 implements IResourceProvider {
 
       final List<CodeSystem> list = new ArrayList<>();
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-        final CodeSystem cs = FhirUtilityR4.toR4(terminology);
+        final java.util.List<Metadata> metadata =
+            CodeSystemMetadataLookupUtility.getMetadataForTerminology(searchService, terminology);
+        final CodeSystem cs = FhirUtilityR4.toR4(terminology, metadata);
 
         final Set<String> mapsetsMatchingCodes = new HashSet<>();
         if (code != null) {
@@ -888,6 +894,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
 
+      CodeSystemMetadataLookupUtility.clearCacheForTerminology(terminology.getId());
       TerminologyUtility.removeTerminology(searchService, terminology.getId());
 
     } catch (final FHIRServerResponseException e) {
