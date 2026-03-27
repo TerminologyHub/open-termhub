@@ -191,6 +191,32 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
+   * Test versions.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testVersions() throws Exception {
+    // Arrange
+    final String endpoint = LOCALHOST + port + "/fhir/r4/$versions";
+
+    // Act
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final Parameters data = parser.parseResource(Parameters.class, content);
+
+    // Assert
+    assertNotNull(data);
+    LOGGER.info("  parameters = {}", parser.encodeResourceToString(data));
+    // Exactly 2 entries
+    assertEquals(2, data.getParameter().size());
+    // Server version matches (this will get set to a real value by docker)
+    assertEquals("override-in-build-process", data.getParameter("version").getValue().toString());
+    // FHIR version matches
+    assertEquals("4.0.1", data.getParameter("fhirVersion").getValue().toString());
+  }
+
+  /**
    * Test code system search.
    *
    * @throws Exception the exception

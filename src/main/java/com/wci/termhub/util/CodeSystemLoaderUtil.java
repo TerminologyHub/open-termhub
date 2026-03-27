@@ -945,8 +945,6 @@ public final class CodeSystemLoaderUtil {
               HttpServletResponse.SC_EXPECTATION_FAILED);
         }
 
-        // ECL clauses removed per requirements
-
         relationships.add(relationship);
       }
 
@@ -955,10 +953,9 @@ public final class CodeSystemLoaderUtil {
         final ConceptRelationship relationship =
             createRelationship(propertyNode, concept, terminology, terminologyCache);
 
-        // ECL clauses removed per requirements
-
         relationships.add(relationship);
       }
+
     }
     return relationships;
   }
@@ -1157,11 +1154,22 @@ public final class CodeSystemLoaderUtil {
       for (final JsonNode extension : extensions) {
         final String url = extension.path("url").asText();
         if (url.endsWith("/additionalType")) {
-          final JsonNode valueCoding = extension.path("valueCoding");
-          if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-            relationship.setAdditionalType(valueCoding.path("code").asText());
-          } else if (!valueCoding.isMissingNode() && valueCoding.has("display")) {
-            relationship.setAdditionalType(valueCoding.path("display").asText());
+          // Support "valueCode"
+          if (extension.has("valueCode")) {
+            relationship.setAdditionalType(extension.get("valueCode").asText());
+          }
+          // Support "valueCoding"
+          else if (extension.has("valueCoding")) {
+            final JsonNode valueCoding = extension.path("valueCoding");
+            if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
+              relationship.setAdditionalType(valueCoding.path("code").asText());
+            } else if (!valueCoding.isMissingNode() && valueCoding.has("display")) {
+              relationship.setAdditionalType(valueCoding.path("display").asText());
+            }
+          }
+          // otherwise fail
+          else {
+            throw new Exception("Unexpected missing valueCode/valueCoding for additional type");
           }
         } else if (url.endsWith("/group")) {
           relationship.setGroup(extension.path("valueString").asText());

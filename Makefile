@@ -53,7 +53,7 @@ rundebug: ## Run the server with debug logging and JVM debug port (5005)
 	./gradlew bootRun --debug-jvm -DLOG_LEVEL=debug
 
 docker: ## Build the docker image and tag with version and latest leave arm64 out for now)
-	docker buildx build --platform linux/amd64 --no-cache-filter=gradle-build -t $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) .
+	docker buildx build --platform linux/amd64 --no-cache-filter=gradle-build --build-arg APP_VERSION=$(APP_VERSION) -t $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) .
 	docker tag $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
 	@echo APP_VERSION=$(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 

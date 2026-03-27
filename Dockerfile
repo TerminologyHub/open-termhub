@@ -29,6 +29,10 @@ RUN chown -R gradle:gradle "${PROJECT}"
 
 WORKDIR ${PROJECT}
 
+# Set server version
+ARG APP_VERSION
+RUN echo "server.version=${APP_VERSION}" >> src/main/resources/application.properties
+
 # Skip tests for docker build
 RUN gradle bootJar -x test -x spotbugsMain -x spotbugsTest
 
