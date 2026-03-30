@@ -1,10 +1,6 @@
 {
   "resourceType": "CodeSystem",
-  "id": "07823d73-aeea-4b26-8614-57807161b3b0",
-  "meta": {
-    "versionId": "1",
-    "lastUpdated": "2024-08-06T00:00:00.000+00:00"
-  },
+  "id": "82945f74-e75e-4b7b-9f34-052d834127e9",
   "url": "http://loinc.org",
   "identifier": [ {
     "system": "urn:ietf:rfc:3986",
@@ -23,10 +19,10 @@
       "value": "http://loinc.org"
     } ]
   } ],
-  "description": "TBD.",
+  "description": "LOINC is a freely available international standard for tests, measurements, and observations",
   "copyright": "This material contains content from LOINC (http://loinc.org). LOINC is copyright Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc.",
   "caseSensitive": false,
-  "valueSet": "http://loinc.org/vs",
+  "valueSet": "http://loinc.org?fhir_vs",
   "hierarchyMeaning": "is-a",
   "compositional": false,
   "versionNeeded": false,
@@ -35,620 +31,730 @@
   "property": [ {
     "code": "polyhierarchy",
     "uri": "https://terminologyhub.com/model/terminology/attributes/polyhierarchy",
-    "description": "true",
+    "description": "Indicates the terminology has a poly-hierarchical structure",
     "type": "string"
   }, {
     "code": "autocomplete",
     "uri": "https://terminologyhub.com/model/terminology/attributes/autocomplete",
-    "description": "true",
+    "description": "Indicates autocomplete search is supported for this terminology",
     "type": "string"
   }, {
     "code": "hierarchical",
     "uri": "https://terminologyhub.com/model/terminology/attributes/hierarchical",
-    "description": "true",
+    "description": "Indicates the terminology has a hierarchical structure",
     "type": "string"
   }, {
     "code": "description",
     "uri": "https://terminologyhub.com/model/terminology/attributes/description",
-    "description": "TBD.",
     "type": "string"
   }, {
     "code": "tree-positions",
     "uri": "https://terminologyhub.com/model/terminology/attributes/tree-positions",
-    "description": "true",
+    "description": "Indicates hierarchical tree positions are computed for this terminology",
     "type": "string"
   }, {
     "code": "unidirectional-rels",
     "uri": "https://terminologyhub.com/model/terminology/attributes/unidirectional-rels",
-    "description": "true",
+    "description": "Indicates relationships are unidirectional",
     "type": "string"
   }, {
     "code": "ecl",
     "uri": "https://terminologyhub.com/model/terminology/attributes/ecl",
-    "description": "true",
+    "description": "Indicates ECL (Expression Constraint Language) is supported for this terminology",
     "type": "string"
   }, {
-    "code": "has_rad-reason-for-exam",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-reason-for-exam",
-    "description": "rad-reason-for-exam",
+    "code": "AnswerListOID",
+    "uri": "https://terminologyhub.com/model/concept/attribute/AnswerListOID",
+    "type": "string"
+  }, {
+    "code": "STATUS",
+    "uri": "https://terminologyhub.com/model/concept/attribute/STATUS",
+    "description": "Status of the term. Within LOINC, codes with STATUS=DEPRECATED are considered inactive. Current values: ACTIVE, TRIAL, DISCOURAGED, and DEPRECATED",
+    "type": "string"
+  }, {
+    "code": "rad-anatomic-location-region-imaged",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-anatomic-location-region-imaged",
+    "description": "The Anatomic Location Region Imaged attribute is used in two ways: as a coarse-grained descriptor of the area imaged and a grouper for finding related imaging exams; or, it is used just as a grouper.",
+    "type": "string"
+  }, {
+    "code": "answers-for",
+    "uri": "https://terminologyhub.com/model/concept/attribute/answers-for",
+    "description": "A LOINC Code for which this answer list is used.",
+    "type": "string"
+  }, {
+    "code": "LocalAnswerCode",
+    "uri": "https://terminologyhub.com/model/concept/attribute/LocalAnswerCode",
+    "type": "string"
+  }, {
+    "code": "rad-view-aggregation",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-view-aggregation",
+    "description": "Aggregation describes the extent of the imaging performed, whether in quantitative terms (e.g., '3 or more views') or subjective terms (e.g., 'complete').",
+    "type": "string"
+  }, {
+    "code": "SYSTEM",
+    "uri": "https://terminologyhub.com/model/concept/attribute/SYSTEM",
+    "description": "Fourth major axis-type of specimen or system: System (Sample) Type",
+    "type": "string"
+  }, {
+    "code": "CONSUMER_NAME",
+    "uri": "https://terminologyhub.com/model/concept/attribute/CONSUMER_NAME",
+    "description": "An experimental (beta) consumer friendly name for this item. The intent is to provide a test name that health care consumers will recognize.",
+    "type": "string"
+  }, {
+    "code": "rad-guidance-for-presence",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-guidance-for-presence",
+    "description": "Guidance for.Presence indicates when a procedure is guided by imaging.",
+    "type": "string"
+  }, {
+    "code": "SURVEY_QUEST_TEXT",
+    "uri": "https://terminologyhub.com/model/concept/attribute/SURVEY_QUEST_TEXT",
+    "description": "Verbatim question from the survey instrument",
+    "type": "string"
+  }, {
+    "code": "AnswerExtDefinedYNListOID",
+    "uri": "https://terminologyhub.com/model/concept/attribute/AnswerExtDefinedYNListOID",
+    "type": "string"
+  }, {
+    "code": "analyte-divisor",
+    "uri": "https://terminologyhub.com/model/concept/attribute/analyte-divisor",
+    "description": "The divisor part of the analyte, if present, i.e., after the slash and before the first carat",
+    "type": "string"
+  }, {
+    "code": "rad-reason-for-exam",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-reason-for-exam",
+    "description": "Reason for exam is used to describe a clinical indication or a purpose for the study.",
+    "type": "string"
+  }, {
+    "code": "rad-pharmaceutical-route",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-pharmaceutical-route",
+    "description": "Route specifies the route of administration of the pharmaceutical.",
+    "type": "string"
+  }, {
+    "code": "time-modifier",
+    "uri": "https://terminologyhub.com/model/concept/attribute/time-modifier",
+    "description": "The modifier of the Time value, such as mean or max",
+    "type": "string"
+  }, {
+    "code": "PanelType",
+    "uri": "https://terminologyhub.com/model/concept/attribute/PanelType",
+    "description": "For LOINC terms that are panels, this attribute classifies them as a 'Convenience group', 'Organizer', or 'Panel'",
+    "type": "string"
+  }, {
+    "code": "UNITSREQUIRED",
+    "uri": "https://terminologyhub.com/model/concept/attribute/UNITSREQUIRED",
+    "description": "Y/N field that indicates that units are required when this LOINC is included as an OBX segment in a HIPAA attachment",
+    "type": "string"
+  }, {
+    "code": "rad-anatomic-location-imaging-focus",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-anatomic-location-imaging-focus",
+    "description": "The Anatomic Location Imaging Focus is a more fine-grained descriptor of the specific target structure of an imaging exam. In many areas, the focus should be a specific organ.",
+    "type": "string"
+  }, {
+    "code": "Score",
+    "uri": "https://terminologyhub.com/model/concept/attribute/Score",
+    "type": "string"
+  }, {
+    "code": "VersionLastChanged",
+    "uri": "https://terminologyhub.com/model/concept/attribute/VersionLastChanged",
+    "description": "The LOINC version number in which the record has last changed. For new records, this field contains the same value as the VersionFirstReleased property.",
+    "type": "string"
+  }, {
+    "code": "HL7_FIELD_SUBFIELD_ID",
+    "uri": "https://terminologyhub.com/model/concept/attribute/HL7_FIELD_SUBFIELD_ID",
+    "description": "A value in this field means that the content should be delivered in the named field/subfield of the HL7 message. When NULL, the data for this data element should be sent in an OBX segment with this LOINC code stored in OBX-3 and with the value in the OBX-5.",
+    "type": "string"
+  }, {
+    "code": "rad-guidance-for-action",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-guidance-for-action",
+    "description": "Guidance for.Action indicates the intervention performed, such as biopsy, aspiration, or ablation.",
+    "type": "string"
+  }, {
+    "code": "CHNG_TYPE",
+    "uri": "https://terminologyhub.com/model/concept/attribute/CHNG_TYPE",
+    "description": "DEL = delete (deprecate); ADD = add; PANEL = addition or removal of child elements or change in the conditionality of child elements in the panel or in sub-panels contained by the panel; NAM = change to Analyte/Component (field #2); MAJ = change to name field other than #2 (#3 - #7); MIN = change to field other than name; UND = undelete",
+    "type": "string"
+  }, {
+    "code": "rad-anatomic-location-laterality",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-anatomic-location-laterality",
+    "description": "Radiology exam Laterality is specified as one of: Left, Right, Bilateral, Unilateral, Unspecified",
+    "type": "string"
+  }, {
+    "code": "rad-maneuver-maneuver-type",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-maneuver-maneuver-type",
+    "description": "Maneuver type indicates an action taken with the goal of elucidating or testing a dynamic aspect of the anatomy.",
+    "type": "string"
+  }, {
+    "code": "CLASS",
+    "uri": "https://terminologyhub.com/model/concept/attribute/CLASS",
+    "description": "An arbitrary classification of terms for grouping related observations together",
     "type": "string"
   }, {
     "code": "child",
-    "uri": "https://terminologyhub.com/model/relationship/type/Child",
-    "description": "From child to parent",
+    "uri": "https://terminologyhub.com/model/concept/attribute/child",
+    "description": "A child code in the Component Hierarchy by System",
     "type": "string"
   }, {
-    "code": "has_rad-pharmaceutical-substance-given",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-pharmaceutical-substance-given",
-    "description": "rad-pharmaceutical-substance-given",
+    "code": "Description",
+    "uri": "https://terminologyhub.com/model/concept/attribute/Description",
     "type": "string"
   }, {
-    "code": "has_document-setting",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-setting",
-    "description": "document-setting",
+    "code": "document-type-of-service",
+    "uri": "https://terminologyhub.com/model/concept/attribute/document-type-of-service",
+    "description": "Characterizes the kind of service or activity provided to/for the patient (or other subject of the service) that is described in the document.",
     "type": "string"
   }, {
-    "code": "has_rad-modality-subtype",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-modality-subtype",
-    "description": "rad-modality-subtype",
+    "code": "LocalAnswerCodeSystem",
+    "uri": "https://terminologyhub.com/model/concept/attribute/LocalAnswerCodeSystem",
     "type": "string"
   }, {
-    "code": "has_search",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasSearch",
-    "description": "search",
+    "code": "LONG_COMMON_NAME",
+    "uri": "https://terminologyhub.com/model/concept/attribute/LONG_COMMON_NAME",
+    "description": "This field contains the LOINC name in a more readable format than the fully specified name. The long common names have been created via a tabledriven algorithmic process. Most abbreviations and acronyms that are used in the LOINC database have been fully spelled out in English.",
     "type": "string"
   }, {
-    "code": "has_rad-modality-type",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-modality-type",
-    "description": "rad-modality-type",
+    "code": "METHOD_TYP",
+    "uri": "https://terminologyhub.com/model/concept/attribute/METHOD_TYP",
+    "description": "Sixth major axis-method of measurement: Type of Method",
     "type": "string"
   }, {
-    "code": "has_component",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasComponent",
-    "description": "COMPONENT",
+    "code": "rad-pharmaceutical-substance-given",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-pharmaceutical-substance-given",
+    "description": "The Pharmaceutical Substance Given specifies administered contrast agents, radiopharmaceuticals, medications, or other clinically important agents and challenges during the imaging procedure.",
     "type": "string"
   }, {
-    "code": "has_member",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasMember",
-    "description": "member",
+    "code": "UsageNotes",
+    "uri": "https://terminologyhub.com/model/concept/attribute/UsageNotes",
     "type": "string"
   }, {
-    "code": "has_rad-pharmaceutical-route",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-pharmaceutical-route",
-    "description": "rad-pharmaceutical-route",
+    "code": "analyte-suffix",
+    "uri": "https://terminologyhub.com/model/concept/attribute/analyte-suffix",
+    "description": "The suffix part of the analyte, if present, e.g., Ab or DNA",
     "type": "string"
   }, {
-    "code": "has_answers",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnswers",
-    "description": "answers",
+    "code": "DefinitionDescription",
+    "uri": "https://terminologyhub.com/model/concept/attribute/DefinitionDescription",
+    "description": "Narrative text that describes the LOINC term taken as a whole (i.e., taking all of the parts of the term together) or relays information specific to the term, such as the context in which the term was requested or its clinical utility.",
     "type": "string"
   }, {
-    "code": "has_analyte-divisor",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-divisor",
-    "description": "analyte-divisor",
+    "code": "COMPONENT",
+    "uri": "https://terminologyhub.com/model/concept/attribute/COMPONENT",
+    "description": "First major axis-component or analyte: Analyte Name, Analyte sub-class, Challenge",
     "type": "string"
   }, {
-    "code": "has_adjustment",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAdjustment",
-    "description": "adjustment",
+    "code": "ValidHL7AttachmentRequest",
+    "uri": "https://terminologyhub.com/model/concept/attribute/ValidHL7AttachmentRequest",
+    "description": "A value of Y in this field indicates that this LOINC code can be sent by a payer as part of an HL7 Attachment request for additional information.",
     "type": "string"
   }, {
-    "code": "has_document-subject-matter-domain",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-subject-matter-domain",
-    "description": "document-subject-matter-domain",
+    "code": "search",
+    "uri": "https://terminologyhub.com/model/concept/attribute/search",
+    "description": "Synonyms, fragments, and other Parts that are linked to a term to enable more encompassing search results.",
     "type": "string"
   }, {
-    "code": "has_challenge",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasChallenge",
-    "description": "challenge",
+    "code": "rad-anatomic-location-laterality-presence",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-anatomic-location-laterality-presence",
+    "description": "Radiology Exams that require laterality to be specified in order to be performed are signified with an Anatomic Location Laterality Presence attribute set to 'True'",
     "type": "string"
   }, {
-    "code": "has_rad-anatomic-location-imaging-focus",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-anatomic-location-imaging-focus",
-    "description": "rad-anatomic-location-imaging-focus",
+    "code": "analyte-numerator",
+    "uri": "https://terminologyhub.com/model/concept/attribute/analyte-numerator",
+    "description": "The numerator part of the analyte, i.e., everything before the slash in analytes that contain a divisor",
     "type": "string"
   }, {
-    "code": "has_rad-anatomic-location-laterality",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-anatomic-location-laterality",
-    "description": "rad-anatomic-location-laterality",
+    "code": "PartTypeName",
+    "uri": "https://terminologyhub.com/model/concept/attribute/PartTypeName",
     "type": "string"
   }, {
-    "code": "has_analyte-core",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-core",
-    "description": "analyte-core",
+    "code": "analyte-gene",
+    "uri": "https://terminologyhub.com/model/concept/attribute/analyte-gene",
+    "description": "The specific gene represented in the analyte",
     "type": "string"
   }, {
-    "code": "has_analyte-numerator",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-numerator",
-    "description": "analyte-numerator",
+    "code": "rad-guidance-for-approach",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-guidance-for-approach",
+    "description": "Guidance for.Approach refers to the primary route of access used, such as percutaneous, transcatheter, or transhepatic.",
     "type": "string"
   }, {
-    "code": "has_class",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasClass",
-    "description": "CLASS",
+    "code": "SequenceNumber",
+    "uri": "https://terminologyhub.com/model/concept/attribute/SequenceNumber",
     "type": "string"
   }, {
-    "code": "has_document-kind",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-kind",
-    "description": "document-kind",
+    "code": "STATUS_REASON",
+    "uri": "https://terminologyhub.com/model/concept/attribute/STATUS_REASON",
+    "description": "Classification of the reason for concept status. This field will be Null for ACTIVE concepts, and optionally populated for terms in other status where the reason is clear. DEPRECATED or DISCOURAGED terms may take values of: AMBIGUOUS, DUPLICATE, or ERRONEOUS.",
     "type": "string"
   }, {
-    "code": "has_time-modifier",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasTime-modifier",
-    "description": "time-modifier",
+    "code": "document-kind",
+    "uri": "https://terminologyhub.com/model/concept/attribute/document-kind",
+    "description": "Characterizes the general structure of the document at a macro level.",
     "type": "string"
   }, {
-    "code": "has_super-system",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasSuper-system",
-    "description": "super-system",
+    "code": "rad-timing",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-timing",
+    "description": "The Timing/Existence property used in conjunction with pharmaceutical and maneuver properties. It specifies whether or not the imaging occurs in the presence of the administered pharmaceutical or a maneuver designed to test some dynamic aspect of anatomy or physiology .",
     "type": "string"
   }, {
-    "code": "has_time_aspct",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasTimeAspct",
-    "description": "TIME_ASPCT",
+    "code": "SCALE_TYP",
+    "uri": "https://terminologyhub.com/model/concept/attribute/SCALE_TYP",
+    "description": "Fifth major axis-scale of measurement: Type of Scale",
     "type": "string"
   }, {
-    "code": "has_rad-guidance-for-action",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-guidance-for-action",
-    "description": "rad-guidance-for-action",
+    "code": "rad-guidance-for-object",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-guidance-for-object",
+    "description": "Guidance for.Object specifies the target of the action, such as mass, abscess or cyst.",
     "type": "string"
   }, {
-    "code": "other",
-    "uri": "https://terminologyhub.com/model/relationship/type/Other",
-    "description": "otherwise related",
+    "code": "parent",
+    "uri": "https://terminologyhub.com/model/concept/attribute/parent",
+    "description": "A parent code in the Component Hierarchy by System",
     "type": "string"
   }, {
-    "code": "has_count",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasCount",
-    "description": "count",
+    "code": "EXAMPLE_UCUM_UNITS",
+    "uri": "https://terminologyhub.com/model/concept/attribute/EXAMPLE_UCUM_UNITS",
+    "description": "The Unified Code for Units of Measure (UCUM) is a code system intended to include all units of measures being contemporarily used in international science, engineering, and business. (www.unitsofmeasure.org) This field contains example units of measures for this term expressed as UCUM units.",
     "type": "string"
   }, {
-    "code": "has_analyte",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte",
-    "description": "analyte",
+    "code": "EXAMPLE_UNITS",
+    "uri": "https://terminologyhub.com/model/concept/attribute/EXAMPLE_UNITS",
+    "description": "This field is populated with a combination of submitters units and units that people have sent us. Its purpose is to show users representative, but not necessarily recommended, units in which data could be sent for this term.",
     "type": "string"
   }, {
-    "code": "has_analyte-suffix",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-suffix",
-    "description": "analyte-suffix",
+    "code": "EXMPL_ANSWERS",
+    "uri": "https://terminologyhub.com/model/concept/attribute/EXMPL_ANSWERS",
+    "description": "For some tests and measurements, we have supplied examples of valid answers, such as “1:64”, “negative @ 1:16”, or “55”.",
     "type": "string"
   }, {
-    "code": "has_rad-anatomic-location-laterality-presence",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-anatomic-location-laterality-presence",
-    "description": "rad-anatomic-location-laterality-presence",
+    "code": "RELATEDNAMES2",
+    "uri": "https://terminologyhub.com/model/concept/attribute/RELATEDNAMES2",
+    "description": "This field was introduced in version 2.05. It contains synonyms for each of the parts of the fully specified LOINC name (component, property, time, system, scale, method).",
     "type": "string"
   }, {
-    "code": "map_to",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/MapTo",
-    "description": "Mapping from retired code to active code",
+    "code": "analyte",
+    "uri": "https://terminologyhub.com/model/concept/attribute/analyte",
+    "description": "First sub-part of the Component, i.e., the part of the Component before the first carat",
     "type": "string"
   }, {
-    "code": "has_rad-view-view-type",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-view-view-type",
-    "description": "rad-view-view-type",
+    "code": "EXTERNAL_COPYRIGHT_NOTICE",
+    "uri": "https://terminologyhub.com/model/concept/attribute/EXTERNAL_COPYRIGHT_NOTICE",
+    "description": "External copyright holders copyright notice for this LOINC code",
     "type": "string"
   }, {
-    "code": "has_rad-view-aggregation",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-view-aggregation",
-    "description": "rad-view-aggregation",
+    "code": "CHANGE_REASON_PUBLIC",
+    "uri": "https://terminologyhub.com/model/concept/attribute/CHANGE_REASON_PUBLIC",
+    "description": "Detailed explanation about special changes to the term over time.",
     "type": "string"
   }, {
-    "code": "has_rad-guidance-for-presence",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-guidance-for-presence",
-    "description": "rad-guidance-for-presence",
+    "code": "answer-list",
+    "uri": "https://terminologyhub.com/model/concept/attribute/answer-list",
+    "description": "An answer list associated with this LOINC code (if there are matching answer lists defined).",
     "type": "string"
   }, {
-    "code": "has_category",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasCategory",
-    "description": "category",
+    "code": "Archetype",
+    "uri": "https://terminologyhub.com/model/concept/attribute/Archetype",
     "type": "string"
   }, {
-    "code": "has_rad-guidance-for-approach",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-guidance-for-approach",
-    "description": "rad-guidance-for-approach",
+    "code": "TIME_ASPCT",
+    "uri": "https://terminologyhub.com/model/concept/attribute/TIME_ASPCT",
+    "description": "Third major axis-timing of the measurement: Time Aspect (Point or moment in time vs. time interval)",
     "type": "string"
   }, {
-    "code": "has_document-role",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-role",
-    "description": "document-role",
+    "code": "category",
+    "uri": "https://terminologyhub.com/model/concept/attribute/category",
+    "description": "A single LOINC term can be assigned one or more categories based on both programmatic and manual tagging. Category properties also utilize LOINC Class Parts.",
     "type": "string"
   }, {
-    "code": "has_rad-anatomic-location-region-imaged",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-anatomic-location-region-imaged",
-    "description": "rad-anatomic-location-region-imaged",
+    "code": "document-role",
+    "uri": "https://terminologyhub.com/model/concept/attribute/document-role",
+    "description": "Characterizes the training or professional level of the author of the document, but does not break down to specialty or subspecialty.",
     "type": "string"
   }, {
-    "code": "has_analyte-gene",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-gene",
-    "description": "analyte-gene",
+    "code": "DisplayName",
+    "uri": "https://terminologyhub.com/model/concept/attribute/DisplayName",
+    "description": "A name that is more 'clinician-friendly' compared to the current LOINC Short Name, Long Common Name, and Fully Specified Name. It is created algorithmically from the manually crafted display text for each Part and is generally more concise than the Long Common Name.",
     "type": "string"
   }, {
-    "code": "has_method_typ",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasMethodTyp",
-    "description": "METHOD_TYP",
+    "code": "MAP_TO",
+    "uri": "https://terminologyhub.com/model/concept/attribute/MAP_TO",
+    "description": "A replacement term that is to be used in place of the deprecated or discouraged term.",
     "type": "string"
   }, {
-    "code": "has_analyte-divisor-suffix",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasAnalyte-divisor-suffix",
-    "description": "analyte-divisor-suffix",
+    "code": "document-subject-matter-domain",
+    "uri": "https://terminologyhub.com/model/concept/attribute/document-subject-matter-domain",
+    "description": "Characterizes the clinical domain that is the subject of the document. For example, Internal Medicine, Neurology, Physical Therapy, etc.",
     "type": "string"
   }, {
-    "code": "has_time-core",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasTime-core",
-    "description": "time-core",
+    "code": "Category",
+    "uri": "https://terminologyhub.com/model/concept/attribute/Category",
     "type": "string"
   }, {
-    "code": "has_rad-maneuver-maneuver-type",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-maneuver-maneuver-type",
-    "description": "rad-maneuver-maneuver-type",
-    "type": "string"
-  }, {
-    "code": "has_rad-guidance-for-object",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-guidance-for-object",
-    "description": "rad-guidance-for-object",
-    "type": "string"
-  }, {
-    "code": "has_scale_typ",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasScaleTyp",
-    "description": "SCALE_TYP",
-    "type": "string"
-  }, {
-    "code": "has_rad-subject",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-subject",
-    "description": "rad-subject",
-    "type": "string"
-  }, {
-    "code": "has_system-core",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasSystem-core",
-    "description": "system-core",
-    "type": "string"
-  }, {
-    "code": "COMMENT",
-    "uri": "https://terminologyhub.com/model/relationship/attribute/Comment",
-    "description": "Comment",
-    "type": "string"
-  }, {
-    "code": "has_system",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasSystem",
-    "description": "SYSTEM",
-    "type": "string"
-  }, {
-    "code": "has_rad-timing",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasRad-timing",
-    "description": "rad-timing",
-    "type": "string"
-  }, {
-    "code": "has_document-type-of-service",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasDocument-type-of-service",
-    "description": "document-type-of-service",
-    "type": "string"
-  }, {
-    "code": "has_property",
-    "uri": "https://terminologyhub.com/model/relationship/additionalType/HasProperty",
-    "description": "PROPERTY",
-    "type": "string"
-  }, {
-    "code": "Answer",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Answer",
+    "code": "rad-modality-modality-type",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-modality-modality-type",
+    "description": "Modality is used to represent the device used to acquire imaging information.",
     "type": "string"
   }, {
     "code": "count",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Count",
+    "uri": "https://terminologyhub.com/model/concept/attribute/count",
+    "description": "Fourth sub-part of the Component, i.e., after the third carat",
     "type": "string"
   }, {
-    "code": "property",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Property",
+    "code": "AssociatedObservations",
+    "uri": "https://terminologyhub.com/model/concept/attribute/AssociatedObservations",
+    "description": "A multi-valued, semicolon delimited list of LOINC codes that represent optional associated observation(s) for a clinical observation or laboratory test. A LOINC term in this field may represent a single associated observation or panel containing several associated observations.",
     "type": "string"
   }, {
-    "code": "document.setting",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.setting",
+    "code": "system-core",
+    "uri": "https://terminologyhub.com/model/concept/attribute/system-core",
+    "description": "The primary part of the System, i.e., without the super system",
     "type": "string"
   }, {
-    "code": "rad.modality.modality type",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.modality.modalityType",
+    "code": "rad-subject",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-subject",
+    "description": "Subject is intended for use when there is a need to distinguish between the patient associated with an imaging study, and the target of the study.",
     "type": "string"
   }, {
-    "code": "document.kind",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.kind",
+    "code": "SURVEY_QUEST_SRC",
+    "uri": "https://terminologyhub.com/model/concept/attribute/SURVEY_QUEST_SRC",
+    "description": "Exact name of the survey instrument and the item/question number",
     "type": "string"
   }, {
-    "code": "rad.view.view type",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.view.viewType",
+    "code": "EXTERNAL_COPYRIGHT_LINK",
+    "uri": "https://terminologyhub.com/model/concept/attribute/EXTERNAL_COPYRIGHT_LINK",
+    "description": "For terms that have a third party copyright, this field is populated with the COPYRIGHT_ID from the Source Organization table (see below). It links an external copyright statement to a term.",
     "type": "string"
   }, {
-    "code": "Answer List",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/AnswerList",
+    "code": "COMMON_ORDER_RANK",
+    "uri": "https://terminologyhub.com/model/concept/attribute/COMMON_ORDER_RANK",
+    "description": "Ranking of approximately 300 common orders performed by laboratories in USA.",
     "type": "string"
   }, {
-    "code": "rad.anatomic location.laterality.presence",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.anatomicLocation.laterality.presence",
+    "code": "ExtDefinedAnswerListCodeSystem",
+    "uri": "https://terminologyhub.com/model/concept/attribute/ExtDefinedAnswerListCodeSystem",
     "type": "string"
   }, {
-    "code": "super system",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/SuperSystem",
+    "code": "ExtDefinedAnswerListLink,AnswerStringId",
+    "uri": "https://terminologyhub.com/model/concept/attribute/ExtDefinedAnswerListLink,AnswerStringId",
     "type": "string"
   }, {
-    "code": "document.typeofservice",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.typeofservice",
+    "code": "PROPERTY",
+    "uri": "https://terminologyhub.com/model/concept/attribute/PROPERTY",
+    "description": "Second major axis-property observed: Kind of Property (also called kind of quantity)",
     "type": "string"
   }, {
-    "code": "rad.anatomic location.region imaged",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.anatomicLocation.regionImaged",
+    "code": "AskAtOrderEntry",
+    "uri": "https://terminologyhub.com/model/concept/attribute/AskAtOrderEntry",
+    "description": "A multi-valued, semicolon delimited list of LOINC codes that represent optional Ask at Order Entry (AOE) observations for a clinical observation or laboratory test. A LOINC term in this field may represent a single AOE observation or a panel containing several AOE observations.",
     "type": "string"
   }, {
     "code": "challenge",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Challenge",
+    "uri": "https://terminologyhub.com/model/concept/attribute/challenge",
+    "description": "Second sub-part of the Component, i.e., after the first carat",
     "type": "string"
   }, {
-    "code": "divisors",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Divisors",
+    "code": "HL7_ATTACHMENT_STRUCTURE",
+    "uri": "https://terminologyhub.com/model/concept/attribute/HL7_ATTACHMENT_STRUCTURE",
+    "description": "This property is populated in collaboration with the HL7 Payer-Provider Exchange (PIE) Work Group (previously called Attachments Work Group) as described in the HL7 Attachment Specification: Supplement to Consolidated CDA Templated Guide.",
     "type": "string"
   }, {
-    "code": "rad.guidance for.approach",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.guidanceFor.approach",
+    "code": "STATUS_TEXT",
+    "uri": "https://terminologyhub.com/model/concept/attribute/STATUS_TEXT",
+    "description": "Explanation of concept status in narrative text. This field will be Null for ACTIVE concepts, and optionally populated for terms in other status.",
     "type": "string"
   }, {
-    "code": "method",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Method",
+    "code": "time-core",
+    "uri": "https://terminologyhub.com/model/concept/attribute/time-core",
+    "description": "The primary part of the Time",
     "type": "string"
   }, {
-    "code": "rad.subject",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.subject",
+    "code": "AnswerListName",
+    "uri": "https://terminologyhub.com/model/concept/attribute/AnswerListName",
     "type": "string"
   }, {
-    "code": "component",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Component",
+    "code": "super-system",
+    "uri": "https://terminologyhub.com/model/concept/attribute/super-system",
+    "description": "The super system part of the System, if present. The super system represents the source of the specimen when the source is someone or something other than the patient whose chart the result will be stored in. For example, fetus is the super system for measurements done on obstetric ultrasounds, because the fetus is being measured and that measurement is being recorded in the patient's (mother's) chart.",
     "type": "string"
   }, {
-    "code": "Group",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Group",
+    "code": "document-setting",
+    "uri": "https://terminologyhub.com/model/concept/attribute/document-setting",
+    "description": "Setting is a modest extension of CMS’s coarse definition of care settings, such as outpatient, hospital, etc. Setting is not equivalent to location, which typically has more locally defined meanings.",
     "type": "string"
   }, {
-    "code": "suffix",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Suffix",
+    "code": "MolecularWeightOfAnalyte",
+    "uri": "https://terminologyhub.com/model/concept/attribute/MolecularWeightOfAnalyte",
     "type": "string"
   }, {
-    "code": "rad.anatomic location.imaging focus",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.anatomicLocation.imagingFocus",
+    "code": "rad-view-view-type",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-view-view-type",
+    "description": "View type names specific views, such as 'lateral' or 'AP'.",
     "type": "string"
   }, {
-    "code": "rad.guidance for.object",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.guidanceFor.object",
+    "code": "SubsequentTextPrompt",
+    "uri": "https://terminologyhub.com/model/concept/attribute/SubsequentTextPrompt",
     "type": "string"
   }, {
-    "code": "rad.pharmaceutical.route",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.pharmaceutical.route",
+    "code": "analyte-divisor-suffix",
+    "uri": "https://terminologyhub.com/model/concept/attribute/analyte-divisor-suffix",
+    "description": "The suffix part of the divisor, if present",
     "type": "string"
   }, {
-    "code": "rad.timing",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.timing",
+    "code": "rad-modality-modality-subtype",
+    "uri": "https://terminologyhub.com/model/concept/attribute/rad-modality-modality-subtype",
+    "description": "Modality subtype may be optionally included to signify a particularly common or evocative configuration of the modality.",
     "type": "string"
   }, {
-    "code": "rad.maneuver.maneuver type",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.maneuver.maneuverType",
+    "code": "FORMULA",
+    "uri": "https://terminologyhub.com/model/concept/attribute/FORMULA",
+    "description": "Contains the formula in human readable form, for calculating the value of any measure that is based on an algebraic or other formula except those for which the component expresses the formula. So Sodium/creatinine does not need a formula, but Free T3 index does.",
     "type": "string"
   }, {
-    "code": "scale",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Scale",
+    "code": "analyte-core",
+    "uri": "https://terminologyhub.com/model/concept/attribute/analyte-core",
+    "description": "The primary part of the analyte without the suffix",
     "type": "string"
   }, {
-    "code": "system",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/System",
+    "code": "SHORTNAME",
+    "uri": "https://terminologyhub.com/model/concept/attribute/SHORTNAME",
+    "description": "Introduced in version 2.07, this field contains the short form of the LOINC name and is created via a table-driven algorithmic process. The short name often includes abbreviations and acronyms.",
     "type": "string"
   }, {
-    "code": "document.subjectmatterdomain",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.subjectmatterdomain",
-    "type": "string"
-  }, {
-    "code": "rad.view.aggregation",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.view.aggregation",
-    "type": "string"
-  }, {
-    "code": "rad.guidance for.action",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.guidanceFor.action",
-    "type": "string"
-  }, {
-    "code": "Part",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Part",
-    "type": "string"
-  }, {
-    "code": "rad.anatomic location.laterality",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.anatomicLocation.laterality",
-    "type": "string"
-  }, {
-    "code": "class",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Class",
-    "type": "string"
-  }, {
-    "code": "rad.reason for exam",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.reasonForExam",
-    "type": "string"
-  }, {
-    "code": "document.role",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Document.role",
+    "code": "Status",
+    "uri": "https://terminologyhub.com/model/concept/attribute/Status",
     "type": "string"
   }, {
     "code": "adjustment",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Adjustment",
+    "uri": "https://terminologyhub.com/model/concept/attribute/adjustment",
+    "description": "Third sub-part of the Component, i.e., after the second carat",
     "type": "string"
   }, {
-    "code": "rad.modality.modality subtype",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.modality.modalitySubtype",
+    "code": "VersionFirstReleased",
+    "uri": "https://terminologyhub.com/model/concept/attribute/VersionFirstReleased",
+    "description": "This is the LOINC version number in which this LOINC term was first published.",
     "type": "string"
   }, {
-    "code": "rad.pharmaceutical.substance given",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.pharmaceutical.substanceGiven",
+    "code": "CLASSTYPE",
+    "uri": "https://terminologyhub.com/model/concept/attribute/CLASSTYPE",
+    "description": "1=Laboratory class; 2=Clinical class; 3=Claims attachments; 4=Surveys",
     "type": "string"
   }, {
-    "code": "time",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Time",
+    "code": "COMMON_TEST_RANK",
+    "uri": "https://terminologyhub.com/model/concept/attribute/COMMON_TEST_RANK",
+    "description": "Ranking of approximately 2000 common tests performed by laboratories in USA.",
     "type": "string"
   }, {
-    "code": "time modifier",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/TimeModifier",
-    "type": "string"
-  }, {
-    "code": "gene",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Gene",
-    "type": "string"
-  }, {
-    "code": "rad.guidance for.presence",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Rad.guidanceFor.presence",
-    "type": "string"
-  }, {
-    "code": "Observation",
-    "uri": "https://terminologyhub.com/model/concept/semanticType/Observation",
+    "code": "ORDER_OBS",
+    "uri": "https://terminologyhub.com/model/concept/attribute/ORDER_OBS",
+    "description": "Provides users with an idea of the intended use of the term by categorizing it as an order only, observation only, or both",
     "type": "string"
   }, {
     "code": "fr-BE",
-    "uri": "https://terminologyhub.com/model/term/language/Fr-be",
+    "uri": "https://terminologyhub.com/model/term/language/fr-BE",
     "description": "fr-BE",
     "type": "string"
   }, {
     "code": "pl-PL",
-    "uri": "https://terminologyhub.com/model/term/language/Pl-pl",
+    "uri": "https://terminologyhub.com/model/term/language/pl-PL",
     "description": "pl-PL",
     "type": "string"
   }, {
+    "code": "Group",
+    "uri": "https://terminologyhub.com/model/term/type/Group",
+    "description": "Group",
+    "type": "string"
+  }, {
+    "code": "el-GR",
+    "uri": "https://terminologyhub.com/model/term/language/el-GR",
+    "description": "el-GR",
+    "type": "string"
+  }, {
     "code": "tr-TR",
-    "uri": "https://terminologyhub.com/model/term/language/Tr-tr",
+    "uri": "https://terminologyhub.com/model/term/language/tr-TR",
     "description": "tr-TR",
     "type": "string"
   }, {
     "code": "ko-KR",
-    "uri": "https://terminologyhub.com/model/term/language/Ko-kr",
+    "uri": "https://terminologyhub.com/model/term/language/ko-KR",
     "description": "ko-KR",
     "type": "string"
   }, {
     "code": "ConsumerName",
-    "uri": "https://terminologyhub.com/model/term/type/Consumername",
-    "description": "Consumer Name",
+    "uri": "https://terminologyhub.com/model/term/type/ConsumerName",
+    "description": "ConsumerName",
     "type": "string"
   }, {
     "code": "de-AT",
-    "uri": "https://terminologyhub.com/model/term/language/De-at",
+    "uri": "https://terminologyhub.com/model/term/language/de-AT",
     "description": "de-AT",
     "type": "string"
   }, {
     "code": "ru-RU",
-    "uri": "https://terminologyhub.com/model/term/language/Ru-ru",
+    "uri": "https://terminologyhub.com/model/term/language/ru-RU",
     "description": "ru-RU",
     "type": "string"
   }, {
     "code": "it-IT",
-    "uri": "https://terminologyhub.com/model/term/language/It-it",
+    "uri": "https://terminologyhub.com/model/term/language/it-IT",
     "description": "it-IT",
     "type": "string"
   }, {
-    "code": "SHORTNAME",
-    "uri": "https://terminologyhub.com/model/term/type/Shortname",
-    "description": "Shortname",
-    "type": "string"
-  }, {
     "code": "CODE_TEXT",
-    "uri": "https://terminologyhub.com/model/term/type/CodeText",
-    "description": "Code Text",
+    "uri": "https://terminologyhub.com/model/term/type/CODE_TEXT",
+    "description": "CODE_TEXT",
     "type": "string"
   }, {
     "code": "es-MX",
-    "uri": "https://terminologyhub.com/model/term/language/Es-mx",
+    "uri": "https://terminologyhub.com/model/term/language/es-MX",
     "description": "es-MX",
     "type": "string"
   }, {
     "code": "es-ES",
-    "uri": "https://terminologyhub.com/model/term/language/Es-es",
+    "uri": "https://terminologyhub.com/model/term/language/es-ES",
     "description": "es-ES",
     "type": "string"
   }, {
     "code": "uk-UA",
-    "uri": "https://terminologyhub.com/model/term/language/Uk-ua",
+    "uri": "https://terminologyhub.com/model/term/language/uk-UA",
     "description": "uk-UA",
     "type": "string"
   }, {
-    "code": "FullySpecifiedName",
-    "uri": "https://terminologyhub.com/model/term/type/FullySpecifiedName",
-    "description": "Fully Specified Name",
+    "code": "en-US",
+    "uri": "https://terminologyhub.com/model/term/language/en-US",
+    "description": "English",
+    "type": "string"
+  }, {
+    "code": "fr-FR",
+    "uri": "https://terminologyhub.com/model/term/language/fr-FR",
+    "description": "fr-FR",
     "type": "string"
   }, {
     "code": "es-AR",
-    "uri": "https://terminologyhub.com/model/term/language/Es-ar",
+    "uri": "https://terminologyhub.com/model/term/language/es-AR",
     "description": "es-AR",
     "type": "string"
   }, {
     "code": "ParentGroup",
-    "uri": "https://terminologyhub.com/model/term/type/Parentgroup",
-    "description": "Parent Group",
+    "uri": "https://terminologyhub.com/model/term/type/ParentGroup",
+    "description": "ParentGroup",
     "type": "string"
   }, {
     "code": "PartName",
-    "uri": "https://terminologyhub.com/model/term/type/Partname",
-    "description": "Part Name",
+    "uri": "https://terminologyhub.com/model/term/type/PartName",
+    "description": "PartName",
     "type": "string"
   }, {
     "code": "de-DE",
-    "uri": "https://terminologyhub.com/model/term/language/De-de",
+    "uri": "https://terminologyhub.com/model/term/language/de-DE",
     "description": "de-DE",
     "type": "string"
   }, {
+    "code": "FullySpecifiedName",
+    "uri": "https://terminologyhub.com/model/term/type/FullySpecifiedName",
+    "description": "FullySpecifiedName",
+    "type": "string"
+  }, {
     "code": "et-EE",
-    "uri": "https://terminologyhub.com/model/term/language/Et-ee",
+    "uri": "https://terminologyhub.com/model/term/language/et-EE",
     "description": "et-EE",
     "type": "string"
   }, {
     "code": "fr-CA",
-    "uri": "https://terminologyhub.com/model/term/language/Fr-ca",
+    "uri": "https://terminologyhub.com/model/term/language/fr-CA",
     "description": "fr-CA",
     "type": "string"
   }, {
-    "code": "DisplayName",
-    "uri": "https://terminologyhub.com/model/term/type/Displayname",
-    "description": "Display Name",
-    "type": "string"
-  }, {
     "code": "PartDisplayName",
-    "uri": "https://terminologyhub.com/model/term/type/Partdisplayname",
-    "description": "Part Display Name",
+    "uri": "https://terminologyhub.com/model/term/type/PartDisplayName",
+    "description": "PartDisplayName",
     "type": "string"
   }, {
     "code": "nl-NL",
-    "uri": "https://terminologyhub.com/model/term/language/Nl-nl",
+    "uri": "https://terminologyhub.com/model/term/language/nl-NL",
     "description": "nl-NL",
     "type": "string"
   }, {
     "code": "zh-CN",
-    "uri": "https://terminologyhub.com/model/term/language/Zh-cn",
+    "uri": "https://terminologyhub.com/model/term/language/zh-CN",
     "description": "zh-CN",
     "type": "string"
   }, {
     "code": "DisplayText",
-    "uri": "https://terminologyhub.com/model/term/type/Displaytext",
-    "description": "Display Text",
+    "uri": "https://terminologyhub.com/model/term/type/DisplayText",
+    "description": "DisplayText",
     "type": "string"
   }, {
     "code": "pt-BR",
-    "uri": "https://terminologyhub.com/model/term/language/Pt-br",
+    "uri": "https://terminologyhub.com/model/term/language/pt-BR",
     "description": "pt-BR",
     "type": "string"
   }, {
-    "code": "en",
-    "uri": "https://terminologyhub.com/model/term/language/En",
-    "description": "English",
+    "code": "rad-modality-subtype",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/rad-modality-subtype",
+    "description": "rad-modality-subtype",
     "type": "string"
   }, {
-    "code": "AnswerListName",
-    "uri": "https://terminologyhub.com/model/term/type/Answerlistname",
-    "description": "Answer List Name",
+    "code": "class",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/class",
+    "description": "CLASS",
     "type": "string"
   }, {
-    "code": "LONG_COMMON_NAME",
-    "uri": "https://terminologyhub.com/model/term/type/LongCommonName",
-    "description": "Long Common Name",
+    "code": "property",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/property",
+    "description": "PROPERTY",
     "type": "string"
   }, {
-    "code": "parent",
-    "uri": "https://terminologyhub.com/model/terminology/attributes/parent",
-    "description": "Parent",
-    "type": "Coding"
+    "code": "time_aspct",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/time_aspct",
+    "description": "TIME_ASPCT",
+    "type": "string"
+  }, {
+    "code": "member",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/member",
+    "description": "member",
+    "type": "string"
+  }, {
+    "code": "system",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/system",
+    "description": "SYSTEM",
+    "type": "string"
+  }, {
+    "code": "answers",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/answers",
+    "description": "answers",
+    "type": "string"
+  }, {
+    "code": "method_typ",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/method_typ",
+    "description": "METHOD_TYP",
+    "type": "string"
+  }, {
+    "code": "other",
+    "uri": "https://terminologyhub.com/model/relationship/type/other",
+    "description": "otherwise related",
+    "type": "string"
+  }, {
+    "code": "map_to",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/map_to",
+    "description": "Mapping from retired code to active code",
+    "type": "string"
+  }, {
+    "code": "rad-modality-type",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/rad-modality-type",
+    "description": "rad-modality-type",
+    "type": "string"
+  }, {
+    "code": "component",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/component",
+    "description": "COMPONENT",
+    "type": "string"
+  }, {
+    "code": "COMMENT",
+    "uri": "https://terminologyhub.com/model/relationship/attribute/COMMENT",
+    "description": "Comment",
+    "type": "string"
+  }, {
+    "code": "scale_typ",
+    "uri": "https://terminologyhub.com/model/relationship/additionalType/scale_typ",
+    "description": "SCALE_TYP",
+    "type": "string"
   }, {
     "code": "active",
     "uri": "https://terminologyhub.com/model/terminology/attributes/active",
@@ -674,351 +780,441 @@
     {
       "code": "10-9",
       "display": "Amdinocillin [Susceptibility] by Serum bactericidal titer",
-      "designation": [ {
-        "language": "en",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "LONG_COMMON_NAME",
-          "display": "Long Common Name"
+      "designation": [
+        {
+          "language": "en-US",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "LONG_COMMON_NAME",
+            "display": "LONG_COMMON_NAME"
+          },
+          "value": "Amdinocillin [Susceptibility] by Serum bactericidal titer"
         },
-        "value": "Amdinocillin [Susceptibility] by Serum bactericidal titer"
-      }, {
-        "language": "en",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "language": "en-US",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "Amdinocillin:Titr:Pt:Isolate+Ser:SemiQn:SBT"
         },
-        "value": "Amdinocillin:Titr:Pt:Isolate+Ser:SemiQn:SBT"
-      }, {
-        "language": "en",
-        "use": {
-          "system": "http://loinc.org",
+        {
+          "language": "en-US",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "ConsumerName",
+            "display": "ConsumerName"
+          },
+          "value": "Susceptibility to Amdinocillin"
+        },
+        {
+          "language": "en-US",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "SHORTNAME",
+            "display": "SHORTNAME"
+          },
+          "value": "Amdinocillin Titr SBT"
+        },
+        {
+          "language": "en-US",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "DisplayName",
+            "display": "DisplayName"
+          },
+          "value": "Amdinocillin SBT (Isol+S)"
+        },
+        {
+          "language": "es-ES",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "Amdinocillina:Titulo / Factor de dilución:Punto temporal:Aislado y Suero:Semicuantitativo:Títulos séricos bactericidas"
+        },
+        {
+          "language": "ko-KR",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "Amdinocillin:감수성:검사시점:분리주+혈청:순위척도:혈청 살균 역가"
+        },
+        {
+          "language": "fr-CA",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "Amdinocilline:Titre:Temps ponctuel:Isolat+Sérum:SemiQn:Pouvoir bactéricide du sérum"
+        },
+        {
+          "language": "zh-CN",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "氮卓脒青霉素:滴定度:时间点:分离株+血清:半定量型:血清杀菌滴度法"
+        },
+        {
+          "language": "it-IT",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "Amdinocillina:Titr:Pt:Isolato+Siero:SemiQn:SBT"
+        },
+        {
+          "language": "pt-BR",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "SHORTNAME",
+            "display": "SHORTNAME"
+          },
+          "value": "Amdinocillin Titr SBT"
+        },
+        {
+          "language": "pt-BR",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "Amdinocilina:Título:Pt:Isolado/Soro:Qn:Teste bactericida do soro"
+        },
+        {
+          "language": "es-MX",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "LONG_COMMON_NAME",
+            "display": "LONG_COMMON_NAME"
+          },
+          "value": "Amdinocilina: Aislado y suero : Punto temporal: Título: Cuantitativo: Título bactericida en suero"
+        },
+        {
+          "language": "es-MX",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "Amdinocilina:Título:Punto temporal:Aislado y suero:Cuantitativo:Título bactericida en suero"
+        },
+        {
+          "language": "fr-FR",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "Mécillinam:Titre:Ponctuel:Isolat+Sérum:Semi-Quantitatif:Pouvoir bactéricide du sérum"
+        },
+        {
+          "language": "nl-NL",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "LONG_COMMON_NAME",
+            "display": "LONG_COMMON_NAME"
+          },
+          "value": "Amdinocilline [titer] in isolaat en serum d.m.v. serum bacteriocide titer"
+        },
+        {
+          "language": "nl-NL",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "amdinocilline:titer:moment:isolaat en serum:semikwantitatief:serum bacteriocide titer"
+        },
+        {
+          "language": "es-AR",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "SHORTNAME",
+            "display": "SHORTNAME"
+          },
+          "value": "amdinocilina:susceptibilidad:punto en el tiempo:cepa clínica+suero:ordinal:determinación de título bactericida en suero"
+        },
+        {
+          "language": "es-AR",
+          "use": {
+            "system": "http://loinc.org",
+            "code": "FullySpecifiedName",
+            "display": "FullySpecifiedName"
+          },
+          "value": "amdinocilina:susceptibilidad:punto en el tiempo:cepa clínica+suero:ordinal:determinación de título bactericida en suero"
+        }
+      ],
+      "property": [
+        {
+          "code": "active",
+          "valueBoolean": true
+        },
+        {
+          "code": "semanticType",
+          "valueString": "Observation"
+        },
+        {
+          "code": "SYSTEM",
+          "valueString": "Isolate+Ser"
+        },
+        {
+          "code": "CLASSTYPE",
+          "valueString": "1"
+        },
+        {
+          "code": "COMMON_TEST_RANK",
+          "valueString": "0"
+        },
+        {
+          "code": "TIME_ASPCT",
+          "valueString": "Pt"
+        },
+        {
           "code": "SHORTNAME",
-          "display": "Shortname"
+          "valueString": "Amdinocillin Titr SBT"
         },
-        "value": "Amdinocillin Titr SBT"
-      }, {
-        "language": "en",
-        "use": {
-          "system": "http://loinc.org",
+        {
+          "code": "PROPERTY",
+          "valueString": "Titr"
+        },
+        {
+          "code": "METHOD_TYP",
+          "valueString": "SBT"
+        },
+        {
+          "code": "LONG_COMMON_NAME",
+          "valueString": "Amdinocillin [Susceptibility] by Serum bactericidal titer"
+        },
+        {
+          "code": "SCALE_TYP",
+          "valueString": "SemiQn"
+        },
+        {
+          "code": "CLASS",
+          "valueString": "ABXBACT"
+        },
+        {
+          "code": "VersionLastChanged",
+          "valueString": "2.75"
+        },
+        {
+          "code": "COMMON_ORDER_RANK",
+          "valueString": "0"
+        },
+        {
+          "code": "STATUS",
+          "valueString": "ACTIVE"
+        },
+        {
+          "code": "VersionFirstReleased",
+          "valueString": "1.0"
+        },
+        {
+          "code": "CHNG_TYPE",
+          "valueString": "MAJ"
+        },
+        {
+          "code": "RELATEDNAMES2",
+          "valueString": "Amdinocillin pivoxil; ANTIBIOTIC SUSCEPTIBILITIES; Dilution factor; Dilution Factor (Titer); ID; Infectious Disease; InfectiousDisease; Islt; Isol; Mecillinam; Pivmecilliam; Point in time; Random; Selexid; Sequence based typing; Serum; SERUM BACTERICIDAL TITER; Serum killing test; SmQn; SR; Titer; Titered; Titre; Ttr"
+        },
+        {
+          "code": "EXAMPLE_UNITS",
+          "valueString": "titer"
+        },
+        {
           "code": "DisplayName",
-          "display": "Display Name"
+          "valueString": "Amdinocillin SBT (Isol+S)"
         },
-        "value": "Amdinocillin SBT (Isol+S)"
-      }, {
-        "language": "es-ES",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "code": "COMPONENT",
+          "valueString": "Amdinocillin"
         },
-        "value": "Amdinocillina:Titulo / Factor de dilución:Punto temporal:Aislado y Suero:Semicuantitativo:Títulos séricos bactericidas"
-      }, {
-        "language": "ko-KR",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "code": "EXAMPLE_UCUM_UNITS",
+          "valueString": "{titer}"
         },
-        "value": "Amdinocillin:감수성:검사시점:분리주+혈청:순위척도:혈청 살균 역가"
-      }, {
-        "language": "fr-CA",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "code": "ORDER_OBS",
+          "valueString": "Observation"
         },
-        "value": "Amdinocilline:Titre:Temps ponctuel:Isolat+Sérum:SemiQn:Pouvoir bactéricide du sérum"
-      }, {
-        "language": "zh-CN",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "code": "method_typ",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP6501-3",
+            "display": "SBT"
+          }
         },
-        "value": "氮卓脒青霉素:滴定度:时间点:分离株+血清:半定量型:血清杀菌滴度法"
-      }, {
-        "language": "it-IT",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "code": "class",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP7755-4",
+            "display": "ABXBACT"
+          }
         },
-        "value": "Amdinocillina:Titr:Pt:Isolato+Siero:SemiQn:SBT"
-      }, {
-        "language": "pt-BR",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "SHORTNAME",
-          "display": "Shortname"
+        {
+          "code": "analyte-core",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP14523-2",
+            "display": "Amdinocillin"
+          }
         },
-        "value": "Amdinocillin Titr SBT"
-      }, {
-        "language": "pt-BR",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "code": "component",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP14523-2",
+            "display": "Amdinocillin"
+          }
         },
-        "value": "Amdinocilina:Título:Pt:Isolado/Soro:Qn:Teste bactericida do soro"
-      }, {
-        "language": "es-MX",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "LONG_COMMON_NAME",
-          "display": "Long Common Name"
+        {
+          "code": "category",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP415704-8",
+            "display": "InfectiousDisease"
+          }
         },
-        "value": "Amdinocilina: Aislado y suero : Punto temporal: Título: Cuantitativo: Título bactericida en suero"
-      }, {
-        "language": "es-MX",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "code": "scale_typ",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP436123-6",
+            "display": "SemiQn"
+          }
         },
-        "value": "Amdinocilina:Título:Punto temporal:Aislado y suero:Cuantitativo:Título bactericida en suero"
-      }, {
-        "language": "nl-NL",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "LONG_COMMON_NAME",
-          "display": "Long Common Name"
+        {
+          "code": "analyte",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP14523-2",
+            "display": "Amdinocillin"
+          }
         },
-        "value": "Amdinocilline [titer] in isolaat en serum d.m.v. serum bacteriocide titer"
-      }, {
-        "language": "nl-NL",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "code": "property",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP6881-9",
+            "display": "Titr"
+          }
         },
-        "value": "amdinocilline:titer:moment:isolaat en serum:semikwantitatief:serum bacteriocide titer"
-      }, {
-        "language": "es-AR",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "SHORTNAME",
-          "display": "Shortname"
+        {
+          "code": "method_typ",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP6501-3",
+            "display": "SBT"
+          }
         },
-        "value": "amdinocilina:susceptibilidad:punto en el tiempo:cepa clínica+suero:ordinal:determinación de título bactericida en suero"
-      }, {
-        "language": "es-AR",
-        "use": {
-          "system": "http://loinc.org",
-          "code": "FullySpecifiedName",
-          "display": "FullySpecifiedName"
+        {
+          "code": "search",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP7567-3",
+            "display": "Ser"
+          }
         },
-        "value": "amdinocilina:susceptibilidad:punto en el tiempo:cepa clínica+suero:ordinal:determinación de título bactericida en suero"
-      } ],
-      "property": [ {
-        "code": "active",
-        "valueBoolean": true
-      }, {
-        "code": "semanticType",
-        "valueString": "Observation"
-      }, {
-        "code": "SYSTEM",
-        "valueString": "Isolate+Ser"
-      }, {
-        "code": "CLASSTYPE",
-        "valueString": "1"
-      }, {
-        "code": "COMMON_TEST_RANK",
-        "valueString": "0"
-      }, {
-        "code": "TIME_ASPCT",
-        "valueString": "Pt"
-      }, {
-        "code": "PROPERTY",
-        "valueString": "Titr"
-      }, {
-        "code": "METHOD_TYP",
-        "valueString": "SBT"
-      }, {
-        "code": "SCALE_TYP",
-        "valueString": "SemiQn"
-      }, {
-        "code": "CLASS",
-        "valueString": "ABXBACT"
-      }, {
-        "code": "VersionLastChanged",
-        "valueString": "2.75"
-      }, {
-        "code": "COMMON_ORDER_RANK",
-        "valueString": "0"
-      }, {
-        "code": "STATUS",
-        "valueString": "ACTIVE"
-      }, {
-        "code": "VersionFirstReleased",
-        "valueString": "1.0"
-      }, {
-        "code": "CHNG_TYPE",
-        "valueString": "MAJ"
-      }, {
-        "code": "RELATEDNAMES2",
-        "valueString": "Amdinocillin pivoxil; ANTIBIOTIC SUSCEPTIBILITIES; Dilution factor; Dilution Factor (Titer); ID; Infectious Disease; InfectiousDisease; Islt; Isol; Mecillinam; Pivmecilliam; Point in time; Random; Selexid; Sequence based typing; Serum; SERUM BACTERICIDAL TITER; Serum killing test; SmQn; SR; Titer; Titered; Titre; Ttr"
-      }, {
-        "code": "EXAMPLE_UNITS",
-        "valueString": "titer"
-      }, {
-        "code": "COMPONENT",
-        "valueString": "Amdinocillin"
-      }, {
-        "code": "EXAMPLE_UCUM_UNITS",
-        "valueString": "{titer}"
-      }, {
-        "code": "ORDER_OBS",
-        "valueString": "Observation"
-      }, {
-        "code": "has_system",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP7371-0",
-          "display": "Isolate and Serum"
+        {
+          "code": "system",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP7371-0",
+            "display": "Isolate+Ser"
+          }
+        },
+        {
+          "code": "scale_typ",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP436123-6",
+            "display": "SemiQn"
+          }
+        },
+        {
+          "code": "category",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP343406-7",
+            "display": "Microbiology and Antimicrobial susceptibility"
+          }
+        },
+        {
+          "code": "time_aspct",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP6960-1",
+            "display": "Pt"
+          }
+        },
+        {
+          "code": "time-core",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP6960-1",
+            "display": "Pt"
+          }
+        },
+        {
+          "code": "category",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP7755-4",
+            "display": "ABXBACT"
+          }
+        },
+        {
+          "code": "parent",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP380471-5",
+            "display": "Amdinocillin | Isolate and Serum | Antibiotic susceptibilities"
+          }
+        },
+        {
+          "code": "property",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP6881-9",
+            "display": "Titr"
+          }
+        },
+        {
+          "code": "search",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP7370-2",
+            "display": "Isolate"
+          }
+        },
+        {
+          "code": "category",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP29693-6",
+            "display": "Lab"
+          }
+        },
+        {
+          "code": "system-core",
+          "valueCoding": {
+            "system": "http://loinc.org",
+            "code": "LP7371-0",
+            "display": "Isolate+Ser"
+          }
         }
-      }, {
-        "code": "parent",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP380471-5",
-          "display": "Amdinocillin | Isolate and Serum | Antibiotic susceptibilities"
-        }
-      }, {
-        "code": "has_scale_typ",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP436123-6",
-          "display": "SemiQn"
-        }
-      }, {
-        "code": "has_component",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP14523-2",
-          "display": "Amdinocillin"
-        }
-      }, {
-        "code": "has_class",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP7755-4",
-          "display": "Antibiotic susceptibilities"
-        }
-      }, {
-        "code": "has_category",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP343406-7",
-          "display": "Microbiology and Antimicrobial susceptibility"
-        }
-      }, {
-        "code": "has_analyte-core",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP14523-2",
-          "display": "Amdinocillin"
-        }
-      }, {
-        "code": "has_analyte",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP14523-2",
-          "display": "Amdinocillin"
-        }
-      }, {
-        "code": "has_property",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP6881-9",
-          "display": "Titer"
-        }
-      }, {
-        "code": "has_scale_typ",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP436123-6",
-          "display": "SemiQn"
-        }
-      }, {
-        "code": "has_method_typ",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP6501-3",
-          "display": "Serum bactericidal titer"
-        }
-      }, {
-        "code": "has_category",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP29693-6",
-          "display": "Laboratory"
-        }
-      }, {
-        "code": "has_system-core",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP7371-0",
-          "display": "Isolate and Serum"
-        }
-      }, {
-        "code": "has_category",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP7755-4",
-          "display": "Antibiotic susceptibilities"
-        }
-      }, {
-        "code": "has_method_typ",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP6501-3",
-          "display": "Serum bactericidal titer"
-        }
-      }, {
-        "code": "has_search",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP7370-2",
-          "display": "Isolate"
-        }
-      }, {
-        "code": "has_time-core",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP6960-1",
-          "display": "Point in time (spot)"
-        }
-      }, {
-        "code": "has_property",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP6881-9",
-          "display": "Titer"
-        }
-      }, {
-        "code": "has_category",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP415704-8",
-          "display": "InfectiousDisease"
-        }
-      }, {
-        "code": "has_search",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP7567-3",
-          "display": "Serum"
-        }
-      }, {
-        "code": "has_time_aspct",
-        "valueCoding": {
-          "system": "http://loinc.org",
-          "code": "LP6960-1",
-          "display": "Point in time (spot)"
-        }
-      } ]
+      ]
     }
   ]
 }
