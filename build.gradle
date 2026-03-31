@@ -40,7 +40,7 @@ repositories {
 }
 
 group = 'com.wci.open-termhub'
-version = '1.2.2-202603'
+version = '1.2.3-202603'
 
 sourceCompatibility = 17
 targetCompatibility = 17
