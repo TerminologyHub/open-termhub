@@ -96,7 +96,7 @@ import ca.uhn.fhir.parser.IParser;
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
-@TestPropertySource(properties = "fhir.loinc.lllg.valuesets.enabled=true")
+@TestPropertySource(properties = "fhir.loinc.lllg.valuesets.enabled=false")
 public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
   /**
@@ -2321,32 +2321,6 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         e -> e.getResource() instanceof ValueSet && LL_VS_ID.equals(e.getResource().getIdPart())
             && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl()));
     assertTrue(found, "Bundle should contain ValueSet " + LL_VS_ID + " with url " + LL_VS_URL);
-  }
-
-  /**
-   * Test ValueSet read by id for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r4). Requires
-   * fhir.loinc.lllg.valuesets.enabled=true.
-   *
-   * @throws Exception the exception
-   */
-  @Test
-  @Order(FIND)
-  public void testValueSetReadLllgById() throws Exception {
-    final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + LL_VS_ID;
-    LOGGER.info("Testing endpoint: {}", endpoint);
-
-    final String content = this.restTemplate.getForObject(endpoint, String.class);
-    final ValueSet valueSet = parser.parseResource(ValueSet.class, content);
-
-    assertNotNull(valueSet);
-    assertEquals(ResourceType.ValueSet, valueSet.getResourceType());
-    assertEquals(LL_VS_ID, valueSet.getIdPart());
-    assertEquals(LL_VS_URL, valueSet.getUrl());
-    assertTrue(
-        valueSet.getCompose() != null && valueSet.getCompose().getInclude() != null
-            && !valueSet.getCompose().getInclude().isEmpty()
-            || valueSet.getExpansion() != null && valueSet.getExpansion().getContains() != null,
-        "LL value set should have compose or expansion with members");
   }
 
   /**

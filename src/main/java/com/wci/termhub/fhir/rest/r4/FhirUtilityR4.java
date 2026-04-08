@@ -1017,6 +1017,8 @@ public final class FhirUtilityR4 {
     final ValueSet set = new ValueSet();
     set.setId(lllgId);
     set.setUrl(terminology.getUri() + "?fhir_vs=" + lllgId);
+    set.setVersion(terminology.getVersion());
+    set.setPublisher(terminology.getPublisher());
     set.setStatus(PublicationStatus.ACTIVE);
     if (terminology.getAttributes() != null && terminology.getAttributes().get("copyright") != null) {
       set.setCopyright(terminology.getAttributes().get("copyright"));
@@ -1033,6 +1035,26 @@ public final class FhirUtilityR4 {
     if (set.getMeta() != null && terminology.getCreated() != null) {
       set.getMeta().setVersionId("1");
       set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
+    }
+    return set;
+  }
+
+  /**
+   * Builds a minimal R4 ValueSet for a LOINC LL/LG concept found during enumeration. Sets name and
+   * title from the concept's name in addition to the fields set by
+   * {@link #toR4LllgValueSet(Terminology, String, boolean)}.
+   *
+   * @param terminology LOINC terminology
+   * @param concept the LL or LG concept (code used as lllgId, name used as title/name)
+   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion and loincLllgId tags
+   * @return the value set
+   */
+  public static ValueSet toR4LllgValueSetFromConcept(final Terminology terminology,
+      final Concept concept, final boolean metaFlag) {
+    final ValueSet set = toR4LllgValueSet(terminology, concept.getCode(), metaFlag);
+    if (concept.getName() != null) {
+      set.setName(concept.getName());
+      set.setTitle(concept.getName());
     }
     return set;
   }
