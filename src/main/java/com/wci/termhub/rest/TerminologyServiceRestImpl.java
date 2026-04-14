@@ -1372,6 +1372,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND",
               "from.code:" + StringUtility.escapeQuery(concept.getCode()),
               "terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
+              StringUtility.isEmpty(concept.getPublisher()) ? null
+                  : "publisher:" + StringUtility.escapeQuery(concept.getPublisher()),
+              StringUtility.isEmpty(concept.getVersion()) ? null
+                  : "version:" + StringUtility.escapeQuery(concept.getVersion()),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
@@ -1519,6 +1523,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND",
               "to.code:" + StringUtility.escapeQuery(concept.getCode()),
               "terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
+              StringUtility.isEmpty(concept.getPublisher()) ? null
+                  : "publisher:" + StringUtility.escapeQuery(concept.getPublisher()),
+              StringUtility.isEmpty(concept.getVersion()) ? null
+                  : "version:" + StringUtility.escapeQuery(concept.getVersion()),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
@@ -1654,7 +1662,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
 
     try {
 
-      final Map<String, Terminology> map = lookupTerminologyMap();
       // look up concept first and get code,
       // then do a find on the query
       final Concept concept = searchService.get(conceptId, Concept.class);
@@ -1662,7 +1669,7 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
         throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
       }
       // Choose indexName for the concept
-      final Terminology terminology = getTerminology(map, concept);
+      final Terminology terminology = getTerminology(lookupTerminologyMap(), concept);
       terminologyHasTreePositions(terminology);
 
       // limit return objects to 2000 regardless of user request
@@ -1672,6 +1679,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           StringUtility.composeQuery("AND",
               "concept.code:" + StringUtility.escapeQuery(concept.getCode()),
               "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
+              StringUtility.isEmpty(concept.getPublisher()) ? null
+                  : "publisher:" + StringUtility.escapeQuery(concept.getPublisher()),
+              StringUtility.isEmpty(concept.getVersion()) ? null
+                  : "version:" + StringUtility.escapeQuery(concept.getVersion()),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
@@ -1753,6 +1764,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       final SearchParameters searchParams = new SearchParameters(
           StringUtility.composeQuery("AND", "terminology:" + StringUtility.escapeQuery(terminology),
               "concept.code:" + StringUtility.escapeQuery(code),
+              StringUtility.isEmpty(term.getPublisher()) ? null
+                  : "publisher:" + StringUtility.escapeQuery(term.getPublisher()),
+              StringUtility.isEmpty(term.getVersion()) ? null
+                  : "version:" + StringUtility.escapeQuery(term.getVersion()),
               QueryBuilder.findBuilder(builders, handler).buildQuery(query)),
           offset, maxLimit, sort, ascending);
 
@@ -1829,8 +1844,8 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       if (concept == null) {
         throw new RestException(false, 404, "Not Found", "Unable to find concept = " + conceptId);
       }
-      // check if terminology has tree positions
-      final Terminology terminology = lookupTerminology(concept.getTerminology());
+      // check if terminology has tree positions (disambiguate by publisher+version; not abbreviation alone)
+      final Terminology terminology = getTerminology(lookupTerminologyMap(), concept);
       terminologyHasTreePositions(terminology);
 
       // Find this thing
@@ -1838,6 +1853,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       searchParams.setQuery(StringUtility.composeQuery("AND",
           "terminology:" + StringUtility.escapeQuery(concept.getTerminology()),
           "concept.code:" + StringUtility.escapeQuery(concept.getCode()),
+          StringUtility.isEmpty(concept.getPublisher()) ? null
+              : "publisher:" + StringUtility.escapeQuery(concept.getPublisher()),
+          StringUtility.isEmpty(concept.getVersion()) ? null
+              : "version:" + StringUtility.escapeQuery(concept.getVersion()),
           QueryBuilder.findBuilder(builders, handler).buildQuery(query)));
 
       // limit return objects to 2000 regardless of user request
@@ -1862,6 +1881,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       paramsChd.setQuery(StringUtility.composeQuery("AND",
           "terminology:" + StringUtility.escapeQuery(tp.getTerminology()),
           "ancestorPath:" + StringUtility.escapeQuery(ancPath),
+          StringUtility.isEmpty(concept.getPublisher()) ? null
+              : "publisher:" + StringUtility.escapeQuery(concept.getPublisher()),
+          StringUtility.isEmpty(concept.getVersion()) ? null
+              : "version:" + StringUtility.escapeQuery(concept.getVersion()),
           QueryBuilder.findBuilder(builders, handler).buildQuery(query)));
 
       final ResultList<ConceptTreePosition> listChd =
@@ -1939,7 +1962,11 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       searchParams.setQuery(StringUtility.composeQuery("AND",
           QueryBuilder.findBuilder(builders, handler).buildQuery(query),
           "terminology:" + StringUtility.escapeQuery(terminology),
-          "concept.code:" + StringUtility.escapeQuery(code)));
+          "concept.code:" + StringUtility.escapeQuery(code),
+          StringUtility.isEmpty(term.getPublisher()) ? null
+              : "publisher:" + StringUtility.escapeQuery(term.getPublisher()),
+          StringUtility.isEmpty(term.getVersion()) ? null
+              : "version:" + StringUtility.escapeQuery(term.getVersion())));
 
       // limit return objects to 2000 regardless of user request
       final Integer maxLimit = (limit == null) ? null : Math.min(limit, 2000);
@@ -1962,6 +1989,10 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       paramsChd.setQuery(StringUtility.composeQuery("AND",
           "terminology:" + StringUtility.escapeQuery(tp.getTerminology()),
           "ancestorPath:" + StringUtility.escapeQuery(ancPath),
+          StringUtility.isEmpty(term.getPublisher()) ? null
+              : "publisher:" + StringUtility.escapeQuery(term.getPublisher()),
+          StringUtility.isEmpty(term.getVersion()) ? null
+              : "version:" + StringUtility.escapeQuery(term.getVersion()),
           QueryBuilder.findBuilder(builders, handler).buildQuery(query)));
       final ResultList<ConceptTreePosition> listChd =
           searchService.find(paramsChd, ConceptTreePosition.class);
