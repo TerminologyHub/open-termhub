@@ -1407,6 +1407,16 @@ public final class FhirUtilityR4 {
         pc.setType(CodeSystem.PropertyType.STRING);
       } else if ("code".equals(property.getType())) {
         pc.setType(CodeSystem.PropertyType.CODE);
+      } else if ("Coding".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.CODING);
+      } else if ("boolean".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.BOOLEAN);
+      } else if ("integer".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.INTEGER);
+      } else if ("dateTime".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.DATETIME);
+      } else if ("decimal".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.DECIMAL);
       }
     }
 

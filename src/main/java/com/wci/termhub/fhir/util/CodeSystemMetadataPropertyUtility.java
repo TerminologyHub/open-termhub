@@ -97,13 +97,13 @@ public final class CodeSystemMetadataPropertyUtility {
    */
   private static void addStandardProperties(final List<CodeSystemMetadataProperty> list) {
     list.add(new CodeSystemMetadataProperty("parent",
-        "http://hl7.org/fhir/concept-properties#parent", "Parent concept", "code"));
+        "http://hl7.org/fhir/concept-properties#parent", "A parent code in the Component Hierarchy by System", "code"));
 
     list.add(new CodeSystemMetadataProperty("status",
         "http://hl7.org/fhir/concept-properties#status", "Concept status", "code"));
 
       list.add(new CodeSystemMetadataProperty("child",
-      "http://hl7.org/fhir/concept-properties#child", "Child concept", "code"));
+      "http://hl7.org/fhir/concept-properties#child", "A child code in the Component Hierarchy by System", "code"));
   }
 }
 
