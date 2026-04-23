@@ -753,16 +753,23 @@ public class ValueSetProviderR5 implements IResourceProvider {
             new ValueSetExpansionContainsComponent().setSystem(terminology.getUri())
                 .setCode(concept.getCode()).setDisplay(concept.getName());
         if (languages != null) {
+          final boolean isLoinc =
+              terminology.getUri() != null && terminology.getUri().contains("loinc.org");
           for (final Term term : concept.getTerms()) {
             if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
               final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService,
                   concept.getTerminology(), concept.getPublisher(), concept.getVersion());
               final Coding coding = new Coding();
-              if (displayMap.containsKey(term.getType())) {
-                coding.setCode(term.getType());
-                coding.setDisplay(displayMap.get(term.getType()));
+              coding.setCode(term.getType());
+              if (isLoinc) {
+                coding.setDisplay(term.getType());
               } else {
-                coding.setCode(term.getType());
+                final String useDisplay = term.getAttributes().get("designationUseDisplay");
+                if (useDisplay != null) {
+                  coding.setDisplay(useDisplay);
+                } else if (displayMap.containsKey(term.getType())) {
+                  coding.setDisplay(displayMap.get(term.getType()));
+                }
               }
               code.addDesignation(new ConceptReferenceDesignationComponent()
                   .setLanguage(
@@ -898,6 +905,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
         // "code": "display"
         // },
         // "value": "Chronic nontraumatic intracranial subdural hematoma"
+        final boolean isLoinc =
+            terminology.getUri() != null && terminology.getUri().contains("loinc.org");
         for (final Term term : concept.getTerms()) {
 
           if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
@@ -905,11 +914,16 @@ public class ValueSetProviderR5 implements IResourceProvider {
             final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService,
                 concept.getTerminology(), concept.getPublisher(), concept.getVersion());
             final Coding coding = new Coding();
-            if (displayMap.containsKey(term.getType())) {
-              coding.setCode(term.getType());
-              coding.setDisplay(displayMap.get(term.getType()));
+            coding.setCode(term.getType());
+            if (isLoinc) {
+              coding.setDisplay(term.getType());
             } else {
-              coding.setCode(term.getType());
+              final String useDisplay = term.getAttributes().get("designationUseDisplay");
+              if (useDisplay != null) {
+                coding.setDisplay(useDisplay);
+              } else if (displayMap.containsKey(term.getType())) {
+                coding.setDisplay(displayMap.get(term.getType()));
+              }
             }
             code.addDesignation(new ConceptReferenceDesignationComponent()
                 .setLanguage(
