@@ -1193,7 +1193,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
     final List<ValueSet> list = new ArrayList<>();
     // For now (until we have real value sets)
     // Look up implicit value sets for code systems
-    for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
+    final List<Terminology> allTerminologies = FhirUtility.lookupTerminologies(searchService);
+    for (final Terminology terminology : allTerminologies) {
       final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, metaFlag);
 
       // Skip non-matching
@@ -1334,23 +1335,71 @@ public class ValueSetProviderR4 implements IResourceProvider {
           lllgId = code.getValue();
         }
         if (lllgId != null) {
-          final ValueSet lllgVs = FhirUtilityR4.toR4LllgValueSet(loinc, lllgId, metaFlag);
-          final boolean idUrlMatch = (id == null || id.getValue().equals(lllgVs.getId()))
-              && (url == null || url.getValue().equals(lllgVs.getUrl()));
-          final boolean dateMatch = date == null || FhirUtility.compareDate(date, lllgVs.getDate());
-          final boolean versionMatch =
-              version == null || FhirUtility.compareString(version, lllgVs.getVersion());
-          final boolean nameMatch =
-              name == null || FhirUtility.compareString(name, lllgVs.getName());
-          final boolean publisherMatch =
-              publisher == null || FhirUtility.compareString(publisher, lllgVs.getPublisher());
-          final boolean titleMatch =
-              title == null || FhirUtility.compareString(title, lllgVs.getTitle());
-          final boolean descriptionMatch = description == null
-              || FhirUtility.compareString(description, lllgVs.getDescription());
-          if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch && titleMatch
-              && descriptionMatch) {
-            list.add(lllgVs);
+          final Terminology loincForLllg;
+          if (version != null && !version.isEmpty()) {
+            final String requestedVersion = version.getValue();
+            loincForLllg = allTerminologies.stream()
+                .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
+                .filter(t -> requestedVersion.equals(t.getVersion()))
+                .findFirst().orElse(null);
+          } else {
+            loincForLllg = loinc;
+          }
+          if (loincForLllg != null) {
+            final ValueSet lllgVs = FhirUtilityR4.toR4LllgValueSet(loincForLllg, lllgId, metaFlag);
+            final boolean idUrlMatch = (id == null || id.getValue().equals(lllgVs.getId()))
+                && (url == null || url.getValue().equals(lllgVs.getUrl()));
+            final boolean dateMatch =
+                date == null || FhirUtility.compareDate(date, lllgVs.getDate());
+            final boolean versionMatch =
+                version == null || FhirUtility.compareString(version, lllgVs.getVersion());
+            final boolean nameMatch =
+                name == null || FhirUtility.compareString(name, lllgVs.getName());
+            final boolean publisherMatch =
+                publisher == null || FhirUtility.compareString(publisher, lllgVs.getPublisher());
+            final boolean titleMatch =
+                title == null || FhirUtility.compareString(title, lllgVs.getTitle());
+            final boolean descriptionMatch = description == null
+                || FhirUtility.compareString(description, lllgVs.getDescription());
+            if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch && titleMatch
+                && descriptionMatch) {
+              list.add(lllgVs);
+            }
+          }
+        } else if (loincValueSetHelper.isEnabled()) {
+          // General listing: enumerate LL/LG concepts from every loaded LOINC version so that an
+          // unfiltered GET /ValueSet returns codes from all versions, and a version-filtered request
+          // returns only the matching subset.
+          final List<Terminology> loincTerminologies = allTerminologies.stream()
+              .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org")).toList();
+          for (final Terminology loincTerm : loincTerminologies) {
+            final ResultList<Concept> lllgConcepts =
+                loincValueSetHelper.findAllLllgConcepts(searchService, loincTerm, 10_000, 0);
+            for (final Concept concept : lllgConcepts.getItems()) {
+              if (!loincValueSetHelper.isLllgId(concept.getCode())) {
+                continue;
+              }
+              final ValueSet lllgVs =
+                  FhirUtilityR4.toR4LllgValueSetFromConcept(loincTerm, concept, metaFlag);
+              final boolean idUrlMatch = (id == null || id.getValue().equals(lllgVs.getId()))
+                  && (url == null || url.getValue().equals(lllgVs.getUrl()));
+              final boolean dateMatch =
+                  date == null || FhirUtility.compareDate(date, lllgVs.getDate());
+              final boolean versionMatch =
+                  version == null || FhirUtility.compareString(version, lllgVs.getVersion());
+              final boolean nameMatch =
+                  name == null || FhirUtility.compareString(name, lllgVs.getName());
+              final boolean publisherMatch =
+                  publisher == null || FhirUtility.compareString(publisher, lllgVs.getPublisher());
+              final boolean titleMatch =
+                  title == null || FhirUtility.compareString(title, lllgVs.getTitle());
+              final boolean descriptionMatch = description == null
+                  || FhirUtility.compareString(description, lllgVs.getDescription());
+              if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch && titleMatch
+                  && descriptionMatch) {
+                list.add(lllgVs);
+              }
+            }
           }
         }
       }

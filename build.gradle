@@ -1,6 +1,9 @@
 buildscript {
   ext {
     springBootVersion = "3.5.13"
+    log4jVersion = "2.25.4"
+    tomcatEmbedVersion = "10.1.54"
+    hapiFhirVersion = "6.9.4"
   }
   repositories {
     mavenLocal()
@@ -22,7 +25,8 @@ plugins {
     id 'java'
     id 'eclipse'
     id 'war'
-    id 'org.springframework.boot' version '3.5.13'
+    id 'org.springframework.boot' version "${springBootVersion}"
+
     id 'io.spring.dependency-management' version '1.1.4'
     id 'com.github.hierynomus.license' version '0.16.1'
     id 'com.github.spotbugs' version '6.0.26'
@@ -40,7 +44,7 @@ repositories {
 }
 
 group = 'com.wci.open-termhub'
-version = '1.2.2-202603'
+version = '1.2.3-202603'
 
 sourceCompatibility = 17
 targetCompatibility = 17
@@ -57,22 +61,18 @@ configurations.all {
 
 // Ensure Spring Boot's dependency management is explicitly configured
 dependencyManagement {
-//    imports {
-//        mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.9"
-//    }
     dependencies {
-        dependency('org.fhir:ucum:1.0.9')
         dependency('com.fasterxml.jackson.core:jackson-core:2.18.6')
         dependency('org.codehaus.plexus:plexus-utils:4.0.3')
         dependency('org.apache.commons:commons-lang3:3.18.0')
-        dependency('org.apache.logging.log4j:log4j-api:2.25.3')
-        dependency('org.apache.logging.log4j:log4j-core:2.25.3')
+        dependency("org.apache.logging.log4j:log4j-api:${log4jVersion}")
+        dependency("org.apache.logging.log4j:log4j-core:${log4jVersion}")
+        dependency("org.apache.logging.log4j:log4j-slf4j2-impl:${log4jVersion}")
+        dependency("org.apache.logging.log4j:log4j-jul:${log4jVersion}")
+        dependency("org.apache.tomcat.embed:tomcat-embed-core:${tomcatEmbedVersion}")
+        dependency("org.apache.tomcat.embed:tomcat-embed-el:${tomcatEmbedVersion}")
+        dependency("org.apache.tomcat.embed:tomcat-embed-websocket:${tomcatEmbedVersion}")
 
-
-//        // NOTE: when spring version is updated, do NOT explicily do this
-//        // It was only done to handle trivy vulnerability without upgrading to 3.5 boot
-//        dependency('org.springframework:spring-core:6.2.11')
-//        dependency('org.springframework:spring-context:6.2.11')
     }
 }
 
@@ -89,17 +89,21 @@ dependencies {
 
 
   // Vulnerability import
-  //implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.44"
+  implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.54"
+  implementation "org.thymeleaf:thymeleaf:3.1.4.RELEASE"
+  implementation "org.thymeleaf:thymeleaf-spring6:3.1.4.RELEASE"
+
+  implementation "org.fhir:ucum:1.0.9"
   // These are needed to override dependencies from hapi-fhir-base (until it is fixed)
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.convertors:6.9.4"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2:6.9.4"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2016may:6.9.4"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:6.9.4"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4:6.9.4"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4b:6.9.4"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r5:6.9.4"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.utilities:6.9.4"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.validation:6.9.4"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.convertors:${hapiFhirVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2:${hapiFhirVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2016may:${hapiFhirVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:${hapiFhirVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4:${hapiFhirVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4b:${hapiFhirVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r5:${hapiFhirVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.utilities:${hapiFhirVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.validation:${hapiFhirVersion}"
 
   // prometheus
   implementation "io.micrometer:micrometer-registry-prometheus"
