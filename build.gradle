@@ -43,7 +43,7 @@ repositories {
 }
 
 group = 'com.wci.open-termhub'
-version = '1.2.2-202603'
+version = '1.2.3-202603'
 
 sourceCompatibility = 17
 targetCompatibility = 17
@@ -60,11 +60,7 @@ configurations.all {
 
 // Ensure Spring Boot's dependency management is explicitly configured
 dependencyManagement {
-//    imports {
-//        mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.9"
-//    }
     dependencies {
-        dependency('org.fhir:ucum:1.0.9')
         dependency('com.fasterxml.jackson.core:jackson-core:2.18.6')
         dependency('org.codehaus.plexus:plexus-utils:4.0.3')
         dependency('org.apache.commons:commons-lang3:3.18.0')
@@ -76,10 +72,6 @@ dependencyManagement {
         dependency("org.apache.tomcat.embed:tomcat-embed-el:${tomcatEmbedVersion}")
         dependency("org.apache.tomcat.embed:tomcat-embed-websocket:${tomcatEmbedVersion}")
 
-//        // NOTE: when spring version is updated, do NOT explicily do this
-//        // It was only done to handle trivy vulnerability without upgrading to 3.5 boot
-//        dependency('org.springframework:spring-core:6.2.11')
-//        dependency('org.springframework:spring-context:6.2.11')
     }
 }
 
@@ -96,7 +88,11 @@ dependencies {
 
 
   // Vulnerability import
-  //implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.44"
+  implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.54"
+  implementation "org.thymeleaf:thymeleaf:3.1.4.RELEASE"
+  implementation "org.thymeleaf:thymeleaf-spring6:3.1.4.RELEASE"
+
+  implementation "org.fhir:ucum:1.0.9"
   // These are needed to override dependencies from hapi-fhir-base (until it is fixed)
   implementation "ca.uhn.hapi.fhir:org.hl7.fhir.convertors:${hapiFhirVersion}"
   implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2:${hapiFhirVersion}"
