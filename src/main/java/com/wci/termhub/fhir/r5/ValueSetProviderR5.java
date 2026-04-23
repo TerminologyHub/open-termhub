@@ -1307,23 +1307,36 @@ public class ValueSetProviderR5 implements IResourceProvider {
           lllgId = code.getValue();
         }
         if (lllgId != null) {
-          final ValueSet lllgVs = FhirUtilityR5.toR5LllgValueSet(loinc, lllgId, metaFlag);
-          final boolean idUrlMatch = (id == null || id.getValue().equals(lllgVs.getId()))
-              && (url == null || url.getValue().equals(lllgVs.getUrl()));
-          final boolean dateMatch = date == null || FhirUtility.compareDate(date, lllgVs.getDate());
-          final boolean versionMatch =
-              version == null || FhirUtility.compareString(version, lllgVs.getVersion());
-          final boolean nameMatch =
-              name == null || FhirUtility.compareString(name, lllgVs.getName());
-          final boolean publisherMatch =
-              publisher == null || FhirUtility.compareString(publisher, lllgVs.getPublisher());
-          final boolean titleMatch =
-              title == null || FhirUtility.compareString(title, lllgVs.getTitle());
-          final boolean descriptionMatch = description == null
-              || FhirUtility.compareString(description, lllgVs.getDescription());
-          if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch && titleMatch
-              && descriptionMatch) {
-            list.add(lllgVs);
+          final Terminology loincForLllg;
+          if (version != null && !version.isEmpty()) {
+            final String requestedVersion = version.getValue();
+            loincForLllg = FhirUtility.lookupTerminologies(searchService).stream()
+                .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
+                .filter(t -> requestedVersion.equals(t.getVersion()))
+                .findFirst().orElse(null);
+          } else {
+            loincForLllg = loinc;
+          }
+          if (loincForLllg != null) {
+            final ValueSet lllgVs = FhirUtilityR5.toR5LllgValueSet(loincForLllg, lllgId, metaFlag);
+            final boolean idUrlMatch = (id == null || id.getValue().equals(lllgVs.getId()))
+                && (url == null || url.getValue().equals(lllgVs.getUrl()));
+            final boolean dateMatch =
+                date == null || FhirUtility.compareDate(date, lllgVs.getDate());
+            final boolean versionMatch =
+                version == null || FhirUtility.compareString(version, lllgVs.getVersion());
+            final boolean nameMatch =
+                name == null || FhirUtility.compareString(name, lllgVs.getName());
+            final boolean publisherMatch =
+                publisher == null || FhirUtility.compareString(publisher, lllgVs.getPublisher());
+            final boolean titleMatch =
+                title == null || FhirUtility.compareString(title, lllgVs.getTitle());
+            final boolean descriptionMatch = description == null
+                || FhirUtility.compareString(description, lllgVs.getDescription());
+            if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch && titleMatch
+                && descriptionMatch) {
+              list.add(lllgVs);
+            }
           }
         }
       }

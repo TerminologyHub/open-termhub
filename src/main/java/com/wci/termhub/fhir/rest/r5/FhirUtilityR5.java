@@ -1035,6 +1035,8 @@ public final class FhirUtilityR5 {
     final ValueSet set = new ValueSet();
     set.setId(lllgId);
     set.setUrl(terminology.getUri() + "?fhir_vs=" + lllgId);
+    set.setVersion(terminology.getVersion());
+    set.setPublisher(terminology.getPublisher());
     set.setStatus(PublicationStatus.ACTIVE);
     if (terminology.getAttributes() != null
         && terminology.getAttributes().get("copyright") != null) {
