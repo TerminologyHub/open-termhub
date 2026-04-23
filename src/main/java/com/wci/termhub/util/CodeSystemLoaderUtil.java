@@ -574,6 +574,7 @@ public final class CodeSystemLoaderUtil {
       final String code = property.path("code").asText();
       final String description = property.path("description").asText();
       final String fieldType = uriParts[uriParts.length - 2];
+      final String fhirType = property.path("type").asText();
 
       try {
 
@@ -587,6 +588,9 @@ public final class CodeSystemLoaderUtil {
         metadata.setVersion(terminology.getVersion());
         metadata.setModel(MetaModel.Model.valueOf(modelType));
         metadata.setField(MetaModel.Field.valueOf(fieldType));
+        if (!fhirType.isEmpty()) {
+          metadata.getAttributes().put("fhirPropertyType", fhirType);
+        }
         metadataList.add(metadata);
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("    ADD metadata = {}", metadata.toString());

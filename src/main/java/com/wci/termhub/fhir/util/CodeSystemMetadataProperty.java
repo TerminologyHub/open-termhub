@@ -95,6 +95,8 @@ public final class CodeSystemMetadataProperty {
     final String uri = codeSystemUrl == null || codeSystemUrl.isEmpty() ? null
         : codeSystemUrl + "/property/" + code;
     final String description = metadata.getName();
-    return new CodeSystemMetadataProperty(code, uri, description, defaultType);
+    final String storedType = metadata.getAttributes().get("fhirPropertyType");
+    final String type = (storedType != null && !storedType.isEmpty()) ? storedType : defaultType;
+    return new CodeSystemMetadataProperty(code, uri, description, type);
   }
 }
