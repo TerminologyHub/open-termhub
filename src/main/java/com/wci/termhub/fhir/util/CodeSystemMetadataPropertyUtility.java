@@ -11,7 +11,6 @@ package com.wci.termhub.fhir.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import com.wci.termhub.model.MetaModel;
 import com.wci.termhub.model.Metadata;
@@ -44,16 +43,13 @@ public final class CodeSystemMetadataPropertyUtility {
 
     final List<CodeSystemMetadataProperty> result = new ArrayList<>();
     if (terminology == null || metadataList == null || metadataList.isEmpty()) {
-      addStandardProperties(result);
+      addStandardProperties(result, terminology != null ? terminology.getUri() : null);
       return result;
     }
 
     final String baseUrl = terminology.getUri();
     for (final Metadata metadata : metadataList) {
       if (metadata.getCode() == null || metadata.getCode().isEmpty()) {
-        continue;
-      }
-      if (isReservedStandardPropertyCode(metadata.getCode())) {
         continue;
       }
 
@@ -71,39 +67,37 @@ public final class CodeSystemMetadataPropertyUtility {
       result.add(CodeSystemMetadataProperty.fromMetadata(metadata, baseUrl, DEFAULT_METADATA_TYPE));
     }
 
-    addStandardProperties(result);
+    addStandardProperties(result, baseUrl);
     return result;
   }
 
   /**
-   * True if the code matches the standard {@code parent} or {@code status} properties (case
-   * insensitive), which are always emitted by {@link #addStandardProperties(List)}.
-   *
-   * @param code the metadata code
-   * @return true if reserved
-   */
-  private static boolean isReservedStandardPropertyCode(final String code) {
-    if (code == null || code.isEmpty()) {
-      return false;
-    }
-    final String normalized = code.trim().toLowerCase(Locale.ROOT);
-    return "parent".equals(normalized) || "status".equals(normalized) || "child".equals(normalized);
-  }
-
-  /**
-   * Adds the standard parent and status properties.
+   * Adds the standard parent, status, and child properties when missing.
    *
    * @param list the list
+   * @param codeSystemUrl the code system base URL; see
+   *          {@link CodeSystemMetadataProperty#propertyUriForLoincOrFhirStandardCode}
    */
-  private static void addStandardProperties(final List<CodeSystemMetadataProperty> list) {
-    list.add(new CodeSystemMetadataProperty("parent",
-        "http://hl7.org/fhir/concept-properties#parent", "A parent code in the Component Hierarchy by System", "code"));
+  private static void addStandardProperties(final List<CodeSystemMetadataProperty> list,
+    final String codeSystemUrl) {
 
-    list.add(new CodeSystemMetadataProperty("status",
-        "http://hl7.org/fhir/concept-properties#status", "Concept status", "code"));
+    if (list.stream().noneMatch(p -> "parent".equalsIgnoreCase(p.getCode()))) {
+      list.add(new CodeSystemMetadataProperty("parent",
+          CodeSystemMetadataProperty.propertyUriForLoincOrFhirStandardCode(codeSystemUrl, "parent"),
+          "A parent code in the Component Hierarchy by System", "code"));
+    }
 
+    if (list.stream().noneMatch(p -> "status".equalsIgnoreCase(p.getCode()))) {
+      list.add(new CodeSystemMetadataProperty("status",
+          CodeSystemMetadataProperty.propertyUriForLoincOrFhirStandardCode(codeSystemUrl, "status"),
+          "Concept status", "code"));
+    }
+
+    if (list.stream().noneMatch(p -> "child".equalsIgnoreCase(p.getCode()))) {
       list.add(new CodeSystemMetadataProperty("child",
-      "http://hl7.org/fhir/concept-properties#child", "A child code in the Component Hierarchy by System", "code"));
+          CodeSystemMetadataProperty.propertyUriForLoincOrFhirStandardCode(codeSystemUrl, "child"),
+          "A child code in the Component Hierarchy by System", "code"));
+    }
   }
 }
 

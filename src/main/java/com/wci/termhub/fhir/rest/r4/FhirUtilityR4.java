@@ -1265,16 +1265,18 @@ public final class FhirUtilityR4 {
 
     cs.setUrl(terminology.getUri());
 
-    // Parse the full date string with timezone information
+    // Parse the full date string with timezone information (also drives meta.lastUpdated)
     final String releaseDate = terminology.getReleaseDate();
+    Date releaseAsDate = null;
     if (releaseDate != null && !releaseDate.isEmpty()) {
       if (releaseDate.contains("T")) {
         // Full ISO 8601 date string with timezone
-        cs.setDate(Date.from(Instant.parse(releaseDate)));
+        releaseAsDate = Date.from(Instant.parse(releaseDate));
       } else {
         // Fallback to date-only format
-        cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+        releaseAsDate = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
       }
+      cs.setDate(releaseAsDate);
     }
 
     // Set version - prefer fhirVersion attribute if available, otherwise use
@@ -1392,10 +1394,11 @@ public final class FhirUtilityR4 {
       cs.setVersionNeeded(Boolean.parseBoolean(versionNeeded));
     }
 
-    // Meta: versionId for _history, lastUpdated from release date (UTC)
+    // Meta: versionId for _history; lastUpdated from release date when present, else created
     final Meta csMeta = new Meta();
     csMeta.setVersionId("1");
-    csMeta.setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
+    csMeta.setLastUpdated(releaseAsDate != null ? releaseAsDate
+        : DateUtility.parseToUtcDate(terminology.getCreated()));
     if (terminology.getAttributes().containsKey("originalId")) {
       csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }

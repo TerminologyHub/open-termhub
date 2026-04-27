@@ -11,6 +11,7 @@ package com.wci.termhub.fhir.rest.r5;
 
 import static java.lang.String.format;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -1261,14 +1262,16 @@ public final class FhirUtilityR5 {
 
     cs.setUrl(terminology.getUri());
 
-    // Parse the full date string with timezone information
+    // Parse the full date string with timezone information (also drives meta.lastUpdated)
     final String releaseDate = terminology.getReleaseDate();
-    if (releaseDate != null && releaseDate.contains("T")) {
-      // Full ISO 8601 date string with timezone
-      cs.setDate(Date.from(java.time.Instant.parse(releaseDate)));
-    } else {
-      // Fallback to date-only format
-      cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+    Date releaseAsDate = null;
+    if (releaseDate != null && !releaseDate.isEmpty()) {
+      if (releaseDate.contains("T")) {
+        releaseAsDate = Date.from(Instant.parse(releaseDate));
+      } else {
+        releaseAsDate = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
+      }
+      cs.setDate(releaseAsDate);
     }
     String version = terminology.getAttributes().get("fhirVersion");
     if (version == null) {
@@ -1374,10 +1377,11 @@ public final class FhirUtilityR5 {
       cs.setVersionNeeded(Boolean.parseBoolean(versionNeeded));
     }
 
-    // Meta: versionId for _history, lastUpdated from release date (UTC)
+    // Meta: versionId for _history; lastUpdated from release date when present, else created
     final Meta csMeta = new Meta();
     csMeta.setVersionId("1");
-    csMeta.setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
+    csMeta.setLastUpdated(releaseAsDate != null ? releaseAsDate
+        : DateUtility.parseToUtcDate(terminology.getCreated()));
     if (terminology.getAttributes().containsKey("originalId")) {
       csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }
