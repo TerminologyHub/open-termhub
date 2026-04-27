@@ -16,6 +16,18 @@ import com.wci.termhub.model.Metadata;
  */
 public final class CodeSystemMetadataProperty {
 
+  /** HL7 standard CodeSystem property URIs (FHIR concept properties). */
+  public static final String FHIR_CONCEPT_PROPERTY_URI_PARENT =
+      "http://hl7.org/fhir/concept-properties#parent";
+
+  /** The Constant FHIR_CONCEPT_PROPERTY_URI_STATUS. */
+  public static final String FHIR_CONCEPT_PROPERTY_URI_STATUS =
+      "http://hl7.org/fhir/concept-properties#status";
+
+  /** The Constant FHIR_CONCEPT_PROPERTY_URI_CHILD. */
+  public static final String FHIR_CONCEPT_PROPERTY_URI_CHILD =
+      "http://hl7.org/fhir/concept-properties#child";
+
   /** The code. */
   private final String code;
 
@@ -81,6 +93,67 @@ public final class CodeSystemMetadataProperty {
   }
 
   /**
+   * If {@code code} is a standard FHIR concept property (parent, child, status,
+   * case insensitive), returns the HL7 fragment URI; otherwise returns
+   * {@code null}.
+   *
+   * @param code the property code
+   * @return the URI or null
+   */
+  public static String fhirConceptPropertyUriForCode(final String code) {
+    if (code == null || code.isEmpty()) {
+      return null;
+    }
+    final String n = code.trim();
+    if ("parent".equalsIgnoreCase(n)) {
+      return FHIR_CONCEPT_PROPERTY_URI_PARENT;
+    }
+    if ("child".equalsIgnoreCase(n)) {
+      return FHIR_CONCEPT_PROPERTY_URI_CHILD;
+    }
+    if ("status".equalsIgnoreCase(n)) {
+      return FHIR_CONCEPT_PROPERTY_URI_STATUS;
+    }
+    return null;
+  }
+
+  /**
+   * True when the code system is LOINC.
+   *
+   * @param codeSystemUrl the CodeSystem URL
+   * @return true if LOINC
+   */
+  public static boolean isLoincCodeSystemUrl(final String codeSystemUrl) {
+    return codeSystemUrl != null && codeSystemUrl.contains("loinc.org");
+  }
+
+  /**
+   * For {@code parent} / {@code child} / {@code status} only: parent and child
+   * always use HL7 {@code concept-properties#} URIs (including for LOINC,
+   * matching fhir.loinc.org). For LOINC only, {@code status} uses
+   * {@code {base}/property/{code}}; all other code systems use HL7 for status
+   * as well.
+   *
+   * @param codeSystemUrl the code system base URL
+   * @param code the property code (one of the three; casing preserved for the
+   *          LOINC status path)
+   * @return the URI, or null if code is not one of the three
+   */
+  public static String propertyUriForLoincOrFhirStandardCode(final String codeSystemUrl,
+    final String code) {
+
+    final String fhir = fhirConceptPropertyUriForCode(code);
+    if (fhir == null) {
+      return null;
+    }
+    if (isLoincCodeSystemUrl(codeSystemUrl) && !codeSystemUrl.isEmpty()
+        && "status".equalsIgnoreCase(code.trim())) {
+      return codeSystemUrl + "/property/" + code.trim();
+    }
+    return fhir;
+  }
+
+  /**
    * Creates a {@link CodeSystemMetadataProperty} from the specified metadata.
    *
    * @param metadata the metadata
@@ -92,8 +165,16 @@ public final class CodeSystemMetadataProperty {
     final String codeSystemUrl, final String defaultType) {
 
     final String code = metadata.getCode();
-    final String uri = codeSystemUrl == null || codeSystemUrl.isEmpty() ? null
+    String uri = codeSystemUrl == null || codeSystemUrl.isEmpty() ? null
         : codeSystemUrl + "/property/" + code;
+    final String fhirUri = fhirConceptPropertyUriForCode(code);
+    if (fhirUri != null) {
+      if (!isLoincCodeSystemUrl(codeSystemUrl)) {
+        uri = fhirUri;
+      } else if (code == null || !"status".equalsIgnoreCase(code.trim())) {
+        uri = fhirUri;
+      }
+    }
     final String description = metadata.getName();
     final String storedType = metadata.getAttributes().get("fhirPropertyType");
     final String type = (storedType != null && !storedType.isEmpty()) ? storedType : defaultType;
