@@ -96,7 +96,9 @@ public final class FhirUtilityR5 {
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
 
-  /** Meta tag system for LOINC LL/LG value set id (used by ValueSetProvider for expand/validate). */
+  /**
+   * Meta tag system for LOINC LL/LG value set id (used by ValueSetProvider for expand/validate).
+   */
   public static final String META_LOINC_LLLG_ID = "loincLllgId";
 
   /**
@@ -445,8 +447,7 @@ public final class FhirUtilityR5 {
    * Recover code.
    *
    * @param code the code
-   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the
-   *          string
+   * @param coding the codiHttpServletResponse.SC_BAD_REQUEST) * @return the string
    * @return the string
    */
   public static String recoverCode(final CodeType code, final Coding coding) {
@@ -623,6 +624,7 @@ public final class FhirUtilityR5 {
    * @return the parameters
    * @throws Exception the exception
    */
+  @SuppressWarnings("null")
   public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children,
@@ -746,8 +748,8 @@ public final class FhirUtilityR5 {
           final Coding coding = new Coding();
           coding.setCode(codingCode);
           coding.setSystem(codeSystem.getUrl());
-          coding.setDisplay(
-              resolveLoincPropertyDisplay(key, value, codingCode, concept, displayMap));
+          coding
+              .setDisplay(resolveLoincPropertyDisplay(key, value, codingCode, concept, displayMap));
           parameters.addParameter(createProperty(loincLookupPropertyName(key), coding, false));
         } else {
           parameters.addParameter(createProperty(loincLookupPropertyName(key), value, false));
@@ -1021,13 +1023,12 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Builds a minimal R5 ValueSet for a LOINC LL/LG value set (metadata only;
-   * expansion is done in provider).
+   * Builds a minimal R5 ValueSet for a LOINC LL/LG value set (metadata only; expansion is done in
+   * provider).
    *
    * @param terminology LOINC terminology
    * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
-   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion
-   *          and loincLllgId tags
+   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion and loincLllgId tags
    * @return the value set
    */
   public static ValueSet toR5LllgValueSet(final Terminology terminology, final String lllgId,
@@ -1059,8 +1060,8 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Builds an R5 ValueSet for a LOINC LL/LG value set with compose but no
-   * expansion (for GET ValueSet/{id} when expansion should not be included).
+   * Builds an R5 ValueSet for a LOINC LL/LG value set with compose but no expansion (for GET
+   * ValueSet/{id} when expansion should not be included).
    *
    * @param terminology LOINC terminology
    * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
@@ -1087,9 +1088,8 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Builds an R5 ValueSet for a LOINC LL/LG value set with compose and
-   * expansion populated from the given members (for GET ValueSet/{id} to match
-   * fhir.loinc.org behavior).
+   * Builds an R5 ValueSet for a LOINC LL/LG value set with compose and expansion populated from the
+   * given members (for GET ValueSet/{id} to match fhir.loinc.org behavior).
    *
    * @param terminology LOINC terminology
    * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
