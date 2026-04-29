@@ -574,6 +574,7 @@ public final class CodeSystemLoaderUtil {
       final String code = property.path("code").asText();
       final String description = property.path("description").asText();
       final String fieldType = uriParts[uriParts.length - 2];
+      final String fhirType = property.path("type").asText();
 
       try {
 
@@ -587,6 +588,9 @@ public final class CodeSystemLoaderUtil {
         metadata.setVersion(terminology.getVersion());
         metadata.setModel(MetaModel.Model.valueOf(modelType));
         metadata.setField(MetaModel.Field.valueOf(fieldType));
+        if (!fhirType.isEmpty()) {
+          metadata.getAttributes().put("fhirPropertyType", fhirType);
+        }
         metadataList.add(metadata);
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("    ADD metadata = {}", metadata.toString());
@@ -662,19 +666,19 @@ public final class CodeSystemLoaderUtil {
         value = property.path("valueBoolean").asText();
       }
 
-      // Handle has_* properties with valueCoding
+      // Handle * properties with valueCoding
       // Store the valueCoding code and display in attributes for later use
-      // Primary properties (has_system, has_property, etc.) are stored once (duplicates ignored)
-      // Multi-valued properties (has_category, has_search) are stored with index suffix
-      if (code.startsWith("has_") && property.has("valueCoding")) {
+      // Primary properties (system, property, etc.) are stored once (duplicates ignored)
+      // Multi-valued properties (category, search) are stored with index suffix
+      if (property.has("valueCoding")) {
         final JsonNode valueCoding = property.path("valueCoding");
         if (valueCoding.has("code")) {
           final String codingCode = valueCoding.path("code").asText();
           // Primary properties that should only be stored once
-          final boolean isPrimary = "has_system".equals(code) || "has_property".equals(code)
-              || "has_component".equals(code) || "has_class".equals(code)
-              || "has_method_typ".equals(code) || "has_scale_typ".equals(code)
-              || "has_time_aspct".equals(code);
+          final boolean isPrimary = "system".equals(code) || "property".equals(code)
+              || "component".equals(code) || "class".equals(code)
+              || "method_typ".equals(code) || "scale_typ".equals(code)
+              || "time_aspct".equals(code);
           if (isPrimary) {
             // Skip if already exists (duplicate primary property)
             if (concept.getAttributes().containsKey(code)) {

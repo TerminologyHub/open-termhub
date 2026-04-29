@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Terminology;
+import com.wci.termhub.util.DateUtility;
 
 /**
  * Unit tests for FHIR R5 Meta (versionId, lastUpdated) on CodeSystem, ValueSet, ConceptMap.
@@ -58,6 +59,35 @@ public class FhirUtilityR5MetaUnitTest {
     assertNotNull(cs.getMeta());
     assertEquals("1", cs.getMeta().getVersionId());
     assertNotNull(cs.getMeta().getLastUpdated());
+    assertNotNull(cs.getDate());
+    assertEquals(cs.getDate(), cs.getMeta().getLastUpdated());
+  }
+
+  /**
+   * When release date is absent, meta.lastUpdated falls back to terminology created (UTC parse).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testCodeSystemMetaLastUpdatedFallsBackWhenNoReleaseDate() throws Exception {
+    final Terminology terminology = new Terminology();
+    terminology.setId("test-cs-nodate");
+    terminology.setReleaseDate(null);
+    terminology.setUri("http://example.org/cs");
+    terminology.setVersion("1");
+    terminology.setName("Test CodeSystem");
+    terminology.setAbbreviation("TCS");
+    terminology.setPublisher("Test");
+    final Map<String, String> attrs = new HashMap<>();
+    terminology.setAttributes(attrs);
+    terminology.setConceptCt(10L);
+    final Date created =
+        Date.from(LocalDate.of(2023, 6, 15).atStartOfDay(ZoneOffset.UTC).toInstant());
+    terminology.setCreated(created);
+
+    final CodeSystem cs = FhirUtilityR5.toR5(terminology);
+    assertNotNull(cs.getMeta().getLastUpdated());
+    assertEquals(DateUtility.parseToUtcDate(created), cs.getMeta().getLastUpdated());
   }
 
   /**

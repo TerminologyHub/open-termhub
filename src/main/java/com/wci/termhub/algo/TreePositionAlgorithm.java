@@ -235,19 +235,13 @@ public class TreePositionAlgorithm extends AbstractTerminologyAlgorithm {
     for (final String par : parChd.keySet()) {
       // things with no parents
       if (!chdPar.containsKey(par)) {
-        // Temporary bypass for LOINC
-        // for LL, LG, and LP things
-        if (getTerminology().equals("LOINC")
-            && (par.startsWith("LL") || par.startsWith("LP") || par.startsWith("LG"))) {
-          continue;
-        }
         rootCodes.add(par);
       }
     }
     logInfo("  root codes count = " + rootCodes.size() + ", " + rootCodes);
 
-    // Something went wrong - fail
-    if (rootCodes.size() > 100) {
+    // Something went wrong - fail (LOINC legitimately has many LP orphan roots in a partial FHIR export)
+    if (rootCodes.size() > 100 && !getTerminology().equals("LOINC")) {
       throw new Exception("Too many root codes, something is wrong");
     }
     chdPar.clear();

@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -28,9 +29,9 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleLinkComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
-import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
+import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.ConceptMap;
 import org.hl7.fhir.r4.model.ContactDetail;
@@ -59,6 +60,7 @@ import org.hl7.fhir.r4.model.ValueSet.ValueSetExpansionParameterComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
 import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
@@ -66,18 +68,17 @@ import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
-import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Definition;
+import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
+import com.wci.termhub.model.Metadata;
+import com.wci.termhub.model.ResultList;
+import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
-import com.wci.termhub.model.ResultList;
-import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
-import com.wci.termhub.model.Metadata;
 import com.wci.termhub.service.EntityRepositoryService;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.util.DateUtility;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
@@ -98,34 +99,16 @@ public final class FhirUtilityR4 {
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
 
   /**
-   * Reverse mapping from property codes to has_* properties in priority order.
-   * Primary has_* properties are checked first, then alternatives.
+   * Meta tag system for LOINC LL/LG value set id (used by ValueSetProvider for expand/validate).
    */
-  private static final Map<String, List<String>> LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES =
-      new HashMap<>();
-  static {
-    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("SYSTEM",
-        List.of("has_system", "has_system-core", "has_search"));
-    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("PROPERTY", List.of("has_property"));
-    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("COMPONENT",
-        List.of("has_component", "has_analyte-core", "has_analyte"));
-    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("CLASS", List.of("has_class", "has_category"));
-    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("METHOD_TYP", List.of("has_method_typ"));
-    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("SCALE_TYP", List.of("has_scale_typ"));
-    LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.put("TIME_ASPCT",
-        List.of("has_time_aspct", "has_time-core"));
-  }
+  public static final String META_LOINC_LLLG_ID = "loincLllgId";
 
   /**
-   * Primary has_* properties that are internal only (used for lookup, not
-   * output).
+   * Uppercase LOINC property codes that duplicate lowercase {@code valueCoding} axes in the same
+   * CodeSystem (legacy string row vs part code row).
    */
-  private static final Set<String> LOINC_PRIMARY_HAS_PROPERTIES =
-      Set.of("has_system", "has_property", "has_component", "has_class", "has_method_typ",
-          "has_scale_typ", "has_time_aspct");
-
-  /** Meta tag system for LOINC LL/LG value set id (used by ValueSetProvider for expand/validate). */
-  public static final String META_LOINC_LLLG_ID = "loincLllgId";
+  private static final Set<String> LOINC_UPPERCASE_PROPERTY_KEYS =
+      Set.of("CLASS", "COMPONENT", "METHOD_TYP", "PROPERTY", "SCALE_TYP", "SYSTEM", "TIME_ASPCT");
 
   /**
    * Instantiates an empty {@link FhirUtilityR4}.
@@ -612,6 +595,7 @@ public final class FhirUtilityR4 {
    * @return the parameters
    * @throws Exception the exception
    */
+  @SuppressWarnings("null")
   public static Parameters toR4(final CodeSystem codeSystem, final Concept concept,
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children,
@@ -637,6 +621,9 @@ public final class FhirUtilityR4 {
       parameters.addParameter(new Parameters.ParametersParameterComponent()
           .setName("sufficientlyDefined").setValue(new BooleanType(concept.getDefined())));
     }
+
+    final boolean isLoinc =
+        codeSystem.getUrl() != null && codeSystem.getUrl().contains("loinc.org");
 
     // Definitions
     if (properties == null || properties.contains("definition")) {
@@ -667,13 +654,14 @@ public final class FhirUtilityR4 {
         coding.setSystem(useSystem);
       }
 
-      if (displayMap.containsKey(term.getType())) {
-        coding.setDisplay(displayMap.get(term.getType()));
+      if (isLoinc) {
+        coding.setDisplay(term.getType());
       } else {
-        // Fallback to stored display from term attributes if available
         final String useDisplay = term.getAttributes().get("designationUseDisplay");
         if (useDisplay != null) {
           coding.setDisplay(useDisplay);
+        } else if (displayMap.containsKey(term.getType())) {
+          coding.setDisplay(displayMap.get(term.getType()));
         }
       }
 
@@ -697,57 +685,8 @@ public final class FhirUtilityR4 {
     }
 
     // Concept attributes
-    final boolean isLoinc =
-        codeSystem.getUrl() != null && codeSystem.getUrl().contains("loinc.org");
     for (final String key : concept.getAttributes().keySet()) {
       if (properties != null && !properties.contains(key)) {
-        continue;
-      }
-
-      // Skip internal helper attributes (_display suffixes)
-      if (key.endsWith("_display")) {
-        continue;
-      }
-
-      // Output alternative has_* properties as separate properties (remove has_
-      // prefix)
-      if (key.startsWith("has_")) {
-        // Remove "has_" prefix and any index suffix (e.g., "has_category_1" ->
-        // "category")
-        String propertyName = key.substring(4);
-        String baseHasProperty = key;
-        // Check if there's an index suffix (last underscore followed by digits)
-        final int lastUnderscoreIndex = propertyName.lastIndexOf('_');
-        if (lastUnderscoreIndex > 0 && lastUnderscoreIndex < propertyName.length() - 1) {
-          final String suffix = propertyName.substring(lastUnderscoreIndex + 1);
-          if (suffix.matches("\\d+")) {
-            propertyName = propertyName.substring(0, lastUnderscoreIndex);
-            baseHasProperty = "has_" + propertyName;
-          }
-        }
-
-        // Skip primary has_* properties (they're internal, used for lookup
-        // only)
-        if (LOINC_PRIMARY_HAS_PROPERTIES.contains(baseHasProperty)) {
-          continue;
-        }
-        final String codingCode = concept.getAttributes().get(key);
-        if (codingCode != null) {
-          final Coding coding = new Coding();
-          coding.setCode(codingCode);
-          coding.setSystem(codeSystem.getUrl());
-          // Get display from stored _display attribute, fallback to displayMap,
-          // then code
-          String display = concept.getAttributes().get(key + "_display");
-          if (display == null) {
-            display = displayMap.get(codingCode);
-          }
-          if (display == null) {
-            display = codingCode;
-          }
-          coding.setDisplay(display);
-          parameters.addParameter(createProperty(propertyName, coding, false));
-        }
         continue;
       }
 
@@ -756,24 +695,37 @@ public final class FhirUtilityR4 {
         continue;
       }
 
+      if (isLoinc && isLoincLookupInternalDisplayKey(key)) {
+        continue;
+      }
+      if (isLoinc && isLoincLegacyStringSupersededByValueCoding(key, value, concept)) {
+        continue;
+      }
+
       // Handle boolean values
       if ("true".equals(value) || "false".equals(value)) {
-        parameters.addParameter(createProperty(key, Boolean.valueOf(value), false));
+        parameters.addParameter(
+            createProperty(loincLookupPropertyName(key), Boolean.valueOf(value), false));
         continue;
       }
 
       // For LOINC: properties with valueCoding use valueCoding, others use
       // valueString
       if (isLoinc) {
-        final String codingCode = findLoincCodingCode(key, concept, relationships);
+        String codingCode = findLoincCodingCode(key, concept, relationships);
+        if (codingCode == null && value != null && isLoincPartCode(value)
+            && concept.getAttributes().containsKey(key + "_display")) {
+          codingCode = value;
+        }
         if (codingCode != null) {
           final Coding coding = new Coding();
           coding.setCode(codingCode);
           coding.setSystem(codeSystem.getUrl());
-          coding.setDisplay(value);
-          parameters.addParameter(createProperty(key, coding, false));
+          coding
+              .setDisplay(resolveLoincPropertyDisplay(key, value, codingCode, concept, displayMap));
+          parameters.addParameter(createProperty(loincLookupPropertyName(key), coding, false));
         } else {
-          parameters.addParameter(createProperty(key, value, false));
+          parameters.addParameter(createProperty(loincLookupPropertyName(key), value, false));
         }
         continue;
       }
@@ -824,26 +776,108 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Finds the coding code for a LOINC property.
-   * First checks for new format (has_* properties stored as attributes),
-   * then falls back to old format (relationships).
+   * LOINC part / answer class codes (LP…).
+   *
+   * @param value the value
+   * @return true, if is loinc part code
+   */
+  private static boolean isLoincPartCode(final String value) {
+    return value != null && value.matches("^LP\\d+-\\d+$");
+  }
+
+  /**
+   * True for attribute keys that only store display text for a {@code valueCoding} pair and must
+   * not be emitted as their own {@code property} in $lookup.
+   *
+   * @param key the attribute key
+   * @return true if internal display-only key
+   */
+  private static boolean isLoincLookupInternalDisplayKey(final String key) {
+    return key != null && key.endsWith("_display");
+  }
+
+  /**
+   * True when this attribute is the legacy uppercase string duplicate of a lowercase
+   * {@code valueCoding} property (same axis: display text vs LP code).
+   *
+   * @param key the attribute key
+   * @param value the attribute value
+   * @param concept the concept
+   * @return true if superseded by the canonical lowercase valueCoding attribute
+   */
+  private static boolean isLoincLegacyStringSupersededByValueCoding(final String key,
+    final String value, final Concept concept) {
+    if (key == null || value == null || !LOINC_UPPERCASE_PROPERTY_KEYS.contains(key)) {
+      return false;
+    }
+    final String canonical = key.toLowerCase(Locale.ROOT);
+    final String canonicalVal = concept.getAttributes().get(canonical);
+    if (canonicalVal == null || !isLoincPartCode(canonicalVal)) {
+      return false;
+    }
+    return !isLoincPartCode(value);
+  }
+
+  /**
+   * Resolve loinc property display.
+   *
+   * @param key the key
+   * @param value the value
+   * @param codingCode the coding code
+   * @param concept the concept
+   * @param displayMap the display map
+   * @return the string
+   */
+  private static String resolveLoincPropertyDisplay(final String key, final String value,
+    final String codingCode, final Concept concept, final Map<String, String> displayMap) {
+    final String fromAttr = concept.getAttributes().get(key + "_display");
+    if (fromAttr != null) {
+      return fromAttr;
+    }
+    if (value != null && !isLoincPartCode(value)) {
+      return value;
+    }
+    if (codingCode != null && displayMap != null && displayMap.containsKey(codingCode)) {
+      return displayMap.get(codingCode);
+    }
+    return codingCode != null ? codingCode : value;
+  }
+
+  /**
+   * Align with fhir.loinc.org: repeated {@code category} / {@code search}, not {@code category_1}.
+   *
+   * @param attributeKey the attribute key
+   * @return the string
+   */
+  private static String loincLookupPropertyName(final String attributeKey) {
+    if (attributeKey.length() > "category_".length() && attributeKey.startsWith("category_")) {
+      final String suffix = attributeKey.substring("category_".length());
+      if (suffix.matches("\\d+")) {
+        return "category";
+      }
+    }
+    if (attributeKey.length() > "search_".length() && attributeKey.startsWith("search_")) {
+      final String suffix = attributeKey.substring("search_".length());
+      if (suffix.matches("\\d+")) {
+        return "search";
+      }
+    }
+    return attributeKey;
+  }
+
+  /**
+   * Finds the coding code for a LOINC property. Checks Regenstrief lowercase attributes, legacy
+   * {@code has_*}, and indexed {@code category_1} / {@code search_1} keys.
    *
    * @param propertyCode the property code
    * @param concept the concept
-   * @param relationships the relationships
+   * @param relationships the relationships (reserved for future use)
    * @return the coding code, or null if not found
    */
   private static String findLoincCodingCode(final String propertyCode, final Concept concept,
     final List<ConceptRelationship> relationships) {
-    // Check for new format: look up has_* properties in priority order
-    final List<String> hasProperties = LOINC_PROPERTY_CODE_TO_HAS_PROPERTIES.get(propertyCode);
-    if (hasProperties != null) {
-      for (final String hasProperty : hasProperties) {
-        final String hasValue = concept.getAttributes().get(hasProperty);
-        if (hasValue != null) {
-          return hasValue;
-        }
-      }
+    if (propertyCode.matches("category_\\d+") || propertyCode.matches("search_\\d+")) {
+      return concept.getAttributes().get(propertyCode);
     }
     return null;
   }
@@ -980,12 +1014,15 @@ public final class FhirUtilityR4 {
    * @return the value set
    */
   public static ValueSet toR4LllgValueSet(final Terminology terminology, final String lllgId,
-      final boolean metaFlag) {
+    final boolean metaFlag) {
     final ValueSet set = new ValueSet();
     set.setId(lllgId);
     set.setUrl(terminology.getUri() + "?fhir_vs=" + lllgId);
+    set.setVersion(terminology.getVersion());
+    set.setPublisher(terminology.getPublisher());
     set.setStatus(PublicationStatus.ACTIVE);
-    if (terminology.getAttributes() != null && terminology.getAttributes().get("copyright") != null) {
+    if (terminology.getAttributes() != null
+        && terminology.getAttributes().get("copyright") != null) {
       set.setCopyright(terminology.getAttributes().get("copyright"));
     }
     if (metaFlag) {
@@ -1005,6 +1042,26 @@ public final class FhirUtilityR4 {
   }
 
   /**
+   * Builds a minimal R4 ValueSet for a LOINC LL/LG concept found during enumeration. Sets name and
+   * title from the concept's name in addition to the fields set by
+   * {@link #toR4LllgValueSet(Terminology, String, boolean)}.
+   *
+   * @param terminology LOINC terminology
+   * @param concept the LL or LG concept (code used as lllgId, name used as title/name)
+   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion and loincLllgId tags
+   * @return the value set
+   */
+  public static ValueSet toR4LllgValueSetFromConcept(final Terminology terminology,
+    final Concept concept, final boolean metaFlag) {
+    final ValueSet set = toR4LllgValueSet(terminology, concept.getCode(), metaFlag);
+    if (concept.getName() != null) {
+      set.setName(concept.getName());
+      set.setTitle(concept.getName());
+    }
+    return set;
+  }
+
+  /**
    * Builds an R4 ValueSet for a LOINC LL/LG value set with compose but no expansion (for GET
    * ValueSet/{id} when expansion should not be included).
    *
@@ -1014,7 +1071,7 @@ public final class FhirUtilityR4 {
    * @return the value set with compose.include set, no expansion
    */
   public static ValueSet toR4LllgValueSetWithComposeOnly(final Terminology terminology,
-      final String lllgId, final List<Concept> members) {
+    final String lllgId, final List<Concept> members) {
     final ValueSet set = toR4LllgValueSet(terminology, lllgId, false);
     final String systemUri = terminology.getUri();
     if (systemUri == null || members == null) {
@@ -1024,8 +1081,8 @@ public final class FhirUtilityR4 {
     final ConceptSetComponent include = new ConceptSetComponent();
     include.setSystem(systemUri);
     for (final Concept c : members) {
-      include.addConcept(
-          new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
+      include
+          .addConcept(new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
     }
     compose.addInclude(include);
     set.setCompose(compose);
@@ -1033,8 +1090,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Builds an R4 ValueSet for a LOINC LL/LG value set with compose and expansion populated from
-   * the given members (for GET ValueSet/{id} to match fhir.loinc.org behavior).
+   * Builds an R4 ValueSet for a LOINC LL/LG value set with compose and expansion populated from the
+   * given members (for GET ValueSet/{id} to match fhir.loinc.org behavior).
    *
    * @param terminology LOINC terminology
    * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
@@ -1042,7 +1099,7 @@ public final class FhirUtilityR4 {
    * @return the value set with compose.include and expansion.contains set
    */
   public static ValueSet toR4LllgValueSetWithMembers(final Terminology terminology,
-      final String lllgId, final List<Concept> members) {
+    final String lllgId, final List<Concept> members) {
     final ValueSet set = toR4LllgValueSet(terminology, lllgId, false);
     final String systemUri = terminology.getUri();
     if (systemUri == null || members == null) {
@@ -1052,8 +1109,8 @@ public final class FhirUtilityR4 {
     final ConceptSetComponent include = new ConceptSetComponent();
     include.setSystem(systemUri);
     for (final Concept c : members) {
-      include.addConcept(
-          new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
+      include
+          .addConcept(new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
     }
     compose.addInclude(include);
     set.setCompose(compose);
@@ -1067,8 +1124,8 @@ public final class FhirUtilityR4 {
     expansion.addParameter(new ValueSetExpansionParameterComponent().setName("count")
         .setValue(new IntegerType(members.size())));
     for (final Concept c : members) {
-      expansion.addContains(new ValueSetExpansionContainsComponent()
-          .setSystem(systemUri).setCode(c.getCode()).setDisplay(c.getName()));
+      expansion.addContains(new ValueSetExpansionContainsComponent().setSystem(systemUri)
+          .setCode(c.getCode()).setDisplay(c.getName()));
     }
     set.setExpansion(expansion);
     return set;
@@ -1208,16 +1265,18 @@ public final class FhirUtilityR4 {
 
     cs.setUrl(terminology.getUri());
 
-    // Parse the full date string with timezone information
+    // Parse the full date string with timezone information (also drives meta.lastUpdated)
     final String releaseDate = terminology.getReleaseDate();
+    Date releaseAsDate = null;
     if (releaseDate != null && !releaseDate.isEmpty()) {
       if (releaseDate.contains("T")) {
         // Full ISO 8601 date string with timezone
-        cs.setDate(Date.from(Instant.parse(releaseDate)));
+        releaseAsDate = Date.from(Instant.parse(releaseDate));
       } else {
         // Fallback to date-only format
-        cs.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
+        releaseAsDate = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
       }
+      cs.setDate(releaseAsDate);
     }
 
     // Set version - prefer fhirVersion attribute if available, otherwise use
@@ -1308,7 +1367,8 @@ public final class FhirUtilityR4 {
               for (final JsonNode tp : telecomArr) {
                 final ContactPoint cp = new ContactPoint();
                 if (!tp.path("system").isMissingNode()) {
-                  cp.setSystem(ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
+                  cp.setSystem(
+                      ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
                 }
                 if (!tp.path("value").isMissingNode()) {
                   cp.setValue(tp.path("value").asText());
@@ -1334,10 +1394,11 @@ public final class FhirUtilityR4 {
       cs.setVersionNeeded(Boolean.parseBoolean(versionNeeded));
     }
 
-    // Meta: versionId for _history, lastUpdated from release date (UTC)
+    // Meta: versionId for _history; lastUpdated from release date when present, else created
     final Meta csMeta = new Meta();
     csMeta.setVersionId("1");
-    csMeta.setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
+    csMeta.setLastUpdated(releaseAsDate != null ? releaseAsDate
+        : DateUtility.parseToUtcDate(terminology.getCreated()));
     if (terminology.getAttributes().containsKey("originalId")) {
       csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }
@@ -1354,8 +1415,8 @@ public final class FhirUtilityR4 {
    * @return the code system
    * @throws Exception the exception
    */
-  public static CodeSystem toR4(final Terminology terminology,
-    final List<Metadata> metadataList) throws Exception {
+  public static CodeSystem toR4(final Terminology terminology, final List<Metadata> metadataList)
+    throws Exception {
 
     final CodeSystem cs = toR4(terminology);
 
@@ -1374,6 +1435,16 @@ public final class FhirUtilityR4 {
         pc.setType(CodeSystem.PropertyType.STRING);
       } else if ("code".equals(property.getType())) {
         pc.setType(CodeSystem.PropertyType.CODE);
+      } else if ("Coding".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.CODING);
+      } else if ("boolean".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.BOOLEAN);
+      } else if ("integer".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.INTEGER);
+      } else if ("dateTime".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.DATETIME);
+      } else if ("decimal".equals(property.getType())) {
+        pc.setType(CodeSystem.PropertyType.DECIMAL);
       }
     }
 
@@ -1460,14 +1531,10 @@ public final class FhirUtilityR4 {
       return cm;
     }
 
-    final String sourceUri =
-        mapset.getAttributes().containsKey("fhirSourceUri")
-            ? mapset.getAttributes().get("fhirSourceUri")
-            : null;
-    final String targetUri =
-        mapset.getAttributes().containsKey("fhirTargetUri")
-            ? mapset.getAttributes().get("fhirTargetUri")
-            : null;
+    final String sourceUri = mapset.getAttributes().containsKey("fhirSourceUri")
+        ? mapset.getAttributes().get("fhirSourceUri") : null;
+    final String targetUri = mapset.getAttributes().containsKey("fhirTargetUri")
+        ? mapset.getAttributes().get("fhirTargetUri") : null;
     if (sourceUri == null || targetUri == null) {
       return cm;
     }
@@ -1479,9 +1546,7 @@ public final class FhirUtilityR4 {
     final Map<String, List<Mapping>> bySourceCode = new HashMap<>();
     for (final Mapping m : mappings) {
       if (m.getFrom() != null && m.getFrom().getCode() != null) {
-        bySourceCode
-            .computeIfAbsent(m.getFrom().getCode(), k -> new ArrayList<>())
-            .add(m);
+        bySourceCode.computeIfAbsent(m.getFrom().getCode(), k -> new ArrayList<>()).add(m);
       }
     }
 
@@ -1490,26 +1555,23 @@ public final class FhirUtilityR4 {
       final Mapping first = elementMappings.get(0);
       final ConceptMap.SourceElementComponent element = group.addElement();
       element.setCode(first.getFrom().getCode());
-      element.setDisplay(
-          first.getFrom().getName() != null ? first.getFrom().getName() : first.getFrom().getCode());
+      element.setDisplay(first.getFrom().getName() != null ? first.getFrom().getName()
+          : first.getFrom().getCode());
 
       for (final Mapping m : elementMappings) {
         final ConceptMap.TargetElementComponent target = element.addTarget();
         if (m.getTo() != null && m.getTo().getCode() != null) {
           target.setCode(m.getTo().getCode());
         }
-        target.setDisplay(
-            m.getTo() != null && m.getTo().getName() != null
-                ? m.getTo().getName()
-                : "Unable to determine name");
+        target.setDisplay(m.getTo() != null && m.getTo().getName() != null ? m.getTo().getName()
+            : "Unable to determine name");
         final String equiv =
             m.getType() != null ? m.getType().toLowerCase().replace("-", "") : "relatedto";
         try {
           target.setEquivalence(
               org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence.fromCode(equiv));
         } catch (final Exception e) {
-          target.setEquivalence(
-              org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence.RELATEDTO);
+          target.setEquivalence(org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence.RELATEDTO);
         }
       }
     }
@@ -1636,8 +1698,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Converts a LOINC Concept to a FHIR R4 Questionnaire. This is the primary
-   * method for creating questionnaires from LOINC concepts.
+   * Converts a LOINC Concept to a FHIR R4 Questionnaire. This is the primary method for creating
+   * questionnaires from LOINC concepts.
    *
    * @param concept the LOINC Concept
    * @param searchService the search service
@@ -1704,9 +1766,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Populates a Questionnaire with questions and answers based on LOINC
-   * relationships. This method uses the concept's existing relationships to
-   * create questionnaire items.
+   * Populates a Questionnaire with questions and answers based on LOINC relationships. This method
+   * uses the concept's existing relationships to create questionnaire items.
    *
    * @param questionnaire the Questionnaire to populate
    * @param searchService the search service for data access
@@ -2032,8 +2093,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Finds answer options for a question via has_answers relationships. Follows
-   * LOINC structure: Question --has_answers--> LL Code <--parent-- LA Codes
+   * Finds answer options for a question via has_answers relationships. Follows LOINC structure:
+   * Question --has_answers--> LL Code <--parent-- LA Codes
    *
    * @param questionCode the question LOINC code
    * @param searchService the search service
@@ -2185,9 +2246,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Gets the system URI for a terminology based on its abbreviation, publisher,
-   * and version. This method uses TerminologyUtility to get the actual URI from
-   * the database.
+   * Gets the system URI for a terminology based on its abbreviation, publisher, and version. This
+   * method uses TerminologyUtility to get the actual URI from the database.
    *
    * @param searchService the search service
    * @param terminology the terminology abbreviation
@@ -2214,9 +2274,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Determines if a concept should be included as a main question based on its
-   * properties. Filters out variant concepts that are overly specific or
-   * descriptive.
+   * Determines if a concept should be included as a main question based on its properties. Filters
+   * out variant concepts that are overly specific or descriptive.
    *
    * @param conceptCode the LOINC concept code to check
    * @param searchService the search service to query concept properties
