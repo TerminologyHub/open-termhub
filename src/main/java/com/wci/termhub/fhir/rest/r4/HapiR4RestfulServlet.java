@@ -26,6 +26,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import ca.uhn.fhir.rest.server.RestfulServer;
+import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
 import jakarta.servlet.ServletException;
 
 /**
@@ -47,6 +48,7 @@ public class HapiR4RestfulServlet extends RestfulServer {
   protected void initialize() throws ServletException {
 
     setDefaultResponseEncoding(EncodingEnum.JSON);
+    setDefaultPrettyPrint(true);
 
     final FhirContext fhirContext = FhirContext.forR4();
     fhirContext.setParserErrorHandler(new LenientErrorHandler());
@@ -80,6 +82,12 @@ public class HapiR4RestfulServlet extends RestfulServer {
 
     // Register interceptors
     registerInterceptor(new TermhubOpenApiInterceptorR4());
+
+    final ResponseHighlighterInterceptor responseHighlighterInterceptor =
+        new ResponseHighlighterInterceptor();
+    responseHighlighterInterceptor.setShowRequestHeaders(false);
+    responseHighlighterInterceptor.setShowResponseHeaders(true);
+    registerInterceptor(responseHighlighterInterceptor);
 
     // Register system-level transaction provider
     registerProvider(applicationContext.getBean(SystemTransactionProviderR4.class));
