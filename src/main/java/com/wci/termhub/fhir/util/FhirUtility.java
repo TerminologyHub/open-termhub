@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -75,6 +76,33 @@ public final class FhirUtility {
    */
   private FhirUtility() {
     // n/a
+  }
+
+  /**
+   * Hierarchical parents from {@code relationships}, at most one {@link ConceptRef} per parent
+   * code (first occurrence wins; insertion order preserved). Used for CodeSystem $lookup so
+   * duplicate isa/parent edges are not emitted as repeated {@code parent} properties.
+   *
+   * @param relationships the concept relationships (may be null or empty)
+   * @return distinct parents; empty list if none
+   */
+  public static List<ConceptRef> distinctHierarchicalParents(
+    final List<ConceptRelationship> relationships) {
+    if (relationships == null || relationships.isEmpty()) {
+      return Collections.emptyList();
+    }
+    final Map<String, ConceptRef> byCode = new LinkedHashMap<>();
+    for (final ConceptRelationship relationship : relationships) {
+      if (relationship.getHierarchical() == null || !relationship.getHierarchical()) {
+        continue;
+      }
+      final ConceptRef to = relationship.getTo();
+      if (to == null || to.getCode() == null) {
+        continue;
+      }
+      byCode.putIfAbsent(to.getCode(), to);
+    }
+    return List.copyOf(byCode.values());
   }
 
   /**
