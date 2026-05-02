@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 West Coast Informatics - All Rights Reserved.
+ * Copyright 2025 West Coast Informatics - All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
  * The intellectual and technical concepts contained herein are proprietary to
@@ -26,15 +26,18 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 /**
- * Validates {@link ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor} behavior:
- * browser-style {@code Accept} yields HTML instead of prompting for an XML download, while generic
- * or programmatic clients receive FHIR JSON or XML according to negotiation.
+ * Validates
+ * {@link ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor}
+ * behavior: browser-style {@code Accept} yields HTML instead of prompting for
+ * an XML download, while generic or programmatic clients receive FHIR JSON or
+ * XML according to negotiation.
  */
 @AutoConfigureMockMvc
 public class ResponseHighlighterFhirR4RestTest extends AbstractFhirR4ServerTest {
 
   /**
-   * Chrome-like {@code Accept} from a typical desktop browser navigation request.
+   * Chrome-like {@code Accept} from a typical desktop browser navigation
+   * request.
    */
   private static final String CHROME_LIKE_ACCEPT =
       "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8";
@@ -48,21 +51,24 @@ public class ResponseHighlighterFhirR4RestTest extends AbstractFhirR4ServerTest 
   private TestRestTemplate restTemplate;
 
   /**
-   * Browser navigation style request should produce HTML highlighter output (text/html).
+   * Browser navigation style request should produce HTML highlighter output
+   * (text/html).
    */
   @Test
   public void browserLikeAcceptReturnsHtmlHighlighterMetadata() {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.set(HttpHeaders.ACCEPT, CHROME_LIKE_ACCEPT);
-    final ResponseEntity<String> response = restTemplate.exchange(
-        metadataUrl(), HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    final ResponseEntity<String> response = restTemplate.exchange(metadataUrl(), HttpMethod.GET,
+        new HttpEntity<>(headers), String.class);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getHeaders().getContentType());
 
-    final String contentTypeHeader = response.getHeaders().getContentType().toString().toLowerCase();
-    assertTrue(contentTypeHeader.contains("text/html"), "unexpected Content-Type: " + contentTypeHeader);
+    final String contentTypeHeader =
+        response.getHeaders().getContentType().toString().toLowerCase();
+    assertTrue(contentTypeHeader.contains("text/html"),
+        "unexpected Content-Type: " + contentTypeHeader);
 
     final String body = response.getBody();
     assertNotNull(body);
@@ -72,23 +78,24 @@ public class ResponseHighlighterFhirR4RestTest extends AbstractFhirR4ServerTest 
   }
 
   /**
-   * Typical API client ({@code Accept: *\/*}) should receive FHIR JSON, not negotiated XML from
-   * browser {@code application/xml}.
+   * Typical API client ({@code Accept: *\/*}) should receive FHIR JSON, not
+   * negotiated XML from browser {@code application/xml}.
    */
   @Test
   public void wildcardAcceptReturnsFhirJsonMetadata() {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.set(HttpHeaders.ACCEPT, MediaType.ALL_VALUE);
-    final ResponseEntity<String> response =
-        restTemplate.exchange(metadataUrl(), HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    final ResponseEntity<String> response = restTemplate.exchange(metadataUrl(), HttpMethod.GET,
+        new HttpEntity<>(headers), String.class);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
     assertNotNull(response.getHeaders().getContentType(), "missing Content-Type");
     final String contentTypeHeader =
         response.getHeaders().getContentType().toString().toLowerCase();
-    assertTrue(contentTypeHeader.contains("fhir+json"), "unexpected Content-Type: " + contentTypeHeader);
+    assertTrue(contentTypeHeader.contains("fhir+json"),
+        "unexpected Content-Type: " + contentTypeHeader);
 
     final String body = response.getBody();
     assertNotNull(body);
@@ -96,22 +103,24 @@ public class ResponseHighlighterFhirR4RestTest extends AbstractFhirR4ServerTest 
   }
 
   /**
-   * Explicit FHIR/XML preference without HTML should negotiate XML raw body (Highlighter inactive).
+   * Explicit FHIR/XML preference without HTML should negotiate XML raw body
+   * (Highlighter inactive).
    */
   @Test
   public void explicitXmlAcceptReturnsFhirXmlMetadata() {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.set(HttpHeaders.ACCEPT, "application/xml");
-    final ResponseEntity<String> response = restTemplate.exchange(
-        metadataUrl(), HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    final ResponseEntity<String> response = restTemplate.exchange(metadataUrl(), HttpMethod.GET,
+        new HttpEntity<>(headers), String.class);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
     assertNotNull(response.getHeaders().getContentType());
     final String contentTypeHeader =
         response.getHeaders().getContentType().toString().toLowerCase();
-    assertTrue(contentTypeHeader.contains("fhir+xml") || contentTypeHeader.contains("application/xml"),
+    assertTrue(
+        contentTypeHeader.contains("fhir+xml") || contentTypeHeader.contains("application/xml"),
         "unexpected Content-Type: " + contentTypeHeader);
 
     final String body = response.getBody();
@@ -120,6 +129,11 @@ public class ResponseHighlighterFhirR4RestTest extends AbstractFhirR4ServerTest 
     assertTrue(trimmed.startsWith("<"));
   }
 
+  /**
+   * Metadata url.
+   *
+   * @return the string
+   */
   private String metadataUrl() {
     return "http://localhost:" + port + "/fhir/r4/metadata";
   }
