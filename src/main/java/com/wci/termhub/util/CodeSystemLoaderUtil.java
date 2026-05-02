@@ -39,6 +39,7 @@ import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Definition;
@@ -668,8 +669,8 @@ public final class CodeSystemLoaderUtil {
 
       // Handle * properties with valueCoding
       // Store the valueCoding code and display in attributes for later use
-      // Primary properties (system, property, etc.) are stored once (duplicates ignored)
-      // Multi-valued properties (category, search) are stored with index suffix
+      // Primary properties (system, property, etc.) are stored once (duplicates ignored).
+      // Other valueCoding rows keep duplicate property codes in fhirPropertyCodings (not Map keys).
       if (property.has("valueCoding")) {
         final JsonNode valueCoding = property.path("valueCoding");
         if (valueCoding.has("code")) {
@@ -691,18 +692,13 @@ public final class CodeSystemLoaderUtil {
               concept.getAttributes().put(code + "_display", display);
             }
           } else {
-            // Multi-valued properties: store with index suffix if needed
-            int index = 0;
-            String keyWithIndex = code;
-            while (concept.getAttributes().containsKey(keyWithIndex)) {
-              index++;
-              keyWithIndex = code + "_" + index;
-            }
-            concept.getAttributes().put(keyWithIndex, codingCode);
+            final ConceptPropertyValueCoding entry = new ConceptPropertyValueCoding();
+            entry.setPropertyCode(code);
+            entry.setValueCode(codingCode);
             if (valueCoding.has("display")) {
-              final String display = valueCoding.path("display").asText();
-              concept.getAttributes().put(keyWithIndex + "_display", display);
+              entry.setValueDisplay(valueCoding.path("display").asText());
             }
+            concept.getFhirPropertyCodings().add(entry);
           }
         }
         continue;
