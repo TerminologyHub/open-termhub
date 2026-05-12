@@ -361,7 +361,7 @@ public class LuceneDataAccess {
     // Now delete the old document and add the updated one using the same
     // writer. This ensures schema consistency while being more efficient than
     // full reindexing
-    updateDocumentInIndex(writer, id, existingEntity);
+    updateDocumentInIndex(writer, id, existingEntity, true);
     clearReaderForClass(clazz);
     if (logger.isDebugEnabled()) {
       logger.debug("Successfully updated document with id: {} for index: {}", id,
@@ -386,6 +386,7 @@ public class LuceneDataAccess {
     }
 
     final IndexWriter writer = getIndexWriter(clazz);
+    boolean documentUpdated = false;
 
     for (final Map.Entry<String, HasId> entry : entities.entrySet()) {
       final String id = entry.getKey();
@@ -432,8 +433,9 @@ public class LuceneDataAccess {
           continue;
         }
 
-        // Delete the old document and add the updated one
-        updateDocumentInIndex(writer, id, existingEntity);
+        // Delete the old document and add the updated one (single commit after loop)
+        updateDocumentInIndex(writer, id, existingEntity, false);
+        documentUpdated = true;
 
         if (logger.isDebugEnabled()) {
           logger.debug("Updated entity with id: {} in bulk update", id);
@@ -445,8 +447,9 @@ public class LuceneDataAccess {
       }
     }
 
-    // Commit all changes at once
-    writer.commit();
+    if (documentUpdated) {
+      writer.commit();
+    }
     clearReaderForClass(clazz);
     logger.debug("Successfully completed bulk update for {} entities in index: {}", entities.size(),
         writer.getDirectory());
@@ -763,7 +766,7 @@ public class LuceneDataAccess {
     // Now delete the old document and add the updated one using the same
     // writer. This ensures schema consistency while being more efficient than
     // full reindexing
-    updateDocumentInIndex(writer, id, existingEntity);
+    updateDocumentInIndex(writer, id, existingEntity, true);
     clearReaderForClass(clazz);
     if (logger.isDebugEnabled()) {
       logger.debug("Successfully added field: {} to document with id: {} for index: {}", fieldName,
@@ -906,16 +909,20 @@ public class LuceneDataAccess {
    * @param writer the index writer
    * @param id the document id
    * @param entity the entity to index
+   * @param commit if true, commit the writer immediately; if false (bulk path), caller commits
    * @throws Exception on error
    */
-  private void updateDocumentInIndex(final IndexWriter writer, final String id, final HasId entity)
+  private void updateDocumentInIndex(final IndexWriter writer, final String id,
+    final HasId entity, final boolean commit)
     throws Exception {
 
     final Term term = new Term("id", id);
     writer.deleteDocuments(term);
     final Document updatedDoc = getDocument(entity);
     writer.addDocument(updatedDoc);
-    writer.commit();
+    if (commit) {
+      writer.commit();
+    }
   }
 
   /**
