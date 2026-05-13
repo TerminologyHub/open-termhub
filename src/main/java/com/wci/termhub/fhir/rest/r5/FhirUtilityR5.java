@@ -1075,6 +1075,26 @@ public final class FhirUtilityR5 {
   }
 
   /**
+   * Builds a minimal R5 ValueSet for a LOINC LL/LG concept found during enumeration. Sets name and
+   * title from the concept's name in addition to the fields set by
+   * {@link #toR5LllgValueSet(Terminology, String, boolean)}.
+   *
+   * @param terminology LOINC terminology
+   * @param concept the LL or LG concept (code used as lllgId, name used as title/name)
+   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion and loincLllgId tags
+   * @return the value set
+   */
+  public static ValueSet toR5LllgValueSetFromConcept(final Terminology terminology,
+    final Concept concept, final boolean metaFlag) {
+    final ValueSet set = toR5LllgValueSet(terminology, concept.getCode(), metaFlag);
+    if (concept.getName() != null) {
+      set.setName(concept.getName());
+      set.setTitle(concept.getName());
+    }
+    return set;
+  }
+
+  /**
    * Builds an R5 ValueSet for a LOINC LL/LG value set with compose but no expansion (for GET
    * ValueSet/{id} when expansion should not be included).
    *

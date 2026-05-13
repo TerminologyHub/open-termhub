@@ -1261,7 +1261,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // Fetch SubsetMembers for this subset
       final SearchParameters memberParams = new SearchParameters();
       memberParams.getFilters().put("subset.code", subset.getCode());
-      memberParams.setLimit(1000000);
+      memberParams.setLimit(1_000_000);
       memberParams.setOffset(0);
       // final List<SubsetMember> members =
       // searchService.findAll(memberParams, SubsetMember.class).getItems();
@@ -1367,37 +1367,37 @@ public class ValueSetProviderR4 implements IResourceProvider {
             }
           }
         } else if (loincValueSetHelper.isEnabled()) {
-          // General listing: enumerate LL/LG concepts from every loaded LOINC version so that an
+          // General listing: enumerate LG concepts from every loaded LOINC version so that an
           // unfiltered GET /ValueSet returns codes from all versions, and a version-filtered request
           // returns only the matching subset.
           final List<Terminology> loincTerminologies = allTerminologies.stream()
               .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org")).toList();
           for (final Terminology loincTerm : loincTerminologies) {
             final ResultList<Concept> lllgConcepts =
-                loincValueSetHelper.findAllLllgConcepts(searchService, loincTerm, 10_000, 0);
+                loincValueSetHelper.findAllLgConcepts(searchService, loincTerm, 10_000, 0);
             for (final Concept concept : lllgConcepts.getItems()) {
               if (!loincValueSetHelper.isLllgId(concept.getCode())) {
                 continue;
               }
-              final ValueSet lllgVs =
+              final ValueSet lgVs =
                   FhirUtilityR4.toR4LllgValueSetFromConcept(loincTerm, concept, metaFlag);
-              final boolean idUrlMatch = (id == null || id.getValue().equals(lllgVs.getId()))
-                  && (url == null || url.getValue().equals(lllgVs.getUrl()));
+              final boolean idUrlMatch = (id == null || id.getValue().equals(lgVs.getId()))
+                  && (url == null || url.getValue().equals(lgVs.getUrl()));
               final boolean dateMatch =
-                  date == null || FhirUtility.compareDate(date, lllgVs.getDate());
+                  date == null || FhirUtility.compareDate(date, lgVs.getDate());
               final boolean versionMatch =
-                  version == null || FhirUtility.compareString(version, lllgVs.getVersion());
+                  version == null || FhirUtility.compareString(version, lgVs.getVersion());
               final boolean nameMatch =
-                  name == null || FhirUtility.compareString(name, lllgVs.getName());
+                  name == null || FhirUtility.compareString(name, lgVs.getName());
               final boolean publisherMatch =
-                  publisher == null || FhirUtility.compareString(publisher, lllgVs.getPublisher());
+                  publisher == null || FhirUtility.compareString(publisher, lgVs.getPublisher());
               final boolean titleMatch =
-                  title == null || FhirUtility.compareString(title, lllgVs.getTitle());
+                  title == null || FhirUtility.compareString(title, lgVs.getTitle());
               final boolean descriptionMatch = description == null
-                  || FhirUtility.compareString(description, lllgVs.getDescription());
+                  || FhirUtility.compareString(description, lgVs.getDescription());
               if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch && titleMatch
                   && descriptionMatch) {
-                list.add(lllgVs);
+                list.add(lgVs);
               }
             }
           }
