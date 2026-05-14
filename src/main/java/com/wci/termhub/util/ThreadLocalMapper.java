@@ -11,7 +11,7 @@ package com.wci.termhub.util;
 
 import java.util.TimeZone;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -38,7 +38,8 @@ public final class ThreadLocalMapper {
    */
   public static ObjectMapper newMapper() {
     final ObjectMapper mapper = new ObjectMapper();
-    mapper.setSerializationInclusion(Include.NON_EMPTY);
+    mapper.setDefaultPropertyInclusion(
+        JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.NON_EMPTY));
     mapper.findAndRegisterModules().configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,
         false);
     mapper.setTimeZone(TimeZone.getDefault());
