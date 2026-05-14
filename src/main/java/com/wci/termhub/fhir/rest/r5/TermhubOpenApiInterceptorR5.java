@@ -9,7 +9,6 @@
  */
 package com.wci.termhub.fhir.rest.r5;
 
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -1478,8 +1477,8 @@ public class TermhubOpenApiInterceptorR5 {
           final Map.Entry<String, Object> nextEntry = iter.next();
           builder.append(UrlUtil.escapeUrlParam(nextEntry.getKey()));
           builder.append("=");
-          builder
-              .append(UrlUtil.escapeUrlParam(defaultIfNull(nextEntry.getValue(), "").toString()));
+          builder.append(UrlUtil
+              .escapeUrlParam(nextEntry.getValue() == null ? "" : nextEntry.getValue().toString()));
           if (iter.hasNext()) {
             builder.append("&");
           }
