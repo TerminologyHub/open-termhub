@@ -71,6 +71,9 @@ public final class ValueSetLoaderUtil {
   /** Log and progress updates at this member interval during ValueSet indexing. */
   private static final int VALUESET_MEMBER_PROGRESS_LOG_INTERVAL = 500;
 
+  /** Flush staged Concept.subset back-reference updates after this many distinct concepts. */
+  private static final int CONCEPT_SUBSET_FLUSH_SIZE = 500;
+
   /**
    * Instantiates a new subset loader util.
    */
@@ -263,6 +266,7 @@ public final class ValueSetLoaderUtil {
           subset.getPublisher(), subset.getVersion());
       final List<SubsetMember> members = new ArrayList<>();
       subsetRef.setCode(subset.getCode());
+      final Map<String, Concept> pendingConceptSubsetUpdates = new HashMap<>();
       final int memberTotalEstimateR4 = estimateValueSetMemberCountR4(valueSet);
       int memberProcessedR4 = 0;
       // Compose.include
@@ -314,8 +318,8 @@ public final class ValueSetLoaderUtil {
 
             // Add subsetRef to the concept corresponding to this
             if (existingConcept != null) {
-              existingConcept.getSubsets().add(subsetRef);
-              service.update(Concept.class, existingConcept.getId(), existingConcept);
+              accumulateConceptSubsetMaybeFlush(service, pendingConceptSubsetUpdates,
+                  existingConcept, subsetRef);
             }
             memberProcessedR4++;
             logValueSetMemberProgress(listener, memberProcessedR4, memberTotalEstimateR4);
@@ -375,14 +379,15 @@ public final class ValueSetLoaderUtil {
 
           // Add subsetRef to the concept corresponding to this
           if (existingConcept != null) {
-            existingConcept.getSubsets().add(subsetRef);
-            service.update(Concept.class, existingConcept.getId(), existingConcept);
+            accumulateConceptSubsetMaybeFlush(service, pendingConceptSubsetUpdates,
+                existingConcept, subsetRef);
           }
           memberProcessedR4++;
           logValueSetMemberProgress(listener, memberProcessedR4, memberTotalEstimateR4);
 
         }
       }
+      flushConceptSubsetUpdates(service, pendingConceptSubsetUpdates);
       if (!members.isEmpty()) {
         service.addBulk(SubsetMember.class, new ArrayList<>(members));
       }
@@ -536,6 +541,7 @@ public final class ValueSetLoaderUtil {
           subset.getPublisher(), subset.getVersion());
       final List<SubsetMember> members = new ArrayList<>();
       subsetRef.setCode(subset.getCode());
+      final Map<String, Concept> pendingConceptSubsetUpdatesR5 = new HashMap<>();
       final int memberTotalEstimateR5 = estimateValueSetMemberCountR5(valueSet);
       int memberProcessedR5 = 0;
       // Compose.include
@@ -587,8 +593,8 @@ public final class ValueSetLoaderUtil {
 
             // Add subsetRef to the concept corresponding to this
             if (existingConcept != null) {
-              existingConcept.getSubsets().add(subsetRef);
-              service.update(Concept.class, existingConcept.getId(), existingConcept);
+              accumulateConceptSubsetMaybeFlush(service, pendingConceptSubsetUpdatesR5,
+                  existingConcept, subsetRef);
             }
             memberProcessedR5++;
             logValueSetMemberProgress(listener, memberProcessedR5, memberTotalEstimateR5);
@@ -645,13 +651,15 @@ public final class ValueSetLoaderUtil {
 
           // Add subsetRef to the concept corresponding to this
           if (existingConcept != null) {
-            service.addField(Concept.class, existingConcept.getId(), subsetRef, "subsets");
+            accumulateConceptSubsetMaybeFlush(service, pendingConceptSubsetUpdatesR5,
+                existingConcept, subsetRef);
           }
           memberProcessedR5++;
           logValueSetMemberProgress(listener, memberProcessedR5, memberTotalEstimateR5);
 
         }
       }
+      flushConceptSubsetUpdates(service, pendingConceptSubsetUpdatesR5);
       if (!members.isEmpty()) {
         service.addBulk(SubsetMember.class, new ArrayList<>(members));
       }
@@ -687,6 +695,12 @@ public final class ValueSetLoaderUtil {
 
   }
 
+  /**
+   * Estimate value set member count R 4.
+   *
+   * @param valueSet the value set
+   * @return the int
+   */
   private static int estimateValueSetMemberCountR4(
       final org.hl7.fhir.r4.model.ValueSet valueSet) {
     int n = 0;
@@ -704,6 +718,12 @@ public final class ValueSetLoaderUtil {
     return n;
   }
 
+  /**
+   * Estimate value set member count R 5.
+   *
+   * @param valueSet the value set
+   * @return the int
+   */
   private static int estimateValueSetMemberCountR5(
       final org.hl7.fhir.r5.model.ValueSet valueSet) {
     int n = 0;
@@ -721,6 +741,13 @@ public final class ValueSetLoaderUtil {
     return n;
   }
 
+  /**
+   * Log value set member progress.
+   *
+   * @param listener the listener
+   * @param processed the processed
+   * @param totalEstimate the total estimate
+   */
   private static void logValueSetMemberProgress(final ProgressListener listener,
       final int processed, final int totalEstimate) {
     final boolean milestone = processed % VALUESET_MEMBER_PROGRESS_LOG_INTERVAL == 0;
@@ -772,10 +799,10 @@ public final class ValueSetLoaderUtil {
     final String systemUri, final String publisher, final String version) {
     try {
       // First try with URI, publisher, and version for exact match
-      final String query = StringUtility.composeQuery("AND",
-          StringUtility.escapeKeywordField("uri", systemUri),
-          StringUtility.escapeKeywordField("publisher", publisher),
-          StringUtility.escapeKeywordField("version", version));
+      final String query =
+          StringUtility.composeQuery("AND", StringUtility.escapeKeywordField("uri", systemUri),
+              StringUtility.escapeKeywordField("publisher", publisher),
+              StringUtility.escapeKeywordField("version", version));
 
       final SearchParameters params = new SearchParameters(query, null, 10, null, null);
       final ResultList<Terminology> results = searchService.find(params, Terminology.class);
@@ -790,6 +817,75 @@ public final class ValueSetLoaderUtil {
     } catch (final Exception e) {
       LOGGER.warn("Failed to lookup terminology for URI {}: {}", systemUri, e.getMessage());
       return null;
+    }
+  }
+
+  /**
+   * Stage a subset reference against a concept for batched persistence
+   * (distinct concept ids keyed in {@code pending} until
+   * {@link #flushConceptSubsetUpdates}).
+   *
+   * @param pending keyed by concept id
+   * @param concept terminology concept (typically from
+   *          {@link TerminologyUtility#getConcept})
+   * @param subsetRef value set subset reference to append on
+   *          {@link Concept#getSubsets()}
+   */
+  private static void accumulateConceptSubset(final Map<String, Concept> pending,
+    final Concept concept, final SubsetRef subsetRef) {
+
+    final String conceptId = concept.getId();
+    if (conceptId == null || conceptId.isEmpty()) {
+      throw new IllegalStateException("Concept id required for subset back-reference indexing");
+    }
+    final Concept tracked = pending.get(conceptId);
+    if (tracked != null) {
+      tracked.getSubsets().add(subsetRef);
+    } else {
+      concept.getSubsets().add(subsetRef);
+      pending.put(conceptId, concept);
+    }
+  }
+
+  /**
+   * Persists all staged Concept updates via Lucene bulk update (single commit per invocation).
+   *
+   * @param service repository
+   * @param pending mutated concepts keyed by id
+   * @throws Exception the exception
+   */
+  private static void flushConceptSubsetUpdates(final EntityRepositoryService service,
+    final Map<String, Concept> pending) throws Exception {
+
+    if (pending.isEmpty()) {
+      return;
+    }
+    final long t0 = System.currentTimeMillis();
+    final int batchSize = pending.size();
+    service.updateBulk(Concept.class, new LinkedHashMap<>(pending));
+    LOGGER.debug(
+        "  Concept subset back-references flushed batchSize={} durationMs={}",
+        batchSize,
+        System.currentTimeMillis() - t0);
+    pending.clear();
+  }
+
+  /**
+   * Accumulate concept subset maybe flush.
+   *
+   * @param service the service
+   * @param pendingConceptSubsetUpdates the pending concept subset updates
+   * @param concept the concept
+   * @param subsetRef the subset ref
+   * @throws Exception the exception
+   */
+  private static void accumulateConceptSubsetMaybeFlush(final EntityRepositoryService service,
+    final Map<String, Concept> pendingConceptSubsetUpdates,
+    final Concept concept, final SubsetRef subsetRef) throws Exception {
+
+    accumulateConceptSubset(pendingConceptSubsetUpdates, concept, subsetRef);
+    if (pendingConceptSubsetUpdates.size() >= CONCEPT_SUBSET_FLUSH_SIZE) {
+      flushConceptSubsetUpdates(service, pendingConceptSubsetUpdates);
     }
   }
 }

@@ -17,7 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -626,6 +628,49 @@ public class EntityServiceImplUnitTest extends AbstractClassTest {
 
     } catch (final Exception e) {
       fail("Error testing add field preserves all existing fields: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Bulk update merges multiple staged documents after a single commit.
+   */
+  @Test
+  @Order(19)
+  public void testUpdateBulkPersistsMultipleDocuments() {
+
+    logger.info("Testing UpdateBulk persists merged fields for multiple documents");
+
+    try {
+      final TestDocument bulk1 =
+          new TestDocument("bulk1", "b100", "bulk one", "first bulk description");
+      final TestDocument bulk2 =
+          new TestDocument("bulk2", "b200", "bulk two", "second bulk description");
+      searchService.addBulk(TestDocument.class, List.of(bulk1, bulk2));
+
+      final TestDocument delta1 = new TestDocument("bulk1", "b100_updated", null, null);
+      final TestDocument delta2 =
+          new TestDocument("bulk2", null, null, "second bulk description updated");
+
+      final Map<String, HasId> updates = new LinkedHashMap<>();
+      updates.put("bulk1", delta1);
+      updates.put("bulk2", delta2);
+      searchService.updateBulk(TestDocument.class, updates);
+
+      final TestDocument retrieved1 = searchService.get("bulk1", TestDocument.class);
+      final TestDocument retrieved2 = searchService.get("bulk2", TestDocument.class);
+      assertNotNull(retrieved1);
+      assertNotNull(retrieved2);
+      assertEquals("b100_updated", retrieved1.getCode());
+      assertEquals("bulk one", retrieved1.getName());
+      assertEquals("first bulk description", retrieved1.getDescription());
+      assertEquals("b200", retrieved2.getCode());
+      assertEquals("bulk two", retrieved2.getName());
+      assertEquals("second bulk description updated", retrieved2.getDescription());
+
+      logger.info("Successfully verified updateBulk merged fields after single batch commit");
+
+    } catch (final Exception e) {
+      fail("Error testing updateBulk: " + e.getMessage());
     }
   }
 
