@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -65,6 +66,7 @@ import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Definition;
@@ -655,6 +657,11 @@ public final class FhirUtilityR5 {
     final boolean isLoinc =
         codeSystem.getUrl() != null && codeSystem.getUrl().contains("loinc.org");
 
+    final List<ConceptRef> distinctHierarchicalParents =
+        FhirUtility.distinctHierarchicalParents(relationships);
+    final Set<String> hierarchicalParentCodes =
+        distinctHierarchicalParents.stream().map(ConceptRef::getCode).collect(Collectors.toSet());
+
     // Definitions
     if (properties == null || properties.contains("definition")) {
       for (final Definition def : concept.getDefinitions()) {
@@ -714,6 +721,32 @@ public final class FhirUtilityR5 {
 
     }
 
+    if (isLoinc && !concept.getFhirPropertyCodings().isEmpty()) {
+      for (final ConceptPropertyValueCoding entry : concept.getFhirPropertyCodings()) {
+        final String propertyCode = entry.getPropertyCode();
+        if (properties != null && !properties.contains(propertyCode)) {
+          continue;
+        }
+        final String codingCode = entry.getValueCode();
+        if (codingCode == null) {
+          continue;
+        }
+        if (hierarchicalParentCodes.contains(codingCode) && "parent".equals(propertyCode)) {
+          continue;
+        }
+        String display = resolveLoincPropertyDisplay(propertyCode, codingCode, codingCode, concept,
+            displayMap);
+        if (entry.getValueDisplay() != null && !entry.getValueDisplay().isEmpty()) {
+          display = entry.getValueDisplay();
+        }
+        final Coding coding = new Coding();
+        coding.setCode(codingCode);
+        coding.setSystem(codeSystem.getUrl());
+        coding.setDisplay(display);
+        parameters.addParameter(createProperty(propertyCode, coding, false));
+      }
+    }
+
     // Concept attributes
     for (final String key : concept.getAttributes().keySet()) {
       if (properties != null && !properties.contains(key)) {
@@ -740,10 +773,14 @@ public final class FhirUtilityR5 {
       }
 
       if (isLoinc) {
-        String codingCode = findLoincCodingCode(key, concept);
-        if (codingCode == null && isLoincPartCode(value)
+        String codingCode = null;
+        if (value != null && isLoincPartCode(value)
             && concept.getAttributes().containsKey(key + "_display")) {
           codingCode = value;
+        }
+        if (codingCode != null && hierarchicalParentCodes.contains(codingCode)
+            && ("parent".equals(key) || key != null && key.matches("parent_\\d+"))) {
+          continue;
         }
         if (codingCode != null) {
           final Coding coding = new Coding();
@@ -813,9 +850,7 @@ public final class FhirUtilityR5 {
 
     // Parents/Children
     if (properties == null || properties.contains("parent")) {
-      for (final ConceptRef parent : relationships.stream()
-          .filter(r -> r.getHierarchical() != null && r.getHierarchical()).map(r -> r.getTo())
-          .toList()) {
+      for (final ConceptRef parent : distinctHierarchicalParents) {
         final Coding coding = new Coding();
         coding.setCode(parent.getCode());
         coding.setSystem(codeSystem.getUrl());
@@ -905,39 +940,18 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Loinc lookup property name.
+   * Legacy {@code Map} keys used {@code _N} suffixes for duplicate FHIR property codes. Strip that
+   * for the $lookup parameter name (indexed documents only; reload uses
+   * {@link com.wci.termhub.model.Concept#getFhirPropertyCodings()}).
    *
    * @param attributeKey the attribute key
-   * @return the string
+   * @return FHIR property name
    */
   private static String loincLookupPropertyName(final String attributeKey) {
-    if (attributeKey.length() > "category_".length() && attributeKey.startsWith("category_")) {
-      final String suffix = attributeKey.substring("category_".length());
-      if (suffix.matches("\\d+")) {
-        return "category";
-      }
-    }
-    if (attributeKey.length() > "search_".length() && attributeKey.startsWith("search_")) {
-      final String suffix = attributeKey.substring("search_".length());
-      if (suffix.matches("\\d+")) {
-        return "search";
-      }
+    if (attributeKey != null && attributeKey.matches(".+_\\d+")) {
+      return attributeKey.replaceFirst("_\\d+$", "");
     }
     return attributeKey;
-  }
-
-  /**
-   * Find loinc coding code.
-   *
-   * @param propertyCode the property code
-   * @param concept the concept
-   * @return the string
-   */
-  private static String findLoincCodingCode(final String propertyCode, final Concept concept) {
-    if (propertyCode.matches("category_\\d+") || propertyCode.matches("search_\\d+")) {
-      return concept.getAttributes().get(propertyCode);
-    }
-    return null;
   }
 
   /**
