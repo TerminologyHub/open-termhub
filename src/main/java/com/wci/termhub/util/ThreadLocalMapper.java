@@ -20,37 +20,37 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  */
 public final class ThreadLocalMapper {
 
-    /**
-     * Instantiates a new thread local mapper.
-     */
-    private ThreadLocalMapper() {
-        // n/a
-    }
+  /**
+   * Instantiates a new thread local mapper.
+   */
+  private ThreadLocalMapper() {
+    // n/a
+  }
 
-    /** The Constant mapper. */
-    private static final ThreadLocal<ObjectMapper> MAPPER =
-            ThreadLocal.withInitial(ThreadLocalMapper::newMapper);
+  /** The Constant mapper. */
+  private static final ThreadLocal<ObjectMapper> MAPPER =
+      ThreadLocal.withInitial(ThreadLocalMapper::newMapper);
 
-    /**
-     * New mapper.
-     *
-     * @return the object mapper
-     */
-    public static ObjectMapper newMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
-        mapper.findAndRegisterModules().configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,
-                false);
-        mapper.setTimeZone(TimeZone.getDefault());
-        return mapper;
-    }
+  /**
+   * New mapper.
+   *
+   * @return the object mapper
+   */
+  public static ObjectMapper newMapper() {
+    final ObjectMapper mapper = new ObjectMapper();
+    mapper.setSerializationInclusion(Include.NON_EMPTY);
+    mapper.findAndRegisterModules().configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,
+        false);
+    mapper.setTimeZone(TimeZone.getDefault());
+    return mapper;
+  }
 
-    /**
-     * Gets the.
-     *
-     * @return the object mapper
-     */
-    public static ObjectMapper get() {
-        return MAPPER.get();
-    }
+  /**
+   * Gets the.
+   *
+   * @return the object mapper
+   */
+  public static ObjectMapper get() {
+    return MAPPER.get();
+  }
 }
