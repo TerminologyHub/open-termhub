@@ -86,6 +86,13 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
   @Field(type = FieldType.Object)
   private Map<String, String> attributes;
 
+  /**
+   * FHIR CodeSystem concept properties with {@code valueCoding}. Preserves duplicate property codes
+   * (same code, multiple values) without synthetic {@code Map} keys such as {@code prop_1}.
+   */
+  @Field(type = FieldType.Object)
+  private List<ConceptPropertyValueCoding> fhirPropertyCodings;
+
   /** The highlights. */
   @Transient
   @JsonSerialize
@@ -172,6 +179,7 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
       axioms = new ArrayList<>(concept.getAxioms());
       definitions = new ArrayList<>(concept.getDefinitions());
       attributes = new HashMap<>(concept.getAttributes());
+      fhirPropertyCodings = new ArrayList<>(concept.getFhirPropertyCodings());
       semanticTypes = new HashSet<>(concept.getSemanticTypes());
       labels = new HashSet<>(concept.getLabels());
       parents = new ArrayList<>(concept.getParents());
@@ -218,6 +226,9 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
       }
       if (!concept.getAttributes().isEmpty()) {
         getAttributes().putAll(concept.getAttributes());
+      }
+      if (!concept.getFhirPropertyCodings().isEmpty()) {
+        getFhirPropertyCodings().addAll(concept.getFhirPropertyCodings());
       }
       if (!concept.getSemanticTypes().isEmpty()) {
         getSemanticTypes().addAll(concept.getSemanticTypes());
@@ -369,6 +380,26 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
   }
 
   /**
+   * FHIR {@code valueCoding} properties from the CodeSystem concept (duplicates allowed).
+   *
+   * @return ordered list; never null
+   */
+  @Schema(description = "FHIR CodeSystem concept properties with valueCoding (preserves duplicates)")
+  public List<ConceptPropertyValueCoding> getFhirPropertyCodings() {
+    if (fhirPropertyCodings == null) {
+      fhirPropertyCodings = new ArrayList<>();
+    }
+    return fhirPropertyCodings;
+  }
+
+  /**
+   * @param fhirPropertyCodings the list (null to clear)
+   */
+  public void setFhirPropertyCodings(final List<ConceptPropertyValueCoding> fhirPropertyCodings) {
+    this.fhirPropertyCodings = fhirPropertyCodings;
+  }
+
+  /**
    * Returns the semantic types.
    *
    * @return the semantic types
@@ -431,6 +462,7 @@ public class Concept extends ConceptRef implements HasAttributes, HasMinimize, H
     indexTerms = new ArrayList<>(0);
     definitions = new ArrayList<>(0);
     attributes = new HashMap<>(0);
+    fhirPropertyCodings = new ArrayList<>(0);
     semanticTypes = new HashSet<>(0);
     labels = new HashSet<>(0);
     children = new ArrayList<>(0);

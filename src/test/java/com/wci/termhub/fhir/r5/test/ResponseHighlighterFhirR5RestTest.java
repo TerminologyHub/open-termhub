@@ -26,8 +26,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 /**
- * Same integration checks as {@code ResponseHighlighterFhirR4RestTest} in the sibling {@code fhir/r4/test}
- * tree, applied to FHIR R5 ({@code /fhir/r5/metadata}): browser HTML highlighter vs JSON/XML negotiation.
+ * Same integration checks as {@code ResponseHighlighterFhirR4RestTest} in the
+ * sibling {@code fhir/r4/test} tree, applied to FHIR R5
+ * ({@code /fhir/r5/metadata}): browser HTML highlighter vs JSON/XML
+ * negotiation.
  */
 @AutoConfigureMockMvc
 public class ResponseHighlighterFhirR5RestTest extends AbstractFhirR5ServerTest {
@@ -45,22 +47,24 @@ public class ResponseHighlighterFhirR5RestTest extends AbstractFhirR5ServerTest 
   private TestRestTemplate restTemplate;
 
   /**
-   * Browser navigation style request should produce HTML highlighter output (text/html).
+   * Browser navigation style request should produce HTML highlighter output
+   * (text/html).
    */
   @Test
   public void browserLikeAcceptReturnsHtmlHighlighterMetadata() {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.set(HttpHeaders.ACCEPT, CHROME_LIKE_ACCEPT);
-    final ResponseEntity<String> response = restTemplate.exchange(
-        metadataUrl(), HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    final ResponseEntity<String> response = restTemplate.exchange(metadataUrl(), HttpMethod.GET,
+        new HttpEntity<>(headers), String.class);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getHeaders().getContentType());
 
     final String contentTypeHeader =
         response.getHeaders().getContentType().toString().toLowerCase();
-    assertTrue(contentTypeHeader.contains("text/html"), "unexpected Content-Type: " + contentTypeHeader);
+    assertTrue(contentTypeHeader.contains("text/html"),
+        "unexpected Content-Type: " + contentTypeHeader);
 
     final String body = response.getBody();
     assertNotNull(body);
@@ -77,15 +81,16 @@ public class ResponseHighlighterFhirR5RestTest extends AbstractFhirR5ServerTest 
 
     final HttpHeaders headers = new HttpHeaders();
     headers.set(HttpHeaders.ACCEPT, MediaType.ALL_VALUE);
-    final ResponseEntity<String> response =
-        restTemplate.exchange(metadataUrl(), HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    final ResponseEntity<String> response = restTemplate.exchange(metadataUrl(), HttpMethod.GET,
+        new HttpEntity<>(headers), String.class);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
     assertNotNull(response.getHeaders().getContentType(), "missing Content-Type");
     final String contentTypeHeader =
         response.getHeaders().getContentType().toString().toLowerCase();
-    assertTrue(contentTypeHeader.contains("fhir+json"), "unexpected Content-Type: " + contentTypeHeader);
+    assertTrue(contentTypeHeader.contains("fhir+json"),
+        "unexpected Content-Type: " + contentTypeHeader);
 
     final String body = response.getBody();
     assertNotNull(body);
@@ -100,15 +105,16 @@ public class ResponseHighlighterFhirR5RestTest extends AbstractFhirR5ServerTest 
 
     final HttpHeaders headers = new HttpHeaders();
     headers.set(HttpHeaders.ACCEPT, "application/xml");
-    final ResponseEntity<String> response = restTemplate.exchange(
-        metadataUrl(), HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    final ResponseEntity<String> response = restTemplate.exchange(metadataUrl(), HttpMethod.GET,
+        new HttpEntity<>(headers), String.class);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
 
     assertNotNull(response.getHeaders().getContentType());
     final String contentTypeHeader =
         response.getHeaders().getContentType().toString().toLowerCase();
-    assertTrue(contentTypeHeader.contains("fhir+xml") || contentTypeHeader.contains("application/xml"),
+    assertTrue(
+        contentTypeHeader.contains("fhir+xml") || contentTypeHeader.contains("application/xml"),
         "unexpected Content-Type: " + contentTypeHeader);
 
     final String body = response.getBody();
@@ -117,6 +123,11 @@ public class ResponseHighlighterFhirR5RestTest extends AbstractFhirR5ServerTest 
     assertTrue(trimmed.startsWith("<"));
   }
 
+  /**
+   * Metadata url.
+   *
+   * @return the string
+   */
   private String metadataUrl() {
     return "http://localhost:" + port + "/fhir/r5/metadata";
   }

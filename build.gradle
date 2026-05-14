@@ -1,6 +1,6 @@
 buildscript {
   ext {
-    springBootVersion = "3.5.13"
+    springBootVersion = "3.5.14"
     log4jVersion = "2.25.4"
     tomcatEmbedVersion = "10.1.54"
     hapiFhirVersion = "6.9.4"
@@ -44,7 +44,7 @@ repositories {
 }
 
 group = 'com.wci.open-termhub'
-version = '1.2.5-202604'
+version = '1.2.6-202605'
 
 sourceCompatibility = 17
 targetCompatibility = 17
@@ -90,8 +90,8 @@ dependencies {
 
   // Vulnerability import
   implementation "org.apache.tomcat.embed:tomcat-embed-core:10.1.54"
-  implementation "org.thymeleaf:thymeleaf:3.1.4.RELEASE"
-  implementation "org.thymeleaf:thymeleaf-spring6:3.1.4.RELEASE"
+  implementation "org.thymeleaf:thymeleaf:3.1.5.RELEASE"
+  implementation "org.thymeleaf:thymeleaf-spring6:3.1.5.RELEASE"
 
   implementation "org.fhir:ucum:1.0.9"
   // These are needed to override dependencies from hapi-fhir-base (until it is fixed)
