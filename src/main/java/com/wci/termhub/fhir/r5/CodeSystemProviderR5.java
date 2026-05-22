@@ -684,13 +684,16 @@ public class CodeSystemProviderR5 implements IResourceProvider {
           OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
     }
 
-    // Lookup parents/children
+    // Lookup parents/children (scoped to this terminology version, like the concept query)
+    final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), terminology.getVersion());
     final List<ConceptRelationship> relationships =
-        searchService.findAll(StringUtility.composeQuery("AND", "active:true",
+        searchService.findAll(StringUtility.composeQuery("AND", termQuery, "active:true",
             "from.code:" + StringUtility.escapeQuery(code)), null, ConceptRelationship.class);
     final List<ConceptRelationship> children =
-        searchService.findAll(StringUtility.composeQuery("AND", "active:true", "hierarchical:true",
-            "to.code:" + StringUtility.escapeQuery(code)), null, ConceptRelationship.class);
+        searchService.findAll(StringUtility.composeQuery("AND", termQuery, "active:true",
+            "hierarchical:true", "to.code:" + StringUtility.escapeQuery(code)), null,
+            ConceptRelationship.class);
 
     // Look up metadata
     final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService, terminology);
