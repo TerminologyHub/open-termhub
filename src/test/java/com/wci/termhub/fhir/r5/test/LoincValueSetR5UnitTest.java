@@ -23,6 +23,7 @@ import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -124,7 +125,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
    *
    * @throws Exception the exception
    */
-  // @Disabled("Disabled until we have a way to test this")
+  @Disabled("Disabled until we have a way to test this")
   @Test
   public void testGetLllgValueSetById() throws Exception {
     final ValueSet vs = provider.getValueSet(request, details, new IdType(LL_VS_ID));
