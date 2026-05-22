@@ -82,6 +82,7 @@ public class FhirUtilityLookupParentsUnitTest {
     final List<ConceptRelationship> rels = new ArrayList<>();
     rels.add(hierarchicalRel(fromA, to));
     rels.add(hierarchicalRel(fromB, to));
+  }
 
   /**
    * Hierarchical rel.
