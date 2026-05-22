@@ -237,7 +237,13 @@ public final class ValueSetLoaderUtil {
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
           final TerminologyRef fromRef = new TerminologyRef();
-          fromRef.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          String fromAbbreviation =
+              lookupTerminologyFromUri(service, include.getSystem(), subset.getPublisher(),
+                  subset.getVersion());
+          if (fromAbbreviation == null) {
+            fromAbbreviation = valueSet.getTitle().split("-")[0];
+          }
+          fromRef.setAbbreviation(fromAbbreviation);
           fromRef.setUri(include.getSystem());
           fromRef.setPublisher(valueSet.getPublisher());
           fromRef.setVersion(valueSet.getVersion());
@@ -512,7 +518,13 @@ public final class ValueSetLoaderUtil {
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
           final TerminologyRef fromRef = new TerminologyRef();
-          fromRef.setAbbreviation(valueSet.getTitle().split("-")[0]);
+          String fromAbbreviation =
+              lookupTerminologyFromUri(service, include.getSystem(), subset.getPublisher(),
+                  subset.getVersion());
+          if (fromAbbreviation == null) {
+            fromAbbreviation = valueSet.getTitle().split("-")[0];
+          }
+          fromRef.setAbbreviation(fromAbbreviation);
           fromRef.setUri(include.getSystem());
           fromRef.setPublisher(valueSet.getPublisher());
           fromRef.setVersion(valueSet.getVersion());
