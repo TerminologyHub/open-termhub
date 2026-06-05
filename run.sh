@@ -36,21 +36,21 @@ else
     exit 1
 fi
 
-if [[ `ls build/libs/open-termhub-*.war 2> /dev/null | wc -l` -eq 1 ]]; then
+if [[ `ls build/libs/open-termhub-*.jar 2> /dev/null | wc -l` -eq 1 ]]; then
     # First form exists
-    war_file=$(ls build/libs/open-termhub-*.war)
-    echo "  Found war file = $war_file"
-elif [[ `ls open-termhub-*.war 2> /dev/null | wc -l` -eq 1 ]]; then
+    jar_file=$(ls build/libs/open-termhub-*.jar)
+    echo "  Found jar file = $jar_file"
+elif [[ `ls open-termhub-*.jar 2> /dev/null | wc -l` -eq 1 ]]; then
     # Second form exists
-    war_file=$(ls open-termhub-*.war)
+    jar_file=$(ls open-termhub-*.jar)
     log_file=log4j2-deploy.xml
-    echo "  Found war file = $war_file"
+    echo "  Found jar file = $jar_file"
 else
     # Neither exists
-    echo "'build/libs/open-termhub-*.war' nor 'open-termhub-*.war' could be found."
+    echo "'build/libs/open-termhub-*.jar' nor 'open-termhub-*.jar' could be found."
     exit 1
 fi
 
-echo "java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -jar $war_file"
-java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -jar $war_file
+echo "java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -jar $jar_file"
+java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -jar $jar_file
 
