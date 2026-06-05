@@ -46,7 +46,7 @@ test-r5: clean ## Run R5 tests only
 	./gradlew testR5
 
 run: ## Run the server
-	./gradlew bootRun
+	./run.sh
 
 # connect
 rundebug: ## Run the server with debug logging and JVM debug port (5005)

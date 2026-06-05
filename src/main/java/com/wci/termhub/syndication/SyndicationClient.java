@@ -41,6 +41,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.wci.termhub.rest.RestException;
 import com.wci.termhub.util.StreamUtility;
+import com.wci.termhub.util.StringUtility;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
@@ -111,7 +112,10 @@ public class SyndicationClient {
    */
   public SyndicationFeed getFeed() throws Exception {
 
-    logger.info("Fetching syndication feed");
+    logger.info("Fetching syndication feed = " + syndicationUrl + "/terminology/syndication/feed");
+    logger.info("  accept = application/xml");
+    logger
+        .info("  authorization = bearer " + StringUtility.substr(getSyndicationCredentials(), 25));
     final HttpHeaders headers = new HttpHeaders();
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_XML));
     headers.setBearerAuth(getSyndicationCredentials());
@@ -140,8 +144,8 @@ public class SyndicationClient {
     try {
       // Strip Atom namespace to simplify unmarshalling
       final String xmlBody = xml.replace("xmlns=\"http://www.w3.org/2005/Atom\"", "");
-      final SyndicationFeed feed = (SyndicationFeed) jaxbContext.createUnmarshaller()
-          .unmarshal(new StringReader(xmlBody));
+      final SyndicationFeed feed =
+          (SyndicationFeed) jaxbContext.createUnmarshaller().unmarshal(new StringReader(xmlBody));
 
       logger.debug("Parsed syndication feed successfully. Found {} entries",
           feed.getEntries().size());
@@ -235,7 +239,8 @@ public class SyndicationClient {
               restTemplate.exchange(normalizedUrl, HttpMethod.OPTIONS,
                   new HttpEntity<Void>(headers), Void.class);
 
-              final File targetFile = Files.createTempFile(UUID.randomUUID().toString(), ".zip").toFile();
+              final File targetFile =
+                  Files.createTempFile(UUID.randomUUID().toString(), ".zip").toFile();
               outputFileHolder[0] = targetFile;
               restTemplate.execute(normalizedUrl, HttpMethod.GET, request -> {
                 request.getHeaders().setBearerAuth(syndicationCredentials);
@@ -531,7 +536,8 @@ public class SyndicationClient {
     // Old format was like "ICD10CM_FHIRR5_ALL" which doesn't match resource type strings
     final SyndicationLink zipLink = entry.getZipLink();
     if (zipLink != null && zipLink.getHref() != null) {
-      final SyndicationContentType urlBasedType = SyndicationContentType.fromDownloadUrl(zipLink.getHref());
+      final SyndicationContentType urlBasedType =
+          SyndicationContentType.fromDownloadUrl(zipLink.getHref());
       if (urlBasedType != null && urlBasedType.equals(resourceType)) {
         return true;
       }
@@ -540,7 +546,6 @@ public class SyndicationClient {
     // Legacy: direct comparison (in case old format somehow matched)
     return resourceTypeStr.equalsIgnoreCase(category);
   }
-
 
   /**
    * Check if an entry is new (not already loaded).

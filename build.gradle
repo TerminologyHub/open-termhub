@@ -311,6 +311,11 @@ bootRun {
     // args = ['--spring.profiles.active=your-profile']
 }
 
+// Avoid building the -plain war file
+tasks.named('war') {
+    enabled = false
+}
+
 bootJar {
   mainClass = 'com.wci.termhub.Application'
   manifest {
