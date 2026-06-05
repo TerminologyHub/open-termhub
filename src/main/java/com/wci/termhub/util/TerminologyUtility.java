@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -560,18 +561,24 @@ public final class TerminologyUtility {
   public static List<ConceptRef> getParents(final EntityRepositoryService searchService,
     final Terminology terminology, final Concept concept) throws Exception {
 
+    final String termQuery = getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), terminology.getVersion());
     final List<ConceptRelationship> list = searchService.findAll(StringUtility.composeQuery("AND",
-        StringUtility.escapeKeywordField("from.code", concept.getCode()),
-        "hierarchical:true AND active:true"), null, ConceptRelationship.class);
+        termQuery, StringUtility.escapeKeywordField("from.code", concept.getCode()),
+        "hierarchical:true", "active:true"), null, ConceptRelationship.class);
 
-    // Set defined status for parents - parents are not defined (higher in
-    // hierarchy)
-    // return list.stream().map(r -> {
-    // final ConceptRef parentRef = r.getTo();
-    // parentRef.setDefined(false);
-    // return parentRef;
-    // }).toList();
-    return list.stream().map(r -> r.getTo()).toList();
+    final Map<String, ConceptRef> byCode = new LinkedHashMap<>();
+    for (final ConceptRelationship relationship : list) {
+      if (relationship.getHierarchical() == null || !relationship.getHierarchical()) {
+        continue;
+      }
+      final ConceptRef parentRef = relationship.getTo();
+      if (parentRef == null || parentRef.getCode() == null) {
+        continue;
+      }
+      byCode.putIfAbsent(parentRef.getCode(), parentRef);
+    }
+    return List.copyOf(byCode.values());
   }
 
   /**
@@ -622,17 +629,25 @@ public final class TerminologyUtility {
   public static List<ConceptRef> getChildren(final EntityRepositoryService searchService,
     final Terminology terminology, final Concept concept) throws Exception {
 
+    final String termQuery = getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), terminology.getVersion());
     final List<ConceptRelationship> list = searchService.findAll(StringUtility.composeQuery("AND",
-        StringUtility.escapeKeywordField("to.code", concept.getCode()), "hierarchical:true",
-        "active:true"), null, ConceptRelationship.class);
+        termQuery, StringUtility.escapeKeywordField("to.code", concept.getCode()),
+        "hierarchical:true", "active:true"), null, ConceptRelationship.class);
 
-    // Set defined status for children - all children are defined (non-leaf
-    // concepts)
-    return list.stream().map(r -> {
-      final ConceptRef childRef = r.getFrom();
+    final Map<String, ConceptRef> byCode = new LinkedHashMap<>();
+    for (final ConceptRelationship relationship : list) {
+      if (relationship.getHierarchical() == null || !relationship.getHierarchical()) {
+        continue;
+      }
+      final ConceptRef childRef = relationship.getFrom();
+      if (childRef == null || childRef.getCode() == null) {
+        continue;
+      }
       childRef.setDefined(true);
-      return childRef;
-    }).toList();
+      byCode.putIfAbsent(childRef.getCode(), childRef);
+    }
+    return List.copyOf(byCode.values());
   }
 
   /**

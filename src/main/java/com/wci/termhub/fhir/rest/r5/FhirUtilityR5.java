@@ -75,6 +75,7 @@ import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.fhir.util.LoincValueSetHelper.LllgComposeStructure;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
@@ -859,7 +860,8 @@ public final class FhirUtilityR5 {
       }
     }
     if (properties == null || properties.contains("child")) {
-      for (final ConceptRef child : children) {
+      final List<ConceptRef> childRefs = children == null ? List.of() : children;
+      for (final ConceptRef child : childRefs) {
         final Coding coding = new Coding();
         coding.setCode(child.getCode());
         coding.setSystem(codeSystem.getUrl());
@@ -1095,68 +1097,88 @@ public final class FhirUtilityR5 {
   }
 
   /**
+   * Applies LOINC LL/LG compose (nested value set refs and/or leaf concepts) to a ValueSet.
+   *
+   * @param set the value set
+   * @param systemUri LOINC code system URI for leaf concepts
+   * @param composeStructure partitioned compose structure
+   */
+  public static void setR5LllgCompose(final ValueSet set, final String systemUri,
+      final LllgComposeStructure composeStructure) {
+    if (set == null || systemUri == null || composeStructure == null) {
+      return;
+    }
+    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
+    if (!composeStructure.getNestedValueSetUrls().isEmpty()) {
+      final ConceptSetComponent nestedInclude = new ConceptSetComponent();
+      for (final String url : composeStructure.getNestedValueSetUrls()) {
+        nestedInclude.addValueSet(url);
+      }
+      compose.addInclude(nestedInclude);
+    }
+    if (!composeStructure.getLeafConcepts().isEmpty()) {
+      final ConceptSetComponent leafInclude = new ConceptSetComponent();
+      leafInclude.setSystem(systemUri);
+      for (final Concept c : composeStructure.getLeafConcepts()) {
+        leafInclude.addConcept(
+            new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
+      }
+      compose.addInclude(leafInclude);
+    }
+    if (!compose.getInclude().isEmpty()) {
+      set.setCompose(compose);
+    }
+  }
+
+  /**
    * Builds an R5 ValueSet for a LOINC LL/LG value set with compose but no expansion (for GET
    * ValueSet/{id} when expansion should not be included).
    *
    * @param terminology LOINC terminology
    * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
-   * @param members the concepts that are members of the value set
+   * @param composeStructure partitioned compose structure from direct members
    * @return the value set with compose.include set, no expansion
    */
   public static ValueSet toR5LllgValueSetWithComposeOnly(final Terminology terminology,
-    final String lllgId, final List<Concept> members) {
+    final String lllgId, final LllgComposeStructure composeStructure) {
     final ValueSet set = toR5LllgValueSet(terminology, lllgId, false);
-    final String systemUri = terminology.getUri();
-    if (systemUri == null || members == null) {
-      return set;
-    }
-    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
-    final ConceptSetComponent include = new ConceptSetComponent();
-    include.setSystem(systemUri);
-    for (final Concept c : members) {
-      include
-          .addConcept(new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
-    }
-    compose.addInclude(include);
-    set.setCompose(compose);
+    setR5LllgCompose(set, terminology.getUri(), composeStructure);
     return set;
   }
 
   /**
-   * Builds an R5 ValueSet for a LOINC LL/LG value set with compose and expansion populated from the
-   * given members (for GET ValueSet/{id} to match fhir.loinc.org behavior).
+   * Builds an R5 ValueSet for a LOINC LL/LG value set with compose and expansion populated from
+   * leaf members (recursive expansion).
    *
    * @param terminology LOINC terminology
-   * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
-   * @param members the concepts that are members of the value set
+   * @param lllgId the LL or LG id
+   * @param composeStructure partitioned compose from direct members
+   * @param leafMembers paginated leaf concepts for expansion.contains
+   * @param expansionTotal total leaf count before pagination
+   * @param expansionOffset expansion offset
+   * @param expansionCount expansion count parameter
    * @return the value set with compose.include and expansion.contains set
    */
   public static ValueSet toR5LllgValueSetWithMembers(final Terminology terminology,
-    final String lllgId, final List<Concept> members) {
+    final String lllgId, final LllgComposeStructure composeStructure,
+    final List<Concept> leafMembers, final int expansionTotal, final int expansionOffset,
+    final int expansionCount) {
     final ValueSet set = toR5LllgValueSet(terminology, lllgId, false);
     final String systemUri = terminology.getUri();
-    if (systemUri == null || members == null) {
+    setR5LllgCompose(set, systemUri, composeStructure);
+    if (systemUri == null || leafMembers == null) {
       return set;
     }
-    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
-    final ConceptSetComponent include = new ConceptSetComponent();
-    include.setSystem(systemUri);
-    for (final Concept c : members) {
-      include
-          .addConcept(new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
-    }
-    compose.addInclude(include);
-    set.setCompose(compose);
     final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
     expansion.setId(UUID.randomUUID().toString());
     expansion.setTimestamp(new Date());
-    expansion.setTotal(members.size());
-    expansion.setOffset(0);
-    expansion.addParameter(
-        new ValueSetExpansionParameterComponent().setName("offset").setValue(new IntegerType(0)));
+    expansion.setTotal(expansionTotal);
+    expansion.setOffset(expansionOffset);
+    expansion.addParameter(new ValueSetExpansionParameterComponent().setName("offset")
+        .setValue(new IntegerType(expansionOffset)));
     expansion.addParameter(new ValueSetExpansionParameterComponent().setName("count")
-        .setValue(new IntegerType(members.size())));
-    for (final Concept c : members) {
+        .setValue(new IntegerType(expansionCount)));
+    for (final Concept c : leafMembers) {
       expansion.addContains(new ValueSetExpansionContainsComponent().setSystem(systemUri)
           .setCode(c.getCode()).setDisplay(c.getName()));
     }

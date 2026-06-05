@@ -10,19 +10,23 @@
 package com.wci.termhub.fhir.r4.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeType;
+import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.UriType;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -124,7 +128,7 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
    *
    * @throws Exception the exception
    */
-  // @Disabled("Disabled until we have a way to test this")
+  @Disabled("Disabled until we have a way to test this")
   @Test
   public void testGetLllgValueSetById() throws Exception {
     final ValueSet vs = provider.getValueSet(request, details, new IdType(LL_VS_ID));
@@ -286,6 +290,66 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
         .filter(p -> "result".equals(p.getName())).findFirst().orElse(null);
     assertNotNull(resultParam, "Parameters should contain 'result'");
     assertTrue(resultParam.getValue() instanceof BooleanType, "Result should be BooleanType");
+  }
+
+  /**
+   * LG47-3 compose should reference child LG value sets (not concepts). Requires full LOINC 2.78
+   * with hierarchical LG panels loaded.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testLg47ComposeUsesNestedValueSetRefs() throws Exception {
+    final String lgId = "LG47-3";
+    final ValueSet vs = provider.getValueSet(request, details, new IdType(lgId));
+    assumeTrue(vs.getCompose() != null && !vs.getCompose().getInclude().isEmpty(),
+        "LG47-3 not in loaded LOINC index");
+    final int nestedCount = vs.getCompose().getInclude().stream()
+        .mapToInt(inc -> inc.getValueSet() == null ? 0 : inc.getValueSet().size()).sum();
+    assumeTrue(nestedCount >= 7, "LG47-3 hierarchical children not in index");
+    assertEquals(7, nestedCount);
+    assertFalse(vs.getCompose().getInclude().stream().flatMap(inc -> inc.getConcept().stream())
+        .anyMatch(c -> c.getCode() != null && c.getCode().startsWith("LG")),
+        "Child LG codes must be valueSet references, not concepts");
+  }
+
+  /**
+   * LG47-3 expansion should flatten to leaf LOINC codes (76 members per fhir.loinc.org 2.78).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testLg47ExpandReturnsLeafCodes() throws Exception {
+    final String lgId = "LG47-3";
+    final ValueSet vs = provider.expandInstance(request, details, new IdType(lgId), null, null,
+        null, null, new IntegerType(0), new IntegerType(1000), null);
+    assumeTrue(vs.getExpansion() != null, "LG47-3 not in loaded LOINC index");
+    assumeTrue(vs.getExpansion().getTotal() >= 76,
+        "LG47-3 full expansion requires LOINC 2.78 with panel hierarchy");
+    assertEquals(76, vs.getExpansion().getTotal());
+    assertFalse(vs.getExpansion().getContains().stream()
+        .anyMatch(c -> c.getCode() != null && c.getCode().startsWith("LG330")),
+        "Expansion must not contain nested LG group codes");
+    assertTrue(vs.getExpansion().getContains().stream()
+        .anyMatch(c -> "104063-3".equals(c.getCode())),
+        "Expected leaf code 104063-3 in LG47-3 expansion");
+  }
+
+  /**
+   * Validates a transitive panel member under LG47-3 (leaf code in child LG value set).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testValidateCodeInLg47PanelMember() throws Exception {
+    final Parameters params = provider.validateCodeInstance(request, details,
+        new IdType("LG47-3"), null, null, new CodeType("104063-3"), null, null, null, null, null);
+    final Parameters.ParametersParameterComponent resultParam = params.getParameter().stream()
+        .filter(p -> "result".equals(p.getName())).findFirst().orElse(null);
+    assumeTrue(resultParam != null && resultParam.getValue() instanceof BooleanType,
+        "LG47-3 not in loaded LOINC index");
+    assumeTrue(((BooleanType) resultParam.getValue()).getValue(),
+        "104063-3 panel membership requires full LOINC 2.78 hierarchy");
   }
 
 }

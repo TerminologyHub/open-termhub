@@ -11,7 +11,11 @@ package com.wci.termhub.fhir.util;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
@@ -120,8 +124,160 @@ public class LoincValueSetHelper {
     return id != null && LL_PATTERN.matcher(id).matches();
   }
 
+  /**
+   * Returns true when a member code is itself an LL/LG value set (nested
+   * reference).
+   *
+   * @param code the concept code
+   * @return true if nested LL/LG value set
+   */
+  public boolean isNestedLllgValueSetCode(final String code) {
+    return isLllgId(code);
+  }
+
+  /**
+   * Canonical child value set URL (Regenstrief path form).
+   *
+   * @param code the LL or LG id
+   * @return http://loinc.org/vs/{code}
+   */
+  public String toChildValueSetUrl(final String code) {
+    return code == null ? null : LOINC_VS_PATH_PREFIX + code;
+  }
+
+  /**
+   * Partitioned compose structure for LL/LG value sets.
+   */
+  public static final class LllgComposeStructure {
+
+    /** The nested value set urls. */
+    private final List<String> nestedValueSetUrls;
+
+    /** The leaf concepts. */
+    private final List<Concept> leafConcepts;
+
+    /**
+     * Instantiates a {@link LllgComposeStructure}.
+     *
+     * @param nestedValueSetUrls nested value set canonical URLs
+     * @param leafConcepts direct leaf LOINC concepts
+     */
+    public LllgComposeStructure(final List<String> nestedValueSetUrls,
+        final List<Concept> leafConcepts) {
+      this.nestedValueSetUrls = nestedValueSetUrls == null ? List.of() : nestedValueSetUrls;
+      this.leafConcepts = leafConcepts == null ? List.of() : leafConcepts;
+    }
+
+    /**
+     * Gets the nested value set urls.
+     *
+     * @return the nested value set urls
+     */
+    public List<String> getNestedValueSetUrls() {
+      return nestedValueSetUrls;
+    }
+
+    /**
+     * Gets the leaf concepts.
+     *
+     * @return the leaf concepts
+     */
+    public List<Concept> getLeafConcepts() {
+      return leafConcepts;
+    }
+  }
+
+  /**
+   * Result of recursive LL/LG expansion to leaf concepts.
+   */
+  public static final class ExpandedLllgResult {
+
+    /** The items. */
+    private final List<Concept> items;
+
+    /** The total. */
+    private final int total;
+
+    /**
+     * Instantiates an {@link ExpandedLllgResult}.
+     *
+     * @param items page of leaf concepts
+     * @param total total leaf count before pagination
+     */
+    public ExpandedLllgResult(final List<Concept> items, final int total) {
+      this.items = items == null ? List.of() : items;
+      this.total = total;
+    }
+
+    /**
+     * Gets the items.
+     *
+     * @return the items
+     */
+    public List<Concept> getItems() {
+      return items;
+    }
+
+    /**
+     * Gets the total.
+     *
+     * @return the total
+     */
+    public int getTotal() {
+      return total;
+    }
+  }
+
+  /**
+   * Builds compose structure: nested LL/LG members as value set references,
+   * others as concepts.
+   *
+   * @param members direct members (sorted by caller)
+   * @return compose structure
+   */
+  public LllgComposeStructure buildLllgComposeStructure(final List<Concept> members) {
+    final List<String> nestedUrls = new ArrayList<>();
+    final List<Concept> leafConcepts = new ArrayList<>();
+    if (members == null) {
+      return new LllgComposeStructure(nestedUrls, leafConcepts);
+    }
+    for (final Concept c : members) {
+      if (c.getCode() != null && isNestedLllgValueSetCode(c.getCode())) {
+        nestedUrls.add(toChildValueSetUrl(c.getCode()));
+      } else {
+        leafConcepts.add(c);
+      }
+    }
+    return new LllgComposeStructure(nestedUrls, leafConcepts);
+  }
+
+  /**
+   * Sorts direct LL/LG members for compose (sequence order for LL, code order
+   * for LG).
+   *
+   * @param lllgId the value set id
+   * @param members members to sort in place
+   */
+  public void sortDirectLllgMembers(final String lllgId, final List<Concept> members) {
+    if (members == null || members.isEmpty()) {
+      return;
+    }
+    if (isLlId(lllgId)) {
+      sortLlMembersBySequenceNumber(members);
+    } else if (lllgId != null && lllgId.startsWith("LG")) {
+      members.sort(
+          Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
+    }
+  }
+
   /** LOINC concept attribute for answer sequence (ordinal order in list). */
   private static final String ATTR_SEQUENCE_NUMBER = "SequenceNumber";
+
+  /** Maximum recursion depth when expanding nested LG/LL value sets. */
+  private static final int MAX_LLLG_EXPANSION_DEPTH = 10;
+
+  /** Member fetch limit for full LL/LG tree expansion. */
+  private static final int LLLG_MEMBER_FETCH_LIMIT = 100_000;
 
   /**
    * Sorts LL value set members (LA concepts) by SequenceNumber so expansion
@@ -373,7 +529,7 @@ public class LoincValueSetHelper {
       return result;
     }
     final String relTermQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
-        terminology.getPublisher(), versionFilter == null ? "*" : versionFilter);
+            terminology.getPublisher(), versionFilter == null ? "*" : versionFilter);
     final String toCodeClause = "to.code:" + StringUtility.escapeQuery(baseLgCode);
     final String relQuery =
         StringUtility.composeQuery("AND", relTermQuery, toCodeClause, "hierarchical:true");
@@ -397,8 +553,15 @@ public class LoincValueSetHelper {
     return fallbackResult;
   }
 
+  /**
+   * Filter out lg concept.
+   *
+   * @param result the result
+   * @param lgCode the lg code
+   * @return the result list
+   */
   private ResultList<Concept> filterOutLgConcept(final ResultList<Concept> result,
-      final String lgCode) {
+    final String lgCode) {
     if (result == null || lgCode == null) {
       return result;
     }
@@ -440,9 +603,97 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Finds all LG concepts in the given LOINC terminology using Lucene wildcard queries.
-   * Used when {@code fhir.loinc.lllg.valuesets.enabled=true} to enumerate value sets for a general
-   * {@code GET /ValueSet} listing.
+   * Recursively expands an LL/LG value set to leaf LOINC concepts, then applies
+   * filter and pagination.
+   *
+   * @param searchService the search service
+   * @param terminology LOINC terminology
+   * @param lllgId the LL or LG id
+   * @param offset expansion offset
+   * @param count expansion page size (0 = none, negative = all)
+   * @param filter optional text filter on code or display
+   * @return paginated leaf concepts and total count before pagination
+   * @throws Exception the exception
+   */
+  public ExpandedLllgResult expandLllgLeaves(final EntityRepositoryService searchService,
+    final Terminology terminology, final String lllgId, final int offset, final int count,
+    final String filter) throws Exception {
+    final List<Concept> leaves = new ArrayList<>();
+    collectLllgLeaves(searchService, terminology, lllgId, new HashSet<>(), 0, leaves);
+    List<Concept> filtered = leaves;
+    if (filter != null && !filter.isBlank()) {
+      final String f = filter.toLowerCase();
+      filtered = leaves.stream().filter(c -> matchesLllgFilter(c, f)).toList();
+    }
+    final int total = filtered.size();
+    final int from = Math.min(Math.max(offset, 0), total);
+    final int to = count < 0 ? total : (count == 0 ? from : Math.min(from + count, total));
+    return new ExpandedLllgResult(filtered.subList(from, to), total);
+  }
+
+  /**
+   * Matches lllg filter.
+   *
+   * @param c the c
+   * @param filterLower the filter lower
+   * @return true, if successful
+   */
+  private static boolean matchesLllgFilter(final Concept c, final String filterLower) {
+    if (c.getCode() != null && c.getCode().toLowerCase().contains(filterLower)) {
+      return true;
+    }
+    return c.getName() != null && c.getName().toLowerCase().contains(filterLower);
+  }
+
+  /**
+   * Collect lllg leaves.
+   *
+   * @param searchService the search service
+   * @param terminology the terminology
+   * @param lllgId the lllg id
+   * @param visited the visited
+   * @param depth the depth
+   * @param out the out
+   * @throws Exception the exception
+   */
+  private void collectLllgLeaves(final EntityRepositoryService searchService,
+    final Terminology terminology, final String lllgId, final Set<String> visited, final int depth,
+    final List<Concept> out) throws Exception {
+    if (lllgId == null || visited.contains(lllgId)) {
+      return;
+    }
+    if (depth > MAX_LLLG_EXPANSION_DEPTH) {
+      LOGGER.warn("LL/LG expansion depth exceeded at {} (max {})", lllgId,
+          MAX_LLLG_EXPANSION_DEPTH);
+      return;
+    }
+    visited.add(lllgId);
+    final ResultList<Concept> list =
+        findLllgMembers(searchService, terminology, lllgId, 0, LLLG_MEMBER_FETCH_LIMIT);
+    final List<Concept> items = new ArrayList<>(list.getItems());
+    sortDirectLllgMembers(lllgId, items);
+    final Map<String, Concept> seen = new LinkedHashMap<>();
+    for (final Concept existing : out) {
+      if (existing.getCode() != null) {
+        seen.put(existing.getCode(), existing);
+      }
+    }
+    for (final Concept member : items) {
+      if (member.getCode() != null && isNestedLllgValueSetCode(member.getCode())) {
+        collectLllgLeaves(searchService, terminology, member.getCode(), visited, depth + 1, out);
+        continue;
+      }
+      if (member.getCode() != null && !seen.containsKey(member.getCode())) {
+        seen.put(member.getCode(), member);
+        out.add(member);
+      }
+    }
+  }
+
+  /**
+   * Finds all LG concepts in the given LOINC terminology using Lucene wildcard
+   * queries. Used when {@code fhir.loinc.lllg.valuesets.enabled=true} to
+   * enumerate value sets for a general {@code GET /ValueSet} listing.
    *
    * @param searchService the search service
    * @param terminology LOINC terminology
@@ -452,7 +703,7 @@ public class LoincValueSetHelper {
    * @throws Exception the exception
    */
   public ResultList<Concept> findAllLgConcepts(final EntityRepositoryService searchService,
-      final Terminology terminology, final int limit, final int offset) throws Exception {
+    final Terminology terminology, final int limit, final int offset) throws Exception {
     final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
         terminology.getPublisher(), terminology.getVersion());
     final String query = "(" + termQuery + ") AND (code:LG*)";

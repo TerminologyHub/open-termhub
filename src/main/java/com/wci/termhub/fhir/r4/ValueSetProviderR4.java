@@ -150,16 +150,13 @@ public class ValueSetProviderR4 implements IResourceProvider {
             final int memberLimit = 10_000;
             final ResultList<Concept> list =
                 loincValueSetHelper.findLllgMembers(searchService, loinc, idPart, 0, memberLimit);
-            final List<Concept> items = list.getItems();
-            if (loincValueSetHelper.isLlId(idPart)) {
-              LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
-            } else if (loincValueSetHelper.isLllgId(idPart)) {
-              items.sort(Comparator.comparing(Concept::getCode,
-                  Comparator.nullsFirst(Comparator.naturalOrder())));
-            }
+            final List<Concept> items = new ArrayList<>(list.getItems());
+            loincValueSetHelper.sortDirectLllgMembers(idPart, items);
+            final LoincValueSetHelper.LllgComposeStructure composeStructure =
+                loincValueSetHelper.buildLllgComposeStructure(items);
             logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}",
                 idPart, items.size());
-            return FhirUtilityR4.toR4LllgValueSetWithComposeOnly(loinc, idPart, items);
+            return FhirUtilityR4.toR4LllgValueSetWithComposeOnly(loinc, idPart, composeStructure);
           }
           logger.info("GET ValueSet/{}: LL/LG path skipped (LOINC terminology not found)", idPart);
         }
@@ -173,14 +170,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // 3. Check explicit subsets
       final Subset subset = idPart != null ? searchService.get(idPart, Subset.class) : null;
       if (subset != null) {
-        // // Fetch members
-        // final SearchParameters memberParams = new SearchParameters();
-        // memberParams.setLimit(100);
-        // memberParams.getFilters().put("subset.code", subset.getCode());
-        // final List<SubsetMember> members =
-        // searchService.findAll(memberParams, SubsetMember.class).getItems();
-        final ValueSet valueSet = FhirUtilityR4.toR4ValueSet(subset, new ArrayList<>(0), false);
-        return valueSet;
+        final List<SubsetMember> members = findSubsetMembersForSubset(subset);
+        return FhirUtilityR4.toR4ValueSet(subset, members, false);
       }
       throw FhirUtilityR4.exception("Value set not found = " + (idPart == null ? "null" : idPart),
           IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
@@ -718,31 +709,24 @@ public class ValueSetProviderR4 implements IResourceProvider {
       final Terminology terminology = TerminologyUtility.getTerminology(searchService,
           fromTerminology, fromPublisher, fromVersion);
       final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
-      final ResultList<Concept> list =
-          loincValueSetHelper.findLllgMembers(searchService, terminology, lllgId, offset, ct);
-      final List<Concept> items = list.getItems();
-      if (loincValueSetHelper.isLlId(lllgId)) {
-        LoincValueSetHelper.sortLlMembersBySequenceNumber(items);
-      } else if (loincValueSetHelper.isLllgId(lllgId)) {
-        items.sort(Comparator.comparing(Concept::getCode,
-            Comparator.nullsFirst(Comparator.naturalOrder())));
-      }
+      final ResultList<Concept> directList = loincValueSetHelper.findLllgMembers(searchService,
+          terminology, lllgId, 0, 100_000);
+      final List<Concept> directItems = new ArrayList<>(directList.getItems());
+      loincValueSetHelper.sortDirectLllgMembers(lllgId, directItems);
+      final LoincValueSetHelper.LllgComposeStructure composeStructure =
+          loincValueSetHelper.buildLllgComposeStructure(directItems);
+      final String filterValue = filter != null ? filter.getValue() : null;
+      final LoincValueSetHelper.ExpandedLllgResult expanded = loincValueSetHelper.expandLllgLeaves(
+          searchService, terminology, lllgId, offset, ct, filterValue);
+      final List<Concept> items = expanded.getItems();
       final String systemUri = terminology.getUri();
       if (systemUri != null) {
-        final ValueSetComposeComponent compose = new ValueSetComposeComponent();
-        final ConceptSetComponent include = new ConceptSetComponent();
-        include.setSystem(systemUri);
-        for (final Concept c : items) {
-          include.addConcept(
-              new ConceptReferenceComponent().setCode(c.getCode()).setDisplay(c.getName()));
-        }
-        compose.addInclude(include);
-        vs.setCompose(compose);
+        FhirUtilityR4.setR4LllgCompose(vs, systemUri, composeStructure);
       }
       final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
       expansion.setIdentifier(UUID.randomUUID().toString());
       expansion.setTimestamp(new Date());
-      expansion.setTotal((int) list.getTotal());
+      expansion.setTotal(expanded.getTotal());
       expansion.setOffset(offset);
       expansion.addParameter(new ValueSetExpansionParameterComponent().setName("offset")
           .setValue(new IntegerType(offset)));
@@ -825,42 +809,38 @@ public class ValueSetProviderR4 implements IResourceProvider {
         .filter(c -> c.getSystem().equals("fromPublisher")).findFirst().get().getCode();
     final String fromVersion = vs.getMeta().getTag().stream()
         .filter(c -> c.getSystem().equals("fromVersion")).findFirst().get().getCode();
-    final Terminology terminology = TerminologyUtility.getTerminology(searchService,
+    Terminology terminology = TerminologyUtility.getTerminology(searchService,
         fromTerminology, fromPublisher, fromVersion);
 
-    // Use meta flags to get the terminology of the concepts
-    final Query terminologyQuery = LuceneQueryBuilder.parse(
-        TerminologyUtility.getTerminologyQuery(fromTerminology, fromPublisher, fromVersion),
-        Concept.class);
+    final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
 
+    Subset loadedSubsetForCompose = null;
+    List<SubsetMember> loadedSubsetMembersForCompose = null;
+
+    final Query terminologyQuery;
     final Query subsetQuery;
     if (!terminologyFlag) {
-      final List<String> memberClauses =
-          searchService
-              .find(new SearchParameters(TerminologyUtility.getTerminologyQuery(fromTerminology,
-                  fromPublisher, fromVersion), 0, 1000000, null, null), SubsetMember.class)
-              .getItems().stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
-              .toList();
-      // if (memberClauses.isEmpty()) {
-      // final ValueSetExpansionComponent expansion = new
-      // ValueSetExpansionComponent();
-      // expansion.setId(UUID.randomUUID().toString());
-      // expansion.setTimestamp(new Date());
-      // expansion.setTotal(0);
-      // expansion.setOffset(offset);
-      // expansion.addParameter(new ValueSetExpansionParameterComponent()
-      // .setName("count")
-      // .setValue(new IntegerType(count < 0 ? 0 : (count > 1000 ? 1000 :
-      // count))));
-      // if (version != null) {
-      // expansion.addParameter(new ValueSetExpansionParameterComponent()
-      // .setName("version")
-      // .setValue(new StringType(version.getValue())));
-      // }
-      // vs.setExpansion(expansion);
-      // vs.setMeta(null);
-      // return vs;
-      // }
+      loadedSubsetForCompose = searchService.get(vs.getId(), Subset.class);
+      if (loadedSubsetForCompose == null) {
+        return createEmptyValueSetExpansion(vs, offset, ct, filter, version);
+      }
+      loadedSubsetMembersForCompose = findSubsetMembersForSubset(loadedSubsetForCompose);
+      if (loadedSubsetMembersForCompose.isEmpty()) {
+        return createEmptyValueSetExpansion(vs, offset, ct, filter, version);
+      }
+      final SubsetMember m0 = loadedSubsetMembersForCompose.get(0);
+      final Terminology terminologyFromMember = TerminologyUtility.getTerminology(searchService,
+          m0.getTerminology(), m0.getPublisher(), m0.getVersion());
+      if (terminologyFromMember != null) {
+        terminology = terminologyFromMember;
+      }
+      terminologyQuery = LuceneQueryBuilder.parse(
+          TerminologyUtility.getTerminologyQuery(m0.getTerminology(), m0.getPublisher(),
+              m0.getVersion()),
+          Concept.class);
+      final List<String> memberClauses = loadedSubsetMembersForCompose.stream()
+          .map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
+          .toList();
       if (memberClauses.size() > LuceneQueryBuilder.MAX_CLAUSE_COUNT) {
         final BooleanQuery.Builder subsetQueryBuilder = new BooleanQuery.Builder();
         for (int i = 0; i < memberClauses.size(); i += LuceneQueryBuilder.MAX_CLAUSE_COUNT) {
@@ -876,6 +856,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
         subsetQuery = LuceneQueryBuilder.parse(memberQuery, Concept.class);
       }
     } else {
+      terminologyQuery = LuceneQueryBuilder.parse(
+          TerminologyUtility.getTerminologyQuery(fromTerminology, fromPublisher, fromVersion),
+          Concept.class);
       subsetQuery = null;
     }
     final Query filterQuery = LuceneQueryBuilder.parse(
@@ -884,7 +867,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
     final Query expressionQuery = getExpressionQuery(url == null ? null : url.getValue());
     final Query booleanQuery =
         getAndQuery(terminologyQuery, subsetQuery, filterQuery, expressionQuery);
-    final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
     final SearchParameters params = new SearchParameters(booleanQuery, offset, ct, null, null);
     if (activeOnly) {
       params.setActive(activeOnly);
@@ -948,12 +930,106 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       expansion.addContains(code);
     }
+    if (loadedSubsetForCompose != null && loadedSubsetMembersForCompose != null) {
+      setComposeFromLoadedSubset(vs, loadedSubsetForCompose, loadedSubsetMembersForCompose,
+          terminology.getUri());
+    }
     vs.setExpansion(expansion);
 
     // Clear meta
     vs.setMeta(null);
 
     return vs;
+  }
+
+  /**
+   * Creates the empty value set expansion.
+   *
+   * @param vs the vs
+   * @param offset the offset
+   * @param ct the ct
+   * @param filter the filter
+   * @param version the version
+   * @return the value set
+   */
+  private ValueSet createEmptyValueSetExpansion(final ValueSet vs, final int offset, final int ct,
+    final StringType filter, final StringType version) {
+    final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
+    expansion.setId(UUID.randomUUID().toString());
+    expansion.setTimestamp(new Date());
+    expansion.setTotal(0);
+    expansion.setOffset(offset);
+    expansion.addParameter(
+        new ValueSetExpansionParameterComponent().setName("count").setValue(new IntegerType(ct)));
+    if (filter != null) {
+      expansion.addParameter(
+          new ValueSetExpansionParameterComponent().setName("filter").setValue(filter));
+    }
+    if (version != null) {
+      expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
+          .setValue(new StringType(version.getValue())));
+    }
+    vs.setExpansion(expansion);
+    vs.setMeta(null);
+    return vs;
+  }
+
+  /**
+   * Subset members for this subset (abbreviation + publisher + version on nested subset ref).
+   *
+   * @param subset the subset
+   * @return members, possibly empty
+   * @throws Exception the exception
+   */
+  private List<SubsetMember> findSubsetMembersForSubset(final Subset subset) throws Exception {
+    if (subset == null) {
+      return new ArrayList<>();
+    }
+    final String subsetMemberQuery = StringUtility.composeQuery("AND",
+        StringUtility.escapeKeywordField("subset.abbreviation", subset.getAbbreviation()),
+        StringUtility.escapeKeywordField("subset.publisher", subset.getPublisher()),
+        StringUtility.escapeKeywordField("subset.version", subset.getVersion()));
+    return searchService
+        .find(new SearchParameters(subsetMemberQuery, 0, 1_000_000, null, null), SubsetMember.class)
+        .getItems();
+  }
+
+  /**
+   * Sets the compose from loaded subset.
+   *
+   * @param vs the vs
+   * @param subset the subset
+   * @param members the members
+   * @param systemFallback the system fallback
+   */
+  private void setComposeFromLoadedSubset(final ValueSet vs, final Subset subset,
+    final List<SubsetMember> members, final String systemFallback) {
+    String includesUri =
+        subset.getAttributes() != null ? subset.getAttributes().get("fhirIncludesUri") : null;
+    if (includesUri == null || includesUri.isEmpty()) {
+      includesUri = systemFallback;
+    }
+    if (includesUri == null || includesUri.isEmpty()) {
+      return;
+    }
+    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
+    final ConceptSetComponent include = new ConceptSetComponent();
+    include.setSystem(includesUri);
+    for (final SubsetMember member : members) {
+      if (member.getCode() == null || (member.getCodeActive() != null && !member.getCodeActive())) {
+        continue;
+      }
+      final ConceptReferenceComponent concept =
+          new ConceptReferenceComponent().setCode(member.getCode());
+      if (member.getName() != null) {
+        concept.setDisplay(member.getName());
+      }
+      include.addConcept(concept);
+    }
+    if (!include.getConcept().isEmpty()) {
+      compose.addInclude(include);
+      vs.setCompose(compose);
+    }
   }
 
   /**
