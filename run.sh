@@ -11,8 +11,10 @@ else
 fi
 
 
-# echo syndication startup setting
+# echo some settings
 echo "  SYNDICATION_CHECK_ON_STARTUP=${SYNDICATION_CHECK_ON_STARTUP:-true}"
+echo "  TERMHUB_URL=${TERMHUB_URL:-https://api.terminologyhub.com}"
+echo "  SERVER_PORT=${SERVER_PORT:-8080}"
 
 if [ -z "${PROJECT_API_KEY+x}" ]; then
     echo "  PROJECT_API_KEY is NOT set"
@@ -23,6 +25,7 @@ fi
 
 # Verify index exists and is writeable
 indexDir="${INDEX_DIR:-/index}"
+echo "  INDEX_DIR=$indexDir"
 if [ -d $indexDir ]; then
     echo "  Index directory $indexDir exists"
 else
