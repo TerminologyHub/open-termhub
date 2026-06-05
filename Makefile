@@ -25,10 +25,6 @@ scan: ## scan for vulnerabilities in dependencies
 	grep CRITICAL report.html
 	/bin/rm -rf gradle.lockfile
 
-scandocker:
-	trivy image $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
-	grep CRITICAL report.html
-
 fullscan: ## scan for vulnerabilities in dependencies
 	/bin/rm -rf gradle/dependency-locks
 	./gradlew dependencies --write-locks
@@ -52,19 +48,27 @@ run: ## Run the server
 rundebug: ## Run the server with debug logging and JVM debug port (5005)
 	./gradlew bootRun --debug-jvm -DLOG_LEVEL=debug
 
-docker: ## Build the docker image and tag with version and latest leave arm64 out for now)
-	docker buildx build --platform linux/amd64 --no-cache-filter=gradle-build --build-arg APP_VERSION=$(APP_VERSION) -t $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) .
+docker:
+# Remove prior docker image if it is built
+ifdef DOCKER_IMG
+	docker rmi -f $(DOCKER_IMG)
+else
+	@echo No docker image to remove
+endif
+	@echo SERVICE=$(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	docker build --platform linux/amd64 --build-arg APP_VERSION=$(APP_VERSION) --no-cache-filter=gradle-build -t $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) .
 	docker tag $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
-	@echo APP_VERSION=$(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 
+scandocker:
+	docker save -o scan.tar $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	trivy image --input scan.tar $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
+	egrep "CRITICAL|HIGH" report.html
+	/bin/rm -f scan.tar
+	
 release: ## publish to dockerhub
-	@echo $(DISPLAY_BOLD)"Publishing container to $(DOCKER_INT_REGISTRY) registry"$(DISPLAY_RESET)
-	@echo $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
-	docker -D push --platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
-	# docker -D push --platform linux/arm64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
 	@echo $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
-	docker -D push --platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
-	# docker -D push --platform linux/arm64 $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	docker -D push--platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
+	docker -D push--platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 
 version:
 	@echo $(APP_VERSION)
