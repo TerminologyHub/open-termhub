@@ -171,7 +171,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       final Subset subset = idPart != null ? searchService.get(idPart, Subset.class) : null;
       if (subset != null) {
         final List<SubsetMember> members = findSubsetMembersForSubset(subset);
-        return FhirUtilityR5.toR5ValueSet(subset, members, false);
+        return FhirUtilityR5.toR5ValueSet(subset, members, false, searchService);
       }
       throw FhirUtilityR5.exception("Value set not found = " + (idPart == null ? "null" : idPart),
           IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
@@ -1319,7 +1319,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // final List<SubsetMember> members =
       // searchService.findAll(memberParams, SubsetMember.class).getItems();
       final ValueSet set =
-          FhirUtilityR5.toR5ValueSet(subset, new ArrayList<SubsetMember>(0), metaFlag);
+          FhirUtilityR5.toR5ValueSet(subset, new ArrayList<SubsetMember>(0), metaFlag, searchService);
       // Apply the same filtering as above
       if ((id != null && !id.getValue().equals(set.getId()))
           || (url != null && !url.getValue().equals(set.getUrl()))) {

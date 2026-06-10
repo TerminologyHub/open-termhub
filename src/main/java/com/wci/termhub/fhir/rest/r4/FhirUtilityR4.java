@@ -1171,11 +1171,12 @@ public final class FhirUtilityR4 {
    * @param subset the Subset
    * @param members the SubsetMembers
    * @param metaFlag the meta flag
+   * @param searchService the search service (used to resolve copyright from source terminology)
    * @return the FHIR R4 ValueSet
    * @throws Exception the exception
    */
   public static ValueSet toR4ValueSet(final Subset subset, final List<SubsetMember> members,
-    final boolean metaFlag) throws Exception {
+    final boolean metaFlag, final EntityRepositoryService searchService) throws Exception {
 
     final ValueSet valueSet = new ValueSet();
     valueSet.setId(subset.getId());
@@ -1203,6 +1204,8 @@ public final class FhirUtilityR4 {
     }
     valueSet.setDescription(subset.getDescription());
     valueSet.setStatus(Enumerations.PublicationStatus.ACTIVE);
+
+    applyCopyrightFromTerminology(valueSet, subset, searchService);
 
     // Set experimental from attributes if present, else fallback
     final String experimentalStr = subset.getAttributes() != null
@@ -1253,6 +1256,34 @@ public final class FhirUtilityR4 {
     valueSet.getMeta().setLastUpdated(DateUtility.parseToUtcDate(subset.getCreated()));
 
     return valueSet;
+  }
+
+  /**
+   * Sets ValueSet copyright from source terminology when available, otherwise from subset
+   * attributes (preserved at import).
+   *
+   * @param valueSet the value set
+   * @param subset the subset
+   * @param searchService the search service
+   * @throws Exception the exception
+   */
+  private static void applyCopyrightFromTerminology(final ValueSet valueSet, final Subset subset,
+    final EntityRepositoryService searchService) throws Exception {
+
+    String copyright = null;
+    if (searchService != null && subset.getFromTerminology() != null) {
+      final Terminology terminology = TerminologyUtility.getTerminology(searchService,
+          subset.getFromTerminology(), subset.getFromPublisher(), subset.getFromVersion(), false);
+      if (terminology != null && terminology.getAttributes() != null) {
+        copyright = terminology.getAttributes().get("copyright");
+      }
+    }
+    if (copyright == null && subset.getAttributes() != null) {
+      copyright = subset.getAttributes().get("copyright");
+    }
+    if (copyright != null) {
+      valueSet.setCopyright(copyright);
+    }
   }
 
   /**
