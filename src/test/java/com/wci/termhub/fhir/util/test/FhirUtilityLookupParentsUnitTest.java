@@ -70,6 +70,21 @@ public class FhirUtilityLookupParentsUnitTest {
   }
 
   /**
+   * Duplicate hierarchical edges to the same child code yield one entry (first
+   * relationship wins).
+   */
+  @Test
+  public void testDistinctHierarchicalChildrenCollapsesDuplicateChildCodes() {
+    final ConceptRef fromA = new ConceptRef("43507-3", "MR Thymus gland A");
+    final ConceptRef fromB = new ConceptRef("43507-3", "MR Thymus gland B");
+    final ConceptRef to = new ConceptRef("LP405123-3", "Thymus gland | MR | Radiology");
+
+    final List<ConceptRelationship> rels = new ArrayList<>();
+    rels.add(hierarchicalRel(fromA, to));
+    rels.add(hierarchicalRel(fromB, to));
+  }
+
+  /**
    * Hierarchical rel.
    *
    * @param from the from

@@ -39,7 +39,8 @@ RUN gradle bootJar -x test -x spotbugsMain -x spotbugsTest
 #
 # This is the runtime container
 #
-FROM bellsoft/liberica-openjre-alpine:17.0.13
+FROM bellsoft/liberica-openjre-alpine:17.0.19
+RUN apk update && apk upgrade --no-cache
 
 # Create the user that will be used to run the product and set up the directory it'll reside in.
 ARG RUNTIME_USER=server
