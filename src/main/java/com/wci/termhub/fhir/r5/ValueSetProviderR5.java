@@ -156,7 +156,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
                 loincValueSetHelper.buildLllgComposeStructure(items);
             logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}",
                 idPart, items.size());
-            return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loinc, idPart, composeStructure);
+            final Concept lllgConcept =
+                loincValueSetHelper.findLllgConcept(searchService, loinc, idPart);
+            final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
+            return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loinc, idPart, valueSetId,
+                composeStructure);
           }
           logger.debug("GET ValueSet/{}: LL/LG path skipped (LOINC terminology not found)", idPart);
         }
@@ -166,6 +170,31 @@ public class ValueSetProviderR5 implements IResourceProvider {
           .filter(s -> s.getId().equals(idPart)).findFirst().orElse(null);
       if (vs != null && vs.getId().endsWith("_entire")) {
         return vs;
+      }
+      // 2.5 LOINC LL/LG by Concept UUID
+      if (idPart != null && loincValueSetHelper.isEnabled()) {
+        final Concept concept = searchService.get(idPart, Concept.class);
+        if (concept != null && concept.getCode() != null
+            && loincValueSetHelper.isLllgId(concept.getCode())) {
+          Terminology loincTerm = TerminologyUtility.getTerminology(searchService,
+              concept.getTerminology(), concept.getPublisher(), concept.getVersion());
+          if (loincTerm == null) {
+            loincTerm = loincValueSetHelper.findLoincTerminology(searchService);
+          }
+          if (loincTerm != null) {
+            final int memberLimit = 10_000;
+            final ResultList<Concept> list = loincValueSetHelper.findLllgMembers(searchService,
+                loincTerm, concept.getCode(), 0, memberLimit);
+            final List<Concept> items = new ArrayList<>(list.getItems());
+            loincValueSetHelper.sortDirectLllgMembers(concept.getCode(), items);
+            final LoincValueSetHelper.LllgComposeStructure composeStructure =
+                loincValueSetHelper.buildLllgComposeStructure(items);
+            logger.info("GET ValueSet/{}: returning LL/LG compose by concept UUID, members={}",
+                idPart, items.size());
+            return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loincTerm, concept.getCode(),
+                concept.getId(), composeStructure);
+          }
+        }
       }
       // 3. Check explicit subsets
       final Subset subset = idPart != null ? searchService.get(idPart, Subset.class) : null;
@@ -1399,9 +1428,14 @@ public class ValueSetProviderR5 implements IResourceProvider {
             loincForLllg = loinc;
           }
           if (loincForLllg != null) {
-            final ValueSet lllgVs = FhirUtilityR5.toR5LllgValueSet(loincForLllg, lllgId, metaFlag);
-            final boolean idUrlMatch = (id == null || id.getValue().equals(lllgVs.getId()))
-                && (url == null || url.getValue().equals(lllgVs.getUrl()));
+            final Concept lllgConcept =
+                loincValueSetHelper.findLllgConcept(searchService, loincForLllg, lllgId);
+            final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
+            final ValueSet lllgVs =
+                FhirUtilityR5.toR5LllgValueSet(loincForLllg, lllgId, valueSetId, metaFlag);
+            final boolean idUrlMatch =
+                (id == null || FhirUtilityR5.matchesLllgValueSetId(id.getValue(), lllgVs))
+                    && (url == null || url.getValue().equals(lllgVs.getUrl()));
             final boolean dateMatch =
                 date == null || FhirUtility.compareDate(date, lllgVs.getDate());
             final boolean versionMatch =
@@ -1434,8 +1468,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
               }
               final ValueSet lgVs =
                   FhirUtilityR5.toR5LllgValueSetFromConcept(loincTerm, concept, metaFlag);
-              final boolean idUrlMatch = (id == null || id.getValue().equals(lgVs.getId()))
-                  && (url == null || url.getValue().equals(lgVs.getUrl()));
+              final boolean idUrlMatch =
+                  (id == null || FhirUtilityR5.matchesLllgValueSetId(id.getValue(), lgVs))
+                      && (url == null || url.getValue().equals(lgVs.getUrl()));
               final boolean dateMatch =
                   date == null || FhirUtility.compareDate(date, lgVs.getDate());
               final boolean versionMatch =

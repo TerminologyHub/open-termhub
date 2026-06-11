@@ -15,6 +15,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,6 +70,10 @@ public final class LuceneQueryBuilder {
   private static final Map<Class<?>, Map<String, AnalyzerType>> FIELD_ANALYZER_TYPES_CACHE =
       new HashMap<>();
 
+  /** Matches {@code attributes.SomeKey:} clauses in query strings. */
+  private static final Pattern ATTRIBUTE_FIELD_PATTERN =
+      Pattern.compile("attributes\\.([A-Za-z0-9_\\-]+)\\s*:");
+
   /**
    * Parses the query for a specific model class.
    *
@@ -86,6 +92,7 @@ public final class LuceneQueryBuilder {
     for (final Map.Entry<String, AnalyzerType> entry : analyzerTypes.entrySet()) {
       fieldAnalyzers.put(entry.getKey(), entry.getValue().newInstance());
     }
+    registerAttributeFieldAnalyzers(queryText, fieldAnalyzers);
     final String[] searchableFields = getSearchableFields(modelClass);
 
     // Create PerFieldAnalyzerWrapper with field-specific analyzers
@@ -100,6 +107,26 @@ public final class LuceneQueryBuilder {
       queryParser.setAllowLeadingWildcard(true);
 
       return queryParser.parse(queryText);
+    }
+  }
+
+  /**
+   * Registers keyword analyzers for {@code attributes.*} fields referenced in the query so values
+   * match case-sensitive {@link org.apache.lucene.document.StringField} indexing.
+   *
+   * @param queryText the query text
+   * @param fieldAnalyzers the per-field analyzer map to augment
+   */
+  private static void registerAttributeFieldAnalyzers(final String queryText,
+    final Map<String, Analyzer> fieldAnalyzers) {
+
+    if (queryText == null) {
+      return;
+    }
+    final Matcher matcher = ATTRIBUTE_FIELD_PATTERN.matcher(queryText);
+    while (matcher.find()) {
+      final String fieldName = "attributes." + matcher.group(1);
+      fieldAnalyzers.put(fieldName, AnalyzerType.KEYWORD.newInstance());
     }
   }
 

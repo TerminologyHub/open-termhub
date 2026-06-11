@@ -31,7 +31,9 @@ import org.apache.lucene.analysis.pattern.PatternReplaceFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -48,6 +50,7 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -275,6 +278,20 @@ public class LuceneDataAccess {
 
               }
               refClass = refClass.getSuperclass();
+            }
+
+          } else if (fieldType == FieldType.Object && fieldValue instanceof Map
+              && "attributes".equals(field.getName())) {
+
+            for (final Map.Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet()) {
+              if (entry.getKey() == null || entry.getValue() == null) {
+                continue;
+              }
+              final String indexName = field.getName() + "." + entry.getKey();
+              final String indexValue = String.valueOf(entry.getValue());
+              document.add(new StringField(indexName, indexValue,
+                  org.apache.lucene.document.Field.Store.NO));
+              document.add(new SortedSetDocValuesField(indexName, new BytesRef(indexValue)));
             }
           }
 
