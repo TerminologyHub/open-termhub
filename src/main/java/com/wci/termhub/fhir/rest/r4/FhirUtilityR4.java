@@ -103,11 +103,6 @@ public final class FhirUtilityR4 {
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
 
   /**
-   * Meta tag system for LOINC LL/LG value set id (used by ValueSetProvider for expand/validate).
-   */
-  public static final String META_LOINC_LLLG_ID = "loincLllgId";
-
-  /**
    * Uppercase LOINC property codes that duplicate lowercase {@code valueCoding} axes in the same
    * CodeSystem (legacy string row vs part code row).
    */
@@ -1027,11 +1022,11 @@ public final class FhirUtilityR4 {
    * @param terminology LOINC terminology
    * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
    * @param valueSetId the FHIR resource id (Concept UUID)
-   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion and loincLllgId tags
+   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion tags
    * @return the value set
    */
   public static ValueSet toR4LllgValueSet(final Terminology terminology, final String lllgId,
-    final String valueSetId, final boolean metaFlag) {
+    final String valueSetId, final boolean metaFlag) throws Exception {
     final ValueSet set = new ValueSet();
     if (valueSetId != null) {
       set.setId(valueSetId);
@@ -1044,19 +1039,22 @@ public final class FhirUtilityR4 {
         && terminology.getAttributes().get("copyright") != null) {
       set.setCopyright(terminology.getAttributes().get("copyright"));
     }
+    final Meta meta = new Meta();
+    meta.setVersionId("1");
+    final Date releaseAsDate = resolveTerminologyReleaseDate(terminology);
+    meta.setLastUpdated(releaseAsDate != null ? releaseAsDate
+        : DateUtility.parseToUtcDate(terminology.getCreated()));
+    if (terminology.getAttributes() != null
+        && terminology.getAttributes().containsKey("originalId")) {
+      meta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
+    }
     if (metaFlag) {
-      set.setMeta(new Meta().addTag("fromTerminology", terminology.getAbbreviation(), null)
+      meta.addTag("fromTerminology", terminology.getAbbreviation(), null)
           .addTag("fromPublisher", terminology.getPublisher(), null)
           .addTag("fromVersion", terminology.getVersion(), null)
-          .addTag("includesUri", terminology.getUri(), null)
-          .addTag(META_LOINC_LLLG_ID, lllgId, null));
-    } else {
-      set.setMeta(new Meta().addTag(META_LOINC_LLLG_ID, lllgId, null));
+          .addTag("includesUri", terminology.getUri(), null);
     }
-    if (set.getMeta() != null && terminology.getCreated() != null) {
-      set.getMeta().setVersionId("1");
-      set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
-    }
+    set.setMeta(meta);
     return set;
   }
 
@@ -1067,22 +1065,21 @@ public final class FhirUtilityR4 {
    *
    * @param terminology LOINC terminology
    * @param concept the LL or LG concept (code used as lllgId, name used as title/name)
-   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion and loincLllgId tags
+   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion tags
    * @return the value set
    */
   public static ValueSet toR4LllgValueSetFromConcept(final Terminology terminology,
-    final Concept concept, final boolean metaFlag) {
+    final Concept concept, final boolean metaFlag) throws Exception {
     final ValueSet set =
         toR4LllgValueSet(terminology, concept.getCode(), concept.getId(), metaFlag);
     if (concept.getName() != null) {
       set.setName(concept.getName());
-      set.setTitle(concept.getName());
     }
     return set;
   }
 
   /**
-   * Returns true when the id search parameter matches a ValueSet id or its loincLllgId meta tag.
+   * Returns true when the id search parameter matches a ValueSet id or its LL/LG code from url.
    *
    * @param idValue the _id search value
    * @param vs the value set
@@ -1095,11 +1092,31 @@ public final class FhirUtilityR4 {
     if (idValue.equals(vs.getId())) {
       return true;
     }
-    if (vs.getMeta() != null) {
-      return vs.getMeta().getTag().stream()
-          .anyMatch(t -> META_LOINC_LLLG_ID.equals(t.getSystem()) && idValue.equals(t.getCode()));
+    final String lllgIdFromUrl = parseLllgIdFromValueSetUrl(vs.getUrl());
+    return idValue.equals(lllgIdFromUrl);
+  }
+
+  /**
+   * Parses the LOINC LL/LG id from a ValueSet url (e.g. http://loinc.org?fhir_vs=LG100-4).
+   *
+   * @param url the value set url
+   * @return the LL/LG id, or null
+   */
+  public static String parseLllgIdFromValueSetUrl(final String url) {
+    if (url == null) {
+      return null;
     }
-    return false;
+    final String marker = "fhir_vs=";
+    final int idx = url.indexOf(marker);
+    if (idx < 0) {
+      return null;
+    }
+    String id = url.substring(idx + marker.length()).trim();
+    final int amp = id.indexOf('&');
+    if (amp >= 0) {
+      id = id.substring(0, amp).trim();
+    }
+    return id.isEmpty() ? null : id;
   }
 
   /**
@@ -1147,7 +1164,8 @@ public final class FhirUtilityR4 {
    * @return the value set with compose.include set, no expansion
    */
   public static ValueSet toR4LllgValueSetWithComposeOnly(final Terminology terminology,
-    final String lllgId, final String valueSetId, final LllgComposeStructure composeStructure) {
+    final String lllgId, final String valueSetId, final LllgComposeStructure composeStructure)
+    throws Exception {
     final ValueSet set = toR4LllgValueSet(terminology, lllgId, valueSetId, false);
     setR4LllgCompose(set, terminology.getUri(), composeStructure);
     return set;
@@ -1170,7 +1188,7 @@ public final class FhirUtilityR4 {
   public static ValueSet toR4LllgValueSetWithMembers(final Terminology terminology,
     final String lllgId, final String valueSetId, final LllgComposeStructure composeStructure,
     final List<Concept> leafMembers, final int expansionTotal, final int expansionOffset,
-    final int expansionCount) {
+    final int expansionCount) throws Exception {
     final ValueSet set = toR4LllgValueSet(terminology, lllgId, valueSetId, false);
     final String systemUri = terminology.getUri();
     setR4LllgCompose(set, systemUri, composeStructure);
@@ -1225,12 +1243,6 @@ public final class FhirUtilityR4 {
     }
 
     valueSet.setName(subset.getName());
-    // Set title from abbreviation if present, else fallback to name
-    if (subset.getAbbreviation() != null && !subset.getAbbreviation().isEmpty()) {
-      valueSet.setTitle(subset.getAbbreviation());
-    } else {
-      valueSet.setTitle(subset.getName());
-    }
     valueSet.setDescription(subset.getDescription());
     valueSet.setStatus(Enumerations.PublicationStatus.ACTIVE);
 
@@ -1245,7 +1257,7 @@ public final class FhirUtilityR4 {
 
     // Set identifier from attributes if present, else fallback
     valueSet.addIdentifier().setValue(subset.getCode())
-        .setSystem("https://terminologyhub.com/model/subset/code");
+        .setSystem(subset.getAttributes().get("fhirIncludesUri"));
 
     // Compose/include
     final ValueSetComposeComponent compose = new ValueSetComposeComponent();

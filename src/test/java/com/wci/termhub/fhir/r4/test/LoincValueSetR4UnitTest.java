@@ -83,7 +83,7 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
       "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$";
 
   /**
-   * Asserts a LOINC LL/LG ValueSet uses a Concept UUID as id and retains the code in meta.
+   * Asserts a LOINC LL/LG ValueSet uses a Concept UUID as id and encodes the code in url.
    *
    * @param vs the value set
    * @param lllgCode the expected LL/LG code
@@ -93,9 +93,8 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     assertFalse(lllgCode.equals(vs.getId()),
         "ValueSet id should be Concept UUID, not LL/LG code " + lllgCode);
     assertTrue(vs.getId().matches(UUID_PATTERN), "ValueSet id should be a UUID");
-    assertTrue(vs.getMeta().getTag().stream().anyMatch(
-        t -> FhirUtilityR4.META_LOINC_LLLG_ID.equals(t.getSystem()) && lllgCode.equals(t.getCode())),
-        "ValueSet should have loincLllgId meta tag for " + lllgCode);
+    assertEquals(lllgCode, FhirUtilityR4.parseLllgIdFromValueSetUrl(vs.getUrl()),
+        "ValueSet url should encode LL/LG code " + lllgCode);
   }
 
   /**
