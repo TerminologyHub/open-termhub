@@ -27,6 +27,7 @@ import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
+import com.wci.termhub.fhir.util.FhirContactUtility;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
@@ -266,6 +267,10 @@ public final class ValueSetLoaderUtil {
       }
       if (valueSet.hasCopyright() && !StringUtility.isEmpty(valueSet.getCopyright())) {
         subset.getAttributes().put("copyright", valueSet.getCopyright());
+      }
+      if (valueSet.hasContact() && !valueSet.getContact().isEmpty()) {
+        subset.getAttributes().put("fhirContact",
+            FhirContactUtility.fromR4Contacts(valueSet.getContact()));
       }
 
       subset.setCategory("ValueSet");
@@ -550,6 +555,10 @@ public final class ValueSetLoaderUtil {
       }
       if (valueSet.hasCopyright() && !StringUtility.isEmpty(valueSet.getCopyright())) {
         subset.getAttributes().put("copyright", valueSet.getCopyright());
+      }
+      if (valueSet.hasContact() && !valueSet.getContact().isEmpty()) {
+        subset.getAttributes().put("fhirContact",
+            FhirContactUtility.fromR5Contacts(valueSet.getContact()));
       }
 
       subset.setCategory("ValueSet");

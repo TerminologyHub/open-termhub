@@ -61,6 +61,9 @@ public final class TerminologyUtility {
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(TerminologyUtility.class);
 
+  /** Cache for resolved terminology records (abbreviation + publisher + version). */
+  private static TimerCache<Terminology> terminologyCache = new TimerCache<>(1000, 10000);
+
   /** The converter. */
   private static EclToLuceneConverter converter = new EclToLuceneConverter();
 
@@ -69,6 +72,14 @@ public final class TerminologyUtility {
    */
   private TerminologyUtility() {
     // n/a
+  }
+
+  /**
+   * Clears cached terminology lookups. Used when the Lucene index is rebuilt so stale document ids
+   * are not reused.
+   */
+  public static void clearCache() {
+    terminologyCache = new TimerCache<>(1000, 10000);
   }
 
   /**
@@ -172,10 +183,19 @@ public final class TerminologyUtility {
     final String terminology, final String publisher, final String version,
     final boolean filterUnloaded) throws Exception {
 
+    final String cacheKey =
+        terminology + "|" + publisher + "|" + version + "|" + filterUnloaded;
+    final Terminology cached = terminologyCache.get(cacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
     final String terminologyQuery = getTerminologyAbbrQuery(terminology, publisher, version);
     SearchParameters searchParameters = new SearchParameters(terminologyQuery, 2, 0);
     searchParameters.setFilterUnloaded(filterUnloaded);
-    logger.info("  terminology query = " + terminologyQuery);
+    if (logger.isDebugEnabled()) {
+      logger.debug("  terminology query = " + terminologyQuery);
+    }
     final ResultList<Terminology> tlist = searchService.find(searchParameters, Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
@@ -186,7 +206,9 @@ public final class TerminologyUtility {
           "Too many terminology matches = " + terminology + ", " + publisher + ", " + version);
     }
 
-    return tlist.getItems().get(0);
+    final Terminology result = tlist.getItems().get(0);
+    terminologyCache.put(cacheKey, result);
+    return result;
   }
 
   /**

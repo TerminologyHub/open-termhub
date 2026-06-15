@@ -148,6 +148,11 @@ public class FhirUtilityR4MetaUnitTest {
     assertEquals("http://loinc.org", cs.getContact().get(0).getTelecom().get(0).getValue());
     assertFalse(cs.getCaseSensitive());
     assertFalse(cs.getVersionNeeded());
+
+    final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, true);
+    assertNotNull(vs.getContact());
+    assertEquals(1, vs.getContact().size());
+    assertEquals("http://loinc.org", vs.getContact().get(0).getTelecom().get(0).getValue());
   }
 
   /**

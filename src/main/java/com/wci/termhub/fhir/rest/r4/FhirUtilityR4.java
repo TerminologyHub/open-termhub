@@ -65,6 +65,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
 import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
+import com.wci.termhub.fhir.util.FhirContactUtility;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.model.Concept;
@@ -1011,6 +1012,7 @@ public final class FhirUtilityR4 {
     set.getMeta().addTag("originalId", terminology.getAttributes().get("originalId"), null);
     set.getMeta().setVersionId("1");
     set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
+    set.getContact().addAll(cs.getContact());
 
     return set;
   }
@@ -1055,6 +1057,7 @@ public final class FhirUtilityR4 {
           .addTag("includesUri", terminology.getUri(), null);
     }
     set.setMeta(meta);
+    applyContactFromTerminology(set, terminology);
     return set;
   }
 
@@ -1247,6 +1250,7 @@ public final class FhirUtilityR4 {
     valueSet.setStatus(Enumerations.PublicationStatus.ACTIVE);
 
     applyCopyrightFromTerminology(valueSet, subset, searchService);
+    applyContactFromTerminology(valueSet, subset, searchService);
 
     // Set experimental from attributes if present, else fallback
     final String experimentalStr = subset.getAttributes() != null
@@ -1311,20 +1315,132 @@ public final class FhirUtilityR4 {
   private static void applyCopyrightFromTerminology(final ValueSet valueSet, final Subset subset,
     final EntityRepositoryService searchService) throws Exception {
 
-    String copyright = null;
-    if (searchService != null && subset.getFromTerminology() != null) {
+    String copyright =
+        subset.getAttributes() != null ? subset.getAttributes().get("copyright") : null;
+    if (copyright == null && searchService != null && subset.getFromTerminology() != null) {
       final Terminology terminology = TerminologyUtility.getTerminology(searchService,
           subset.getFromTerminology(), subset.getFromPublisher(), subset.getFromVersion(), false);
       if (terminology != null && terminology.getAttributes() != null) {
         copyright = terminology.getAttributes().get("copyright");
       }
     }
-    if (copyright == null && subset.getAttributes() != null) {
-      copyright = subset.getAttributes().get("copyright");
-    }
     if (copyright != null) {
       valueSet.setCopyright(copyright);
     }
+  }
+
+  /**
+   * Adds terminology contact to a ValueSet when an equivalent contact is not already present.
+   *
+   * @param valueSet the value set
+   * @param terminology the terminology
+   */
+  private static void applyContactFromTerminology(final ValueSet valueSet,
+    final Terminology terminology) {
+    if (terminology == null || terminology.getAttributes() == null) {
+      return;
+    }
+    addContactsFromFhirContactJson(valueSet, terminology.getAttributes().get("fhirContact"));
+  }
+
+  /**
+   * Adds subset and source terminology contacts when equivalent contacts are not already present.
+   *
+   * @param valueSet the value set
+   * @param subset the subset
+   * @param searchService the search service
+   * @throws Exception the exception
+   */
+  private static void applyContactFromTerminology(final ValueSet valueSet, final Subset subset,
+    final EntityRepositoryService searchService) throws Exception {
+    if (subset.getAttributes() != null) {
+      addContactsFromFhirContactJson(valueSet, subset.getAttributes().get("fhirContact"));
+    }
+    if (searchService != null && subset.getFromTerminology() != null) {
+      final Terminology terminology = TerminologyUtility.getTerminology(searchService,
+          subset.getFromTerminology(), subset.getFromPublisher(), subset.getFromVersion(), false);
+      applyContactFromTerminology(valueSet, terminology);
+    }
+  }
+
+  /**
+   * Adds contacts parsed from fhirContact JSON when equivalent contacts are not already present.
+   *
+   * @param valueSet the value set
+   * @param fhirContact the fhirContact attribute value
+   */
+  private static void addContactsFromFhirContactJson(final ValueSet valueSet,
+    final String fhirContact) {
+    final List<JsonNode> parsed = FhirContactUtility.parseArray(fhirContact);
+    if (parsed.isEmpty()) {
+      return;
+    }
+    final Set<String> existingSignatures = new HashSet<>();
+    for (final ContactDetail contact : valueSet.getContact()) {
+      existingSignatures.add(FhirContactUtility.signature(toContactJsonNode(contact)));
+    }
+    for (final JsonNode item : parsed) {
+      if (!FhirContactUtility.containsEquivalentSignature(existingSignatures, item)) {
+        valueSet.addContact(toR4ContactDetail(item));
+        existingSignatures.add(FhirContactUtility.signature(item));
+      }
+    }
+  }
+
+  /**
+   * Converts an R4 contact detail to JSON for comparison.
+   *
+   * @param contact the contact detail
+   * @return the contact JSON node
+   */
+  private static JsonNode toContactJsonNode(final ContactDetail contact) {
+    final com.fasterxml.jackson.databind.node.ObjectNode obj =
+        ThreadLocalMapper.get().createObjectNode();
+    if (contact.hasName()) {
+      obj.put("name", contact.getName());
+    }
+    final com.fasterxml.jackson.databind.node.ArrayNode telecom =
+        ThreadLocalMapper.get().createArrayNode();
+    for (final ContactPoint cp : contact.getTelecom()) {
+      final com.fasterxml.jackson.databind.node.ObjectNode tp =
+          ThreadLocalMapper.get().createObjectNode();
+      if (cp.hasSystem()) {
+        tp.put("system", cp.getSystem().toCode());
+      }
+      if (cp.hasValue()) {
+        tp.put("value", cp.getValue());
+      }
+      telecom.add(tp);
+    }
+    obj.set("telecom", telecom);
+    return obj;
+  }
+
+  /**
+   * Converts a contact JSON node to an R4 contact detail.
+   *
+   * @param item the contact JSON node
+   * @return the contact detail
+   */
+  private static ContactDetail toR4ContactDetail(final JsonNode item) {
+    final ContactDetail contact = new ContactDetail();
+    if (!item.path("name").isMissingNode() && !item.path("name").isNull()) {
+      contact.setName(item.path("name").asText());
+    }
+    final JsonNode telecomArr = item.path("telecom");
+    if (telecomArr.isArray()) {
+      for (final JsonNode tp : telecomArr) {
+        final ContactPoint cp = new ContactPoint();
+        if (!tp.path("system").isMissingNode()) {
+          cp.setSystem(ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
+        }
+        if (!tp.path("value").isMissingNode()) {
+          cp.setValue(tp.path("value").asText());
+        }
+        contact.addTelecom(cp);
+      }
+    }
+    return contact;
   }
 
   /**
@@ -1461,33 +1577,9 @@ public final class FhirUtilityR4 {
       cs.setValueSet(valueSet);
     }
 
-    final String fhirContact = terminology.getAttributes().get("fhirContact");
-    if (fhirContact != null && !fhirContact.isEmpty()) {
-      try {
-        final JsonNode arr = ThreadLocalMapper.get().readTree(fhirContact);
-        if (arr.isArray()) {
-          for (final JsonNode item : arr) {
-            final ContactDetail contact = new ContactDetail();
-            final JsonNode telecomArr = item.path("telecom");
-            if (telecomArr.isArray()) {
-              for (final JsonNode tp : telecomArr) {
-                final ContactPoint cp = new ContactPoint();
-                if (!tp.path("system").isMissingNode()) {
-                  cp.setSystem(
-                      ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
-                }
-                if (!tp.path("value").isMissingNode()) {
-                  cp.setValue(tp.path("value").asText());
-                }
-                contact.addTelecom(cp);
-              }
-            }
-            cs.addContact(contact);
-          }
-        }
-      } catch (final Exception e) {
-        LoggerFactory.getLogger(FhirUtilityR4.class).warn("Failed to parse fhirContact", e);
-      }
+    for (final JsonNode item : FhirContactUtility
+        .parseArray(terminology.getAttributes().get("fhirContact"))) {
+      cs.addContact(toR4ContactDetail(item));
     }
 
     final String caseSensitive = terminology.getAttributes().get("caseSensitive");

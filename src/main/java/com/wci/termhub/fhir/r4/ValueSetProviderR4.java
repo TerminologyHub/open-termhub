@@ -697,9 +697,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
   private ValueSet getExpandedValueSet(final IdType id, final UriType url, final StringType version,
     final StringType filter, final int offset, final int count, final boolean activeOnly,
     final Set<String> languages) throws Exception {
-    // Look up implicit value sets for code systems
 
-    final List<ValueSet> valueSets = findPossibleValueSets(true, id, url, version);
+    final List<ValueSet> valueSets = findValueSetForExpand(id, url, version);
 
     // Expect a single value set
     if (valueSets.isEmpty()) {
@@ -858,14 +857,27 @@ public class ValueSetProviderR4 implements IResourceProvider {
         return createEmptyValueSetExpansion(vs, offset, ct, filter, version);
       }
       final SubsetMember m0 = loadedSubsetMembersForCompose.get(0);
-      final Terminology terminologyFromMember = TerminologyUtility.getTerminology(searchService,
-          m0.getTerminology(), m0.getPublisher(), m0.getVersion());
-      if (terminologyFromMember != null) {
-        terminology = terminologyFromMember;
+      final String memberTerminology = m0.getTerminology();
+      final String memberPublisher = m0.getPublisher();
+      final String memberVersion = m0.getVersion();
+      if (!memberTerminology.equals(fromTerminology) || !memberPublisher.equals(fromPublisher)
+          || !memberVersion.equals(fromVersion)) {
+        final Terminology terminologyFromMember = TerminologyUtility.getTerminology(searchService,
+            memberTerminology, memberPublisher, memberVersion);
+        if (terminologyFromMember != null) {
+          terminology = terminologyFromMember;
+        }
+      }
+      if (terminology == null) {
+        terminology = TerminologyUtility.getTerminology(searchService, memberTerminology,
+            memberPublisher, memberVersion);
+      }
+      if (terminology == null) {
+        throw FhirUtilityR4.exception("Failed to find terminology for value set",
+            OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
       terminologyQuery = LuceneQueryBuilder.parse(
-          TerminologyUtility.getTerminologyQuery(m0.getTerminology(), m0.getPublisher(),
-              m0.getVersion()),
+          TerminologyUtility.getTerminologyQuery(memberTerminology, memberPublisher, memberVersion),
           Concept.class);
       final List<String> memberClauses = loadedSubsetMembersForCompose.stream()
           .map(s -> "code:" + StringUtility.escapeQuery(s.getCode()))
@@ -1518,6 +1530,106 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
     return list;
 
+  }
+
+  /**
+   * Resolves a ValueSet for $expand using targeted lookups when id is known, avoiding a full scan
+   * of all loaded subsets.
+   *
+   * @param id the id
+   * @param url the url
+   * @param version the version
+   * @return matching value sets
+   * @throws Exception the exception
+   */
+  private List<ValueSet> findValueSetForExpand(final IdType id, final UriType url,
+    final StringType version) throws Exception {
+    if (id == null || id.getIdPart() == null) {
+      return findPossibleValueSets(true, id, url, version);
+    }
+    final String idPart = id.getIdPart();
+
+    if (loincValueSetHelper.isLllgId(idPart)
+        && (loincValueSetHelper.isEnabled() || version != null)) {
+      final ValueSet lllgVs = resolveLllgValueSetForExpand(idPart, version);
+      if (lllgVs != null) {
+        return List.of(lllgVs);
+      }
+    }
+
+    final Subset subset = searchService.get(idPart, Subset.class);
+    if (subset != null && !subset.getId().endsWith("_entire")) {
+      final ValueSet vs =
+          FhirUtilityR4.toR4ValueSet(subset, new ArrayList<>(), true, searchService);
+      if (version != null && !FhirUtility.compareString(new StringParam(version.getValue()),
+          vs.getVersion())) {
+        return new ArrayList<>();
+      }
+      return List.of(vs);
+    }
+
+    if (loincValueSetHelper.isEnabled()) {
+      final Concept concept = searchService.get(idPart, Concept.class);
+      if (concept != null && concept.getCode() != null
+          && loincValueSetHelper.isLllgId(concept.getCode())) {
+        Terminology loincTerm = TerminologyUtility.getTerminology(searchService,
+            concept.getTerminology(), concept.getPublisher(), concept.getVersion());
+        if (loincTerm == null) {
+          loincTerm = loincValueSetHelper.findLoincTerminology(searchService);
+        }
+        if (loincTerm != null) {
+          final ValueSet lllgVs = FhirUtilityR4.toR4LllgValueSet(loincTerm, concept.getCode(),
+              concept.getId(), true);
+          if (version != null && !FhirUtility.compareString(new StringParam(version.getValue()),
+              lllgVs.getVersion())) {
+            return new ArrayList<>();
+          }
+          return List.of(lllgVs);
+        }
+      }
+    }
+
+    for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
+      final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, true);
+      if (idPart.equals(vs.getId())) {
+        if (version != null && !FhirUtility.compareString(new StringParam(version.getValue()),
+            vs.getVersion())) {
+          return new ArrayList<>();
+        }
+        return List.of(vs);
+      }
+    }
+
+    return findPossibleValueSets(true, id, url, version);
+  }
+
+  /**
+   * Builds an LL/LG ValueSet for $expand when the id is an LL/LG code.
+   *
+   * @param lllgId the LL/LG id
+   * @param version the requested value set version
+   * @return the value set, or null if not found
+   * @throws Exception the exception
+   */
+  private ValueSet resolveLllgValueSetForExpand(final String lllgId, final StringType version)
+    throws Exception {
+    final List<Terminology> allTerminologies = FhirUtility.lookupTerminologies(searchService);
+    final Terminology loincForLllg;
+    if (version != null && !version.isEmpty()) {
+      final String requestedVersion = version.getValue();
+      loincForLllg = allTerminologies.stream()
+          .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
+          .filter(t -> requestedVersion.equals(t.getVersion())).findFirst().orElse(null);
+    } else {
+      loincForLllg = loincValueSetHelper.findLoincTerminology(searchService);
+    }
+    if (loincForLllg == null) {
+      return null;
+    }
+    final Concept lllgConcept =
+        loincValueSetHelper.findLllgConcept(searchService, loincForLllg, lllgId);
+    final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
+    return FhirUtilityR4.toR4LllgValueSet(loincForLllg, lllgId, valueSetId, true);
   }
 
   /**

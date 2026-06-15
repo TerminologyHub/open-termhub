@@ -910,6 +910,7 @@ public final class FhirUtility {
    * Clear caches. Used only for testing.
    */
   public static void clearCaches() {
+    TerminologyUtility.clearCache();
     terminologyCache = new TimerCache<>(1000, 10000);
     mapsetCache = new TimerCache<>(1000, 10000);
     codeSystemUriCache = new TimerCache<>(1000, 10000);

@@ -31,6 +31,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ThreadLocalMapper;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
@@ -77,6 +78,7 @@ public abstract class AbstractServerTest extends BaseUnitTest {
       searchService.createIndex(clazz);
     }
     LuceneDataAccess.clearReaders();
+    TerminologyUtility.clearCache();
   }
 
   /**
