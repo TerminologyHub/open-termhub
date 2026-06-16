@@ -84,6 +84,7 @@ import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.DateUtility;
+import com.wci.termhub.util.FhirIdentifierUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
@@ -1255,9 +1256,8 @@ public final class FhirUtilityR4 {
       valueSet.setExperimental(Boolean.parseBoolean(experimentalStr));
     }
 
-    // Set identifier from attributes if present, else fallback
-    valueSet.addIdentifier().setValue(subset.getCode())
-        .setSystem(subset.getAttributes().get("fhirIncludesUri"));
+    FhirIdentifierUtil.applyToR4ValueSet(valueSet,
+        subset.getAttributes().get(Subset.Attributes.fhirIdentifier.name()));
 
     // Compose/include
     final ValueSetComposeComponent compose = new ValueSetComposeComponent();
@@ -1595,10 +1595,8 @@ public final class FhirUtilityR4 {
     cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
     cm.setCopyright(mapset.getAttributes().get("copyright"));
-    if (mapset.getCode() != null) {
-      cm.setIdentifier(new Identifier().setSystem("https://terminologyhub.com/model/mapset/code")
-          .setValue(mapset.getCode()));
-    }
+    FhirIdentifierUtil.applyToR4ConceptMap(cm,
+        mapset.getAttributes().get(FhirIdentifierUtil.ATTR_FHIR_IDENTIFIER));
 
     // Set source and target scopes from fromTerminology and toTerminology
     if (mapset.getAttributes().containsKey("fhirSourceUri")) {

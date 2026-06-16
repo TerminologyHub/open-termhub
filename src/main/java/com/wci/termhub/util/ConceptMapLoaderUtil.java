@@ -14,9 +14,11 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
@@ -157,8 +159,11 @@ public final class ConceptMapLoaderUtil {
       }
 
       // check for existing (require key fields)
-      final String abbreviation = conceptMap.has("title") ? conceptMap.path("title").asText()
-          : conceptMap.path("name").asText();
+      final String resourceUrl = conceptMap.path("url").asText();
+      String abbreviation = conceptMap.path("title").asText();
+      if (StringUtility.isEmpty(abbreviation)) {
+        abbreviation = StringUtility.deriveTitleFromUrl(resourceUrl);
+      }
 
       final String publisher = conceptMap.path("publisher").asText();
       final String version = conceptMap.path("version").asText();
@@ -166,7 +171,7 @@ public final class ConceptMapLoaderUtil {
           || version == null || version.isEmpty()) {
         final List<String> missing = new ArrayList<>();
         if (abbreviation == null || abbreviation.isEmpty()) {
-          missing.add(conceptMap.has("title") ? "title" : "name");
+          missing.add("title");
         }
         if (publisher == null || publisher.isEmpty()) {
           missing.add("publisher");
@@ -175,8 +180,8 @@ public final class ConceptMapLoaderUtil {
           missing.add("version");
         }
         throw FhirUtilityR4.exception(
-            "ConceptMap requires title (or name), publisher, and version for import. Missing: "
-                + String.join(", ", missing) + ". url: " + conceptMap.path("url").asText(),
+            "ConceptMap requires title (or url), publisher, and version for import. Missing: "
+                + String.join(", ", missing) + ". url: " + resourceUrl,
             IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
       }
       Mapset mapset = findMapset(service, abbreviation, publisher, version);
@@ -224,6 +229,8 @@ public final class ConceptMapLoaderUtil {
       }
 
       int mappingCount = 0;
+      int duplicateMappingCount = 0;
+      final Set<String> seenFromToKeys = new HashSet<>();
 
       int totalCt = conceptMap.get("groupCt").asInt();
 
@@ -326,6 +333,14 @@ public final class ConceptMapLoaderUtil {
                     }
                   }
 
+                  final String fromToKey = fromToKey(sourceCode, targetCode);
+                  if (!seenFromToKeys.add(fromToKey)) {
+                    duplicateMappingCount++;
+                    LOGGER.warn(
+                        "Duplicate ConceptMap mapping entry: mapset={}, url={}, from={}, to={}",
+                        abbreviation, resourceUrl, sourceCode, targetCode);
+                  }
+
                   // Add concept to batch
                   mappingBatch.add(mapping);
                   mappingCount++;
@@ -355,6 +370,11 @@ public final class ConceptMapLoaderUtil {
       }
 
       LOGGER.info("  final counts - mapsets: {}, mappings: {}", 1, mappingCount);
+      if (duplicateMappingCount > 0) {
+        LOGGER.warn(
+            "ConceptMap {} (url={}): {} duplicate from-to mapping entries of {} total ({} unique from-to pairs)",
+            abbreviation, resourceUrl, duplicateMappingCount, mappingCount, seenFromToKeys.size());
+      }
       LOGGER.info("  duration: {} ms", (System.currentTimeMillis() - startTime));
 
       // Get the mapset again because the tree position computer would've
@@ -447,7 +467,11 @@ public final class ConceptMapLoaderUtil {
     mapset.setActive(true);
     mapset.setName(root.path("name").asText());
     mapset.setActive(root.path("active").asBoolean(true));
-    mapset.setAbbreviation(root.path("title").asText());
+    String abbreviation = root.path("title").asText();
+    if (StringUtility.isEmpty(abbreviation)) {
+      abbreviation = StringUtility.deriveTitleFromUrl(root.path("url").asText());
+    }
+    mapset.setAbbreviation(abbreviation);
     mapset.setDescription(root.path("description").asText());
     mapset.setPublisher(root.path("publisher").asText());
     final String version = root.path("version").asText();
@@ -496,8 +520,7 @@ public final class ConceptMapLoaderUtil {
     toRef.setVersion(version);
 
     // Extract abbreviations from title field
-    final String title = root.path("title").asText();
-    final String[] titleParts = title.split("-");
+    final String[] titleParts = abbreviation.split("-");
     final String fromAbbreviation = titleParts.length > 0 ? titleParts[0] : fromTerminology;
     final String toAbbreviation = titleParts.length > 1 ? titleParts[1] : toTerminology;
 
@@ -515,24 +538,14 @@ public final class ConceptMapLoaderUtil {
     mapset.setToVersion(toRef.getVersion());
     mapset.getAttributes().put("fhirTargetUri", toRef.getUri());
 
-    // Use the identifier as the code, otherwise use the id
-    // NOTE: termhub generated files will have a single id
-    // with a system matching this value.
-    final JsonNode identifier = root.path("identifier");
-    if (identifier.isArray() && identifier.size() > 0) {
-      final JsonNode firstId = identifier.get(0);
-      if (firstId != null && firstId.path("system").asText().contains("/model/mapset/code")) {
-        mapset.setCode(firstId.path("value").asText());
-      }
-    }
-    //JsonNode identifierNode = root.path("identifier").isArray() ? root.path("identifier").get(0)
-    //    : root.path("identifier");
-    //if (identifierNode != null && "https://terminologyhub.com/model/mapset/code"
-    //    .equals(identifierNode.path("system").asText())) {
-    //  mapset.setCode(identifierNode.path("value").asText());
+    final JsonNode identifiersNode = root.get("identifier");
+    final String identifierCode = FhirIdentifierUtil.firstValue(identifiersNode);
+    mapset.setCode(StringUtility.isEmpty(identifierCode) ? mapset.getId() : identifierCode);
 
-    if (StringUtility.isEmpty(mapset.getCode())) {
-      mapset.setCode(mapset.getId());
+    final String storedIdentifiers = FhirIdentifierUtil.normalizeForStorage(identifiersNode,
+        mapset.getAttributes().get("fhirSourceUri"));
+    if (storedIdentifiers != null) {
+      mapset.getAttributes().put(FhirIdentifierUtil.ATTR_FHIR_IDENTIFIER, storedIdentifiers);
     }
 
     // Store the original URIs in attributes
@@ -545,6 +558,17 @@ public final class ConceptMapLoaderUtil {
     // LOGGER.info("ConceptMapLoaderUtil: mapset: {}", mapset);
     service.add(Mapset.class, mapset);
     return mapset;
+  }
+
+  /**
+   * Identity key for a from-to mapping pair.
+   *
+   * @param fromCode the source code
+   * @param toCode the target code
+   * @return the key
+   */
+  private static String fromToKey(final String fromCode, final String toCode) {
+    return fromCode + '\0' + (toCode != null ? toCode : "");
   }
 
   /**

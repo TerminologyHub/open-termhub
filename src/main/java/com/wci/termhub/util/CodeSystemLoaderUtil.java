@@ -182,7 +182,11 @@ public final class CodeSystemLoaderUtil {
       }
 
       // check for existing
-      final String abbreviation = jsonContent.path("title").asText();
+      final String url = jsonContent.path("url").asText();
+      String abbreviation = jsonContent.path("title").asText();
+      if (StringUtility.isEmpty(abbreviation)) {
+        abbreviation = StringUtility.deriveTitleFromUrl(url);
+      }
       final String publisher = jsonContent.path("publisher").asText();
       final String version = jsonContent.path("version").asText();
       Terminology terminology = findTerminology(service, abbreviation, publisher, version);
@@ -467,7 +471,11 @@ public final class CodeSystemLoaderUtil {
     terminology.setActive(true);
     terminology.setUri(root.path("url").asText());
     terminology.setName(root.path("name").asText());
-    terminology.setAbbreviation(root.path("title").asText());
+    String abbreviation = root.path("title").asText();
+    if (StringUtility.isEmpty(abbreviation)) {
+      abbreviation = StringUtility.deriveTitleFromUrl(terminology.getUri());
+    }
+    terminology.setAbbreviation(abbreviation);
     terminology.setPublisher(root.path("publisher").asText());
     terminology.setVersion(root.path("version").asText());
     // For SNOMED, set the terminology version to just the base version at the
