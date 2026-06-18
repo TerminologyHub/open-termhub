@@ -37,6 +37,7 @@ import com.wci.termhub.algo.TerminologyCache;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
+import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
@@ -1186,6 +1187,16 @@ public final class CodeSystemLoaderUtil {
           final JsonNode valueBoolean = extension.path("valueBoolean");
           if (!valueBoolean.isMissingNode() && valueBoolean.asBoolean()) {
             isHistorical = true;
+          }
+        } else if (url.contains("/relationship/attribute/")) {
+          final String attrName = url.substring(url.lastIndexOf('/') + 1);
+          if (extension.has("valueString")) {
+            final String attrValue = extension.path("valueString").asText();
+            if ("SEQUENC#".equals(attrName)) {
+              relationship.getAttributes().put(LoincConstants.ATTR_SEQ_NO, attrValue);
+            } else {
+              relationship.getAttributes().put(attrName, attrValue);
+            }
           }
         }
       }

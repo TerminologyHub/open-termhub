@@ -62,6 +62,24 @@ public final class LoincConstants {
   /** Panel membership relationship (sandbox / legacy). */
   public static final String LOINC_REL_HAS_MEMBER = "has_member";
 
+  /** Member-edge form link id (parent relationship extension). */
+  public static final String ATTR_REL_ID = "ID";
+
+  /** Member-edge form prefix (parent relationship extension). */
+  public static final String ATTR_OBSERVATION_ID_IN_FORM = "ObservationIdInForm";
+
+  /** Member-edge form display text (parent relationship extension). */
+  public static final String ATTR_DISPLAY_NAME_FOR_FORM = "DisplayNameForForm";
+
+  /** Member-edge sequence number on indexed relationships. */
+  public static final String ATTR_SEQ_NO = "SEQ_NO";
+
+  /** LOINC PROPERTY concept attribute / property code. */
+  public static final String ATTR_PROPERTY = "PROPERTY";
+
+  /** External copyright notice on a LOINC concept. */
+  public static final String ATTR_EXTERNAL_COPYRIGHT_NOTICE = "EXTERNAL_COPYRIGHT_NOTICE";
+
   private LoincConstants() {
     // utility class
   }
