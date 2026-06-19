@@ -39,6 +39,7 @@ import org.hl7.fhir.r4.model.ConceptMap;
 import org.hl7.fhir.r4.model.ContactDetail;
 import org.hl7.fhir.r4.model.ContactPoint;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.MetadataResource;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r4.model.IdType;
@@ -1059,6 +1060,7 @@ public final class FhirUtilityR4 {
           .addTag("includesUri", terminology.getUri(), null);
     }
     set.setMeta(meta);
+    applyTerminologyContact(set, terminology);
     return set;
   }
 
@@ -1467,34 +1469,7 @@ public final class FhirUtilityR4 {
       cs.setValueSet(valueSet);
     }
 
-    final String fhirContact = terminology.getAttributes().get("fhirContact");
-    if (fhirContact != null && !fhirContact.isEmpty()) {
-      try {
-        final JsonNode arr = ThreadLocalMapper.get().readTree(fhirContact);
-        if (arr.isArray()) {
-          for (final JsonNode item : arr) {
-            final ContactDetail contact = new ContactDetail();
-            final JsonNode telecomArr = item.path("telecom");
-            if (telecomArr.isArray()) {
-              for (final JsonNode tp : telecomArr) {
-                final ContactPoint cp = new ContactPoint();
-                if (!tp.path("system").isMissingNode()) {
-                  cp.setSystem(
-                      ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
-                }
-                if (!tp.path("value").isMissingNode()) {
-                  cp.setValue(tp.path("value").asText());
-                }
-                contact.addTelecom(cp);
-              }
-            }
-            cs.addContact(contact);
-          }
-        }
-      } catch (final Exception e) {
-        LoggerFactory.getLogger(FhirUtilityR4.class).warn("Failed to parse fhirContact", e);
-      }
-    }
+    applyTerminologyContact(cs, terminology);
 
     final String caseSensitive = terminology.getAttributes().get("caseSensitive");
     if (caseSensitive != null) {
@@ -1766,6 +1741,121 @@ public final class FhirUtilityR4 {
     }
 
     return bundle;
+  }
+
+  /**
+   * Adds contact from terminology {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param resource the FHIR metadata resource
+   * @param terminology the terminology
+   */
+  private static void applyTerminologyContact(final MetadataResource resource,
+    final Terminology terminology) {
+    applyTerminologyContact(resource, terminology, null, null);
+  }
+
+  /**
+   * Adds contact from terminology {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param questionnaire the questionnaire
+   * @param terminology the terminology (optional)
+   * @param fallbackName contact name when terminology or fhirContact name is absent
+   * @param fallbackUri contact url when terminology uri is absent
+   */
+  private static void applyTerminologyContact(final Questionnaire questionnaire,
+    final Terminology terminology, final String fallbackName, final String fallbackUri) {
+    if (questionnaire == null) {
+      return;
+    }
+    for (final ContactDetail contact : resolveTerminologyContacts(terminology, fallbackName,
+        fallbackUri)) {
+      questionnaire.addContact(contact);
+    }
+  }
+
+  /**
+   * Adds contact from terminology {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param resource the FHIR metadata resource
+   * @param terminology the terminology (optional)
+   * @param fallbackName contact name when terminology or fhirContact name is absent
+   * @param fallbackUri contact url when terminology uri is absent
+   */
+  private static void applyTerminologyContact(final MetadataResource resource,
+    final Terminology terminology, final String fallbackName, final String fallbackUri) {
+    if (resource == null) {
+      return;
+    }
+    for (final ContactDetail contact : resolveTerminologyContacts(terminology, fallbackName,
+        fallbackUri)) {
+      resource.addContact(contact);
+    }
+  }
+
+  /**
+   * Builds contact details from terminology {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param terminology the terminology (optional)
+   * @param fallbackName contact name when terminology or fhirContact name is absent
+   * @param fallbackUri contact url when terminology uri is absent
+   * @return contact details to add to a FHIR resource
+   */
+  private static List<ContactDetail> resolveTerminologyContacts(final Terminology terminology,
+    final String fallbackName, final String fallbackUri) {
+    final List<ContactDetail> contacts = new ArrayList<>();
+    final String publisher = terminology != null ? terminology.getPublisher() : null;
+    final String uri = terminology != null ? terminology.getUri() : null;
+    final Map<String, String> attrs =
+        terminology != null ? terminology.getAttributes() : null;
+    final String fhirContact = attrs != null ? attrs.get("fhirContact") : null;
+    if (fhirContact != null && !fhirContact.isEmpty()) {
+      try {
+        final JsonNode arr = ThreadLocalMapper.get().readTree(fhirContact);
+        if (arr.isArray()) {
+          for (final JsonNode item : arr) {
+            final ContactDetail contact = new ContactDetail();
+            if (!item.path("name").isMissingNode() && !item.path("name").asText().isEmpty()) {
+              contact.setName(item.path("name").asText());
+            } else if (publisher != null) {
+              contact.setName(publisher);
+            }
+            final JsonNode telecomArr = item.path("telecom");
+            if (telecomArr.isArray()) {
+              for (final JsonNode tp : telecomArr) {
+                final ContactPoint cp = new ContactPoint();
+                if (!tp.path("system").isMissingNode()) {
+                  cp.setSystem(
+                      ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
+                }
+                if (!tp.path("value").isMissingNode()) {
+                  cp.setValue(tp.path("value").asText());
+                }
+                contact.addTelecom(cp);
+              }
+            }
+            contacts.add(contact);
+          }
+          return contacts;
+        }
+      } catch (final Exception e) {
+        LoggerFactory.getLogger(FhirUtilityR4.class).warn("Failed to parse fhirContact", e);
+      }
+    }
+    final String contactName = publisher != null ? publisher : fallbackName;
+    final String contactUri = uri != null ? uri : fallbackUri;
+    if (contactName == null) {
+      return contacts;
+    }
+    final ContactDetail contact = new ContactDetail();
+    contact.setName(contactName);
+    if (contactUri != null) {
+      final ContactPoint telecom = new ContactPoint();
+      telecom.setSystem(ContactPoint.ContactPointSystem.URL);
+      telecom.setValue(contactUri);
+      contact.addTelecom(telecom);
+    }
+    contacts.add(contact);
+    return contacts;
   }
 
   /**
@@ -2049,14 +2139,7 @@ public final class FhirUtilityR4 {
     coding.setDisplay(title);
     questionnaire.addCode(coding);
 
-    // Add contact information using concept data
-    final ContactDetail contact = new ContactDetail();
-    contact.setName(concept.getPublisher());
-    final ContactPoint telecom = new ContactPoint();
-    telecom.setSystem(ContactPoint.ContactPointSystem.URL);
-    telecom.setValue(systemUri);
-    contact.addTelecom(telecom);
-    questionnaire.addContact(contact);
+    applyTerminologyContact(questionnaire, terminology, concept.getPublisher(), systemUri);
 
     Terminology copyrightTerminology = terminology;
     if (copyrightTerminology == null && searchService != null) {

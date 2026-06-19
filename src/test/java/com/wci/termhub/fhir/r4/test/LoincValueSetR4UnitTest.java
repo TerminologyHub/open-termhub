@@ -168,6 +168,23 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
         .orElse(null);
     assertNotNull(found, "Bundle should contain LG value set for " + LG_VS_URL);
     assertLllgValueSetHasUuidId(found, LG_VS_ID);
+    assertLllgValueSetContact(found);
+  }
+
+  /**
+   * Asserts a LOINC LL/LG ValueSet has contact from terminology publisher and uri.
+   *
+   * @param vs the value set
+   */
+  private static void assertLllgValueSetContact(final ValueSet vs) {
+    assertNotNull(vs.getContact(), "ValueSet contact should not be null");
+    assertNotNull(vs.getContactFirstRep().getName(), "ValueSet contact name should not be null");
+    assertEquals(vs.getPublisher(), vs.getContactFirstRep().getName(),
+        "ValueSet contact name should match publisher");
+    assertNotNull(vs.getContactFirstRep().getTelecomFirstRep().getValue(),
+        "ValueSet contact telecom should not be null");
+    assertTrue(vs.getContactFirstRep().getTelecomFirstRep().getValue().contains("loinc.org"),
+        "ValueSet contact url should reference loinc.org");
   }
 
   /**
