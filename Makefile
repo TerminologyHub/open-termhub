@@ -67,8 +67,8 @@ scandocker:
 	
 release: ## publish to dockerhub
 	@echo $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
-	docker -D push--platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
-	docker -D push--platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
+	docker -D push --platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
+	docker -D push --platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 
 version:
 	@echo $(APP_VERSION)
