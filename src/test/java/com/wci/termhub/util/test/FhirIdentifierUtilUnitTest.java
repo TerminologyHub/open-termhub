@@ -93,6 +93,35 @@ public class FhirIdentifierUtilUnitTest {
   }
 
   /**
+   * ValueSet serve restores contact from stored fhirContact.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testValueSetServeContactFromFhirContact() throws Exception {
+    final Subset subset = new Subset();
+    subset.setId("vs-contact");
+    subset.setCode("loinc-universal-order-set");
+    subset.setName("LOINC Universal Order Set");
+    subset.setAbbreviation("loinc-universal-order-set");
+    subset.setPublisher("Regenstrief Institute, Inc.");
+    subset.setVersion("2.81");
+    subset.setUri("http://loinc.org?fhir_vs=loinc-universal-order-set");
+    final Map<String, String> attrs = new HashMap<>();
+    attrs.put("fhirIncludesUri", "http://loinc.org");
+    attrs.put("fhirContact",
+        "[{\"telecom\":[{\"system\":\"url\",\"value\":\"http://loinc.org\"}]}]");
+    subset.setAttributes(attrs);
+
+    final ValueSet valueSet = FhirUtilityR4.toR4ValueSet(subset, List.of(), false, null);
+
+    assertNotNull(valueSet.getContact());
+    assertEquals(1, valueSet.getContact().size());
+    assertEquals("Regenstrief Institute, Inc.", valueSet.getContactFirstRep().getName());
+    assertEquals("http://loinc.org", valueSet.getContactFirstRep().getTelecomFirstRep().getValue());
+  }
+
+  /**
    * ConceptMap serve uses stored fhirIdentifier pass-through.
    *
    * @throws Exception the exception

@@ -1273,6 +1273,7 @@ public final class FhirUtilityR5 {
     valueSet.setStatus(PublicationStatus.ACTIVE);
 
     applyCopyrightFromTerminology(valueSet, subset, searchService);
+    applySubsetContact(valueSet, subset);
 
     // Set experimental from attributes if present, else fallback
     final String experimentalStr = subset.getAttributes() != null
@@ -1333,6 +1334,25 @@ public final class FhirUtilityR5 {
    * @param searchService the search service
    * @throws Exception the exception
    */
+  /**
+   * Adds contact from subset {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param valueSet the value set
+   * @param subset the subset
+   */
+  private static void applySubsetContact(final ValueSet valueSet, final Subset subset) {
+    if (valueSet == null || subset == null) {
+      return;
+    }
+    final Map<String, String> attrs = subset.getAttributes();
+    final String includesUri = attrs != null ? attrs.get("fhirIncludesUri") : null;
+    final String fallbackUri = includesUri != null ? includesUri : subset.getUri();
+    for (final ContactDetail contact : resolveContactsFromAttributes(subset.getPublisher(),
+        subset.getUri(), attrs, null, fallbackUri)) {
+      valueSet.addContact(contact);
+    }
+  }
+
   private static void applyCopyrightFromTerminology(final ValueSet valueSet, final Subset subset,
     final EntityRepositoryService searchService) throws Exception {
 
@@ -1757,7 +1777,8 @@ public final class FhirUtilityR5 {
       }
       final BundleEntryComponent component = new BundleEntryComponent();
       component.setResource(list.get(i));
-      component.setFullUrl(request.getRequestURL() + "/" + list.get(i).getId());
+      final String baseUrl = request.getRequestURL().toString().replaceAll("/$", "");
+      component.setFullUrl(baseUrl + "/" + list.get(i).getIdElement().getIdPart());
       bundle.addEntry(component);
     }
     return bundle;
@@ -1822,11 +1843,27 @@ public final class FhirUtilityR5 {
    */
   private static List<ContactDetail> resolveTerminologyContacts(final Terminology terminology,
     final String fallbackName, final String fallbackUri) {
-    final List<ContactDetail> contacts = new ArrayList<>();
     final String publisher = terminology != null ? terminology.getPublisher() : null;
     final String uri = terminology != null ? terminology.getUri() : null;
     final Map<String, String> attrs =
         terminology != null ? terminology.getAttributes() : null;
+    return resolveContactsFromAttributes(publisher, uri, attrs, fallbackName, fallbackUri);
+  }
+
+  /**
+   * Builds contact details from {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param publisher the publisher
+   * @param uri the resource uri
+   * @param attrs attribute map that may contain {@code fhirContact}
+   * @param fallbackName contact name when publisher or fhirContact name is absent
+   * @param fallbackUri contact url when uri is absent
+   * @return contact details to add to a FHIR resource
+   */
+  private static List<ContactDetail> resolveContactsFromAttributes(final String publisher,
+    final String uri, final Map<String, String> attrs, final String fallbackName,
+    final String fallbackUri) {
+    final List<ContactDetail> contacts = new ArrayList<>();
     final String fhirContact = attrs != null ? attrs.get("fhirContact") : null;
     if (fhirContact != null && !fhirContact.isEmpty()) {
       try {

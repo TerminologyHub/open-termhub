@@ -900,7 +900,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
     final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
     expansion.setId(UUID.randomUUID().toString());
     expansion.setTimestamp(new Date());
-    expansion.setTotal((int) list.getTotal());
+    expansion.setTotal((int) Math.min(list.getTotal(), Integer.MAX_VALUE));
     expansion.setOffset(offset);
     // set count
     expansion.addParameter(

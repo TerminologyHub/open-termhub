@@ -260,6 +260,7 @@ public final class ValueSetLoaderUtil {
       if (valueSet.hasCopyright() && !StringUtility.isEmpty(valueSet.getCopyright())) {
         subset.getAttributes().put("copyright", valueSet.getCopyright());
       }
+      storeValueSetContactR4(subset, valueSet);
 
       subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
@@ -540,6 +541,7 @@ public final class ValueSetLoaderUtil {
       if (valueSet.hasCopyright() && !StringUtility.isEmpty(valueSet.getCopyright())) {
         subset.getAttributes().put("copyright", valueSet.getCopyright());
       }
+      storeValueSetContactR5(subset, valueSet);
 
       subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
@@ -821,6 +823,74 @@ public final class ValueSetLoaderUtil {
     if (stored != null) {
       subset.getAttributes().put(Subset.Attributes.fhirIdentifier.name(), stored);
     }
+  }
+
+  /**
+   * Store FHIR contact details on a subset loaded from R4.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetContactR4(final Subset subset,
+    final org.hl7.fhir.r4.model.ValueSet valueSet) {
+    if (valueSet.hasContact() && !valueSet.getContact().isEmpty()) {
+      subset.getAttributes().put("fhirContact",
+          encodeContactArrayR4(valueSet.getContact()));
+    }
+  }
+
+  /**
+   * Store FHIR contact details on a subset loaded from R5.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetContactR5(final Subset subset,
+    final org.hl7.fhir.r5.model.ValueSet valueSet) {
+    if (valueSet.hasContact() && !valueSet.getContact().isEmpty()) {
+      subset.getAttributes().put("fhirContact",
+          encodeContactArrayR5(valueSet.getContact()));
+    }
+  }
+
+  /**
+   * Encode R4 contact details as a JSON array string.
+   *
+   * @param contacts the contacts
+   * @return JSON array string
+   */
+  private static String encodeContactArrayR4(
+    final List<org.hl7.fhir.r4.model.ContactDetail> contacts) {
+    final IParser parser = FHIR_CONTEXT_R4.newJsonParser();
+    final StringBuilder json = new StringBuilder("[");
+    for (int i = 0; i < contacts.size(); i++) {
+      if (i > 0) {
+        json.append(',');
+      }
+      json.append(parser.encodeToString(contacts.get(i)));
+    }
+    json.append(']');
+    return json.toString();
+  }
+
+  /**
+   * Encode R5 contact details as a JSON array string.
+   *
+   * @param contacts the contacts
+   * @return JSON array string
+   */
+  private static String encodeContactArrayR5(
+    final List<org.hl7.fhir.r5.model.ContactDetail> contacts) {
+    final IParser parser = FHIR_CONTEXT_R5.newJsonParser();
+    final StringBuilder json = new StringBuilder("[");
+    for (int i = 0; i < contacts.size(); i++) {
+      if (i > 0) {
+        json.append(',');
+      }
+      json.append(parser.encodeToString(contacts.get(i)));
+    }
+    json.append(']');
+    return json.toString();
   }
 
   /**
