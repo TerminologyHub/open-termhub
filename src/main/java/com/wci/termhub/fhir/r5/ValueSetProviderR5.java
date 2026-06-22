@@ -797,6 +797,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
           expansion.addContains(code);
         }
         vs.setExpansion(expansion);
+        if (loincValueSetHelper.isLgId(lllgId)) {
+          vs.setExperimental(true);
+        }
         vs.setMeta(null);
         return vs;
       }

@@ -116,6 +116,16 @@ public class LoincValueSetHelper {
   }
 
   /**
+   * Returns true if the id is an LG (group) value set id (e.g. LG50982-4).
+   *
+   * @param id the id
+   * @return true if LG
+   */
+  public boolean isLgId(final String id) {
+    return id != null && LG_PATTERN.matcher(id).matches();
+  }
+
+  /**
    * Returns true when a member code is itself an LL/LG value set (nested
    * reference).
    *

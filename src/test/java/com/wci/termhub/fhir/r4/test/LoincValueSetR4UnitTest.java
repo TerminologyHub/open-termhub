@@ -11,6 +11,7 @@ package com.wci.termhub.fhir.r4.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -234,6 +235,24 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     assertTrue(vs.getExpansion().getParameter().stream().anyMatch(p -> "count".equals(p.getName())),
         "Expansion should have count parameter");
     assertTrue(vs.getExpansion().getContains() != null, "Expansion should have contains list");
+    assertNotEquals(Boolean.TRUE, vs.getExperimental(),
+        "LL value set expansion should not be experimental");
+  }
+
+  /**
+   * Test expand LG value set by id sets experimental=true.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testExpandLgValueSetExperimental() throws Exception {
+    final ValueSet vs =
+        provider.expandInstance(request, details, new IdType(LG_VS_ID), null, null, null, null,
+            null, null, null);
+    assertNotNull(vs);
+    assertNotNull(vs.getExpansion(), "Expansion should be present");
+    assertEquals(Boolean.TRUE, vs.getExperimental(),
+        "LG value set expansion should be experimental");
   }
 
   /**
