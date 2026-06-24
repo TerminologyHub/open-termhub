@@ -1,6 +1,6 @@
 {
   "resourceType": "ValueSet",
-  "id": "3c85f158-bf5a-4228-ad22-3c653c309fe1",
+  "id": "aa94c247-6446-4549-b5a5-692361f0e8e9",
   "url": "http://snomed.info/sct?fhir_vs=900000000000012004-instance",
   "identifier": [ {
     "system": "https://terminologyhub.com/model/subset/code",
@@ -13,6 +13,12 @@
   "experimental": false,
   "date": "2024-03-01T00:00:00-08:00",
   "publisher": "SANDBOX",
+  "contact": [ {
+    "telecom": [ {
+      "system": "url",
+      "value": "http://snomed.info/sct"
+    } ]
+  } ],
   "description": "SNOMED CT model component",
   "compose": {
     "include": [ {

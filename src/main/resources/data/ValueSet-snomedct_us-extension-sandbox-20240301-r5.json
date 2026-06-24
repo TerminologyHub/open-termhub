@@ -1,6 +1,6 @@
 {
   "resourceType": "ValueSet",
-  "id": "1a16cdf0-022d-45e7-afe0-e20623b9795b",
+  "id": "0c042a2e-2c3e-46ad-9a6d-328b9cbb0c0c",
   "url": "http://snomed.info/sct?fhir_vs=731000124108-instance",
   "identifier": [ {
     "system": "https://terminologyhub.com/model/subset/code",
@@ -13,6 +13,12 @@
   "experimental": false,
   "date": "2024-03-01T00:00:00-08:00",
   "publisher": "SANDBOX",
+  "contact": [ {
+    "telecom": [ {
+      "system": "url",
+      "value": "http://snomed.info/sct"
+    } ]
+  } ],
   "description": "US National Library of Medicine maintained module",
   "compose": {
     "include": [ {
