@@ -71,6 +71,7 @@ import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincConstants;
+import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
 import com.wci.termhub.fhir.util.LoincQuestionnaireHelper;
 import com.wci.termhub.fhir.util.LoincValueSetHelper.LllgComposeStructure;
 import com.wci.termhub.model.Concept;
@@ -631,11 +632,36 @@ public final class FhirUtilityR5 {
    * @return the parameters
    * @throws Exception the exception
    */
-  @SuppressWarnings("null")
   public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children,
     final Map<String, String> conceptNameMap, final EntityRepositoryService searchService)
+    throws Exception {
+    return toR5(codeSystem, concept, properties, displayMap, relationships, children,
+        conceptNameMap, searchService, false);
+  }
+
+  /**
+   * To R5.
+   *
+   * @param codeSystem the code system
+   * @param concept the concept
+   * @param properties the properties
+   * @param displayMap the display map
+   * @param relationships the relationships
+   * @param children the children
+   * @param conceptNameMap the concept name map
+   * @param searchService the search service
+   * @param regenstriefMode true when LOINC LL/LG value set mode is enabled
+   * @return the parameters
+   * @throws Exception the exception
+   */
+  @SuppressWarnings("null")
+  public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
+    final Set<String> properties, final Map<String, String> displayMap,
+    final List<ConceptRelationship> relationships, final List<ConceptRef> children,
+    final Map<String, String> conceptNameMap, final EntityRepositoryService searchService,
+    final boolean regenstriefMode)
     throws Exception {
     final Parameters parameters = new Parameters();
 
@@ -663,8 +689,6 @@ public final class FhirUtilityR5 {
 
     final List<ConceptRef> distinctHierarchicalParents =
         FhirUtility.distinctHierarchicalParents(relationships);
-    final Set<String> hierarchicalParentCodes =
-        distinctHierarchicalParents.stream().map(ConceptRef::getCode).collect(Collectors.toSet());
 
     // Definitions
     if (properties == null || properties.contains("definition")) {
@@ -735,7 +759,8 @@ public final class FhirUtilityR5 {
         if (codingCode == null) {
           continue;
         }
-        if (hierarchicalParentCodes.contains(codingCode) && "parent".equals(propertyCode)) {
+        // parent is emitted only from the hierarchical relationship index below
+        if ("parent".equals(propertyCode)) {
           continue;
         }
         String display = resolveLoincPropertyDisplay(propertyCode, codingCode, codingCode, concept,
@@ -768,6 +793,10 @@ public final class FhirUtilityR5 {
       if (isLoinc && isLoincLegacyStringSupersededByValueCoding(key, value, concept)) {
         continue;
       }
+      if (LoincConceptPropertyHelper.suppressStatusOnLookupOutput(key, concept, regenstriefMode,
+          isLoinc)) {
+        continue;
+      }
 
       // Check for boolean value
       if ("true".equals(value) || "false".equals(value)) {
@@ -777,14 +806,15 @@ public final class FhirUtilityR5 {
       }
 
       if (isLoinc) {
+        // parent/child are emitted only from the hierarchical relationship index below
+        final String loincPropName = loincLookupPropertyName(key);
+        if ("parent".equals(loincPropName) || "child".equals(loincPropName)) {
+          continue;
+        }
         String codingCode = null;
         if (value != null && isLoincPartCode(value)
             && concept.getAttributes().containsKey(key + "_display")) {
           codingCode = value;
-        }
-        if (codingCode != null && hierarchicalParentCodes.contains(codingCode)
-            && ("parent".equals(key) || key != null && key.matches("parent_\\d+"))) {
-          continue;
         }
         if (codingCode != null) {
           final Coding coding = new Coding();
@@ -794,7 +824,12 @@ public final class FhirUtilityR5 {
               .setDisplay(resolveLoincPropertyDisplay(key, value, codingCode, concept, displayMap));
           parameters.addParameter(createProperty(loincLookupPropertyName(key), coding, false));
         } else {
-          parameters.addParameter(createProperty(loincLookupPropertyName(key), value, false));
+          final String propName = loincLookupPropertyName(key);
+          if (LoincConceptPropertyHelper.isStatusValueCodeProperty(propName)) {
+            parameters.addParameter(createProperty(propName, value, true));
+          } else {
+            parameters.addParameter(createProperty(propName, value, false));
+          }
         }
         continue;
       }
@@ -847,8 +882,20 @@ public final class FhirUtilityR5 {
         parameters.addParameter(createProperty(key, coding, false));
       }
       // otherwise just a string
-      else {
+      else if (LoincConceptPropertyHelper.isStatusValueCodeProperty(key)) {
+        parameters.addParameter(createProperty(key, value, true));
+      } else {
         parameters.addParameter(createProperty(key, value, false));
+      }
+    }
+
+    // Legacy index: semanticType was stored only on semanticTypes, not attributes
+    if (isLoinc && (properties == null || properties.contains("semanticType"))
+        && !concept.getAttributes().containsKey("semanticType")) {
+      for (final String semanticType : concept.getSemanticTypes()) {
+        if (semanticType != null && !semanticType.isEmpty()) {
+          parameters.addParameter(createProperty("semanticType", semanticType, false));
+        }
       }
     }
 

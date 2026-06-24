@@ -713,15 +713,28 @@ public final class CodeSystemLoaderUtil {
         continue;
       }
 
-      // Redirect semantic type
+      // Redirect semantic type (also store as attribute for $lookup / $expand)
       if ("semanticType".equals(code)) {
-        concept.getSemanticTypes().add(value);
+        if (value != null) {
+          concept.getSemanticTypes().add(value);
+          concept.getAttributes().put(code, value);
+        }
       }
-      // redirect active and "status"
-      else if ("active".equals(code) || "status".equals(code)) {
-        // already handled by cacheConcept
-        continue;
-        // concept.setActive(Boolean.valueOf(value));
+      else if ("status".equals(code)) {
+        if (property.has("valueCode")) {
+          final String statusCode = property.path("valueCode").asText();
+          concept.setActive("active".equalsIgnoreCase(statusCode));
+          concept.getAttributes().put("status", statusCode);
+        } else if (value != null) {
+          concept.setActive("active".equalsIgnoreCase(value) || Boolean.parseBoolean(value));
+          concept.getAttributes().put("status", value);
+        }
+      }
+      else if ("active".equals(code)) {
+        // active flag already set from cacheConcept
+        if (value != null) {
+          concept.getAttributes().put("active", value);
+        }
       }
       // redirect defined
       else if ("sufficientlyDefined".equals(code)) {
@@ -740,6 +753,9 @@ public final class CodeSystemLoaderUtil {
       // anything that has a value other than "valueCode" or "valueCoding" is a property
       else if (!property.has("valueCode") && !property.has("valueCoding")) {
         concept.getAttributes().put(code, value);
+      }
+      else if (property.has("valueCode")) {
+        concept.getAttributes().put(code, property.path("valueCode").asText());
       }
 
     }
@@ -866,6 +882,11 @@ public final class CodeSystemLoaderUtil {
       // redirect active
       if ("active".equals(code)) {
         concept.setActive(Boolean.valueOf(value));
+      }
+      // FHIR standard status (valueCode active/inactive) drives concept active flag
+      else if ("status".equals(code) && property.has("valueCode")) {
+        final String statusCode = property.path("valueCode").asText();
+        concept.setActive("active".equalsIgnoreCase(statusCode));
       }
       // redirect defined
       else if ("sufficientlyDefined".equals(code)) {

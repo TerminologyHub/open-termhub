@@ -77,6 +77,12 @@ public final class LoincConstants {
   /** LOINC PROPERTY concept attribute / property code. */
   public static final String ATTR_PROPERTY = "PROPERTY";
 
+  /** FHIR standard concept status property (valueCode active/inactive). */
+  public static final String FHIR_STATUS = "status";
+
+  /** LOINC display status property (valueString, e.g. Active). */
+  public static final String ATTR_STATUS = "STATUS";
+
   /** External copyright notice on a LOINC concept. */
   public static final String ATTR_EXTERNAL_COPYRIGHT_NOTICE = "EXTERNAL_COPYRIGHT_NOTICE";
 

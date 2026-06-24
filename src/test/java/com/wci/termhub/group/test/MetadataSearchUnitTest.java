@@ -62,7 +62,7 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(14, metadata.getItems().size());
+    assertEquals(13, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -82,7 +82,7 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(86, metadata.getItems().size());
+    assertEquals(73, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -102,7 +102,7 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(80, metadata.getItems().size());
+    assertEquals(76, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -122,7 +122,7 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(54, metadata.getItems().size());
+    assertEquals(42, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
