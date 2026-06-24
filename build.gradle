@@ -67,7 +67,7 @@ dependencyManagement {
     dependencies {
         dependency('com.fasterxml.jackson.core:jackson-core:2.21.4')
         dependency('com.fasterxml.jackson.core:jackson-databind:2.21.4')
-        dependency('com.fasterxml.jackson.core:jackson-annotations:2.21.4')
+        dependency('com.fasterxml.jackson.core:jackson-annotations:2.21')
         dependency('org.codehaus.plexus:plexus-utils:4.0.3')
         dependency('org.apache.commons:commons-lang3:3.18.0')
         dependency("org.apache.logging.log4j:log4j-api:${log4jVersion}")
