@@ -65,9 +65,6 @@ public final class ValueSetLoaderUtil {
   /** The Constant contextR5. */
   private static final FhirContext FHIR_CONTEXT_R5 = FhirContext.forR5();
 
-  /** The Constant JSON_SUBSET_CODE. */
-  private static final String JSON_SUBSET_CODE = "https://terminologyhub.com/model/subset/code";
-
   /** Log and progress updates at this member interval during ValueSet indexing. */
   private static final int VALUESET_MEMBER_PROGRESS_LOG_INTERVAL = 500;
 
@@ -173,13 +170,16 @@ public final class ValueSetLoaderUtil {
       }
 
       // check for existing (require key fields)
-      final String abbreviation = valueSet.getTitle();
+      String abbreviation = valueSet.getTitle();
+      if (StringUtility.isEmpty(abbreviation)) {
+        abbreviation = StringUtility.deriveTitleFromUrl(valueSet.getUrl());
+      }
       final String publisher = valueSet.getPublisher();
       final String version = valueSet.getVersion();
       if (abbreviation == null || abbreviation.isEmpty() || publisher == null || publisher.isEmpty()
           || version == null || version.isEmpty()) {
         throw FhirUtilityR4.exception(
-            "ValueSet requires title, publisher, and version for import (missing one or more)",
+            "ValueSet requires title (or url), publisher, and version for import (missing one or more)",
             IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
       }
       Subset subset = findSubset(service, abbreviation, publisher, version);
@@ -205,17 +205,8 @@ public final class ValueSetLoaderUtil {
       subset.setActive(true);
       subset.setUri(valueSet.getUrl());
 
-      // Use the identifier as the code, otherwise use the id
-      // NOTE: termhub generated files will have a single id
-      // with a system matching this value.
-      for (final org.hl7.fhir.r4.model.Identifier identifier : valueSet.getIdentifier()) {
-        if (JSON_SUBSET_CODE.equals(identifier.getSystem())) {
-          subset.setCode(identifier.getValue());
-        }
-      }
-      if (StringUtility.isEmpty(subset.getCode())) {
-        subset.setCode(subset.getId());
-      }
+      final String identifierCode = FhirIdentifierUtil.firstValueR4(valueSet.getIdentifier());
+      subset.setCode(StringUtility.isEmpty(identifierCode) ? subset.getId() : identifierCode);
 
       if (valueSet.hasDate()) {
         subset.setReleaseDate(DateUtility.DATE_YYYY_MM_DD_DASH.format(valueSet.getDate()));
@@ -225,7 +216,7 @@ public final class ValueSetLoaderUtil {
       subset.setName(valueSet.getName());
       subset.setLoaded(true);
 
-      subset.setAbbreviation(valueSet.getTitle());
+      subset.setAbbreviation(abbreviation);
       subset.setPublisher(valueSet.getPublisher());
       subset.setVersion(valueSet.getVersion());
 
@@ -241,7 +232,7 @@ public final class ValueSetLoaderUtil {
               lookupTerminologyFromUri(service, include.getSystem(), subset.getPublisher(),
                   subset.getVersion());
           if (fromAbbreviation == null) {
-            fromAbbreviation = valueSet.getTitle().split("-")[0];
+            fromAbbreviation = abbreviation.split("-")[0];
           }
           fromRef.setAbbreviation(fromAbbreviation);
           fromRef.setUri(include.getSystem());
@@ -256,7 +247,9 @@ public final class ValueSetLoaderUtil {
         }
       }
 
-      // Store experimental and identifier in attributes if present
+      storeValueSetIdentifiers(subset, valueSet.getIdentifier());
+
+      // Store experimental in attributes if present
       if (valueSet.hasExperimental()) {
         if (subset.getAttributes() == null) {
           subset.setAttributes(new HashMap<>());
@@ -267,6 +260,7 @@ public final class ValueSetLoaderUtil {
       if (valueSet.hasCopyright() && !StringUtility.isEmpty(valueSet.getCopyright())) {
         subset.getAttributes().put("copyright", valueSet.getCopyright());
       }
+      storeValueSetContactR4(subset, valueSet);
 
       subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
@@ -298,7 +292,7 @@ public final class ValueSetLoaderUtil {
               subset.getPublisher(), subset.getVersion());
           if (termAbbreviation == null) {
             // Fallback to title-based extraction
-            termAbbreviation = valueSet.getTitle().split("-")[0];
+            termAbbreviation = abbreviation.split("-")[0];
           }
           ref.setAbbreviation(termAbbreviation);
 
@@ -363,7 +357,7 @@ public final class ValueSetLoaderUtil {
                 subset.getPublisher(), subset.getVersion());
             if (termAbbreviation == null) {
               // Fallback to title-based extraction
-              termAbbreviation = valueSet.getTitle().split("-")[0];
+              termAbbreviation = abbreviation.split("-")[0];
             }
             ref.setAbbreviation(termAbbreviation);
 
@@ -463,7 +457,10 @@ public final class ValueSetLoaderUtil {
       }
 
       // check for existing
-      final String abbreviation = valueSet.getTitle();
+      String abbreviation = valueSet.getTitle();
+      if (StringUtility.isEmpty(abbreviation)) {
+        abbreviation = StringUtility.deriveTitleFromUrl(valueSet.getUrl());
+      }
       final String publisher = valueSet.getPublisher();
       final String version = valueSet.getVersion();
       Subset subset = findSubset(service, abbreviation, publisher, version);
@@ -489,17 +486,8 @@ public final class ValueSetLoaderUtil {
       subset.setActive(true);
       subset.setUri(valueSet.getUrl());
 
-      // Use the identifier as the code, otherwise use the id
-      // NOTE: termhub generated files will have a single id
-      // with a system matching this value.
-      for (final org.hl7.fhir.r5.model.Identifier identifier : valueSet.getIdentifier()) {
-        if (JSON_SUBSET_CODE.equals(identifier.getSystem())) {
-          subset.setCode(identifier.getValue());
-        }
-      }
-      if (StringUtility.isEmpty(subset.getCode())) {
-        subset.setCode(subset.getId());
-      }
+      final String identifierCode = FhirIdentifierUtil.firstValueR5(valueSet.getIdentifier());
+      subset.setCode(StringUtility.isEmpty(identifierCode) ? subset.getId() : identifierCode);
 
       if (valueSet.hasDate()) {
         subset.setReleaseDate(DateUtility.DATE_YYYY_MM_DD_DASH.format(valueSet.getDate()));
@@ -509,7 +497,7 @@ public final class ValueSetLoaderUtil {
       subset.setName(valueSet.getName());
       subset.setLoaded(true);
 
-      subset.setAbbreviation(valueSet.getTitle());
+      subset.setAbbreviation(abbreviation);
       subset.setPublisher(valueSet.getPublisher());
       subset.setVersion(valueSet.getVersion());
 
@@ -525,7 +513,7 @@ public final class ValueSetLoaderUtil {
               lookupTerminologyFromUri(service, include.getSystem(), subset.getPublisher(),
                   subset.getVersion());
           if (fromAbbreviation == null) {
-            fromAbbreviation = valueSet.getTitle().split("-")[0];
+            fromAbbreviation = abbreviation.split("-")[0];
           }
           fromRef.setAbbreviation(fromAbbreviation);
           fromRef.setUri(include.getSystem());
@@ -540,7 +528,9 @@ public final class ValueSetLoaderUtil {
         }
       }
 
-      // Store experimental and identifier in attributes if present
+      storeValueSetIdentifiersR5(subset, valueSet.getIdentifier());
+
+      // Store experimental in attributes if present
       if (valueSet.hasExperimental()) {
         if (subset.getAttributes() == null) {
           subset.setAttributes(new HashMap<>());
@@ -551,6 +541,7 @@ public final class ValueSetLoaderUtil {
       if (valueSet.hasCopyright() && !StringUtility.isEmpty(valueSet.getCopyright())) {
         subset.getAttributes().put("copyright", valueSet.getCopyright());
       }
+      storeValueSetContactR5(subset, valueSet);
 
       subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
@@ -582,7 +573,7 @@ public final class ValueSetLoaderUtil {
               subset.getPublisher(), subset.getVersion());
           if (termAbbreviation == null) {
             // Fallback to title-based extraction
-            termAbbreviation = valueSet.getTitle().split("-")[0];
+            termAbbreviation = abbreviation.split("-")[0];
           }
           ref.setAbbreviation(termAbbreviation);
 
@@ -644,7 +635,7 @@ public final class ValueSetLoaderUtil {
                 subset.getPublisher(), subset.getVersion());
             if (termAbbreviation == null) {
               // Fallback to title-based extraction
-              termAbbreviation = valueSet.getTitle().split("-")[0];
+              termAbbreviation = abbreviation.split("-")[0];
             }
             ref.setAbbreviation(termAbbreviation);
 
@@ -802,6 +793,104 @@ public final class ValueSetLoaderUtil {
     final ResultList<Subset> subset = service.find(searchParams, Subset.class);
 
     return (subset.getItems().isEmpty()) ? null : subset.getItems().get(0);
+  }
+
+  /**
+   * Store normalized FHIR identifiers on a subset loaded from R4.
+   *
+   * @param subset the subset
+   * @param identifiers the identifiers
+   */
+  private static void storeValueSetIdentifiers(final Subset subset,
+    final List<org.hl7.fhir.r4.model.Identifier> identifiers) {
+    final String stored = FhirIdentifierUtil.fromR4Identifiers(identifiers,
+        subset.getAttributes().get("fhirIncludesUri"));
+    if (stored != null) {
+      subset.getAttributes().put(Subset.Attributes.fhirIdentifier.name(), stored);
+    }
+  }
+
+  /**
+   * Store normalized FHIR identifiers on a subset loaded from R5.
+   *
+   * @param subset the subset
+   * @param identifiers the identifiers
+   */
+  private static void storeValueSetIdentifiersR5(final Subset subset,
+    final List<org.hl7.fhir.r5.model.Identifier> identifiers) {
+    final String stored = FhirIdentifierUtil.fromR5Identifiers(identifiers,
+        subset.getAttributes().get("fhirIncludesUri"));
+    if (stored != null) {
+      subset.getAttributes().put(Subset.Attributes.fhirIdentifier.name(), stored);
+    }
+  }
+
+  /**
+   * Store FHIR contact details on a subset loaded from R4.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetContactR4(final Subset subset,
+    final org.hl7.fhir.r4.model.ValueSet valueSet) {
+    if (valueSet.hasContact() && !valueSet.getContact().isEmpty()) {
+      subset.getAttributes().put("fhirContact",
+          encodeContactArrayR4(valueSet.getContact()));
+    }
+  }
+
+  /**
+   * Store FHIR contact details on a subset loaded from R5.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetContactR5(final Subset subset,
+    final org.hl7.fhir.r5.model.ValueSet valueSet) {
+    if (valueSet.hasContact() && !valueSet.getContact().isEmpty()) {
+      subset.getAttributes().put("fhirContact",
+          encodeContactArrayR5(valueSet.getContact()));
+    }
+  }
+
+  /**
+   * Encode R4 contact details as a JSON array string.
+   *
+   * @param contacts the contacts
+   * @return JSON array string
+   */
+  private static String encodeContactArrayR4(
+    final List<org.hl7.fhir.r4.model.ContactDetail> contacts) {
+    final IParser parser = FHIR_CONTEXT_R4.newJsonParser();
+    final StringBuilder json = new StringBuilder("[");
+    for (int i = 0; i < contacts.size(); i++) {
+      if (i > 0) {
+        json.append(',');
+      }
+      json.append(parser.encodeToString(contacts.get(i)));
+    }
+    json.append(']');
+    return json.toString();
+  }
+
+  /**
+   * Encode R5 contact details as a JSON array string.
+   *
+   * @param contacts the contacts
+   * @return JSON array string
+   */
+  private static String encodeContactArrayR5(
+    final List<org.hl7.fhir.r5.model.ContactDetail> contacts) {
+    final IParser parser = FHIR_CONTEXT_R5.newJsonParser();
+    final StringBuilder json = new StringBuilder("[");
+    for (int i = 0; i < contacts.size(); i++) {
+      if (i > 0) {
+        json.append(',');
+      }
+      json.append(parser.encodeToString(contacts.get(i)));
+    }
+    json.append(']');
+    return json.toString();
   }
 
   /**

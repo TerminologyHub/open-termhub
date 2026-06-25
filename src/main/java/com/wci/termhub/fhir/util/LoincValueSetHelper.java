@@ -116,6 +116,16 @@ public class LoincValueSetHelper {
   }
 
   /**
+   * Returns true if the id is an LG (group) value set id (e.g. LG50982-4).
+   *
+   * @param id the id
+   * @return true if LG
+   */
+  public boolean isLgId(final String id) {
+    return id != null && LG_PATTERN.matcher(id).matches();
+  }
+
+  /**
    * Returns true when a member code is itself an LL/LG value set (nested
    * reference).
    *
@@ -255,7 +265,7 @@ public class LoincValueSetHelper {
     }
     if (isLlId(lllgId)) {
       sortLlMembersBySequenceNumber(members);
-    } else if (lllgId != null && lllgId.startsWith("LG")) {
+    } else if (lllgId != null && (lllgId.startsWith("LL") || lllgId.startsWith("LG"))) {
       members.sort(
           Comparator.comparing(Concept::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
     }
@@ -729,7 +739,7 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Finds all LG concepts in the given LOINC terminology using Lucene wildcard
+   * Finds all LL and LG concepts in the given LOINC terminology using Lucene wildcard
    * queries. Used when {@code fhir.loinc.lllg.valuesets.enabled=true} to
    * enumerate value sets for a general {@code GET /ValueSet} listing.
    *
@@ -737,14 +747,15 @@ public class LoincValueSetHelper {
    * @param terminology LOINC terminology
    * @param limit maximum number of concepts to return
    * @param offset start offset
-   * @return result list of LG concepts
+   * @return result list of LL/LG concepts
    * @throws Exception the exception
    */
-  public ResultList<Concept> findAllLgConcepts(final EntityRepositoryService searchService,
+  public ResultList<Concept> findAllLllgConcepts(final EntityRepositoryService searchService,
     final Terminology terminology, final int limit, final int offset) throws Exception {
     final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
         terminology.getPublisher(), terminology.getVersion());
-    final String query = "(" + termQuery + ") AND (code:LG*)";
+    final String codeQuery = "(code:LL* OR code:LG*)";
+    final String query = "(" + termQuery + ") AND " + codeQuery;
     final SearchParameters params = new SearchParameters(query, limit, offset);
     return searchService.find(params, Concept.class);
   }

@@ -143,11 +143,34 @@ public class FhirUtilityR4MetaUnitTest {
     assertEquals(valueSet, cs.getValueSet());
     assertNotNull(cs.getContact());
     assertTrue(cs.getContact().size() >= 1);
+    assertEquals("Regenstrief Institute, Inc.", cs.getContact().get(0).getName());
     assertNotNull(cs.getContact().get(0).getTelecom());
     assertTrue(cs.getContact().get(0).getTelecom().size() >= 1);
     assertEquals("http://loinc.org", cs.getContact().get(0).getTelecom().get(0).getValue());
     assertFalse(cs.getCaseSensitive());
     assertFalse(cs.getVersionNeeded());
+  }
+
+  /**
+   * Test LOINC LL/LG ValueSet contact from terminology publisher and uri.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testLllgValueSetContact() throws Exception {
+    final Terminology terminology = new Terminology();
+    terminology.setUri("http://loinc.org");
+    terminology.setVersion("2.78");
+    terminology.setPublisher("Regenstrief Institute, Inc.");
+    terminology.setReleaseDate("2022-04-11");
+    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final ValueSet vs =
+        FhirUtilityR4.toR4LllgValueSet(terminology, "LG10030-1", "test-uuid", false);
+
+    assertNotNull(vs.getContact());
+    assertEquals("Regenstrief Institute, Inc.", vs.getContactFirstRep().getName());
+    assertEquals("http://loinc.org", vs.getContactFirstRep().getTelecomFirstRep().getValue());
   }
 
   /**

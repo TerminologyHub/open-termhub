@@ -1,6 +1,6 @@
 {
   "resourceType": "ValueSet",
-  "id": "4960f1cd-ad70-4a20-b3c1-d0d3f8db4589",
+  "id": "ddb7a5f6-b7fc-46e8-acad-76f60e35ff72",
   "url": "http://snomed.info/sct?fhir_vs=723264001-instance",
   "identifier": [ {
     "system": "https://terminologyhub.com/model/subset/code",
@@ -13,6 +13,12 @@
   "experimental": false,
   "date": "2024-03-01T00:00:00-08:00",
   "publisher": "SANDBOX",
+  "contact": [ {
+    "telecom": [ {
+      "system": "url",
+      "value": "http://snomed.info/sct"
+    } ]
+  } ],
   "description": "Lateralizable body structure reference set",
   "compose": {
     "include": [ {

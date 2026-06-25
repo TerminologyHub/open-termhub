@@ -14,8 +14,11 @@ import static java.lang.String.format;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,6 +40,7 @@ import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.DateTimeType;
+import org.hl7.fhir.r5.model.MetadataResource;
 import org.hl7.fhir.r5.model.Enumerations;
 import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
@@ -47,6 +51,7 @@ import org.hl7.fhir.r5.model.Meta;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r5.model.Parameters;
+import org.hl7.fhir.r5.model.Questionnaire;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.UriType;
@@ -65,6 +70,10 @@ import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
 import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
+import com.wci.termhub.fhir.util.LoincConstants;
+import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
+import com.wci.termhub.fhir.util.LoincQuestionnaireHelper;
+import com.wci.termhub.fhir.util.LoincValueSetHelper.LllgComposeStructure;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.ConceptRef;
@@ -75,13 +84,13 @@ import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
-import com.wci.termhub.fhir.util.LoincValueSetHelper.LllgComposeStructure;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.DateUtility;
+import com.wci.termhub.util.FhirIdentifierUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
@@ -90,10 +99,6 @@ import com.wci.termhub.util.ThreadLocalMapper;
 import ca.uhn.fhir.rest.param.NumberParam;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Comparator;
-import java.util.HashSet;
-import org.hl7.fhir.r5.model.Questionnaire;
-import com.wci.termhub.fhir.util.LoincConstants;
 
 /**
  * Utility for fhir data building.
@@ -103,11 +108,6 @@ public final class FhirUtilityR5 {
   /** The logger. */
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
-
-  /**
-   * Meta tag system for LOINC LL/LG value set id (used by ValueSetProvider for expand/validate).
-   */
-  public static final String META_LOINC_LLLG_ID = "loincLllgId";
 
   /**
    * Uppercase LOINC property codes that duplicate lowercase {@code valueCoding} axes in the same
@@ -632,11 +632,36 @@ public final class FhirUtilityR5 {
    * @return the parameters
    * @throws Exception the exception
    */
-  @SuppressWarnings("null")
   public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children,
     final Map<String, String> conceptNameMap, final EntityRepositoryService searchService)
+    throws Exception {
+    return toR5(codeSystem, concept, properties, displayMap, relationships, children,
+        conceptNameMap, searchService, false);
+  }
+
+  /**
+   * To R5.
+   *
+   * @param codeSystem the code system
+   * @param concept the concept
+   * @param properties the properties
+   * @param displayMap the display map
+   * @param relationships the relationships
+   * @param children the children
+   * @param conceptNameMap the concept name map
+   * @param searchService the search service
+   * @param regenstriefMode true when LOINC LL/LG value set mode is enabled
+   * @return the parameters
+   * @throws Exception the exception
+   */
+  @SuppressWarnings("null")
+  public static Parameters toR5(final CodeSystem codeSystem, final Concept concept,
+    final Set<String> properties, final Map<String, String> displayMap,
+    final List<ConceptRelationship> relationships, final List<ConceptRef> children,
+    final Map<String, String> conceptNameMap, final EntityRepositoryService searchService,
+    final boolean regenstriefMode)
     throws Exception {
     final Parameters parameters = new Parameters();
 
@@ -664,8 +689,6 @@ public final class FhirUtilityR5 {
 
     final List<ConceptRef> distinctHierarchicalParents =
         FhirUtility.distinctHierarchicalParents(relationships);
-    final Set<String> hierarchicalParentCodes =
-        distinctHierarchicalParents.stream().map(ConceptRef::getCode).collect(Collectors.toSet());
 
     // Definitions
     if (properties == null || properties.contains("definition")) {
@@ -736,7 +759,8 @@ public final class FhirUtilityR5 {
         if (codingCode == null) {
           continue;
         }
-        if (hierarchicalParentCodes.contains(codingCode) && "parent".equals(propertyCode)) {
+        // parent is emitted only from the hierarchical relationship index below
+        if ("parent".equals(propertyCode)) {
           continue;
         }
         String display = resolveLoincPropertyDisplay(propertyCode, codingCode, codingCode, concept,
@@ -769,6 +793,10 @@ public final class FhirUtilityR5 {
       if (isLoinc && isLoincLegacyStringSupersededByValueCoding(key, value, concept)) {
         continue;
       }
+      if (LoincConceptPropertyHelper.suppressStatusOnLookupOutput(key, concept, regenstriefMode,
+          isLoinc)) {
+        continue;
+      }
 
       // Check for boolean value
       if ("true".equals(value) || "false".equals(value)) {
@@ -778,14 +806,15 @@ public final class FhirUtilityR5 {
       }
 
       if (isLoinc) {
+        // parent/child are emitted only from the hierarchical relationship index below
+        final String loincPropName = loincLookupPropertyName(key);
+        if ("parent".equals(loincPropName) || "child".equals(loincPropName)) {
+          continue;
+        }
         String codingCode = null;
         if (value != null && isLoincPartCode(value)
             && concept.getAttributes().containsKey(key + "_display")) {
           codingCode = value;
-        }
-        if (codingCode != null && hierarchicalParentCodes.contains(codingCode)
-            && ("parent".equals(key) || key != null && key.matches("parent_\\d+"))) {
-          continue;
         }
         if (codingCode != null) {
           final Coding coding = new Coding();
@@ -795,7 +824,12 @@ public final class FhirUtilityR5 {
               .setDisplay(resolveLoincPropertyDisplay(key, value, codingCode, concept, displayMap));
           parameters.addParameter(createProperty(loincLookupPropertyName(key), coding, false));
         } else {
-          parameters.addParameter(createProperty(loincLookupPropertyName(key), value, false));
+          final String propName = loincLookupPropertyName(key);
+          if (LoincConceptPropertyHelper.isStatusValueCodeProperty(propName)) {
+            parameters.addParameter(createProperty(propName, value, true));
+          } else {
+            parameters.addParameter(createProperty(propName, value, false));
+          }
         }
         continue;
       }
@@ -848,8 +882,20 @@ public final class FhirUtilityR5 {
         parameters.addParameter(createProperty(key, coding, false));
       }
       // otherwise just a string
-      else {
+      else if (LoincConceptPropertyHelper.isStatusValueCodeProperty(key)) {
+        parameters.addParameter(createProperty(key, value, true));
+      } else {
         parameters.addParameter(createProperty(key, value, false));
+      }
+    }
+
+    // Legacy index: semanticType was stored only on semanticTypes, not attributes
+    if (isLoinc && (properties == null || properties.contains("semanticType"))
+        && !concept.getAttributes().containsKey("semanticType")) {
+      for (final String semanticType : concept.getSemanticTypes()) {
+        if (semanticType != null && !semanticType.isEmpty()) {
+          parameters.addParameter(createProperty("semanticType", semanticType, false));
+        }
       }
     }
 
@@ -1050,11 +1096,11 @@ public final class FhirUtilityR5 {
    * @param terminology LOINC terminology
    * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
    * @param valueSetId the FHIR resource id (Concept UUID)
-   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion and loincLllgId tags
+   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion tags
    * @return the value set
    */
   public static ValueSet toR5LllgValueSet(final Terminology terminology, final String lllgId,
-    final String valueSetId, final boolean metaFlag) {
+    final String valueSetId, final boolean metaFlag) throws Exception {
     final ValueSet set = new ValueSet();
     if (valueSetId != null) {
       set.setId(valueSetId);
@@ -1067,19 +1113,23 @@ public final class FhirUtilityR5 {
         && terminology.getAttributes().get("copyright") != null) {
       set.setCopyright(terminology.getAttributes().get("copyright"));
     }
+    final Meta meta = new Meta();
+    meta.setVersionId("1");
+    final Date releaseAsDate = resolveTerminologyReleaseDate(terminology);
+    meta.setLastUpdated(releaseAsDate != null ? releaseAsDate
+        : DateUtility.parseToUtcDate(terminology.getCreated()));
+    if (terminology.getAttributes() != null
+        && terminology.getAttributes().containsKey("originalId")) {
+      meta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
+    }
     if (metaFlag) {
-      set.setMeta(new Meta().addTag("fromTerminology", terminology.getAbbreviation(), null)
+      meta.addTag("fromTerminology", terminology.getAbbreviation(), null)
           .addTag("fromPublisher", terminology.getPublisher(), null)
           .addTag("fromVersion", terminology.getVersion(), null)
-          .addTag("includesUri", terminology.getUri(), null)
-          .addTag(META_LOINC_LLLG_ID, lllgId, null));
-    } else {
-      set.setMeta(new Meta().addTag(META_LOINC_LLLG_ID, lllgId, null));
+          .addTag("includesUri", terminology.getUri(), null);
     }
-    if (set.getMeta() != null && terminology.getCreated() != null) {
-      set.getMeta().setVersionId("1");
-      set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
-    }
+    set.setMeta(meta);
+    applyTerminologyContact(set, terminology);
     return set;
   }
 
@@ -1090,22 +1140,21 @@ public final class FhirUtilityR5 {
    *
    * @param terminology LOINC terminology
    * @param concept the LL or LG concept (code used as lllgId, name used as title/name)
-   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion and loincLllgId tags
+   * @param metaFlag when true, add fromTerminology/fromPublisher/fromVersion tags
    * @return the value set
    */
   public static ValueSet toR5LllgValueSetFromConcept(final Terminology terminology,
-    final Concept concept, final boolean metaFlag) {
+    final Concept concept, final boolean metaFlag) throws Exception {
     final ValueSet set =
         toR5LllgValueSet(terminology, concept.getCode(), concept.getId(), metaFlag);
     if (concept.getName() != null) {
       set.setName(concept.getName());
-      set.setTitle(concept.getName());
     }
     return set;
   }
 
   /**
-   * Returns true when the id search parameter matches a ValueSet id or its loincLllgId meta tag.
+   * Returns true when the id search parameter matches a ValueSet id or its LL/LG code from url.
    *
    * @param idValue the _id search value
    * @param vs the value set
@@ -1118,11 +1167,31 @@ public final class FhirUtilityR5 {
     if (idValue.equals(vs.getId())) {
       return true;
     }
-    if (vs.getMeta() != null) {
-      return vs.getMeta().getTag().stream()
-          .anyMatch(t -> META_LOINC_LLLG_ID.equals(t.getSystem()) && idValue.equals(t.getCode()));
+    final String lllgIdFromUrl = parseLllgIdFromValueSetUrl(vs.getUrl());
+    return idValue.equals(lllgIdFromUrl);
+  }
+
+  /**
+   * Parses the LOINC LL/LG id from a ValueSet url (e.g. http://loinc.org?fhir_vs=LG100-4).
+   *
+   * @param url the value set url
+   * @return the LL/LG id, or null
+   */
+  public static String parseLllgIdFromValueSetUrl(final String url) {
+    if (url == null) {
+      return null;
     }
-    return false;
+    final String marker = "fhir_vs=";
+    final int idx = url.indexOf(marker);
+    if (idx < 0) {
+      return null;
+    }
+    String id = url.substring(idx + marker.length()).trim();
+    final int amp = id.indexOf('&');
+    if (amp >= 0) {
+      id = id.substring(0, amp).trim();
+    }
+    return id.isEmpty() ? null : id;
   }
 
   /**
@@ -1133,7 +1202,7 @@ public final class FhirUtilityR5 {
    * @param composeStructure partitioned compose structure
    */
   public static void setR5LllgCompose(final ValueSet set, final String systemUri,
-      final LllgComposeStructure composeStructure) {
+    final LllgComposeStructure composeStructure) {
     if (set == null || systemUri == null || composeStructure == null) {
       return;
     }
@@ -1170,7 +1239,8 @@ public final class FhirUtilityR5 {
    * @return the value set with compose.include set, no expansion
    */
   public static ValueSet toR5LllgValueSetWithComposeOnly(final Terminology terminology,
-    final String lllgId, final String valueSetId, final LllgComposeStructure composeStructure) {
+    final String lllgId, final String valueSetId, final LllgComposeStructure composeStructure)
+    throws Exception {
     final ValueSet set = toR5LllgValueSet(terminology, lllgId, valueSetId, false);
     setR5LllgCompose(set, terminology.getUri(), composeStructure);
     return set;
@@ -1193,7 +1263,7 @@ public final class FhirUtilityR5 {
   public static ValueSet toR5LllgValueSetWithMembers(final Terminology terminology,
     final String lllgId, final String valueSetId, final LllgComposeStructure composeStructure,
     final List<Concept> leafMembers, final int expansionTotal, final int expansionOffset,
-    final int expansionCount) {
+    final int expansionCount) throws Exception {
     final ValueSet set = toR5LllgValueSet(terminology, lllgId, valueSetId, false);
     final String systemUri = terminology.getUri();
     setR5LllgCompose(set, systemUri, composeStructure);
@@ -1246,16 +1316,11 @@ public final class FhirUtilityR5 {
     }
 
     valueSet.setName(subset.getName());
-    // Set title from abbreviation if present, else fallback to name
-    if (subset.getAbbreviation() != null && !subset.getAbbreviation().isEmpty()) {
-      valueSet.setTitle(subset.getAbbreviation());
-    } else {
-      valueSet.setTitle(subset.getName());
-    }
     valueSet.setDescription(subset.getDescription());
     valueSet.setStatus(PublicationStatus.ACTIVE);
 
     applyCopyrightFromTerminology(valueSet, subset, searchService);
+    applySubsetContact(valueSet, subset);
 
     // Set experimental from attributes if present, else fallback
     final String experimentalStr = subset.getAttributes() != null
@@ -1264,9 +1329,8 @@ public final class FhirUtilityR5 {
       valueSet.setExperimental(Boolean.parseBoolean(experimentalStr));
     }
 
-    // Set identifier from attributes if present, else fallback
-    valueSet.addIdentifier().setValue(subset.getCode())
-        .setSystem("https://terminologyhub.com/model/subset/code");
+    FhirIdentifierUtil.applyToR5ValueSet(valueSet,
+        subset.getAttributes().get(Subset.Attributes.fhirIdentifier.name()));
 
     // Compose/include
     final ValueSetComposeComponent compose = new ValueSetComposeComponent();
@@ -1317,6 +1381,25 @@ public final class FhirUtilityR5 {
    * @param searchService the search service
    * @throws Exception the exception
    */
+  /**
+   * Adds contact from subset {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param valueSet the value set
+   * @param subset the subset
+   */
+  private static void applySubsetContact(final ValueSet valueSet, final Subset subset) {
+    if (valueSet == null || subset == null) {
+      return;
+    }
+    final Map<String, String> attrs = subset.getAttributes();
+    final String includesUri = attrs != null ? attrs.get("fhirIncludesUri") : null;
+    final String fallbackUri = includesUri != null ? includesUri : subset.getUri();
+    for (final ContactDetail contact : resolveContactsFromAttributes(subset.getPublisher(),
+        subset.getUri(), attrs, null, fallbackUri)) {
+      valueSet.addContact(contact);
+    }
+  }
+
   private static void applyCopyrightFromTerminology(final ValueSet valueSet, final Subset subset,
     final EntityRepositoryService searchService) throws Exception {
 
@@ -1456,34 +1539,7 @@ public final class FhirUtilityR5 {
       cs.setValueSet(valueSet);
     }
 
-    final String fhirContact = terminology.getAttributes().get("fhirContact");
-    if (fhirContact != null && !fhirContact.isEmpty()) {
-      try {
-        final JsonNode arr = ThreadLocalMapper.get().readTree(fhirContact);
-        if (arr.isArray()) {
-          for (final JsonNode item : arr) {
-            final ContactDetail contact = new ContactDetail();
-            final JsonNode telecomArr = item.path("telecom");
-            if (telecomArr.isArray()) {
-              for (final JsonNode tp : telecomArr) {
-                final ContactPoint cp = new ContactPoint();
-                if (!tp.path("system").isMissingNode()) {
-                  cp.setSystem(
-                      ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
-                }
-                if (!tp.path("value").isMissingNode()) {
-                  cp.setValue(tp.path("value").asText());
-                }
-                contact.addTelecom(cp);
-              }
-            }
-            cs.addContact(contact);
-          }
-        }
-      } catch (final Exception e) {
-        LoggerFactory.getLogger(FhirUtilityR5.class).warn("Failed to parse fhirContact", e);
-      }
-    }
+    applyTerminologyContact(cs, terminology);
 
     final String caseSensitive = terminology.getAttributes().get("caseSensitive");
     if (caseSensitive != null) {
@@ -1583,10 +1639,8 @@ public final class FhirUtilityR5 {
     cm.setTitle(mapset.getAbbreviation());
     cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
-    if (mapset.getCode() != null) {
-      cm.addIdentifier(new Identifier().setSystem("https://terminologyhub.com/model/mapset/code")
-          .setValue(mapset.getCode()));
-    }
+    FhirIdentifierUtil.applyToR5ConceptMap(cm,
+        mapset.getAttributes().get(FhirIdentifierUtil.ATTR_FHIR_IDENTIFIER));
 
     // Set source and target scopes from fromTerminology and toTerminology
     if (mapset.getAttributes().containsKey("fhirSourceUri")) {
@@ -1770,10 +1824,142 @@ public final class FhirUtilityR5 {
       }
       final BundleEntryComponent component = new BundleEntryComponent();
       component.setResource(list.get(i));
-      component.setFullUrl(request.getRequestURL() + "/" + list.get(i).getId());
+      final String baseUrl = request.getRequestURL().toString().replaceAll("/$", "");
+      component.setFullUrl(baseUrl + "/" + list.get(i).getIdElement().getIdPart());
       bundle.addEntry(component);
     }
     return bundle;
+  }
+
+  /**
+   * Adds contact from terminology {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param resource the FHIR metadata resource
+   * @param terminology the terminology
+   */
+  private static void applyTerminologyContact(final MetadataResource resource,
+    final Terminology terminology) {
+    applyTerminologyContact(resource, terminology, null, null);
+  }
+
+  /**
+   * Adds contact from terminology {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param questionnaire the questionnaire
+   * @param terminology the terminology (optional)
+   * @param fallbackName contact name when terminology or fhirContact name is absent
+   * @param fallbackUri contact url when terminology uri is absent
+   */
+  private static void applyTerminologyContact(final Questionnaire questionnaire,
+    final Terminology terminology, final String fallbackName, final String fallbackUri) {
+    if (questionnaire == null) {
+      return;
+    }
+    for (final ContactDetail contact : resolveTerminologyContacts(terminology, fallbackName,
+        fallbackUri)) {
+      questionnaire.addContact(contact);
+    }
+  }
+
+  /**
+   * Adds contact from terminology {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param resource the FHIR metadata resource
+   * @param terminology the terminology (optional)
+   * @param fallbackName contact name when terminology or fhirContact name is absent
+   * @param fallbackUri contact url when terminology uri is absent
+   */
+  private static void applyTerminologyContact(final MetadataResource resource,
+    final Terminology terminology, final String fallbackName, final String fallbackUri) {
+    if (resource == null) {
+      return;
+    }
+    for (final ContactDetail contact : resolveTerminologyContacts(terminology, fallbackName,
+        fallbackUri)) {
+      resource.addContact(contact);
+    }
+  }
+
+  /**
+   * Builds contact details from terminology {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param terminology the terminology (optional)
+   * @param fallbackName contact name when terminology or fhirContact name is absent
+   * @param fallbackUri contact url when terminology uri is absent
+   * @return contact details to add to a FHIR resource
+   */
+  private static List<ContactDetail> resolveTerminologyContacts(final Terminology terminology,
+    final String fallbackName, final String fallbackUri) {
+    final String publisher = terminology != null ? terminology.getPublisher() : null;
+    final String uri = terminology != null ? terminology.getUri() : null;
+    final Map<String, String> attrs =
+        terminology != null ? terminology.getAttributes() : null;
+    return resolveContactsFromAttributes(publisher, uri, attrs, fallbackName, fallbackUri);
+  }
+
+  /**
+   * Builds contact details from {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param publisher the publisher
+   * @param uri the resource uri
+   * @param attrs attribute map that may contain {@code fhirContact}
+   * @param fallbackName contact name when publisher or fhirContact name is absent
+   * @param fallbackUri contact url when uri is absent
+   * @return contact details to add to a FHIR resource
+   */
+  private static List<ContactDetail> resolveContactsFromAttributes(final String publisher,
+    final String uri, final Map<String, String> attrs, final String fallbackName,
+    final String fallbackUri) {
+    final List<ContactDetail> contacts = new ArrayList<>();
+    final String fhirContact = attrs != null ? attrs.get("fhirContact") : null;
+    if (fhirContact != null && !fhirContact.isEmpty()) {
+      try {
+        final JsonNode arr = ThreadLocalMapper.get().readTree(fhirContact);
+        if (arr.isArray()) {
+          for (final JsonNode item : arr) {
+            final ContactDetail contact = new ContactDetail();
+            if (!item.path("name").isMissingNode() && !item.path("name").asText().isEmpty()) {
+              contact.setName(item.path("name").asText());
+            } else if (publisher != null) {
+              contact.setName(publisher);
+            }
+            final JsonNode telecomArr = item.path("telecom");
+            if (telecomArr.isArray()) {
+              for (final JsonNode tp : telecomArr) {
+                final ContactPoint cp = new ContactPoint();
+                if (!tp.path("system").isMissingNode()) {
+                  cp.setSystem(
+                      ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
+                }
+                if (!tp.path("value").isMissingNode()) {
+                  cp.setValue(tp.path("value").asText());
+                }
+                contact.addTelecom(cp);
+              }
+            }
+            contacts.add(contact);
+          }
+          return contacts;
+        }
+      } catch (final Exception e) {
+        LoggerFactory.getLogger(FhirUtilityR5.class).warn("Failed to parse fhirContact", e);
+      }
+    }
+    final String contactName = publisher != null ? publisher : fallbackName;
+    final String contactUri = uri != null ? uri : fallbackUri;
+    if (contactName == null) {
+      return contacts;
+    }
+    final ContactDetail contact = new ContactDetail();
+    contact.setName(contactName);
+    if (contactUri != null) {
+      final ContactPoint telecom = new ContactPoint();
+      telecom.setSystem(ContactPoint.ContactPointSystem.URL);
+      telecom.setValue(contactUri);
+      contact.addTelecom(telecom);
+    }
+    contacts.add(contact);
+    return contacts;
   }
 
   private static Date resolveTerminologyReleaseDate(final Terminology terminology)
@@ -1852,6 +2038,80 @@ public final class FhirUtilityR5 {
   }
 
   /**
+   * Resolves questionnaire copyright from CodeSystem copyright plus external
+   * notices on member codes.
+   *
+   * @param questionnaire the questionnaire
+   * @param terminology the terminology
+   * @param searchService the search service
+   * @return copyright text or null
+   * @throws Exception the exception
+   */
+  private static String resolveQuestionnaireCopyright(final Questionnaire questionnaire,
+    final Terminology terminology, final EntityRepositoryService searchService) throws Exception {
+    final String baseCopyright = resolveTerminologyCopyright(terminology, searchService);
+    if (questionnaire == null || terminology == null || searchService == null) {
+      return baseCopyright;
+    }
+    return LoincQuestionnaireHelper.buildQuestionnaireCopyright(baseCopyright,
+        collectLoincCodesFromQuestionnaire(questionnaire), searchService,
+        terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion());
+  }
+
+  /**
+   * Collects LOINC codes referenced by a questionnaire (root code, items,
+   * answer options).
+   *
+   * @param questionnaire the questionnaire
+   * @return codes in depth-first order
+   */
+  private static Set<String> collectLoincCodesFromQuestionnaire(final Questionnaire questionnaire) {
+    final Set<String> codes = new LinkedHashSet<>();
+    if (questionnaire == null) {
+      return codes;
+    }
+    for (final Coding coding : questionnaire.getCode()) {
+      if (coding.hasCode()) {
+        codes.add(coding.getCode());
+      }
+    }
+    for (final Questionnaire.QuestionnaireItemComponent item : questionnaire.getItem()) {
+      collectLoincCodesFromItem(item, codes);
+    }
+    return codes;
+  }
+
+  /**
+   * Adds LOINC codes from a questionnaire item subtree.
+   *
+   * @param item the item
+   * @param codes the collector
+   */
+  private static void collectLoincCodesFromItem(final Questionnaire.QuestionnaireItemComponent item,
+    final Set<String> codes) {
+    if (item == null) {
+      return;
+    }
+    for (final Coding coding : item.getCode()) {
+      if (coding.hasCode()) {
+        codes.add(coding.getCode());
+      }
+    }
+    for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : item
+        .getAnswerOption()) {
+      if (option.getValue() instanceof Coding) {
+        final Coding valueCoding = (Coding) option.getValue();
+        if (valueCoding.hasCode()) {
+          codes.add(valueCoding.getCode());
+        }
+      }
+    }
+    for (final Questionnaire.QuestionnaireItemComponent child : item.getItem()) {
+      collectLoincCodesFromItem(child, codes);
+    }
+  }
+
+  /**
    * Sets Questionnaire copyright from terminology attributes when available.
    *
    * @param questionnaire the questionnaire
@@ -1861,7 +2121,8 @@ public final class FhirUtilityR5 {
    */
   private static void applyQuestionnaireCopyright(final Questionnaire questionnaire,
     final Terminology terminology, final EntityRepositoryService searchService) throws Exception {
-    final String copyright = resolveTerminologyCopyright(terminology, searchService);
+    final String copyright =
+        resolveQuestionnaireCopyright(questionnaire, terminology, searchService);
     if (copyright != null) {
       questionnaire.setCopyright(copyright);
     }
@@ -1946,8 +2207,8 @@ public final class FhirUtilityR5 {
     final String shortCommonName = resolveLoincShortCommonName(concept);
     final String title =
         !StringUtility.isEmpty(shortCommonName) ? shortCommonName : concept.getName();
-    final String name = !StringUtility.isEmpty(shortCommonName) ? toQuestionnaireName(shortCommonName)
-        : concept.getName();
+    final String name = !StringUtility.isEmpty(shortCommonName)
+        ? toQuestionnaireName(shortCommonName) : concept.getName();
     questionnaire.setName(name);
     questionnaire.setTitle(title);
     questionnaire.setStatus(PublicationStatus.DRAFT);
@@ -1974,14 +2235,7 @@ public final class FhirUtilityR5 {
     coding.setDisplay(title);
     questionnaire.addCode(coding);
 
-    // Add contact information using concept data
-    final ContactDetail contact = new ContactDetail();
-    contact.setName(concept.getPublisher());
-    final ContactPoint telecom = new ContactPoint();
-    telecom.setSystem(ContactPoint.ContactPointSystem.URL);
-    telecom.setValue(systemUri);
-    contact.addTelecom(telecom);
-    questionnaire.addContact(contact);
+    applyTerminologyContact(questionnaire, terminology, concept.getPublisher(), systemUri);
 
     Terminology copyrightTerminology = terminology;
     if (copyrightTerminology == null && searchService != null) {
@@ -2018,9 +2272,7 @@ public final class FhirUtilityR5 {
 
     try {
 
-      // Track all processed codes to prevent duplicates at any level
-      final Set<String> processedCodes = new HashSet<>();
-      processedCodes.add(loincCode); // Add the main questionnaire code
+      final Set<String> processedLinkIds = new HashSet<>();
 
       // Get the main concept to find its relationships
       final Concept mainConcept =
@@ -2032,12 +2284,14 @@ public final class FhirUtilityR5 {
 
       // Find panel members via has_member or hierarchical parent relationships
       final List<Questionnaire.QuestionnaireItemComponent> groupItems = findGroupConcepts(
-          mainConcept, searchService, terminology, processedCodes, terminology.getVersion());
+          mainConcept, searchService, terminology, processedLinkIds, terminology.getVersion());
 
       // Add group items to questionnaire
       for (final Questionnaire.QuestionnaireItemComponent groupItem : groupItems) {
         questionnaire.addItem(groupItem);
       }
+
+      applyQuestionnaireCopyright(questionnaire, terminology, searchService);
 
     } catch (final Exception e) {
       // Log error but don't fail the entire questionnaire
@@ -2051,9 +2305,6 @@ public final class FhirUtilityR5 {
 
   /** Alternate LOINC scale type attribute key. */
   private static final String ATTR_LOINC_SCALE_TYP = "LOINC_SCALE_TYP";
-
-  /** Panel member sequence on relationships. */
-  private static final String ATTR_SEQ_NO = "SEQ_NO";
 
   /**
    * Finds panel member relationships for a questionnaire/panel code. Prefers outbound
@@ -2101,7 +2352,8 @@ public final class FhirUtilityR5 {
         continue;
       }
       final ConceptRef memberRef = rel.getFrom();
-      if (memberRef == null || memberRef.getCode() == null || panelCode.equals(memberRef.getCode())) {
+      if (memberRef == null || memberRef.getCode() == null
+          || panelCode.equals(memberRef.getCode())) {
         continue;
       }
       filtered.add(rel);
@@ -2110,8 +2362,7 @@ public final class FhirUtilityR5 {
       return sortMemberRelationships(filterPanelMemberRelationships(panelCode, filtered));
     }
 
-    final String parentClause =
-        "parents.code:" + StringUtility.escapeQuery(panelCode);
+    final String parentClause = "parents.code:" + StringUtility.escapeQuery(panelCode);
     final String excludePanel = "-code:" + StringUtility.escapeQuery(panelCode);
     final String conceptQuery =
         StringUtility.composeQuery("AND", termQuery, parentClause, excludePanel);
@@ -2193,8 +2444,8 @@ public final class FhirUtilityR5 {
       return relationships == null ? List.of() : relationships;
     }
     final List<ConceptRelationship> sorted = new ArrayList<>(relationships);
-    sorted.sort(Comparator.comparingInt(FhirUtilityR5::relationshipSequenceNumber)
-        .thenComparing(rel -> {
+    sorted.sort(
+        Comparator.comparingInt(FhirUtilityR5::relationshipSequenceNumber).thenComparing(rel -> {
           final ConceptRef memberRef = getMemberConceptRef(rel);
           return memberRef == null || memberRef.getCode() == null ? "" : memberRef.getCode();
         }));
@@ -2208,31 +2459,33 @@ public final class FhirUtilityR5 {
    * @return sequence number or max value if unknown
    */
   private static int relationshipSequenceNumber(final ConceptRelationship rel) {
-    if (rel == null) {
-      return Integer.MAX_VALUE;
-    }
-    if (rel.getAttributes() != null) {
-      final String seq = rel.getAttributes().get(ATTR_SEQ_NO);
-      if (seq != null) {
-        try {
-          return Integer.parseInt(seq);
-        } catch (final NumberFormatException e) {
-          // fall through
-        }
-      }
-    }
-    if (rel.getGroup() != null) {
-      try {
-        return Integer.parseInt(rel.getGroup());
-      } catch (final NumberFormatException e) {
-        // fall through
-      }
+    final int seq = LoincQuestionnaireHelper.relationshipSequenceNumber(rel);
+    if (seq < Integer.MAX_VALUE) {
+      return seq;
     }
     final ConceptRef memberRef = getMemberConceptRef(rel);
     if (memberRef != null && memberRef.getCode() != null) {
       return Integer.MAX_VALUE - 1;
     }
     return Integer.MAX_VALUE;
+  }
+
+  /**
+   * Resolves questionnaire item text from member-edge metadata, then concept
+   * display.
+   *
+   * @param memberRel the member relationship
+   * @param memberConcept the member concept
+   * @param memberRef the member concept ref
+   * @return display text
+   */
+  private static String resolveItemDisplayName(final ConceptRelationship memberRel,
+    final Concept memberConcept, final ConceptRef memberRef) {
+    final String formDisplay = LoincQuestionnaireHelper.resolveFormDisplayName(memberRel);
+    if (!StringUtility.isEmpty(formDisplay)) {
+      return formDisplay;
+    }
+    return resolveLoincDisplayName(memberConcept, memberRef);
   }
 
   /**
@@ -2331,6 +2584,9 @@ public final class FhirUtilityR5 {
     if (answerOptions != null && !answerOptions.isEmpty()) {
       return Questionnaire.QuestionnaireItemType.CODING;
     }
+    if (LoincQuestionnaireHelper.isDateProperty(memberConcept)) {
+      return Questionnaire.QuestionnaireItemType.DATE;
+    }
     final String scaleTyp = getScaleType(memberConcept);
     if (scaleTyp != null) {
       final String normalized = scaleTyp.toUpperCase(Locale.ENGLISH);
@@ -2352,21 +2608,21 @@ public final class FhirUtilityR5 {
    * @param mainConcept the main questionnaire concept
    * @param searchService the search service
    * @param terminology the terminology
-   * @param processedCodes set of already processed codes
+   * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the latest version
    * @return list of group questionnaire item components
    * @throws Exception the exception
    */
   private static List<Questionnaire.QuestionnaireItemComponent> findGroupConcepts(
     final Concept mainConcept, final EntityRepositoryService searchService,
-    final Terminology terminology, final Set<String> processedCodes, final String latestVersion)
+    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion)
     throws Exception {
 
     final List<Questionnaire.QuestionnaireItemComponent> allItems = new ArrayList<>();
 
     try {
-      List<ConceptRelationship> memberRels = findPanelMemberRelationships(mainConcept.getCode(),
-          searchService, terminology);
+      List<ConceptRelationship> memberRels =
+          findPanelMemberRelationships(mainConcept.getCode(), searchService, terminology);
 
       if (memberRels.isEmpty() && !mainConcept.getChildren().isEmpty()) {
         memberRels = new ArrayList<>();
@@ -2389,8 +2645,12 @@ public final class FhirUtilityR5 {
         if (memberRef == null) {
           continue;
         }
+        final String linkId = LoincQuestionnaireHelper.resolveMemberLinkId(memberRel, memberRef);
+        if (StringUtility.isEmpty(linkId) || processedLinkIds.contains(linkId)) {
+          continue;
+        }
         final String memberCode = memberRef.getCode();
-        if (memberCode == null || processedCodes.contains(memberCode)) {
+        if (memberCode == null) {
           continue;
         }
 
@@ -2402,17 +2662,17 @@ public final class FhirUtilityR5 {
 
           if (isOrganizer) {
             final Questionnaire.QuestionnaireItemComponent groupItem = createGroupItem(memberRel,
-                searchService, terminology, processedCodes, latestVersion);
+                searchService, terminology, processedLinkIds, latestVersion);
             if (groupItem != null) {
               allItems.add(groupItem);
-              processedCodes.add(memberCode);
+              processedLinkIds.add(linkId);
             }
           } else {
             final Questionnaire.QuestionnaireItemComponent questionItem = createDirectQuestionItem(
-                memberRel, searchService, terminology, processedCodes, latestVersion);
+                memberRel, searchService, terminology, processedLinkIds, latestVersion);
             if (questionItem != null) {
               allItems.add(questionItem);
-              processedCodes.add(memberCode);
+              processedLinkIds.add(linkId);
             }
           }
         }
@@ -2433,14 +2693,14 @@ public final class FhirUtilityR5 {
    * @param hasMemberRel the has_member relationship
    * @param searchService the search service
    * @param terminology the terminology
-   * @param processedCodes set of already processed codes
+   * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the latest version
    * @return the questionnaire item component
    * @throws Exception the exception
    */
   private static Questionnaire.QuestionnaireItemComponent createGroupItem(
     final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
-    final Terminology terminology, final Set<String> processedCodes, final String latestVersion)
+    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion)
     throws Exception {
 
     final Questionnaire.QuestionnaireItemComponent groupItem =
@@ -2449,16 +2709,21 @@ public final class FhirUtilityR5 {
     final ConceptRef memberRef = getMemberConceptRef(hasMemberRel);
     if (memberRef != null) {
       final ConceptRef toConcept = memberRef;
-      final Concept memberConcept = TerminologyUtility.getConcept(searchService,
-          terminology.getAbbreviation(), terminology.getPublisher(), latestVersion,
-          toConcept.getCode());
-      final String displayName = resolveLoincDisplayName(memberConcept, toConcept);
+      final Concept memberConcept =
+          TerminologyUtility.getConcept(searchService, terminology.getAbbreviation(),
+              terminology.getPublisher(), latestVersion, toConcept.getCode());
+      final String displayName = resolveItemDisplayName(hasMemberRel, memberConcept, toConcept);
 
-      // Set group properties
-      groupItem.setLinkId(toConcept.getCode());
+      groupItem.setLinkId(LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept));
+      final String prefix = LoincQuestionnaireHelper.resolveFormPrefix(hasMemberRel);
+      if (!StringUtility.isEmpty(prefix)) {
+        groupItem.setPrefix(prefix);
+      }
       groupItem.setText(displayName);
       groupItem.setType(Questionnaire.QuestionnaireItemType.GROUP);
-      groupItem.setRequired(true);
+      if (isOrganizerConcept(memberConcept)) {
+        groupItem.setRequired(true);
+      }
 
       // Add special properties for "Intensity of ideation" group (93303-6)
       if (toConcept.getCode().equals("93303-6")) {
@@ -2485,16 +2750,10 @@ public final class FhirUtilityR5 {
         }
       }
 
-      // Add coding
-      final Coding coding = new Coding();
-      coding.setSystem(terminology.getUri());
-      coding.setCode(toConcept.getCode());
-      coding.setDisplay(displayName);
-      groupItem.addCode(coding);
-
       // Find questions for this group
       final List<Questionnaire.QuestionnaireItemComponent> questions =
-          findQuestionsForGroup(toConcept.getCode(), searchService, terminology, processedCodes);
+          findQuestionsForGroup(toConcept.getCode(), searchService, terminology, processedLinkIds,
+              latestVersion, LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept));
 
       for (final Questionnaire.QuestionnaireItemComponent question : questions) {
         groupItem.addItem(question);
@@ -2510,71 +2769,73 @@ public final class FhirUtilityR5 {
    * @param groupCode the group LOINC code
    * @param searchService the search service
    * @param terminology the terminology
-   * @param processedCodes set of already processed codes
+   * @param processedLinkIds set of already processed form linkIds
+   * @param latestVersion the terminology version
+   * @param parentLinkId parent group linkId for form-scoped member-edge
+   *          selection
    * @return list of question components
    * @throws Exception the exception
    */
   private static List<Questionnaire.QuestionnaireItemComponent> findQuestionsForGroup(
     final String groupCode, final EntityRepositoryService searchService,
-    final Terminology terminology, final Set<String> processedCodes) throws Exception {
+    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion,
+    final String parentLinkId) throws Exception {
 
     final List<Questionnaire.QuestionnaireItemComponent> questions = new ArrayList<>();
-
-    // Create a separate processedCodes set for this group to avoid conflicts
-    // with main level
-    final Set<String> groupProcessedCodes = new HashSet<>();
+    final Set<String> groupProcessedLinkIds = new HashSet<>();
 
     try {
-      final List<ConceptRelationship> memberRels =
+      List<ConceptRelationship> memberRels =
           findPanelMemberRelationships(groupCode, searchService, terminology);
+      memberRels = LoincQuestionnaireHelper.dedupePanelMemberRelationshipsForFormContext(memberRels,
+          parentLinkId);
+      memberRels = sortMemberRelationships(memberRels);
 
       final Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
       logger.debug("Found {} panel member relationships for group {}: {}", memberRels.size(),
-          groupCode,
-          memberRels.stream().map(rel -> {
+          groupCode, memberRels.stream().map(rel -> {
             final ConceptRef ref = getMemberConceptRef(rel);
             return ref != null ? ref.getCode() : "null";
           }).collect(Collectors.joining(", ")));
 
       for (final ConceptRelationship hasMemberRel : memberRels) {
         final ConceptRef memberRef = getMemberConceptRef(hasMemberRel);
-        if (memberRef != null) {
-          final String questionCode = memberRef.getCode();
-          if (questionCode != null && !groupProcessedCodes.contains(questionCode)) {
-            // Filter for "Intensity of ideation" group to match master file
-            // structure
-            if (groupCode.equals("93303-6")) {
-              // Filter out description items to match master file (12 items
-              // instead of 14)
-              final String questionText = memberRef.getName();
-              if (questionText != null && questionText.contains("description")) {
-                logger.debug("Filtering out description item: {} - not in master file structure",
-                    questionCode);
-                continue;
-              }
-            }
-
-            // Create question item
-            final Questionnaire.QuestionnaireItemComponent questionItem =
-                createQuestionItem(hasMemberRel, searchService, terminology, groupProcessedCodes);
-            if (questionItem != null) {
-              questions.add(questionItem);
-              groupProcessedCodes.add(questionCode); // Mark as processed to
-                                                     // avoid duplicates within
-                                                     // this group
-              logger.debug("Successfully created question item for code: {}", questionCode);
-            } else {
-              logger.warn(
-                  "Failed to create question item for code: {} - createQuestionItem returned null",
-                  questionCode);
-            }
-          } else {
-            if (questionCode == null) {
-              logger.warn("Question code is null for hasMemberRel: {}", hasMemberRel);
-            } else if (groupProcessedCodes.contains(questionCode)) {
-              logger.debug("Skipping already processed code: {}", questionCode);
-            }
+        if (memberRef == null || memberRef.getCode() == null) {
+          continue;
+        }
+        final String linkId = LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, memberRef);
+        if (StringUtility.isEmpty(linkId) || groupProcessedLinkIds.contains(linkId)) {
+          continue;
+        }
+        final String questionCode = memberRef.getCode();
+        if (groupCode.equals("93303-6")) {
+          final String questionText = memberRef.getName();
+          if (questionText != null && questionText.contains("description")) {
+            logger.debug("Filtering out description item: {} - not in master file structure",
+                questionCode);
+            continue;
           }
+        }
+
+        final Concept memberConcept = TerminologyUtility.getConcept(searchService,
+            terminology.getAbbreviation(), terminology.getPublisher(), latestVersion, questionCode);
+        if (memberConcept == null) {
+          continue;
+        }
+
+        final Questionnaire.QuestionnaireItemComponent item;
+        if (isOrganizerConcept(memberConcept)) {
+          item = createGroupItem(hasMemberRel, searchService, terminology, processedLinkIds,
+              latestVersion);
+        } else {
+          item = createQuestionItem(hasMemberRel, searchService, terminology, processedLinkIds);
+        }
+        if (item != null && !StringUtility.isEmpty(item.getLinkId())) {
+          questions.add(item);
+          groupProcessedLinkIds.add(linkId);
+          logger.debug("Successfully created item linkId={} code={}", linkId, questionCode);
+        } else {
+          logger.warn("Failed to create item for linkId={} code={}", linkId, questionCode);
         }
       }
 
@@ -2593,13 +2854,13 @@ public final class FhirUtilityR5 {
    * @param hasMemberRel the has_member relationship
    * @param searchService the search service
    * @param terminology the terminology
-   * @param processedCodes set of already processed codes
+   * @param processedLinkIds set of already processed form linkIds
    * @return the questionnaire item component
    * @throws Exception the exception
    */
   private static Questionnaire.QuestionnaireItemComponent createQuestionItem(
     final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
-    final Terminology terminology, final Set<String> processedCodes) throws Exception {
+    final Terminology terminology, final Set<String> processedLinkIds) throws Exception {
 
     final Questionnaire.QuestionnaireItemComponent questionItem =
         new Questionnaire.QuestionnaireItemComponent();
@@ -2610,14 +2871,16 @@ public final class FhirUtilityR5 {
       final Concept memberConcept =
           TerminologyUtility.getConcept(searchService, terminology.getAbbreviation(),
               terminology.getPublisher(), terminology.getVersion(), toConcept.getCode());
-      final String displayName = resolveLoincDisplayName(memberConcept, toConcept);
+      final String displayName = resolveItemDisplayName(hasMemberRel, memberConcept, toConcept);
 
-      // Set question properties
-      questionItem.setLinkId(toConcept.getCode());
+      questionItem.setLinkId(LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept));
+      final String prefix = LoincQuestionnaireHelper.resolveFormPrefix(hasMemberRel);
+      if (!StringUtility.isEmpty(prefix)) {
+        questionItem.setPrefix(prefix);
+      }
       questionItem.setText(displayName);
       questionItem.setRepeats(false);
 
-      // Add coding
       final Coding coding = new Coding();
       coding.setSystem(terminology.getUri());
       coding.setCode(toConcept.getCode());
@@ -2626,7 +2889,7 @@ public final class FhirUtilityR5 {
 
       // Find answer options for this question
       final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
-          findAnswerOptionsForQuestion(toConcept.getCode(), searchService, terminology);
+          findAnswerOptionsForQuestion(memberConcept, searchService, terminology);
 
       questionItem.setType(resolveQuestionnaireItemType(memberConcept, answerOptions));
       for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
@@ -2638,75 +2901,92 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Finds answer options for a question via has_answers relationships. Follows LOINC structure:
-   * Question --has_answers--> LL Code <--parent-- LA Codes
+   * Builds a FHIR answer option from an LA answer-list member concept.
    *
-   * @param questionCode the question LOINC code
+   * @param laConcept the LA concept
+   * @param terminology the terminology
+   * @return the answer option or null
+   */
+  private static Questionnaire.QuestionnaireItemAnswerOptionComponent toAnswerOption(
+    final Concept laConcept, final Terminology terminology) {
+    if (laConcept == null || laConcept.getCode() == null) {
+      return null;
+    }
+    final Questionnaire.QuestionnaireItemAnswerOptionComponent option =
+        new Questionnaire.QuestionnaireItemAnswerOptionComponent();
+    final Coding valueCoding = new Coding();
+    valueCoding.setSystem(terminology.getUri());
+    valueCoding.setCode(laConcept.getCode());
+    valueCoding.setDisplay(laConcept.getName());
+    option.setValue(valueCoding);
+    return option;
+  }
+
+  /**
+   * Finds answer options for a question from its {@code answer-list} property,
+   * with {@code has_answers} relationship fallback.
+   *
+   * @param memberConcept the question concept
    * @param searchService the search service
    * @param terminology the terminology
    * @return list of answer option components
    * @throws Exception the exception
    */
   private static List<Questionnaire.QuestionnaireItemAnswerOptionComponent> findAnswerOptionsForQuestion(
-    final String questionCode, final EntityRepositoryService searchService,
+    final Concept memberConcept, final EntityRepositoryService searchService,
     final Terminology terminology) throws Exception {
 
     final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
         new ArrayList<>();
-    final Set<String> uniqueAnswerCodes = new HashSet<>();
+    if (memberConcept == null || memberConcept.getCode() == null) {
+      return answerOptions;
+    }
 
     try {
-      // Find has_answers relationships from the question to get LL codes
+      final String llCode = LoincQuestionnaireHelper.resolveAnswerListCode(memberConcept);
+      if (!StringUtility.isEmpty(llCode)) {
+        for (final Concept laConcept : LoincQuestionnaireHelper.findAnswerListMembers(searchService,
+            terminology, llCode)) {
+          final Questionnaire.QuestionnaireItemAnswerOptionComponent option =
+              toAnswerOption(laConcept, terminology);
+          if (option != null) {
+            answerOptions.add(option);
+          }
+        }
+      }
+      if (!answerOptions.isEmpty()) {
+        return answerOptions;
+      }
+
+      final String questionCode = memberConcept.getCode();
       final String hasAnswersQuery = "from.code:" + StringUtility.escapeQuery(questionCode)
           + " AND additionalType:has_answers";
       final List<ConceptRelationship> hasAnswersRels =
           searchService.findAll(hasAnswersQuery, null, ConceptRelationship.class);
+      final Set<String> uniqueAnswerCodes = new HashSet<>();
 
       for (final ConceptRelationship hasAnswersRel : hasAnswersRels) {
-        final String llCode = hasAnswersRel.getTo().getCode();
-        if (llCode != null) {
-          // Find parent relationships from LA codes to the LL code
-          final String parentQuery =
-              "to.code:" + StringUtility.escapeQuery(llCode) + " AND type:\"Is a\"";
-          final List<ConceptRelationship> parentRels =
-              searchService.findAll(parentQuery, null, ConceptRelationship.class);
-
-          for (final ConceptRelationship parentRel : parentRels) {
-            final String laCode = parentRel.getFrom().getCode();
-            if (laCode != null && laCode.startsWith("LA") && uniqueAnswerCodes.add(laCode)) {
-              try {
-                // Get the full Concept object to access attributes
-                final Concept laConcept =
-                    TerminologyUtility.getConcept(searchService, terminology.getAbbreviation(),
-                        terminology.getPublisher(), terminology.getVersion(), laCode);
-
-                if (laConcept != null) {
-                  // Create answer option component
-                  final Questionnaire.QuestionnaireItemAnswerOptionComponent option =
-                      new Questionnaire.QuestionnaireItemAnswerOptionComponent();
-
-                  // Set the value coding for the LA code
-                  final Coding valueCoding = new Coding();
-                  valueCoding.setSystem(terminology.getUri());
-                  valueCoding.setCode(laCode);
-                  valueCoding.setDisplay(laConcept.getName());
-                  option.setValue(valueCoding);
-
-                  answerOptions.add(option);
-                }
-              } catch (final Exception e) {
-                // Log error but continue with other options
-                final Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
-                logger.warn("Failed to get concept for LA code {}: {}", laCode, e.getMessage());
-              }
-            }
+        if (hasAnswersRel.getTo() == null || hasAnswersRel.getTo().getCode() == null) {
+          continue;
+        }
+        final String fallbackLlCode = hasAnswersRel.getTo().getCode();
+        for (final Concept laConcept : LoincQuestionnaireHelper.findAnswerListMembers(searchService,
+            terminology, fallbackLlCode)) {
+          if (laConcept == null || laConcept.getCode() == null
+              || !uniqueAnswerCodes.add(laConcept.getCode())) {
+            continue;
+          }
+          final Questionnaire.QuestionnaireItemAnswerOptionComponent option =
+              toAnswerOption(laConcept, terminology);
+          if (option != null) {
+            answerOptions.add(option);
           }
         }
       }
 
     } catch (final Exception e) {
       final Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
-      logger.warn("Failed to find answer options for question {}: {}", questionCode,
+      logger.warn("Failed to find answer options for question {}: {}", memberConcept.getCode(),
           e.getMessage());
     }
 
@@ -2743,14 +3023,14 @@ public final class FhirUtilityR5 {
    * @param hasMemberRel the has_member relationship
    * @param searchService the search service
    * @param terminology the terminology
-   * @param processedCodes set of already processed codes
+   * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the latest version
    * @return the questionnaire item component
    * @throws Exception the exception
    */
   private static Questionnaire.QuestionnaireItemComponent createDirectQuestionItem(
     final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
-    final Terminology terminology, final Set<String> processedCodes, final String latestVersion)
+    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion)
     throws Exception {
 
     final Questionnaire.QuestionnaireItemComponent questionItem =
@@ -2759,17 +3039,19 @@ public final class FhirUtilityR5 {
     final ConceptRef memberRef = getMemberConceptRef(hasMemberRel);
     if (memberRef != null) {
       final ConceptRef toConcept = memberRef;
-      final Concept memberConcept = TerminologyUtility.getConcept(searchService,
-          terminology.getAbbreviation(), terminology.getPublisher(), latestVersion,
-          toConcept.getCode());
-      final String displayName = resolveLoincDisplayName(memberConcept, toConcept);
+      final Concept memberConcept =
+          TerminologyUtility.getConcept(searchService, terminology.getAbbreviation(),
+              terminology.getPublisher(), latestVersion, toConcept.getCode());
+      final String displayName = resolveItemDisplayName(hasMemberRel, memberConcept, toConcept);
 
-      // Set question properties
-      questionItem.setLinkId(toConcept.getCode());
+      questionItem.setLinkId(LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept));
+      final String prefix = LoincQuestionnaireHelper.resolveFormPrefix(hasMemberRel);
+      if (!StringUtility.isEmpty(prefix)) {
+        questionItem.setPrefix(prefix);
+      }
       questionItem.setText(displayName);
       questionItem.setRepeats(false);
 
-      // Add coding
       final Coding coding = new Coding();
       coding.setSystem(terminology.getUri());
       coding.setCode(toConcept.getCode());
@@ -2778,7 +3060,7 @@ public final class FhirUtilityR5 {
 
       // Find answer options for this question
       final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
-          findAnswerOptionsForQuestion(toConcept.getCode(), searchService, terminology);
+          findAnswerOptionsForQuestion(memberConcept, searchService, terminology);
 
       questionItem.setType(resolveQuestionnaireItemType(memberConcept, answerOptions));
       for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {

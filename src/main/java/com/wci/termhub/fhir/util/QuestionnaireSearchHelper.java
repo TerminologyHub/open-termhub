@@ -10,13 +10,16 @@
 package com.wci.termhub.fhir.util;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
@@ -37,6 +40,12 @@ public class QuestionnaireSearchHelper {
 
   /** Lucene clause for LOINC panel concepts. */
   private static final String PANEL_TYPE_CLAUSE = "attributes.PanelType:Panel";
+
+  /** LOINC CLASS relationship additionalType. */
+  private static final String CLASS_REL_TYPE = "CLASS";
+
+  /** CLASS name prefix that fhir.loinc.org exposes as Questionnaires. */
+  private static final String PANEL_CLASS_PREFIX = "PANEL.";
 
   /** Batch size for paginated concept queries. */
   private static final int BATCH_SIZE = 5000;
@@ -78,6 +87,20 @@ public class QuestionnaireSearchHelper {
     } else if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Found {} panel concepts via attributes.PanelType index for LOINC {}",
           panels.size(), latestLoincTerminology.getVersion());
+    }
+
+    // PanelType=Panel also matches panels whose LOINC CLASS does not start with "PANEL."
+    // (e.g. NAACCR "SURVEY.*"/"TUMRRGT" aggregates) that fhir.loinc.org does not expose as
+    // Questionnaires. Every published questionnaire has a CLASS starting with "PANEL.", so keep
+    // only those. Fall back to the unfiltered list when no CLASS edges are indexed.
+    final Set<String> panelClassCodes =
+        findPanelClassConceptCodes(searchService, latestLoincTerminology);
+    if (!panelClassCodes.isEmpty()) {
+      panels =
+          new ArrayList<>(panels.stream().filter(c -> panelClassCodes.contains(c.getCode())).toList());
+    } else {
+      LOGGER.info("No CLASS edges indexed for LOINC {}; returning all PanelType=Panel concepts",
+          latestLoincTerminology.getVersion());
     }
 
     synchronized (cacheLock) {
@@ -133,6 +156,54 @@ public class QuestionnaireSearchHelper {
         terminology.getPublisher(), terminology.getVersion());
     final String query = StringUtility.composeQuery("AND", termQuery, PANEL_TYPE_CLAUSE);
     return fetchAllConcepts(searchService, query);
+  }
+
+  /**
+   * Collects the {@code from.code} of every LOINC {@code CLASS} relationship whose target name
+   * starts with {@code PANEL.}. CLASS is stored as a relationship (not a concept attribute), so the
+   * full set is fetched once and cached by the caller.
+   *
+   * @param searchService the search service
+   * @param terminology latest LOINC terminology
+   * @return concept codes whose CLASS name starts with {@code PANEL.}
+   * @throws Exception the exception
+   */
+  private Set<String> findPanelClassConceptCodes(final EntityRepositoryService searchService,
+    final Terminology terminology) throws Exception {
+
+    final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), terminology.getVersion());
+    final String query = StringUtility.composeQuery("AND", termQuery,
+        StringUtility.escapeKeywordField("additionalType", CLASS_REL_TYPE));
+    final Set<String> codes = new HashSet<>();
+    int offset = 0;
+    long total = Long.MAX_VALUE;
+
+    while (offset < total) {
+      final SearchParameters params = new SearchParameters();
+      params.setQuery(query);
+      params.setLimit(BATCH_SIZE);
+      params.setOffset(offset);
+
+      final ResultList<ConceptRelationship> batch =
+          searchService.findAll(params, ConceptRelationship.class);
+      total = batch.getTotal();
+      if (batch.getItems().isEmpty()) {
+        break;
+      }
+      for (final ConceptRelationship rel : batch.getItems()) {
+        if (rel.getFrom() == null || rel.getFrom().getCode() == null || rel.getTo() == null) {
+          continue;
+        }
+        final String className = rel.getTo().getName();
+        if (className != null
+            && className.trim().toUpperCase().startsWith(PANEL_CLASS_PREFIX)) {
+          codes.add(rel.getFrom().getCode());
+        }
+      }
+      offset += BATCH_SIZE;
+    }
+    return codes;
   }
 
   /**

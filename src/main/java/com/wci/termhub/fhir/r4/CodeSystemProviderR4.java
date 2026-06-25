@@ -51,6 +51,7 @@ import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.fhir.util.CodeSystemMetadataLookupUtility;
+import com.wci.termhub.fhir.util.LoincValueSetHelper;
 
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
@@ -94,6 +95,10 @@ public class CodeSystemProviderR4 implements IResourceProvider {
   /** The mark latest runner. */
   @Autowired
   private MarkLatestRunner markLatestRunner;
+
+  /** The LOINC LL/LG value set helper (Regenstrief mode). */
+  @Autowired
+  private LoincValueSetHelper loincValueSetHelper;
 
   /**
    * Gets the code system.
@@ -687,12 +692,15 @@ public class CodeSystemProviderR4 implements IResourceProvider {
       logger.debug("Failed to get concept name map: {}", e.getMessage());
     }
 
+    final boolean regenstriefMode = loincValueSetHelper.isEnabled()
+        && terminology.getUri() != null && terminology.getUri().contains("loinc.org");
+
     return FhirUtilityR4.toR4(FhirUtilityR4.toR4(terminology), concept,
         properties == null ? null
             : properties.stream().map(c -> c.getValue()).collect(Collectors.toSet()),
         displayMap, relationships, children == null ? null
             : children.stream().map(r -> r.getFrom()).collect(Collectors.toList()),
-        conceptNameMap, searchService);
+        conceptNameMap, searchService, regenstriefMode);
   }
 
   /**

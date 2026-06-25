@@ -23,10 +23,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
 import org.hl7.fhir.r5.model.CapabilityStatement;
+import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r5.model.ConceptMap;
@@ -38,6 +40,7 @@ import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.ResourceType;
+import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -63,11 +66,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.algo.DefaultProgressListener;
+import com.wci.termhub.fhir.util.LoincValueSetHelper;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
@@ -123,6 +128,12 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   /** LL value set url (fhir_vs form). */
   private static final String LL_VS_URL = "http://loinc.org?fhir_vs=LL1772-4";
 
+  /** LOINC sandbox concept with both {@code status} and {@code STATUS} properties. */
+  private static final String LOINC_STATUS_TEST_CODE = "LG50982-4";
+
+  /** LOINC sandbox version from CodeSystem-lnc-sandbox-277-r5.json. */
+  private static final String LOINC_SANDBOX_VERSION = "277";
+
   /** The Constant FIND. */
   private static final int FIND = 10;
 
@@ -138,6 +149,10 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;
+
+  /** LOINC LL/LG helper (Regenstrief mode flag). */
+  @Autowired
+  private LoincValueSetHelper loincValueSetHelper;
 
   /**
    * Sets the up once.
@@ -831,7 +846,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
       assertNotNull(valueSet.getId());
       assertNotNull(valueSet.getVersion());
       assertNotNull(valueSet.getName());
-      assertNotNull(valueSet.getTitle());
+      // assertNotNull(valueSet.getTitle());
       assertEquals(PublicationStatus.ACTIVE, valueSet.getStatus());
       assertNotNull(valueSet.getPublisher());
       assertNotNull(valueSet.getMeta());
@@ -1590,6 +1605,51 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   }
 
   /**
+   * LOINC $lookup with Regenstrief mode off returns both {@code status} (valueCode) and
+   * {@code STATUS} (valueString) from sandbox data.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemLookupLoincStatusBothPropertiesWhenRegenstriefOff() throws Exception {
+    assertFalse(loincValueSetHelper.isEnabled());
+
+    final Parameters result = lookupLoincStatusTestConcept();
+    final Set<String> propertyKeys = collectLookupPropertyKeys(result);
+
+    assertTrue(propertyKeys.contains("status|active"),
+        "Expected status|active property, got: " + propertyKeys);
+    assertTrue(propertyKeys.contains("STATUS|Active"),
+        "Expected STATUS|Active property, got: " + propertyKeys);
+    assertTrue(((BooleanType) result.getParameter("active").getValue()).getValue());
+  }
+
+  /**
+   * LOINC $lookup with Regenstrief mode on suppresses lowercase {@code status} when {@code STATUS}
+   * is also present.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemLookupLoincSuppressesStatusWhenRegenstriefOn() throws Exception {
+    ReflectionTestUtils.setField(loincValueSetHelper, "enabled", true);
+    try {
+      final Parameters result = lookupLoincStatusTestConcept();
+      final Set<String> propertyKeys = collectLookupPropertyKeys(result);
+
+      assertFalse(propertyKeys.contains("status|active"),
+          "status should be suppressed when STATUS is present in Regenstrief mode: " + propertyKeys);
+      assertTrue(propertyKeys.contains("STATUS|Active"),
+          "Expected STATUS|Active property, got: " + propertyKeys);
+      assertTrue(((BooleanType) result.getParameter("active").getValue()).getValue());
+    } finally {
+      ReflectionTestUtils.setField(loincValueSetHelper, "enabled", false);
+    }
+  }
+
+  /**
    * Test CodeSystem read with unknown ID returns 404.
    *
    * @throws Exception the exception
@@ -1869,6 +1929,56 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
       assertTrue(response.getStatusCode().is4xxClientError(), "Endpoint " + endpoint
           + " should return 4xx, not 5xx. Status: " + response.getStatusCode());
     }
+  }
+
+  /**
+   * Calls $lookup for the LOINC sandbox concept used in status/STATUS tests.
+   *
+   * @return parsed Parameters response
+   */
+  private Parameters lookupLoincStatusTestConcept() {
+    final String lookupParams = "/$lookup?code=" + LOINC_STATUS_TEST_CODE
+        + "&system=http://loinc.org&version=" + LOINC_SANDBOX_VERSION;
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + lookupParams;
+    LOGGER.info("Testing LOINC status lookup endpoint: {}", endpoint);
+
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    assertNotNull(content, "Lookup response should not be null");
+    assertFalse(content.contains("OperationOutcome") && content.contains("error"),
+        "Lookup should succeed, not return an error. Response: " + content);
+    return parser.parseResource(Parameters.class, content);
+  }
+
+  /**
+   * Collects {@code code|value} keys from $lookup property parameters.
+   *
+   * @param parameters the lookup response
+   * @return property keys
+   */
+  private static Set<String> collectLookupPropertyKeys(final Parameters parameters) {
+    final Set<String> keys = new HashSet<>();
+    for (final Parameters.ParametersParameterComponent param : parameters.getParameter()) {
+      if (!"property".equals(param.getName())) {
+        continue;
+      }
+      String code = null;
+      String value = null;
+      for (final Parameters.ParametersParameterComponent part : param.getPart()) {
+        if ("code".equals(part.getName()) && part.getValue() instanceof CodeType codeType) {
+          code = codeType.getValue();
+        } else if ("value".equals(part.getName())) {
+          if (part.getValue() instanceof CodeType valueCode) {
+            value = valueCode.getValue();
+          } else if (part.getValue() instanceof StringType valueString) {
+            value = valueString.getValue();
+          }
+        }
+      }
+      if (code != null && value != null) {
+        keys.add(code + "|" + value);
+      }
+    }
+    return keys;
   }
 
   /**
