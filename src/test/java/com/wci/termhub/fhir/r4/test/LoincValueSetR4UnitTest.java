@@ -93,8 +93,10 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     assertFalse(lllgCode.equals(vs.getId()),
         "ValueSet id should be Concept UUID, not LL/LG code " + lllgCode);
     assertTrue(vs.getId().matches(UUID_PATTERN), "ValueSet id should be a UUID");
-    assertTrue(vs.getMeta().getTag().stream().anyMatch(
-        t -> FhirUtilityR4.META_LOINC_LLLG_ID.equals(t.getSystem()) && lllgCode.equals(t.getCode())),
+    assertTrue(
+        vs.getMeta().getTag().stream()
+            .anyMatch(t -> FhirUtilityR4.META_LOINC_LLLG_ID.equals(t.getSystem())
+                && lllgCode.equals(t.getCode())),
         "ValueSet should have loincLllgId meta tag for " + lllgCode);
   }
 
@@ -136,19 +138,18 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
    *
    * @throws Exception the exception
    */
-    @Test
-    public void testFindLllgValueSetByUrl() throws Exception {
-      final UriParam url = new UriParam(LL_VS_URL);
-      final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
-          null, null, null, url, null, null, null);
-      assertNotNull(bundle);
-      assertTrue(
-          bundle.getEntry().stream()
-              .anyMatch(e -> e.getResource() instanceof ValueSet
-                  && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl())),
-          "Bundle should contain LL value set for " + LL_VS_URL);
-    }
-
+  @Test
+  public void testFindLllgValueSetByUrl() throws Exception {
+    final UriParam url = new UriParam(LL_VS_URL);
+    final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
+        null, null, null, url, null, null, null);
+    assertNotNull(bundle);
+    assertTrue(
+        bundle.getEntry().stream()
+            .anyMatch(e -> e.getResource() instanceof ValueSet
+                && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl())),
+        "Bundle should contain LL value set for " + LL_VS_URL);
+  }
 
   /**
    * Test find LG value set by url uses Concept UUID as id.
@@ -161,13 +162,9 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, url, null, null, null);
     assertNotNull(bundle);
-    final ValueSet found = bundle.getEntry().stream()
-        .map(e -> e.getResource())
-        .filter(ValueSet.class::isInstance)
-        .map(ValueSet.class::cast)
-        .filter(v -> LG_VS_URL.equals(v.getUrl()))
-        .findFirst()
-        .orElse(null);
+    final ValueSet found = bundle.getEntry().stream().map(e -> e.getResource())
+        .filter(ValueSet.class::isInstance).map(ValueSet.class::cast)
+        .filter(v -> LG_VS_URL.equals(v.getUrl())).findFirst().orElse(null);
     assertNotNull(found, "Bundle should contain LG value set for " + LG_VS_URL);
     assertLllgValueSetHasUuidId(found, LG_VS_ID);
   }
@@ -262,8 +259,7 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
   public void testValueSetReadLgByUuid() throws Exception {
     final ValueSet byCode = provider.getValueSet(request, details, new IdType(LG_VS_ID));
     assertNotNull(byCode.getId());
-    final ValueSet byUuid =
-        provider.getValueSet(request, details, new IdType(byCode.getId()));
+    final ValueSet byUuid = provider.getValueSet(request, details, new IdType(byCode.getId()));
     assertNotNull(byUuid);
     assertEquals(byCode.getId(), byUuid.getId());
     assertEquals(LG_VS_URL, byUuid.getUrl());
