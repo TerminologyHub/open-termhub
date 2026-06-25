@@ -19,8 +19,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeType;
-import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.UriType;
@@ -34,11 +34,11 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.UriParam;
-import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 
 /**
@@ -149,6 +149,7 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
           "Bundle should contain LL value set for " + LL_VS_URL);
     }
 
+
   /**
    * Test find LG value set by url uses Concept UUID as id.
    *
@@ -191,10 +192,11 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(vs.getExpansion(), "ValueSet should have expansion like fhir.loinc.org");
     assertTrue(vs.getExpansion().getTotal() >= 0, "Expansion total should be non-negative");
     // assertTrue(
-    //     vs.getExpansion().getParameter().stream().anyMatch(p -> "offset".equals(p.getName())),
-    //     "Expansion should have offset parameter");
-    // assertTrue(vs.getExpansion().getParameter().stream().anyMatch(p -> "count".equals(p.getName())),
-    //     "Expansion should have count parameter");
+    // vs.getExpansion().getParameter().stream().anyMatch(p -> "offset".equals(p.getName())),
+    // "Expansion should have offset parameter");
+    // assertTrue(vs.getExpansion().getParameter().stream().anyMatch(p ->
+    // "count".equals(p.getName())),
+    // "Expansion should have count parameter");
   }
 
   /**
@@ -286,8 +288,8 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
 
   /**
    * Test expand lllg value set with wrong version. Verifies that a valueSetVersion that does not
-   * match any loaded LOINC terminology returns a not-found error instead of silently falling back to
-   * the latest version.
+   * match any loaded LOINC terminology returns a not-found error instead of silently falling back
+   * to the latest version.
    */
   @Test
   public void testExpandLllgValueSetWithWrongVersionNotFound() {
@@ -387,8 +389,9 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
         .mapToInt(inc -> inc.getValueSet() == null ? 0 : inc.getValueSet().size()).sum();
     assumeTrue(nestedCount >= 7, "LG47-3 hierarchical children not in index");
     assertEquals(7, nestedCount);
-    assertFalse(vs.getCompose().getInclude().stream().flatMap(inc -> inc.getConcept().stream())
-        .anyMatch(c -> c.getCode() != null && c.getCode().startsWith("LG")),
+    assertFalse(
+        vs.getCompose().getInclude().stream().flatMap(inc -> inc.getConcept().stream())
+            .anyMatch(c -> c.getCode() != null && c.getCode().startsWith("LG")),
         "Child LG codes must be valueSet references, not concepts");
   }
 
@@ -406,11 +409,12 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     assumeTrue(vs.getExpansion().getTotal() >= 76,
         "LG47-3 full expansion requires LOINC 2.78 with panel hierarchy");
     assertEquals(76, vs.getExpansion().getTotal());
-    assertFalse(vs.getExpansion().getContains().stream()
-        .anyMatch(c -> c.getCode() != null && c.getCode().startsWith("LG330")),
+    assertFalse(
+        vs.getExpansion().getContains().stream()
+            .anyMatch(c -> c.getCode() != null && c.getCode().startsWith("LG330")),
         "Expansion must not contain nested LG group codes");
-    assertTrue(vs.getExpansion().getContains().stream()
-        .anyMatch(c -> "104063-3".equals(c.getCode())),
+    assertTrue(
+        vs.getExpansion().getContains().stream().anyMatch(c -> "104063-3".equals(c.getCode())),
         "Expected leaf code 104063-3 in LG47-3 expansion");
   }
 
@@ -419,10 +423,11 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
    *
    * @throws Exception the exception
    */
+  @SuppressWarnings("null")
   @Test
   public void testValidateCodeInLg47PanelMember() throws Exception {
-    final Parameters params = provider.validateCodeInstance(request, details,
-        new IdType("LG47-3"), null, null, new CodeType("104063-3"), null, null, null, null, null);
+    final Parameters params = provider.validateCodeInstance(request, details, new IdType("LG47-3"),
+        null, null, new CodeType("104063-3"), null, null, null, null, null);
     final Parameters.ParametersParameterComponent resultParam = params.getParameter().stream()
         .filter(p -> "result".equals(p.getName())).findFirst().orElse(null);
     assumeTrue(resultParam != null && resultParam.getValue() instanceof BooleanType,
