@@ -33,6 +33,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
+import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 
@@ -47,6 +48,12 @@ import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
  */
 @TestPropertySource(properties = "fhir.loinc.lllg.valuesets.enabled=true")
 public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
+
+  /** The Constant LG_VS_URL. */
+  private static final String LG_VS_URL = "http://loinc.org?fhir_vs=LG50982-4";
+
+  /** The Constant LG_VS_ID. */
+  private static final String LG_VS_ID = "LG50982-4";
 
   /** The Constant LL_VS_URL. */
   private static final String LL_VS_URL = "http://loinc.org?fhir_vs=LL1772-4";
@@ -70,6 +77,28 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** The details. */
   private ServletRequestDetails details;
+
+  /** UUID pattern for ValueSet ids. */
+  private static final String UUID_PATTERN =
+      "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$";
+
+  /**
+   * Asserts a LOINC LL/LG ValueSet uses a Concept UUID as id and retains the code in meta.
+   *
+   * @param vs the value set
+   * @param lllgCode the expected LL/LG code
+   */
+  private static void assertLllgValueSetHasUuidId(final ValueSet vs, final String lllgCode) {
+    assertNotNull(vs.getId(), "ValueSet id should not be null");
+    assertFalse(lllgCode.equals(vs.getId()),
+        "ValueSet id should be Concept UUID, not LL/LG code " + lllgCode);
+    assertTrue(vs.getId().matches(UUID_PATTERN), "ValueSet id should be a UUID");
+    assertTrue(
+        vs.getMeta().getTag().stream()
+            .anyMatch(t -> FhirUtilityR4.META_LOINC_LLLG_ID.equals(t.getSystem())
+                && lllgCode.equals(t.getCode())),
+        "ValueSet should have loincLllgId meta tag for " + lllgCode);
+  }
 
   /**
    * Sets the up.
@@ -118,9 +147,26 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     assertTrue(
         bundle.getEntry().stream()
             .anyMatch(e -> e.getResource() instanceof ValueSet
-                && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl())
-                && LL_VS_ID.equals(e.getResource().getId())),
+                && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl())),
         "Bundle should contain LL value set for " + LL_VS_URL);
+  }
+
+  /**
+   * Test find LG value set by url uses Concept UUID as id.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindLgValueSetByUrlHasUuidId() throws Exception {
+    final UriParam url = new UriParam(LG_VS_URL);
+    final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
+        null, null, null, url, null, null, null);
+    assertNotNull(bundle);
+    final ValueSet found = bundle.getEntry().stream().map(e -> e.getResource())
+        .filter(ValueSet.class::isInstance).map(ValueSet.class::cast)
+        .filter(v -> LG_VS_URL.equals(v.getUrl())).findFirst().orElse(null);
+    assertNotNull(found, "Bundle should contain LG value set for " + LG_VS_URL);
+    assertLllgValueSetHasUuidId(found, LG_VS_ID);
   }
 
   /**
@@ -162,7 +208,9 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(vs);
     assertNotNull(vs.getExpansion(), "Expansion should be present");
     assertTrue(vs.getExpansion().getTotal() >= 0, "Total should be non-negative");
-    assertTrue(LL_VS_ID.equals(vs.getId()) || vs.getId() != null);
+    if (vs.getId() != null) {
+      assertFalse(LL_VS_ID.equals(vs.getId()), "Expanded ValueSet id should not be the LL/LG code");
+    }
     assertTrue(
         vs.getExpansion().getParameter().stream().anyMatch(p -> "offset".equals(p.getName())),
         "Expansion should have offset parameter like fhir.loinc.org");
@@ -181,13 +229,41 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
   public void testValueSetReadLllgById() throws Exception {
     final ValueSet vs = provider.getValueSet(request, details, new IdType(LL_VS_ID));
     assertNotNull(vs);
-    assertEquals(LL_VS_ID, vs.getIdPart());
     assertEquals(LL_VS_URL, vs.getUrl());
     assertTrue(
         vs.getCompose() != null && vs.getCompose().getInclude() != null
             && !vs.getCompose().getInclude().isEmpty()
             || vs.getExpansion() != null && vs.getExpansion().getContains() != null,
         "LL value set should have compose or expansion with members");
+  }
+
+  /**
+   * Test ValueSet read by LG code returns Concept UUID as id.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testValueSetReadLgById() throws Exception {
+    final ValueSet vs = provider.getValueSet(request, details, new IdType(LG_VS_ID));
+    assertNotNull(vs);
+    assertLllgValueSetHasUuidId(vs, LG_VS_ID);
+    assertEquals(LG_VS_URL, vs.getUrl());
+  }
+
+  /**
+   * Test ValueSet read by Concept UUID for LOINC LG value set.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testValueSetReadLgByUuid() throws Exception {
+    final ValueSet byCode = provider.getValueSet(request, details, new IdType(LG_VS_ID));
+    assertNotNull(byCode.getId());
+    final ValueSet byUuid = provider.getValueSet(request, details, new IdType(byCode.getId()));
+    assertNotNull(byUuid);
+    assertEquals(byCode.getId(), byUuid.getId());
+    assertEquals(LG_VS_URL, byUuid.getUrl());
+    assertLllgValueSetHasUuidId(byUuid, LG_VS_ID);
   }
 
   /**

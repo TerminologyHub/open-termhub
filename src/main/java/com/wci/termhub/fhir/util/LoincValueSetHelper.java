@@ -9,6 +9,15 @@
  */
 package com.wci.termhub.fhir.util;
 
+import static com.wci.termhub.fhir.util.LoincConstants.LOINC_PUBLISHER;
+import static com.wci.termhub.fhir.util.LoincConstants.LOINC_PUBLISHER_ALT;
+import static com.wci.termhub.fhir.util.LoincConstants.LOINC_SYSTEM;
+import static com.wci.termhub.fhir.util.LoincConstants.LOINC_SYSTEM_ALT;
+import static com.wci.termhub.fhir.util.LoincConstants.LOINC_URI;
+import static com.wci.termhub.fhir.util.LoincConstants.LOINC_VS_PATH_PREFIX;
+import static com.wci.termhub.fhir.util.LoincConstants.LOINC_VS_PATH_PREFIX_HTTPS;
+import static com.wci.termhub.fhir.util.LoincConstants.LOINC_VS_URL_PREFIX;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -46,15 +55,6 @@ public class LoincValueSetHelper {
   /** The Constant logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(LoincValueSetHelper.class);
 
-  /** URL prefix for LOINC value sets (query form). */
-  public static final String LOINC_VS_URL_PREFIX = "http://loinc.org?fhir_vs";
-
-  /** Path prefix for LOINC value set URLs (e.g. http://loinc.org/vs/LG51018-6-2.72). */
-  public static final String LOINC_VS_PATH_PREFIX = "http://loinc.org/vs/";
-
-  /** Path prefix for LOINC value set URLs (HTTPS). */
-  private static final String LOINC_VS_PATH_PREFIX_HTTPS = "https://loinc.org/vs/";
-
   /** LL pattern: LL followed by digits, hyphen, digits (e.g. LL1162-8). */
   private static final Pattern LL_PATTERN = Pattern.compile("^LL\\d+-\\d+$");
 
@@ -63,15 +63,6 @@ public class LoincValueSetHelper {
    * LG51018-6 or LG51018-6-2.78).
    */
   private static final Pattern LG_PATTERN = Pattern.compile("^LG\\d+-\\d+(-[\\d.]+)?$");
-
-  /** LOINC system abbreviation. */
-  public static final String LOINC_SYSTEM = "LOINC";
-
-  /** LOINC publisher. */
-  public static final String LOINC_PUBLISHER = "Regenstrief Institute";
-
-  /** Concept attribute for answer list ID (LOINC). */
-  public static final String ATTR_ANSWER_LIST_ID = "ANSWER_LIST_ID";
 
   /** The enabled. */
   @Value("${fhir.loinc.lllg.valuesets.enabled:false}")
@@ -399,13 +390,60 @@ public class LoincValueSetHelper {
   }
 
   /**
+   * Returns the base LL/LG code without a version suffix (e.g. LG51018-6-2.78 -> LG51018-6).
+   *
+   * @param lllgId the full id
+   * @return base code
+   */
+  public String getBaseLllgCode(final String lllgId) {
+    if (lllgId == null) {
+      return null;
+    }
+    if (getVersionFromLllgId(lllgId) != null) {
+      return lllgId.substring(0, lllgId.lastIndexOf('-'));
+    }
+    return lllgId;
+  }
+
+  /**
+   * Finds the Concept backing an LL/LG value set.
+   *
+   * @param searchService the search service
+   * @param terminology LOINC terminology
+   * @param lllgId the LL or LG id (may include version suffix for LG)
+   * @return the concept or null
+   * @throws Exception the exception
+   */
+  public Concept findLllgConcept(final EntityRepositoryService searchService,
+    final Terminology terminology, final String lllgId) throws Exception {
+    if (lllgId == null || terminology == null) {
+      return null;
+    }
+    final String baseCode = getBaseLllgCode(lllgId);
+    Concept concept = TerminologyUtility.getConcept(searchService, terminology, baseCode);
+    if (concept != null) {
+      return concept;
+    }
+    final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), "*");
+    final String query = StringUtility.composeQuery("AND", termQuery,
+        StringUtility.escapeKeywordField("code", baseCode));
+    final SearchParameters params = new SearchParameters(query, 1, 0);
+    final ResultList<Concept> result = searchService.find(params, Concept.class);
+    if (!result.getItems().isEmpty()) {
+      return result.getItems().get(0);
+    }
+    return null;
+  }
+
+  /**
    * Builds the canonical URL for an LL/LG value set id.
    *
    * @param id the id (e.g. LL1162-8)
    * @return http://loinc.org/?fhir_vs={id}
    */
   public String toLllgUrl(final String id) {
-    return id == null ? null : "http://loinc.org/?fhir_vs=" + id;
+    return id == null ? null : LOINC_URI + "/?fhir_vs=" + id;
   }
 
   /**
@@ -424,26 +462,26 @@ public class LoincValueSetHelper {
         return term;
       }
       term = TerminologyUtility.getLatestTerminologyVersion(searchService, LOINC_SYSTEM,
-          "Regenstrief Institute, Inc.");
+          LOINC_PUBLISHER_ALT);
       if (term != null) {
         return term;
       }
-      term = TerminologyUtility.getLatestTerminologyVersion(searchService, "LNC", null);
-      if (term != null && term.getUri() != null && term.getUri().contains("loinc.org")) {
+      term = TerminologyUtility.getLatestTerminologyVersion(searchService, LOINC_SYSTEM_ALT, null);
+      if (term != null && term.getUri() != null && term.getUri().contains(LOINC_URI)) {
         return term;
       }
       final SearchParameters params = new SearchParameters(
           StringUtility.escapeKeywordField("abbreviation", LOINC_SYSTEM), 50, 0);
       ResultList<Terminology> list = searchService.find(params, Terminology.class);
       List<Terminology> loincTerms = list.getItems().stream()
-          .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
+          .filter(t -> t.getUri() != null && t.getUri().contains(LOINC_URI))
           .toList();
       if (loincTerms.isEmpty()) {
         final SearchParameters lncParams = new SearchParameters(
-            StringUtility.escapeKeywordField("abbreviation", "LNC"), 50, 0);
+            StringUtility.escapeKeywordField("abbreviation", LOINC_SYSTEM_ALT), 50, 0);
         list = searchService.find(lncParams, Terminology.class);
         loincTerms = list.getItems().stream()
-            .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
+            .filter(t -> t.getUri() != null && t.getUri().contains(LOINC_URI))
             .toList();
       }
       if (loincTerms.isEmpty()) {
