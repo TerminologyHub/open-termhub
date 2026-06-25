@@ -46,7 +46,6 @@ public final class LuceneQueryBuilder {
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(LuceneQueryBuilder.class);
 
-
   /** The max clause count. */
   public static final int MAX_CLAUSE_COUNT = 32768;
 
@@ -117,6 +116,7 @@ public final class LuceneQueryBuilder {
    * @param queryText the query text
    * @param fieldAnalyzers the per-field analyzer map to augment
    */
+  @SuppressWarnings("resource")
   private static void registerAttributeFieldAnalyzers(final String queryText,
     final Map<String, Analyzer> fieldAnalyzers) {
 
