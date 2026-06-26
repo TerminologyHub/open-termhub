@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -63,6 +64,13 @@ public final class TerminologyUtility {
 
   /** The converter. */
   private static EclToLuceneConverter converter = new EclToLuceneConverter();
+
+  /**
+   * Cross-request cache of resolved {@link Terminology} keyed by
+   * terminology|publisher|version|filterUnloaded. Terminology metadata is static per version;
+   * invalidated via {@link #clearTerminologyCache()} on index mutations.
+   */
+  private static final Map<String, Terminology> TERMINOLOGY_CACHE = new ConcurrentHashMap<>();
 
   /**
    * Instantiates an empty {@link TerminologyUtility}.
@@ -172,10 +180,18 @@ public final class TerminologyUtility {
     final String terminology, final String publisher, final String version,
     final boolean filterUnloaded) throws Exception {
 
+    final String cacheKey = terminology + "|" + publisher + "|" + version + "|" + filterUnloaded;
+    final Terminology cached = TERMINOLOGY_CACHE.get(cacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
     final String terminologyQuery = getTerminologyAbbrQuery(terminology, publisher, version);
-    SearchParameters searchParameters = new SearchParameters(terminologyQuery, 2, 0);
+    final SearchParameters searchParameters = new SearchParameters(terminologyQuery, 2, 0);
     searchParameters.setFilterUnloaded(filterUnloaded);
-    logger.info("  terminology query = " + terminologyQuery);
+    if (logger.isDebugEnabled()) {
+      logger.debug("  terminology query = " + terminologyQuery);
+    }
     final ResultList<Terminology> tlist = searchService.find(searchParameters, Terminology.class);
 
     if (tlist.getItems().isEmpty()) {
@@ -186,7 +202,18 @@ public final class TerminologyUtility {
           "Too many terminology matches = " + terminology + ", " + publisher + ", " + version);
     }
 
-    return tlist.getItems().get(0);
+    final Terminology result = tlist.getItems().get(0);
+    // Only cache resolved (non-null) results so a not-yet-loaded terminology is re-queried
+    TERMINOLOGY_CACHE.put(cacheKey, result);
+    return result;
+  }
+
+  /**
+   * Clears the cross-request terminology cache. Must be invoked whenever the Terminology index is
+   * mutated (load, update, remove, reindex) to avoid returning stale metadata.
+   */
+  public static void clearTerminologyCache() {
+    TERMINOLOGY_CACHE.clear();
   }
 
   /**

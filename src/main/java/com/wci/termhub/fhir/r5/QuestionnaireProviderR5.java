@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.fhir.r4;
+package com.wci.termhub.fhir.r5;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,19 +15,19 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
-import org.hl7.fhir.r4.model.Questionnaire;
-import org.hl7.fhir.r4.model.StringType;
-import org.hl7.fhir.r4.model.UriType;
+import org.hl7.fhir.r5.model.Bundle;
+import org.hl7.fhir.r5.model.IdType;
+import org.hl7.fhir.r5.model.OperationOutcome;
+import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
+import org.hl7.fhir.r5.model.Questionnaire;
+import org.hl7.fhir.r5.model.StringType;
+import org.hl7.fhir.r5.model.UriType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincConstants;
@@ -57,13 +57,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * QuestionnaireProviderR4. Prepared for a POC. Not fully tested or implemented.
+ * QuestionnaireProviderR5. Prepared for a POC. Not fully tested or implemented.
  */
 @Component
-public class QuestionnaireProviderR4 implements IResourceProvider {
+public class QuestionnaireProviderR5 implements IResourceProvider {
 
   /** The logger. */
-  private static Logger logger = LoggerFactory.getLogger(QuestionnaireProviderR4.class);
+  private static Logger logger = LoggerFactory.getLogger(QuestionnaireProviderR5.class);
 
   /** The search service. */
   @Autowired
@@ -99,7 +99,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
 
       // Validate input parameters
       if (id == null || id.getIdPart() == null || id.getIdPart().trim().isEmpty()) {
-        throw FhirUtilityR4.exception("Questionnaire ID is required", IssueType.INVALID,
+        throw FhirUtilityR5.exception("Questionnaire ID is required", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
       }
 
@@ -111,7 +111,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
       final Concept concept =
           TerminologyUtility.getConcept(searchService, latestTerminologyVersion, conceptCode);
       if (concept == null) {
-        throw FhirUtilityR4.exception(
+        throw FhirUtilityR5.exception(
             "Questionnaire not found = " + (id == null ? "null" : id.getIdPart()),
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
@@ -119,16 +119,16 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
       // Verify the code represents a questionnaire (has PanelType:Panel
       // attribute)
       if (!isQuestionnaireConcept(concept)) {
-        throw FhirUtilityR4.exception("Concept " + conceptCode + " is not a questionnaire",
+        throw FhirUtilityR5.exception("Concept " + conceptCode + " is not a questionnaire",
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
 
       // Convert found concept to Questionnaire resource and return
       final Questionnaire questionnaire =
-          FhirUtilityR4.toR4Questionnaire(concept, searchService, latestTerminologyVersion);
+          FhirUtilityR5.toR5Questionnaire(concept, searchService, latestTerminologyVersion);
 
       // Populate with questions and answers
-      FhirUtilityR4.populateQuestionnaire(questionnaire, searchService, latestTerminologyVersion);
+      FhirUtilityR5.populateQuestionnaire(questionnaire, searchService, latestTerminologyVersion);
 
       return questionnaire;
 
@@ -136,7 +136,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
-      throw FhirUtilityR4.exception("Failed to get questionnaire",
+      throw FhirUtilityR5.exception("Failed to get questionnaire",
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
@@ -201,7 +201,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
       // Validate and process search parameters
       validateSearchParameters(count, offset);
 
-      FhirUtilityR4.notSupportedSearchParams(request);
+      FhirUtilityR5.notSupportedSearchParams(request);
 
       // Get possible questionnaires with enhanced search capabilities
       final List<Questionnaire> allQuestionnaires = findPossibleQuestionnaires(true, id, code, date,
@@ -215,13 +215,13 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
       // Create and return bundle with proper paging support
       // Note: makeBundle will handle the paging by only including the requested
       // page
-      return FhirUtilityR4.makeBundle(request, allQuestionnaires, count, offset);
+      return FhirUtilityR5.makeBundle(request, allQuestionnaires, count, offset);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {
       logger.error("Unexpected FHIR error", e);
-      throw FhirUtilityR4.exception("Failed to find questionnaires",
+      throw FhirUtilityR5.exception("Failed to find questionnaires",
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
@@ -240,11 +240,11 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
     if (count != null) {
       final int countValue = count.getValue().intValue();
       if (countValue < 0) {
-        throw FhirUtilityR4.exception("_count parameter must be non-negative", IssueType.INVALID,
+        throw FhirUtilityR5.exception("_count parameter must be non-negative", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
       }
       if (countValue > 2000) {
-        throw FhirUtilityR4.exception("_count parameter cannot exceed 2000", IssueType.INVALID,
+        throw FhirUtilityR5.exception("_count parameter cannot exceed 2000", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
       }
     }
@@ -253,7 +253,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
     if (offset != null) {
       final int offsetValue = offset.getValue().intValue();
       if (offsetValue < 0) {
-        throw FhirUtilityR4.exception("_offset parameter must be non-negative", IssueType.INVALID,
+        throw FhirUtilityR5.exception("_offset parameter must be non-negative", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
       }
     }
@@ -352,7 +352,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
   private Terminology requireLoincTerminology() throws FHIRServerResponseException {
     final Terminology terminology = loincValueSetHelper.findLoincTerminology(searchService);
     if (terminology == null) {
-      throw FhirUtilityR4.exception("LOINC terminology not found", IssueType.NOTFOUND,
+      throw FhirUtilityR5.exception("LOINC terminology not found", IssueType.NOTFOUND,
           HttpServletResponse.SC_NOT_FOUND);
     }
     return terminology;
@@ -416,9 +416,9 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
             TerminologyUtility.getConcept(searchService, loincTerminology, codeValue);
 
         if (concept != null && isQuestionnaireConcept(concept)) {
-          final Questionnaire questionnaire = FhirUtilityR4.toR4Questionnaire(concept, searchService,
+          final Questionnaire questionnaire = FhirUtilityR5.toR5Questionnaire(concept, searchService,
               loincTerminology);
-          FhirUtilityR4.populateQuestionnaire(questionnaire, searchService, loincTerminology);
+          FhirUtilityR5.populateQuestionnaire(questionnaire, searchService, loincTerminology);
           list.add(questionnaire);
         }
       } catch (final Exception e) {
@@ -441,7 +441,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
       }
 
       final Questionnaire questionnaire =
-          FhirUtilityR4.toR4Questionnaire(concept, searchService, loincTerminology);
+          FhirUtilityR5.toR5Questionnaire(concept, searchService, loincTerminology);
 
       // Apply filtering based on search criteria
       if (!matchesSearchCriteria(questionnaire, id, code, date, description, identifier, name,

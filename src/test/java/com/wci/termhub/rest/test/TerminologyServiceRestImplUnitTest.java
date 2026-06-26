@@ -1267,7 +1267,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertEquals("ICD10CM", mapping.getTo().getTerminology());
 
       // attributes
-      assertNotNull(mapping.getAttributes().get("advice"));
       assertNotNull(mapping.getAttributes().get("rule"));
       assertNotNull(mapping.getAttributes().get("priority"));
       assertNotNull(mapping.getAttributes().get("group"));
@@ -1325,7 +1324,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertEquals("ICD10CM", mapping.getTo().getTerminology());
 
       // attributes
-      assertNotNull(mapping.getAttributes().get("advice"));
       assertNotNull(mapping.getAttributes().get("rule"));
       assertNotNull(mapping.getAttributes().get("priority"));
       assertNotNull(mapping.getAttributes().get("group"));

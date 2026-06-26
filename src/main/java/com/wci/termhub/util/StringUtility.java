@@ -520,6 +520,29 @@ public final class StringUtility {
   }
 
   /**
+   * Derives a title/abbreviation from a canonical URL when title is absent: last path segment,
+   * uppercased, spaces replaced with dashes.
+   *
+   * @param url the resource url
+   * @return derived title, or null/empty when url is null or empty
+   */
+  public static String deriveTitleFromUrl(final String url) {
+    if (isEmpty(url)) {
+      return url;
+    }
+    String path = url;
+    while (path.endsWith("/")) {
+      path = path.substring(0, path.length() - 1);
+    }
+    final int slash = path.lastIndexOf('/');
+    final String segment = slash >= 0 ? path.substring(slash + 1) : path;
+    if (isEmpty(segment)) {
+      return segment;
+    }
+    return segment.toUpperCase().replace(' ', '-');
+  }
+
+  /**
    * Returns the profile.
    *
    * @param string the string

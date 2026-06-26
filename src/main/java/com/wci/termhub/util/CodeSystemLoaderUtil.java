@@ -37,6 +37,7 @@ import com.wci.termhub.algo.TerminologyCache;
 import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
+import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
@@ -182,7 +183,11 @@ public final class CodeSystemLoaderUtil {
       }
 
       // check for existing
-      final String abbreviation = jsonContent.path("title").asText();
+      final String url = jsonContent.path("url").asText();
+      String abbreviation = jsonContent.path("title").asText();
+      if (StringUtility.isEmpty(abbreviation)) {
+        abbreviation = StringUtility.deriveTitleFromUrl(url);
+      }
       final String publisher = jsonContent.path("publisher").asText();
       final String version = jsonContent.path("version").asText();
       Terminology terminology = findTerminology(service, abbreviation, publisher, version);
@@ -467,7 +472,11 @@ public final class CodeSystemLoaderUtil {
     terminology.setActive(true);
     terminology.setUri(root.path("url").asText());
     terminology.setName(root.path("name").asText());
-    terminology.setAbbreviation(root.path("title").asText());
+    String abbreviation = root.path("title").asText();
+    if (StringUtility.isEmpty(abbreviation)) {
+      abbreviation = StringUtility.deriveTitleFromUrl(terminology.getUri());
+    }
+    terminology.setAbbreviation(abbreviation);
     terminology.setPublisher(root.path("publisher").asText());
     terminology.setVersion(root.path("version").asText());
     // For SNOMED, set the terminology version to just the base version at the
@@ -704,15 +713,28 @@ public final class CodeSystemLoaderUtil {
         continue;
       }
 
-      // Redirect semantic type
+      // Redirect semantic type (also store as attribute for $lookup / $expand)
       if ("semanticType".equals(code)) {
-        concept.getSemanticTypes().add(value);
+        if (value != null) {
+          concept.getSemanticTypes().add(value);
+          concept.getAttributes().put(code, value);
+        }
       }
-      // redirect active and "status"
-      else if ("active".equals(code) || "status".equals(code)) {
-        // already handled by cacheConcept
-        continue;
-        // concept.setActive(Boolean.valueOf(value));
+      else if ("status".equals(code)) {
+        if (property.has("valueCode")) {
+          final String statusCode = property.path("valueCode").asText();
+          concept.setActive("active".equalsIgnoreCase(statusCode));
+          concept.getAttributes().put("status", statusCode);
+        } else if (value != null) {
+          concept.setActive("active".equalsIgnoreCase(value) || Boolean.parseBoolean(value));
+          concept.getAttributes().put("status", value);
+        }
+      }
+      else if ("active".equals(code)) {
+        // active flag already set from cacheConcept
+        if (value != null) {
+          concept.getAttributes().put("active", value);
+        }
       }
       // redirect defined
       else if ("sufficientlyDefined".equals(code)) {
@@ -731,6 +753,9 @@ public final class CodeSystemLoaderUtil {
       // anything that has a value other than "valueCode" or "valueCoding" is a property
       else if (!property.has("valueCode") && !property.has("valueCoding")) {
         concept.getAttributes().put(code, value);
+      }
+      else if (property.has("valueCode")) {
+        concept.getAttributes().put(code, property.path("valueCode").asText());
       }
 
     }
@@ -857,6 +882,11 @@ public final class CodeSystemLoaderUtil {
       // redirect active
       if ("active".equals(code)) {
         concept.setActive(Boolean.valueOf(value));
+      }
+      // FHIR standard status (valueCode active/inactive) drives concept active flag
+      else if ("status".equals(code) && property.has("valueCode")) {
+        final String statusCode = property.path("valueCode").asText();
+        concept.setActive("active".equalsIgnoreCase(statusCode));
       }
       // redirect defined
       else if ("sufficientlyDefined".equals(code)) {
@@ -1178,6 +1208,16 @@ public final class CodeSystemLoaderUtil {
           final JsonNode valueBoolean = extension.path("valueBoolean");
           if (!valueBoolean.isMissingNode() && valueBoolean.asBoolean()) {
             isHistorical = true;
+          }
+        } else if (url.contains("/relationship/attribute/")) {
+          final String attrName = url.substring(url.lastIndexOf('/') + 1);
+          if (extension.has("valueString")) {
+            final String attrValue = extension.path("valueString").asText();
+            if ("SEQUENC#".equals(attrName)) {
+              relationship.getAttributes().put(LoincConstants.ATTR_SEQ_NO, attrValue);
+            } else {
+              relationship.getAttributes().put(attrName, attrValue);
+            }
           }
         }
       }

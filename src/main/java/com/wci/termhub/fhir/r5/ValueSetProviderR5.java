@@ -147,7 +147,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
         } else {
           final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
           if (loinc != null) {
-            final int memberLimit = 10_000;
+            final int memberLimit = 100_000;
             final ResultList<Concept> list =
                 loincValueSetHelper.findLllgMembers(searchService, loinc, idPart, 0, memberLimit);
             final List<Concept> items = new ArrayList<>(list.getItems());
@@ -156,7 +156,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
                 loincValueSetHelper.buildLllgComposeStructure(items);
             logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}",
                 idPart, items.size());
-            return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loinc, idPart, composeStructure);
+            final Concept lllgConcept =
+                loincValueSetHelper.findLllgConcept(searchService, loinc, idPart);
+            final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
+            return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loinc, idPart, valueSetId,
+                composeStructure);
           }
           logger.debug("GET ValueSet/{}: LL/LG path skipped (LOINC terminology not found)", idPart);
         }
@@ -167,11 +171,36 @@ public class ValueSetProviderR5 implements IResourceProvider {
       if (vs != null && vs.getId().endsWith("_entire")) {
         return vs;
       }
+      // 2.5 LOINC LL/LG by Concept UUID
+      if (idPart != null && loincValueSetHelper.isEnabled()) {
+        final Concept concept = searchService.get(idPart, Concept.class);
+        if (concept != null && concept.getCode() != null
+            && loincValueSetHelper.isLllgId(concept.getCode())) {
+          Terminology loincTerm = TerminologyUtility.getTerminology(searchService,
+              concept.getTerminology(), concept.getPublisher(), concept.getVersion());
+          if (loincTerm == null) {
+            loincTerm = loincValueSetHelper.findLoincTerminology(searchService);
+          }
+          if (loincTerm != null) {
+            final int memberLimit = 10_000;
+            final ResultList<Concept> list = loincValueSetHelper.findLllgMembers(searchService,
+                loincTerm, concept.getCode(), 0, memberLimit);
+            final List<Concept> items = new ArrayList<>(list.getItems());
+            loincValueSetHelper.sortDirectLllgMembers(concept.getCode(), items);
+            final LoincValueSetHelper.LllgComposeStructure composeStructure =
+                loincValueSetHelper.buildLllgComposeStructure(items);
+            logger.info("GET ValueSet/{}: returning LL/LG compose by concept UUID, members={}",
+                idPart, items.size());
+            return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loincTerm, concept.getCode(),
+                concept.getId(), composeStructure);
+          }
+        }
+      }
       // 3. Check explicit subsets
       final Subset subset = idPart != null ? searchService.get(idPart, Subset.class) : null;
       if (subset != null) {
         final List<SubsetMember> members = findSubsetMembersForSubset(subset);
-        return FhirUtilityR5.toR5ValueSet(subset, members, false);
+        return FhirUtilityR5.toR5ValueSet(subset, members, false, searchService);
       }
       throw FhirUtilityR5.exception("Value set not found = " + (idPart == null ? "null" : idPart),
           IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
@@ -615,8 +644,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
             "Cannot delete implicit value set for code system = " + id.getIdPart(),
             IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
       }
-      if (valueSet != null && valueSet.getMeta() != null && valueSet.getMeta().getTag().stream()
-          .anyMatch(t -> FhirUtilityR5.META_LOINC_LLLG_ID.equals(t.getSystem()))) {
+      if (valueSet != null && loincValueSetHelper.isEnabled()
+          && (loincValueSetHelper.isLllgValueSetUrl(valueSet.getUrl())
+              || loincValueSetHelper.isLllgId(valueSet.getId()))) {
         throw FhirUtilityR5.exception("Cannot delete LOINC LL/LG value set = " + id.getIdPart(),
             IssueType.NOTSUPPORTED, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
       }
@@ -691,86 +721,88 @@ public class ValueSetProviderR5 implements IResourceProvider {
     }
 
     // LOINC LL/LG expansion (Regenstrief mode)
-    if (loincValueSetHelper.isEnabled() && vs.getMeta() != null && vs.getMeta().getTag().stream()
-        .anyMatch(t -> FhirUtilityR5.META_LOINC_LLLG_ID.equals(t.getSystem()))) {
-      final String lllgId = vs.getMeta().getTag().stream()
-          .filter(t -> FhirUtilityR5.META_LOINC_LLLG_ID.equals(t.getSystem())).findFirst().get()
-          .getCode();
-      final String fromTerminology = vs.getMeta().getTag().stream()
-          .filter(t -> "fromTerminology".equals(t.getSystem())).findFirst().get().getCode();
-      final String fromPublisher = vs.getMeta().getTag().stream()
-          .filter(t -> "fromPublisher".equals(t.getSystem())).findFirst().get().getCode();
-      final String fromVersion = vs.getMeta().getTag().stream()
-          .filter(t -> "fromVersion".equals(t.getSystem())).findFirst().get().getCode();
-      final Terminology terminology = TerminologyUtility.getTerminology(searchService,
-          fromTerminology, fromPublisher, fromVersion);
-      final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
-      final ResultList<Concept> directList = loincValueSetHelper.findLllgMembers(searchService,
-          terminology, lllgId, 0, 100_000);
-      final List<Concept> directItems = new ArrayList<>(directList.getItems());
-      loincValueSetHelper.sortDirectLllgMembers(lllgId, directItems);
-      final LoincValueSetHelper.LllgComposeStructure composeStructure =
-          loincValueSetHelper.buildLllgComposeStructure(directItems);
-      final String filterValue = filter != null ? filter.getValue() : null;
-      final LoincValueSetHelper.ExpandedLllgResult expanded = loincValueSetHelper.expandLllgLeaves(
-          searchService, terminology, lllgId, offset, ct, filterValue);
-      final List<Concept> items = expanded.getItems();
-      final String systemUri = terminology.getUri();
-      if (systemUri != null) {
-        FhirUtilityR5.setR5LllgCompose(vs, systemUri, composeStructure);
+    if (loincValueSetHelper.isEnabled()) {
+      String lllgId = loincValueSetHelper.parseIdFromUrl(vs.getUrl());
+      if (lllgId == null && loincValueSetHelper.isLllgId(vs.getId())) {
+        lllgId = vs.getId();
       }
-      final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
-      expansion.setId(UUID.randomUUID().toString());
-      expansion.setTimestamp(new Date());
-      expansion.setTotal(expanded.getTotal());
-      expansion.setOffset(offset);
-      expansion.addParameter(new ValueSetExpansionParameterComponent().setName("offset")
-          .setValue(new IntegerType(offset)));
-      if (filter != null) {
+      if (lllgId != null && loincValueSetHelper.isLllgId(lllgId)) {
+        final Terminology terminology = resolveLllgTerminology(vs);
+        if (terminology == null) {
+          throw FhirUtilityR5.exception("Failed to find LOINC terminology for value set",
+              OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+        }
+        final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
+        final ResultList<Concept> directList = loincValueSetHelper.findLllgMembers(searchService,
+            terminology, lllgId, 0, 100_000);
+        final List<Concept> directItems = new ArrayList<>(directList.getItems());
+        loincValueSetHelper.sortDirectLllgMembers(lllgId, directItems);
+        final LoincValueSetHelper.LllgComposeStructure composeStructure =
+            loincValueSetHelper.buildLllgComposeStructure(directItems);
+        final String filterValue = filter != null ? filter.getValue() : null;
+        final LoincValueSetHelper.ExpandedLllgResult expanded = loincValueSetHelper.expandLllgLeaves(
+            searchService, terminology, lllgId, offset, ct, filterValue);
+        final List<Concept> items = expanded.getItems();
+        final String systemUri = terminology.getUri();
+        if (systemUri != null) {
+          FhirUtilityR5.setR5LllgCompose(vs, systemUri, composeStructure);
+        }
+        final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
+        expansion.setId(UUID.randomUUID().toString());
+        expansion.setTimestamp(new Date());
+        expansion.setTotal(expanded.getTotal());
+        expansion.setOffset(offset);
+        expansion.addParameter(new ValueSetExpansionParameterComponent().setName("offset")
+            .setValue(new IntegerType(offset)));
+        if (filter != null) {
+          expansion.addParameter(
+              new ValueSetExpansionParameterComponent().setName("filter").setValue(filter));
+        }
         expansion.addParameter(
-            new ValueSetExpansionParameterComponent().setName("filter").setValue(filter));
-      }
-      expansion.addParameter(
-          new ValueSetExpansionParameterComponent().setName("count").setValue(new IntegerType(ct)));
-      if (version != null) {
-        expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
-            .setValue(new StringType(version.getValue())));
-      }
-      for (final Concept concept : items) {
-        final ValueSetExpansionContainsComponent code =
-            new ValueSetExpansionContainsComponent().setSystem(terminology.getUri())
-                .setCode(concept.getCode()).setDisplay(concept.getName());
-        if (languages != null) {
-          final boolean isLoinc =
-              terminology.getUri() != null && terminology.getUri().contains("loinc.org");
-          for (final Term term : concept.getTerms()) {
-            if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
-              final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService,
-                  concept.getTerminology(), concept.getPublisher(), concept.getVersion());
-              final Coding coding = new Coding();
-              coding.setCode(term.getType());
-              if (isLoinc) {
-                coding.setDisplay(term.getType());
-              } else {
-                final String useDisplay = term.getAttributes().get("designationUseDisplay");
-                if (useDisplay != null) {
-                  coding.setDisplay(useDisplay);
-                } else if (displayMap.containsKey(term.getType())) {
-                  coding.setDisplay(displayMap.get(term.getType()));
+            new ValueSetExpansionParameterComponent().setName("count").setValue(new IntegerType(ct)));
+        if (version != null) {
+          expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
+              .setValue(new StringType(version.getValue())));
+        }
+        for (final Concept concept : items) {
+          final ValueSetExpansionContainsComponent code =
+              new ValueSetExpansionContainsComponent().setSystem(terminology.getUri())
+                  .setCode(concept.getCode()).setDisplay(concept.getName());
+          if (languages != null) {
+            final boolean isLoinc =
+                terminology.getUri() != null && terminology.getUri().contains("loinc.org");
+            for (final Term term : concept.getTerms()) {
+              if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
+                final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService,
+                    concept.getTerminology(), concept.getPublisher(), concept.getVersion());
+                final Coding coding = new Coding();
+                coding.setCode(term.getType());
+                if (isLoinc) {
+                  coding.setDisplay(term.getType());
+                } else {
+                  final String useDisplay = term.getAttributes().get("designationUseDisplay");
+                  if (useDisplay != null) {
+                    coding.setDisplay(useDisplay);
+                  } else if (displayMap.containsKey(term.getType())) {
+                    coding.setDisplay(displayMap.get(term.getType()));
+                  }
                 }
+                code.addDesignation(new ConceptReferenceDesignationComponent()
+                    .setLanguage(
+                        Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
+                    .setUse(coding).setValue(term.getName()));
               }
-              code.addDesignation(new ConceptReferenceDesignationComponent()
-                  .setLanguage(
-                      Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
-                  .setUse(coding).setValue(term.getName()));
             }
           }
+          expansion.addContains(code);
         }
-        expansion.addContains(code);
+        vs.setExpansion(expansion);
+        if (loincValueSetHelper.isLgId(lllgId)) {
+          vs.setExperimental(true);
+        }
+        vs.setMeta(null);
+        return vs;
       }
-      vs.setExpansion(expansion);
-      vs.setMeta(null);
-      return vs;
     }
 
     // Perform the expansion
@@ -871,7 +903,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
     final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
     expansion.setId(UUID.randomUUID().toString());
     expansion.setTimestamp(new Date());
-    expansion.setTotal((int) list.getTotal());
+    expansion.setTotal((int) Math.min(list.getTotal(), Integer.MAX_VALUE));
     expansion.setOffset(offset);
     // set count
     expansion.addParameter(
@@ -1319,7 +1351,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // final List<SubsetMember> members =
       // searchService.findAll(memberParams, SubsetMember.class).getItems();
       final ValueSet set =
-          FhirUtilityR5.toR5ValueSet(subset, new ArrayList<SubsetMember>(0), metaFlag);
+          FhirUtilityR5.toR5ValueSet(subset, new ArrayList<SubsetMember>(0), metaFlag, searchService);
       // Apply the same filtering as above
       if ((id != null && !id.getValue().equals(set.getId()))
           || (url != null && !url.getValue().equals(set.getUrl()))) {
@@ -1399,9 +1431,14 @@ public class ValueSetProviderR5 implements IResourceProvider {
             loincForLllg = loinc;
           }
           if (loincForLllg != null) {
-            final ValueSet lllgVs = FhirUtilityR5.toR5LllgValueSet(loincForLllg, lllgId, metaFlag);
-            final boolean idUrlMatch = (id == null || id.getValue().equals(lllgVs.getId()))
-                && (url == null || url.getValue().equals(lllgVs.getUrl()));
+            final Concept lllgConcept =
+                loincValueSetHelper.findLllgConcept(searchService, loincForLllg, lllgId);
+            final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
+            final ValueSet lllgVs =
+                FhirUtilityR5.toR5LllgValueSet(loincForLllg, lllgId, valueSetId, metaFlag);
+            final boolean idUrlMatch =
+                (id == null || FhirUtilityR5.matchesLllgValueSetId(id.getValue(), lllgVs))
+                    && (url == null || url.getValue().equals(lllgVs.getUrl()));
             final boolean dateMatch =
                 date == null || FhirUtility.compareDate(date, lllgVs.getDate());
             final boolean versionMatch =
@@ -1420,22 +1457,23 @@ public class ValueSetProviderR5 implements IResourceProvider {
             }
           }
         } else if (loincValueSetHelper.isEnabled()) {
-          // General listing: enumerate LG concepts from every loaded LOINC version so that an
+          // General listing: enumerate LL/LG concepts from every loaded LOINC version so that an
           // unfiltered GET /ValueSet returns codes from all versions, and a version-filtered request
           // returns only the matching subset.
           final List<Terminology> loincTerminologies = allTerminologies.stream()
               .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org")).toList();
           for (final Terminology loincTerm : loincTerminologies) {
             final ResultList<Concept> lllgConcepts =
-                loincValueSetHelper.findAllLgConcepts(searchService, loincTerm, 10_000, 0);
+                loincValueSetHelper.findAllLllgConcepts(searchService, loincTerm, 10_000, 0);
             for (final Concept concept : lllgConcepts.getItems()) {
               if (!loincValueSetHelper.isLllgId(concept.getCode())) {
                 continue;
               }
               final ValueSet lgVs =
                   FhirUtilityR5.toR5LllgValueSetFromConcept(loincTerm, concept, metaFlag);
-              final boolean idUrlMatch = (id == null || id.getValue().equals(lgVs.getId()))
-                  && (url == null || url.getValue().equals(lgVs.getUrl()));
+              final boolean idUrlMatch =
+                  (id == null || FhirUtilityR5.matchesLllgValueSetId(id.getValue(), lgVs))
+                      && (url == null || url.getValue().equals(lgVs.getUrl()));
               final boolean dateMatch =
                   date == null || FhirUtility.compareDate(date, lgVs.getDate());
               final boolean versionMatch =
@@ -1460,6 +1498,45 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
     return list;
 
+  }
+
+  /**
+   * Resolves LOINC terminology for an LL/LG ValueSet from meta tags or resource fields.
+   *
+   * @param vs the value set
+   * @return the terminology, or null if not found
+   * @throws Exception the exception
+   */
+  private Terminology resolveLllgTerminology(final ValueSet vs) throws Exception {
+    if (vs.getMeta() != null) {
+      final String fromTerminology = vs.getMeta().getTag().stream()
+          .filter(t -> "fromTerminology".equals(t.getSystem())).map(t -> t.getCode()).findFirst()
+          .orElse(null);
+      final String fromPublisher = vs.getMeta().getTag().stream()
+          .filter(t -> "fromPublisher".equals(t.getSystem())).map(t -> t.getCode()).findFirst()
+          .orElse(null);
+      final String fromVersion = vs.getMeta().getTag().stream()
+          .filter(t -> "fromVersion".equals(t.getSystem())).map(t -> t.getCode()).findFirst()
+          .orElse(null);
+      if (fromTerminology != null && fromPublisher != null && fromVersion != null) {
+        final Terminology fromMeta = TerminologyUtility.getTerminology(searchService,
+            fromTerminology, fromPublisher, fromVersion);
+        if (fromMeta != null) {
+          return fromMeta;
+        }
+      }
+    }
+    if (vs.getPublisher() != null && vs.getVersion() != null) {
+      final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
+      if (loinc != null) {
+        final Terminology fromFields = TerminologyUtility.getTerminology(searchService,
+            loinc.getAbbreviation(), vs.getPublisher(), vs.getVersion());
+        if (fromFields != null) {
+          return fromFields;
+        }
+      }
+    }
+    return loincValueSetHelper.findLoincTerminology(searchService);
   }
 
 }

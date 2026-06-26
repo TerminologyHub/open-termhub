@@ -27,6 +27,7 @@ import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.Test;
 
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.util.DateUtility;
@@ -142,11 +143,34 @@ public class FhirUtilityR4MetaUnitTest {
     assertEquals(valueSet, cs.getValueSet());
     assertNotNull(cs.getContact());
     assertTrue(cs.getContact().size() >= 1);
+    assertEquals("Regenstrief Institute, Inc.", cs.getContact().get(0).getName());
     assertNotNull(cs.getContact().get(0).getTelecom());
     assertTrue(cs.getContact().get(0).getTelecom().size() >= 1);
     assertEquals("http://loinc.org", cs.getContact().get(0).getTelecom().get(0).getValue());
     assertFalse(cs.getCaseSensitive());
     assertFalse(cs.getVersionNeeded());
+  }
+
+  /**
+   * Test LOINC LL/LG ValueSet contact from terminology publisher and uri.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testLllgValueSetContact() throws Exception {
+    final Terminology terminology = new Terminology();
+    terminology.setUri("http://loinc.org");
+    terminology.setVersion("2.78");
+    terminology.setPublisher("Regenstrief Institute, Inc.");
+    terminology.setReleaseDate("2022-04-11");
+    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final ValueSet vs =
+        FhirUtilityR4.toR4LllgValueSet(terminology, "LG10030-1", "test-uuid", false);
+
+    assertNotNull(vs.getContact());
+    assertEquals("Regenstrief Institute, Inc.", vs.getContactFirstRep().getName());
+    assertEquals("http://loinc.org", vs.getContactFirstRep().getTelecomFirstRep().getValue());
   }
 
   /**
@@ -208,6 +232,8 @@ public class FhirUtilityR4MetaUnitTest {
    */
   @Test
   public void testQuestionnaireMeta() throws Exception {
+    final String copyright =
+        "This material contains content from LOINC (http://loinc.org). LOINC is copyright Regenstrief Institute, Inc.";
     final Terminology terminology = new Terminology();
     terminology.setId("test-cs");
     terminology.setReleaseDate("2022-04-11");
@@ -216,12 +242,40 @@ public class FhirUtilityR4MetaUnitTest {
     terminology.setName("Test CodeSystem");
     terminology.setAbbreviation("TCS");
     terminology.setPublisher("Test");
-    terminology.setAttributes(new HashMap<>());
+    final Map<String, String> attrs = new HashMap<>();
+    attrs.put("copyright", copyright);
+    terminology.setAttributes(attrs);
     terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final Questionnaire q = FhirUtilityR4.toR4Questionnaire(terminology, true);
     assertNotNull(q.getMeta());
     assertEquals("1", q.getMeta().getVersionId());
     assertNotNull(q.getMeta().getLastUpdated());
+    assertNotNull(q.getDate());
+    assertEquals(q.getDate(), q.getMeta().getLastUpdated());
+    assertEquals(copyright, q.getCopyright());
+  }
+
+  /**
+   * Test Questionnaire name/title from LOINC SHORTNAME (short common name).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testQuestionnaireNameTitleFromShortName() throws Exception {
+    final Concept concept = new Concept();
+    concept.setCode("100105-6");
+    concept.setName("Filaria IgG and IgM panel - Serum");
+    concept.setTerminology("LOINC");
+    concept.setPublisher("Regenstrief Institute, Inc.");
+    concept.setVersion("2.81");
+    final Map<String, String> attrs = new HashMap<>();
+    attrs.put("SHORTNAME", "Filaria Ab.IgG + IgM Pnl Ser");
+    concept.setAttributes(attrs);
+
+    final Questionnaire q = FhirUtilityR4.toR4Questionnaire(concept, null, null);
+    assertEquals("Filaria_Ab_IgG_IgM_Pnl_Ser", q.getName());
+    assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getTitle());
+    assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getCodeFirstRep().getDisplay());
   }
 }

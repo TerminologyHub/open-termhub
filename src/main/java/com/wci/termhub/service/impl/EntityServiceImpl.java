@@ -28,9 +28,11 @@ import com.wci.termhub.model.HasId;
 import com.wci.termhub.model.HasModified;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.service.FindCallbackHandler;
 import com.wci.termhub.util.ModelUtility;
+import com.wci.termhub.util.TerminologyUtility;
 
 /**
  * Entity service implementation.
@@ -59,6 +61,17 @@ public class EntityServiceImpl implements EntityRepositoryService {
    */
   public void setFindAllPageSize(final int pageSize) {
     findAllPageSize = pageSize;
+  }
+
+  /**
+   * Invalidate the cross-request terminology metadata cache when the Terminology index is mutated.
+   *
+   * @param clazz the entity class being mutated
+   */
+  private static void invalidateMetadataCaches(final Class<? extends HasId> clazz) {
+    if (Terminology.class.equals(clazz)) {
+      TerminologyUtility.clearTerminologyCache();
+    }
   }
 
   /**
@@ -93,6 +106,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     luceneDataAccess.deleteIndex(clazz);
+    invalidateMetadataCaches(clazz);
   }
 
   /* see superclass */
@@ -105,6 +119,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
       LOGGER.debug("    ADD {} entity to index {}", entity, clazz.getSimpleName());
     }
     luceneDataAccess.add(entity);
+    invalidateMetadataCaches(clazz);
   }
 
   /* see superclass */
@@ -120,6 +135,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
       LOGGER.debug("    ADD {} entities to index: {}", clazz.getSimpleName(), entity.size());
     }
     luceneDataAccess.add(entity);
+    invalidateMetadataCaches(clazz);
   }
 
   /* see superclass */
@@ -132,6 +148,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
       LOGGER.debug("    UPDATE {} entity to index {}", entity, clazz.getSimpleName());
     }
     luceneDataAccess.update(clazz, id, entity);
+    invalidateMetadataCaches(clazz);
   }
 
   /* see superclass */
@@ -145,6 +162,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
           clazz.getSimpleName());
     }
     luceneDataAccess.updateBulk(clazz, entities);
+    invalidateMetadataCaches(clazz);
   }
 
   /* see superclass */
@@ -158,6 +176,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
           clazz.getSimpleName());
     }
     luceneDataAccess.addField(clazz, id, entity, fieldName);
+    invalidateMetadataCaches(clazz);
   }
 
   /* see superclass */
@@ -213,6 +232,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
 
     checkIfEntityHasDocumentAnnotation(clazz);
     luceneDataAccess.remove(clazz, id);
+    invalidateMetadataCaches(clazz);
   }
 
   /* see superclass */
@@ -221,7 +241,7 @@ public class EntityServiceImpl implements EntityRepositoryService {
     throws Exception {
     checkIfEntityHasDocumentAnnotation(clazz);
     luceneDataAccess.remove(clazz, ids);
-
+    invalidateMetadataCaches(clazz);
   }
 
   /**

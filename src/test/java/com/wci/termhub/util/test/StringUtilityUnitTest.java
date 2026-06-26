@@ -61,6 +61,19 @@ public class StringUtilityUnitTest {
   }
 
   /**
+   * Test derive title from url.
+   */
+  @Test
+  public void testDeriveTitleFromUrl() {
+    assertEquals("CMS-IRF-PAI-TO-LOINC",
+        StringUtility.deriveTitleFromUrl("http://loinc.org/cm/cms-irf-pai-to-loinc"));
+    assertEquals("MY-CODE", StringUtility.deriveTitleFromUrl("http://example.com/my code"));
+    assertEquals("SEGMENT", StringUtility.deriveTitleFromUrl("http://example.com/segment/"));
+    assertTrue(StringUtility.isEmpty(StringUtility.deriveTitleFromUrl(null)));
+    assertTrue(StringUtility.isEmpty(StringUtility.deriveTitleFromUrl("")));
+  }
+
+  /**
    * Test string normalization.
    */
   @Test
