@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptPropertyValueCoding;
 
 /**
  * Unit tests for LOINC status / STATUS handling in {@link FhirUtilityR4}
@@ -219,5 +220,29 @@ public class FhirUtilityR4LoincLookupUnitTest {
         statusProp.getPart().stream()
             .filter(part -> "value".equals(part.getName()) && part.getValue() instanceof CodeType)
             .map(part -> ((CodeType) part.getValue()).getValue()).findFirst().orElse(null));
+  }
+
+  /**
+   * Panel member properties stored in fhirPropertyCodings must not appear on $lookup.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testLookupSuppressesMemberPropertyFromFhirPropertyCodings() throws Exception {
+    final Concept concept = new Concept();
+    concept.setCode("LG33055-1");
+    concept.setName("CMS Assessment panel");
+    concept.setActive(true);
+    final ConceptPropertyValueCoding member = new ConceptPropertyValueCoding();
+    member.setPropertyCode("member");
+    member.setValueCode("101351-5");
+    member.setValueDisplay(
+        "Has lack of transportation kept you from medical appointments, meetings, work, or from getting things needed for daily living during assessment period [CMS Assessment]");
+    concept.getFhirPropertyCodings().add(member);
+
+    final Parameters parameters = FhirUtilityR4.toR4(loincCodeSystem(), concept, null, Map.of(),
+        List.of(), List.of(), null, null, false);
+
+    assertFalse(propertyCodes(parameters).contains("member"));
   }
 }
