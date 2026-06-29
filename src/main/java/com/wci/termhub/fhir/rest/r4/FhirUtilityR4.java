@@ -108,13 +108,6 @@ public final class FhirUtilityR4 {
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR4.class);
 
   /**
-   * Uppercase LOINC property codes that duplicate lowercase {@code valueCoding} axes in the same
-   * CodeSystem (legacy string row vs part code row).
-   */
-  private static final Set<String> LOINC_UPPERCASE_PROPERTY_KEYS =
-      Set.of("CLASS", "COMPONENT", "METHOD_TYP", "PROPERTY", "SCALE_TYP", "SYSTEM", "TIME_ASPCT");
-
-  /**
    * Instantiates an empty {@link FhirUtilityR4}.
    */
   private FhirUtilityR4() {
@@ -726,8 +719,7 @@ public final class FhirUtilityR4 {
         if (codingCode == null) {
           continue;
         }
-        // parent is emitted only from the hierarchical relationship index below
-        if ("parent".equals(propertyCode)) {
+        if (LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput(propertyCode)) {
           continue;
         }
         String display =
@@ -775,9 +767,8 @@ public final class FhirUtilityR4 {
       // For LOINC: properties with valueCoding use valueCoding, others use
       // valueString
       if (isLoinc) {
-        // parent/child are emitted only from the hierarchical relationship index below
         final String loincPropName = loincLookupPropertyName(key);
-        if ("parent".equals(loincPropName) || "child".equals(loincPropName)) {
+        if (LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput(loincPropName)) {
           continue;
         }
         String codingCode = null;
@@ -891,7 +882,8 @@ public final class FhirUtilityR4 {
    */
   private static boolean isLoincLegacyStringSupersededByValueCoding(final String key,
     final String value, final Concept concept) {
-    if (key == null || value == null || !LOINC_UPPERCASE_PROPERTY_KEYS.contains(key)) {
+    if (key == null || value == null
+        || !LoincConstants.LOINC_UPPERCASE_PROPERTY_KEYS.contains(key)) {
       return false;
     }
     final String canonical = key.toLowerCase(Locale.ROOT);
@@ -1707,16 +1699,22 @@ public final class FhirUtilityR4 {
       final Mapping first = elementMappings.get(0);
       final ConceptMap.SourceElementComponent element = group.addElement();
       element.setCode(first.getFrom().getCode());
-      element.setDisplay(first.getFrom().getName() != null ? first.getFrom().getName()
-          : first.getFrom().getCode());
+      final String fromDisplay = first.getFrom().getName();
+      if (!StringUtility.isEmpty(fromDisplay)) {
+        element.setDisplay(fromDisplay);
+      }
 
       for (final Mapping m : elementMappings) {
         final ConceptMap.TargetElementComponent target = element.addTarget();
         if (m.getTo() != null && m.getTo().getCode() != null) {
           target.setCode(m.getTo().getCode());
         }
-        target.setDisplay(m.getTo() != null && m.getTo().getName() != null ? m.getTo().getName()
-            : "Unable to determine name");
+        if (m.getTo() != null) {
+          final String toDisplay = m.getTo().getName();
+          if (!StringUtility.isEmpty(toDisplay)) {
+            target.setDisplay(toDisplay);
+          }
+        }
         final String equiv =
             m.getType() != null ? m.getType().toLowerCase().replace("-", "") : "relatedto";
         try {
