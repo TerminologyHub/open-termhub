@@ -240,7 +240,8 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           }
 
           if (cm.getSourceScope() == null || ((UriType) cm.getSourceScope()).getValue() == null
-              || !((UriType) cm.getSourceScope()).getValue().equals(sourceSystem.getValue())) {
+              || !((UriType) cm.getSourceScope()).getValue().replace("?fhir_vs", "")
+                  .equals(sourceSystem.getValue())) {
             if (logger.isDebugEnabled()) {
               logger.debug("  SKIP sourceSystem mismatch = {}", sourceSystem.getValue());
             }
@@ -257,7 +258,8 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           }
 
           if (cm.getTargetScope() == null || ((UriType) cm.getTargetScope()).getValue() == null
-              || !((UriType) cm.getTargetScope()).getValue().equals(targetSystem.getValue())) {
+              || !((UriType) cm.getTargetScope()).getValue().replace("?fhir_vs", "")
+                  .equals(targetSystem.getValue())) {
             if (logger.isDebugEnabled()) {
               logger.debug("  SKIP targetSystem mismatch = {}", targetSystem.getValue());
             }

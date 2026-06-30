@@ -199,7 +199,7 @@ public final class ConceptMapLoaderUtil {
       if (conceptMap.has("sourceUri")) {
         source = conceptMap.get("sourceUri").asText();
       } else if (conceptMap.has("sourceScopeUri")) {
-        source = conceptMap.get("sourceScopeUri").asText().replaceFirst("\\?fhir_cm", "");
+        source = conceptMap.get("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
       } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
           && conceptMap.get("group").get(0).has("source")) {
         source = conceptMap.get("group").get(0).get("source").asText();
@@ -214,7 +214,7 @@ public final class ConceptMapLoaderUtil {
       if (conceptMap.has("targetUri")) {
         target = conceptMap.get("targetUri").asText();
       } else if (conceptMap.has("targetScopeUri")) {
-        target = conceptMap.get("targetScopeUri").asText().replaceFirst("\\?fhir_cm", "");
+        target = conceptMap.get("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
       } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
           && conceptMap.get("group").get(0).has("target")) {
         target = conceptMap.get("group").get(0).get("target").asText();
