@@ -1631,6 +1631,8 @@ public final class FhirUtilityR5 {
     cm.setTitle(mapset.getAbbreviation());
     cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
+    cm.setCopyright(mapset.getAttributes().get("copyright"));
+    applyMapsetContact(cm, mapset);
     FhirIdentifierUtil.applyToR5ConceptMap(cm,
         mapset.getAttributes().get(FhirIdentifierUtil.ATTR_FHIR_IDENTIFIER));
 
@@ -1874,6 +1876,22 @@ public final class FhirUtilityR5 {
     }
     for (final ContactDetail contact : resolveTerminologyContacts(terminology, fallbackName,
         fallbackUri)) {
+      resource.addContact(contact);
+    }
+  }
+
+  /**
+   * Adds contact from mapset {@code fhirContact} JSON or publisher+uri fallback.
+   *
+   * @param resource the FHIR metadata resource
+   * @param mapset the mapset
+   */
+  private static void applyMapsetContact(final MetadataResource resource, final Mapset mapset) {
+    if (resource == null || mapset == null) {
+      return;
+    }
+    for (final ContactDetail contact : resolveContactsFromAttributes(mapset.getPublisher(),
+        mapset.getUri(), mapset.getAttributes(), null, mapset.getUri())) {
       resource.addContact(contact);
     }
   }

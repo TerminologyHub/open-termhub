@@ -548,6 +548,13 @@ public final class ConceptMapLoaderUtil {
       mapset.getAttributes().put(FhirIdentifierUtil.ATTR_FHIR_IDENTIFIER, storedIdentifiers);
     }
 
+    if (root.has("contact") && root.get("contact").isArray()) {
+      mapset.getAttributes().put("fhirContact", root.get("contact").toString());
+    }
+    if (!root.path("copyright").isMissingNode() && !root.path("copyright").asText().isEmpty()) {
+      mapset.getAttributes().put("copyright", root.path("copyright").asText());
+    }
+
     // Store the original URIs in attributes
     mapset.setUri(root.path("url").asText());
 
