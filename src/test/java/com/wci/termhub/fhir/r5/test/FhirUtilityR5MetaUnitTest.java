@@ -222,6 +222,7 @@ public class FhirUtilityR5MetaUnitTest {
     assertNotNull(cm.getMeta());
     assertEquals("1", cm.getMeta().getVersionId());
     assertNotNull(cm.getMeta().getLastUpdated());
+    assertTrue(cm.getContact().isEmpty());
   }
 
   /**

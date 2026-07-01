@@ -1881,7 +1881,7 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Adds contact from mapset {@code fhirContact} JSON or publisher+uri fallback.
+   * Adds contact from mapset {@code fhirContact} when stored at import.
    *
    * @param resource the FHIR metadata resource
    * @param mapset the mapset
@@ -1891,7 +1891,7 @@ public final class FhirUtilityR5 {
       return;
     }
     for (final ContactDetail contact : resolveContactsFromAttributes(mapset.getPublisher(),
-        mapset.getUri(), mapset.getAttributes(), null, mapset.getUri())) {
+        mapset.getUri(), mapset.getAttributes(), null, null, false)) {
       resource.addContact(contact);
     }
   }
@@ -1910,7 +1910,7 @@ public final class FhirUtilityR5 {
     final String uri = terminology != null ? terminology.getUri() : null;
     final Map<String, String> attrs =
         terminology != null ? terminology.getAttributes() : null;
-    return resolveContactsFromAttributes(publisher, uri, attrs, fallbackName, fallbackUri);
+    return resolveContactsFromAttributes(publisher, uri, attrs, fallbackName, fallbackUri, true);
   }
 
   /**
@@ -1926,6 +1926,23 @@ public final class FhirUtilityR5 {
   private static List<ContactDetail> resolveContactsFromAttributes(final String publisher,
     final String uri, final Map<String, String> attrs, final String fallbackName,
     final String fallbackUri) {
+    return resolveContactsFromAttributes(publisher, uri, attrs, fallbackName, fallbackUri, true);
+  }
+
+  /**
+   * Builds contact details from {@code fhirContact} JSON, optionally with publisher+uri fallback.
+   *
+   * @param publisher the publisher
+   * @param uri the resource uri
+   * @param attrs attribute map that may contain {@code fhirContact}
+   * @param fallbackName contact name when publisher or fhirContact name is absent
+   * @param fallbackUri contact url when uri is absent
+   * @param allowPublisherFallback when false, returns only stored {@code fhirContact}
+   * @return contact details to add to a FHIR resource
+   */
+  private static List<ContactDetail> resolveContactsFromAttributes(final String publisher,
+    final String uri, final Map<String, String> attrs, final String fallbackName,
+    final String fallbackUri, final boolean allowPublisherFallback) {
     final List<ContactDetail> contacts = new ArrayList<>();
     final String fhirContact = attrs != null ? attrs.get("fhirContact") : null;
     if (fhirContact != null && !fhirContact.isEmpty()) {
@@ -1960,6 +1977,9 @@ public final class FhirUtilityR5 {
       } catch (final Exception e) {
         LoggerFactory.getLogger(FhirUtilityR5.class).warn("Failed to parse fhirContact", e);
       }
+    }
+    if (!allowPublisherFallback) {
+      return contacts;
     }
     final String contactName = publisher != null ? publisher : fallbackName;
     final String contactUri = uri != null ? uri : fallbackUri;
