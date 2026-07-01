@@ -57,4 +57,20 @@ public final class LoincConceptPropertyHelper {
   public static boolean isStatusValueCodeProperty(final String propertyName) {
     return ATTR_STATUS_CODE.equals(propertyName);
   }
+
+  /**
+   * Relationship properties stored on the concept must not be emitted on $lookup;
+   * hierarchy and panel membership are resolved from the relationship index.
+   *
+   * @param propertyCode the FHIR property code
+   * @return true to skip emitting this property
+   */
+  public static boolean suppressRelationshipPropertyOnLookupOutput(final String propertyCode) {
+    if (propertyCode == null) {
+      return false;
+    }
+    return "parent".equals(propertyCode) || "child".equals(propertyCode)
+        || LoincConstants.LOINC_REL_PANEL_MEMBER.equals(propertyCode)
+        || LoincConstants.LOINC_REL_HAS_MEMBER.equals(propertyCode);
+  }
 }

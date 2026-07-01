@@ -70,4 +70,17 @@ public class LoincConceptPropertyHelperUnitTest {
     assertTrue(LoincConceptPropertyHelper.isStatusValueCodeProperty("status"));
     assertFalse(LoincConceptPropertyHelper.isStatusValueCodeProperty("STATUS"));
   }
+
+  /**
+   * Panel membership and hierarchy properties are suppressed on $lookup.
+   */
+  @Test
+  public void testSuppressRelationshipPropertyOnLookupOutput() {
+    assertTrue(LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput("parent"));
+    assertTrue(LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput("child"));
+    assertTrue(LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput("member"));
+    assertTrue(LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput("has_member"));
+    assertFalse(LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput("component"));
+    assertFalse(LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput(null));
+  }
 }

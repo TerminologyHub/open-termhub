@@ -223,6 +223,65 @@ public class FhirUtilityR4MetaUnitTest {
     assertNotNull(cm.getMeta());
     assertEquals("1", cm.getMeta().getVersionId());
     assertNotNull(cm.getMeta().getLastUpdated());
+    assertTrue(cm.getContact().isEmpty());
+  }
+
+  /**
+   * Test ConceptMap contact round-trip from mapset {@code fhirContact} attribute.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConceptMapContact() throws Exception {
+    final String fhirContact =
+        "[{\"telecom\":[{\"system\":\"url\",\"value\":\"http://loinc.org/cm/chebi-to-loinc-parts\"}]}]";
+
+    final Mapset mapset = new Mapset();
+    mapset.setId("test-cm");
+    mapset.setUri("http://loinc.org/cm/chebi-to-loinc-parts");
+    mapset.setVersion("1");
+    mapset.setName("Test ConceptMap");
+    mapset.setAbbreviation("TCM");
+    mapset.setPublisher("Regenstrief Institute, Inc.");
+    final Map<String, String> attrs = new HashMap<>();
+    attrs.put("fhirContact", fhirContact);
+    mapset.setAttributes(attrs);
+    mapset.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final ConceptMap cm = FhirUtilityR4.toR4(mapset);
+
+    assertNotNull(cm.getContact());
+    assertEquals(1, cm.getContact().size());
+    assertEquals("Regenstrief Institute, Inc.", cm.getContact().get(0).getName());
+    assertEquals("http://loinc.org/cm/chebi-to-loinc-parts",
+        cm.getContact().get(0).getTelecomFirstRep().getValue());
+  }
+
+  /**
+   * Test ConceptMap copyright round-trip from mapset {@code copyright} attribute.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConceptMapCopyright() throws Exception {
+    final String copyright =
+        "This material contains content from LOINC and ChEBI. See respective publishers for terms.";
+
+    final Mapset mapset = new Mapset();
+    mapset.setId("test-cm");
+    mapset.setUri("http://loinc.org/cm/chebi-to-loinc-parts");
+    mapset.setVersion("1");
+    mapset.setName("Test ConceptMap");
+    mapset.setAbbreviation("TCM");
+    mapset.setPublisher("Regenstrief Institute, Inc.");
+    final Map<String, String> attrs = new HashMap<>();
+    attrs.put("copyright", copyright);
+    mapset.setAttributes(attrs);
+    mapset.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final ConceptMap cm = FhirUtilityR4.toR4(mapset);
+
+    assertEquals(copyright, cm.getCopyright());
   }
 
   /**
@@ -277,5 +336,32 @@ public class FhirUtilityR4MetaUnitTest {
     assertEquals("Filaria_Ab_IgG_IgM_Pnl_Ser", q.getName());
     assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getTitle());
     assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getCodeFirstRep().getDisplay());
+  }
+
+  /**
+   * CodeSystem and implicit ValueSet dates preserve imported UTC offset on serialization.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testCodeSystemAndValueSetDatePreserveUtcOffset() throws Exception {
+    final Terminology terminology = new Terminology();
+    terminology.setId("loinc-cs");
+    terminology.setReleaseDate("2024-08-06T00:00:00+00:00");
+    terminology.setUri("http://loinc.org");
+    terminology.setVersion("2.78");
+    terminology.setName("Logical Observation Identifiers Names and Codes");
+    terminology.setAbbreviation("LOINC");
+    terminology.setPublisher("Regenstrief Institute, Inc.");
+    terminology.setAttributes(new HashMap<>());
+    terminology.setConceptCt(1L);
+    terminology.setCreated(
+        Date.from(LocalDate.of(2024, 8, 6).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final CodeSystem cs = FhirUtilityR4.toR4(terminology);
+    assertEquals("2024-08-06T00:00:00+00:00", cs.getDateElement().getValueAsString());
+
+    final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, false);
+    assertEquals("2024-08-06T00:00:00+00:00", vs.getDateElement().getValueAsString());
   }
 }
