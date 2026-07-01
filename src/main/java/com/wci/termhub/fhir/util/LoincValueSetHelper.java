@@ -42,12 +42,11 @@ import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * Helper for LOINC LL/LG value set support (Regenstrief mode). When enabled
- * (FHIR_LOINC_LLLG_VALUESETS_ENABLED=true), value set providers expose value
- * sets at http://loinc.org?fhir_vs/LL* and http://loinc.org?fhir_vs/LG*, and at
- * http://loinc.org/vs/{id} (path form). When enabled, LG ids may include a
- * version suffix (e.g. LG51018-6-2.72) and expansion is scoped to that LOINC
- * version.
+ * Helper for LOINC LL/LG value set support. When {@code fhir.mode=regenstrief},
+ * value set providers expose value sets at http://loinc.org?fhir_vs/LL* and
+ * http://loinc.org?fhir_vs/LG*, and at http://loinc.org/vs/{id} (path form).
+ * In Regenstrief mode, LG ids may include a version suffix (e.g.
+ * LG51018-6-2.72) and expansion is scoped to that LOINC version.
  */
 @Component
 public class LoincValueSetHelper {
@@ -64,17 +63,26 @@ public class LoincValueSetHelper {
    */
   private static final Pattern LG_PATTERN = Pattern.compile("^LG\\d+-\\d+(-[\\d.]+)?$");
 
-  /** The enabled. */
-  @Value("${fhir.loinc.lllg.valuesets.enabled:false}")
-  private boolean enabled;
+  /** The FHIR server mode. */
+  @Value("${fhir.mode:basic}")
+  private FhirMode mode;
 
   /**
-   * Returns whether LL/LG value set support is enabled.
+   * Returns whether Regenstrief-compatible LOINC FHIR behavior is enabled.
    *
-   * @return true if enabled
+   * @return true when {@code fhir.mode=regenstrief}
+   */
+  public boolean isRegenstriefMode() {
+    return mode.isRegenstriefMode();
+  }
+
+  /**
+   * Returns whether Regenstrief-compatible LOINC FHIR behavior is enabled.
+   *
+   * @return true when {@code fhir.mode=regenstrief}
    */
   public boolean isEnabled() {
-    return enabled;
+    return isRegenstriefMode();
   }
 
   /**
@@ -557,7 +565,7 @@ public class LoincValueSetHelper {
     String baseLgCode = lgId;
     String versionFilter = terminology.getVersion();
     final String versionFromId = getVersionFromLllgId(lgId);
-    if (versionFromId != null && enabled) {
+    if (versionFromId != null && isRegenstriefMode()) {
       baseLgCode = lgId.substring(0, lgId.lastIndexOf('-'));
       versionFilter = versionFromId;
     } else if (versionFromId != null) {
@@ -740,7 +748,7 @@ public class LoincValueSetHelper {
 
   /**
    * Finds all LL and LG concepts in the given LOINC terminology using Lucene wildcard
-   * queries. Used when {@code fhir.loinc.lllg.valuesets.enabled=true} to
+   * queries. Used when {@code fhir.mode=regenstrief} to
    * enumerate value sets for a general {@code GET /ValueSet} listing.
    *
    * @param searchService the search service
@@ -808,7 +816,7 @@ public class LoincValueSetHelper {
     String baseLgCode = lgId;
     String versionFilter = terminology.getVersion();
     final String versionFromId = getVersionFromLllgId(lgId);
-    if (versionFromId != null && enabled) {
+    if (versionFromId != null && isRegenstriefMode()) {
       baseLgCode = lgId.substring(0, lgId.lastIndexOf('-'));
       versionFilter = versionFromId;
     } else if (versionFromId != null) {

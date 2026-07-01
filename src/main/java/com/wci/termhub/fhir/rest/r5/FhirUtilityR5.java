@@ -645,7 +645,7 @@ public final class FhirUtilityR5 {
    * @param children the children
    * @param conceptNameMap the concept name map
    * @param searchService the search service
-   * @param regenstriefMode true when LOINC LL/LG value set mode is enabled
+   * @param regenstriefMode true when {@code fhir.mode=regenstrief}
    * @return the parameters
    * @throws Exception the exception
    */

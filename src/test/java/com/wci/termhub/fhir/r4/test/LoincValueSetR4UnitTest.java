@@ -44,10 +44,10 @@ import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 
 /**
  * Unit tests for LOINC LL/LG value set support (Regenstrief mode) with
- * fhir.loinc.lllg.valuesets.enabled=true. Uses LOINC sandbox data loaded by
+ * fhir.mode=regenstrief. Uses LOINC sandbox data loaded by
  * AbstractFhirR4ServerTest (e.g. concepts with ANSWER_LIST_ID LL1772-4).
  */
-@TestPropertySource(properties = "fhir.loinc.lllg.valuesets.enabled=true")
+@TestPropertySource(properties = "fhir.mode=regenstrief")
 public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** The Constant LG_VS_URL. */
@@ -118,7 +118,7 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
 
   /**
    * Test path-style LOINC value set URL (http://loinc.org/vs/LG51018-6-2.72). When
-   * FHIR_LOINC_LLLG_VALUESETS_ENABLED is true, version 2.72 is used for expansion.
+   * fhir.mode=regenstrief, version 2.72 is used for expansion.
    */
   @Test
   public void testParseIdFromPathStyleUrl() {
@@ -253,7 +253,7 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
 
   /**
    * Test ValueSet read by id for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r4). Requires
-   * fhir.loinc.lllg.valuesets.enabled=true.
+   * fhir.mode=regenstrief.
    *
    * @throws Exception the exception
    */
