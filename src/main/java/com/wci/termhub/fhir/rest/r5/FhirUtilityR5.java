@@ -11,7 +11,6 @@ package com.wci.termhub.fhir.rest.r5;
 
 import static java.lang.String.format;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,7 +39,6 @@ import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.DateTimeType;
-import org.hl7.fhir.r5.model.MetadataResource;
 import org.hl7.fhir.r5.model.Enumerations;
 import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
@@ -48,6 +46,7 @@ import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.Identifier;
 import org.hl7.fhir.r5.model.IntegerType;
 import org.hl7.fhir.r5.model.Meta;
+import org.hl7.fhir.r5.model.MetadataResource;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r5.model.Parameters;
@@ -69,9 +68,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
 import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
+import com.wci.termhub.fhir.util.FhirDateTimeUtil;
 import com.wci.termhub.fhir.util.FhirUtility;
-import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
+import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincQuestionnaireHelper;
 import com.wci.termhub.fhir.util.LoincValueSetHelper.LllgComposeStructure;
 import com.wci.termhub.model.Concept;
@@ -1061,7 +1061,7 @@ public final class FhirUtilityR5 {
     set.setTitle(cs.getTitle() + "-ENTIRE");
     set.setStatus(PublicationStatus.ACTIVE);
     set.setDescription("Value set representing the entire contents of this code system");
-    set.setDate(cs.getDate());
+    FhirDateTimeUtil.setR5DateTimeUtc(set.getDateElement(), terminology.getReleaseDate());
     set.setPublisher(cs.getPublisher());
     set.setCopyright(cs.getCopyright());
 
@@ -1076,7 +1076,8 @@ public final class FhirUtilityR5 {
     }
     set.getMeta().addTag("originalId", terminology.getAttributes().get("originalId"), null);
     set.getMeta().setVersionId("1");
-    set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
+    FhirDateTimeUtil.setR5InstantUtc(set.getMeta().getLastUpdatedElement(),
+        DateUtility.toFhirUtcInstantString(terminology.getCreated()));
 
     return set;
   }
@@ -1107,9 +1108,13 @@ public final class FhirUtilityR5 {
     }
     final Meta meta = new Meta();
     meta.setVersionId("1");
-    final Date releaseAsDate = resolveTerminologyReleaseDate(terminology);
-    meta.setLastUpdated(releaseAsDate != null ? releaseAsDate
-        : DateUtility.parseToUtcDate(terminology.getCreated()));
+    final String releaseDate = resolveTerminologyReleaseDateString(terminology);
+    if (releaseDate != null) {
+      FhirDateTimeUtil.setR5InstantUtc(meta.getLastUpdatedElement(), releaseDate);
+    } else {
+      FhirDateTimeUtil.setR5InstantUtc(meta.getLastUpdatedElement(),
+          DateUtility.toFhirUtcInstantString(terminology.getCreated()));
+    }
     if (terminology.getAttributes() != null
         && terminology.getAttributes().containsKey("originalId")) {
       meta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
@@ -1297,15 +1302,7 @@ public final class FhirUtilityR5 {
     valueSet.setUrl(subset.getUri());
     valueSet.setPublisher(subset.getPublisher());
     valueSet.setVersion(subset.getVersion());
-    // Parse the full date string with timezone information
-    final String releaseDate = subset.getReleaseDate();
-    if (releaseDate != null && releaseDate.contains("T")) {
-      // Full ISO 8601 date string with timezone
-      valueSet.setDate(Date.from(java.time.Instant.parse(releaseDate)));
-    } else {
-      // Fallback to date-only format
-      valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
-    }
+    FhirDateTimeUtil.setR5DateTimeUtc(valueSet.getDateElement(), subset.getReleaseDate());
 
     valueSet.setName(subset.getName());
     valueSet.setDescription(subset.getDescription());
@@ -1359,7 +1356,8 @@ public final class FhirUtilityR5 {
     }
     valueSet.getMeta().addTag("originalId", subset.getAttributes().get("originalId"), null);
     valueSet.getMeta().setVersionId("1");
-    valueSet.getMeta().setLastUpdated(DateUtility.parseToUtcDate(subset.getCreated()));
+    FhirDateTimeUtil.setR5InstantUtc(valueSet.getMeta().getLastUpdatedElement(),
+        DateUtility.toFhirUtcInstantString(subset.getCreated()));
 
     return valueSet;
   }
@@ -1455,17 +1453,8 @@ public final class FhirUtilityR5 {
 
     cs.setUrl(terminology.getUri());
 
-    // Parse the full date string with timezone information (also drives meta.lastUpdated)
     final String releaseDate = terminology.getReleaseDate();
-    Date releaseAsDate = null;
-    if (releaseDate != null && !releaseDate.isEmpty()) {
-      if (releaseDate.contains("T")) {
-        releaseAsDate = Date.from(Instant.parse(releaseDate));
-      } else {
-        releaseAsDate = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
-      }
-      cs.setDate(releaseAsDate);
-    }
+    FhirDateTimeUtil.setR5DateTimeUtc(cs.getDateElement(), releaseDate);
     String version = terminology.getAttributes().get("fhirVersion");
     if (version == null) {
       version = terminology.getVersion();
@@ -1546,8 +1535,12 @@ public final class FhirUtilityR5 {
     // Meta: versionId for _history; lastUpdated from release date when present, else created
     final Meta csMeta = new Meta();
     csMeta.setVersionId("1");
-    csMeta.setLastUpdated(releaseAsDate != null ? releaseAsDate
-        : DateUtility.parseToUtcDate(terminology.getCreated()));
+    if (releaseDate != null && !releaseDate.isEmpty()) {
+      FhirDateTimeUtil.setR5InstantUtc(csMeta.getLastUpdatedElement(), releaseDate);
+    } else {
+      FhirDateTimeUtil.setR5InstantUtc(csMeta.getLastUpdatedElement(),
+          DateUtility.toFhirUtcInstantString(terminology.getCreated()));
+    }
     if (terminology.getAttributes().containsKey("originalId")) {
       csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }
@@ -1645,10 +1638,11 @@ public final class FhirUtilityR5 {
       cm.setTargetScope(new UriType(mapset.getAttributes().get("fhirTargetUri") + "?fhir_vs"));
     }
 
-    // Meta: versionId for _history, lastUpdated from release date (UTC)
+    // Meta: versionId for _history, lastUpdated from created (UTC)
     final Meta cmMeta = new Meta();
     cmMeta.setVersionId("1");
-    cmMeta.setLastUpdated(DateUtility.parseToUtcDate(mapset.getCreated()));
+    FhirDateTimeUtil.setR5InstantUtc(cmMeta.getLastUpdatedElement(),
+        DateUtility.toFhirUtcInstantString(mapset.getCreated()));
     if (mapset.getAttributes().containsKey("originalId")) {
       cmMeta.addTag("originalId", mapset.getAttributes().get("originalId"), null);
     }
@@ -1998,19 +1992,11 @@ public final class FhirUtilityR5 {
     return contacts;
   }
 
-  private static Date resolveTerminologyReleaseDate(final Terminology terminology)
-    throws Exception {
+  private static String resolveTerminologyReleaseDateString(final Terminology terminology) {
     if (terminology == null) {
       return null;
     }
-    final String releaseDate = terminology.getReleaseDate();
-    if (releaseDate == null || releaseDate.isEmpty()) {
-      return null;
-    }
-    if (releaseDate.contains("T")) {
-      return Date.from(Instant.parse(releaseDate));
-    }
-    return DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
+    return DateUtility.toFhirUtcDateTimeString(terminology.getReleaseDate());
   }
 
   /**
@@ -2025,19 +2011,19 @@ public final class FhirUtilityR5 {
     throws Exception {
     final Meta meta = new Meta();
     meta.setVersionId("1");
-    Date lastUpdated = resolveTerminologyReleaseDate(terminology);
+    String lastUpdated = resolveTerminologyReleaseDateString(terminology);
     if (lastUpdated == null && terminology != null && terminology.getCreated() != null) {
-      lastUpdated = DateUtility.parseToUtcDate(terminology.getCreated());
+      lastUpdated = DateUtility.toFhirUtcInstantString(terminology.getCreated());
     }
     if (lastUpdated == null && concept != null) {
       if (concept.getModified() != null) {
-        lastUpdated = DateUtility.parseToUtcDate(concept.getModified());
+        lastUpdated = DateUtility.toFhirUtcInstantString(concept.getModified());
       } else if (concept.getCreated() != null) {
-        lastUpdated = DateUtility.parseToUtcDate(concept.getCreated());
+        lastUpdated = DateUtility.toFhirUtcInstantString(concept.getCreated());
       }
     }
     if (lastUpdated != null) {
-      meta.setLastUpdated(lastUpdated);
+      FhirDateTimeUtil.setR5InstantUtc(meta.getLastUpdatedElement(), lastUpdated);
     }
     if (concept != null && concept.getAttributes() != null
         && concept.getAttributes().containsKey("originalId")) {
@@ -2184,10 +2170,8 @@ public final class FhirUtilityR5 {
     questionnaire.setStatus(PublicationStatus.ACTIVE);
     questionnaire
         .setDescription("Questionnaire representing the entire contents of this code system");
-    final Date releaseAsDate = resolveTerminologyReleaseDate(terminology);
-    if (releaseAsDate != null) {
-      questionnaire.setDate(releaseAsDate);
-    }
+    FhirDateTimeUtil.setR5DateTimeUtc(questionnaire.getDateElement(),
+        resolveTerminologyReleaseDateString(terminology));
     questionnaire.setPublisher(terminology.getPublisher());
     applyQuestionnaireCopyright(questionnaire, terminology, null);
 

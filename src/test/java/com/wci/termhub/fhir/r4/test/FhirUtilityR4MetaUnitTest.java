@@ -337,4 +337,31 @@ public class FhirUtilityR4MetaUnitTest {
     assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getTitle());
     assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getCodeFirstRep().getDisplay());
   }
+
+  /**
+   * CodeSystem and implicit ValueSet dates preserve imported UTC offset on serialization.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testCodeSystemAndValueSetDatePreserveUtcOffset() throws Exception {
+    final Terminology terminology = new Terminology();
+    terminology.setId("loinc-cs");
+    terminology.setReleaseDate("2024-08-06T00:00:00+00:00");
+    terminology.setUri("http://loinc.org");
+    terminology.setVersion("2.78");
+    terminology.setName("Logical Observation Identifiers Names and Codes");
+    terminology.setAbbreviation("LOINC");
+    terminology.setPublisher("Regenstrief Institute, Inc.");
+    terminology.setAttributes(new HashMap<>());
+    terminology.setConceptCt(1L);
+    terminology.setCreated(
+        Date.from(LocalDate.of(2024, 8, 6).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final CodeSystem cs = FhirUtilityR4.toR4(terminology);
+    assertEquals("2024-08-06T00:00:00+00:00", cs.getDateElement().getValueAsString());
+
+    final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, false);
+    assertEquals("2024-08-06T00:00:00+00:00", vs.getDateElement().getValueAsString());
+  }
 }

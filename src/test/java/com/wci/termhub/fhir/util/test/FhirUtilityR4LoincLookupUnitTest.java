@@ -237,7 +237,8 @@ public class FhirUtilityR4LoincLookupUnitTest {
     member.setPropertyCode("member");
     member.setValueCode("101351-5");
     member.setValueDisplay(
-        "Has lack of transportation kept you from medical appointments, meetings, work, or from getting things needed for daily living during assessment period [CMS Assessment]");
+        "Has lack of transportation kept you from medical appointments, meetings, work, or"
+            + " from getting things needed for daily living during assessment period [CMS Assessment]");
     concept.getFhirPropertyCodings().add(member);
 
     final Parameters parameters = FhirUtilityR4.toR4(loincCodeSystem(), concept, null, Map.of(),
