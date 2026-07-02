@@ -42,6 +42,7 @@ import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.MapsetRef;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Terminology;
 import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 
@@ -485,29 +486,48 @@ public final class ConceptMapLoaderUtil {
       mapset.setReleaseDate(dateStr.substring(0, 10));
     }
 
+    // Extract abbreviations from title field
+    final String[] titleParts = abbreviation.split("-");
+    final String fromAbbreviation = titleParts.length > 0 ? titleParts[0] : null;
+    final String toAbbreviation = titleParts.length > 1 ? titleParts[1] : null;
+
     String fromTerminology = null;
-    if (root.has("sourceScopeUri")) {
-      fromTerminology = root.path("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
-    } else if (root.has("sourceUri")) {
-      fromTerminology = root.path("sourceUri").asText();
-    } else if (root.has("group") && (root.get("group").isArray())) {
+    // if (root.has("sourceScopeUri")) {
+    // fromTerminology = root.path("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
+    // } else if (root.has("sourceUri")) {
+    // fromTerminology = root.path("sourceUri").asText();
+    // } else
+    if (root.has("group") && (root.get("group").isArray())) {
       fromTerminology = root.path("group").get(0).path("source").asText();
     }
     if (fromTerminology == null) {
       throw FhirUtilityR4.exception("Unable to determine information about the map source",
           IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
+
     final TerminologyRef fromRef = new TerminologyRef();
     fromRef.setUri(fromTerminology);
     fromRef.setPublisher(root.path("publisher").asText());
     fromRef.setVersion(version);
+    fromRef.setAbbreviation(fromAbbreviation);
+
+    // Attempt to "find" the from terminology
+    LOGGER.info("XXX from query = " + "uri:" + StringUtility.escapeQuery(fromTerminology));
+    ResultList<Terminology> list = service.find(
+        new SearchParameters("uri:" + StringUtility.escapeQuery(fromTerminology), 0, 1, null, null),
+        Terminology.class);
+    if (list.getItems().size() > 0) {
+      LOGGER.info("XXX2 from = " + list.getItems().get(0).getAbbreviation());
+      fromRef.setAbbreviation(list.getItems().get(0).getAbbreviation());
+    }
 
     String toTerminology = null;
-    if (root.has("targetScopeUri")) {
-      toTerminology = root.path("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
-    } else if (root.has("targetUri")) {
-      toTerminology = root.path("targetUri").asText();
-    } else if (root.has("group") && (root.get("group").isArray())) {
+    // if (root.has("targetScopeUri")) {
+    // toTerminology = root.path("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
+    // } else if (root.has("targetUri")) {
+    // toTerminology = root.path("targetUri").asText();
+    // } else
+    if (root.has("group") && (root.get("group").isArray())) {
       toTerminology = root.path("group").get(0).path("target").asText();
     }
     if (toTerminology == null) {
@@ -518,15 +538,17 @@ public final class ConceptMapLoaderUtil {
     toRef.setUri(toTerminology);
     toRef.setPublisher(root.path("publisher").asText());
     toRef.setVersion(version);
-
-    // Extract abbreviations from title field
-    final String[] titleParts = abbreviation.split("-");
-    final String fromAbbreviation = titleParts.length > 0 ? titleParts[0] : fromTerminology;
-    final String toAbbreviation = titleParts.length > 1 ? titleParts[1] : toTerminology;
-
-    // Set the abbreviations
-    fromRef.setAbbreviation(fromAbbreviation);
     toRef.setAbbreviation(toAbbreviation);
+
+    // Attempt to "find" the to terminology
+    LOGGER.info("XXX to query = " + "uri:" + StringUtility.escapeQuery(toTerminology));
+    list = service.find(
+        new SearchParameters("uri:" + StringUtility.escapeQuery(toTerminology), 0, 1, null, null),
+        Terminology.class);
+    if (list.getItems().size() > 0) {
+      LOGGER.info("XXX2 from");
+      toRef.setAbbreviation(list.getItems().get(0).getAbbreviation());
+    }
 
     mapset.setFromTerminology(fromRef.getAbbreviation());
     mapset.setFromPublisher(fromRef.getPublisher());
