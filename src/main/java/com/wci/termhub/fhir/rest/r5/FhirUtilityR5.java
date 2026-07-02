@@ -11,7 +11,6 @@ package com.wci.termhub.fhir.rest.r5;
 
 import static java.lang.String.format;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,7 +39,6 @@ import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.ContactDetail;
 import org.hl7.fhir.r5.model.ContactPoint;
 import org.hl7.fhir.r5.model.DateTimeType;
-import org.hl7.fhir.r5.model.MetadataResource;
 import org.hl7.fhir.r5.model.Enumerations;
 import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
@@ -48,6 +46,7 @@ import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.Identifier;
 import org.hl7.fhir.r5.model.IntegerType;
 import org.hl7.fhir.r5.model.Meta;
+import org.hl7.fhir.r5.model.MetadataResource;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r5.model.Parameters;
@@ -69,9 +68,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
 import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
+import com.wci.termhub.fhir.util.FhirDateTimeUtil;
 import com.wci.termhub.fhir.util.FhirUtility;
-import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
+import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincQuestionnaireHelper;
 import com.wci.termhub.fhir.util.LoincValueSetHelper.LllgComposeStructure;
 import com.wci.termhub.model.Concept;
@@ -108,13 +108,6 @@ public final class FhirUtilityR5 {
   /** The logger. */
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(FhirUtilityR5.class);
-
-  /**
-   * Uppercase LOINC property codes that duplicate lowercase {@code valueCoding} axes in the same
-   * CodeSystem (legacy string row vs part code row).
-   */
-  private static final Set<String> LOINC_UPPERCASE_PROPERTY_KEYS =
-      Set.of("CLASS", "COMPONENT", "METHOD_TYP", "PROPERTY", "SCALE_TYP", "SYSTEM", "TIME_ASPCT");
 
   /**
    * Instantiates an empty {@link FhirUtilityR5}.
@@ -759,8 +752,7 @@ public final class FhirUtilityR5 {
         if (codingCode == null) {
           continue;
         }
-        // parent is emitted only from the hierarchical relationship index below
-        if ("parent".equals(propertyCode)) {
+        if (LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput(propertyCode)) {
           continue;
         }
         String display = resolveLoincPropertyDisplay(propertyCode, codingCode, codingCode, concept,
@@ -806,9 +798,8 @@ public final class FhirUtilityR5 {
       }
 
       if (isLoinc) {
-        // parent/child are emitted only from the hierarchical relationship index below
         final String loincPropName = loincLookupPropertyName(key);
-        if ("parent".equals(loincPropName) || "child".equals(loincPropName)) {
+        if (LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput(loincPropName)) {
           continue;
         }
         String codingCode = null;
@@ -955,7 +946,8 @@ public final class FhirUtilityR5 {
    */
   private static boolean isLoincLegacyStringSupersededByValueCoding(final String key,
     final String value, final Concept concept) {
-    if (key == null || value == null || !LOINC_UPPERCASE_PROPERTY_KEYS.contains(key)) {
+    if (key == null || value == null
+        || !LoincConstants.LOINC_UPPERCASE_PROPERTY_KEYS.contains(key)) {
       return false;
     }
     final String canonical = key.toLowerCase(Locale.ROOT);
@@ -1069,7 +1061,7 @@ public final class FhirUtilityR5 {
     set.setTitle(cs.getTitle() + "-ENTIRE");
     set.setStatus(PublicationStatus.ACTIVE);
     set.setDescription("Value set representing the entire contents of this code system");
-    set.setDate(cs.getDate());
+    FhirDateTimeUtil.setR5DateTimeUtc(set.getDateElement(), terminology.getReleaseDate());
     set.setPublisher(cs.getPublisher());
     set.setCopyright(cs.getCopyright());
 
@@ -1084,7 +1076,8 @@ public final class FhirUtilityR5 {
     }
     set.getMeta().addTag("originalId", terminology.getAttributes().get("originalId"), null);
     set.getMeta().setVersionId("1");
-    set.getMeta().setLastUpdated(DateUtility.parseToUtcDate(terminology.getCreated()));
+    FhirDateTimeUtil.setR5InstantUtc(set.getMeta().getLastUpdatedElement(),
+        DateUtility.toFhirUtcInstantString(terminology.getCreated()));
 
     return set;
   }
@@ -1115,9 +1108,13 @@ public final class FhirUtilityR5 {
     }
     final Meta meta = new Meta();
     meta.setVersionId("1");
-    final Date releaseAsDate = resolveTerminologyReleaseDate(terminology);
-    meta.setLastUpdated(releaseAsDate != null ? releaseAsDate
-        : DateUtility.parseToUtcDate(terminology.getCreated()));
+    final String releaseDate = resolveTerminologyReleaseDateString(terminology);
+    if (releaseDate != null) {
+      FhirDateTimeUtil.setR5InstantUtc(meta.getLastUpdatedElement(), releaseDate);
+    } else {
+      FhirDateTimeUtil.setR5InstantUtc(meta.getLastUpdatedElement(),
+          DateUtility.toFhirUtcInstantString(terminology.getCreated()));
+    }
     if (terminology.getAttributes() != null
         && terminology.getAttributes().containsKey("originalId")) {
       meta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
@@ -1305,15 +1302,7 @@ public final class FhirUtilityR5 {
     valueSet.setUrl(subset.getUri());
     valueSet.setPublisher(subset.getPublisher());
     valueSet.setVersion(subset.getVersion());
-    // Parse the full date string with timezone information
-    final String releaseDate = subset.getReleaseDate();
-    if (releaseDate != null && releaseDate.contains("T")) {
-      // Full ISO 8601 date string with timezone
-      valueSet.setDate(Date.from(java.time.Instant.parse(releaseDate)));
-    } else {
-      // Fallback to date-only format
-      valueSet.setDate(DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate));
-    }
+    FhirDateTimeUtil.setR5DateTimeUtc(valueSet.getDateElement(), subset.getReleaseDate());
 
     valueSet.setName(subset.getName());
     valueSet.setDescription(subset.getDescription());
@@ -1367,7 +1356,8 @@ public final class FhirUtilityR5 {
     }
     valueSet.getMeta().addTag("originalId", subset.getAttributes().get("originalId"), null);
     valueSet.getMeta().setVersionId("1");
-    valueSet.getMeta().setLastUpdated(DateUtility.parseToUtcDate(subset.getCreated()));
+    FhirDateTimeUtil.setR5InstantUtc(valueSet.getMeta().getLastUpdatedElement(),
+        DateUtility.toFhirUtcInstantString(subset.getCreated()));
 
     return valueSet;
   }
@@ -1463,17 +1453,8 @@ public final class FhirUtilityR5 {
 
     cs.setUrl(terminology.getUri());
 
-    // Parse the full date string with timezone information (also drives meta.lastUpdated)
     final String releaseDate = terminology.getReleaseDate();
-    Date releaseAsDate = null;
-    if (releaseDate != null && !releaseDate.isEmpty()) {
-      if (releaseDate.contains("T")) {
-        releaseAsDate = Date.from(Instant.parse(releaseDate));
-      } else {
-        releaseAsDate = DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
-      }
-      cs.setDate(releaseAsDate);
-    }
+    FhirDateTimeUtil.setR5DateTimeUtc(cs.getDateElement(), releaseDate);
     String version = terminology.getAttributes().get("fhirVersion");
     if (version == null) {
       version = terminology.getVersion();
@@ -1554,8 +1535,12 @@ public final class FhirUtilityR5 {
     // Meta: versionId for _history; lastUpdated from release date when present, else created
     final Meta csMeta = new Meta();
     csMeta.setVersionId("1");
-    csMeta.setLastUpdated(releaseAsDate != null ? releaseAsDate
-        : DateUtility.parseToUtcDate(terminology.getCreated()));
+    if (releaseDate != null && !releaseDate.isEmpty()) {
+      FhirDateTimeUtil.setR5InstantUtc(csMeta.getLastUpdatedElement(), releaseDate);
+    } else {
+      FhirDateTimeUtil.setR5InstantUtc(csMeta.getLastUpdatedElement(),
+          DateUtility.toFhirUtcInstantString(terminology.getCreated()));
+    }
     if (terminology.getAttributes().containsKey("originalId")) {
       csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }
@@ -1639,6 +1624,8 @@ public final class FhirUtilityR5 {
     cm.setTitle(mapset.getAbbreviation());
     cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
+    cm.setCopyright(mapset.getAttributes().get("copyright"));
+    applyMapsetContact(cm, mapset);
     FhirIdentifierUtil.applyToR5ConceptMap(cm,
         mapset.getAttributes().get(FhirIdentifierUtil.ATTR_FHIR_IDENTIFIER));
 
@@ -1651,10 +1638,11 @@ public final class FhirUtilityR5 {
       cm.setTargetScope(new UriType(mapset.getAttributes().get("fhirTargetUri") + "?fhir_vs"));
     }
 
-    // Meta: versionId for _history, lastUpdated from release date (UTC)
+    // Meta: versionId for _history, lastUpdated from created (UTC)
     final Meta cmMeta = new Meta();
     cmMeta.setVersionId("1");
-    cmMeta.setLastUpdated(DateUtility.parseToUtcDate(mapset.getCreated()));
+    FhirDateTimeUtil.setR5InstantUtc(cmMeta.getLastUpdatedElement(),
+        DateUtility.toFhirUtcInstantString(mapset.getCreated()));
     if (mapset.getAttributes().containsKey("originalId")) {
       cmMeta.addTag("originalId", mapset.getAttributes().get("originalId"), null);
     }
@@ -1703,16 +1691,22 @@ public final class FhirUtilityR5 {
       final Mapping first = elementMappings.get(0);
       final var element = group.addElement();
       element.setCode(first.getFrom().getCode());
-      element.setDisplay(first.getFrom().getName() != null ? first.getFrom().getName()
-          : first.getFrom().getCode());
+      final String fromDisplay = first.getFrom().getName();
+      if (!StringUtility.isEmpty(fromDisplay)) {
+        element.setDisplay(fromDisplay);
+      }
 
       for (final Mapping m : elementMappings) {
         final var target = element.addTarget();
         if (m.getTo() != null && m.getTo().getCode() != null) {
           target.setCode(m.getTo().getCode());
         }
-        target.setDisplay(m.getTo() != null && m.getTo().getName() != null ? m.getTo().getName()
-            : "Unable to determine name");
+        if (m.getTo() != null) {
+          final String toDisplay = m.getTo().getName();
+          if (!StringUtility.isEmpty(toDisplay)) {
+            target.setDisplay(toDisplay);
+          }
+        }
         final String rel = mapRelationshipTo(m.getType());
         try {
           target.setRelationship(
@@ -1881,6 +1875,22 @@ public final class FhirUtilityR5 {
   }
 
   /**
+   * Adds contact from mapset {@code fhirContact} when stored at import.
+   *
+   * @param resource the FHIR metadata resource
+   * @param mapset the mapset
+   */
+  private static void applyMapsetContact(final MetadataResource resource, final Mapset mapset) {
+    if (resource == null || mapset == null) {
+      return;
+    }
+    for (final ContactDetail contact : resolveContactsFromAttributes(mapset.getPublisher(),
+        mapset.getUri(), mapset.getAttributes(), null, null, false)) {
+      resource.addContact(contact);
+    }
+  }
+
+  /**
    * Builds contact details from terminology {@code fhirContact} JSON or publisher+uri fallback.
    *
    * @param terminology the terminology (optional)
@@ -1894,7 +1904,7 @@ public final class FhirUtilityR5 {
     final String uri = terminology != null ? terminology.getUri() : null;
     final Map<String, String> attrs =
         terminology != null ? terminology.getAttributes() : null;
-    return resolveContactsFromAttributes(publisher, uri, attrs, fallbackName, fallbackUri);
+    return resolveContactsFromAttributes(publisher, uri, attrs, fallbackName, fallbackUri, true);
   }
 
   /**
@@ -1910,6 +1920,23 @@ public final class FhirUtilityR5 {
   private static List<ContactDetail> resolveContactsFromAttributes(final String publisher,
     final String uri, final Map<String, String> attrs, final String fallbackName,
     final String fallbackUri) {
+    return resolveContactsFromAttributes(publisher, uri, attrs, fallbackName, fallbackUri, true);
+  }
+
+  /**
+   * Builds contact details from {@code fhirContact} JSON, optionally with publisher+uri fallback.
+   *
+   * @param publisher the publisher
+   * @param uri the resource uri
+   * @param attrs attribute map that may contain {@code fhirContact}
+   * @param fallbackName contact name when publisher or fhirContact name is absent
+   * @param fallbackUri contact url when uri is absent
+   * @param allowPublisherFallback when false, returns only stored {@code fhirContact}
+   * @return contact details to add to a FHIR resource
+   */
+  private static List<ContactDetail> resolveContactsFromAttributes(final String publisher,
+    final String uri, final Map<String, String> attrs, final String fallbackName,
+    final String fallbackUri, final boolean allowPublisherFallback) {
     final List<ContactDetail> contacts = new ArrayList<>();
     final String fhirContact = attrs != null ? attrs.get("fhirContact") : null;
     if (fhirContact != null && !fhirContact.isEmpty()) {
@@ -1945,6 +1972,9 @@ public final class FhirUtilityR5 {
         LoggerFactory.getLogger(FhirUtilityR5.class).warn("Failed to parse fhirContact", e);
       }
     }
+    if (!allowPublisherFallback) {
+      return contacts;
+    }
     final String contactName = publisher != null ? publisher : fallbackName;
     final String contactUri = uri != null ? uri : fallbackUri;
     if (contactName == null) {
@@ -1962,19 +1992,11 @@ public final class FhirUtilityR5 {
     return contacts;
   }
 
-  private static Date resolveTerminologyReleaseDate(final Terminology terminology)
-    throws Exception {
+  private static String resolveTerminologyReleaseDateString(final Terminology terminology) {
     if (terminology == null) {
       return null;
     }
-    final String releaseDate = terminology.getReleaseDate();
-    if (releaseDate == null || releaseDate.isEmpty()) {
-      return null;
-    }
-    if (releaseDate.contains("T")) {
-      return Date.from(Instant.parse(releaseDate));
-    }
-    return DateUtility.DATE_YYYY_MM_DD_DASH.parse(releaseDate);
+    return DateUtility.toFhirUtcDateTimeString(terminology.getReleaseDate());
   }
 
   /**
@@ -1989,19 +2011,19 @@ public final class FhirUtilityR5 {
     throws Exception {
     final Meta meta = new Meta();
     meta.setVersionId("1");
-    Date lastUpdated = resolveTerminologyReleaseDate(terminology);
+    String lastUpdated = resolveTerminologyReleaseDateString(terminology);
     if (lastUpdated == null && terminology != null && terminology.getCreated() != null) {
-      lastUpdated = DateUtility.parseToUtcDate(terminology.getCreated());
+      lastUpdated = DateUtility.toFhirUtcInstantString(terminology.getCreated());
     }
     if (lastUpdated == null && concept != null) {
       if (concept.getModified() != null) {
-        lastUpdated = DateUtility.parseToUtcDate(concept.getModified());
+        lastUpdated = DateUtility.toFhirUtcInstantString(concept.getModified());
       } else if (concept.getCreated() != null) {
-        lastUpdated = DateUtility.parseToUtcDate(concept.getCreated());
+        lastUpdated = DateUtility.toFhirUtcInstantString(concept.getCreated());
       }
     }
     if (lastUpdated != null) {
-      meta.setLastUpdated(lastUpdated);
+      FhirDateTimeUtil.setR5InstantUtc(meta.getLastUpdatedElement(), lastUpdated);
     }
     if (concept != null && concept.getAttributes() != null
         && concept.getAttributes().containsKey("originalId")) {
@@ -2148,10 +2170,8 @@ public final class FhirUtilityR5 {
     questionnaire.setStatus(PublicationStatus.ACTIVE);
     questionnaire
         .setDescription("Questionnaire representing the entire contents of this code system");
-    final Date releaseAsDate = resolveTerminologyReleaseDate(terminology);
-    if (releaseAsDate != null) {
-      questionnaire.setDate(releaseAsDate);
-    }
+    FhirDateTimeUtil.setR5DateTimeUtc(questionnaire.getDateElement(),
+        resolveTerminologyReleaseDateString(terminology));
     questionnaire.setPublisher(terminology.getPublisher());
     applyQuestionnaireCopyright(questionnaire, terminology, null);
 

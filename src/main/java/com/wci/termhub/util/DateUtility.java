@@ -143,6 +143,37 @@ public final class DateUtility {
   }
 
   /**
+   * Normalizes a stored date string for FHIR dateTime/instant serialization in UTC. Full ISO 8601
+   * strings are returned unchanged (preserving offset, e.g. {@code +00:00}). Date-only values become
+   * midnight UTC ({@code T00:00:00Z}).
+   *
+   * @param dateString the date string (ISO 8601 or yyyy-MM-dd), or null
+   * @return the FHIR dateTime string, or null if dateString is null or empty
+   */
+  public static String toFhirUtcDateTimeString(final String dateString) {
+    if (dateString == null || dateString.isEmpty()) {
+      return null;
+    }
+    if (dateString.contains("T")) {
+      return dateString;
+    }
+    return dateString + "T00:00:00Z";
+  }
+
+  /**
+   * Formats a {@link Date} as a UTC instant string for FHIR {@code instant} elements.
+   *
+   * @param date the date, or null
+   * @return ISO 8601 instant in UTC (Z), or null if date is null
+   */
+  public static String toFhirUtcInstantString(final Date date) {
+    if (date == null) {
+      return null;
+    }
+    return date.toInstant().toString();
+  }
+
+  /**
    * Converts a Date to a UTC Date by formatting as ISO 8601 and parsing back.
    * Use when a Date from another source should be normalized to UTC for FHIR.
    *

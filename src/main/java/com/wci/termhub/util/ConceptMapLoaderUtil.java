@@ -199,7 +199,7 @@ public final class ConceptMapLoaderUtil {
       if (conceptMap.has("sourceUri")) {
         source = conceptMap.get("sourceUri").asText();
       } else if (conceptMap.has("sourceScopeUri")) {
-        source = conceptMap.get("sourceScopeUri").asText().replaceFirst("\\?fhir_cm", "");
+        source = conceptMap.get("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
       } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
           && conceptMap.get("group").get(0).has("source")) {
         source = conceptMap.get("group").get(0).get("source").asText();
@@ -214,7 +214,7 @@ public final class ConceptMapLoaderUtil {
       if (conceptMap.has("targetUri")) {
         target = conceptMap.get("targetUri").asText();
       } else if (conceptMap.has("targetScopeUri")) {
-        target = conceptMap.get("targetScopeUri").asText().replaceFirst("\\?fhir_cm", "");
+        target = conceptMap.get("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
       } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
           && conceptMap.get("group").get(0).has("target")) {
         target = conceptMap.get("group").get(0).get("target").asText();
@@ -546,6 +546,13 @@ public final class ConceptMapLoaderUtil {
         mapset.getAttributes().get("fhirSourceUri"));
     if (storedIdentifiers != null) {
       mapset.getAttributes().put(FhirIdentifierUtil.ATTR_FHIR_IDENTIFIER, storedIdentifiers);
+    }
+
+    if (root.has("contact") && root.get("contact").isArray()) {
+      mapset.getAttributes().put("fhirContact", root.get("contact").toString());
+    }
+    if (!root.path("copyright").isMissingNode() && !root.path("copyright").asText().isEmpty()) {
+      mapset.getAttributes().put("copyright", root.path("copyright").asText());
     }
 
     // Store the original URIs in attributes
