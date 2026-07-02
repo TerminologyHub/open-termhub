@@ -286,4 +286,26 @@ public class DateUtilityUnitTest {
     assertNotNull(result);
     assertEquals(input.toInstant(), result.toInstant());
   }
+
+  /**
+   * Test toFhirUtcDateTimeString preserves full ISO offset; date-only becomes midnight UTC.
+   */
+  @Test
+  public void testToFhirUtcDateTimeString() {
+    assertNull(DateUtility.toFhirUtcDateTimeString(null));
+    assertNull(DateUtility.toFhirUtcDateTimeString(""));
+    assertEquals("2024-08-06T00:00:00+00:00",
+        DateUtility.toFhirUtcDateTimeString("2024-08-06T00:00:00+00:00"));
+    assertEquals("2022-04-11T00:00:00Z", DateUtility.toFhirUtcDateTimeString("2022-04-11"));
+  }
+
+  /**
+   * Test toFhirUtcInstantString formats Date as UTC instant.
+   */
+  @Test
+  public void testToFhirUtcInstantString() {
+    assertNull(DateUtility.toFhirUtcInstantString(null));
+    final Date date = DateUtility.parseToUtcDate("2023-06-15T00:00:00Z");
+    assertEquals("2023-06-15T00:00:00Z", DateUtility.toFhirUtcInstantString(date));
+  }
 }
