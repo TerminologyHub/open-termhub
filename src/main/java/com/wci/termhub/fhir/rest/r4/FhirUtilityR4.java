@@ -621,8 +621,7 @@ public final class FhirUtilityR4 {
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children,
     final Map<String, String> conceptNameMap, final EntityRepositoryService searchService,
-    final boolean regenstriefMode)
-    throws Exception {
+    final boolean regenstriefMode) throws Exception {
     final Parameters parameters = new Parameters();
 
     // Properties to include by default from
@@ -920,9 +919,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Legacy {@code Map} keys used {@code _N} suffixes for duplicate FHIR
-   * property codes. Strip that for the $lookup parameter name (indexed
-   * documents only; reload uses
+   * Legacy {@code Map} keys used {@code _N} suffixes for duplicate FHIR property codes. Strip that
+   * for the $lookup parameter name (indexed documents only; reload uses
    * {@link com.wci.termhub.model.Concept#getFhirPropertyCodings()}).
    *
    * @param attributeKey the attribute key
@@ -936,8 +934,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Finds a concept code for a property value by searching conceptNameMap or
-   * searchService.
+   * Finds a concept code for a property value by searching conceptNameMap or searchService.
    *
    * @param propertyCode the property code
    * @param propertyValue the property value
@@ -1538,7 +1535,9 @@ public final class FhirUtilityR4 {
       csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }
     cs.setMeta(csMeta);
-
+    if (terminology.getConceptCt() != null) {
+      cs.setCount(terminology.getConceptCt().intValue());
+    }
     return cs;
   }
 
@@ -1581,6 +1580,9 @@ public final class FhirUtilityR4 {
       } else if ("decimal".equals(property.getType())) {
         pc.setType(CodeSystem.PropertyType.DECIMAL);
       }
+    }
+    if (terminology.getConceptCt() != null) {
+      cs.setCount(terminology.getConceptCt().intValue());
     }
 
     return cs;
@@ -2034,8 +2036,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Resolves questionnaire copyright from CodeSystem copyright plus external
-   * notices on member codes.
+   * Resolves questionnaire copyright from CodeSystem copyright plus external notices on member
+   * codes.
    *
    * @param questionnaire the questionnaire
    * @param terminology the terminology
@@ -2055,8 +2057,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Collects LOINC codes referenced by a questionnaire (root code, items,
-   * answer options).
+   * Collects LOINC codes referenced by a questionnaire (root code, items, answer options).
    *
    * @param questionnaire the questionnaire
    * @return codes in depth-first order
@@ -2201,8 +2202,8 @@ public final class FhirUtilityR4 {
     final String shortCommonName = resolveLoincShortCommonName(concept);
     final String title =
         !StringUtility.isEmpty(shortCommonName) ? shortCommonName : concept.getName();
-    final String name = !StringUtility.isEmpty(shortCommonName) ? toQuestionnaireName(shortCommonName)
-        : concept.getName();
+    final String name = !StringUtility.isEmpty(shortCommonName)
+        ? toQuestionnaireName(shortCommonName) : concept.getName();
     questionnaire.setName(name);
     questionnaire.setTitle(title);
     questionnaire.setStatus(PublicationStatus.DRAFT);
@@ -2303,8 +2304,8 @@ public final class FhirUtilityR4 {
 
   /**
    * Finds panel member relationships for a questionnaire/panel code. Prefers outbound
-   * {@code member} edges (full LOINC), then {@code has_member} (sandbox); falls back to
-   * inbound hierarchical {@code parent} edges (child {@code from} → panel {@code to}).
+   * {@code member} edges (full LOINC), then {@code has_member} (sandbox); falls back to inbound
+   * hierarchical {@code parent} edges (child {@code from} → panel {@code to}).
    *
    * @param panelCode the panel or questionnaire code
    * @param searchService the search service
@@ -2380,8 +2381,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Drops self-references and LOINC part (LP*) targets from panel member
-   * relationships.
+   * Drops self-references and LOINC part (LP*) targets from panel member relationships.
    *
    * @param panelCode the panel code
    * @param relationships the candidate relationships
@@ -2467,8 +2467,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Resolves questionnaire item text from member-edge metadata, then concept
-   * display.
+   * Resolves questionnaire item text from member-edge metadata, then concept display.
    *
    * @param memberRel the member relationship
    * @param memberConcept the member concept
@@ -2495,8 +2494,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Converts a LOINC short common name to a FHIR Questionnaire.name
-   * (non-alphanumeric → underscore).
+   * Converts a LOINC short common name to a FHIR Questionnaire.name (non-alphanumeric →
+   * underscore).
    *
    * @param shortCommonName the short common name
    * @return machine name
@@ -2569,8 +2568,7 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Resolves FHIR Questionnaire item type from LOINC scale type and answer
-   * options.
+   * Resolves FHIR Questionnaire item type from LOINC scale type and answer options.
    *
    * @param memberConcept the member concept
    * @param answerOptions the answer options
@@ -2769,8 +2767,7 @@ public final class FhirUtilityR4 {
    * @param terminology the terminology
    * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the terminology version
-   * @param parentLinkId parent group linkId for form-scoped member-edge
-   *          selection
+   * @param parentLinkId parent group linkId for form-scoped member-edge selection
    * @return list of question components
    * @throws Exception the exception
    */
@@ -2921,8 +2918,8 @@ public final class FhirUtilityR4 {
   }
 
   /**
-   * Finds answer options for a question from its {@code answer-list} property,
-   * with {@code has_answers} relationship fallback.
+   * Finds answer options for a question from its {@code answer-list} property, with
+   * {@code has_answers} relationship fallback.
    *
    * @param memberConcept the question concept
    * @param searchService the search service

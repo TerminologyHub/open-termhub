@@ -689,29 +689,30 @@ public class ConceptMapProviderR5 implements IResourceProvider {
     final List<ParametersParameterComponent> matches = new ArrayList<>();
 
     for (final ConceptMap map : maps) {
-      // Get the identifier from the map
-      final String mapsetCode = map.getIdentifier().get(0).getValue();
+      // Get the identifier from the map (or the id if blank)
+      final String mapsetCode =
+          !map.getIdentifier().isEmpty() ? map.getIdentifier().get(0).getValue() : map.getId();
+
       if (logger.isDebugEnabled()) {
         logger.debug("Processing concept map: id={}, code={}, url={}", map.getId(), mapsetCode,
             map.getUrl());
       }
 
-      final List<Mapping> mappings = searchService.find(
-          new SearchParameters(StringUtility.composeQuery("AND",
-              // code clause
-              (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
-              // terminology clause (null if null) - no reversing
-              sourceTerminology == null ? null
-                  : ("from.terminology:"
-                      + StringUtility.escapeQuery(sourceTerminology.getAbbreviation())),
-              targetTerminology == null ? null
-                  : ("to.terminology:"
-                      + StringUtility.escapeQuery(targetTerminology.getAbbreviation())),
-              // mapset clauses
-              "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
-              "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
-              "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 2000, null, null),
-          Mapping.class).getItems();
+      final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
+          // code clause
+          (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
+          // terminology clause (null if null) - no reversing
+          sourceTerminology == null ? null
+              : ("from.terminology:"
+                  + StringUtility.escapeQuery(sourceTerminology.getAbbreviation())),
+          targetTerminology == null ? null
+              : ("to.terminology:"
+                  + StringUtility.escapeQuery(targetTerminology.getAbbreviation())),
+          // mapset clauses
+          "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
+          "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
+          "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 2000, null, null);
+      final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
 
       if (logger.isDebugEnabled()) {
         logger.debug("Found {} mappings for concept map {}", mappings.size(), map.getId());

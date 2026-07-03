@@ -654,8 +654,7 @@ public final class FhirUtilityR5 {
     final Set<String> properties, final Map<String, String> displayMap,
     final List<ConceptRelationship> relationships, final List<ConceptRef> children,
     final Map<String, String> conceptNameMap, final EntityRepositoryService searchService,
-    final boolean regenstriefMode)
-    throws Exception {
+    final boolean regenstriefMode) throws Exception {
     final Parameters parameters = new Parameters();
 
     // Properties to include by default from
@@ -755,8 +754,8 @@ public final class FhirUtilityR5 {
         if (LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput(propertyCode)) {
           continue;
         }
-        String display = resolveLoincPropertyDisplay(propertyCode, codingCode, codingCode, concept,
-            displayMap);
+        String display =
+            resolveLoincPropertyDisplay(propertyCode, codingCode, codingCode, concept, displayMap);
         if (entry.getValueDisplay() != null && !entry.getValueDisplay().isEmpty()) {
           display = entry.getValueDisplay();
         }
@@ -1545,6 +1544,9 @@ public final class FhirUtilityR5 {
       csMeta.addTag("originalId", terminology.getAttributes().get("originalId"), null);
     }
     cs.setMeta(csMeta);
+    if (terminology.getConceptCt() != null) {
+      cs.setCount(terminology.getConceptCt().intValue());
+    }
 
     return cs;
   }
@@ -1588,6 +1590,9 @@ public final class FhirUtilityR5 {
       } else if ("decimal".equals(property.getType())) {
         pc.setType(CodeSystem.PropertyType.DECIMAL);
       }
+    }
+    if (terminology.getConceptCt() != null) {
+      cs.setCount(terminology.getConceptCt().intValue());
     }
 
     return cs;
@@ -2060,8 +2065,8 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Resolves questionnaire copyright from CodeSystem copyright plus external
-   * notices on member codes.
+   * Resolves questionnaire copyright from CodeSystem copyright plus external notices on member
+   * codes.
    *
    * @param questionnaire the questionnaire
    * @param terminology the terminology
@@ -2081,8 +2086,7 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Collects LOINC codes referenced by a questionnaire (root code, items,
-   * answer options).
+   * Collects LOINC codes referenced by a questionnaire (root code, items, answer options).
    *
    * @param questionnaire the questionnaire
    * @return codes in depth-first order
@@ -2328,8 +2332,8 @@ public final class FhirUtilityR5 {
 
   /**
    * Finds panel member relationships for a questionnaire/panel code. Prefers outbound
-   * {@code member} edges (full LOINC), then {@code has_member} (sandbox); falls back to
-   * inbound hierarchical {@code parent} edges (child {@code from} → panel {@code to}).
+   * {@code member} edges (full LOINC), then {@code has_member} (sandbox); falls back to inbound
+   * hierarchical {@code parent} edges (child {@code from} → panel {@code to}).
    *
    * @param panelCode the panel or questionnaire code
    * @param searchService the search service
@@ -2491,8 +2495,7 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Resolves questionnaire item text from member-edge metadata, then concept
-   * display.
+   * Resolves questionnaire item text from member-edge metadata, then concept display.
    *
    * @param memberRel the member relationship
    * @param memberConcept the member concept
@@ -2519,7 +2522,8 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Converts a LOINC short common name to a FHIR Questionnaire.name (non-alphanumeric → underscore).
+   * Converts a LOINC short common name to a FHIR Questionnaire.name (non-alphanumeric →
+   * underscore).
    *
    * @param shortCommonName the short common name
    * @return machine name
@@ -2791,8 +2795,7 @@ public final class FhirUtilityR5 {
    * @param terminology the terminology
    * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the terminology version
-   * @param parentLinkId parent group linkId for form-scoped member-edge
-   *          selection
+   * @param parentLinkId parent group linkId for form-scoped member-edge selection
    * @return list of question components
    * @throws Exception the exception
    */
@@ -2943,8 +2946,8 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Finds answer options for a question from its {@code answer-list} property,
-   * with {@code has_answers} relationship fallback.
+   * Finds answer options for a question from its {@code answer-list} property, with
+   * {@code has_answers} relationship fallback.
    *
    * @param memberConcept the question concept
    * @param searchService the search service
