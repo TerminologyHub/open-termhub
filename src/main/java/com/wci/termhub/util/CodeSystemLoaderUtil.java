@@ -245,7 +245,6 @@ public final class CodeSystemLoaderUtil {
               cacheConcept(conceptNode, terminologyCache);
 
             }
-
           }
         }
       }
@@ -385,10 +384,6 @@ public final class CodeSystemLoaderUtil {
       if (isSyndicated != null && isSyndicated) {
         terminology.getAttributes().put("syndicated", "true");
       }
-
-      // When finished, set concept ct
-      terminology.setConceptCt((long) conceptCount);
-
       service.update(Terminology.class, terminology.getId(), terminology);
 
       // Mark latest terminology/mapset/subset version for this
@@ -493,9 +488,7 @@ public final class CodeSystemLoaderUtil {
     final String fullDateString = root.path("date").asText();
     terminology.setReleaseDate(fullDateString);
     terminology.setFamily(terminology.getAbbreviation());
-
-    // actually count it instead of doing this
-    // terminology.setConceptCt(root.path("count").asLong(0));
+    terminology.setConceptCt(root.path("count").asLong(0));
 
     // Set terminology attributes
     final JsonNode properties = root.path("property");
@@ -693,8 +686,9 @@ public final class CodeSystemLoaderUtil {
           final String codingCode = valueCoding.path("code").asText();
           // Primary properties that should only be stored once
           final boolean isPrimary = "system".equals(code) || "property".equals(code)
-              || "component".equals(code) || "class".equals(code) || "method_typ".equals(code)
-              || "scale_typ".equals(code) || "time_aspct".equals(code);
+              || "component".equals(code) || "class".equals(code)
+              || "method_typ".equals(code) || "scale_typ".equals(code)
+              || "time_aspct".equals(code);
           if (isPrimary) {
             // Skip if already exists (duplicate primary property)
             if (concept.getAttributes().containsKey(code)) {
@@ -725,7 +719,8 @@ public final class CodeSystemLoaderUtil {
           concept.getSemanticTypes().add(value);
           concept.getAttributes().put(code, value);
         }
-      } else if ("status".equals(code)) {
+      }
+      else if ("status".equals(code)) {
         if (property.has("valueCode")) {
           final String statusCode = property.path("valueCode").asText();
           concept.setActive("active".equalsIgnoreCase(statusCode));
@@ -734,13 +729,13 @@ public final class CodeSystemLoaderUtil {
           concept.setActive("active".equalsIgnoreCase(value) || Boolean.parseBoolean(value));
           concept.getAttributes().put("status", value);
         }
-      } else if ("active".equals(code)) {
+      }
+      else if ("active".equals(code)) {
         // active flag already set from cacheConcept
         if (value != null) {
           concept.getAttributes().put("active", value);
         }
       }
-
       // redirect defined
       else if ("sufficientlyDefined".equals(code)) {
         // already handled by cacheConcept
@@ -758,7 +753,8 @@ public final class CodeSystemLoaderUtil {
       // anything that has a value other than "valueCode" or "valueCoding" is a property
       else if (!property.has("valueCode") && !property.has("valueCoding")) {
         concept.getAttributes().put(code, value);
-      } else if (property.has("valueCode")) {
+      }
+      else if (property.has("valueCode")) {
         concept.getAttributes().put(code, property.path("valueCode").asText());
       }
 
@@ -869,7 +865,6 @@ public final class CodeSystemLoaderUtil {
     // active/defined/name/par/chd
 
     final Concept concept = new Concept();
-    concept.setActive(true);
     concept.setCode(conceptNode.path("code").asText());
     concept.setName(conceptNode.path("display").asText());
     // Process common properties
@@ -887,10 +882,6 @@ public final class CodeSystemLoaderUtil {
       // redirect active
       if ("active".equals(code)) {
         concept.setActive(Boolean.valueOf(value));
-      }
-      // redirect inactive
-      else if ("inactive".equals(code)) {
-        concept.setActive(!Boolean.valueOf(value));
       }
       // FHIR standard status (valueCode active/inactive) drives concept active flag
       else if ("status".equals(code) && property.has("valueCode")) {

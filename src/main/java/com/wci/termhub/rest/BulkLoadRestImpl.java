@@ -728,49 +728,41 @@ public class BulkLoadRestImpl {
             // Use ObjectMapper to read the sub-object as a JsonNode
             final JsonNode entryNode = parser.readValueAsTree();
             if (entryNode.has("resource")) {
-              final JsonNode resource = entryNode.get("resource");
-              final String resourceType = resource.get("resourceType").asText(null);
-              final String resourceId = describeBundleResource(resource);
+              final String resourceType =
+                  entryNode.get("resource").get("resourceType").asText(null);
               logger.info("  resource = " + resourceType);
 
               final File tmpResourceFile = File.createTempFile("tmp", ".json");
-              try {
-                ThreadLocalMapper.get().writeValue(tmpResourceFile, resource);
+              ThreadLocalMapper.get().writeValue(tmpResourceFile, entryNode.get("resource"));
 
-                switch (resourceType) {
-                  case "CodeSystem":
-                    final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService,
-                        tmpResourceFile, enablePostLoadComputations.isEnabled(), CodeSystem.class,
-                        new DefaultProgressListener(), null, markLatestRunner);
-                    results.add("CodeSystem/" + codeSystem.getId());
-                    break;
+              switch (resourceType) {
+                case "CodeSystem":
+                  final CodeSystem codeSystem = CodeSystemLoaderUtil.loadCodeSystem(searchService,
+                      tmpResourceFile, enablePostLoadComputations.isEnabled(), CodeSystem.class,
+                      new DefaultProgressListener(), null, markLatestRunner);
+                  results.add("CodeSystem/" + codeSystem.getId());
+                  break;
 
-                  case "ValueSet":
-                    // Use existing loader utility
-                    final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService,
-                        tmpResourceFile, ValueSet.class, new DefaultProgressListener(), false,
-                        markLatestRunner);
-                    results.add("ValueSet/" + valueSet.getId());
-                    break;
+                case "ValueSet":
+                  // Use existing loader utility
+                  final ValueSet valueSet = ValueSetLoaderUtil.loadValueSet(searchService,
+                      tmpResourceFile, ValueSet.class, new DefaultProgressListener(), false,
+                      markLatestRunner);
+                  results.add("ValueSet/" + valueSet.getId());
+                  break;
 
-                  case "ConceptMap":
-                    // Use existing loader utility
-                    final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService,
-                        tmpResourceFile, ConceptMap.class, new DefaultProgressListener(), null,
-                        markLatestRunner);
-                    results.add("ConceptMap/" + conceptMap.getId());
-                    break;
+                case "ConceptMap":
+                  // Use existing loader utility
+                  final ConceptMap conceptMap = ConceptMapLoaderUtil.loadConceptMap(searchService,
+                      tmpResourceFile, ConceptMap.class, new DefaultProgressListener(), null,
+                      markLatestRunner);
+                  results.add("ConceptMap/" + conceptMap.getId());
+                  break;
 
-                  default:
-                    logger.info("    SKIP unhandled resource");
-                    break;
+                default:
+                  logger.info("    SKIP unhandled resource");
+                  continue;
 
-                }
-              } catch (final Exception e) {
-                logger.error("Bundle entry failed: {}", resourceId, e);
-                results.add("ERROR " + resourceId + ": " + e.getMessage());
-              } finally {
-                FileUtils.deleteQuietly(tmpResourceFile);
               }
 
             }
@@ -779,36 +771,6 @@ public class BulkLoadRestImpl {
         }
       }
     }
-
-    final long errorCount = results.stream().filter(r -> r.startsWith("ERROR ")).count();
-    if (errorCount > 0) {
-      logger.warn("Bundle load finished with {} error(s) of {} entries", errorCount, entryCount);
-    }
-  }
-
-  /**
-   * Describe bundle resource.
-   *
-   * @param resource the resource
-   * @return the string
-   */
-  private static String describeBundleResource(final JsonNode resource) {
-    final String resourceType = resource.path("resourceType").asText("?");
-    final String title = resource.path("title").asText(null);
-    final String url = resource.path("url").asText(null);
-    final String id = resource.path("id").asText(null);
-
-    final StringBuilder sb = new StringBuilder(resourceType);
-    if (title != null) {
-      sb.append(" title=").append(title);
-    }
-    if (url != null) {
-      sb.append(" url=").append(url);
-    }
-    if (id != null) {
-      sb.append(" id=").append(id);
-    }
-    return sb.toString();
   }
 
 }
