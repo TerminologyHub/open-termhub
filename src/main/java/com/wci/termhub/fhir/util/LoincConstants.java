@@ -9,6 +9,8 @@
  */
 package com.wci.termhub.fhir.util;
 
+import java.util.Set;
+
 /**
  * Shared LOINC identifiers used across FHIR providers and utilities.
  */
@@ -76,6 +78,13 @@ public final class LoincConstants {
 
   /** LOINC PROPERTY concept attribute / property code. */
   public static final String ATTR_PROPERTY = "PROPERTY";
+
+  /**
+   * Uppercase LOINC property codes that duplicate lowercase {@code valueCoding} axes in the same
+   * CodeSystem (legacy string row vs part code row).
+   */
+  public static final Set<String> LOINC_UPPERCASE_PROPERTY_KEYS =
+      Set.of("CLASS", "COMPONENT", "METHOD_TYP", "PROPERTY", "SCALE_TYP", "SYSTEM", "TIME_ASPCT");
 
   /** FHIR standard concept status property (valueCode active/inactive). */
   public static final String FHIR_STATUS = "status";

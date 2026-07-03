@@ -222,6 +222,65 @@ public class FhirUtilityR5MetaUnitTest {
     assertNotNull(cm.getMeta());
     assertEquals("1", cm.getMeta().getVersionId());
     assertNotNull(cm.getMeta().getLastUpdated());
+    assertTrue(cm.getContact().isEmpty());
+  }
+
+  /**
+   * Test ConceptMap contact round-trip from mapset {@code fhirContact} attribute.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConceptMapContact() throws Exception {
+    final String fhirContact =
+        "[{\"telecom\":[{\"system\":\"url\",\"value\":\"http://loinc.org/cm/chebi-to-loinc-parts\"}]}]";
+
+    final Mapset mapset = new Mapset();
+    mapset.setId("test-cm");
+    mapset.setUri("http://loinc.org/cm/chebi-to-loinc-parts");
+    mapset.setVersion("1");
+    mapset.setName("Test ConceptMap");
+    mapset.setAbbreviation("TCM");
+    mapset.setPublisher("Regenstrief Institute, Inc.");
+    final Map<String, String> attrs = new HashMap<>();
+    attrs.put("fhirContact", fhirContact);
+    mapset.setAttributes(attrs);
+    mapset.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final ConceptMap cm = FhirUtilityR5.toR5(mapset);
+
+    assertNotNull(cm.getContact());
+    assertEquals(1, cm.getContact().size());
+    assertEquals("Regenstrief Institute, Inc.", cm.getContact().get(0).getName());
+    assertEquals("http://loinc.org/cm/chebi-to-loinc-parts",
+        cm.getContact().get(0).getTelecomFirstRep().getValue());
+  }
+
+  /**
+   * Test ConceptMap copyright round-trip from mapset {@code copyright} attribute.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConceptMapCopyright() throws Exception {
+    final String copyright =
+        "This material contains content from LOINC and ChEBI. See respective publishers for terms.";
+
+    final Mapset mapset = new Mapset();
+    mapset.setId("test-cm");
+    mapset.setUri("http://loinc.org/cm/chebi-to-loinc-parts");
+    mapset.setVersion("1");
+    mapset.setName("Test ConceptMap");
+    mapset.setAbbreviation("TCM");
+    mapset.setPublisher("Regenstrief Institute, Inc.");
+    final Map<String, String> attrs = new HashMap<>();
+    attrs.put("copyright", copyright);
+    mapset.setAttributes(attrs);
+    mapset.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final ConceptMap cm = FhirUtilityR5.toR5(mapset);
+
+    assertEquals(copyright, cm.getCopyright());
   }
 
   /**
