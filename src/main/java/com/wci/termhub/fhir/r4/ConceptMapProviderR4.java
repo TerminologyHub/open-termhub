@@ -735,15 +735,8 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     // } ]
     // }
     for (final ConceptMap map : maps) {
-      // Get the identifier from the map (or the id if blank)
-      String mapsetCode = map.getIdentifier().getValue();
-      if (StringUtility.isEmpty(mapsetCode)) {
-        mapsetCode = map.getId();
-      }
-      if (logger.isDebugEnabled()) {
-        logger.debug("Processing concept map: id={}, code={}, url={}", map.getId(), mapsetCode,
-            map.getUrl());
-      }
+      // Get the identifier from the map
+      final String mapsetCode = map.getIdentifier().getValue();
 
       final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
           // code clause

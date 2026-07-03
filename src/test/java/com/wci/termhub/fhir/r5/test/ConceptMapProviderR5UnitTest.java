@@ -324,8 +324,9 @@ public class ConceptMapProviderR5UnitTest extends AbstractFhirR5ServerTest {
   public void testFindConceptMapsByTargetSystem() throws Exception {
 
     // Given
-    final UriParam targetSystem = new UriParam(TEST_MAP_TARGET);
-    LOGGER.info("testFindConceptMapsByTargetSystem targetSystem: {}", TEST_MAP_TARGET);
+    final String testMapTarget = TEST_MAP_TARGET + "?fhir_vs";
+    final UriParam targetSystem = new UriParam(testMapTarget);
+    LOGGER.info("testFindConceptMapsByTargetSystem targetSystem: {}", testMapTarget);
 
     // When
     final Bundle bundle = provider.findConceptMaps(request, details,
@@ -357,7 +358,7 @@ public class ConceptMapProviderR5UnitTest extends AbstractFhirR5ServerTest {
     assertTrue(bundle.getEntry().stream().allMatch(e -> {
       final ConceptMap cm = (ConceptMap) e.getResource();
       return cm.getTargetScope() != null && ((UriType) cm.getTargetScope()).getValue() != null
-          && ((UriType) cm.getTargetScope()).getValue().startsWith(TEST_MAP_TARGET);
+          && ((UriType) cm.getTargetScope()).getValue().equals(testMapTarget);
     }), "All entries should have matching target scope URI");
   }
 
