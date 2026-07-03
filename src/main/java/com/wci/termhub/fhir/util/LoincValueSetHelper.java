@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.wci.termhub.app.ServerMode;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ResultList;
@@ -42,7 +43,7 @@ import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * Helper for LOINC LL/LG value set support. When {@code fhir.mode=regenstrief},
+ * Helper for LOINC LL/LG value set support. When {@code server.mode=regenstrief},
  * value set providers expose value sets at http://loinc.org?fhir_vs/LL* and
  * http://loinc.org?fhir_vs/LG*, and at http://loinc.org/vs/{id} (path form).
  * In Regenstrief mode, LG ids may include a version suffix (e.g.
@@ -64,13 +65,13 @@ public class LoincValueSetHelper {
   private static final Pattern LG_PATTERN = Pattern.compile("^LG\\d+-\\d+(-[\\d.]+)?$");
 
   /** The FHIR server mode. */
-  @Value("${fhir.mode:basic}")
-  private FhirMode mode;
+  @Value("${server.mode:default}")
+  private ServerMode mode;
 
   /**
    * Returns whether Regenstrief-compatible LOINC FHIR behavior is enabled.
    *
-   * @return true when {@code fhir.mode=regenstrief}
+   * @return true when {@code server.mode=regenstrief}
    */
   public boolean isRegenstriefMode() {
     return mode.isRegenstriefMode();
@@ -79,7 +80,7 @@ public class LoincValueSetHelper {
   /**
    * Returns whether Regenstrief-compatible LOINC FHIR behavior is enabled.
    *
-   * @return true when {@code fhir.mode=regenstrief}
+   * @return true when {@code server.mode=regenstrief}
    */
   public boolean isEnabled() {
     return isRegenstriefMode();
@@ -748,7 +749,7 @@ public class LoincValueSetHelper {
 
   /**
    * Finds all LL and LG concepts in the given LOINC terminology using Lucene wildcard
-   * queries. Used when {@code fhir.mode=regenstrief} to
+   * queries. Used when {@code server.mode=regenstrief} to
    * enumerate value sets for a general {@code GET /ValueSet} listing.
    *
    * @param searchService the search service

@@ -76,7 +76,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.algo.DefaultProgressListener;
-import com.wci.termhub.fhir.util.FhirMode;
+import com.wci.termhub.app.ServerMode;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 import com.wci.termhub.model.Mapset;
@@ -96,13 +96,13 @@ import ca.uhn.fhir.parser.IParser;
 /**
  * Class tests for FhirR4Tests. Tests the functionality of the FHIR R4 endpoints, CodeSystem,
  * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set
- * id's. With fhir.mode=regenstrief, LOINC LL/LG value sets from
+ * id's. With server.mode=regenstrief, LOINC LL/LG value sets from
  * CodeSystem-lnc-sandbox-277-r4 (e.g. LL1772-4) are exposed via ValueSet search by url and read by
  * id.
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
-@TestPropertySource(properties = "fhir.mode=basic")
+@TestPropertySource(properties = "server.mode=default")
 public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
   /**
@@ -1912,7 +1912,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemLookupLoincSuppressesStatusWhenRegenstriefOn() throws Exception {
-    ReflectionTestUtils.setField(loincValueSetHelper, "mode", FhirMode.REGENSTRIEF);
+    ReflectionTestUtils.setField(loincValueSetHelper, "mode", ServerMode.REGENSTRIEF);
     try {
       final Parameters result = lookupLoincStatusTestConcept();
       final Set<String> propertyKeys = collectLookupPropertyKeys(result);
@@ -1923,7 +1923,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
           "Expected STATUS|Active property, got: " + propertyKeys);
       assertTrue(((BooleanType) result.getParameter("active").getValue()).getValue());
     } finally {
-      ReflectionTestUtils.setField(loincValueSetHelper, "mode", FhirMode.BASIC);
+      ReflectionTestUtils.setField(loincValueSetHelper, "mode", ServerMode.DEFAULT);
     }
   }
 
@@ -2411,7 +2411,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
   /**
    * Test ValueSet search by url for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r4).
-   * Requires fhir.mode=regenstrief.
+   * Requires server.mode=regenstrief.
    *
    * @throws Exception the exception
    */

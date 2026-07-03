@@ -35,7 +35,7 @@ public final class LoincConceptPropertyHelper {
    *
    * @param attributeKey the concept attribute key
    * @param concept the concept
-   * @param regenstriefMode true when {@code fhir.mode=regenstrief}
+   * @param regenstriefMode true when {@code server.mode=regenstrief}
    * @param isLoinc true when the code system is LOINC
    * @return true to skip emitting this attribute as a property
    */

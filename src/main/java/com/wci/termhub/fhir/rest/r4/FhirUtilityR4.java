@@ -612,7 +612,7 @@ public final class FhirUtilityR4 {
    * @param children the children
    * @param conceptNameMap the concept name map
    * @param searchService the search service
-   * @param regenstriefMode true when {@code fhir.mode=regenstrief}
+   * @param regenstriefMode true when {@code server.mode=regenstrief}
    * @return the parameters
    * @throws Exception the exception
    */
