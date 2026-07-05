@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.algo.MarkLatestRunner;
+import com.wci.termhub.app.ServerModeUtility;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
@@ -127,7 +128,8 @@ public class ConceptMapProviderR5 implements IResourceProvider {
               "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
           null, 100000, null, null);
       final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
-      return FhirUtilityR5.toR5(mapset, mappings);
+      return FhirUtilityR5.toR5(mapset, mappings,
+          resolveContactTerminology(mapset));
 
     } catch (final FHIRServerResponseException e) {
       logger.error("FHIR Server Response Exception", e);
@@ -646,7 +648,8 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       // Lookup and filter mapsets
       final List<ConceptMap> list = new ArrayList<>();
       for (final Mapset mapset : FhirUtility.lookupMapsets(searchService)) {
-        final ConceptMap cm = FhirUtilityR5.toR5(mapset);
+        final ConceptMap cm =
+            FhirUtilityR5.toR5(mapset, resolveContactTerminology(mapset));
         list.add(cm);
       }
       return list;
@@ -658,6 +661,20 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       throw FhirUtilityR5.exception("Failed to find concept maps",
           OperationOutcome.IssueType.EXCEPTION, 500);
     }
+  }
+
+  /**
+   * Terminology contact for ConceptMap when {@code server.mode=regenstrief}.
+   *
+   * @param mapset the mapset
+   * @return contact terminology, or null in basic mode
+   * @throws Exception the exception
+   */
+  private Terminology resolveContactTerminology(final Mapset mapset) throws Exception {
+    if (!ServerModeUtility.isRegenstriefImportMode()) {
+      return null;
+    }
+    return FhirUtility.resolveRegenstriefConceptMapContactTerminology(searchService, mapset);
   }
 
   /**
