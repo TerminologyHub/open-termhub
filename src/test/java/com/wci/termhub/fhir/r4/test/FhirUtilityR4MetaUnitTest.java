@@ -27,7 +27,9 @@ import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.Test;
 
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.util.DateUtility;
@@ -384,6 +386,31 @@ public class FhirUtilityR4MetaUnitTest {
     assertEquals("Filaria_Ab_IgG_IgM_Pnl_Ser", q.getName());
     assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getTitle());
     assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getCodeFirstRep().getDisplay());
+  }
+
+  /**
+   * Deprecated panel without SHORTNAME uses COMPONENT display for questionnaire metadata.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testQuestionnaireNameTitleFromComponentDisplay() throws Exception {
+    final Concept concept = new Concept();
+    concept.setCode("45981-8");
+    concept.setName("Deprecated MDS full assessment form - version 2.0");
+    concept.setTerminology("LOINC");
+    concept.setPublisher("Regenstrief Institute, Inc.");
+    concept.setVersion("2.81");
+    final ConceptPropertyValueCoding component = new ConceptPropertyValueCoding();
+    component.setPropertyCode(LoincConstants.ATTR_COMPONENT);
+    component.setValueCode("LP75085-8");
+    component.setValueDisplay("MDS full assessment form - version 2.0");
+    concept.getFhirPropertyCodings().add(component);
+
+    final Questionnaire q = FhirUtilityR4.toR4Questionnaire(concept, null, null);
+    assertEquals("MDS_full_assessment_form_version", q.getName());
+    assertEquals("MDS full assessment form - version 2.0", q.getTitle());
+    assertEquals("MDS full assessment form - version 2.0", q.getCodeFirstRep().getDisplay());
   }
 
   /**

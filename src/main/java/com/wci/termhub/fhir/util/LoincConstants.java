@@ -46,17 +46,17 @@ public final class LoincConstants {
   /** Concept attribute for answer list ID (LOINC). */
   public static final String ATTR_ANSWER_LIST_ID = "ANSWER_LIST_ID";
 
-  /** LOINC short common name concept attribute. */
-  public static final String ATTR_SHORT_COMMON_NAME = "SHORT_COMMON_NAME";
-
-  /** LOINC short common name term/designation type. */
-  public static final String TERM_TYPE_SHORT_COMMON_NAME = "SHORT_COMMON_NAME";
-
   /** LOINC short name concept attribute (official LOINC column). */
   public static final String ATTR_SHORTNAME = "SHORTNAME";
 
   /** LOINC short name term/designation type. */
   public static final String TERM_TYPE_SHORTNAME = "SHORTNAME";
+
+  /** LOINC component part property code on indexed concepts. */
+  public static final String ATTR_COMPONENT = "COMPONENT";
+
+  /** LOINC fully specified name designation type. */
+  public static final String TERM_TYPE_FULLY_SPECIFIED_NAME = "FullySpecifiedName";
 
   /** Panel membership relationship (full LOINC loads). */
   public static final String LOINC_REL_PANEL_MEMBER = "member";
