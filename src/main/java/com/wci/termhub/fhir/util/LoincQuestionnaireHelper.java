@@ -25,6 +25,7 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.Term;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
@@ -230,6 +231,157 @@ public final class LoincQuestionnaireHelper {
    */
   public static String resolveFormDisplayName(final ConceptRelationship rel) {
     return getRelationshipAttribute(rel, LoincConstants.ATTR_DISPLAY_NAME_FOR_FORM);
+  }
+
+  /**
+   * Resolves LOINC display text for questionnaire name/title/code.display.
+   *
+   * @param concept the loaded concept (optional)
+   * @param fallback the member concept ref from a relationship (optional)
+   * @return display text or null
+   */
+  public static String resolveLoincDisplayName(final Concept concept, final ConceptRef fallback) {
+    if (concept != null && concept.getAttributes() != null) {
+      final String shortName = concept.getAttributes().get(LoincConstants.ATTR_SHORTNAME);
+      if (!StringUtility.isEmpty(shortName)) {
+        return shortName;
+      }
+    }
+    if (concept != null) {
+      for (final Term term : concept.getTerms()) {
+        if (!term.getActive() || StringUtility.isEmpty(term.getName())) {
+          continue;
+        }
+        if (LoincConstants.TERM_TYPE_SHORTNAME.equals(term.getType())) {
+          return term.getName();
+        }
+      }
+    }
+    final String fsnComponent = resolveFullySpecifiedNameComponent(concept);
+    if (!StringUtility.isEmpty(fsnComponent)) {
+      return fsnComponent;
+    }
+    final String componentDisplay = resolveComponentDisplay(concept);
+    if (!StringUtility.isEmpty(componentDisplay)) {
+      return componentDisplay;
+    }
+    if (concept != null && !StringUtility.isEmpty(concept.getName())) {
+      return concept.getName();
+    }
+    if (fallback != null && !StringUtility.isEmpty(fallback.getName())) {
+      return fallback.getName();
+    }
+    return null;
+  }
+
+  /**
+   * Reads the component axis from the en-US {@code FullySpecifiedName} designation.
+   *
+   * @param concept the concept
+   * @return FSN component text or null
+   */
+  private static String resolveFullySpecifiedNameComponent(final Concept concept) {
+    if (concept == null || concept.getTerms() == null) {
+      return null;
+    }
+    String fallback = null;
+    for (final Term term : concept.getTerms()) {
+      if (!term.getActive() || StringUtility.isEmpty(term.getName())
+          || !LoincConstants.TERM_TYPE_FULLY_SPECIFIED_NAME.equals(term.getType())) {
+        continue;
+      }
+      final String component = parseFullySpecifiedNameComponent(term.getName());
+      if (StringUtility.isEmpty(component)) {
+        continue;
+      }
+      if (term.getLocaleMap() != null && term.getLocaleMap().containsKey("en-US")) {
+        return component;
+      }
+      if (fallback == null) {
+        fallback = component;
+      }
+    }
+    return fallback;
+  }
+
+  /**
+   * Extracts the LOINC component from a fully specified name ({@code component:-:...}).
+   *
+   * @param fullySpecifiedName the FSN
+   * @return component text
+   */
+  static String parseFullySpecifiedNameComponent(final String fullySpecifiedName) {
+    if (StringUtility.isEmpty(fullySpecifiedName)) {
+      return fullySpecifiedName;
+    }
+    final int delim = fullySpecifiedName.indexOf(":-");
+    if (delim < 0) {
+      return fullySpecifiedName.trim();
+    }
+    return fullySpecifiedName.substring(0, delim).trim();
+  }
+
+  /**
+   * Reads the COMPONENT property coding display when SHORTNAME is absent.
+   *
+   * @param concept the concept
+   * @return component display or null
+   */
+  private static String resolveComponentDisplay(final Concept concept) {
+    if (concept == null || concept.getFhirPropertyCodings() == null) {
+      return null;
+    }
+    for (final ConceptPropertyValueCoding coding : concept.getFhirPropertyCodings()) {
+      if (coding != null
+          && LoincConstants.ATTR_COMPONENT.equalsIgnoreCase(coding.getPropertyCode())
+          && !StringUtility.isEmpty(coding.getValueDisplay())) {
+        return coding.getValueDisplay();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Converts a LOINC SHORTNAME / short common name to a FHIR {@code Questionnaire.name},
+   * matching fhir.loinc.org: drop pure-numeric tokens, strip leading digits from other
+   * tokens, join with underscores, preserve embedded letter-digit tokens (e.g. {@code D25}).
+   *
+   * @param shortCommonName the LOINC short name
+   * @return machine name
+   */
+  public static String toQuestionnaireName(final String shortCommonName) {
+    if (StringUtility.isEmpty(shortCommonName)) {
+      return shortCommonName;
+    }
+    final String[] tokens = shortCommonName.split("[^a-zA-Z0-9]+");
+    final StringBuilder sb = new StringBuilder();
+    for (String token : tokens) {
+      if (token.isEmpty() || token.matches("\\d+")) {
+        continue;
+      }
+      token = token.replaceFirst("^\\d+", "");
+      if (token.isEmpty()) {
+        continue;
+      }
+      if (sb.length() > 0) {
+        sb.append('_');
+      }
+      sb.append(token);
+    }
+    return capitalizeFirstLetter(sb.toString());
+  }
+
+  /**
+   * Uppercases the first character of the string.
+   *
+   * @param string the string
+   * @return adjusted string
+   */
+  private static String capitalizeFirstLetter(final String string) {
+    if (string == null || string.isEmpty() || !Character.isLowerCase(string.charAt(0))) {
+      return string;
+    }
+    return Character.toUpperCase(string.charAt(0)) + string.substring(1);
   }
 
   /**

@@ -23,6 +23,7 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
+import com.wci.termhub.model.Term;
 
 /**
  * Unit tests for {@link LoincQuestionnaireHelper}.
@@ -176,5 +177,83 @@ public class LoincQuestionnaireHelperUnitTest {
         java.util.List.of("44249-1"), null, "LOINC", "Regenstrief Institute, Inc.", "2.81");
 
     assertEquals(base, result);
+  }
+
+  /**
+   * Test {@link LoincQuestionnaireHelper#toQuestionnaireName(String)} matches fhir.loinc.org.
+   */
+  @Test
+  public void testToQuestionnaireName() {
+    assertEquals("Filaria_Ab_IgG_IgM_Pnl_Ser",
+        LoincQuestionnaireHelper.toQuestionnaireName("Filaria Ab.IgG + IgM Pnl Ser"));
+    assertEquals("Lytes_Pnl_Fld", LoincQuestionnaireHelper.toQuestionnaireName("Lytes 3 Pnl Fld"));
+    assertEquals("Hepatitis_Pnl_Ser",
+        LoincQuestionnaireHelper.toQuestionnaireName("Hepatitis 1996 Pnl Ser"));
+    assertEquals("GTT_gest_h_Pnl_Ur_SerPl",
+        LoincQuestionnaireHelper.toQuestionnaireName("GTT gest 2h Pnl Ur SerPl"));
+    assertEquals("Lead_EKG_Pnl", LoincQuestionnaireHelper.toQuestionnaireName("12 lead EKG Pnl"));
+    assertEquals("Fluid_IO_Pnl_h", LoincQuestionnaireHelper.toQuestionnaireName("Fluid IO Pnl 24h"));
+    assertEquals("Cardiac_D_echo_panel",
+        LoincQuestionnaireHelper.toQuestionnaireName("Cardiac 2D echo panel"));
+    assertEquals("Creat_H_Cl_Pnl_Ur_SerPl",
+        LoincQuestionnaireHelper.toQuestionnaireName("Creat 24H Cl Pnl Ur SerPl"));
+    assertEquals("Vit_D25_D1_OH_D1_Pnl_SerPl_mCnc", LoincQuestionnaireHelper
+        .toQuestionnaireName("Vit D25+D1,25 OH+D1,25 Pnl SerPl-mCnc"));
+    assertEquals("S_pneum_serotypes_IgG_Pnl_B_Ser_mCnc",
+        LoincQuestionnaireHelper.toQuestionnaireName("S pneum 14 serotypes IgG Pnl B Ser-mCnc"));
+    assertEquals("Nd_trimester_screen_Pnl_SerPl",
+        LoincQuestionnaireHelper.toQuestionnaireName("2nd trimester 3 screen Pnl SerPl"));
+    assertEquals("CarBAMazepine_free_tot_Pnl_SerPl_mCnc",
+        LoincQuestionnaireHelper.toQuestionnaireName("carBAMazepine free+tot Pnl SerPl-mCnc"));
+    assertEquals("TTG_Ab_Pnl_Ser", LoincQuestionnaireHelper.toQuestionnaireName("tTG Ab Pnl Ser"));
+  }
+
+  /**
+   * Deprecated panel without SHORTNAME uses COMPONENT coding display for title/name.
+   */
+  @Test
+  public void testResolveLoincDisplayNameFromComponentWhenShortNameAbsent() {
+    final Concept concept = new Concept();
+    concept.setCode("45981-8");
+    concept.setName("Deprecated MDS full assessment form - version 2.0");
+    final ConceptPropertyValueCoding component = new ConceptPropertyValueCoding();
+    component.setPropertyCode(LoincConstants.ATTR_COMPONENT);
+    component.setValueCode("LP75085-8");
+    component.setValueDisplay("MDS full assessment form - version 2.0");
+    concept.getFhirPropertyCodings().add(component);
+
+    assertEquals("MDS full assessment form - version 2.0",
+        LoincQuestionnaireHelper.resolveLoincDisplayName(concept, null));
+    assertEquals("MDS_full_assessment_form_version",
+        LoincQuestionnaireHelper.toQuestionnaireName(
+            LoincQuestionnaireHelper.resolveLoincDisplayName(concept, null)));
+  }
+
+  /**
+   * FSN component is preferred over COMPONENT display when casing differs (52747-3).
+   */
+  @Test
+  public void testResolveLoincDisplayNamePrefersFsnOverComponentDisplay() {
+    final Concept concept = new Concept();
+    concept.setCode("52747-3");
+    concept.setName("Continuity Assessment Record and Evaluation (CARE) tool - Expired");
+    final Term fsn = new Term();
+    fsn.setActive(true);
+    fsn.setType(LoincConstants.TERM_TYPE_FULLY_SPECIFIED_NAME);
+    fsn.setName(
+        "Continuity assessment record and evaluation tool - Expired:-:Pt:^Patient:-:CARE");
+    fsn.getLocaleMap().put("en-US", true);
+    concept.getTerms().add(fsn);
+    final ConceptPropertyValueCoding component = new ConceptPropertyValueCoding();
+    component.setPropertyCode(LoincConstants.ATTR_COMPONENT);
+    component.setValueCode("LP74591-6");
+    component.setValueDisplay("Continuity assessment record and evaluation tool - expired");
+    concept.getFhirPropertyCodings().add(component);
+
+    assertEquals("Continuity assessment record and evaluation tool - Expired",
+        LoincQuestionnaireHelper.resolveLoincDisplayName(concept, null));
+    assertEquals("Continuity_assessment_record_and_evaluation_tool_Expired",
+        LoincQuestionnaireHelper.toQuestionnaireName(
+            LoincQuestionnaireHelper.resolveLoincDisplayName(concept, null)));
   }
 }

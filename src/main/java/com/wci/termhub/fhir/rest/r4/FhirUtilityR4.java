@@ -2176,7 +2176,7 @@ public final class FhirUtilityR4 {
     final String title =
         !StringUtility.isEmpty(shortCommonName) ? shortCommonName : concept.getName();
     final String name = !StringUtility.isEmpty(shortCommonName)
-        ? toQuestionnaireName(shortCommonName) : concept.getName();
+        ? LoincQuestionnaireHelper.toQuestionnaireName(shortCommonName) : concept.getName();
     questionnaire.setName(name);
     questionnaire.setTitle(title);
     questionnaire.setStatus(PublicationStatus.DRAFT);
@@ -2453,7 +2453,7 @@ public final class FhirUtilityR4 {
     if (!StringUtility.isEmpty(formDisplay)) {
       return formDisplay;
     }
-    return resolveLoincDisplayName(memberConcept, memberRef);
+    return LoincQuestionnaireHelper.resolveLoincDisplayName(memberConcept, memberRef);
   }
 
   /**
@@ -2463,60 +2463,7 @@ public final class FhirUtilityR4 {
    * @return short common name or null
    */
   private static String resolveLoincShortCommonName(final Concept concept) {
-    return resolveLoincDisplayName(concept, null);
-  }
-
-  /**
-   * Converts a LOINC short common name to a FHIR Questionnaire.name (non-alphanumeric →
-   * underscore).
-   *
-   * @param shortCommonName the short common name
-   * @return machine name
-   */
-  private static String toQuestionnaireName(final String shortCommonName) {
-    if (StringUtility.isEmpty(shortCommonName)) {
-      return shortCommonName;
-    }
-    return shortCommonName.replaceAll("[^a-zA-Z0-9]+", "_").replaceAll("^_+|_+$", "");
-  }
-
-  /**
-   * Resolves the LOINC short common name for questionnaire item display.
-   *
-   * @param concept the loaded member concept (optional)
-   * @param fallback the member concept ref from a relationship (optional)
-   * @return display text
-   */
-  private static String resolveLoincDisplayName(final Concept concept, final ConceptRef fallback) {
-    if (concept != null && concept.getAttributes() != null) {
-      final Map<String, String> attrs = concept.getAttributes();
-      String shortName = attrs.get(LoincConstants.ATTR_SHORT_COMMON_NAME);
-      if (StringUtility.isEmpty(shortName)) {
-        shortName = attrs.get(LoincConstants.ATTR_SHORTNAME);
-      }
-      if (!StringUtility.isEmpty(shortName)) {
-        return shortName;
-      }
-    }
-    if (concept != null) {
-      for (final Term term : concept.getTerms()) {
-        if (!term.getActive() || StringUtility.isEmpty(term.getName())) {
-          continue;
-        }
-        final String termType = term.getType();
-        if (LoincConstants.TERM_TYPE_SHORT_COMMON_NAME.equals(termType)
-            || LoincConstants.TERM_TYPE_SHORTNAME.equals(termType)) {
-          return term.getName();
-        }
-      }
-    }
-    if (concept != null && !StringUtility.isEmpty(concept.getName())) {
-      return concept.getName();
-    }
-    if (fallback != null && !StringUtility.isEmpty(fallback.getName())) {
-      return fallback.getName();
-    }
-    return null;
+    return LoincQuestionnaireHelper.resolveLoincDisplayName(concept, null);
   }
 
   /**
