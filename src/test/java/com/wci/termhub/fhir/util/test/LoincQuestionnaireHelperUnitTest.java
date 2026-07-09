@@ -10,6 +10,7 @@
 package com.wci.termhub.fhir.util.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -227,6 +228,58 @@ public class LoincQuestionnaireHelperUnitTest {
     assertEquals("MDS_full_assessment_form_version",
         LoincQuestionnaireHelper.toQuestionnaireName(
             LoincQuestionnaireHelper.resolveLoincDisplayName(concept, null)));
+  }
+
+  /**
+   * Nested panel sections (PanelType=Panel) are questionnaire groups, not leaf questions.
+   */
+  @Test
+  public void testIsQuestionnaireGroupConceptPanelTypePanel() {
+    final Concept concept = new Concept();
+    concept.setCode("52452-0");
+    concept.getAttributes().put("PanelType", "Panel");
+
+    assertTrue(LoincQuestionnaireHelper.isQuestionnaireGroupConcept(concept));
+    assertEquals("Panel", LoincQuestionnaireHelper.resolvePanelType(concept));
+  }
+
+  /**
+   * Organizer and Convenience group panel types are questionnaire groups.
+   */
+  @Test
+  public void testIsQuestionnaireGroupConceptOrganizerAndConvenienceGroup() {
+    final Concept organizer = new Concept();
+    organizer.getAttributes().put("PanelType", "Organizer");
+    assertTrue(LoincQuestionnaireHelper.isQuestionnaireGroupConcept(organizer));
+
+    final Concept convenience = new Concept();
+    convenience.getAttributes().put("PanelType", "Convenience group");
+    assertTrue(LoincQuestionnaireHelper.isQuestionnaireGroupConcept(convenience));
+  }
+
+  /**
+   * Leaf observations without a panel type are not questionnaire groups.
+   */
+  @Test
+  public void testIsQuestionnaireGroupConceptFalseForLeafObservation() {
+    final Concept concept = new Concept();
+    concept.setCode("70160-7");
+    assertFalse(LoincQuestionnaireHelper.isQuestionnaireGroupConcept(concept));
+  }
+
+  /**
+   * PanelType can be read from FHIR property codings when attributes are absent.
+   */
+  @Test
+  public void testResolvePanelTypeFromFhirPropertyCoding() {
+    final Concept concept = new Concept();
+    final ConceptPropertyValueCoding panelType = new ConceptPropertyValueCoding();
+    panelType.setPropertyCode("PanelType");
+    panelType.setValueDisplay("Panel");
+    concept.getFhirPropertyCodings().add(panelType);
+
+    assertEquals("Panel", LoincQuestionnaireHelper.resolvePanelType(concept));
+    assertTrue(LoincQuestionnaireHelper.isQuestionnaireGroupConcept(concept));
   }
 
   /**

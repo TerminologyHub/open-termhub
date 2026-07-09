@@ -622,6 +622,70 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
+   * LOINC {@code PanelType} from indexed attributes or FHIR property codings.
+   *
+   * @param concept the concept
+   * @return panel type display (Organizer, Panel, Convenience group) or null
+   */
+  public static String resolvePanelType(final Concept concept) {
+    if (concept == null) {
+      return null;
+    }
+    if (concept.getAttributes() != null) {
+      final String panelType = concept.getAttributes().get("PanelType");
+      if (!StringUtility.isEmpty(panelType)) {
+        return panelType;
+      }
+    }
+    if (concept.getFhirPropertyCodings() != null) {
+      for (final ConceptPropertyValueCoding coding : concept.getFhirPropertyCodings()) {
+        if (coding == null || coding.getPropertyCode() == null) {
+          continue;
+        }
+        if ("PanelType".equalsIgnoreCase(coding.getPropertyCode())) {
+          if (!StringUtility.isEmpty(coding.getValueDisplay())) {
+            return coding.getValueDisplay();
+          }
+          if (!StringUtility.isEmpty(coding.getValueCode())) {
+            return coding.getValueCode();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Whether a LOINC panel type becomes a nested FHIR Questionnaire {@code group} item (not the
+   * root questionnaire resource).
+   *
+   * @param panelType the LOINC panel type
+   * @return true for Organizer, Panel, or Convenience group
+   */
+  public static boolean isQuestionnaireGroupPanelType(final String panelType) {
+    return "Organizer".equals(panelType) || "Panel".equals(panelType)
+        || "Convenience group".equals(panelType);
+  }
+
+  /**
+   * Whether a panel member concept should be rendered as a FHIR Questionnaire group with nested
+   * items (matches fhir.loinc.org section / sub-section structure).
+   *
+   * @param concept the member concept
+   * @return true when the concept is a structural group in a LOINC form
+   */
+  public static boolean isQuestionnaireGroupConcept(final Concept concept) {
+    if (concept == null) {
+      return false;
+    }
+    if (isQuestionnaireGroupPanelType(resolvePanelType(concept))) {
+      return true;
+    }
+    final String name = concept.getName();
+    return name != null && name.toLowerCase().contains("organizer");
+  }
+
+  /**
    * Reads {@link LoincConstants#ATTR_EXTERNAL_COPYRIGHT_NOTICE} from a concept.
    *
    * @param concept the concept

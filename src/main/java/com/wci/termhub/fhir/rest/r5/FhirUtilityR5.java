@@ -2630,9 +2630,9 @@ public final class FhirUtilityR5 {
             terminology.getAbbreviation(), terminology.getPublisher(), latestVersion, memberCode);
 
         if (memberConcept != null) {
-          final boolean isOrganizer = isOrganizerConcept(memberConcept);
+          final boolean isGroup = LoincQuestionnaireHelper.isQuestionnaireGroupConcept(memberConcept);
 
-          if (isOrganizer) {
+          if (isGroup) {
             final Questionnaire.QuestionnaireItemComponent groupItem = createGroupItem(memberRel,
                 searchService, terminology, processedLinkIds, latestVersion);
             if (groupItem != null) {
@@ -2693,9 +2693,7 @@ public final class FhirUtilityR5 {
       }
       groupItem.setText(displayName);
       groupItem.setType(Questionnaire.QuestionnaireItemType.GROUP);
-      if (isOrganizerConcept(memberConcept)) {
-        groupItem.setRequired(true);
-      }
+      groupItem.setRequired(true);
 
       // Add special properties for "Intensity of ideation" group (93303-6)
       if (toConcept.getCode().equals("93303-6")) {
@@ -2795,7 +2793,7 @@ public final class FhirUtilityR5 {
         }
 
         final Questionnaire.QuestionnaireItemComponent item;
-        if (isOrganizerConcept(memberConcept)) {
+        if (LoincQuestionnaireHelper.isQuestionnaireGroupConcept(memberConcept)) {
           item = createGroupItem(hasMemberRel, searchService, terminology, processedLinkIds,
               latestVersion);
         } else {
@@ -2962,30 +2960,6 @@ public final class FhirUtilityR5 {
     }
 
     return answerOptions;
-  }
-
-  /**
-   * Determines if a concept is an organizer concept based on its attributes.
-   *
-   * @param concept the concept to check
-   * @return true if it's an organizer, false otherwise
-   */
-  private static boolean isOrganizerConcept(final Concept concept) {
-    // Check for PanelType attribute = "Organizer"
-    if (concept.getAttributes() != null) {
-      final String panelType = concept.getAttributes().get("PanelType");
-      if ("Organizer".equals(panelType)) {
-        return true;
-      }
-    }
-
-    // Fallback: check if name contains "organizer" (case insensitive)
-    final String name = concept.getName();
-    if (name != null && name.toLowerCase().contains("organizer")) {
-      return true;
-    }
-
-    return false;
   }
 
   /**
