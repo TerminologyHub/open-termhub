@@ -1724,15 +1724,15 @@ public final class TerminologyUtility {
     final int batchSize = 5000;
     final SearchParameters params = new SearchParameters(query, 0, batchSize, null, null);
 
-    int offset = 0;
+    // Always re-query at offset 0: each removeBulk call shrinks the matching set by
+    // batchSize, so the "next" batch is already at offset 0, not offset+batchSize.
+    // Advancing the offset here would skip over it, leaving it undeleted.
     while (true) {
-      params.setOffset(offset);
       final ResultList<String> ids = searchService.findIds(params, clazz);
       if (ids.getItems().isEmpty()) {
-        break;
+       break;
       }
       searchService.removeBulk(ids.getItems(), clazz);
-      offset += batchSize;
     }
   }
 
