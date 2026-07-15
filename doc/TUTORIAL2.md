@@ -71,6 +71,48 @@ No step is required to load sandbox data because the syndication mechanism will 
 
 **[Back to top](#step-by-step-instructions-with-sandbox-data-using-syndication)**
 
+### On-demand loading option
+
+On-demand syndication needs two keys:
+
+- `PROJECT_API_KEY`: the sandbox TermHub project key used to download syndicated content.
+- `ADMIN_KEY`: a local admin key you choose for this Open TermHub server. It only protects the local `/syndicate` API.
+
+Set both before starting the server:
+
+```
+export PROJECT_API_KEY=$SANDBOX_KEY
+export ADMIN_KEY=my-admin-key
+export SYNDICATION_CHECK_ON_STARTUP=false
+```
+
+For Docker, add:
+
+```
+  -e PROJECT_API_KEY="$PROJECT_API_KEY" \
+  -e ADMIN_KEY="$ADMIN_KEY" \
+  -e SYNDICATION_CHECK_ON_STARTUP=false \
+```
+
+After the server starts, begin syndication:
+
+```
+curl -X POST "http://localhost:8080/syndicate" \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "accept: application/json" | jq
+```
+
+The response includes a `processId`. Poll until `status` is `COMPLETED`, then continue with the commands below:
+
+```
+processId=<processId-from-response>
+curl "http://localhost:8080/syndicate/$processId" \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "accept: application/json" | jq
+```
+
+If the POST returns `403`, the server was not started with the same `ADMIN_KEY` used in the `Authorization` header. Restart the server after setting it. If it returns `503`, `PROJECT_API_KEY` was not configured.
+
 
 ## Demonstrating the Server
 

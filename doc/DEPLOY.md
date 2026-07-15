@@ -18,7 +18,8 @@ The following environment variables can be used to configure the application:
 - `DEBUG`: set to "true" to see debug messages in the log
 - `JAVA_OPTS`: Java options including memory usage, recommendation is to use `-Xmx4g` (we are testing various scenarios to allow this to be done with `-Xmx2g`).  NOTE: if you load data separately from deployment, you only need the setting this high while loading data, then can deploy with `-Xmx1g`.
 - `ENABLE_POST_LOAD_COMPUTATIONS`: Enable/disable post-load computations (default: false).  This can be set to "true" to compute tree position information which is used by the embedded browser to display hierarchy information.
-`PROJECT_API_KEY`: Authentication token for secure operations (required only if using Terminology Syndication from www.terminologyhub.com). To obtain this token, [see below](#creating-a-termhub-project-with-an-api-key):
+- `ADMIN_KEY`: Local admin key chosen by the Open TermHub deployer. Required only to authorize protected local API operations such as on-demand syndication. This is not issued by TermHub and is not the same as `PROJECT_API_KEY`.
+- `PROJECT_API_KEY`: TermHub project API key used by the syndication client to fetch the configured project feed and content. Required for any syndication mode. To obtain this token, [see below](#creating-a-termhub-project-with-an-api-key):
 - `SYNDICATION_CHECK_ON_STARTUP` (optional): when set to `true`, performs a one-time syndication load at application startup. If not set or false, no startup syndication occurs.
 - `SYNDICATION_CHECK_CRON` (optional): a Spring cron expression (6 fields: sec min hour dom mon dow) to enable periodic re-syndication. If not set or empty, no schedule is registered. Requires `PROJECT_API_KEY`.
 
@@ -35,6 +36,9 @@ syndication.check.on-startup=true
 
 # Optional: periodic re-syndication (Spring cron format: sec min hour dom mon dow)
 syndication.check.cron=0 0 0 * * *
+
+# Optional: admin key for protected operations
+admin.key=<your-admin-key>
 ```
 
 ### Docker examples
@@ -64,6 +68,16 @@ docker run --rm --name open-termhub -p 8080:8080 \
   -e PROJECT_API_KEY=... \
   -e SYNDICATION_CHECK_ON_STARTUP=true \
   -e SYNDICATION_CHECK_CRON="0 0 0 * * *" \
+  wcinformatics/open-termhub:latest
+```
+
+On-demand syndication only:
+
+```bashs
+docker run --rm --name open-termhub -p 8080:8080 \
+  -e PROJECT_API_KEY=... \
+  -e ADMIN_KEY=... \
+  -e SYNDICATION_CHECK_ON_STARTUP=false \
   wcinformatics/open-termhub:latest
 ```
 
@@ -223,6 +237,22 @@ Syndication features are enabled when a token is provided. Use one or both of th
 - One-time startup load: set `PROJECT_API_KEY` and `SYNDICATION_CHECK_ON_STARTUP=true`. If not set, the app starts and performs no syndication at startup.
 - Periodic re-syndication: set `PROJECT_API_KEY` and `SYNDICATION_CHECK_CRON` to a valid Spring cron expression.
 
+#### On-demand syndication keys
+
+On-demand syndication uses two different keys:
+
+- `PROJECT_API_KEY` is the TermHub project credential. It allows Open TermHub to fetch the syndication feed and content from TermHub.
+- `ADMIN_KEY` is a local shared secret chosen by the Open TermHub deployer. It protects the local `POST /syndicate` and `GET /syndicate/{processId}` endpoints.
+
+Both must be configured before server startup for on-demand syndication to work. Do not reuse `PROJECT_API_KEY` as `ADMIN_KEY`.
+
+Failure behavior:
+
+- Missing or wrong `Authorization: Bearer <ADMIN_KEY>` header: `403 Forbidden`
+- Missing or blank `PROJECT_API_KEY`: `503 Service Unavailable`
+- Invalid `PROJECT_API_KEY`: the job may start, but status polling returns `FAILED`
+- Existing syndication job already running: `409 Conflict`
+
 Examples of valid Spring cron expressions:
 
 ```
@@ -261,6 +291,43 @@ If the TermHub project has been configured with "latest" versions of terminologi
 #### Startup one-time load
 
 To perform a one-time load at startup, set `SYNDICATION_CHECK_ON_STARTUP=true`. If not set or false, the application starts and performs no syndication on startup.
+
+#### On-demand syndication
+
+To start the server without loading data immediately, set `SYNDICATION_CHECK_ON_STARTUP=false`, configure `PROJECT_API_KEY`, and configure `ADMIN_KEY`.
+
+```bashs
+export ADMIN_KEY=$(openssl rand -hex 32)
+export PROJECT_API_KEY=your-project-api-key-here
+export SYNDICATION_CHECK_ON_STARTUP=false
+
+docker run -d --rm --name open-termhub \
+  -e PROJECT_API_KEY="$PROJECT_API_KEY" \
+  -e ADMIN_KEY="$ADMIN_KEY" \
+  -e SYNDICATION_CHECK_ON_STARTUP="$SYNDICATION_CHECK_ON_STARTUP" \
+  -e JAVA_OPTS=-Xmx4g \
+  -v "$INDEX_DIR":/index \
+  -p 8080:8080 \
+  wcinformatics/open-termhub:latest
+```
+
+Start syndication with:
+
+```bashs
+curl -X POST "http://localhost:8080/syndicate" \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "accept: application/json"
+```
+
+The response includes a `processId`. Poll that job until `status` is `COMPLETED` or `FAILED`:
+
+```bashs
+curl "http://localhost:8080/syndicate/<processId>" \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "accept: application/json"
+```
+
+This endpoint uses the same syndication process as startup and cron syndication. If a syndication check is already running, the API returns `409 Conflict`.
 
 
 ### Loading Data Manually
