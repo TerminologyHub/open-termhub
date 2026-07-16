@@ -7,7 +7,7 @@
  * and are protected by trade secret or copyright law.  Dissemination of this information
  * or reproduction of this material is strictly forbidden.
  */
-package com.wci.termhub.fhir.util;
+package com.wci.termhub.fhir.util.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -18,6 +18,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.wci.termhub.fhir.util.LoincValueSetHelper;
 import com.wci.termhub.fhir.util.LoincValueSetHelper.LllgComposeStructure;
 import com.wci.termhub.model.Concept;
 
