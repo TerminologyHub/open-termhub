@@ -30,11 +30,32 @@ import com.wci.termhub.model.ResultListTerminology;
 import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.SubsetMember;
 import com.wci.termhub.model.Terminology;
+import com.wci.termhub.syndication.SyndicationJobStatus;
 
 /**
  * Rest services oriented around content.
  */
 public interface TerminologyServiceRest extends RootServiceRest {
+
+  /**
+   * Starts syndication. POST /syndicate tag=syndication
+   *
+   * @param authorization the authorization header
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<SyndicationJobStatus> syndicate(String authorization) throws Exception;
+
+  /**
+   * Gets syndication status. GET /syndicate/{processId} tag=syndication
+   *
+   * @param processId the process id
+   * @param authorization the authorization header
+   * @return the response entity
+   * @throws Exception the exception
+   */
+  public ResponseEntity<SyndicationJobStatus> getSyndicationStatus(String processId,
+    String authorization) throws Exception;
 
   /**
    * Returns the terminology. GET /terminology/{id:[a-f0-9].+} tag=terminology

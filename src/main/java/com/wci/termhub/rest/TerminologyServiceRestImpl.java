@@ -44,6 +44,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.wci.termhub.Application;
@@ -78,6 +79,9 @@ import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.service.RootServiceRestImpl;
+import com.wci.termhub.syndication.SyndicationJobRunner;
+import com.wci.termhub.syndication.SyndicationJobService;
+import com.wci.termhub.syndication.SyndicationJobStatus;
 import com.wci.termhub.util.AdhocUtility;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.PropertyUtility;
@@ -90,6 +94,7 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -130,6 +135,7 @@ import jakarta.servlet.http.HttpServletRequest;
             description = "Concept service endpoints with \"by code\" parameters"),
         @Tag(name = "term", description = "Term endpoints"),
         @Tag(name = "load", description = "Bulk loader endpoints"),
+        @Tag(name = "syndication", description = "Syndication endpoints"),
     }, servers = {
         @Server(description = "Current Instance", url = "/")
     })
@@ -164,6 +170,14 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /** The builders. */
   @Autowired
   private List<QueryBuilder> builders;
+
+  /** The syndication job service. */
+  @Autowired
+  private SyndicationJobService syndicationJobService;
+
+  /** The syndication job runner. */
+  @Autowired
+  private SyndicationJobRunner syndicationJobRunner;
 
   /**
    * Instantiates an empty {@link TerminologyServiceRestImpl}.
@@ -256,6 +270,133 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
       handleException(e, "trying to perform admin = " + task);
       return null;
     }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/syndicate", method = RequestMethod.POST)
+  @Operation(summary = "Start syndication",
+      description = "Starts an asynchronous syndication check and load using the configured "
+          + "TermHub project API key. Poll the returned process id with "
+          + "GET /syndicate/{processId}.",
+      tags = {
+          "syndication"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "202", description = "Syndication job accepted",
+          content = @Content(schema = @Schema(implementation = SyndicationJobStatus.class))),
+      @ApiResponse(responseCode = "403", description = "Invalid authorization header",
+          content = @Content()),
+      @ApiResponse(responseCode = "409", description = "Syndication already in progress",
+          content = @Content()),
+      @ApiResponse(responseCode = "503", description = "Syndication is not configured",
+          content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "Authorization", in = ParameterIn.HEADER,
+          description = "Bearer token using the local ADMIN_KEY value", required = true)
+  })
+  public ResponseEntity<SyndicationJobStatus> syndicate(
+    @RequestHeader(name = "Authorization", required = false) final String authorization)
+    throws Exception {
+
+    try {
+      if (!isAdminAuthorizationValid(authorization)) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.FORBIDDEN);
+      }
+
+      if (!syndicationJobService.isSyndicationConfigured()) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.SERVICE_UNAVAILABLE);
+      }
+
+      if (syndicationJobService.isSyndicationInProgress()) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.CONFLICT);
+      }
+
+      final SyndicationJobStatus status = syndicationJobService.startJob();
+      if (status == null) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.CONFLICT);
+      }
+      syndicationJobRunner.runSyndication(status.getProcessId());
+      return new ResponseEntity<>(status, new HttpHeaders(), HttpStatus.ACCEPTED);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to start syndication");
+      return null;
+    }
+  }
+
+  /* see superclass */
+  @Override
+  @RequestMapping(value = "/syndicate/{processId}", method = RequestMethod.GET)
+  @Operation(summary = "Get syndication job status",
+      description = "Gets status and final results for an asynchronous syndication job.", tags = {
+          "syndication"
+      })
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Syndication job status",
+          content = @Content(schema = @Schema(implementation = SyndicationJobStatus.class))),
+      @ApiResponse(responseCode = "403", description = "Invalid authorization header",
+          content = @Content()),
+      @ApiResponse(responseCode = "404", description = "Process id not found",
+          content = @Content()),
+      @ApiResponse(responseCode = "500", description = "Internal server error",
+          content = @Content())
+  })
+  @Parameters({
+      @Parameter(name = "processId", description = "Process id returned by POST /syndicate",
+          required = true),
+      @Parameter(name = "Authorization", in = ParameterIn.HEADER,
+          description = "Bearer token using the local ADMIN_KEY value", required = true)
+  })
+  public ResponseEntity<SyndicationJobStatus> getSyndicationStatus(
+    @PathVariable("processId") final String processId,
+    @RequestHeader(name = "Authorization", required = false) final String authorization)
+    throws Exception {
+
+    try {
+      if (!isAdminAuthorizationValid(authorization)) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.FORBIDDEN);
+      }
+
+      final SyndicationJobStatus status = syndicationJobService.getStatus(processId);
+      if (status == null) {
+        return new ResponseEntity<>(null, new HttpHeaders(), HttpStatus.NOT_FOUND);
+      }
+      return new ResponseEntity<>(status, new HttpHeaders(), HttpStatus.OK);
+
+    } catch (final Exception e) {
+      handleException(e, "trying to get syndication status for process id = " + processId);
+      return null;
+    }
+  }
+
+  /**
+   * Indicates whether the specified authorization header is valid.
+   *
+   * @param authorization the authorization header
+   * @return true, if valid
+   */
+  private boolean isAdminAuthorizationValid(final String authorization) {
+    final String value = StringUtils.trimToEmpty(authorization);
+    final String bearerPrefix = "Bearer ";
+    if (!value.regionMatches(true, 0, bearerPrefix, 0, bearerPrefix.length())) {
+      return false;
+    }
+    return isAdminKeyValid(value.substring(bearerPrefix.length()).trim());
+  }
+
+  /**
+   * Indicates whether the specified admin key is valid.
+   *
+   * @param adminKey the admin key
+   * @return true, if valid
+   */
+  private boolean isAdminKeyValid(final String adminKey) {
+    final String configuredAdminKey = PropertyUtility.getProperties().getProperty("admin.key");
+    return StringUtils.isNotBlank(configuredAdminKey) && configuredAdminKey.equals(adminKey);
   }
 
   /* see superclass */
