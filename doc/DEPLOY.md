@@ -227,31 +227,16 @@ After data loads, stop the container and redeploy without syndication settings.
 
 **Note**: The standalone loader (Option 1) is preferred because it provides better error handling and clearer separation between data loading and server operation.
 
-
 ### Loading Data with Syndication
 
 Open TermHub supports syndication of content from a TermHub project that is configured with an API key and one or more terminology/subset/mapset (code system, value set, concept map) resources.  [See the section above](#creating-a-termhub-project-with-an-api-key) for information on setting up a project.
 
-Syndication features are enabled when a token is provided. Use one or both of the modes below:
+Syndication features are enabled when a token is provided. Use one or more of the modes below:
 
 - One-time startup load: set `PROJECT_API_KEY` and `SYNDICATION_CHECK_ON_STARTUP=true`. If not set, the app starts and performs no syndication at startup.
 - Periodic re-syndication: set `PROJECT_API_KEY` and `SYNDICATION_CHECK_CRON` to a valid Spring cron expression.
+- On-demand re-syndication: set `PROJECT_API_KEY` and `ADMIN_KEY` to a known value used in the header of the API call to perform syndication.
 
-#### On-demand syndication keys
-
-On-demand syndication uses two different keys:
-
-- `PROJECT_API_KEY` is the TermHub project credential. It allows Open TermHub to fetch the syndication feed and content from TermHub.
-- `ADMIN_KEY` is a local shared secret chosen by the Open TermHub deployer. It protects the local `POST /syndicate` and `GET /syndicate/{processId}` endpoints.
-
-Both must be configured before server startup for on-demand syndication to work. Do not reuse `PROJECT_API_KEY` as `ADMIN_KEY`.
-
-Failure behavior:
-
-- Missing or wrong `Authorization: Bearer <ADMIN_KEY>` header: `403 Forbidden`
-- Missing or blank `PROJECT_API_KEY`: `503 Service Unavailable`
-- Invalid `PROJECT_API_KEY`: the job may start, but status polling returns `FAILED`
-- Existing syndication job already running: `409 Conflict`
 
 Examples of valid Spring cron expressions:
 
@@ -279,8 +264,6 @@ Common conversions:
 5 * * * *       ->  0 5 * * * *
 ```
 
-
-
 #### Resyndication
 
 If the TermHub project has been configured with "latest" versions of terminologies, you can configure periodic re-syndication via `SYNDICATION_CHECK_CRON`. The service will reconcile the project feed with the currently loaded data and load new versions when available.
@@ -293,6 +276,20 @@ If the TermHub project has been configured with "latest" versions of terminologi
 To perform a one-time load at startup, set `SYNDICATION_CHECK_ON_STARTUP=true`. If not set or false, the application starts and performs no syndication on startup.
 
 #### On-demand syndication
+
+On-demand syndication uses two different keys:
+
+- `PROJECT_API_KEY` is the TermHub project credential. It allows Open TermHub to fetch the syndication feed and content from TermHub.
+- `ADMIN_KEY` is a local shared secret chosen by the Open TermHub deployer. It protects the local `POST /syndicate` and `GET /syndicate/{processId}` endpoints.
+
+Both must be configured before server startup for on-demand syndication to work. Do not reuse `PROJECT_API_KEY` as `ADMIN_KEY`.
+
+Failure behavior:
+
+- Missing or wrong `Authorization: Bearer <ADMIN_KEY>` header: `403 Forbidden`
+- Missing or blank `PROJECT_API_KEY`: `503 Service Unavailable`
+- Invalid `PROJECT_API_KEY`: the job may start, but status polling returns `FAILED`
+- Existing syndication job already running: `409 Conflict`
 
 To start the server without loading data immediately, set `SYNDICATION_CHECK_ON_STARTUP=false`, configure `PROJECT_API_KEY`, and configure `ADMIN_KEY`.
 
@@ -311,7 +308,7 @@ docker run -d --rm --name open-termhub \
   wcinformatics/open-termhub:latest
 ```
 
-Start syndication with:
+Start syndication with an API call:
 
 ```bashs
 curl -X POST "http://localhost:8080/syndicate" \
@@ -328,7 +325,6 @@ curl "http://localhost:8080/syndicate/<processId>" \
 ```
 
 This endpoint uses the same syndication process as startup and cron syndication. If a syndication check is already running, the API returns `409 Conflict`.
-
 
 ### Loading Data Manually
 
