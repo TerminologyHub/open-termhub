@@ -31,6 +31,7 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.util.DateUtility;
+import com.wci.termhub.util.PropertyUtility;
 
 /**
  * Unit tests for FHIR R4 Meta (versionId, lastUpdated) on CodeSystem, ValueSet, ConceptMap,
@@ -255,6 +256,53 @@ public class FhirUtilityR4MetaUnitTest {
     assertEquals("Regenstrief Institute, Inc.", cm.getContact().get(0).getName());
     assertEquals("http://loinc.org/cm/chebi-to-loinc-parts",
         cm.getContact().get(0).getTelecomFirstRep().getValue());
+  }
+
+  /**
+   * Test ConceptMap contact in regenstrief mode uses terminology contact, not mapset URL.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConceptMapContactRegenstriefUsesTerminologyContact() throws Exception {
+    final String priorMode = PropertyUtility.getProperty("server.mode");
+    PropertyUtility.setProperty("server.mode", "regenstrief");
+    try {
+      final String fhirContact =
+          "[{\"telecom\":[{\"system\":\"url\",\"value\":\"http://loinc.org/cm/chebi-to-loinc-parts\"}]}]";
+
+      final Terminology terminology = new Terminology();
+      terminology.setUri("https://loinc.org");
+      terminology.setPublisher("Regenstrief Institute, Inc.");
+      final Map<String, String> termAttrs = new HashMap<>();
+      termAttrs.put("fhirContact",
+          "[{\"telecom\":[{\"system\":\"url\",\"value\":\"https://loinc.org\"}]}]");
+      terminology.setAttributes(termAttrs);
+
+      final Mapset mapset = new Mapset();
+      mapset.setId("test-cm");
+      mapset.setUri("http://loinc.org/cm/chebi-to-loinc-parts");
+      mapset.setVersion("1");
+      mapset.setName("Test ConceptMap");
+      mapset.setAbbreviation("TCM");
+      mapset.setPublisher("Regenstrief Institute, Inc.");
+      final Map<String, String> attrs = new HashMap<>();
+      attrs.put("fhirContact", fhirContact);
+      mapset.setAttributes(attrs);
+      mapset.setCreated(
+          Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+      final ConceptMap cm = FhirUtilityR4.toR4(mapset, terminology);
+
+      assertNotNull(cm.getContact());
+      assertEquals(1, cm.getContact().size());
+      assertEquals("Regenstrief Institute, Inc.", cm.getContact().get(0).getName());
+      assertEquals("https://loinc.org", cm.getContact().get(0).getTelecomFirstRep().getValue());
+    } finally {
+      if (priorMode != null) {
+        PropertyUtility.setProperty("server.mode", priorMode);
+      }
+    }
   }
 
   /**
