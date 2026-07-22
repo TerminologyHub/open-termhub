@@ -2307,7 +2307,6 @@ public final class FhirUtilityR5 {
         return;
       }
 
-      // Find panel members via has_member or hierarchical parent relationships
       final List<Questionnaire.QuestionnaireItemComponent> groupItems = findGroupConcepts(
           mainConcept, searchService, terminology, processedLinkIds, terminology.getVersion());
 
@@ -2324,12 +2323,6 @@ public final class FhirUtilityR5 {
       logger.warn("Failed to populate questionnaire {}: {}", loincCode, e.getMessage());
     }
   }
-
-  /** LOINC scale type attribute keys on indexed concepts. */
-  private static final String ATTR_SCALE_TYP = "SCALE_TYP";
-
-  /** Alternate LOINC scale type attribute key. */
-  private static final String ATTR_LOINC_SCALE_TYP = "LOINC_SCALE_TYP";
 
   /**
    * Finds panel member relationships for a questionnaire/panel code. Prefers outbound
@@ -2348,22 +2341,22 @@ public final class FhirUtilityR5 {
     final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
         terminology.getPublisher(), terminology.getVersion());
 
-    final String memberQuery = StringUtility.composeQuery("AND", termQuery,
+    final String memberQuery = StringUtility.composeQuery("AND", termQuery, "active:true",
         StringUtility.escapeKeywordField("from.code", panelCode),
         StringUtility.escapeKeywordField("additionalType", LoincConstants.LOINC_REL_PANEL_MEMBER));
     final List<ConceptRelationship> memberRels =
         searchService.findAll(memberQuery, null, ConceptRelationship.class);
     if (!memberRels.isEmpty()) {
-      return sortMemberRelationships(filterPanelMemberRelationships(panelCode, memberRels));
+      return sortMemberRelationships(memberRels);
     }
 
-    final String hasMemberQuery = StringUtility.composeQuery("AND", termQuery,
+    final String hasMemberQuery = StringUtility.composeQuery("AND", termQuery, "active:true",
         StringUtility.escapeKeywordField("from.code", panelCode),
         StringUtility.escapeKeywordField("additionalType", LoincConstants.LOINC_REL_HAS_MEMBER));
     final List<ConceptRelationship> hasMemberRels =
         searchService.findAll(hasMemberQuery, null, ConceptRelationship.class);
     if (!hasMemberRels.isEmpty()) {
-      return sortMemberRelationships(filterPanelMemberRelationships(panelCode, hasMemberRels));
+      return sortMemberRelationships(hasMemberRels);
     }
 
     final String childQuery = StringUtility.composeQuery("AND", termQuery,
@@ -2384,7 +2377,7 @@ public final class FhirUtilityR5 {
       filtered.add(rel);
     }
     if (!filtered.isEmpty()) {
-      return sortMemberRelationships(filterPanelMemberRelationships(panelCode, filtered));
+      return sortMemberRelationships(filtered);
     }
 
     final String parentClause = "parents.code:" + StringUtility.escapeQuery(panelCode);
@@ -2406,7 +2399,7 @@ public final class FhirUtilityR5 {
       rel.setTo(new ConceptRef(panelCode, null));
       fromParents.add(rel);
     }
-    return sortMemberRelationships(filterPanelMemberRelationships(panelCode, fromParents));
+    return sortMemberRelationships(fromParents);
   }
 
   /**
@@ -2429,6 +2422,9 @@ public final class FhirUtilityR5 {
       }
       final String memberCode = memberRef.getCode();
       if (panelCode.equals(memberCode) || memberCode.startsWith("LP")) {
+        continue;
+      }
+      if (Boolean.TRUE.equals(rel.getHistorical())) {
         continue;
       }
       filtered.add(rel);
@@ -2505,11 +2501,8 @@ public final class FhirUtilityR5 {
    */
   private static String resolveItemDisplayName(final ConceptRelationship memberRel,
     final Concept memberConcept, final ConceptRef memberRef) {
-    final String formDisplay = LoincQuestionnaireHelper.resolveFormDisplayName(memberRel);
-    if (!StringUtility.isEmpty(formDisplay)) {
-      return formDisplay;
-    }
-    return LoincQuestionnaireHelper.resolveLoincDisplayName(memberConcept, memberRef);
+    return LoincQuestionnaireHelper.resolveQuestionnaireItemDisplayName(memberRel, memberConcept,
+        memberRef);
   }
 
   /**
@@ -2529,18 +2522,7 @@ public final class FhirUtilityR5 {
    * @return scale type or null
    */
   private static String getScaleType(final Concept concept) {
-    if (concept == null || concept.getAttributes() == null) {
-      return null;
-    }
-    final Map<String, String> attrs = concept.getAttributes();
-    String scaleTyp = attrs.get(ATTR_SCALE_TYP);
-    if (scaleTyp == null) {
-      scaleTyp = attrs.get(ATTR_LOINC_SCALE_TYP);
-    }
-    if (scaleTyp == null) {
-      scaleTyp = attrs.get("scale_typ");
-    }
-    return scaleTyp;
+    return LoincQuestionnaireHelper.resolveScaleType(concept);
   }
 
   /**
@@ -2562,16 +2544,15 @@ public final class FhirUtilityR5 {
     final String scaleTyp = getScaleType(memberConcept);
     if (scaleTyp != null) {
       final String normalized = scaleTyp.toUpperCase(Locale.ENGLISH);
-      if (normalized.contains("QN") || normalized.contains("SEMIQN")) {
+      // fhir.loinc.org maps only pure "Qn" to decimal; OrdQn, SemiQn and every other
+      // scale render as string. A contains("QN") check wrongly caught OrdQn/SemiQn.
+      if ("QN".equals(normalized)) {
         return Questionnaire.QuestionnaireItemType.DECIMAL;
       }
-      if (normalized.contains("QL") || normalized.equals("ORD") || normalized.equals("NAR")
-          || normalized.equals("NOM") || normalized.equals("DOC") || normalized.equals("SET")
-          || normalized.equals("MULTI")) {
-        return Questionnaire.QuestionnaireItemType.STRING;
-      }
+      return Questionnaire.QuestionnaireItemType.STRING;
     }
-    return Questionnaire.QuestionnaireItemType.DECIMAL;
+    // Missing/placeholder SCALE_TYP ("-") → string (panels-as-leaf, etc.), not decimal.
+    return Questionnaire.QuestionnaireItemType.STRING;
   }
 
   /**
@@ -2612,6 +2593,13 @@ public final class FhirUtilityR5 {
         memberRels = sortMemberRelationships(memberRels);
       }
 
+      final String rootFormLinkId = LoincQuestionnaireHelper.resolveQuestionnaireRootFormLinkId(
+          memberRels, mainConcept.getCode());
+      memberRels = filterPanelMemberRelationships(mainConcept.getCode(), memberRels);
+      memberRels = LoincQuestionnaireHelper.dedupeRootQuestionnaireMemberRelationships(memberRels,
+          rootFormLinkId);
+      memberRels = sortMemberRelationships(memberRels);
+
       for (final ConceptRelationship memberRel : memberRels) {
         final ConceptRef memberRef = getMemberConceptRef(memberRel);
         if (memberRef == null) {
@@ -2630,18 +2618,20 @@ public final class FhirUtilityR5 {
             terminology.getAbbreviation(), terminology.getPublisher(), latestVersion, memberCode);
 
         if (memberConcept != null) {
-          final boolean isGroup = LoincQuestionnaireHelper.isQuestionnaireGroupConcept(memberConcept);
+          final boolean isGroup = LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(
+              memberConcept, linkId);
 
           if (isGroup) {
             final Questionnaire.QuestionnaireItemComponent groupItem = createGroupItem(memberRel,
-                searchService, terminology, processedLinkIds, latestVersion);
+                searchService, terminology, processedLinkIds, latestVersion, mainConcept.getCode());
             if (groupItem != null) {
               allItems.add(groupItem);
               processedLinkIds.add(linkId);
             }
           } else {
             final Questionnaire.QuestionnaireItemComponent questionItem = createDirectQuestionItem(
-                memberRel, searchService, terminology, processedLinkIds, latestVersion);
+                memberRel, searchService, terminology, processedLinkIds, latestVersion,
+                mainConcept.getCode());
             if (questionItem != null) {
               allItems.add(questionItem);
               processedLinkIds.add(linkId);
@@ -2667,13 +2657,14 @@ public final class FhirUtilityR5 {
    * @param terminology the terminology
    * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the latest version
+   * @param questionnaireLoinc the questionnaire loinc
    * @return the questionnaire item component
    * @throws Exception the exception
    */
   private static Questionnaire.QuestionnaireItemComponent createGroupItem(
     final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
-    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion)
-    throws Exception {
+    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion,
+    final String questionnaireLoinc) throws Exception {
 
     final Questionnaire.QuestionnaireItemComponent groupItem =
         new Questionnaire.QuestionnaireItemComponent();
@@ -2695,35 +2686,36 @@ public final class FhirUtilityR5 {
       groupItem.setType(Questionnaire.QuestionnaireItemType.GROUP);
       groupItem.setRequired(true);
 
-      // Add special properties for "Intensity of ideation" group (93303-6)
-      if (toConcept.getCode().equals("93303-6")) {
-        // Add enableWhen conditions based on master file
-        groupItem.setEnableBehavior(Questionnaire.EnableWhenBehavior.ANY);
+      // // Add special properties for "Intensity of ideation" group (93303-6)
+      // if (toConcept.getCode().equals("93303-6")) {
+      //   // Add enableWhen conditions based on master file
+      //   groupItem.setEnableBehavior(Questionnaire.EnableWhenBehavior.ANY);
 
-        // Add enableWhen conditions for questions 113944, 113952, 113947,
-        // 113951
-        final String[] enableWhenQuestions = {
-            "113944", "113952", "113947", "113951"
-        };
-        for (final String questionId : enableWhenQuestions) {
-          final Questionnaire.QuestionnaireItemEnableWhenComponent enableWhen =
-              new Questionnaire.QuestionnaireItemEnableWhenComponent();
-          enableWhen.setQuestion(questionId);
-          enableWhen.setOperator(Questionnaire.QuestionnaireItemOperator.EQUAL);
+      //   // Add enableWhen conditions for questions 113944, 113952, 113947,
+      //   // 113951
+      //   final String[] enableWhenQuestions = {
+      //       "113944", "113952", "113947", "113951"
+      //   };
+      //   for (final String questionId : enableWhenQuestions) {
+      //     final Questionnaire.QuestionnaireItemEnableWhenComponent enableWhen =
+      //         new Questionnaire.QuestionnaireItemEnableWhenComponent();
+      //     enableWhen.setQuestion(questionId);
+      //     enableWhen.setOperator(Questionnaire.QuestionnaireItemOperator.EQUAL);
 
-          final Coding answerCoding = new Coding();
-          answerCoding.setSystem(LoincConstants.LOINC_URI);
-          answerCoding.setCode("LA33-6");
-          enableWhen.setAnswer(answerCoding);
+      //     final Coding answerCoding = new Coding();
+      //     answerCoding.setSystem(LoincConstants.LOINC_URI);
+      //     answerCoding.setCode("LA33-6");
+      //     enableWhen.setAnswer(answerCoding);
 
-          groupItem.addEnableWhen(enableWhen);
-        }
-      }
+      //     groupItem.addEnableWhen(enableWhen);
+      //   }
+      // }
 
       // Find questions for this group
-      final List<Questionnaire.QuestionnaireItemComponent> questions =
-          findQuestionsForGroup(toConcept.getCode(), searchService, terminology, processedLinkIds,
-              latestVersion, LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept));
+      final String groupLinkId = LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept);
+      final List<Questionnaire.QuestionnaireItemComponent> questions = findQuestionsForGroup(
+          toConcept.getCode(), searchService, terminology, processedLinkIds, latestVersion,
+          groupLinkId, questionnaireLoinc);
 
       for (final Questionnaire.QuestionnaireItemComponent question : questions) {
         groupItem.addItem(question);
@@ -2742,13 +2734,14 @@ public final class FhirUtilityR5 {
    * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the terminology version
    * @param parentLinkId parent group linkId for form-scoped member-edge selection
+   * @param questionnaireLoinc the questionnaire loinc
    * @return list of question components
    * @throws Exception the exception
    */
   private static List<Questionnaire.QuestionnaireItemComponent> findQuestionsForGroup(
     final String groupCode, final EntityRepositoryService searchService,
     final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion,
-    final String parentLinkId) throws Exception {
+    final String parentLinkId, final String questionnaireLoinc) throws Exception {
 
     final List<Questionnaire.QuestionnaireItemComponent> questions = new ArrayList<>();
     final Set<String> groupProcessedLinkIds = new HashSet<>();
@@ -2756,6 +2749,7 @@ public final class FhirUtilityR5 {
     try {
       List<ConceptRelationship> memberRels =
           findPanelMemberRelationships(groupCode, searchService, terminology);
+      memberRels = filterPanelMemberRelationships(groupCode, memberRels);
       memberRels = LoincQuestionnaireHelper.dedupePanelMemberRelationshipsForFormContext(memberRels,
           parentLinkId);
       memberRels = sortMemberRelationships(memberRels);
@@ -2793,11 +2787,12 @@ public final class FhirUtilityR5 {
         }
 
         final Questionnaire.QuestionnaireItemComponent item;
-        if (LoincQuestionnaireHelper.isQuestionnaireGroupConcept(memberConcept)) {
+        if (LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(memberConcept, linkId)) {
           item = createGroupItem(hasMemberRel, searchService, terminology, processedLinkIds,
-              latestVersion);
+              latestVersion, questionnaireLoinc);
         } else {
-          item = createQuestionItem(hasMemberRel, searchService, terminology, processedLinkIds);
+          item = createQuestionItem(hasMemberRel, searchService, terminology, processedLinkIds,
+              questionnaireLoinc);
         }
         if (item != null && !StringUtility.isEmpty(item.getLinkId())) {
           questions.add(item);
@@ -2824,12 +2819,14 @@ public final class FhirUtilityR5 {
    * @param searchService the search service
    * @param terminology the terminology
    * @param processedLinkIds set of already processed form linkIds
+   * @param questionnaireLoinc the questionnaire loinc
    * @return the questionnaire item component
    * @throws Exception the exception
    */
   private static Questionnaire.QuestionnaireItemComponent createQuestionItem(
     final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
-    final Terminology terminology, final Set<String> processedLinkIds) throws Exception {
+    final Terminology terminology, final Set<String> processedLinkIds,
+    final String questionnaireLoinc) throws Exception {
 
     final Questionnaire.QuestionnaireItemComponent questionItem =
         new Questionnaire.QuestionnaireItemComponent();
@@ -2848,7 +2845,11 @@ public final class FhirUtilityR5 {
         questionItem.setPrefix(prefix);
       }
       questionItem.setText(displayName);
-      questionItem.setRepeats(false);
+      questionItem.setRepeats(
+          LoincQuestionnaireHelper.resolveMemberRepeats(hasMemberRel, memberConcept));
+      if (LoincQuestionnaireHelper.resolveMemberRequired(hasMemberRel)) {
+        questionItem.setRequired(true);
+      }
 
       final Coding coding = new Coding();
       coding.setSystem(terminology.getUri());
@@ -2856,11 +2857,16 @@ public final class FhirUtilityR5 {
       coding.setDisplay(displayName);
       questionItem.addCode(coding);
 
-      // Find answer options for this question
+      // Leaf-embedded panel occurrence: gold uses string with no answerOption expansion.
+      final boolean leafEmbedded = LoincQuestionnaireHelper.isLeafEmbeddedFormOccurrence(
+          toConcept.getCode(), questionItem.getLinkId());
       final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
-          findAnswerOptionsForQuestion(memberConcept, searchService, terminology);
+          leafEmbedded ? List.of()
+              : findAnswerOptionsForQuestion(hasMemberRel, memberConcept, searchService,
+                  terminology, questionnaireLoinc);
 
-      questionItem.setType(resolveQuestionnaireItemType(memberConcept, answerOptions));
+      questionItem.setType(leafEmbedded ? Questionnaire.QuestionnaireItemType.STRING
+          : resolveQuestionnaireItemType(memberConcept, answerOptions));
       for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
         questionItem.addAnswerOption(option);
       }
@@ -2895,15 +2901,18 @@ public final class FhirUtilityR5 {
    * Finds answer options for a question from its {@code answer-list} property, with
    * {@code has_answers} relationship fallback.
    *
+   * @param memberRel the member rel
    * @param memberConcept the question concept
    * @param searchService the search service
    * @param terminology the terminology
+   * @param questionnaireLoinc the questionnaire loinc
    * @return list of answer option components
    * @throws Exception the exception
    */
   private static List<Questionnaire.QuestionnaireItemAnswerOptionComponent> findAnswerOptionsForQuestion(
-    final Concept memberConcept, final EntityRepositoryService searchService,
-    final Terminology terminology) throws Exception {
+    final ConceptRelationship memberRel, final Concept memberConcept,
+    final EntityRepositoryService searchService, final Terminology terminology,
+    final String questionnaireLoinc) throws Exception {
 
     final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
         new ArrayList<>();
@@ -2912,7 +2921,8 @@ public final class FhirUtilityR5 {
     }
 
     try {
-      final String llCode = LoincQuestionnaireHelper.resolveAnswerListCode(memberConcept);
+      final String llCode = LoincQuestionnaireHelper.resolveAnswerListCode(memberRel, memberConcept,
+          questionnaireLoinc, searchService, terminology);
       if (!StringUtility.isEmpty(llCode)) {
         for (final Concept laConcept : LoincQuestionnaireHelper.findAnswerListMembers(searchService,
             terminology, llCode)) {
@@ -2922,14 +2932,23 @@ public final class FhirUtilityR5 {
             answerOptions.add(option);
           }
         }
+        // ExtDefined lists have no LA members; gold emits one empty loinc Coding.
+        if (answerOptions.isEmpty() && LoincQuestionnaireHelper.isExternallyDefinedAnswerList(
+            searchService, terminology, llCode)) {
+          answerOptions.add(toExternallyDefinedAnswerOption(terminology));
+          return answerOptions;
+        }
       }
       if (!answerOptions.isEmpty()) {
         return answerOptions;
       }
 
       final String questionCode = memberConcept.getCode();
-      final String hasAnswersQuery = "from.code:" + StringUtility.escapeQuery(questionCode)
-          + " AND additionalType:has_answers";
+      final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+          terminology.getPublisher(), terminology.getVersion());
+      final String hasAnswersQuery = StringUtility.composeQuery("AND", termQuery,
+          StringUtility.escapeKeywordField("from.code", questionCode),
+          StringUtility.escapeKeywordField("additionalType", "has_answers"));
       final List<ConceptRelationship> hasAnswersRels =
           searchService.findAll(hasAnswersQuery, null, ConceptRelationship.class);
       final Set<String> uniqueAnswerCodes = new HashSet<>();
@@ -2951,6 +2970,11 @@ public final class FhirUtilityR5 {
             answerOptions.add(option);
           }
         }
+        if (answerOptions.isEmpty() && LoincQuestionnaireHelper.isExternallyDefinedAnswerList(
+            searchService, terminology, fallbackLlCode)) {
+          answerOptions.add(toExternallyDefinedAnswerOption(terminology));
+          return answerOptions;
+        }
       }
 
     } catch (final Exception e) {
@@ -2963,6 +2987,22 @@ public final class FhirUtilityR5 {
   }
 
   /**
+   * fhir.loinc.org ExtDefined placeholder: one answerOption with system only.
+   *
+   * @param terminology the terminology
+   * @return answer option component
+   */
+  private static Questionnaire.QuestionnaireItemAnswerOptionComponent toExternallyDefinedAnswerOption(
+    final Terminology terminology) {
+    final Questionnaire.QuestionnaireItemAnswerOptionComponent option =
+        new Questionnaire.QuestionnaireItemAnswerOptionComponent();
+    final Coding valueCoding = new Coding();
+    valueCoding.setSystem(terminology.getUri());
+    option.setValue(valueCoding);
+    return option;
+  }
+
+  /**
    * Creates a direct question item from a has_member relationship.
    *
    * @param hasMemberRel the has_member relationship
@@ -2970,13 +3010,14 @@ public final class FhirUtilityR5 {
    * @param terminology the terminology
    * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the latest version
+   * @param questionnaireLoinc the questionnaire loinc
    * @return the questionnaire item component
    * @throws Exception the exception
    */
   private static Questionnaire.QuestionnaireItemComponent createDirectQuestionItem(
     final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
-    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion)
-    throws Exception {
+    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion,
+    final String questionnaireLoinc) throws Exception {
 
     final Questionnaire.QuestionnaireItemComponent questionItem =
         new Questionnaire.QuestionnaireItemComponent();
@@ -2995,7 +3036,11 @@ public final class FhirUtilityR5 {
         questionItem.setPrefix(prefix);
       }
       questionItem.setText(displayName);
-      questionItem.setRepeats(false);
+      questionItem.setRepeats(
+          LoincQuestionnaireHelper.resolveMemberRepeats(hasMemberRel, memberConcept));
+      if (LoincQuestionnaireHelper.resolveMemberRequired(hasMemberRel)) {
+        questionItem.setRequired(true);
+      }
 
       final Coding coding = new Coding();
       coding.setSystem(terminology.getUri());
@@ -3003,11 +3048,16 @@ public final class FhirUtilityR5 {
       coding.setDisplay(displayName);
       questionItem.addCode(coding);
 
-      // Find answer options for this question
+      // Leaf-embedded panel occurrence: gold uses string with no answerOption expansion.
+      final boolean leafEmbedded = LoincQuestionnaireHelper.isLeafEmbeddedFormOccurrence(
+          toConcept.getCode(), questionItem.getLinkId());
       final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
-          findAnswerOptionsForQuestion(memberConcept, searchService, terminology);
+          leafEmbedded ? List.of()
+              : findAnswerOptionsForQuestion(hasMemberRel, memberConcept, searchService,
+                  terminology, questionnaireLoinc);
 
-      questionItem.setType(resolveQuestionnaireItemType(memberConcept, answerOptions));
+      questionItem.setType(leafEmbedded ? Questionnaire.QuestionnaireItemType.STRING
+          : resolveQuestionnaireItemType(memberConcept, answerOptions));
       for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
         questionItem.addAnswerOption(option);
       }

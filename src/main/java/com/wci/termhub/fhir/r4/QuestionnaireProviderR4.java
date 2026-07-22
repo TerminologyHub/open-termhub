@@ -552,12 +552,13 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
    * @return true if the concept is a questionnaire, false otherwise
    */
   private boolean isQuestionnaireConcept(final Concept concept) {
-    if (QuestionnaireSearchHelper.isPanelConcept(concept)) {
-      return true;
+    try {
+      return questionnaireSearchHelper.isQuestionnairePanel(searchService, concept);
+    } catch (final Exception e) {
+      logger.debug("Error checking questionnaire eligibility for concept {}: {}",
+          concept.getCode(), e.getMessage());
+      return false;
     }
-
-    // Secondary criteria: LP29696-9 | Survey instruments |
-    return hasSurveyInstrumentsRelationship(concept);
   }
 
   /**
