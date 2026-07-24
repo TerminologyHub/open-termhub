@@ -142,7 +142,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       if (idPart != null && loincValueSetHelper.isLllgId(idPart)) {
         if (!loincValueSetHelper.isEnabled()) {
           logger.info(
-              "GET ValueSet/{}: LL/LG path skipped (fhir.loinc.lllg.valuesets.enabled=false)",
+              "GET ValueSet/{}: LL/LG path skipped (server).mode is not regenstrief)",
               idPart);
         } else {
           final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
@@ -1422,7 +1422,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
     // --- LOINC LL/LG value sets (Regenstrief mode) ---
     // Run when enabled or when search params indicate an LL/LG request (so ?code=LG51018-6-2.81
-    // returns the value set even if FHIR_LOINC_LLLG_VALUESETS_ENABLED is not set).
+    // returns the value set even if server.mode is not regenstrief).
     final boolean lllgRequested =
         (url != null && loincValueSetHelper.isLllgValueSetUrl(url.getValue()))
             || (id != null && id.getValue() != null && loincValueSetHelper.isLllgId(id.getValue()))

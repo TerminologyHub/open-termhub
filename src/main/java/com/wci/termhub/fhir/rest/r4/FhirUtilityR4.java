@@ -68,6 +68,7 @@ import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirDateTimeUtil;
 import com.wci.termhub.fhir.util.FhirUtility;
+import com.wci.termhub.app.ServerModeUtility;
 import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
 import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincQuestionnaireHelper;
@@ -612,7 +613,7 @@ public final class FhirUtilityR4 {
    * @param children the children
    * @param conceptNameMap the concept name map
    * @param searchService the search service
-   * @param regenstriefMode true when LOINC LL/LG value set mode is enabled
+   * @param regenstriefMode true when {@code server.mode=regenstrief}
    * @return the parameters
    * @throws Exception the exception
    */
@@ -722,7 +723,8 @@ public final class FhirUtilityR4 {
           continue;
         }
         String display =
-            resolveLoincPropertyDisplay(propertyCode, codingCode, codingCode, concept, displayMap);
+            LoincConceptPropertyHelper.resolveLoincPropertyDisplay(propertyCode, codingCode,
+                codingCode, concept, displayMap);
         if (entry.getValueDisplay() != null && !entry.getValueDisplay().isEmpty()) {
           display = entry.getValueDisplay();
         }
@@ -745,10 +747,11 @@ public final class FhirUtilityR4 {
         continue;
       }
 
-      if (isLoinc && isLoincLookupInternalDisplayKey(key)) {
+      if (isLoinc && LoincConceptPropertyHelper.isLoincLookupInternalDisplayKey(key)) {
         continue;
       }
-      if (isLoinc && isLoincLegacyStringSupersededByValueCoding(key, value, concept)) {
+      if (isLoinc && LoincConceptPropertyHelper.isLoincLegacyStringSupersededByValueCoding(key,
+          value, concept)) {
         continue;
       }
       if (LoincConceptPropertyHelper.suppressStatusOnLookupOutput(key, concept, regenstriefMode,
@@ -759,19 +762,20 @@ public final class FhirUtilityR4 {
       // Handle boolean values
       if ("true".equals(value) || "false".equals(value)) {
         parameters.addParameter(
-            createProperty(loincLookupPropertyName(key), Boolean.valueOf(value), false));
+            createProperty(LoincConceptPropertyHelper.loincLookupPropertyName(key),
+                Boolean.valueOf(value), false));
         continue;
       }
 
       // For LOINC: properties with valueCoding use valueCoding, others use
       // valueString
       if (isLoinc) {
-        final String loincPropName = loincLookupPropertyName(key);
+        final String loincPropName = LoincConceptPropertyHelper.loincLookupPropertyName(key);
         if (LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput(loincPropName)) {
           continue;
         }
         String codingCode = null;
-        if (value != null && isLoincPartCode(value)
+        if (value != null && LoincConceptPropertyHelper.isLoincPartCode(value)
             && concept.getAttributes().containsKey(key + "_display")) {
           codingCode = value;
         }
@@ -779,11 +783,13 @@ public final class FhirUtilityR4 {
           final Coding coding = new Coding();
           coding.setCode(codingCode);
           coding.setSystem(codeSystem.getUrl());
-          coding
-              .setDisplay(resolveLoincPropertyDisplay(key, value, codingCode, concept, displayMap));
-          parameters.addParameter(createProperty(loincLookupPropertyName(key), coding, false));
+          coding.setDisplay(LoincConceptPropertyHelper.resolveLoincPropertyDisplay(key, value,
+              codingCode, concept, displayMap));
+          parameters.addParameter(
+              createProperty(LoincConceptPropertyHelper.loincLookupPropertyName(key), coding,
+                  false));
         } else {
-          final String propName = loincLookupPropertyName(key);
+          final String propName = LoincConceptPropertyHelper.loincLookupPropertyName(key);
           if (LoincConceptPropertyHelper.isStatusValueCodeProperty(propName)) {
             parameters.addParameter(createProperty(propName, value, true));
           } else {
@@ -847,90 +853,6 @@ public final class FhirUtilityR4 {
     }
 
     return parameters;
-  }
-
-  /**
-   * LOINC part / answer class codes (LP…).
-   *
-   * @param value the value
-   * @return true, if is loinc part code
-   */
-  private static boolean isLoincPartCode(final String value) {
-    return value != null && value.matches("^LP\\d+-\\d+$");
-  }
-
-  /**
-   * True for attribute keys that only store display text for a {@code valueCoding} pair and must
-   * not be emitted as their own {@code property} in $lookup.
-   *
-   * @param key the attribute key
-   * @return true if internal display-only key
-   */
-  private static boolean isLoincLookupInternalDisplayKey(final String key) {
-    return key != null && key.endsWith("_display");
-  }
-
-  /**
-   * True when this attribute is the legacy uppercase string duplicate of a lowercase
-   * {@code valueCoding} property (same axis: display text vs LP code).
-   *
-   * @param key the attribute key
-   * @param value the attribute value
-   * @param concept the concept
-   * @return true if superseded by the canonical lowercase valueCoding attribute
-   */
-  private static boolean isLoincLegacyStringSupersededByValueCoding(final String key,
-    final String value, final Concept concept) {
-    if (key == null || value == null
-        || !LoincConstants.LOINC_UPPERCASE_PROPERTY_KEYS.contains(key)) {
-      return false;
-    }
-    final String canonical = key.toLowerCase(Locale.ROOT);
-    final String canonicalVal = concept.getAttributes().get(canonical);
-    if (canonicalVal == null || !isLoincPartCode(canonicalVal)) {
-      return false;
-    }
-    return !isLoincPartCode(value);
-  }
-
-  /**
-   * Resolve loinc property display.
-   *
-   * @param key the key
-   * @param value the value
-   * @param codingCode the coding code
-   * @param concept the concept
-   * @param displayMap the display map
-   * @return the string
-   */
-  private static String resolveLoincPropertyDisplay(final String key, final String value,
-    final String codingCode, final Concept concept, final Map<String, String> displayMap) {
-    final String fromAttr = concept.getAttributes().get(key + "_display");
-    if (fromAttr != null) {
-      return fromAttr;
-    }
-    if (value != null && !isLoincPartCode(value)) {
-      return value;
-    }
-    if (codingCode != null && displayMap != null && displayMap.containsKey(codingCode)) {
-      return displayMap.get(codingCode);
-    }
-    return codingCode != null ? codingCode : value;
-  }
-
-  /**
-   * Legacy {@code Map} keys used {@code _N} suffixes for duplicate FHIR property codes. Strip that
-   * for the $lookup parameter name (indexed documents only; reload uses
-   * {@link com.wci.termhub.model.Concept#getFhirPropertyCodings()}).
-   *
-   * @param attributeKey the attribute key
-   * @return FHIR property name
-   */
-  private static String loincLookupPropertyName(final String attributeKey) {
-    if (attributeKey != null && attributeKey.matches(".+_\\d+")) {
-      return attributeKey.replaceFirst("_\\d+$", "");
-    }
-    return attributeKey;
   }
 
   /**
@@ -1346,8 +1268,6 @@ public final class FhirUtilityR4 {
    *
    * @param valueSet the value set
    * @param subset the subset
-   * @param searchService the search service
-   * @throws Exception the exception
    */
   /**
    * Adds contact from subset {@code fhirContact} JSON or publisher+uri fallback.
@@ -1368,6 +1288,14 @@ public final class FhirUtilityR4 {
     }
   }
 
+  /**
+   * Apply copyright from terminology.
+   *
+   * @param valueSet the value set
+   * @param subset the subset
+   * @param searchService the search service
+   * @throws Exception the exception
+   */
   private static void applyCopyrightFromTerminology(final ValueSet valueSet, final Subset subset,
     final EntityRepositoryService searchService) throws Exception {
 
@@ -1596,6 +1524,19 @@ public final class FhirUtilityR4 {
    * @throws Exception the exception
    */
   public static ConceptMap toR4(final Mapset mapset) throws Exception {
+    return toR4(mapset, (Terminology) null);
+  }
+
+  /**
+   * To R4.
+   *
+   * @param mapset the mapset
+   * @param contactTerminology terminology contact source when {@code server.mode=regenstrief}
+   * @return the concept map
+   * @throws Exception the exception
+   */
+  public static ConceptMap toR4(final Mapset mapset, final Terminology contactTerminology)
+    throws Exception {
     if (mapset == null) {
       throw new FHIRServerResponseException(HttpServletResponse.SC_BAD_REQUEST,
           "Mapset cannot be null", null);
@@ -1617,7 +1558,7 @@ public final class FhirUtilityR4 {
     cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
     cm.setCopyright(mapset.getAttributes().get("copyright"));
-    applyMapsetContact(cm, mapset);
+    applyConceptMapContact(cm, mapset, contactTerminology);
     FhirIdentifierUtil.applyToR4ConceptMap(cm,
         mapset.getAttributes().get(FhirIdentifierUtil.ATTR_FHIR_IDENTIFIER));
 
@@ -1653,8 +1594,22 @@ public final class FhirUtilityR4 {
    */
   public static ConceptMap toR4(final Mapset mapset, final List<Mapping> mappings)
     throws Exception {
+    return toR4(mapset, mappings, null);
+  }
 
-    final ConceptMap cm = toR4(mapset);
+  /**
+   * To R4 with groups and elements from mappings.
+   *
+   * @param mapset the mapset
+   * @param mappings the mappings (may be null or empty for metadata-only)
+   * @param contactTerminology terminology contact source when {@code server.mode=regenstrief}
+   * @return the concept map
+   * @throws Exception the exception
+   */
+  public static ConceptMap toR4(final Mapset mapset, final List<Mapping> mappings,
+    final Terminology contactTerminology) throws Exception {
+
+    final ConceptMap cm = toR4(mapset, contactTerminology);
     if (mappings == null || mappings.isEmpty()) {
       return cm;
     }
@@ -1845,7 +1800,26 @@ public final class FhirUtilityR4 {
   /**
    * Adds contact from mapset {@code fhirContact} when stored at import.
    *
-   * @param resource the FHIR metadata resource
+   * @param conceptMap the concept map
+   * @param mapset the mapset
+   * @param contactTerminology the contact terminology
+   */
+  private static void applyConceptMapContact(final ConceptMap conceptMap, final Mapset mapset,
+    final Terminology contactTerminology) {
+    if (conceptMap == null || mapset == null) {
+      return;
+    }
+    if (ServerModeUtility.isRegenstriefImportMode() && contactTerminology != null) {
+      applyTerminologyContact(conceptMap, contactTerminology);
+    } else {
+      applyMapsetContact(conceptMap, mapset);
+    }
+  }
+
+  /**
+   * Apply mapset contact.
+   *
+   * @param resource the resource
    * @param mapset the mapset
    */
   private static void applyMapsetContact(final MetadataResource resource, final Mapset mapset) {
@@ -1965,7 +1939,6 @@ public final class FhirUtilityR4 {
    *
    * @param terminology the terminology
    * @return release date or null
-   * @throws Exception the exception
    */
   private static String resolveTerminologyReleaseDateString(final Terminology terminology) {
     if (terminology == null) {

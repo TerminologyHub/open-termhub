@@ -9,8 +9,11 @@
  */
 package com.wci.termhub.fhir.util.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -82,5 +85,71 @@ public class LoincConceptPropertyHelperUnitTest {
     assertTrue(LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput("has_member"));
     assertFalse(LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput("component"));
     assertFalse(LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput(null));
+  }
+
+  /**
+   * LP part codes match LOINC part / answer class pattern.
+   */
+  @Test
+  public void testIsLoincPartCode() {
+    assertTrue(LoincConceptPropertyHelper.isLoincPartCode("LP343406-7"));
+    assertFalse(LoincConceptPropertyHelper.isLoincPartCode("LA1-0"));
+    assertFalse(LoincConceptPropertyHelper.isLoincPartCode(null));
+  }
+
+  /**
+   * Internal display companion keys must not be emitted as properties.
+   */
+  @Test
+  public void testIsLoincLookupInternalDisplayKey() {
+    assertTrue(LoincConceptPropertyHelper.isLoincLookupInternalDisplayKey("component_display"));
+    assertFalse(LoincConceptPropertyHelper.isLoincLookupInternalDisplayKey("component"));
+    assertFalse(LoincConceptPropertyHelper.isLoincLookupInternalDisplayKey(null));
+  }
+
+  /**
+   * Legacy uppercase string duplicate is superseded when lowercase LP code exists.
+   */
+  @Test
+  public void testIsLoincLegacyStringSupersededByValueCoding() {
+    final Concept concept = new Concept();
+    concept.getAttributes().put("component", "LP343406-7");
+    concept.getAttributes().put("component_display", "Body weight");
+
+    assertTrue(LoincConceptPropertyHelper.isLoincLegacyStringSupersededByValueCoding("COMPONENT",
+        "Body weight", concept));
+    assertFalse(LoincConceptPropertyHelper.isLoincLegacyStringSupersededByValueCoding("COMPONENT",
+        "LP343406-7", concept));
+    assertFalse(LoincConceptPropertyHelper.isLoincLegacyStringSupersededByValueCoding("component",
+        "Body weight", concept));
+  }
+
+  /**
+   * Resolve display from _display attribute, literal, or display map.
+   */
+  @Test
+  public void testResolveLoincPropertyDisplay() {
+    final Concept concept = new Concept();
+    concept.getAttributes().put("component_display", "From attribute");
+
+    assertEquals("From attribute",
+        LoincConceptPropertyHelper.resolveLoincPropertyDisplay("component", "LP343406-7",
+            "LP343406-7", concept, Map.of()));
+    assertEquals("Literal text",
+        LoincConceptPropertyHelper.resolveLoincPropertyDisplay("component", "Literal text",
+            null, new Concept(), Map.of()));
+    assertEquals("Mapped display",
+        LoincConceptPropertyHelper.resolveLoincPropertyDisplay("component", "LP343406-7",
+            "LP343406-7", new Concept(), Map.of("LP343406-7", "Mapped display")));
+  }
+
+  /**
+   * Legacy indexed keys strip numeric suffix for FHIR property name.
+   */
+  @Test
+  public void testLoincLookupPropertyName() {
+    assertEquals("component", LoincConceptPropertyHelper.loincLookupPropertyName("component_2"));
+    assertEquals("component", LoincConceptPropertyHelper.loincLookupPropertyName("component"));
+    assertEquals(null, LoincConceptPropertyHelper.loincLookupPropertyName(null));
   }
 }

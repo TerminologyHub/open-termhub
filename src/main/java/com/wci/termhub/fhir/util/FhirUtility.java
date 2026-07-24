@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -889,6 +890,91 @@ public final class FhirUtility {
       mapsetCache.put(query, mapsets);
     }
     return mapsets;
+  }
+
+  /**
+   * Resolves the terminology whose contact should appear on a ConceptMap when
+   * {@code server.mode=regenstrief}: always the loaded LOINC terminology (same as
+   * CodeSystem and ValueSet), not the map source or target.
+   *
+   * @param searchService the search service
+   * @param mapset unused; kept for call-site compatibility
+   * @return LOINC terminology for contact, or null when not loaded
+   * @throws Exception the exception
+   */
+  public static Terminology resolveRegenstriefConceptMapContactTerminology(
+    final EntityRepositoryService searchService, final Mapset mapset) throws Exception {
+    if (searchService == null) {
+      return null;
+    }
+    return findLoincTerminology(searchService);
+  }
+
+  /**
+   * Finds LOINC terminology (any version) for Regenstrief FHIR contact and LL/LG
+   * resolution. Prefers LOINC + Regenstrief Institute; falls back to any
+   * terminology whose URI contains {@code loinc.org}.
+   *
+   * @param searchService the search service
+   * @return LOINC terminology or null
+   */
+  public static Terminology findLoincTerminology(final EntityRepositoryService searchService) {
+    try {
+      Terminology term = TerminologyUtility.getLatestTerminologyVersion(searchService,
+          LoincConstants.LOINC_SYSTEM, LoincConstants.LOINC_PUBLISHER);
+      if (term != null) {
+        return term;
+      }
+      term = TerminologyUtility.getLatestTerminologyVersion(searchService,
+          LoincConstants.LOINC_SYSTEM, LoincConstants.LOINC_PUBLISHER_ALT);
+      if (term != null) {
+        return term;
+      }
+      term = TerminologyUtility.getLatestTerminologyVersion(searchService,
+          LoincConstants.LOINC_SYSTEM_ALT, null);
+      if (term != null && term.getUri() != null && isLoincUri(term.getUri())) {
+        return term;
+      }
+      final SearchParameters params = new SearchParameters(
+          StringUtility.escapeKeywordField("abbreviation", LoincConstants.LOINC_SYSTEM), 50, 0);
+      ResultList<Terminology> list = searchService.find(params, Terminology.class);
+      List<Terminology> loincTerms = list.getItems().stream()
+          .filter(t -> t.getUri() != null && isLoincUri(t.getUri())).toList();
+      if (loincTerms.isEmpty()) {
+        final SearchParameters lncParams = new SearchParameters(
+            StringUtility.escapeKeywordField("abbreviation", LoincConstants.LOINC_SYSTEM_ALT), 50,
+            0);
+        list = searchService.find(lncParams, Terminology.class);
+        loincTerms = list.getItems().stream()
+            .filter(t -> t.getUri() != null && isLoincUri(t.getUri())).toList();
+      }
+      if (loincTerms.isEmpty()) {
+        return null;
+      }
+      return TerminologyUtility.getLatestTerminology(loincTerms);
+    } catch (final Exception e) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("LOINC terminology not found: {}", e.getMessage());
+      }
+      return null;
+    }
+  }
+
+  /**
+   * True when the URI is the LOINC code system or a LOINC sub-path.
+   *
+   * @param uri the URI
+   * @return true for LOINC URIs
+   */
+  private static boolean isLoincUri(final String uri) {
+    if (uri == null) {
+      return false;
+    }
+    final String normalized = uri.toLowerCase(Locale.ROOT);
+    return normalized.equals(LoincConstants.LOINC_URI)
+        || normalized.startsWith(LoincConstants.LOINC_URI + "/")
+        || normalized.equals("https://loinc.org")
+        || normalized.startsWith("https://loinc.org/");
   }
 
   /**

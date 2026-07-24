@@ -9,10 +9,6 @@
  */
 package com.wci.termhub.fhir.util;
 
-import static com.wci.termhub.fhir.util.LoincConstants.LOINC_PUBLISHER;
-import static com.wci.termhub.fhir.util.LoincConstants.LOINC_PUBLISHER_ALT;
-import static com.wci.termhub.fhir.util.LoincConstants.LOINC_SYSTEM;
-import static com.wci.termhub.fhir.util.LoincConstants.LOINC_SYSTEM_ALT;
 import static com.wci.termhub.fhir.util.LoincConstants.LOINC_URI;
 import static com.wci.termhub.fhir.util.LoincConstants.LOINC_VS_PATH_PREFIX;
 import static com.wci.termhub.fhir.util.LoincConstants.LOINC_VS_PATH_PREFIX_HTTPS;
@@ -32,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.wci.termhub.app.ServerMode;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ResultList;
@@ -42,12 +39,11 @@ import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * Helper for LOINC LL/LG value set support (Regenstrief mode). When enabled
- * (FHIR_LOINC_LLLG_VALUESETS_ENABLED=true), value set providers expose value
- * sets at http://loinc.org?fhir_vs/LL* and http://loinc.org?fhir_vs/LG*, and at
- * http://loinc.org/vs/{id} (path form). When enabled, LG ids may include a
- * version suffix (e.g. LG51018-6-2.72) and expansion is scoped to that LOINC
- * version.
+ * Helper for LOINC LL/LG value set support. When {@code server.mode=regenstrief},
+ * value set providers expose value sets at http://loinc.org?fhir_vs/LL* and
+ * http://loinc.org?fhir_vs/LG*, and at http://loinc.org/vs/{id} (path form).
+ * In Regenstrief mode, LG ids may include a version suffix (e.g.
+ * LG51018-6-2.72) and expansion is scoped to that LOINC version.
  */
 @Component
 public class LoincValueSetHelper {
@@ -64,17 +60,26 @@ public class LoincValueSetHelper {
    */
   private static final Pattern LG_PATTERN = Pattern.compile("^LG\\d+-\\d+(-[\\d.]+)?$");
 
-  /** The enabled. */
-  @Value("${fhir.loinc.lllg.valuesets.enabled:false}")
-  private boolean enabled;
+  /** The FHIR server mode. */
+  @Value("${server.mode:default}")
+  private ServerMode mode;
 
   /**
-   * Returns whether LL/LG value set support is enabled.
+   * Returns whether Regenstrief-compatible LOINC FHIR behavior is enabled.
    *
-   * @return true if enabled
+   * @return true when {@code server.mode=regenstrief}
+   */
+  public boolean isRegenstriefMode() {
+    return mode.isRegenstriefMode();
+  }
+
+  /**
+   * Returns whether Regenstrief-compatible LOINC FHIR behavior is enabled.
+   *
+   * @return true when {@code server.mode=regenstrief}
    */
   public boolean isEnabled() {
-    return enabled;
+    return isRegenstriefMode();
   }
 
   /**
@@ -465,45 +470,7 @@ public class LoincValueSetHelper {
    * @return LOINC terminology or null
    */
   public Terminology findLoincTerminology(final EntityRepositoryService searchService) {
-    try {
-      Terminology term = TerminologyUtility.getLatestTerminologyVersion(searchService, LOINC_SYSTEM,
-          LOINC_PUBLISHER);
-      if (term != null) {
-        return term;
-      }
-      term = TerminologyUtility.getLatestTerminologyVersion(searchService, LOINC_SYSTEM,
-          LOINC_PUBLISHER_ALT);
-      if (term != null) {
-        return term;
-      }
-      term = TerminologyUtility.getLatestTerminologyVersion(searchService, LOINC_SYSTEM_ALT, null);
-      if (term != null && term.getUri() != null && term.getUri().contains(LOINC_URI)) {
-        return term;
-      }
-      final SearchParameters params = new SearchParameters(
-          StringUtility.escapeKeywordField("abbreviation", LOINC_SYSTEM), 50, 0);
-      ResultList<Terminology> list = searchService.find(params, Terminology.class);
-      List<Terminology> loincTerms = list.getItems().stream()
-          .filter(t -> t.getUri() != null && t.getUri().contains(LOINC_URI))
-          .toList();
-      if (loincTerms.isEmpty()) {
-        final SearchParameters lncParams = new SearchParameters(
-            StringUtility.escapeKeywordField("abbreviation", LOINC_SYSTEM_ALT), 50, 0);
-        list = searchService.find(lncParams, Terminology.class);
-        loincTerms = list.getItems().stream()
-            .filter(t -> t.getUri() != null && t.getUri().contains(LOINC_URI))
-            .toList();
-      }
-      if (loincTerms.isEmpty()) {
-        return null;
-      }
-      return TerminologyUtility.getLatestTerminology(loincTerms);
-    } catch (final Exception e) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("LOINC terminology not found: {}", e.getMessage());
-      }
-      return null;
-    }
+    return FhirUtility.findLoincTerminology(searchService);
   }
 
   /**
@@ -557,7 +524,7 @@ public class LoincValueSetHelper {
     String baseLgCode = lgId;
     String versionFilter = terminology.getVersion();
     final String versionFromId = getVersionFromLllgId(lgId);
-    if (versionFromId != null && enabled) {
+    if (versionFromId != null && isRegenstriefMode()) {
       baseLgCode = lgId.substring(0, lgId.lastIndexOf('-'));
       versionFilter = versionFromId;
     } else if (versionFromId != null) {
@@ -740,7 +707,7 @@ public class LoincValueSetHelper {
 
   /**
    * Finds all LL and LG concepts in the given LOINC terminology using Lucene wildcard
-   * queries. Used when {@code fhir.loinc.lllg.valuesets.enabled=true} to
+   * queries. Used when {@code server.mode=regenstrief} to
    * enumerate value sets for a general {@code GET /ValueSet} listing.
    *
    * @param searchService the search service
@@ -808,7 +775,7 @@ public class LoincValueSetHelper {
     String baseLgCode = lgId;
     String versionFilter = terminology.getVersion();
     final String versionFromId = getVersionFromLllgId(lgId);
-    if (versionFromId != null && enabled) {
+    if (versionFromId != null && isRegenstriefMode()) {
       baseLgCode = lgId.substring(0, lgId.lastIndexOf('-'));
       versionFilter = versionFromId;
     } else if (versionFromId != null) {

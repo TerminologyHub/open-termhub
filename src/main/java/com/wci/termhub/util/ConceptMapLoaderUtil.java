@@ -35,6 +35,7 @@ import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
+import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.Mapping;
@@ -398,11 +399,13 @@ public final class ConceptMapLoaderUtil {
       listener.updateProgress(new ProgressEvent(100));
 
       // R4
+      final Terminology contactTerminology =
+          FhirUtility.resolveRegenstriefConceptMapContactTerminology(service, mapset);
       if (type == org.hl7.fhir.r4.model.ConceptMap.class) {
-        return (T) FhirUtilityR4.toR4(mapset);
+        return (T) FhirUtilityR4.toR4(mapset, contactTerminology);
       }
       // else R5
-      return (T) FhirUtilityR5.toR5(mapset);
+      return (T) FhirUtilityR5.toR5(mapset, contactTerminology);
 
     } catch (final Exception e) {
       LOGGER.error("Error indexing concept map", e);
