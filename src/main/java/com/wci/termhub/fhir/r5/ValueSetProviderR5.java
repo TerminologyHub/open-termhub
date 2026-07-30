@@ -142,8 +142,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       final String idPart = id != null ? id.getIdPart() : null;
       if (idPart != null && loincValueSetHelper.isLllgId(idPart)) {
         if (!loincValueSetHelper.isEnabled()) {
-          logger.debug(
-              "GET ValueSet/{}: LL/LG path skipped (server.mode is not regenstrief)",
+          logger.debug("GET ValueSet/{}: LL/LG path skipped (server.mode is not regenstrief)",
               idPart);
         } else {
           final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
@@ -336,9 +335,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
       FhirUtilityR5.notSupported("valueSet", valueSet);
 
       final ValueSet vs =
-          getExpandedValueSet(null, url, version, filter,
-              offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100, false,
-              displayLanguage == null ? null
+          getExpandedValueSet(null, url, version, filter, offset != null ? offset.getValue() : 0,
+              count != null ? count.getValue() : 100, false, displayLanguage == null ? null
                   : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()));
 
       if (vs == null) {
@@ -402,9 +400,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
     try {
 
       final ValueSet vs =
-          getExpandedValueSet(id, null, version, filter,
-              offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100, false,
-              displayLanguage == null ? null
+          getExpandedValueSet(id, null, version, filter, offset != null ? offset.getValue() : 0,
+              count != null ? count.getValue() : 100, false, displayLanguage == null ? null
                   : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()));
 
       if (vs == null) {
@@ -698,9 +695,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the implicit code system value set
    * @throws Exception the exception
    */
-  private ValueSet getExpandedValueSet(final IdType id,
-    final UriType url, final StringType version, final StringType filter, final int offset,
-    final int count, final boolean activeOnly, final Set<String> languages) throws Exception {
+  private ValueSet getExpandedValueSet(final IdType id, final UriType url, final StringType version,
+    final StringType filter, final int offset, final int count, final boolean activeOnly,
+    final Set<String> languages) throws Exception {
     final String cacheKey = ValueSetExpandCache.buildKey("R5", id == null ? null : id.getIdPart(),
         url == null ? null : url.getValue(), version == null ? null : version.getValue(), offset,
         count, filter == null ? null : filter.getValue(), activeOnly, languages);
@@ -748,15 +745,15 @@ public class ValueSetProviderR5 implements IResourceProvider {
               OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
         }
         final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
-        final ResultList<Concept> directList = loincValueSetHelper.findLllgMembers(searchService,
-            terminology, lllgId, 0, 100_000);
+        final ResultList<Concept> directList =
+            loincValueSetHelper.findLllgMembers(searchService, terminology, lllgId, 0, 100_000);
         final List<Concept> directItems = new ArrayList<>(directList.getItems());
         loincValueSetHelper.sortDirectLllgMembers(lllgId, directItems);
         final LoincValueSetHelper.LllgComposeStructure composeStructure =
             loincValueSetHelper.buildLllgComposeStructure(directItems);
         final String filterValue = filter != null ? filter.getValue() : null;
-        final LoincValueSetHelper.ExpandedLllgResult expanded = loincValueSetHelper.expandLllgLeaves(
-            searchService, terminology, lllgId, offset, ct, filterValue);
+        final LoincValueSetHelper.ExpandedLllgResult expanded = loincValueSetHelper
+            .expandLllgLeaves(searchService, terminology, lllgId, offset, ct, filterValue);
         final List<Concept> items = expanded.getItems();
         final String systemUri = terminology.getUri();
         if (systemUri != null) {
@@ -773,8 +770,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
           expansion.addParameter(
               new ValueSetExpansionParameterComponent().setName("filter").setValue(filter));
         }
-        expansion.addParameter(
-            new ValueSetExpansionParameterComponent().setName("count").setValue(new IntegerType(ct)));
+        expansion.addParameter(new ValueSetExpansionParameterComponent().setName("count")
+            .setValue(new IntegerType(ct)));
         if (version != null) {
           expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
               .setValue(new StringType(version.getValue())));
@@ -802,9 +799,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
                     coding.setDisplay(displayMap.get(term.getType()));
                   }
                 }
-                code.addDesignation(new ConceptReferenceDesignationComponent()
-                    .setLanguage(
-                        Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
+                code.addDesignation(new ConceptReferenceDesignationComponent().setLanguage(
+                    Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
                     .setUse(coding).setValue(term.getName()));
               }
             }
@@ -831,8 +827,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
         .filter(c -> c.getSystem().equals("fromPublisher")).findFirst().get().getCode();
     final String fromVersion = vs.getMeta().getTag().stream()
         .filter(c -> c.getSystem().equals("fromVersion")).findFirst().get().getCode();
-    Terminology terminology = TerminologyUtility.getTerminology(searchService,
-        fromTerminology, fromPublisher, fromVersion);
+    Terminology terminology = TerminologyUtility.getTerminology(searchService, fromTerminology,
+        fromPublisher, fromVersion);
 
     final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
 
@@ -864,19 +860,18 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // Designations need Concept.terms — keep legacy Concept expand only then.
       final Query expressionQuery = getExpressionQuery(url == null ? null : url.getValue());
       if (languages == null && expressionQuery == null) {
-        final ValueSet expanded = expandLoadedSubsetFromMembers(vs, members, systemUri, offset, ct,
-            filter, version);
+        final ValueSet expanded =
+            expandLoadedSubsetFromMembers(vs, members, systemUri, offset, ct, filter, version);
         ValueSetExpandCache.putR5(cacheKey, expanded);
         return expanded;
       }
 
       // Fallback: Concept path for displayLanguage / ECL (compose already set)
-      final Query terminologyQuery = LuceneQueryBuilder.parse(
-          TerminologyUtility.getTerminologyQuery(m0.getTerminology(), m0.getPublisher(),
-              m0.getVersion()),
-          Concept.class);
-      final List<String> memberClauses = members.stream()
-          .map(s -> "code:" + StringUtility.escapeQuery(s.getCode())).toList();
+      final Query terminologyQuery =
+          LuceneQueryBuilder.parse(TerminologyUtility.getTerminologyQuery(m0.getTerminology(),
+              m0.getPublisher(), m0.getVersion()), Concept.class);
+      final List<String> memberClauses =
+          members.stream().map(s -> "code:" + StringUtility.escapeQuery(s.getCode())).toList();
       final Query subsetQuery;
       if (memberClauses.size() > LuceneQueryBuilder.MAX_CLAUSE_COUNT) {
         final BooleanQuery.Builder subsetQueryBuilder = new BooleanQuery.Builder();
@@ -902,11 +897,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
         params.setActive(activeOnly);
       }
       final ResultList<Concept> list = searchService.find(params, Concept.class);
-      final ValueSetExpansionComponent expansion =
-          buildExpansionHeader(offset, ct, filter, version, (int) Math.min(list.getTotal(),
-              Integer.MAX_VALUE));
-      final boolean isLoinc =
-          systemUri != null && systemUri.contains("loinc.org");
+      final ValueSetExpansionComponent expansion = buildExpansionHeader(offset, ct, filter, version,
+          (int) Math.min(list.getTotal(), Integer.MAX_VALUE));
+      final boolean isLoinc = systemUri != null && systemUri.contains("loinc.org");
       for (final Concept concept : list.getItems()) {
         final ValueSetExpansionContainsComponent code = new ValueSetExpansionContainsComponent()
             .setSystem(systemUri).setCode(concept.getCode()).setDisplay(concept.getName());
@@ -949,8 +942,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
         new BrowserQueryBuilder().buildQuery(filter == null ? null : filter.getValue()),
         Concept.class);
     final Query expressionQuery = getExpressionQuery(url == null ? null : url.getValue());
-    final Query booleanQuery =
-        getAndQuery(terminologyQuery, null, filterQuery, expressionQuery);
+    final Query booleanQuery = getAndQuery(terminologyQuery, null, filterQuery, expressionQuery);
     final SearchParameters params = new SearchParameters(booleanQuery, offset, ct, null, null);
     if (activeOnly) {
       params.setActive(activeOnly);
@@ -996,7 +988,6 @@ public class ValueSetProviderR5 implements IResourceProvider {
     return vs;
   }
 
-
   /**
    * Expands a loaded ValueSet from SubsetMembers. Compose must already be set.
    *
@@ -1032,7 +1023,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
       }
       eligible.add(member);
     }
-    eligible.sort(Comparator.comparing(SubsetMember::getCode, Comparator.nullsLast(String::compareTo)));
+    eligible
+        .sort(Comparator.comparing(SubsetMember::getCode, Comparator.nullsLast(String::compareTo)));
 
     final int total = eligible.size();
     final ValueSetExpansionComponent expansion =
@@ -1129,8 +1121,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
   }
 
   /**
-   * Loads ValueSet subsets for findPossibleValueSets. Uses direct get/search when id or url
-   * is provided so expand-by-id does not scan every loaded ValueSet.
+   * Loads ValueSet subsets for findPossibleValueSets. Uses direct get/search when id or url is
+   * provided so expand-by-id does not scan every loaded ValueSet.
    *
    * @param id the id filter
    * @param url the url filter
@@ -1430,6 +1422,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the list
    * @throws Exception the exception
    */
+  @SuppressWarnings("null")
   public List<ValueSet> findPossibleValueSets(final boolean metaFlag, final TokenParam id,
     final TokenParam code, final DateRangeParam date, final StringParam description,
     final TokenParam identifier, final StringParam name, final StringParam publisher,
@@ -1501,8 +1494,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
     // Prefer direct id/url lookup; avoid findAll of every ValueSet subset.
     final List<Subset> subsets = findLoadedValueSetSubsets(id, url);
     for (final Subset subset : subsets) {
-      final ValueSet set =
-          FhirUtilityR5.toR5ValueSet(subset, new ArrayList<SubsetMember>(0), metaFlag, searchService);
+      final ValueSet set = FhirUtilityR5.toR5ValueSet(subset, new ArrayList<SubsetMember>(0),
+          metaFlag, searchService);
       // Apply the same filtering as above
       if ((id != null && !id.getValue().equals(set.getId()))
           || (url != null && !url.getValue().equals(set.getUrl()))) {
@@ -1576,8 +1569,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
             final String requestedVersion = version.getValue();
             loincForLllg = allTerminologies.stream()
                 .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
-                .filter(t -> requestedVersion.equals(t.getVersion()))
-                .findFirst().orElse(null);
+                .filter(t -> requestedVersion.equals(t.getVersion())).findFirst().orElse(null);
           } else {
             loincForLllg = loinc;
           }
@@ -1662,8 +1654,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
                   title == null || FhirUtility.compareString(title, lgVs.getTitle());
               final boolean descriptionMatch = description == null
                   || FhirUtility.compareString(description, lgVs.getDescription());
-              if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch && titleMatch
-                  && descriptionMatch) {
+              if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch
+                  && titleMatch && descriptionMatch) {
                 list.add(lgVs);
               }
             }
@@ -1685,15 +1677,15 @@ public class ValueSetProviderR5 implements IResourceProvider {
    */
   private Terminology resolveLllgTerminology(final ValueSet vs) throws Exception {
     if (vs.getMeta() != null) {
-      final String fromTerminology = vs.getMeta().getTag().stream()
-          .filter(t -> "fromTerminology".equals(t.getSystem())).map(t -> t.getCode()).findFirst()
-          .orElse(null);
-      final String fromPublisher = vs.getMeta().getTag().stream()
-          .filter(t -> "fromPublisher".equals(t.getSystem())).map(t -> t.getCode()).findFirst()
-          .orElse(null);
-      final String fromVersion = vs.getMeta().getTag().stream()
-          .filter(t -> "fromVersion".equals(t.getSystem())).map(t -> t.getCode()).findFirst()
-          .orElse(null);
+      final String fromTerminology =
+          vs.getMeta().getTag().stream().filter(t -> "fromTerminology".equals(t.getSystem()))
+              .map(t -> t.getCode()).findFirst().orElse(null);
+      final String fromPublisher =
+          vs.getMeta().getTag().stream().filter(t -> "fromPublisher".equals(t.getSystem()))
+              .map(t -> t.getCode()).findFirst().orElse(null);
+      final String fromVersion =
+          vs.getMeta().getTag().stream().filter(t -> "fromVersion".equals(t.getSystem()))
+              .map(t -> t.getCode()).findFirst().orElse(null);
       if (fromTerminology != null && fromPublisher != null && fromVersion != null) {
         final Terminology fromMeta = TerminologyUtility.getTerminology(searchService,
             fromTerminology, fromPublisher, fromVersion);
