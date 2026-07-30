@@ -1,6 +1,6 @@
 buildscript {
   ext {
-    springBootVersion = "3.5.14"
+    springBootVersion = "3.5.16"
     log4jVersion = "2.25.4"
     tomcatEmbedVersion = "10.1.55"
     hapiFhirVersion = "6.9.10"
