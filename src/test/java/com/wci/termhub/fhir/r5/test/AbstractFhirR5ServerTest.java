@@ -25,6 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.test.AbstractServerTest;
 
@@ -91,10 +92,13 @@ public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
       return;
     }
     try {
+      // Drop any static FHIR caches left by other suites (e.g. R4) that use a different index.
+      FhirUtility.clearCaches();
       clearAndCreateIndexDirectories(searchService, indexDirectory);
       loadCodeSystems(searchService, CODE_SYSTEM_FILES, false);
       loadConceptMaps(searchService, CONCEPT_MAP_FILES);
       loadValueSets(searchService, VALUE_SET_FILES);
+      FhirUtility.clearCaches();
     } catch (final Exception e) {
       logger.error("Error setting up data: {}", e.getMessage(), e);
       throw e;

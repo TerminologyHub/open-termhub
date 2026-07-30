@@ -49,7 +49,9 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
+import com.wci.termhub.fhir.util.CodeSystemLookupCache;
 import com.wci.termhub.fhir.util.CodeSystemMetadataLookupUtility;
+import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
@@ -694,31 +696,43 @@ public class CodeSystemProviderR5 implements IResourceProvider {
         terminology.getPublisher(), terminology.getVersion());
     final List<ConceptRelationship> relationships =
         searchService.findAll(StringUtility.composeQuery("AND", termQuery, "active:true",
-            "from.code:" + StringUtility.escapeQuery(code)), null, ConceptRelationship.class);
+            "hierarchical:true", "from.code:" + StringUtility.escapeQuery(code)), null,
+            ConceptRelationship.class);
     final List<ConceptRelationship> children =
         searchService.findAll(StringUtility.composeQuery("AND", termQuery, "active:true",
             "hierarchical:true", "to.code:" + StringUtility.escapeQuery(code)), null,
             ConceptRelationship.class);
 
-    // Look up metadata
-    final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService, terminology);
-    // Build concept name map (name -> code) for property lookups
-    Map<String, String> conceptNameMap = null;
-    try {
-      conceptNameMap = FhirUtility.getConceptNameMap(searchService, terminology);
-    } catch (final Exception e) {
-      logger.debug("Failed to get concept name map: {}", e.getMessage());
+    final boolean isLoinc =
+        terminology.getUri() != null && terminology.getUri().contains(LoincConstants.LOINC_URI);
+    final boolean regenstriefMode = loincValueSetHelper.isEnabled() && isLoinc;
+
+    final Set<String> propertySet = properties == null ? null
+        : properties.stream().map(c -> c.getValue()).collect(Collectors.toSet());
+    final String cacheKey = CodeSystemLookupCache.buildKey("R5", terminology.getUri(),
+        terminology.getVersion(), code, propertySet, regenstriefMode);
+    final Parameters cached = CodeSystemLookupCache.getR5(cacheKey);
+    if (cached != null) {
+      return cached;
     }
 
-    final boolean regenstriefMode = loincValueSetHelper.isEnabled()
-        && terminology.getUri() != null && terminology.getUri().contains("loinc.org");
+    final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService, terminology);
+    // LOINC toR5 does not use conceptNameMap; skip the expensive full-concept scan
+    Map<String, String> conceptNameMap = null;
+    if (!isLoinc) {
+      try {
+        conceptNameMap = FhirUtility.getConceptNameMap(searchService, terminology);
+      } catch (final Exception e) {
+        logger.debug("Failed to get concept name map: {}", e.getMessage());
+      }
+    }
 
-    return FhirUtilityR5.toR5(FhirUtilityR5.toR5(terminology), concept,
-        properties == null ? null
-            : properties.stream().map(c -> c.getValue()).collect(Collectors.toSet()),
-        displayMap, relationships,
+    final Parameters result = FhirUtilityR5.toR5(FhirUtilityR5.toR5(terminology), concept,
+        propertySet, displayMap, relationships,
         children == null ? null : children.stream().map(r -> r.getFrom()).toList(),
         conceptNameMap, searchService, regenstriefMode);
+    CodeSystemLookupCache.putR5(cacheKey, result);
+    return result;
   }
 
   /**
@@ -888,6 +902,8 @@ public class CodeSystemProviderR5 implements IResourceProvider {
           .setDiagnostics("CodeSystem created = " + codeSystem.getId());
       out.setOperationOutcome(outcome);
 
+      FhirUtility.clearCaches();
+      CodeSystemLookupCache.clear();
       return out;
 
     } catch (FHIRServerResponseException fe) {
@@ -928,6 +944,8 @@ public class CodeSystemProviderR5 implements IResourceProvider {
       }
 
       CodeSystemMetadataLookupUtility.clearCacheForTerminology(terminology.getId());
+      FhirUtility.clearCaches();
+      CodeSystemLookupCache.clear();
       TerminologyUtility.removeTerminology(searchService, terminology.getId());
 
     } catch (final FHIRServerResponseException e) {

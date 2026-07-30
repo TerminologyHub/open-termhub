@@ -57,20 +57,44 @@ public final class FhirUtility {
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(FhirUtility.class);
 
+  /** Cache TTL: 5 minutes. */
+  private static final int CACHE_TTL_MS = 300_000;
+
+  /** Default cache size. */
+  private static final int CACHE_SIZE = 1000;
+
+  /** Lock for single-flight cache fills. */
+  private static final Object CACHE_FILL_LOCK = new Object();
+
+  /** Cache key for all terminologies list. */
+  private static final String LOOKUP_TERMINOLOGIES_KEY = "*";
+
   /** The terminologies cache. */
-  private static TimerCache<List<Terminology>> terminologyCache = new TimerCache<>(1000, 10000);
+  private static TimerCache<List<Terminology>> terminologyCache =
+      new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+
+  /** The all-terminologies list cache. */
+  private static TimerCache<List<Terminology>> allTerminologiesCache =
+      new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
 
   /** The mapset cache. */
-  private static TimerCache<List<Mapset>> mapsetCache = new TimerCache<>(1000, 10000);
+  private static TimerCache<List<Mapset>> mapsetCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
 
   /** The code system uri cache. */
-  private static TimerCache<String> codeSystemUriCache = new TimerCache<>(1000, 10000);
+  private static TimerCache<String> codeSystemUriCache =
+      new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
 
   /** The display map cache. */
-  private static TimerCache<Map<String, String>> displayMapCache = new TimerCache<>(1000, 10000);
+  private static TimerCache<Map<String, String>> displayMapCache =
+      new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
 
   /** The concept name map cache. */
-  private static TimerCache<Map<String, String>> conceptNameMapCache = new TimerCache<>(1000, 10000);
+  private static TimerCache<Map<String, String>> conceptNameMapCache =
+      new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+
+  /** system|version -> Terminology for FHIR $lookup resolution. */
+  private static TimerCache<Terminology> systemVersionTerminologyCache =
+      new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
 
   /**
    * Instantiates an empty {@link FhirUtility}.
@@ -116,26 +140,79 @@ public final class FhirUtility {
   public static List<Terminology> lookupTerminologies(final EntityRepositoryService service)
     throws Exception {
 
-    final SearchParameters params = new SearchParameters();
-    params.setQuery("*:*");
-    params.setLimit(100);
-
-    if (logger.isDebugEnabled()) {
-      logger.debug("Looking up terminologies with query: {}", params.getQuery());
+    List<Terminology> cached = allTerminologiesCache.get(LOOKUP_TERMINOLOGIES_KEY);
+    if (cached != null) {
+      return cached;
     }
-    final ResultList<Terminology> terminologies = service.find(params, Terminology.class);
-    if (logger.isDebugEnabled()) {
-      logger.debug("Found {} terminologies", terminologies.getItems().size());
-    }
-
-    for (final Terminology term : terminologies.getItems()) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("Found terminology: {} ({}), version: {}, publisher: {}", term.getName(),
-            term.getAbbreviation(), term.getVersion(), term.getPublisher());
+    synchronized (CACHE_FILL_LOCK) {
+      cached = allTerminologiesCache.get(LOOKUP_TERMINOLOGIES_KEY);
+      if (cached != null) {
+        return cached;
       }
-    }
+      final SearchParameters params = new SearchParameters();
+      params.setQuery("*:*");
+      params.setLimit(100);
 
-    return terminologies.getItems();
+      if (logger.isDebugEnabled()) {
+        logger.debug("Looking up terminologies with query: {}", params.getQuery());
+      }
+      final ResultList<Terminology> terminologies = service.find(params, Terminology.class);
+      if (logger.isDebugEnabled()) {
+        logger.debug("Found {} terminologies", terminologies.getItems().size());
+      }
+
+      for (final Terminology term : terminologies.getItems()) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Found terminology: {} ({}), version: {}, publisher: {}", term.getName(),
+              term.getAbbreviation(), term.getVersion(), term.getPublisher());
+        }
+      }
+
+      final List<Terminology> items = List.copyOf(terminologies.getItems());
+      allTerminologiesCache.put(LOOKUP_TERMINOLOGIES_KEY, items);
+      return items;
+    }
+  }
+
+  /**
+   * Returns a Terminology previously resolved for a code system URL and version, or null.
+   *
+   * @param system the system URI
+   * @param version the version (may be null)
+   * @return cached terminology or null
+   */
+  public static Terminology getCachedTerminologyBySystemVersion(final String system,
+    final String version) {
+    if (system == null) {
+      return null;
+    }
+    return systemVersionTerminologyCache.get(systemVersionKey(system, version));
+  }
+
+  /**
+   * Caches a Terminology for a code system URL and version.
+   *
+   * @param system the system URI
+   * @param version the version (may be null)
+   * @param terminology the terminology
+   */
+  public static void putCachedTerminologyBySystemVersion(final String system, final String version,
+    final Terminology terminology) {
+    if (system == null || terminology == null) {
+      return;
+    }
+    systemVersionTerminologyCache.put(systemVersionKey(system, version), terminology);
+  }
+
+  /**
+   * Builds system|version cache key.
+   *
+   * @param system the system
+   * @param version the version
+   * @return the key
+   */
+  private static String systemVersionKey(final String system, final String version) {
+    return system + "|" + (version == null ? "" : version);
   }
 
   /**
@@ -686,22 +763,20 @@ public final class FhirUtility {
     final String key =
         terminology.getAbbreviation() + terminology.getPublisher() + terminology.getVersion();
 
-    // Lazy initialize for the terminology
     Map<String, String> map = displayMapCache.get(key);
     if (map != null) {
       return map;
     }
-
-    // we need the query to avoid duplicate keys in the map
-    map = new HashMap<>();
-    for (final Metadata metadata : searchService.findAll(
-        "active:true AND ((model:concept AND field:attribute) OR "
-            + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))",
-        null, Metadata.class).stream().collect(Collectors.toList())) {
-      map.put(metadata.getCode(), metadata.getName());
+    synchronized (CACHE_FILL_LOCK) {
+      map = displayMapCache.get(key);
+      if (map != null) {
+        return map;
+      }
+      map = loadDisplayMap(searchService, terminology.getAbbreviation(),
+          terminology.getPublisher(), terminology.getVersion());
+      displayMapCache.put(key, map);
+      return map;
     }
-    displayMapCache.put(key, map);
-    return map;
   }
 
   /**
@@ -720,35 +795,37 @@ public final class FhirUtility {
     final String key =
         terminology.getAbbreviation() + terminology.getPublisher() + terminology.getVersion();
 
-    // Lazy initialize for the terminology
     Map<String, String> nameMap = conceptNameMapCache.get(key);
     if (nameMap != null) {
       return nameMap;
     }
-
-    nameMap = new HashMap<>();
-    final SearchParameters params = new SearchParameters(
-        StringUtility.composeQuery("AND", "active:true",
-            "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
-            terminology.getVersion() != null
-                ? "version:" + StringUtility.escapeQuery(terminology.getVersion()) : null,
-            terminology.getPublisher() != null
-                ? "publisher:" + StringUtility.escapeQuery(terminology.getPublisher()) : null),
-        null, 10000, null, null);
-    final ResultList<Concept> concepts =
-        searchService.findFields(params, ModelUtility.asList("code", "name"), Concept.class);
-    for (final Concept concept : concepts.getItems()) {
-      if (concept.getCode() != null) {
-        // Map code -> code (for direct code lookups)
-        nameMap.put(concept.getCode(), concept.getCode());
-        // Map name -> code (for name lookups)
-        if (concept.getName() != null) {
-          nameMap.put(concept.getName(), concept.getCode());
+    synchronized (CACHE_FILL_LOCK) {
+      nameMap = conceptNameMapCache.get(key);
+      if (nameMap != null) {
+        return nameMap;
+      }
+      nameMap = new HashMap<>();
+      final SearchParameters params = new SearchParameters(
+          StringUtility.composeQuery("AND", "active:true",
+              "terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation()),
+              terminology.getVersion() != null
+                  ? "version:" + StringUtility.escapeQuery(terminology.getVersion()) : null,
+              terminology.getPublisher() != null
+                  ? "publisher:" + StringUtility.escapeQuery(terminology.getPublisher()) : null),
+          null, 10000, null, null);
+      final ResultList<Concept> concepts =
+          searchService.findFields(params, ModelUtility.asList("code", "name"), Concept.class);
+      for (final Concept concept : concepts.getItems()) {
+        if (concept.getCode() != null) {
+          nameMap.put(concept.getCode(), concept.getCode());
+          if (concept.getName() != null) {
+            nameMap.put(concept.getName(), concept.getCode());
+          }
         }
       }
+      conceptNameMapCache.put(key, nameMap);
+      return nameMap;
     }
-    conceptNameMapCache.put(key, nameMap);
-    return nameMap;
   }
 
   /**
@@ -766,21 +843,44 @@ public final class FhirUtility {
 
     final String key = terminology + publisher + version;
 
-    // Lazy initialize for the terminology
     Map<String, String> map = displayMapCache.get(key);
     if (map != null) {
       return map;
     }
+    synchronized (CACHE_FILL_LOCK) {
+      map = displayMapCache.get(key);
+      if (map != null) {
+        return map;
+      }
+      map = loadDisplayMap(searchService, terminology, publisher, version);
+      displayMapCache.put(key, map);
+      return map;
+    }
+  }
 
-    // we need the query to avoid duplicate keys in the map
-    map = new HashMap<>();
-    for (final Metadata metadata : searchService.findAll(
-        "active:true AND ((model:concept AND field:attribute) OR "
-            + "(model:relationship AND field:additionalType) OR " + "(model:term AND field:type))",
-        null, Metadata.class).stream().collect(Collectors.toList())) {
+  /**
+   * Loads display map metadata scoped to terminology when possible.
+   *
+   * @param searchService the search service
+   * @param terminology the abbreviation
+   * @param publisher the publisher
+   * @param version the version
+   * @return code -> name map
+   * @throws Exception the exception
+   */
+  private static Map<String, String> loadDisplayMap(final EntityRepositoryService searchService,
+    final String terminology, final String publisher, final String version) throws Exception {
+
+    final Map<String, String> map = new HashMap<>();
+    final String modelClause = "((model:concept AND field:attribute) OR "
+        + "(model:relationship AND field:additionalType) OR (model:term AND field:type))";
+    final String query = StringUtility.composeQuery("AND", "active:true",
+        terminology != null ? "terminology:" + StringUtility.escapeQuery(terminology) : null,
+        publisher != null ? "publisher:" + StringUtility.escapeQuery(publisher) : null,
+        version != null ? "version:" + StringUtility.escapeQuery(version) : null, modelClause);
+    for (final Metadata metadata : searchService.findAll(query, null, Metadata.class)) {
       map.put(metadata.getCode(), metadata.getName());
     }
-    displayMapCache.put(key, map);
     return map;
   }
 
@@ -993,13 +1093,17 @@ public final class FhirUtility {
   }
 
   /**
-   * Clear caches. Used only for testing.
+   * Clear caches. Used only for testing and after terminology load/delete.
    */
   public static void clearCaches() {
-    terminologyCache = new TimerCache<>(1000, 10000);
-    mapsetCache = new TimerCache<>(1000, 10000);
-    codeSystemUriCache = new TimerCache<>(1000, 10000);
-    displayMapCache = new TimerCache<>(1000, 10000);
-    conceptNameMapCache = new TimerCache<>(1000, 10000);
+    terminologyCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+    allTerminologiesCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+    mapsetCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+    codeSystemUriCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+    displayMapCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+    conceptNameMapCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+    systemVersionTerminologyCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+    CodeSystemLookupCache.clear();
+    ValueSetExpandCache.clear();
   }
 }

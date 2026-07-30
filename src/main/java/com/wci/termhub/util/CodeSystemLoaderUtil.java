@@ -38,6 +38,7 @@ import com.wci.termhub.algo.TreePositionAlgorithm;
 import com.wci.termhub.app.ServerModeUtility;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
+import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
@@ -395,6 +396,9 @@ public final class CodeSystemLoaderUtil {
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
+
+      // Terminology list / $lookup caches must not keep pre-load entries
+      FhirUtility.clearCaches();
 
       // R4
       if (type == org.hl7.fhir.r4.model.CodeSystem.class) {

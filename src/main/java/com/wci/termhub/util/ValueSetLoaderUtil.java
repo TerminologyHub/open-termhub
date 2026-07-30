@@ -417,6 +417,7 @@ public final class ValueSetLoaderUtil {
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
 
+      FhirUtility.clearCaches();
       return FhirUtilityR4.toR4ValueSet(subset, null, false, service);
 
     } catch (final Exception e) {
@@ -695,6 +696,7 @@ public final class ValueSetLoaderUtil {
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
 
+      FhirUtility.clearCaches();
       return FhirUtilityR5.toR5ValueSet(subset, null, false, service);
 
     } catch (final Exception e) {

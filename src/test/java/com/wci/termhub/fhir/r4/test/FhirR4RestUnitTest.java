@@ -11,6 +11,7 @@ package com.wci.termhub.fhir.r4.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -77,6 +78,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.app.ServerMode;
+import com.wci.termhub.fhir.util.CodeSystemLookupCache;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 import com.wci.termhub.model.Mapset;
@@ -2141,6 +2143,41 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
       return null;
     }
     return code + "|" + value;
+  }
+
+  /**
+   * Second identical LOINC $lookup is served from the response cache (both modes keyed).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemLookupResponseCacheHit() throws Exception {
+    FhirUtility.clearCaches();
+
+    final Parameters first = lookupLoincStatusTestConcept();
+    assertNotNull(first.getParameter("code"));
+
+    final String keyDefault = CodeSystemLookupCache.buildKey("R4", "http://loinc.org",
+        LOINC_SANDBOX_VERSION, LOINC_STATUS_TEST_CODE, null, false);
+    assertTrue(CodeSystemLookupCache.containsKey(keyDefault),
+        "Expected default-mode lookup response cached: " + keyDefault);
+
+    final Parameters second = lookupLoincStatusTestConcept();
+    assertEquals(parser.encodeResourceToString(first), parser.encodeResourceToString(second));
+
+    ReflectionTestUtils.setField(loincValueSetHelper, "mode", ServerMode.REGENSTRIEF);
+    try {
+      final Parameters regen = lookupLoincStatusTestConcept();
+      assertNotNull(regen.getParameter("code"));
+      final String keyRegen = CodeSystemLookupCache.buildKey("R4", "http://loinc.org",
+          LOINC_SANDBOX_VERSION, LOINC_STATUS_TEST_CODE, null, true);
+      assertTrue(CodeSystemLookupCache.containsKey(keyRegen),
+          "Expected Regenstrief-mode lookup response cached: " + keyRegen);
+      assertNotEquals(keyDefault, keyRegen);
+    } finally {
+      ReflectionTestUtils.setField(loincValueSetHelper, "mode", ServerMode.DEFAULT);
+    }
   }
 
   /**

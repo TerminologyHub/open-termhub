@@ -27,6 +27,8 @@ import org.junit.jupiter.api.Test;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
+import com.wci.termhub.model.ConceptRef;
+import com.wci.termhub.model.ConceptRelationship;
 
 /**
  * Unit tests for LOINC status / STATUS handling in {@link FhirUtilityR4}
@@ -245,5 +247,37 @@ public class FhirUtilityR4LoincLookupUnitTest {
         List.of(), List.of(), null, null, false);
 
     assertFalse(propertyCodes(parameters).contains("member"));
+  }
+
+  /**
+   * Hierarchical-only parent relationships still emit parent with null conceptNameMap
+   * (LOINC path).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testLookupEmitsParentFromHierarchicalRelsWithNullConceptNameMap() throws Exception {
+    final Concept concept = loincConceptWithStatus();
+    final ConceptRelationship parentRel = new ConceptRelationship();
+    parentRel.setHierarchical(true);
+    final ConceptRef parent = new ConceptRef();
+    parent.setCode("LP123-4");
+    parent.setName("Parent part");
+    parentRel.setTo(parent);
+
+    final ConceptRelationship memberRel = new ConceptRelationship();
+    memberRel.setHierarchical(false);
+    final ConceptRef member = new ConceptRef();
+    member.setCode("99999-9");
+    member.setName("Member");
+    memberRel.setTo(member);
+
+    final Parameters parameters = FhirUtilityR4.toR4(loincCodeSystem(), concept, null, Map.of(),
+        List.of(parentRel, memberRel), List.of(), null, null, false);
+
+    final long parentCount = parameters.getParameter().stream()
+        .filter(p -> "property".equals(p.getName()))
+        .filter(p -> "parent".equals(propertyCodeFromParameter(p))).count();
+    assertEquals(1, parentCount);
   }
 }
