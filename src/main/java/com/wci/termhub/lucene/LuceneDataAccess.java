@@ -659,18 +659,19 @@ public class LuceneDataAccess {
           searchParameters.getSort(), clazz.getName());
     }
 
-    // When sort is present, use a large number to get accurate total count
-    // Otherwise totalHits may be limited by the 'end' parameter
-    final int maxHitsToCollect = (sort != null) ? Integer.MAX_VALUE : end;
+    // Collect only through end (offset+limit). findAll pages by page size; do not
+    // materialize unbounded TopDocs when a sort is present.
+    final int maxHitsToCollect = Math.max(end, 1);
     final TopDocs topDocs = (sort != null) ? searcher.search(queryBuilder, maxHitsToCollect, sort)
-        : searcher.search(queryBuilder, end);
+        : searcher.search(queryBuilder, maxHitsToCollect);
     if (logger.isTraceEnabled()) {
       logger.trace("Query topDocs: {}", topDocs.totalHits.value);
     }
 
     final ResultList<T> results = new ResultList<>();
     final ObjectMapper mapper = ThreadLocalMapper.get();
-    for (int i = start; i < Math.min(topDocs.totalHits.value, end); i++) {
+    final int scoreDocLimit = Math.min(topDocs.scoreDocs.length, end);
+    for (int i = start; i < scoreDocLimit; i++) {
 
       final ScoreDoc scoreDoc = topDocs.scoreDocs[i];
       if (logger.isTraceEnabled()) {

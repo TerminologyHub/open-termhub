@@ -180,6 +180,17 @@ public final class FhirUtilityR4 {
           HttpServletResponse.SC_NOT_FOUND);
     }
 
+    final String resolvedSystem =
+        systemSystem != null ? systemSystem : (codeSystem != null ? codeSystem : codingSystem);
+    final String resolvedVersion = version == null ? null : version.getValue();
+    if (id == null && resolvedSystem != null) {
+      final Terminology cached =
+          FhirUtility.getCachedTerminologyBySystemVersion(resolvedSystem, resolvedVersion);
+      if (cached != null) {
+        return cached;
+      }
+    }
+
     final List<Terminology> list = new ArrayList<>();
     for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
       final CodeSystem cs = toR4(terminology);
@@ -204,17 +215,22 @@ public final class FhirUtilityR4 {
       list.add(terminology);
     }
     if (list.size() == 1) {
-      return list.get(0);
+      final Terminology match = list.get(0);
+      if (id == null && resolvedSystem != null) {
+        FhirUtility.putCachedTerminologyBySystemVersion(resolvedSystem, resolvedVersion, match);
+      }
+      return match;
     }
     if (list.size() > 1) {
       // If no explicit version was requested, pick the latest terminology version
       // instead of failing.
       if (version == null || version.isEmpty()) {
         final Terminology latestTerminology = TerminologyUtility.getLatestTerminology(list);
-        if (latestTerminology != null) {
-          return latestTerminology;
+        final Terminology match = latestTerminology != null ? latestTerminology : list.get(0);
+        if (id == null && resolvedSystem != null) {
+          FhirUtility.putCachedTerminologyBySystemVersion(resolvedSystem, resolvedVersion, match);
         }
-        return list.get(0);
+        return match;
       }
       throw FhirUtilityR4.exception(
           "Too many code systems found matching '" + systemField + "' "

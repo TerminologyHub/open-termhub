@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility for caching objects with a timeout.
+ * Utility for caching objects with a timeout. Thread-safe; get never throws on map/timeMap drift.
  *
  * @param <T> the generic type
  */
@@ -29,16 +29,16 @@ public class TimerCache<T> {
   private static Logger logger = LoggerFactory.getLogger(TimerCache.class);
 
   /** The map. */
-  private Map<String, T> map = null;
+  private final Map<String, T> map;
 
   /** The time map. */
-  private Map<String, Long> timeMap = null;
+  private final Map<String, Long> timeMap;
 
   /** The timeout. */
-  private int timeout = 300000;
+  private final int timeout;
 
   /** The size. */
-  private int size;
+  private final int size;
 
   /**
    * Instantiates a new timer cache.
@@ -65,46 +65,56 @@ public class TimerCache<T> {
   }
 
   /**
-   * Returns the.
+   * Returns the cached value, or null on miss/expiry/corrupt entry. Never throws due to map drift.
    *
    * @param key the key
-   * @return the t
+   * @return the value or null
    */
-  public T get(final String key) {
-    final long now = System.currentTimeMillis();
-    if (map.containsKey(key) && (now - timeMap.get(key)) < timeout) {
-      logger.debug("   CACHE HIT = " + StringUtility.substr(key, 20));
-      return map.get(key);
-    } else {
-      map.remove(key);
-      map.remove(key);
+  public synchronized T get(final String key) {
+    if (key == null) {
+      return null;
     }
+    final long now = System.currentTimeMillis();
+    final Long cachedAt = timeMap.get(key);
+    if (map.containsKey(key) && cachedAt != null && (now - cachedAt.longValue()) < timeout) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("   CACHE HIT = " + StringUtility.substr(key, 20));
+      }
+      return map.get(key);
+    }
+    // Miss, expired, or desynced maps — fail open and clean both sides.
+    map.remove(key);
+    timeMap.remove(key);
     return null;
   }
 
   /**
-   * Put.
+   * Put. Null value removes the key (does not cache null/failures).
    *
    * @param key the key
    * @param value the value
    */
-  public void put(final String key, final T value) {
-    // putting null is tantamount to removing something
+  public synchronized void put(final String key, final T value) {
+    if (key == null) {
+      return;
+    }
+    // putting null is tantamount to removing something — do not cache null
     if (value == null) {
       map.remove(key);
       timeMap.remove(key);
+      return;
     }
     final long now = System.currentTimeMillis();
     map.put(key, value);
-    timeMap.put(key, now);
+    timeMap.put(key, Long.valueOf(now));
   }
 
   /**
-   * Check.
+   * Check internal consistency.
    *
    * @throws Exception the exception
    */
-  public void check() throws Exception {
+  public synchronized void check() throws Exception {
     if (map.size() != timeMap.size()) {
       throw new Exception("unexpected differences in size = " + map.size() + ", " + timeMap.size());
     }
@@ -115,9 +125,8 @@ public class TimerCache<T> {
     }
     final Set<String> keys2 = new HashSet<>(timeMap.keySet());
     keys2.removeAll(map.keySet());
-    if (!keys.isEmpty()) {
-      throw new Exception("Mismatched keys (2) = " + keys);
+    if (!keys2.isEmpty()) {
+      throw new Exception("Mismatched keys (2) = " + keys2);
     }
-
   }
 }
