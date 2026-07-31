@@ -20,6 +20,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import com.wci.termhub.util.TimerCache;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 
 /**
@@ -52,7 +53,7 @@ public final class ValueSetExpandCache {
   /**
    * Builds a cache key for a $expand request.
    *
-   * @param fhirVersion R4 or R5
+   * @param fhirVersion FHIR version
    * @param id value set id (may be null)
    * @param url value set url (may be null)
    * @param version valueSetVersion (may be null)
@@ -63,7 +64,7 @@ public final class ValueSetExpandCache {
    * @param languages display languages (may be null)
    * @return cache key
    */
-  public static String buildKey(final String fhirVersion, final String id, final String url,
+  public static String buildKey(final FhirVersionEnum fhirVersion, final String id, final String url,
     final String version, final int offset, final int count, final String filter,
     final boolean activeOnly, final Set<String> languages) {
     final String langs;
@@ -74,7 +75,7 @@ public final class ValueSetExpandCache {
       Collections.sort(sorted);
       langs = sorted.stream().collect(Collectors.joining(","));
     }
-    return fhirVersion + "|" + nullToEmpty(id) + "|" + nullToEmpty(url) + "|"
+    return fhirVersion.name() + "|" + nullToEmpty(id) + "|" + nullToEmpty(url) + "|"
         + nullToEmpty(version) + "|" + offset + "|" + count + "|" + nullToEmpty(filter) + "|"
         + activeOnly + "|" + langs;
   }

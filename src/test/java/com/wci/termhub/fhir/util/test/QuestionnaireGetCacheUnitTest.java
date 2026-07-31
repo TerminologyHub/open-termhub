@@ -1,0 +1,83 @@
+/*
+ * Copyright 2026 West Coast Informatics - All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains the property of West Coast Informatics
+ * The intellectual and technical concepts contained herein are proprietary to
+ * West Coast Informatics and may be covered by U.S. and Foreign Patents, patents in process,
+ * and are protected by trade secret or copyright law.  Dissemination of this information
+ * or reproduction of this material is strictly forbidden.
+ */
+package com.wci.termhub.fhir.util.test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.hl7.fhir.r4.model.Questionnaire;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
+import com.wci.termhub.fhir.util.QuestionnaireGetCache;
+
+import ca.uhn.fhir.context.FhirVersionEnum;
+
+/**
+ * Unit tests for {@link QuestionnaireGetCache}.
+ */
+public class QuestionnaireGetCacheUnitTest {
+
+  /**
+   * Clear cache after each test.
+   */
+  @AfterEach
+  public void tearDown() {
+    QuestionnaireGetCache.clear();
+  }
+
+  /**
+   * Put and get round-trip for R4 Questionnaire GET responses.
+   */
+  @Test
+  public void testPutGetR4() {
+    final String key = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "12345-6");
+    assertFalse(QuestionnaireGetCache.containsKey(key));
+
+    final Questionnaire questionnaire = new Questionnaire();
+    questionnaire.setId("12345-6");
+    questionnaire.setUrl("http://loinc.org/q/12345-6");
+    QuestionnaireGetCache.putR4(key, questionnaire);
+
+    assertTrue(QuestionnaireGetCache.containsKey(key));
+    final Questionnaire cached = QuestionnaireGetCache.getR4(key);
+    assertNotNull(cached);
+    assertEquals("12345-6", cached.getIdElement().getIdPart());
+  }
+
+  /**
+   * Clear removes cached entries.
+   */
+  @Test
+  public void testClear() {
+    final String key = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "99999-9");
+    final Questionnaire questionnaire = new Questionnaire();
+    questionnaire.setId("99999-9");
+    QuestionnaireGetCache.putR4(key, questionnaire);
+    assertTrue(QuestionnaireGetCache.containsKey(key));
+
+    QuestionnaireGetCache.clear();
+    assertFalse(QuestionnaireGetCache.containsKey(key));
+    assertNull(QuestionnaireGetCache.getR4(key));
+  }
+
+  /**
+   * R4 and R5 keys are distinct for the same id.
+   */
+  @Test
+  public void testBuildKeyIncludesFhirVersion() {
+    final String r4 = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "12345-6");
+    final String r5 = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5, "12345-6");
+    assertFalse(r4.equals(r5));
+  }
+}

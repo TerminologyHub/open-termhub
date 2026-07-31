@@ -93,6 +93,7 @@ import com.wci.termhub.util.ThreadLocalMapper;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 
 /**
@@ -2158,7 +2159,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     final Parameters first = lookupLoincStatusTestConcept();
     assertNotNull(first.getParameter("code"));
 
-    final String keyDefault = CodeSystemLookupCache.buildKey("R4", "http://loinc.org",
+    final String keyDefault = CodeSystemLookupCache.buildKey(FhirVersionEnum.R4, "http://loinc.org",
         LOINC_SANDBOX_VERSION, LOINC_STATUS_TEST_CODE, null, false);
     assertTrue(CodeSystemLookupCache.containsKey(keyDefault),
         "Expected default-mode lookup response cached: " + keyDefault);
@@ -2170,7 +2171,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     try {
       final Parameters regen = lookupLoincStatusTestConcept();
       assertNotNull(regen.getParameter("code"));
-      final String keyRegen = CodeSystemLookupCache.buildKey("R4", "http://loinc.org",
+      final String keyRegen = CodeSystemLookupCache.buildKey(FhirVersionEnum.R4, "http://loinc.org",
           LOINC_SANDBOX_VERSION, LOINC_STATUS_TEST_CODE, null, true);
       assertTrue(CodeSystemLookupCache.containsKey(keyRegen),
           "Expected Regenstrief-mode lookup response cached: " + keyRegen);

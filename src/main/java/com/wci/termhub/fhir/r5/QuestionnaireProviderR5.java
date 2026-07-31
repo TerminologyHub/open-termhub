@@ -32,6 +32,7 @@ import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
+import com.wci.termhub.fhir.util.QuestionnaireGetCache;
 import com.wci.termhub.fhir.util.QuestionnaireSearchHelper;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
@@ -41,6 +42,7 @@ import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.OptionalParam;
@@ -106,6 +108,12 @@ public class QuestionnaireProviderR5 implements IResourceProvider {
       final String conceptCode = id.getIdPart().contains("/")
           ? id.getIdPart().substring(id.getIdPart().indexOf("/") + 1) : id.getIdPart();
 
+      final String cacheKey = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5, conceptCode);
+      final Questionnaire cached = QuestionnaireGetCache.getR5(cacheKey);
+      if (cached != null) {
+        return cached;
+      }
+
       // Find LOINC concept using TerminologyUtility
       final Terminology latestTerminologyVersion = requireLoincTerminology();
       final Concept concept =
@@ -130,6 +138,7 @@ public class QuestionnaireProviderR5 implements IResourceProvider {
       // Populate with questions and answers
       FhirUtilityR5.populateQuestionnaire(questionnaire, searchService, latestTerminologyVersion);
 
+      QuestionnaireGetCache.putR5(cacheKey, questionnaire);
       return questionnaire;
 
     } catch (final FHIRServerResponseException e) {

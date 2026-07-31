@@ -20,6 +20,7 @@ import org.hl7.fhir.instance.model.api.IBaseParameters;
 import com.wci.termhub.util.TimerCache;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 
 /**
@@ -54,7 +55,7 @@ public final class CodeSystemLookupCache {
   /**
    * Builds a cache key for a $lookup request.
    *
-   * @param fhirVersion R4 or R5
+   * @param fhirVersion FHIR version
    * @param system code system URI
    * @param version terminology version
    * @param code the code
@@ -62,8 +63,9 @@ public final class CodeSystemLookupCache {
    * @param regenstriefMode true when Regenstrief LOINC shaping applies
    * @return cache key
    */
-  public static String buildKey(final String fhirVersion, final String system, final String version,
-    final String code, final Set<String> propertySet, final boolean regenstriefMode) {
+  public static String buildKey(final FhirVersionEnum fhirVersion, final String system,
+    final String version, final String code, final Set<String> propertySet,
+    final boolean regenstriefMode) {
     final String props;
     if (propertySet == null || propertySet.isEmpty()) {
       props = "*";
@@ -72,7 +74,7 @@ public final class CodeSystemLookupCache {
       Collections.sort(sorted);
       props = sorted.stream().collect(Collectors.joining(","));
     }
-    return fhirVersion + "|" + nullToEmpty(system) + "|" + nullToEmpty(version) + "|"
+    return fhirVersion.name() + "|" + nullToEmpty(system) + "|" + nullToEmpty(version) + "|"
         + nullToEmpty(code) + "|" + props + "|" + regenstriefMode;
   }
 

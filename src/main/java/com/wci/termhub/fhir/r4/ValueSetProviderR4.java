@@ -75,6 +75,7 @@ import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
@@ -701,9 +702,10 @@ public class ValueSetProviderR4 implements IResourceProvider {
   private ValueSet getExpandedValueSet(final IdType id, final UriType url, final StringType version,
     final StringType filter, final int offset, final int count, final boolean activeOnly,
     final Set<String> languages) throws Exception {
-    final String cacheKey = ValueSetExpandCache.buildKey("R4", id == null ? null : id.getIdPart(),
-        url == null ? null : url.getValue(), version == null ? null : version.getValue(), offset,
-        count, filter == null ? null : filter.getValue(), activeOnly, languages);
+    final String cacheKey = ValueSetExpandCache.buildKey(FhirVersionEnum.R4,
+        id == null ? null : id.getIdPart(), url == null ? null : url.getValue(),
+        version == null ? null : version.getValue(), offset, count,
+        filter == null ? null : filter.getValue(), activeOnly, languages);
     final ValueSet cached = ValueSetExpandCache.getR4(cacheKey);
     if (cached != null) {
       return cached;

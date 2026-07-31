@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 
 import com.wci.termhub.fhir.util.CodeSystemLookupCache;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
+
 /**
  * Unit tests for {@link CodeSystemLookupCache}.
  */
@@ -42,10 +44,10 @@ public class CodeSystemLookupCacheUnitTest {
    */
   @Test
   public void testBuildKeyIncludesRegenstriefMode() {
-    final String off = CodeSystemLookupCache.buildKey("R4", "http://loinc.org", "2.69", "10-9",
-        null, false);
-    final String on = CodeSystemLookupCache.buildKey("R4", "http://loinc.org", "2.69", "10-9", null,
-        true);
+    final String off = CodeSystemLookupCache.buildKey(FhirVersionEnum.R4, "http://loinc.org",
+        "2.69", "10-9", null, false);
+    final String on = CodeSystemLookupCache.buildKey(FhirVersionEnum.R4, "http://loinc.org", "2.69",
+        "10-9", null, true);
     assertNotEquals(off, on);
     assertTrue(off.endsWith("|false"));
     assertTrue(on.endsWith("|true"));
@@ -56,12 +58,12 @@ public class CodeSystemLookupCacheUnitTest {
    */
   @Test
   public void testBuildKeyPropertySet() {
-    final String all = CodeSystemLookupCache.buildKey("R4", "http://loinc.org", "2.69", "10-9",
-        null, false);
+    final String all = CodeSystemLookupCache.buildKey(FhirVersionEnum.R4, "http://loinc.org",
+        "2.69", "10-9", null, false);
     assertTrue(all.contains("|*|"));
 
-    final String filtered = CodeSystemLookupCache.buildKey("R4", "http://loinc.org", "2.69", "10-9",
-        Set.of("child", "parent"), false);
+    final String filtered = CodeSystemLookupCache.buildKey(FhirVersionEnum.R4, "http://loinc.org",
+        "2.69", "10-9", Set.of("child", "parent"), false);
     assertTrue(filtered.contains("|child,parent|"));
   }
 
@@ -70,8 +72,8 @@ public class CodeSystemLookupCacheUnitTest {
    */
   @Test
   public void testPutGetR4() {
-    final String key = CodeSystemLookupCache.buildKey("R4", "http://loinc.org", "2.69", "10-9",
-        null, false);
+    final String key = CodeSystemLookupCache.buildKey(FhirVersionEnum.R4, "http://loinc.org",
+        "2.69", "10-9", null, false);
     assertFalse(CodeSystemLookupCache.containsKey(key));
 
     final Parameters parameters = new Parameters();
@@ -90,10 +92,10 @@ public class CodeSystemLookupCacheUnitTest {
    */
   @Test
   public void testR4AndR5KeysDiffer() {
-    final String r4 = CodeSystemLookupCache.buildKey("R4", "http://loinc.org", "2.69", "10-9", null,
-        false);
-    final String r5 = CodeSystemLookupCache.buildKey("R5", "http://loinc.org", "2.69", "10-9", null,
-        false);
+    final String r4 = CodeSystemLookupCache.buildKey(FhirVersionEnum.R4, "http://loinc.org", "2.69",
+        "10-9", null, false);
+    final String r5 = CodeSystemLookupCache.buildKey(FhirVersionEnum.R5, "http://loinc.org", "2.69",
+        "10-9", null, false);
     assertNotEquals(r4, r5);
   }
 }
