@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import com.wci.termhub.fhir.util.ValueSetExpandCache;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
+
 /**
  * Unit tests for {@link ValueSetExpandCache}.
  */
@@ -38,8 +40,8 @@ public class ValueSetExpandCacheUnitTest {
    */
   @Test
   public void testPutGetR4() {
-    final String key = ValueSetExpandCache.buildKey("R4", "vs-1", null, "2.81", 0, 1000, null,
-        false, null);
+    final String key = ValueSetExpandCache.buildKey(FhirVersionEnum.R4, "vs-1", null, "2.81", 0,
+        1000, null, false, null);
     assertFalse(ValueSetExpandCache.containsKey(key));
 
     final ValueSet valueSet = new ValueSet();
@@ -58,10 +60,10 @@ public class ValueSetExpandCacheUnitTest {
    */
   @Test
   public void testBuildKeyIncludesPaging() {
-    final String page0 = ValueSetExpandCache.buildKey("R4", "vs-1", null, "2.81", 0, 1000, null,
-        false, null);
-    final String page1 = ValueSetExpandCache.buildKey("R4", "vs-1", null, "2.81", 1000, 1000, null,
-        false, null);
+    final String page0 = ValueSetExpandCache.buildKey(FhirVersionEnum.R4, "vs-1", null, "2.81", 0,
+        1000, null, false, null);
+    final String page1 = ValueSetExpandCache.buildKey(FhirVersionEnum.R4, "vs-1", null, "2.81",
+        1000, 1000, null, false, null);
     assertFalse(page0.equals(page1));
   }
 }

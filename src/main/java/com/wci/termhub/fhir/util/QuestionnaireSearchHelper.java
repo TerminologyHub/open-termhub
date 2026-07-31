@@ -118,6 +118,7 @@ public class QuestionnaireSearchHelper {
       cachedTerminologyKey = null;
       cachedPanelConcepts = null;
     }
+    QuestionnaireGetCache.clear();
   }
 
   /**

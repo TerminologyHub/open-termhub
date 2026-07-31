@@ -55,6 +55,7 @@ import com.wci.termhub.fhir.util.CodeSystemMetadataLookupUtility;
 import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
@@ -691,7 +692,7 @@ public class CodeSystemProviderR4 implements IResourceProvider {
 
     final Set<String> propertySet = properties == null ? null
         : properties.stream().map(c -> c.getValue()).collect(Collectors.toSet());
-    final String cacheKey = CodeSystemLookupCache.buildKey("R4", terminology.getUri(),
+    final String cacheKey = CodeSystemLookupCache.buildKey(FhirVersionEnum.R4, terminology.getUri(),
         terminology.getVersion(), code, propertySet, regenstriefMode);
     final Parameters cached = CodeSystemLookupCache.getR4(cacheKey);
     if (cached != null) {

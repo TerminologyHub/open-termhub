@@ -35,6 +35,7 @@ import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
+import com.wci.termhub.fhir.util.ConceptMapGetCache;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
@@ -397,6 +398,8 @@ public final class ConceptMapLoaderUtil {
 
       // Set listener to 100%
       listener.updateProgress(new ProgressEvent(100));
+
+      ConceptMapGetCache.clear();
 
       // R4
       final Terminology contactTerminology =

@@ -1105,5 +1105,7 @@ public final class FhirUtility {
     systemVersionTerminologyCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
     CodeSystemLookupCache.clear();
     ValueSetExpandCache.clear();
+    ConceptMapGetCache.clear();
+    QuestionnaireGetCache.clear();
   }
 }

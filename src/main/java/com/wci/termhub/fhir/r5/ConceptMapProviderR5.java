@@ -35,6 +35,7 @@ import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.app.ServerModeUtility;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
+import com.wci.termhub.fhir.util.ConceptMapGetCache;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.lucene.eventing.Write;
@@ -48,6 +49,7 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.Delete;
@@ -113,6 +115,11 @@ public class ConceptMapProviderR5 implements IResourceProvider {
         logger.debug("Getting concept map with id = {}", id);
       }
       final String requestedId = id.getIdPart();
+      final String cacheKey = ConceptMapGetCache.buildKey(FhirVersionEnum.R5, requestedId);
+      final ConceptMap cached = ConceptMapGetCache.getR5(cacheKey);
+      if (cached != null) {
+        return cached;
+      }
       final Mapset mapset = searchService.get(requestedId, Mapset.class);
       if (mapset == null) {
         logger.warn("No concept map found matching id={}", id);
@@ -128,8 +135,10 @@ public class ConceptMapProviderR5 implements IResourceProvider {
               "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
           null, 100000, null, null);
       final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
-      return FhirUtilityR5.toR5(mapset, mappings,
+      final ConceptMap conceptMap = FhirUtilityR5.toR5(mapset, mappings,
           resolveContactTerminology(mapset));
+      ConceptMapGetCache.putR5(cacheKey, conceptMap);
+      return conceptMap;
 
     } catch (final FHIRServerResponseException e) {
       logger.error("FHIR Server Response Exception", e);
@@ -617,6 +626,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       }
 
       TerminologyUtility.removeMapset(searchService, mapset.getId());
+      ConceptMapGetCache.clear();
 
     } catch (final FHIRServerResponseException e) {
       throw e;
@@ -812,6 +822,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           ConceptMap.class, new DefaultProgressListener(), null, markLatestRunner);
 
       FileUtils.delete(file);
+      ConceptMapGetCache.clear();
 
       // Return success
       final MethodOutcome out = new MethodOutcome();
