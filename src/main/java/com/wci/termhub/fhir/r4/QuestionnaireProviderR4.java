@@ -33,6 +33,7 @@ import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 import com.wci.termhub.fhir.util.QuestionnaireGetCache;
+import com.wci.termhub.fhir.util.QuestionnaireSearchCache;
 import com.wci.termhub.fhir.util.QuestionnaireSearchHelper;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
@@ -109,37 +110,32 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
           ? id.getIdPart().substring(id.getIdPart().indexOf("/") + 1) : id.getIdPart();
 
       final String cacheKey = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, conceptCode);
-      final Questionnaire cached = QuestionnaireGetCache.getR4(cacheKey);
-      if (cached != null) {
-        return cached;
-      }
+      return QuestionnaireGetCache.getOrLoadR4(cacheKey, () -> {
+        // Find LOINC concept using TerminologyUtility
+        final Terminology latestTerminologyVersion = requireLoincTerminology();
+        final Concept concept =
+            TerminologyUtility.getConcept(searchService, latestTerminologyVersion, conceptCode);
+        if (concept == null) {
+          throw FhirUtilityR4.exception(
+              "Questionnaire not found = " + (id == null ? "null" : id.getIdPart()),
+              IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+        }
 
-      // Find LOINC concept using TerminologyUtility
-      final Terminology latestTerminologyVersion = requireLoincTerminology();
-      final Concept concept =
-          TerminologyUtility.getConcept(searchService, latestTerminologyVersion, conceptCode);
-      if (concept == null) {
-        throw FhirUtilityR4.exception(
-            "Questionnaire not found = " + (id == null ? "null" : id.getIdPart()),
-            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
-      }
+        // Verify the code represents a questionnaire (has PanelType:Panel
+        // attribute)
+        if (!isQuestionnaireConcept(concept)) {
+          throw FhirUtilityR4.exception("Concept " + conceptCode + " is not a questionnaire",
+              IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+        }
 
-      // Verify the code represents a questionnaire (has PanelType:Panel
-      // attribute)
-      if (!isQuestionnaireConcept(concept)) {
-        throw FhirUtilityR4.exception("Concept " + conceptCode + " is not a questionnaire",
-            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
-      }
+        // Convert found concept to Questionnaire resource and return
+        final Questionnaire questionnaire =
+            FhirUtilityR4.toR4Questionnaire(concept, searchService, latestTerminologyVersion);
 
-      // Convert found concept to Questionnaire resource and return
-      final Questionnaire questionnaire =
-          FhirUtilityR4.toR4Questionnaire(concept, searchService, latestTerminologyVersion);
-
-      // Populate with questions and answers
-      FhirUtilityR4.populateQuestionnaire(questionnaire, searchService, latestTerminologyVersion);
-
-      QuestionnaireGetCache.putR4(cacheKey, questionnaire);
-      return questionnaire;
+        // Populate with questions and answers
+        FhirUtilityR4.populateQuestionnaire(questionnaire, searchService, latestTerminologyVersion);
+        return questionnaire;
+      });
 
     } catch (final FHIRServerResponseException e) {
       throw e;
@@ -425,10 +421,13 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
             TerminologyUtility.getConcept(searchService, loincTerminology, codeValue);
 
         if (concept != null && isQuestionnaireConcept(concept)) {
-          final Questionnaire questionnaire = FhirUtilityR4.toR4Questionnaire(concept, searchService,
-              loincTerminology);
-          FhirUtilityR4.populateQuestionnaire(questionnaire, searchService, loincTerminology);
-          list.add(questionnaire);
+          final String cacheKey = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, codeValue);
+          list.add(QuestionnaireGetCache.getOrLoadR4(cacheKey, () -> {
+            final Questionnaire questionnaire = FhirUtilityR4.toR4Questionnaire(concept,
+                searchService, loincTerminology);
+            FhirUtilityR4.populateQuestionnaire(questionnaire, searchService, loincTerminology);
+            return questionnaire;
+          }));
         }
       } catch (final Exception e) {
         logger.error("Error looking up concept by code: {}", e.getMessage());
@@ -436,47 +435,35 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
       return list;
     }
 
-    final List<Concept> concepts = questionnaireSearchHelper.findPanelConcepts(searchService,
-        loincTerminology);
+    final String terminologyKey = loincTerminology.getId() != null ? loincTerminology.getId()
+        : TerminologyUtility.getTerminologyQuery(loincTerminology.getAbbreviation(),
+            loincTerminology.getPublisher(), loincTerminology.getVersion());
+    final String shellsKey = QuestionnaireSearchCache.buildKey(FhirVersionEnum.R4, terminologyKey);
+    final List<Questionnaire> shells =
+        QuestionnaireSearchCache.getOrLoadR4(shellsKey, () -> {
+          final List<Concept> concepts =
+              questionnaireSearchHelper.findPanelConcepts(searchService, loincTerminology);
+          if (logger.isDebugEnabled()) {
+            logger.debug("Found {} LOINC questionnaire concepts", concepts.size());
+          }
+          final List<Questionnaire> built = new ArrayList<>(concepts.size());
+          for (final Concept concept : concepts) {
+            built.add(
+                FhirUtilityR4.toR4Questionnaire(concept, searchService, loincTerminology));
+          }
+          return built;
+        });
 
-    if (logger.isDebugEnabled()) {
-      logger.debug("Found {} LOINC questionnaire concepts", concepts.size());
-    }
-
-    for (final Concept concept : concepts) {
-
-      if (logger.isDebugEnabled()) {
-        logger.debug("Converting concept {} to questionnaire", concept.getCode());
-      }
-
-      final Questionnaire questionnaire =
-          FhirUtilityR4.toR4Questionnaire(concept, searchService, loincTerminology);
-
-      // Apply filtering based on search criteria
+    for (final Questionnaire questionnaire : shells) {
       if (!matchesSearchCriteria(questionnaire, id, code, date, description, identifier, name,
           publisher, title, url, version)) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("Questionnaire {} did not match search criteria", questionnaire.getId());
-        }
         continue;
       }
-
-      if (logger.isDebugEnabled()) {
-        logger.debug("Questionnaire {} matched search criteria, adding to results",
-            questionnaire.getId());
-      }
-
       list.add(questionnaire);
-      if (logger.isDebugEnabled()) {
-        logger.debug("Added questionnaire {} to results list", questionnaire.getId());
-      }
     }
 
     if (logger.isDebugEnabled()) {
       logger.debug("Returning {} questionnaires after filtering", list.size());
-      if (list.isEmpty()) {
-        logger.debug("No questionnaires found after filtering");
-      }
     }
 
     return list;

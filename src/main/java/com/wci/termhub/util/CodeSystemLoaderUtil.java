@@ -39,6 +39,7 @@ import com.wci.termhub.app.ServerModeUtility;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FhirUtility;
+import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
 import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Concept;
@@ -711,6 +712,25 @@ public final class CodeSystemLoaderUtil {
             entry.setValueCode(codingCode);
             if (valueCoding.has("display")) {
               entry.setValueDisplay(valueCoding.path("display").asText());
+            }
+            if (property.has("extension")) {
+              for (final JsonNode ext : property.get("extension")) {
+                final String url = ext.path("url").asText(null);
+                if (url == null || !ext.has("valueString")) {
+                  continue;
+                }
+                final String extValue = ext.path("valueString").asText(null);
+                if (extValue == null || extValue.isBlank()) {
+                  continue;
+                }
+                if (url.endsWith("/AnswerListLinkType")
+                    || LoincConceptPropertyHelper.EXT_ANSWER_LIST_LINK_TYPE.equals(url)) {
+                  entry.setAnswerListLinkType(extValue);
+                } else if (url.endsWith("/ApplicableContext")
+                    || LoincConceptPropertyHelper.EXT_APPLICABLE_CONTEXT.equals(url)) {
+                  entry.setApplicableContext(extValue);
+                }
+              }
             }
             concept.getFhirPropertyCodings().add(entry);
           }
