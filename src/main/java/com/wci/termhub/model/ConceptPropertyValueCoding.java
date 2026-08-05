@@ -39,6 +39,18 @@ public class ConceptPropertyValueCoding {
   private String valueDisplay;
 
   /**
+   * LOINC AnswerListLinkType extension (EXAMPLE, NORMATIVE, …) when present on the source property.
+   */
+  @Field(type = FieldType.Keyword)
+  private String answerListLinkType;
+
+  /**
+   * LOINC ApplicableContext extension (e.g. panel code) when present on the source property.
+   */
+  @Field(type = FieldType.Keyword)
+  private String applicableContext;
+
+  /**
    * Instantiates an empty {@link ConceptPropertyValueCoding}.
    */
   public ConceptPropertyValueCoding() {
@@ -79,5 +91,21 @@ public class ConceptPropertyValueCoding {
 
   public void setValueDisplay(final String valueDisplay) {
     this.valueDisplay = valueDisplay;
+  }
+
+  public String getAnswerListLinkType() {
+    return answerListLinkType;
+  }
+
+  public void setAnswerListLinkType(final String answerListLinkType) {
+    this.answerListLinkType = answerListLinkType;
+  }
+
+  public String getApplicableContext() {
+    return applicableContext;
+  }
+
+  public void setApplicableContext(final String applicableContext) {
+    this.applicableContext = applicableContext;
   }
 }

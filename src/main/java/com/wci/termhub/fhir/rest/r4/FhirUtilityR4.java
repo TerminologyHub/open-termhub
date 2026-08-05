@@ -726,7 +726,8 @@ public final class FhirUtilityR4 {
     }
 
     if (isLoinc && !concept.getFhirPropertyCodings().isEmpty()) {
-      for (final ConceptPropertyValueCoding entry : concept.getFhirPropertyCodings()) {
+      for (final ConceptPropertyValueCoding entry : LoincConceptPropertyHelper
+          .selectFhirPropertyCodingsForLookup(concept.getFhirPropertyCodings())) {
         final String propertyCode = entry.getPropertyCode();
         if (properties != null && !properties.contains(propertyCode)) {
           continue;

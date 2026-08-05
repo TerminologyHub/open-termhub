@@ -10,6 +10,7 @@
 package com.wci.termhub.fhir.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +25,7 @@ import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
+import com.wci.termhub.util.SingleFlight;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
@@ -51,17 +53,21 @@ public class QuestionnaireSearchHelper {
   private static final int BATCH_SIZE = 5000;
 
   /** Cache lock. */
-  private final Object cacheLock = new Object();
+  private static final Object CACHE_LOCK = new Object();
+
+  /** Coalesces concurrent panel scans for the same terminology key. */
+  private static final SingleFlight PANEL_FLIGHT = new SingleFlight();
 
   /** Cached terminology key. */
-  private String cachedTerminologyKey;
+  private static String cachedTerminologyKey;
 
   /** Cached panel concepts for the latest LOINC version. */
-  private List<Concept> cachedPanelConcepts;
+  private static List<Concept> cachedPanelConcepts;
 
   /**
    * Returns panel concepts for the given latest LOINC terminology, using an indexed query when
-   * available and an in-memory cache to avoid repeated full scans.
+   * available and an in-memory cache to avoid repeated full scans. Concurrent cold misses for the
+   * same terminology share a single scan.
    *
    * @param searchService the search service
    * @param latestLoincTerminology latest LOINC terminology (abbreviation, publisher, version)
@@ -72,52 +78,73 @@ public class QuestionnaireSearchHelper {
     final Terminology latestLoincTerminology) throws Exception {
 
     final String cacheKey = buildCacheKey(latestLoincTerminology);
-    synchronized (cacheLock) {
+    synchronized (CACHE_LOCK) {
       if (cacheKey.equals(cachedTerminologyKey) && cachedPanelConcepts != null) {
         return cachedPanelConcepts;
       }
     }
 
-    List<Concept> panels = queryPanelConcepts(searchService, latestLoincTerminology);
-    if (panels.isEmpty()) {
-      LOGGER.info(
-          "No indexed panel concepts for LOINC {} {} (attributes.PanelType:Panel); scanning release",
-          latestLoincTerminology.getAbbreviation(), latestLoincTerminology.getVersion());
-      panels = scanPanelConcepts(searchService, latestLoincTerminology);
-    } else if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Found {} panel concepts via attributes.PanelType index for LOINC {}",
-          panels.size(), latestLoincTerminology.getVersion());
-    }
+    return PANEL_FLIGHT.execute(cacheKey, () -> {
+      synchronized (CACHE_LOCK) {
+        if (cacheKey.equals(cachedTerminologyKey) && cachedPanelConcepts != null) {
+          return cachedPanelConcepts;
+        }
+      }
 
-    // PanelType=Panel also matches panels whose LOINC CLASS does not start with "PANEL."
-    // (e.g. NAACCR "SURVEY.*"/"TUMRRGT" aggregates) that fhir.loinc.org does not expose as
-    // Questionnaires. Every published questionnaire has a CLASS starting with "PANEL.", so keep
-    // only those. Fall back to the unfiltered list when no CLASS edges are indexed.
-    final Set<String> panelClassCodes =
-        findPanelClassConceptCodes(searchService, latestLoincTerminology);
-    if (!panelClassCodes.isEmpty()) {
-      panels =
-          new ArrayList<>(panels.stream().filter(c -> panelClassCodes.contains(c.getCode())).toList());
-    } else {
-      LOGGER.info("No CLASS edges indexed for LOINC {}; returning all PanelType=Panel concepts",
-          latestLoincTerminology.getVersion());
-    }
+      List<Concept> panels = queryPanelConcepts(searchService, latestLoincTerminology);
+      if (panels.isEmpty()) {
+        LOGGER.info(
+            "No indexed panel concepts for LOINC {} {} (attributes.PanelType:Panel); scanning release",
+            latestLoincTerminology.getAbbreviation(), latestLoincTerminology.getVersion());
+        panels = scanPanelConcepts(searchService, latestLoincTerminology);
+      } else if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Found {} panel concepts via attributes.PanelType index for LOINC {}",
+            panels.size(), latestLoincTerminology.getVersion());
+      }
 
-    synchronized (cacheLock) {
-      cachedTerminologyKey = cacheKey;
-      cachedPanelConcepts = panels;
-    }
-    return panels;
+      // PanelType=Panel also matches panels whose LOINC CLASS does not start with "PANEL."
+      // (e.g. NAACCR "SURVEY.*"/"TUMRRGT" aggregates) that fhir.loinc.org does not expose as
+      // Questionnaires. Every published questionnaire has a CLASS starting with "PANEL.", so keep
+      // only those. Fall back to the unfiltered list when no CLASS edges are indexed.
+      final Set<String> panelClassCodes =
+          findPanelClassConceptCodes(searchService, latestLoincTerminology);
+      if (!panelClassCodes.isEmpty()) {
+        panels = new ArrayList<>(
+            panels.stream().filter(c -> panelClassCodes.contains(c.getCode())).toList());
+      } else {
+        LOGGER.info("No CLASS edges indexed for LOINC {}; returning all PanelType=Panel concepts",
+            latestLoincTerminology.getVersion());
+      }
+
+      final List<Concept> immutable = Collections.unmodifiableList(panels);
+      synchronized (CACHE_LOCK) {
+        if (cacheKey.equals(cachedTerminologyKey) && cachedPanelConcepts != null) {
+          return cachedPanelConcepts;
+        }
+        cachedTerminologyKey = cacheKey;
+        cachedPanelConcepts = immutable;
+        return cachedPanelConcepts;
+      }
+    });
   }
 
   /**
-   * Clears the cached panel list (e.g. after LOINC reload).
+   * Clears the cached panel list and related Questionnaire caches (e.g. after LOINC reload).
    */
   public void clearCache() {
-    synchronized (cacheLock) {
+    clearCaches();
+  }
+
+  /**
+   * Static clear for {@link FhirUtility#clearCaches()} and loaders.
+   */
+  public static void clearCaches() {
+    synchronized (CACHE_LOCK) {
       cachedTerminologyKey = null;
       cachedPanelConcepts = null;
     }
+    PANEL_FLIGHT.clear();
+    QuestionnaireSearchCache.clear();
     QuestionnaireGetCache.clear();
   }
 
@@ -197,8 +224,7 @@ public class QuestionnaireSearchHelper {
           continue;
         }
         final String className = rel.getTo().getName();
-        if (className != null
-            && className.trim().toUpperCase().startsWith(PANEL_CLASS_PREFIX)) {
+        if (className != null && className.trim().toUpperCase().startsWith(PANEL_CLASS_PREFIX)) {
           codes.add(rel.getFrom().getCode());
         }
       }

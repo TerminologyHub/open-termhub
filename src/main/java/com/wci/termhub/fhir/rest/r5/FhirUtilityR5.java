@@ -759,7 +759,8 @@ public final class FhirUtilityR5 {
     }
 
     if (isLoinc && !concept.getFhirPropertyCodings().isEmpty()) {
-      for (final ConceptPropertyValueCoding entry : concept.getFhirPropertyCodings()) {
+      for (final ConceptPropertyValueCoding entry : LoincConceptPropertyHelper
+          .selectFhirPropertyCodingsForLookup(concept.getFhirPropertyCodings())) {
         final String propertyCode = entry.getPropertyCode();
         if (properties != null && !properties.contains(propertyCode)) {
           continue;
@@ -1777,7 +1778,7 @@ public final class FhirUtilityR5 {
   public static Bundle makeBundle(final HttpServletRequest request,
     final List<? extends Resource> list, final NumberParam count, final NumberParam offset) {
 
-    final int countInt = count == null ? 100 : count.getValue().intValue();
+    final int countInt = count == null ? 25 : count.getValue().intValue();
     final int offsetInt = offset == null ? 0 : offset.getValue().intValue();
     final String thisUrl = request.getQueryString() == null ? request.getRequestURL().toString()
         : request.getRequestURL().append('?').append(request.getQueryString()).toString();

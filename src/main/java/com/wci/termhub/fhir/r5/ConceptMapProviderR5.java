@@ -116,29 +116,24 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       }
       final String requestedId = id.getIdPart();
       final String cacheKey = ConceptMapGetCache.buildKey(FhirVersionEnum.R5, requestedId);
-      final ConceptMap cached = ConceptMapGetCache.getR5(cacheKey);
-      if (cached != null) {
-        return cached;
-      }
-      final Mapset mapset = searchService.get(requestedId, Mapset.class);
-      if (mapset == null) {
-        logger.warn("No concept map found matching id={}", id);
-        throw FhirUtilityR5.exception(
-            "Concept map not found = " + (id == null ? "null" : requestedId), IssueType.NOTFOUND,
-            HttpServletResponse.SC_NOT_FOUND);
-      }
+      return ConceptMapGetCache.getOrLoadR5(cacheKey, () -> {
+        final Mapset mapset = searchService.get(requestedId, Mapset.class);
+        if (mapset == null) {
+          logger.warn("No concept map found matching id={}", id);
+          throw FhirUtilityR5.exception(
+              "Concept map not found = " + (id == null ? "null" : requestedId), IssueType.NOTFOUND,
+              HttpServletResponse.SC_NOT_FOUND);
+        }
 
-      final SearchParameters params = new SearchParameters(
-          StringUtility.composeQuery("AND",
-              "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
-              "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
-              "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
-          null, 100000, null, null);
-      final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
-      final ConceptMap conceptMap = FhirUtilityR5.toR5(mapset, mappings,
-          resolveContactTerminology(mapset));
-      ConceptMapGetCache.putR5(cacheKey, conceptMap);
-      return conceptMap;
+        final SearchParameters params = new SearchParameters(
+            StringUtility.composeQuery("AND",
+                "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
+                "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
+                "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
+            null, 100000, null, null);
+        final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
+        return FhirUtilityR5.toR5(mapset, mappings, resolveContactTerminology(mapset));
+      });
 
     } catch (final FHIRServerResponseException e) {
       logger.error("FHIR Server Response Exception", e);
