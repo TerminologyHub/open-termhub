@@ -13,12 +13,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptPropertyValueCoding;
 
 /**
  * Unit tests for {@link LoincConceptPropertyHelper}.
@@ -151,5 +153,69 @@ public class LoincConceptPropertyHelperUnitTest {
     assertEquals("component", LoincConceptPropertyHelper.loincLookupPropertyName("component_2"));
     assertEquals("component", LoincConceptPropertyHelper.loincLookupPropertyName("component"));
     assertEquals(null, LoincConceptPropertyHelper.loincLookupPropertyName(null));
+  }
+
+  /**
+   * EXAMPLE then NORMATIVE for the same LL collapses to NORMATIVE for $lookup.
+   */
+  @Test
+  public void testSelectFhirPropertyCodingsPrefersNormativeAnswerList() {
+    final ConceptPropertyValueCoding example = new ConceptPropertyValueCoding();
+    example.setPropertyCode("answer-list");
+    example.setValueCode("LL6214-2");
+    example.setAnswerListLinkType("EXAMPLE");
+
+    final ConceptPropertyValueCoding normative = new ConceptPropertyValueCoding();
+    normative.setPropertyCode("answer-list");
+    normative.setValueCode("LL6214-2");
+    normative.setAnswerListLinkType("NORMATIVE");
+    normative.setApplicableContext("84428-2");
+
+    final List<ConceptPropertyValueCoding> selected =
+        LoincConceptPropertyHelper.selectFhirPropertyCodingsForLookup(List.of(example, normative));
+    assertEquals(1, selected.size());
+    assertEquals("NORMATIVE", selected.get(0).getAnswerListLinkType());
+    assertEquals("LL6214-2", selected.get(0).getValueCode());
+  }
+
+  /**
+   * Without link types, keep the last duplicate (EXAMPLE then NORMATIVE order in LOINC).
+   */
+  @Test
+  public void testSelectFhirPropertyCodingsKeepsLastWhenLinkTypeMissing() {
+    final ConceptPropertyValueCoding first = new ConceptPropertyValueCoding();
+    first.setPropertyCode("answer-list");
+    first.setValueCode("LL6214-2");
+    first.setValueDisplay("first");
+
+    final ConceptPropertyValueCoding second = new ConceptPropertyValueCoding();
+    second.setPropertyCode("answer-list");
+    second.setValueCode("LL6214-2");
+    second.setValueDisplay("second");
+
+    final List<ConceptPropertyValueCoding> selected =
+        LoincConceptPropertyHelper.selectFhirPropertyCodingsForLookup(List.of(first, second));
+    assertEquals(1, selected.size());
+    assertEquals("second", selected.get(0).getValueDisplay());
+  }
+
+  /**
+   * Different LLs are both kept.
+   */
+  @Test
+  public void testSelectFhirPropertyCodingsKeepsDistinctAnswerLists() {
+    final ConceptPropertyValueCoding a = new ConceptPropertyValueCoding();
+    a.setPropertyCode("answer-list");
+    a.setValueCode("LL1-1");
+    a.setAnswerListLinkType("NORMATIVE");
+
+    final ConceptPropertyValueCoding b = new ConceptPropertyValueCoding();
+    b.setPropertyCode("answer-list");
+    b.setValueCode("LL2-2");
+    b.setAnswerListLinkType("NORMATIVE");
+
+    final List<ConceptPropertyValueCoding> selected =
+        LoincConceptPropertyHelper.selectFhirPropertyCodingsForLookup(List.of(a, b));
+    assertEquals(2, selected.size());
   }
 }

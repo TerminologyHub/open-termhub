@@ -80,4 +80,51 @@ public class QuestionnaireGetCacheUnitTest {
     final String r5 = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5, "12345-6");
     assertFalse(r4.equals(r5));
   }
+
+  /**
+   * getOrLoadR4 builds once and serves concurrent waiters from cache / flight.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testGetOrLoadR4Coalesces() throws Exception {
+    final String key = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "55555-5");
+    final java.util.concurrent.atomic.AtomicInteger builds =
+        new java.util.concurrent.atomic.AtomicInteger();
+    final java.util.concurrent.CountDownLatch started =
+        new java.util.concurrent.CountDownLatch(6);
+    final java.util.concurrent.CountDownLatch release =
+        new java.util.concurrent.CountDownLatch(1);
+    final java.util.concurrent.ExecutorService pool =
+        java.util.concurrent.Executors.newFixedThreadPool(6);
+    try {
+      final java.util.List<java.util.concurrent.Future<Questionnaire>> futures =
+          new java.util.ArrayList<>();
+      for (int i = 0; i < 6; i++) {
+        futures.add(pool.submit(() -> {
+          started.countDown();
+          started.await(5, java.util.concurrent.TimeUnit.SECONDS);
+          return QuestionnaireGetCache.getOrLoadR4(key, () -> {
+            builds.incrementAndGet();
+            release.await(5, java.util.concurrent.TimeUnit.SECONDS);
+            final Questionnaire questionnaire = new Questionnaire();
+            questionnaire.setId("55555-5");
+            return questionnaire;
+          });
+        }));
+      }
+      assertTrue(started.await(5, java.util.concurrent.TimeUnit.SECONDS));
+      Thread.sleep(100);
+      release.countDown();
+      for (final java.util.concurrent.Future<Questionnaire> future : futures) {
+        final Questionnaire q = future.get(5, java.util.concurrent.TimeUnit.SECONDS);
+        assertNotNull(q);
+        assertEquals("55555-5", q.getIdElement().getIdPart());
+      }
+      assertEquals(1, builds.get());
+      assertTrue(QuestionnaireGetCache.containsKey(key));
+    } finally {
+      pool.shutdownNow();
+    }
+  }
 }

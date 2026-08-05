@@ -60,6 +60,7 @@ import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 import com.wci.termhub.fhir.util.ValueSetExpandCache;
+import com.wci.termhub.fhir.util.ValueSetSearchCache;
 import com.wci.termhub.handler.BrowserQueryBuilder;
 import com.wci.termhub.lucene.LuceneQueryBuilder;
 import com.wci.termhub.lucene.eventing.Write;
@@ -278,7 +279,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
       final List<ValueSet> list = findPossibleValueSets(false, id, code, date, description,
           identifier, name, publisher, title, url, version);
 
-      return FhirUtilityR5.makeBundle(request, list, count, offset);
+      final NumberParam clampedCount = clampSearchCount(count);
+      return FhirUtilityR5.makeBundle(request, list, clampedCount, offset);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
@@ -607,6 +609,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
       FhirUtility.clearCaches();
       ValueSetExpandCache.clear();
+      ValueSetSearchCache.clear();
       return out;
 
     } catch (FHIRServerResponseException fe) {
@@ -672,6 +675,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       TerminologyUtility.removeSubset(searchService, subset.getId());
       FhirUtility.clearCaches();
       ValueSetExpandCache.clear();
+      ValueSetSearchCache.clear();
 
     } catch (final FHIRServerResponseException e) {
       throw e;
@@ -1630,17 +1634,28 @@ public class ValueSetProviderR5 implements IResourceProvider {
           }
         } else if (loincValueSetHelper.isEnabled() && id == null && url == null) {
           // General listing only: enumerate LL/LG concepts when not targeting id/url.
+          // Cache + SingleFlight so concurrent unfiltered searches do not each reload all LL/LG.
           final List<Terminology> loincTerminologies = allTerminologies.stream()
               .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org")).toList();
           for (final Terminology loincTerm : loincTerminologies) {
-            final ResultList<Concept> lllgConcepts =
-                loincValueSetHelper.findAllLllgConcepts(searchService, loincTerm, 10_000, 0);
-            for (final Concept concept : lllgConcepts.getItems()) {
-              if (!loincValueSetHelper.isLllgId(concept.getCode())) {
-                continue;
+            final String terminologyKey = loincTerm.getId() != null ? loincTerm.getId()
+                : TerminologyUtility.getTerminologyQuery(loincTerm.getAbbreviation(),
+                    loincTerm.getPublisher(), loincTerm.getVersion());
+            final String shellsKey =
+                ValueSetSearchCache.buildKey(FhirVersionEnum.R5, terminologyKey, metaFlag);
+            final List<ValueSet> shells = ValueSetSearchCache.getOrLoadR5(shellsKey, () -> {
+              final ResultList<Concept> lllgConcepts =
+                  loincValueSetHelper.findAllLllgConcepts(searchService, loincTerm, 10_000, 0);
+              final List<ValueSet> built = new ArrayList<>(lllgConcepts.getItems().size());
+              for (final Concept concept : lllgConcepts.getItems()) {
+                if (!loincValueSetHelper.isLllgId(concept.getCode())) {
+                  continue;
+                }
+                built.add(FhirUtilityR5.toR5LllgValueSetFromConcept(loincTerm, concept, metaFlag));
               }
-              final ValueSet lgVs =
-                  FhirUtilityR5.toR5LllgValueSetFromConcept(loincTerm, concept, metaFlag);
+              return built;
+            });
+            for (final ValueSet lgVs : shells) {
               final boolean idUrlMatch =
                   (id == null || FhirUtilityR5.matchesLllgValueSetId(id.getValue(), lgVs))
                       && (url == null || url.getValue().equals(lgVs.getUrl()));
@@ -1668,6 +1683,23 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
     return list;
 
+  }
+
+  /**
+   * Clamps FHIR _count for ValueSet search (max 100).
+   *
+   * @param count the requested count
+   * @return clamped count, or null if count was null
+   */
+  private static NumberParam clampSearchCount(final NumberParam count) {
+    if (count == null || count.getValue() == null) {
+      return count;
+    }
+    final int requested = count.getValue().intValue();
+    if (requested <= 100) {
+      return count;
+    }
+    return new NumberParam(100);
   }
 
   /**

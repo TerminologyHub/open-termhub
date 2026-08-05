@@ -11,6 +11,8 @@ package com.wci.termhub.fhir.util;
 
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
+import com.wci.termhub.util.SingleFlight;
+import com.wci.termhub.util.SingleFlight.ThrowingSupplier;
 import com.wci.termhub.util.TimerCache;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -18,7 +20,8 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 
 /**
- * Caches serialized Questionnaire GET responses for R4 and R5.
+ * Caches serialized Questionnaire GET responses for R4 and R5. Concurrent misses for the same key
+ * are coalesced via {@link SingleFlight}.
  */
 public final class QuestionnaireGetCache {
 
@@ -36,6 +39,9 @@ public final class QuestionnaireGetCache {
 
   /** Serialized Questionnaire JSON by cache key. */
   private static TimerCache<String> cache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+
+  /** Coalesces concurrent builds for the same key. */
+  private static final SingleFlight FLIGHT = new SingleFlight();
 
   /**
    * Instantiates a {@link QuestionnaireGetCache}.
@@ -70,6 +76,33 @@ public final class QuestionnaireGetCache {
   }
 
   /**
+   * Returns a cached R4 Questionnaire, or builds/stores one. Concurrent callers for the same key
+   * share a single build.
+   *
+   * @param key the cache key
+   * @param loader builds the Questionnaire on miss
+   * @return Questionnaire
+   * @throws Exception if the loader fails
+   */
+  public static org.hl7.fhir.r4.model.Questionnaire getOrLoadR4(final String key,
+    final ThrowingSupplier<org.hl7.fhir.r4.model.Questionnaire> loader) throws Exception {
+    final org.hl7.fhir.r4.model.Questionnaire cached = getR4(key);
+    if (cached != null) {
+      return cached;
+    }
+    return FLIGHT.execute(key, () -> {
+      final org.hl7.fhir.r4.model.Questionnaire again = getR4(key);
+      if (again != null) {
+        return again;
+      }
+      final org.hl7.fhir.r4.model.Questionnaire built = loader.get();
+      putR4(key, built);
+      final org.hl7.fhir.r4.model.Questionnaire fromCache = getR4(key);
+      return fromCache != null ? fromCache : built;
+    });
+  }
+
+  /**
    * Stores an R4 Questionnaire GET response.
    *
    * @param key the cache key
@@ -98,6 +131,33 @@ public final class QuestionnaireGetCache {
   }
 
   /**
+   * Returns a cached R5 Questionnaire, or builds/stores one. Concurrent callers for the same key
+   * share a single build.
+   *
+   * @param key the cache key
+   * @param loader builds the Questionnaire on miss
+   * @return Questionnaire
+   * @throws Exception if the loader fails
+   */
+  public static org.hl7.fhir.r5.model.Questionnaire getOrLoadR5(final String key,
+    final ThrowingSupplier<org.hl7.fhir.r5.model.Questionnaire> loader) throws Exception {
+    final org.hl7.fhir.r5.model.Questionnaire cached = getR5(key);
+    if (cached != null) {
+      return cached;
+    }
+    return FLIGHT.execute(key, () -> {
+      final org.hl7.fhir.r5.model.Questionnaire again = getR5(key);
+      if (again != null) {
+        return again;
+      }
+      final org.hl7.fhir.r5.model.Questionnaire built = loader.get();
+      putR5(key, built);
+      final org.hl7.fhir.r5.model.Questionnaire fromCache = getR5(key);
+      return fromCache != null ? fromCache : built;
+    });
+  }
+
+  /**
    * Stores an R5 Questionnaire GET response.
    *
    * @param key the cache key
@@ -115,6 +175,7 @@ public final class QuestionnaireGetCache {
    * Clears all cached Questionnaire GET responses.
    */
   public static void clear() {
+    FLIGHT.clear();
     cache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
   }
 

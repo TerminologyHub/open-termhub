@@ -117,27 +117,22 @@ public class ConceptMapProviderR4 implements IResourceProvider {
             IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
       }
       final String cacheKey = ConceptMapGetCache.buildKey(FhirVersionEnum.R4, id.getIdPart());
-      final ConceptMap cached = ConceptMapGetCache.getR4(cacheKey);
-      if (cached != null) {
-        return cached;
-      }
-      final Mapset mapset = searchService.get(id.getIdPart(), Mapset.class);
-      if (mapset == null) {
-        throw FhirUtilityR4.exception(
-            "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
-            HttpServletResponse.SC_NOT_FOUND);
-      }
-      final SearchParameters params = new SearchParameters(
-          StringUtility.composeQuery("AND",
-              "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
-              "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
-              "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
-          null, 100000, null, null);
-      final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
-      final ConceptMap conceptMap = FhirUtilityR4.toR4(mapset, mappings,
-          resolveContactTerminology(mapset));
-      ConceptMapGetCache.putR4(cacheKey, conceptMap);
-      return conceptMap;
+      return ConceptMapGetCache.getOrLoadR4(cacheKey, () -> {
+        final Mapset mapset = searchService.get(id.getIdPart(), Mapset.class);
+        if (mapset == null) {
+          throw FhirUtilityR4.exception(
+              "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
+              HttpServletResponse.SC_NOT_FOUND);
+        }
+        final SearchParameters params = new SearchParameters(
+            StringUtility.composeQuery("AND",
+                "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
+                "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
+                "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
+            null, 100000, null, null);
+        final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
+        return FhirUtilityR4.toR4(mapset, mappings, resolveContactTerminology(mapset));
+      });
     } catch (final FHIRServerResponseException e) {
       throw e;
     } catch (final Exception e) {

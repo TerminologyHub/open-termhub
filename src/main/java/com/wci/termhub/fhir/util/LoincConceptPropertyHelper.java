@@ -9,10 +9,14 @@
  */
 package com.wci.termhub.fhir.util;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptPropertyValueCoding;
 
 /**
  * LOINC concept property helpers for loader output and FHIR $lookup.
@@ -25,6 +29,23 @@ public final class LoincConceptPropertyHelper {
   /** LOINC display status property code (valueString, e.g. Active). */
   public static final String ATTR_STATUS_DISPLAY = "STATUS";
 
+  /** FHIR / TermHub answer-list property code. */
+  public static final String PROP_ANSWER_LIST = "answer-list";
+
+  /** AnswerListLinkType extension URL used in LOINC CodeSystem JSON. */
+  public static final String EXT_ANSWER_LIST_LINK_TYPE =
+      "https://terminologyhub.com/model/relationship/attribute/AnswerListLinkType";
+
+  /** ApplicableContext extension URL. */
+  public static final String EXT_APPLICABLE_CONTEXT =
+      "https://terminologyhub.com/model/relationship/attribute/ApplicableContext";
+
+  /** Prefer this AnswerListLinkType when the same LL appears more than once (fhir.loinc.org). */
+  public static final String LINK_TYPE_NORMATIVE = "NORMATIVE";
+
+  /** Example link type; dropped when a NORMATIVE row exists for the same LL. */
+  public static final String LINK_TYPE_EXAMPLE = "EXAMPLE";
+
   /**
    * Instantiates a {@link LoincConceptPropertyHelper}.
    */
@@ -33,8 +54,7 @@ public final class LoincConceptPropertyHelper {
   }
 
   /**
-   * When Regenstrief mode is on and both status codes are stored, emit only
-   * STATUS on $lookup.
+   * When Regenstrief mode is on and both status codes are stored, emit only STATUS on $lookup.
    *
    * @param attributeKey the concept attribute key
    * @param concept the concept
@@ -50,8 +70,7 @@ public final class LoincConceptPropertyHelper {
   }
 
   /**
-   * True when the FHIR property name is the standard lowercase {@code status}
-   * (valueCode).
+   * True when the FHIR property name is the standard lowercase {@code status} (valueCode).
    *
    * @param propertyName the property name
    * @return true for status
@@ -61,8 +80,8 @@ public final class LoincConceptPropertyHelper {
   }
 
   /**
-   * Relationship properties stored on the concept must not be emitted on $lookup;
-   * hierarchy and panel membership are resolved from the relationship index.
+   * Relationship properties stored on the concept must not be emitted on $lookup; hierarchy and
+   * panel membership are resolved from the relationship index.
    *
    * @param propertyCode the FHIR property code
    * @return true to skip emitting this property
@@ -74,6 +93,71 @@ public final class LoincConceptPropertyHelper {
     return "parent".equals(propertyCode) || "child".equals(propertyCode)
         || LoincConstants.LOINC_REL_PANEL_MEMBER.equals(propertyCode)
         || LoincConstants.LOINC_REL_HAS_MEMBER.equals(propertyCode);
+  }
+
+  /**
+   * Selects {@code fhirPropertyCodings} for CodeSystem $lookup. fhir.loinc.org does not emit both
+   * EXAMPLE and NORMATIVE {@code answer-list} rows for the same LL; prefer NORMATIVE, otherwise keep
+   * the last row for that (propertyCode, valueCode) pair.
+   *
+   * @param entries concept fhirPropertyCodings (may be null)
+   * @return ordered entries to emit (never null)
+   */
+  public static List<ConceptPropertyValueCoding> selectFhirPropertyCodingsForLookup(
+    final List<ConceptPropertyValueCoding> entries) {
+    if (entries == null || entries.isEmpty()) {
+      return List.of();
+    }
+    final LinkedHashMap<String, ConceptPropertyValueCoding> byKey = new LinkedHashMap<>();
+    for (final ConceptPropertyValueCoding entry : entries) {
+      if (entry == null || entry.getPropertyCode() == null || entry.getValueCode() == null) {
+        continue;
+      }
+      final String key = entry.getPropertyCode() + "|" + entry.getValueCode();
+      final ConceptPropertyValueCoding existing = byKey.get(key);
+      if (existing == null) {
+        byKey.put(key, entry);
+        continue;
+      }
+      byKey.put(key, preferForLookup(existing, entry));
+    }
+    return new ArrayList<>(byKey.values());
+  }
+
+  /**
+   * Prefers NORMATIVE over EXAMPLE (and over unspecified) for the same property/value pair.
+   *
+   * @param a first candidate
+   * @param b second candidate
+   * @return preferred entry
+   */
+  static ConceptPropertyValueCoding preferForLookup(final ConceptPropertyValueCoding a,
+    final ConceptPropertyValueCoding b) {
+    final int scoreA = linkTypeScore(a.getAnswerListLinkType());
+    final int scoreB = linkTypeScore(b.getAnswerListLinkType());
+    if (scoreB != scoreA) {
+      return scoreB > scoreA ? b : a;
+    }
+    // Same score: keep later (b) — LOINC often lists EXAMPLE then NORMATIVE.
+    return b;
+  }
+
+  /**
+   * @param linkType AnswerListLinkType or null
+   * @return higher is better for fhir.loinc.org $lookup
+   */
+  private static int linkTypeScore(final String linkType) {
+    if (linkType == null || linkType.isBlank()) {
+      return 0;
+    }
+    final String normalized = linkType.trim().toUpperCase(Locale.ROOT);
+    if (LINK_TYPE_NORMATIVE.equals(normalized)) {
+      return 2;
+    }
+    if (LINK_TYPE_EXAMPLE.equals(normalized)) {
+      return 0;
+    }
+    return 1;
   }
 
   /**
