@@ -65,12 +65,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.wci.termhub.app.ServerModeUtility;
 import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
 import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirDateTimeUtil;
 import com.wci.termhub.fhir.util.FhirUtility;
-import com.wci.termhub.app.ServerModeUtility;
 import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
 import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincQuestionnaireHelper;
@@ -2067,90 +2067,36 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Resolves questionnaire copyright from CodeSystem copyright plus external notices on member
-   * codes.
+   * Resolves questionnaire copyright from CodeSystem copyright plus external notices collected
+   * during panel expand.
    *
-   * @param questionnaire the questionnaire
    * @param terminology the terminology
    * @param searchService the search service
+   * @param externalNotices unique instrument notices (may be null)
    * @return copyright text or null
    * @throws Exception the exception
    */
-  private static String resolveQuestionnaireCopyright(final Questionnaire questionnaire,
-    final Terminology terminology, final EntityRepositoryService searchService) throws Exception {
+  private static String resolveQuestionnaireCopyright(final Terminology terminology,
+    final EntityRepositoryService searchService, final Set<String> externalNotices)
+    throws Exception {
     final String baseCopyright = resolveTerminologyCopyright(terminology, searchService);
-    if (questionnaire == null || terminology == null || searchService == null) {
-      return baseCopyright;
-    }
-    return LoincQuestionnaireHelper.buildQuestionnaireCopyright(baseCopyright,
-        collectLoincCodesFromQuestionnaire(questionnaire), searchService,
-        terminology.getAbbreviation(), terminology.getPublisher(), terminology.getVersion());
+    return LoincQuestionnaireHelper.buildQuestionnaireCopyright(baseCopyright, externalNotices);
   }
 
   /**
-   * Collects LOINC codes referenced by a questionnaire (root code, items, answer options).
-   *
-   * @param questionnaire the questionnaire
-   * @return codes in depth-first order
-   */
-  private static Set<String> collectLoincCodesFromQuestionnaire(final Questionnaire questionnaire) {
-    final Set<String> codes = new LinkedHashSet<>();
-    if (questionnaire == null) {
-      return codes;
-    }
-    for (final Coding coding : questionnaire.getCode()) {
-      if (coding.hasCode()) {
-        codes.add(coding.getCode());
-      }
-    }
-    for (final Questionnaire.QuestionnaireItemComponent item : questionnaire.getItem()) {
-      collectLoincCodesFromItem(item, codes);
-    }
-    return codes;
-  }
-
-  /**
-   * Adds LOINC codes from a questionnaire item subtree.
-   *
-   * @param item the item
-   * @param codes the collector
-   */
-  private static void collectLoincCodesFromItem(final Questionnaire.QuestionnaireItemComponent item,
-    final Set<String> codes) {
-    if (item == null) {
-      return;
-    }
-    for (final Coding coding : item.getCode()) {
-      if (coding.hasCode()) {
-        codes.add(coding.getCode());
-      }
-    }
-    for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : item
-        .getAnswerOption()) {
-      if (option.getValue() instanceof Coding) {
-        final Coding valueCoding = (Coding) option.getValue();
-        if (valueCoding.hasCode()) {
-          codes.add(valueCoding.getCode());
-        }
-      }
-    }
-    for (final Questionnaire.QuestionnaireItemComponent child : item.getItem()) {
-      collectLoincCodesFromItem(child, codes);
-    }
-  }
-
-  /**
-   * Sets Questionnaire copyright from terminology attributes when available.
+   * Sets Questionnaire copyright from terminology attributes and collected external notices.
    *
    * @param questionnaire the questionnaire
    * @param terminology the terminology
    * @param searchService the search service (optional)
+   * @param externalNotices unique instrument notices (may be null)
    * @throws Exception the exception
    */
   private static void applyQuestionnaireCopyright(final Questionnaire questionnaire,
-    final Terminology terminology, final EntityRepositoryService searchService) throws Exception {
+    final Terminology terminology, final EntityRepositoryService searchService,
+    final Set<String> externalNotices) throws Exception {
     final String copyright =
-        resolveQuestionnaireCopyright(questionnaire, terminology, searchService);
+        resolveQuestionnaireCopyright(terminology, searchService, externalNotices);
     if (copyright != null) {
       questionnaire.setCopyright(copyright);
     }
@@ -2179,7 +2125,7 @@ public final class FhirUtilityR5 {
     FhirDateTimeUtil.setR5DateTimeUtc(questionnaire.getDateElement(),
         resolveTerminologyReleaseDateString(terminology));
     questionnaire.setPublisher(terminology.getPublisher());
-    applyQuestionnaireCopyright(questionnaire, terminology, null);
+    applyQuestionnaireCopyright(questionnaire, terminology, null, null);
 
     final Meta meta = buildQuestionnaireMeta(terminology, null);
     if (metaFlag) {
@@ -2223,7 +2169,7 @@ public final class FhirUtilityR5 {
     final Questionnaire questionnaire = new Questionnaire();
 
     // Set basic metadata
-    questionnaire.setId(concept.getCode());
+    questionnaire.setId(concept.getId());
 
     // Build URL from terminology information
     final String systemUri = getSystemUriFromTerminology(searchService, concept.getTerminology(),
@@ -2249,6 +2195,12 @@ public final class FhirUtilityR5 {
     // Set publisher from concept data
     questionnaire.setPublisher(concept.getPublisher());
 
+    if (terminology != null && terminology.getVersion() != null) {
+      questionnaire.setVersion(terminology.getVersion());
+    } else if (concept.getVersion() != null) {
+      questionnaire.setVersion(concept.getVersion());
+    }
+
     // Set subject type to Patient for most questionnaires
     final List<CodeType> subjectTypes = new ArrayList<>();
     subjectTypes.add(new CodeType("Patient"));
@@ -2268,7 +2220,10 @@ public final class FhirUtilityR5 {
       copyrightTerminology = TerminologyUtility.getTerminology(searchService,
           concept.getTerminology(), concept.getPublisher(), concept.getVersion());
     }
-    applyQuestionnaireCopyright(questionnaire, copyrightTerminology, searchService);
+    final Set<String> copyrightNotices = new LinkedHashSet<>();
+    LoincQuestionnaireHelper.addExternalCopyrightNotice(concept, copyrightNotices);
+    applyQuestionnaireCopyright(questionnaire, copyrightTerminology, searchService,
+        copyrightNotices);
 
     questionnaire.setMeta(buildQuestionnaireMeta(terminology, concept));
 
@@ -2290,8 +2245,14 @@ public final class FhirUtilityR5 {
     // Clear any existing items
     questionnaire.getItem().clear();
 
-    // Extract LOINC code from questionnaire ID
-    final String loincCode = questionnaire.getId();
+    // LOINC panel code lives on Questionnaire.code; id is the Concept UUID
+    String loincCode = null;
+    if (questionnaire.hasCode() && questionnaire.getCodeFirstRep().hasCode()) {
+      loincCode = questionnaire.getCodeFirstRep().getCode();
+    }
+    if (loincCode == null) {
+      loincCode = questionnaire.getId();
+    }
     if (loincCode == null) {
       return;
     }
@@ -2308,15 +2269,19 @@ public final class FhirUtilityR5 {
         return;
       }
 
-      final List<Questionnaire.QuestionnaireItemComponent> groupItems = findGroupConcepts(
-          mainConcept, searchService, terminology, processedLinkIds, terminology.getVersion());
+      final Set<String> copyrightNotices = new LinkedHashSet<>();
+      LoincQuestionnaireHelper.addExternalCopyrightNotice(mainConcept, copyrightNotices);
+
+      final List<Questionnaire.QuestionnaireItemComponent> groupItems =
+          findGroupConcepts(mainConcept, searchService, terminology, processedLinkIds,
+              terminology.getVersion(), copyrightNotices);
 
       // Add group items to questionnaire
       for (final Questionnaire.QuestionnaireItemComponent groupItem : groupItems) {
         questionnaire.addItem(groupItem);
       }
 
-      applyQuestionnaireCopyright(questionnaire, terminology, searchService);
+      applyQuestionnaireCopyright(questionnaire, terminology, searchService, copyrightNotices);
 
     } catch (final Exception e) {
       // Log error but don't fail the entire questionnaire
@@ -2498,12 +2463,13 @@ public final class FhirUtilityR5 {
    * @param memberRel the member relationship
    * @param memberConcept the member concept
    * @param memberRef the member concept ref
+   * @param memberLinkId the member link id
    * @return display text
    */
   private static String resolveItemDisplayName(final ConceptRelationship memberRel,
-    final Concept memberConcept, final ConceptRef memberRef) {
+    final Concept memberConcept, final ConceptRef memberRef, final String memberLinkId) {
     return LoincQuestionnaireHelper.resolveQuestionnaireItemDisplayName(memberRel, memberConcept,
-        memberRef);
+        memberRef, memberLinkId);
   }
 
   /**
@@ -2536,17 +2502,25 @@ public final class FhirUtilityR5 {
   private static Questionnaire.QuestionnaireItemType resolveQuestionnaireItemType(
     final Concept memberConcept,
     final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions) {
+    // EXAMPLE_UNITS=score → decimal (even Ord/SemiQn); skip choice-from-options.
+    if (LoincQuestionnaireHelper.isScoreExampleUnits(memberConcept)) {
+      return Questionnaire.QuestionnaireItemType.DECIMAL;
+    }
     if (answerOptions != null && !answerOptions.isEmpty()) {
       return Questionnaire.QuestionnaireItemType.CODING;
     }
-    if (LoincQuestionnaireHelper.isDateProperty(memberConcept)) {
+    final String scaleTyp = getScaleType(memberConcept);
+    final String normalized =
+        scaleTyp == null ? null : scaleTyp.toUpperCase(Locale.ENGLISH);
+    // PROPERTY Date/ClockTime with SCALE Qn (gold); Nom+Date stays string.
+    if ("QN".equals(normalized) && LoincQuestionnaireHelper.isDateProperty(memberConcept)) {
       return Questionnaire.QuestionnaireItemType.DATE;
     }
-    final String scaleTyp = getScaleType(memberConcept);
+    if ("QN".equals(normalized) && LoincQuestionnaireHelper.isClockTimeProperty(memberConcept)) {
+      return Questionnaire.QuestionnaireItemType.TIME;
+    }
     if (scaleTyp != null) {
-      final String normalized = scaleTyp.toUpperCase(Locale.ENGLISH);
-      // fhir.loinc.org maps only pure "Qn" to decimal; OrdQn, SemiQn and every other
-      // scale render as string. A contains("QN") check wrongly caught OrdQn/SemiQn.
+      // Pure "Qn" → decimal; OrdQn, SemiQn and every other scale → string.
       if ("QN".equals(normalized)) {
         return Questionnaire.QuestionnaireItemType.DECIMAL;
       }
@@ -2564,12 +2538,14 @@ public final class FhirUtilityR5 {
    * @param terminology the terminology
    * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the latest version
+   * @param copyrightNotices the copyright notices
    * @return list of group questionnaire item components
    * @throws Exception the exception
    */
   private static List<Questionnaire.QuestionnaireItemComponent> findGroupConcepts(
     final Concept mainConcept, final EntityRepositoryService searchService,
-    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion)
+    final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion,
+    final Set<String> copyrightNotices)
     throws Exception {
 
     final List<Questionnaire.QuestionnaireItemComponent> allItems = new ArrayList<>();
@@ -2614,17 +2590,20 @@ public final class FhirUtilityR5 {
         if (memberCode == null) {
           continue;
         }
+        LoincQuestionnaireHelper.addAdditionalCopyrightNotice(memberRel, copyrightNotices);
 
         final Concept memberConcept = TerminologyUtility.getConcept(searchService,
             terminology.getAbbreviation(), terminology.getPublisher(), latestVersion, memberCode);
 
         if (memberConcept != null) {
+          LoincQuestionnaireHelper.addExternalCopyrightNotice(memberConcept, copyrightNotices);
           final boolean isGroup = LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(
               memberConcept, linkId);
 
           if (isGroup) {
             final Questionnaire.QuestionnaireItemComponent groupItem = createGroupItem(memberRel,
-                searchService, terminology, processedLinkIds, latestVersion, mainConcept.getCode());
+                searchService, terminology, processedLinkIds, latestVersion, mainConcept.getCode(),
+                copyrightNotices);
             if (groupItem != null) {
               allItems.add(groupItem);
               processedLinkIds.add(linkId);
@@ -2632,7 +2611,7 @@ public final class FhirUtilityR5 {
           } else {
             final Questionnaire.QuestionnaireItemComponent questionItem = createDirectQuestionItem(
                 memberRel, searchService, terminology, processedLinkIds, latestVersion,
-                mainConcept.getCode());
+                mainConcept.getCode(), copyrightNotices);
             if (questionItem != null) {
               allItems.add(questionItem);
               processedLinkIds.add(linkId);
@@ -2659,13 +2638,14 @@ public final class FhirUtilityR5 {
    * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the latest version
    * @param questionnaireLoinc the questionnaire loinc
+   * @param copyrightNotices the copyright notices
    * @return the questionnaire item component
    * @throws Exception the exception
    */
   private static Questionnaire.QuestionnaireItemComponent createGroupItem(
     final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
     final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion,
-    final String questionnaireLoinc) throws Exception {
+    final String questionnaireLoinc, final Set<String> copyrightNotices) throws Exception {
 
     final Questionnaire.QuestionnaireItemComponent groupItem =
         new Questionnaire.QuestionnaireItemComponent();
@@ -2676,9 +2656,13 @@ public final class FhirUtilityR5 {
       final Concept memberConcept =
           TerminologyUtility.getConcept(searchService, terminology.getAbbreviation(),
               terminology.getPublisher(), latestVersion, toConcept.getCode());
-      final String displayName = resolveItemDisplayName(hasMemberRel, memberConcept, toConcept);
+      LoincQuestionnaireHelper.addExternalCopyrightNotice(memberConcept, copyrightNotices);
+      final String linkId =
+          LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept);
+      final String displayName =
+          resolveItemDisplayName(hasMemberRel, memberConcept, toConcept, linkId);
 
-      groupItem.setLinkId(LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept));
+      groupItem.setLinkId(linkId);
       final String prefix = LoincQuestionnaireHelper.resolveFormPrefix(hasMemberRel);
       if (!StringUtility.isEmpty(prefix)) {
         groupItem.setPrefix(prefix);
@@ -2713,10 +2697,17 @@ public final class FhirUtilityR5 {
       // }
 
       // Find questions for this group
-      final String groupLinkId = LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept);
+      final String groupLinkId = linkId;
       final List<Questionnaire.QuestionnaireItemComponent> questions = findQuestionsForGroup(
           toConcept.getCode(), searchService, terminology, processedLinkIds, latestVersion,
-          groupLinkId, questionnaireLoinc);
+          groupLinkId, questionnaireLoinc, copyrightNotices);
+
+      // Panel/Organizer with no form-scoped members under this ParentId: gold emits a leaf
+      // question, not an empty group (see cycle 003 R1).
+      if (questions.isEmpty()) {
+        return createQuestionItem(hasMemberRel, searchService, terminology, processedLinkIds,
+            questionnaireLoinc, copyrightNotices);
+      }
 
       for (final Questionnaire.QuestionnaireItemComponent question : questions) {
         groupItem.addItem(question);
@@ -2736,13 +2727,15 @@ public final class FhirUtilityR5 {
    * @param latestVersion the terminology version
    * @param parentLinkId parent group linkId for form-scoped member-edge selection
    * @param questionnaireLoinc the questionnaire loinc
+   * @param copyrightNotices the copyright notices
    * @return list of question components
    * @throws Exception the exception
    */
   private static List<Questionnaire.QuestionnaireItemComponent> findQuestionsForGroup(
     final String groupCode, final EntityRepositoryService searchService,
     final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion,
-    final String parentLinkId, final String questionnaireLoinc) throws Exception {
+    final String parentLinkId, final String questionnaireLoinc, final Set<String> copyrightNotices)
+    throws Exception {
 
     final List<Questionnaire.QuestionnaireItemComponent> questions = new ArrayList<>();
     final Set<String> groupProcessedLinkIds = new HashSet<>();
@@ -2780,20 +2773,22 @@ public final class FhirUtilityR5 {
             continue;
           }
         }
+        LoincQuestionnaireHelper.addAdditionalCopyrightNotice(hasMemberRel, copyrightNotices);
 
         final Concept memberConcept = TerminologyUtility.getConcept(searchService,
             terminology.getAbbreviation(), terminology.getPublisher(), latestVersion, questionCode);
         if (memberConcept == null) {
           continue;
         }
+        LoincQuestionnaireHelper.addExternalCopyrightNotice(memberConcept, copyrightNotices);
 
         final Questionnaire.QuestionnaireItemComponent item;
         if (LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(memberConcept, linkId)) {
           item = createGroupItem(hasMemberRel, searchService, terminology, processedLinkIds,
-              latestVersion, questionnaireLoinc);
+              latestVersion, questionnaireLoinc, copyrightNotices);
         } else {
           item = createQuestionItem(hasMemberRel, searchService, terminology, processedLinkIds,
-              questionnaireLoinc);
+              questionnaireLoinc, copyrightNotices);
         }
         if (item != null && !StringUtility.isEmpty(item.getLinkId())) {
           questions.add(item);
@@ -2821,13 +2816,14 @@ public final class FhirUtilityR5 {
    * @param terminology the terminology
    * @param processedLinkIds set of already processed form linkIds
    * @param questionnaireLoinc the questionnaire loinc
+   * @param copyrightNotices the copyright notices
    * @return the questionnaire item component
    * @throws Exception the exception
    */
   private static Questionnaire.QuestionnaireItemComponent createQuestionItem(
     final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
     final Terminology terminology, final Set<String> processedLinkIds,
-    final String questionnaireLoinc) throws Exception {
+    final String questionnaireLoinc, final Set<String> copyrightNotices) throws Exception {
 
     final Questionnaire.QuestionnaireItemComponent questionItem =
         new Questionnaire.QuestionnaireItemComponent();
@@ -2838,36 +2834,47 @@ public final class FhirUtilityR5 {
       final Concept memberConcept =
           TerminologyUtility.getConcept(searchService, terminology.getAbbreviation(),
               terminology.getPublisher(), terminology.getVersion(), toConcept.getCode());
-      final String displayName = resolveItemDisplayName(hasMemberRel, memberConcept, toConcept);
+      LoincQuestionnaireHelper.addExternalCopyrightNotice(memberConcept, copyrightNotices);
+      final String linkId =
+          LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept);
+      final String displayName =
+          resolveItemDisplayName(hasMemberRel, memberConcept, toConcept, linkId);
 
-      questionItem.setLinkId(LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept));
+      questionItem.setLinkId(linkId);
       final String prefix = LoincQuestionnaireHelper.resolveFormPrefix(hasMemberRel);
       if (!StringUtility.isEmpty(prefix)) {
         questionItem.setPrefix(prefix);
       }
       questionItem.setText(displayName);
-      questionItem.setRepeats(
-          LoincQuestionnaireHelper.resolveMemberRepeats(hasMemberRel, memberConcept));
-      if (LoincQuestionnaireHelper.resolveMemberRequired(hasMemberRel)) {
+      // Score EXAMPLE_UNITS: bare decimal (no code / required; omit repeats when false).
+      final boolean scoreUnits =
+          LoincQuestionnaireHelper.isScoreExampleUnits(memberConcept);
+      final boolean repeats =
+          LoincQuestionnaireHelper.resolveMemberRepeats(hasMemberRel, memberConcept);
+      if (repeats || !scoreUnits) {
+        questionItem.setRepeats(repeats);
+      }
+      if (!scoreUnits && LoincQuestionnaireHelper.resolveMemberRequired(hasMemberRel)) {
         questionItem.setRequired(true);
       }
+      if (!scoreUnits) {
+        final Coding coding = new Coding();
+        coding.setSystem(terminology.getUri());
+        coding.setCode(toConcept.getCode());
+        coding.setDisplay(displayName);
+        questionItem.addCode(coding);
+      }
 
-      final Coding coding = new Coding();
-      coding.setSystem(terminology.getUri());
-      coding.setCode(toConcept.getCode());
-      coding.setDisplay(displayName);
-      questionItem.addCode(coding);
-
-      // Leaf-embedded panel occurrence: gold uses string with no answerOption expansion.
+      // Leaf-embedded panel: do not expand children / answer lists; type still follows SCALE/PROPERTY.
+      // Score EXAMPLE_UNITS: decimal, no answerOption expansion (list selection unchanged).
       final boolean leafEmbedded = LoincQuestionnaireHelper.isLeafEmbeddedFormOccurrence(
-          toConcept.getCode(), questionItem.getLinkId());
+          toConcept.getCode(), linkId);
       final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
-          leafEmbedded ? List.of()
+          (leafEmbedded || scoreUnits) ? List.of()
               : findAnswerOptionsForQuestion(hasMemberRel, memberConcept, searchService,
                   terminology, questionnaireLoinc);
 
-      questionItem.setType(leafEmbedded ? Questionnaire.QuestionnaireItemType.STRING
-          : resolveQuestionnaireItemType(memberConcept, answerOptions));
+      questionItem.setType(resolveQuestionnaireItemType(memberConcept, answerOptions));
       for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
         questionItem.addAnswerOption(option);
       }
@@ -3012,13 +3019,14 @@ public final class FhirUtilityR5 {
    * @param processedLinkIds set of already processed form linkIds
    * @param latestVersion the latest version
    * @param questionnaireLoinc the questionnaire loinc
+   * @param copyrightNotices the copyright notices
    * @return the questionnaire item component
    * @throws Exception the exception
    */
   private static Questionnaire.QuestionnaireItemComponent createDirectQuestionItem(
     final ConceptRelationship hasMemberRel, final EntityRepositoryService searchService,
     final Terminology terminology, final Set<String> processedLinkIds, final String latestVersion,
-    final String questionnaireLoinc) throws Exception {
+    final String questionnaireLoinc, final Set<String> copyrightNotices) throws Exception {
 
     final Questionnaire.QuestionnaireItemComponent questionItem =
         new Questionnaire.QuestionnaireItemComponent();
@@ -3029,36 +3037,47 @@ public final class FhirUtilityR5 {
       final Concept memberConcept =
           TerminologyUtility.getConcept(searchService, terminology.getAbbreviation(),
               terminology.getPublisher(), latestVersion, toConcept.getCode());
-      final String displayName = resolveItemDisplayName(hasMemberRel, memberConcept, toConcept);
+      LoincQuestionnaireHelper.addExternalCopyrightNotice(memberConcept, copyrightNotices);
+      final String linkId =
+          LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept);
+      final String displayName =
+          resolveItemDisplayName(hasMemberRel, memberConcept, toConcept, linkId);
 
-      questionItem.setLinkId(LoincQuestionnaireHelper.resolveMemberLinkId(hasMemberRel, toConcept));
+      questionItem.setLinkId(linkId);
       final String prefix = LoincQuestionnaireHelper.resolveFormPrefix(hasMemberRel);
       if (!StringUtility.isEmpty(prefix)) {
         questionItem.setPrefix(prefix);
       }
       questionItem.setText(displayName);
-      questionItem.setRepeats(
-          LoincQuestionnaireHelper.resolveMemberRepeats(hasMemberRel, memberConcept));
-      if (LoincQuestionnaireHelper.resolveMemberRequired(hasMemberRel)) {
+      // Score EXAMPLE_UNITS: bare decimal (no code / required; omit repeats when false).
+      final boolean scoreUnits =
+          LoincQuestionnaireHelper.isScoreExampleUnits(memberConcept);
+      final boolean repeats =
+          LoincQuestionnaireHelper.resolveMemberRepeats(hasMemberRel, memberConcept);
+      if (repeats || !scoreUnits) {
+        questionItem.setRepeats(repeats);
+      }
+      if (!scoreUnits && LoincQuestionnaireHelper.resolveMemberRequired(hasMemberRel)) {
         questionItem.setRequired(true);
       }
+      if (!scoreUnits) {
+        final Coding coding = new Coding();
+        coding.setSystem(terminology.getUri());
+        coding.setCode(toConcept.getCode());
+        coding.setDisplay(displayName);
+        questionItem.addCode(coding);
+      }
 
-      final Coding coding = new Coding();
-      coding.setSystem(terminology.getUri());
-      coding.setCode(toConcept.getCode());
-      coding.setDisplay(displayName);
-      questionItem.addCode(coding);
-
-      // Leaf-embedded panel occurrence: gold uses string with no answerOption expansion.
+      // Leaf-embedded panel: do not expand children / answer lists; type still follows SCALE/PROPERTY.
+      // Score EXAMPLE_UNITS: decimal, no answerOption expansion (list selection unchanged).
       final boolean leafEmbedded = LoincQuestionnaireHelper.isLeafEmbeddedFormOccurrence(
-          toConcept.getCode(), questionItem.getLinkId());
+          toConcept.getCode(), linkId);
       final List<Questionnaire.QuestionnaireItemAnswerOptionComponent> answerOptions =
-          leafEmbedded ? List.of()
+          (leafEmbedded || scoreUnits) ? List.of()
               : findAnswerOptionsForQuestion(hasMemberRel, memberConcept, searchService,
                   terminology, questionnaireLoinc);
 
-      questionItem.setType(leafEmbedded ? Questionnaire.QuestionnaireItemType.STRING
-          : resolveQuestionnaireItemType(memberConcept, answerOptions));
+      questionItem.setType(resolveQuestionnaireItemType(memberConcept, answerOptions));
       for (final Questionnaire.QuestionnaireItemAnswerOptionComponent option : answerOptions) {
         questionItem.addAnswerOption(option);
       }

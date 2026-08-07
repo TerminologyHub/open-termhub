@@ -79,7 +79,7 @@ public class QuestionnaireSearchHelper {
    *
    * @param appConfig the app config
    */
-  QuestionnaireSearchHelper(AppConfig appConfig) {
+  QuestionnaireSearchHelper(final AppConfig appConfig) {
     this.appConfig = appConfig;
   }
 

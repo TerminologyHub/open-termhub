@@ -11,6 +11,7 @@ package com.wci.termhub.fhir.util.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -76,6 +77,57 @@ public class LoincQuestionnaireHelperUnitTest {
     concept.getAttributes().putAll(Map.of("PROPERTY_display", "Date"));
 
     assertTrue(LoincQuestionnaireHelper.isDateProperty(concept));
+  }
+
+  /**
+   * ClockTime PROPERTY is distinct from Date.
+   */
+  @Test
+  public void testIsClockTimePropertyFromAttributes() {
+    final Concept concept = new Concept();
+    concept.getAttributes().put(LoincConstants.ATTR_PROPERTY + "_display", "ClockTime");
+
+    assertTrue(LoincQuestionnaireHelper.isClockTimeProperty(concept));
+    assertFalse(LoincQuestionnaireHelper.isDateProperty(concept));
+  }
+
+  /**
+   * EXAMPLE_UNITS=score (also {score} / UCUM fallback) forces decimal / no answer-list expansion /
+   * bare item emit (FORMULA irrelevant).
+   */
+  @Test
+  public void testIsScoreExampleUnits() {
+    final Concept scoreUnits = new Concept();
+    scoreUnits.getAttributes().put(LoincConstants.ATTR_EXAMPLE_UNITS, "score");
+    assertTrue(LoincQuestionnaireHelper.isScoreExampleUnits(scoreUnits));
+
+    final Concept bracedUnits = new Concept();
+    bracedUnits.getAttributes().put(LoincConstants.ATTR_EXAMPLE_UNITS, "{score}");
+    assertTrue(LoincQuestionnaireHelper.isScoreExampleUnits(bracedUnits));
+
+    final Concept ucumFallback = new Concept();
+    ucumFallback.getAttributes().put(LoincConstants.ATTR_EXAMPLE_UCUM_UNITS, "{score}");
+    assertTrue(LoincQuestionnaireHelper.isScoreExampleUnits(ucumFallback));
+
+    final Concept withFormula = new Concept();
+    withFormula.getAttributes().put(LoincConstants.ATTR_EXAMPLE_UNITS, "score");
+    withFormula.getAttributes().put(LoincConstants.ATTR_FORMULA, "Score A + Score B");
+    assertTrue(LoincQuestionnaireHelper.isScoreExampleUnits(withFormula));
+
+    final Concept otherUnits = new Concept();
+    otherUnits.getAttributes().put(LoincConstants.ATTR_EXAMPLE_UNITS, "mg/dL");
+    assertFalse(LoincQuestionnaireHelper.isScoreExampleUnits(otherUnits));
+
+    final Concept otherUcumOnly = new Concept();
+    otherUcumOnly.getAttributes().put(LoincConstants.ATTR_EXAMPLE_UCUM_UNITS, "mg/dL");
+    assertFalse(LoincQuestionnaireHelper.isScoreExampleUnits(otherUcumOnly));
+
+    final Concept nonScoreUcumIgnoredWhenUnitsSet = new Concept();
+    nonScoreUcumIgnoredWhenUnitsSet.getAttributes().put(LoincConstants.ATTR_EXAMPLE_UNITS,
+        "mg/dL");
+    nonScoreUcumIgnoredWhenUnitsSet.getAttributes().put(LoincConstants.ATTR_EXAMPLE_UCUM_UNITS,
+        "{score}");
+    assertFalse(LoincQuestionnaireHelper.isScoreExampleUnits(nonScoreUcumIgnoredWhenUnitsSet));
   }
 
   /**
@@ -201,13 +253,18 @@ public class LoincQuestionnaireHelperUnitTest {
   }
 
   /**
-   * AnswerCardinality {@code 1..7} enables repeats on questionnaire items.
+   * AnswerCardinality multi-range enables repeats only with an answer-list;
+   * otherwise QuestionCardinality decides (e.g. {@code 1..n}).
    */
   @Test
   public void testResolveMemberRepeatsFromAnswerCardinalityRange() {
     final ConceptRelationship rel = new ConceptRelationship();
     rel.getAttributes().put(LoincConstants.ATTR_ANSWER_CARDINALITY, "1..7");
-    assertTrue(LoincQuestionnaireHelper.resolveMemberRepeats(rel));
+    assertFalse(LoincQuestionnaireHelper.resolveMemberRepeats(rel));
+
+    final Concept withAnswerList = new Concept();
+    withAnswerList.getAttributes().put(LoincConstants.ATTR_ANSWER_LIST_ID, "LL1-1");
+    assertTrue(LoincQuestionnaireHelper.resolveMemberRepeats(rel, withAnswerList));
 
     rel.getAttributes().put(LoincConstants.ATTR_ANSWER_CARDINALITY, "0..1");
     assertFalse(LoincQuestionnaireHelper.resolveMemberRepeats(rel));
@@ -236,6 +293,15 @@ public class LoincQuestionnaireHelperUnitTest {
     final ConceptRelationship rel = new ConceptRelationship();
     rel.getAttributes().put(LoincConstants.ATTR_OBSERVATION_REQUIRED_IN_PANEL, "R");
     assertTrue(LoincQuestionnaireHelper.resolveMemberRequired(rel));
+
+    final ConceptRelationship ra = new ConceptRelationship();
+    ra.getAttributes().put(LoincConstants.ATTR_OBSERVATION_REQUIRED_IN_PANEL, "R-a");
+    assertTrue(LoincQuestionnaireHelper.resolveMemberRequired(ra));
+
+    // PAF lowercase r (unique in 2.82) is not required — do not uppercase to R.
+    final ConceptRelationship lowercaseR = new ConceptRelationship();
+    lowercaseR.getAttributes().put(LoincConstants.ATTR_OBSERVATION_REQUIRED_IN_PANEL, "r");
+    assertFalse(LoincQuestionnaireHelper.resolveMemberRequired(lowercaseR));
   }
 
   /**
@@ -263,6 +329,22 @@ public class LoincQuestionnaireHelperUnitTest {
     final ConceptRelationship rel = new ConceptRelationship();
     rel.getAttributes().put(LoincConstants.ATTR_QUESTION_CARDINALITY, "0..*");
     assertTrue(LoincQuestionnaireHelper.resolveMemberRepeats(rel));
+  }
+
+  /**
+   * QuestionCardinality 1..n still repeats when AnswerCardinality is 1..1.
+   */
+  @Test
+  public void testResolveMemberRepeatsQuestionCardinalityNotBlockedByAnswerCardinality() {
+    final ConceptRelationship rel = new ConceptRelationship();
+    rel.getAttributes().put(LoincConstants.ATTR_ANSWER_CARDINALITY, "1..1");
+    rel.getAttributes().put(LoincConstants.ATTR_QUESTION_CARDINALITY, "1..n");
+    assertTrue(LoincQuestionnaireHelper.resolveMemberRepeats(rel));
+
+    // Multi AnswerCardinality without answer-list does not force repeats.
+    rel.getAttributes().put(LoincConstants.ATTR_ANSWER_CARDINALITY, "0..4");
+    rel.getAttributes().remove(LoincConstants.ATTR_QUESTION_CARDINALITY);
+    assertFalse(LoincQuestionnaireHelper.resolveMemberRepeats(rel));
   }
 
   /**
@@ -397,6 +479,59 @@ public class LoincQuestionnaireHelperUnitTest {
     assertTrue(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(emotional, "58880"));
     // Standalone nest root occurrence → leaf
     assertFalse(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(emotional, "60836"));
+
+    // HIV NRTI genotype/phenotype: leaf under one form copy, expand under the other
+    final Concept nrtiGeno = new Concept();
+    nrtiGeno.setCode("49658-8");
+    nrtiGeno.getAttributes().put("PanelType", "Panel");
+    assertFalse(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(nrtiGeno, "11844"));
+    assertTrue(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(nrtiGeno, "19232"));
+
+    final Concept nrtiPheno = new Concept();
+    nrtiPheno.setCode("49663-8");
+    nrtiPheno.getAttributes().put("PanelType", "Panel");
+    assertFalse(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(nrtiPheno, "11875"));
+    assertTrue(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(nrtiPheno, "19263"));
+
+    // Genetic analysis / NB panels: gold leaf-embeds under parent form linkIds
+    final Concept geneticSummary = new Concept();
+    geneticSummary.setCode("55232-3");
+    geneticSummary.getAttributes().put("PanelType", "Panel");
+    assertTrue(LoincQuestionnaireHelper.isLeafEmbeddedFormOccurrence("55232-3", "30074"));
+    assertFalse(LoincQuestionnaireHelper.isLeafEmbeddedFormOccurrence("55232-3", "99999"));
+    assertFalse(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(geneticSummary, "30074"));
+    assertTrue(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(geneticSummary, "99999"));
+
+    final Concept mps2Nb = new Concept();
+    mps2Nb.setCode("104188-8");
+    mps2Nb.getAttributes().put("PanelType", "Panel");
+    assertTrue(LoincQuestionnaireHelper.isLeafEmbeddedFormOccurrence("104188-8", "144301"));
+    assertFalse(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(mps2Nb, "144301"));
+    assertTrue(LoincQuestionnaireHelper.shouldExpandAsQuestionnaireGroup(mps2Nb, "99999"));
+
+    // All cycle string-vs-group leaf-embed pairs (panelCode → member linkId)
+    final String[][] leafEmbedPairs = {
+        {"104188-8", "144301"}, {"111825-6", "152212"}, {"54078-1", "27712"},
+        {"54076-5", "27729"}, {"54081-5", "27750"}, {"54082-3", "27761"},
+        {"55232-3", "30074"}, {"55207-5", "30117"}, {"51956-1", "70576"},
+        {"62355-3", "47376"}, {"62367-8", "47385"}, {"62343-9", "47402"},
+        {"62386-8", "47490"}, {"70495-7", "58645"}, {"70499-9", "58676"},
+        {"70498-1", "58677"}, {"70503-8", "58663"}, {"70497-3", "58664"},
+        {"70496-5", "58665"}, {"70571-5", "60059"}, {"70585-5", "60073"},
+        {"70606-9", "60094"}, {"70624-2", "60113"}, {"70635-8", "60212"},
+        {"70636-6", "60258"}, {"70637-4", "60263"}, {"70649-9", "60319"},
+        {"70655-6", "60388"}, {"74078-7", "66162"}, {"76463-9", "72153"},
+        {"76456-3", "72154"}, {"76455-5", "72155"}, {"76454-8", "72156"},
+        {"76453-0", "72157"}, {"76452-2", "72158"}, {"77638-5", "73318"},
+        {"77637-7", "73319"}, {"92252-6", "110869"}, {"94128-6", "118684"},
+        {"94391-0", "120323"}, {"95800-9", "122386"},
+    };
+    for (final String[] pair : leafEmbedPairs) {
+      assertTrue(LoincQuestionnaireHelper.isLeafEmbeddedFormOccurrence(pair[0], pair[1]),
+          "expected leaf-embed " + pair[0] + "@" + pair[1]);
+      assertFalse(LoincQuestionnaireHelper.isLeafEmbeddedFormOccurrence(pair[0], "0"),
+          "expected non-map linkId not leaf-embed for " + pair[0]);
+    }
   }
 
   /**
@@ -448,17 +583,39 @@ public class LoincQuestionnaireHelperUnitTest {
   }
 
   /**
-   * Test build questionnaire copyright base only without search service.
-   *
-   * @throws Exception the exception
+   * Test build questionnaire copyright base only without external notices.
    */
   @Test
-  public void testBuildQuestionnaireCopyrightBaseOnlyWithoutSearchService() throws Exception {
+  public void testBuildQuestionnaireCopyrightBaseOnlyWithoutSearchService() {
     final String base = "LOINC base copyright";
-    final String result = LoincQuestionnaireHelper.buildQuestionnaireCopyright(base,
-        java.util.List.of("44249-1"), null, "LOINC", "Regenstrief Institute, Inc.", "2.81");
+    final String result = LoincQuestionnaireHelper.buildQuestionnaireCopyright(base, null);
 
     assertEquals(base, result);
+  }
+
+  /**
+   * Test build questionnaire copyright appends collected external notices.
+   */
+  @Test
+  public void testBuildQuestionnaireCopyrightWithExternalNotices() {
+    assertEquals("LOINC base\r\nCopyright © Pfizer Inc. All rights reserved.",
+        LoincQuestionnaireHelper.buildQuestionnaireCopyright("LOINC base",
+            java.util.List.of("Copyright © Pfizer Inc. All rights reserved.")));
+  }
+
+  /**
+   * Test AdditionalCopyright from a form-scoped panel edge is collected.
+   */
+  @Test
+  public void testAddAdditionalCopyrightNoticeFromRelationship() {
+    final ConceptRelationship rel = memberRel("113152", "93025-5");
+    rel.getAttributes().put(LoincConstants.ATTR_ADDITIONAL_COPYRIGHT,
+        "© 2019. National Association of Community Health Centers, Inc.");
+    final java.util.Set<String> notices = new java.util.LinkedHashSet<>();
+    LoincQuestionnaireHelper.addAdditionalCopyrightNotice(rel, notices);
+    assertEquals(
+        java.util.Set.of("© 2019. National Association of Community Health Centers, Inc."),
+        notices);
   }
 
   /**
@@ -663,6 +820,103 @@ public class LoincQuestionnaireHelperUnitTest {
   }
 
   /**
+   * Leaf-embedded survey panel (empty SHORTNAME) uses full FullySpecifiedName;
+   * DisplayNameForForm does not override.
+   */
+  @Test
+  public void testResolveQuestionnaireItemDisplayNameLeafEmbedUsesFullFsn() {
+    final String fsnValue =
+        "Confusion Assessment Method (CAM):-:Pt:^Patient:-:Observed.CAM.CARE";
+    final Concept concept = camConcept(fsnValue, "Confusion Assessment Method (CAM)");
+
+    final ConceptRelationship leafRel = new ConceptRelationship();
+    leafRel.getAttributes().put(LoincConstants.ATTR_REL_ID, "32622");
+    leafRel.getAttributes().put(LoincConstants.ATTR_DISPLAY_NAME_FOR_FORM,
+        "Should not win over FSN when leaf-embedded");
+
+    assertEquals(fsnValue, LoincQuestionnaireHelper.resolveQuestionnaireItemDisplayName(leafRel,
+        concept, null, "32622"));
+    assertEquals(fsnValue,
+        LoincQuestionnaireHelper.resolveQuestionnaireItemDisplayName(leafRel, concept, null));
+  }
+
+  /**
+   * Leaf-embedded lab panel with SHORTNAME uses SHORTNAME (not full FSN).
+   */
+  @Test
+  public void testResolveQuestionnaireItemDisplayNameLeafEmbedPrefersShortName() {
+    final Concept concept = new Concept();
+    concept.setCode("24358-4");
+    concept.getAttributes().put(LoincConstants.ATTR_SHORTNAME, "CBC WO Platelets Bld");
+    final Term fsn = new Term();
+    fsn.setActive(true);
+    fsn.setType(LoincConstants.TERM_TYPE_FULLY_SPECIFIED_NAME);
+    fsn.setName("Hemogram WO platelets panel:-:Pt:Bld:Qn");
+    fsn.getLocaleMap().put("en-US", true);
+    concept.getTerms().add(fsn);
+
+    final ConceptRelationship leafRel = new ConceptRelationship();
+    leafRel.getAttributes().put(LoincConstants.ATTR_REL_ID, "10793");
+    leafRel.getAttributes().put(LoincConstants.ATTR_DISPLAY_NAME_FOR_FORM, "Should not win");
+
+    assertEquals("CBC WO Platelets Bld", LoincQuestionnaireHelper
+        .resolveQuestionnaireItemDisplayName(leafRel, concept, null, "10793"));
+  }
+
+  /**
+   * Same panel under a non-leaf-embed linkId keeps DisplayNameForForm / LCN stack.
+   */
+  @Test
+  public void testResolveQuestionnaireItemDisplayNameNonLeafKeepsFormDisplay() {
+    final String fsnValue =
+        "Confusion Assessment Method (CAM):-:Pt:^Patient:-:Observed.CAM.CARE";
+    final Concept concept = camConcept(fsnValue, "Confusion Assessment Method (CAM)");
+
+    final ConceptRelationship otherRel = new ConceptRelationship();
+    otherRel.getAttributes().put(LoincConstants.ATTR_REL_ID, "99999");
+    otherRel.getAttributes().put(LoincConstants.ATTR_DISPLAY_NAME_FOR_FORM, "CAM form label");
+
+    assertEquals("CAM form label", LoincQuestionnaireHelper
+        .resolveQuestionnaireItemDisplayName(otherRel, concept, null, "99999"));
+  }
+
+  /**
+   * Non-leaf-embed without DNF uses LCN, not full FSN.
+   */
+  @Test
+  public void testResolveQuestionnaireItemDisplayNameNonLeafUsesLcnNotFullFsn() {
+    final String fsnValue =
+        "Confusion Assessment Method (CAM):-:Pt:^Patient:-:Observed.CAM.CARE";
+    final String lcn = "Confusion Assessment Method (CAM)";
+    final Concept concept = camConcept(fsnValue, lcn);
+
+    final ConceptRelationship otherRel = new ConceptRelationship();
+    otherRel.getAttributes().put(LoincConstants.ATTR_REL_ID, "99999");
+
+    assertEquals(lcn, LoincQuestionnaireHelper.resolveQuestionnaireItemDisplayName(otherRel,
+        concept, null, "99999"));
+  }
+
+  private static Concept camConcept(final String fsnValue, final String lcn) {
+    final Concept concept = new Concept();
+    concept.setCode("52495-9");
+    concept.getAttributes().put(LoincConstants.ATTR_LONG_COMMON_NAME, lcn);
+    final Term fsn = new Term();
+    fsn.setActive(true);
+    fsn.setType(LoincConstants.TERM_TYPE_FULLY_SPECIFIED_NAME);
+    fsn.setName(fsnValue);
+    fsn.getLocaleMap().put("en-US", true);
+    concept.getTerms().add(fsn);
+    final Term lcnTerm = new Term();
+    lcnTerm.setActive(true);
+    lcnTerm.setType(LoincConstants.TERM_TYPE_LONG_COMMON_NAME);
+    lcnTerm.setName(lcn);
+    lcnTerm.getLocaleMap().put("en-US", true);
+    concept.getTerms().add(lcnTerm);
+    return concept;
+  }
+
+  /**
    * SURVEY_QUEST_TEXT is preferred over SHORTNAME for PhenX questionnaire
    * items.
    */
@@ -743,7 +997,7 @@ public class LoincQuestionnaireHelperUnitTest {
   }
 
   /**
-   * LOINC 2.x colon FSN yields the component axis when survey text is absent.
+   * Colon FSN yields the component axis when survey text is absent.
    */
   @Test
   public void testResolveLoincDisplayNameFromColonFsnComponent() {
@@ -757,6 +1011,70 @@ public class LoincQuestionnaireHelperUnitTest {
     concept.getTerms().add(fsn);
 
     assertEquals("Route", LoincQuestionnaireHelper.resolveLoincDisplayName(concept, null));
+  }
+
+  /**
+   * Empty ApplicableContext binding wins over foreign-context and link-type rows.
+   */
+  @Test
+  public void testSelectAnswerListFromLinksPrefersEmptyApplicableContext() {
+    final ConceptRelationship foreign = answerListLink("LL653-7", "NORMATIVE", "54682-0");
+    final ConceptRelationship empty = answerListLink("LL4960-2", "EXAMPLE", null);
+    final ConceptRelationship contextMatch = answerListLink("LL999-9", "NORMATIVE", "54644-0");
+
+    assertEquals("LL4960-2", LoincQuestionnaireHelper
+        .selectAnswerListFromLinks(List.of(foreign, empty, contextMatch)));
+  }
+
+  /**
+   * Without an empty ApplicableContext row, no LL is selected from links.
+   */
+  @Test
+  public void testSelectAnswerListFromLinksReturnsNullWithoutEmptyContext() {
+    final ConceptRelationship foreign = answerListLink("LL653-7", "NORMATIVE", "54682-0");
+    final ConceptRelationship other = answerListLink("LL999-9", "PREFERRED", "54644-0");
+
+    assertNull(LoincQuestionnaireHelper.selectAnswerListFromLinks(List.of(foreign, other)));
+    assertNull(LoincQuestionnaireHelper.selectAnswerListFromLinks(List.of()));
+    assertNull(LoincQuestionnaireHelper.selectAnswerListFromLinks(null));
+  }
+
+  /**
+   * Override on the member edge wins over concept answer-list properties.
+   */
+  @Test
+  public void testResolveAnswerListCodePrefersOverride() {
+    final ConceptRelationship member = memberRel("1", "54644-0");
+    member.getAttributes().put(LoincConstants.ATTR_ANSWER_LIST_ID_OVERRIDE, "LL111-1");
+
+    final Concept concept = new Concept();
+    concept.setCode("54644-0");
+    concept.getAttributes().put(LoincConstants.ATTR_ANSWER_LIST_ID, "LL222-2");
+
+    assertEquals("LL111-1", LoincQuestionnaireHelper.resolveAnswerListCode(member, concept,
+        "54682-0", null, null));
+  }
+
+  /**
+   * Builds an answer-list relationship with link type and optional context.
+   *
+   * @param llCode answer list code
+   * @param linkType AnswerListLinkType
+   * @param applicableContext ApplicableContext or null
+   * @return relationship
+   */
+  private static ConceptRelationship answerListLink(final String llCode, final String linkType,
+    final String applicableContext) {
+    final ConceptRelationship rel = new ConceptRelationship();
+    rel.setAdditionalType(LoincConstants.LOINC_REL_ANSWER_LIST_LINK);
+    rel.setTo(new ConceptRef(llCode, null));
+    if (linkType != null) {
+      rel.getAttributes().put(LoincConstants.ATTR_ANSWER_LIST_LINK_TYPE, linkType);
+    }
+    if (applicableContext != null) {
+      rel.getAttributes().put(LoincConstants.ATTR_APPLICABLE_CONTEXT, applicableContext);
+    }
+    return rel;
   }
 
 }

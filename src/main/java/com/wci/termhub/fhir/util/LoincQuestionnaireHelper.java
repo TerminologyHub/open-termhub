@@ -15,7 +15,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,9 +25,9 @@ import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
-import com.wci.termhub.model.Term;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.StringUtility;
@@ -54,7 +53,7 @@ public final class LoincQuestionnaireHelper {
    * ParentId blocks in PanelsAndForms / CodeSystem; gold picks the nest instance's {@code ID}s
    * as linkIds.
    *
-   * <p>Verified offline against fhir.loinc.org 2.82: each entry is the ParentId whose member
+   * <p>Verified offline against fhir.loinc.org: each entry is the ParentId whose member
    * {@code ID}s match gold linkIds. Preferring "any non-self ParentId" regresses panels that
    * correctly keep the self-ref root. No CodeSystem-only discriminator found for the rest.
    */
@@ -71,16 +70,25 @@ public final class LoincQuestionnaireHelper {
           Map.entry("34564-5", "27985"),
           Map.entry("42360-8", "25494"),
           Map.entry("49657-0", "19243"),
+          Map.entry("49658-8", "11844"),
           Map.entry("49661-2", "19275"),
           Map.entry("49662-0", "19271"),
+          Map.entry("49663-8", "11875"),
           Map.entry("49664-6", "19262"),
           Map.entry("49665-3", "11873"),
           Map.entry("50556-0", "25085"),
           Map.entry("50738-4", "20064"),
+          Map.entry("51956-1", "70576"),
           Map.entry("52491-8", "97929"),
           Map.entry("52495-9", "32622"),
           Map.entry("53261-4", "138179"),
+          Map.entry("54076-5", "27729"),
+          Map.entry("54078-1", "27712"),
           Map.entry("54079-9", "138364"),
+          Map.entry("54081-5", "27750"),
+          Map.entry("54082-3", "27761"),
+          Map.entry("55207-5", "30117"),
+          Map.entry("55232-3", "30074"),
           Map.entry("58406-0", "38642"),
           Map.entry("60342-3", "128969"),
           Map.entry("60343-1", "125242"),
@@ -91,20 +99,54 @@ public final class LoincQuestionnaireHelper {
           Map.entry("62298-5", "47170"),
           Map.entry("62333-0", "138433"),
           Map.entry("62335-5", "47172"),
+          Map.entry("62343-9", "47402"),
+          Map.entry("62355-3", "47376"),
+          Map.entry("62367-8", "47385"),
+          Map.entry("62386-8", "47490"),
           Map.entry("69738-3", "57552"),
+          Map.entry("70495-7", "58645"),
+          Map.entry("70496-5", "58665"),
+          Map.entry("70497-3", "58664"),
+          Map.entry("70498-1", "58677"),
+          Map.entry("70499-9", "58676"),
           Map.entry("70500-4", "60836"),
           Map.entry("70501-2", "60469"),
+          Map.entry("70503-8", "58663"),
+          Map.entry("70571-5", "60059"),
+          Map.entry("70585-5", "60073"),
+          Map.entry("70606-9", "60094"),
+          Map.entry("70624-2", "60113"),
+          Map.entry("70635-8", "60212"),
+          Map.entry("70636-6", "60258"),
+          Map.entry("70637-4", "60263"),
+          Map.entry("70649-9", "60319"),
+          Map.entry("70655-6", "60388"),
           Map.entry("72110-0", "124858"),
+          Map.entry("74078-7", "66162"),
+          Map.entry("76452-2", "72158"),
+          Map.entry("76453-0", "72157"),
+          Map.entry("76454-8", "72156"),
+          Map.entry("76455-5", "72155"),
+          Map.entry("76456-3", "72154"),
+          Map.entry("76463-9", "72153"),
+          Map.entry("77637-7", "73319"),
+          Map.entry("77638-5", "73318"),
           Map.entry("79563-3", "138421"),
           Map.entry("82307-0", "110886"),
           Map.entry("85267-3", "138445"),
           Map.entry("88368-6", "112681"),
           Map.entry("92005-8", "138440"),
+          Map.entry("92252-6", "110869"),
           Map.entry("93187-3", "113410"),
           Map.entry("93784-7", "118268"),
+          Map.entry("94128-6", "118684"),
+          Map.entry("94391-0", "120323"),
           Map.entry("94537-8", "126140"),
           Map.entry("95249-9", "147022"),
-          Map.entry("95619-3", "146259"));
+          Map.entry("95619-3", "146259"),
+          Map.entry("95800-9", "122386"),
+          Map.entry("104188-8", "144301"),
+          Map.entry("111825-6", "152212"));
 
   /**
    * Upper bound above parent linkId when scoping shared organizer member edges.
@@ -488,11 +530,13 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Whether a panel member question repeats. Uses {@code AnswerCardinality}, then
-   * {@code QuestionCardinality}.
-   * {@code AnswerCardinality} with {@code *} means repeats only when the question
-   * has an answer-list (multi-select); without an answer-list that {@code *} is
-   * ignored.
+   * Whether a panel member question repeats.
+   *
+   * <p>{@code AnswerCardinality} with multi max ({@code *} or {@code >1}) means
+   * {@code item.repeats} only when the question has an answer-list (multi-select).
+   * Without an answer-list that multi answer capacity is ignored (fhir.loinc.org).
+   * {@code QuestionCardinality} then decides repeats (e.g. {@code 1..n} with
+   * {@code AnswerCardinality} {@code 1..1}).
    *
    * @param rel the member or form_placement relationship
    * @param memberConcept the question concept (optional; needed for answer-list gate)
@@ -500,17 +544,25 @@ public final class LoincQuestionnaireHelper {
    */
   public static boolean resolveMemberRepeats(final ConceptRelationship rel,
     final Concept memberConcept) {
-    String cardinality = getRelationshipAttribute(rel, LoincConstants.ATTR_ANSWER_CARDINALITY);
-    if (!StringUtility.isEmpty(cardinality) && cardinality.contains("*")) {
-      if (hasAnswerList(rel, memberConcept)) {
-        return true;
-      }
-      // No answer-list: * is multi-answer capacity, not item.repeats.
-      cardinality = null;
+    final String answerCardinality =
+        getRelationshipAttribute(rel, LoincConstants.ATTR_ANSWER_CARDINALITY);
+    if (!StringUtility.isEmpty(answerCardinality) && isMultiCardinality(answerCardinality)
+        && hasAnswerList(rel, memberConcept)) {
+      return true;
     }
-    if (StringUtility.isEmpty(cardinality)) {
-      cardinality = getRelationshipAttribute(rel, LoincConstants.ATTR_QUESTION_CARDINALITY);
-    }
+    final String questionCardinality =
+        getRelationshipAttribute(rel, LoincConstants.ATTR_QUESTION_CARDINALITY);
+    return !StringUtility.isEmpty(questionCardinality) && isMultiCardinality(questionCardinality);
+  }
+
+  /**
+   * Whether a LOINC cardinality string allows more than one (e.g. {@code 0..*},
+   * {@code 1..n}, {@code 0..4}).
+   *
+   * @param cardinality AnswerCardinality or QuestionCardinality value
+   * @return true when max is unbounded or greater than 1
+   */
+  private static boolean isMultiCardinality(final String cardinality) {
     if (StringUtility.isEmpty(cardinality)) {
       return false;
     }
@@ -519,18 +571,19 @@ public final class LoincQuestionnaireHelper {
       return true;
     }
     final int rangeIdx = normalized.indexOf("..");
-    if (rangeIdx >= 0) {
-      final String maxPart = normalized.substring(rangeIdx + 2).trim();
-      if ("1".equals(maxPart)) {
-        return false;
-      }
-      try {
-        return Integer.parseInt(maxPart) > 1;
-      } catch (final NumberFormatException e) {
-        return true;
-      }
+    if (rangeIdx < 0) {
+      return false;
     }
-    return false;
+    final String maxPart = normalized.substring(rangeIdx + 2).trim();
+    if ("1".equals(maxPart)) {
+      return false;
+    }
+    try {
+      return Integer.parseInt(maxPart) > 1;
+    } catch (final NumberFormatException e) {
+      // e.g. 1..n
+      return true;
+    }
   }
 
   /**
@@ -576,9 +629,10 @@ public final class LoincQuestionnaireHelper {
   /**
    * Whether a panel member is required.
    *
-   * <p>{@code ObservationRequiredInPanel} {@code R}/{@code R-a} are required;
-   * {@code Rflx}/{@code Rflx-a} are not. When that attribute is absent or optional,
-   * {@code AnswerCardinality} {@code 1..1} also means required (fhir.loinc.org).
+   * <p>{@code ObservationRequiredInPanel} {@code R}/{@code R-a} are required
+   * (case-sensitive; lowercase {@code r} is not). {@code Rflx}/{@code Rflx-a} are
+   * not. When that attribute is absent or optional, {@code AnswerCardinality}
+   * {@code 1..1} also means required (fhir.loinc.org).
    *
    * @param rel the member or form_placement relationship
    * @return true when required in panel
@@ -587,8 +641,8 @@ public final class LoincQuestionnaireHelper {
     final String required = getRelationshipAttribute(rel,
         LoincConstants.ATTR_OBSERVATION_REQUIRED_IN_PANEL);
     if (required != null) {
-      final String normalized = required.trim().toUpperCase(Locale.ENGLISH);
-      if ("R".equals(normalized) || "R-A".equals(normalized)) {
+      final String trimmed = required.trim();
+      if ("R".equals(trimmed) || "R-a".equals(trimmed)) {
         return true;
       }
     }
@@ -633,8 +687,7 @@ public final class LoincQuestionnaireHelper {
         if (coding == null || coding.getPropertyCode() == null) {
           continue;
         }
-        if ("SCALE_TYP".equalsIgnoreCase(coding.getPropertyCode())
-            || LoincConstants.ATTR_SCALE_TYP.equalsIgnoreCase(coding.getPropertyCode())) {
+        if (LoincConstants.ATTR_SCALE_TYP.equalsIgnoreCase(coding.getPropertyCode())) {
           if (!StringUtility.isEmpty(coding.getValueDisplay())
               && !"-".equals(coding.getValueDisplay().trim())) {
             return coding.getValueDisplay().trim();
@@ -671,6 +724,7 @@ public final class LoincQuestionnaireHelper {
 
   /**
    * Display text for a questionnaire item: form label, then LOINC short/component names.
+   * Leaf-embedded panel occurrences prefer SHORTNAME, else full FullySpecifiedName.
    *
    * @param memberRel the member relationship
    * @param memberConcept the member concept
@@ -679,6 +733,34 @@ public final class LoincQuestionnaireHelper {
    */
   public static String resolveQuestionnaireItemDisplayName(final ConceptRelationship memberRel,
     final Concept memberConcept, final ConceptRef memberRef) {
+    return resolveQuestionnaireItemDisplayName(memberRel, memberConcept, memberRef,
+        resolveMemberLinkId(memberRel, memberRef));
+  }
+
+  /**
+   * Display text for a questionnaire item, using {@code memberLinkId} for leaf-embed detection.
+   * Leaf-embedded panels: SHORTNAME when present (lab panels), else full FullySpecifiedName
+   * (survey panels with empty SHORTNAME). DisplayNameForForm does not override either.
+   *
+   * @param memberRel the member relationship
+   * @param memberConcept the member concept
+   * @param memberRef the member concept ref
+   * @param memberLinkId member edge linkId
+   * @return display text
+   */
+  public static String resolveQuestionnaireItemDisplayName(final ConceptRelationship memberRel,
+    final Concept memberConcept, final ConceptRef memberRef, final String memberLinkId) {
+    if (memberConcept != null
+        && isLeafEmbeddedFormOccurrence(memberConcept.getCode(), memberLinkId)) {
+      final String shortName = resolveShortName(memberConcept);
+      if (!StringUtility.isEmpty(shortName)) {
+        return shortName;
+      }
+      final String fsn = resolveFullySpecifiedName(memberConcept);
+      if (!StringUtility.isEmpty(fsn)) {
+        return fsn;
+      }
+    }
     final String formDisplay = resolveFormDisplayName(memberRel);
     if (!StringUtility.isEmpty(formDisplay)) {
       return formDisplay;
@@ -738,22 +820,9 @@ public final class LoincQuestionnaireHelper {
         return surveyText.trim();
       }
     }
-    if (concept != null && concept.getAttributes() != null) {
-      final String shortName = concept.getAttributes().get(LoincConstants.ATTR_SHORTNAME);
-      if (!StringUtility.isEmpty(shortName)) {
-        return shortName;
-      }
-    }
-    if (concept != null) {
-      for (final Term term : concept.getTerms()) {
-        if (!term.getActive() || StringUtility.isEmpty(term.getName())
-            || !LoincConstants.TERM_TYPE_SHORTNAME.equals(term.getType())) {
-          continue;
-        }
-        if (term.getLocaleMap() != null && term.getLocaleMap().containsKey("en-US")) {
-          return term.getName();
-        }
-      }
+    final String shortName = resolveShortName(concept);
+    if (!StringUtility.isEmpty(shortName)) {
+      return shortName;
     }
     final String fsnComponent = resolveFullySpecifiedNameComponent(concept);
     if (!StringUtility.isEmpty(fsnComponent)) {
@@ -774,6 +843,37 @@ public final class LoincQuestionnaireHelper {
     if (fallback != null && !StringUtility.isEmpty(fallback.getName())
         && !looksLikeFullySpecifiedName(fallback.getName())) {
       return fallback.getName();
+    }
+    return null;
+  }
+
+  /**
+   * Reads SHORTNAME from concept attributes or en-US designations.
+   *
+   * @param concept the concept
+   * @return short name or null
+   */
+  private static String resolveShortName(final Concept concept) {
+    if (concept == null) {
+      return null;
+    }
+    if (concept.getAttributes() != null) {
+      final String shortName = concept.getAttributes().get(LoincConstants.ATTR_SHORTNAME);
+      if (!StringUtility.isEmpty(shortName)) {
+        return shortName.trim();
+      }
+    }
+    if (concept.getTerms() == null) {
+      return null;
+    }
+    for (final Term term : concept.getTerms()) {
+      if (!term.getActive() || StringUtility.isEmpty(term.getName())
+          || !LoincConstants.TERM_TYPE_SHORTNAME.equals(term.getType())) {
+        continue;
+      }
+      if (term.getLocaleMap() != null && term.getLocaleMap().containsKey("en-US")) {
+        return term.getName().trim();
+      }
     }
     return null;
   }
@@ -808,6 +908,33 @@ public final class LoincQuestionnaireHelper {
       }
       if (fallback == null) {
         fallback = term.getName().trim();
+      }
+    }
+    return fallback;
+  }
+
+  /**
+   * Reads the full en-US {@code FullySpecifiedName} designation (no axis stripping).
+   *
+   * @param concept the concept
+   * @return full FSN text or null
+   */
+  static String resolveFullySpecifiedName(final Concept concept) {
+    if (concept == null || concept.getTerms() == null) {
+      return null;
+    }
+    String fallback = null;
+    for (final Term term : concept.getTerms()) {
+      if (!term.getActive() || StringUtility.isEmpty(term.getName())
+          || !LoincConstants.TERM_TYPE_FULLY_SPECIFIED_NAME.equals(term.getType())) {
+        continue;
+      }
+      final String name = term.getName().trim();
+      if (term.getLocaleMap() != null && term.getLocaleMap().containsKey("en-US")) {
+        return name;
+      }
+      if (fallback == null) {
+        fallback = name;
       }
     }
     return fallback;
@@ -1002,12 +1129,13 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Resolves the answer list for a questionnaire item using form overrides and
-   * {@code LoincAnswerListLink} metadata when available.
+   * Resolves the answer list for a questionnaire item: {@code AnswerListIdOverride} on the member
+   * edge, else empty-{@code ApplicableContext} {@code LoincAnswerListLink}, else concept
+   * answer-list properties.
    *
    * @param memberRel the member or form_placement edge (optional)
    * @param concept the question concept
-   * @param questionnaireLoinc the questionnaire LOINC code (optional)
+   * @param questionnaireLoinc unused; retained for call-site compatibility
    * @param searchService the search service (optional)
    * @param terminology the terminology version scope (required for link lookup)
    * @return LL code or null
@@ -1026,8 +1154,8 @@ public final class LoincQuestionnaireHelper {
     if (concept != null && searchService != null && terminology != null
         && concept.getCode() != null) {
       try {
-        final String fromLinks = resolveAnswerListFromLinks(searchService, terminology,
-            concept.getCode(), questionnaireLoinc);
+        final String fromLinks =
+            resolveAnswerListFromLinks(searchService, terminology, concept.getCode());
         if (!StringUtility.isEmpty(fromLinks)) {
           return fromLinks;
         }
@@ -1037,8 +1165,7 @@ public final class LoincQuestionnaireHelper {
       }
     }
     if (concept != null && concept.getFhirPropertyCodings() != null) {
-      // fhir.loinc.org uses the first (normative) answer-list property; any later
-      // answer-list codings are example lists and must not override it.
+      // Prefer the first answer-list property; later codings are typically EXAMPLE lists.
       for (final ConceptPropertyValueCoding coding : concept.getFhirPropertyCodings()) {
         if (coding != null && "answer-list".equalsIgnoreCase(coding.getPropertyCode())
             && !StringUtility.isEmpty(coding.getValueCode())) {
@@ -1056,24 +1183,17 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Selects an answer list from indexed {@code answer-list} relationships that carry
-   * {@code AnswerListLinkType} / {@code ApplicableContext}.
-   *
-   * <p>
-   * Cascade (aligned to fhir.loinc.org against LOINC 2.78): context match, then EXAMPLE
-   * empty, then foreign (non-empty context) NORMATIVE/PREFERRED by majority LL, then
-   * empty-context NORMATIVE/PREFERRED, then first link.
+   * Loads indexed {@code answer-list} links for a question LOINC and selects per
+   * {@link #selectAnswerListFromLinks}.
    *
    * @param searchService the search service
    * @param terminology the terminology (version scope)
    * @param loincCode the question LOINC code
-   * @param questionnaireLoinc the questionnaire LOINC code
    * @return LL code or null
    * @throws Exception the exception
    */
   private static String resolveAnswerListFromLinks(final EntityRepositoryService searchService,
-    final Terminology terminology, final String loincCode, final String questionnaireLoinc)
-    throws Exception {
+    final Terminology terminology, final String loincCode) throws Exception {
 
     final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
         terminology.getPublisher(), terminology.getVersion());
@@ -1083,104 +1203,43 @@ public final class LoincQuestionnaireHelper {
             LoincConstants.LOINC_REL_ANSWER_LIST_LINK));
     final List<ConceptRelationship> links =
         searchService.findAll(query, null, ConceptRelationship.class);
+    return selectAnswerListFromLinks(links);
+  }
+
+  /**
+   * Selects an answer list from {@code LoincAnswerListLink} rows: the binding with an empty
+   * {@code ApplicableContext}. When no empty-context row exists, returns null (callers may fall
+   * back to concept properties). Link type and non-empty context are ignored for selection.
+   *
+   * @param links answer-list relationships for one question LOINC
+   * @return LL code or null
+   */
+  public static String selectAnswerListFromLinks(final List<ConceptRelationship> links) {
     if (links == null || links.isEmpty()) {
       return null;
     }
-    ConceptRelationship preferredMatch = null;
-    ConceptRelationship otherMatch = null;
-    ConceptRelationship normativeOpen = null;
-    ConceptRelationship preferredOpen = null;
-    ConceptRelationship exampleOpen = null;
-    // LL code -> row count (insertion order preserved for ties)
-    final Map<String, Integer> foreignNormativeCount = new LinkedHashMap<>();
-    final Map<String, Integer> foreignPreferredCount = new LinkedHashMap<>();
+    String emptyContextLl = null;
     for (final ConceptRelationship link : links) {
       if (link.getTo() == null || StringUtility.isEmpty(link.getTo().getCode())) {
         continue;
       }
-      final String llCode = link.getTo().getCode();
-      final String linkType =
-          getRelationshipAttribute(link, LoincConstants.ATTR_ANSWER_LIST_LINK_TYPE);
       final String context = getRelationshipAttribute(link, LoincConstants.ATTR_APPLICABLE_CONTEXT);
-      final boolean contextEmpty = StringUtility.isEmpty(context);
-      final boolean contextMatches = !StringUtility.isEmpty(questionnaireLoinc)
-          && questionnaireLoinc.equals(context);
-      if ("NORMATIVE".equalsIgnoreCase(linkType)) {
-        if (contextMatches) {
-          return llCode;
-        }
-        if (contextEmpty) {
-          if (normativeOpen == null) {
-            normativeOpen = link;
-          }
-        } else {
-          foreignNormativeCount.merge(llCode, 1, Integer::sum);
-        }
-      } else if ("PREFERRED".equalsIgnoreCase(linkType)) {
-        if (contextMatches && preferredMatch == null) {
-          preferredMatch = link;
-        } else if (contextEmpty) {
-          if (preferredOpen == null) {
-            preferredOpen = link;
-          }
-        } else {
-          foreignPreferredCount.merge(llCode, 1, Integer::sum);
-        }
-      } else if ("EXAMPLE".equalsIgnoreCase(linkType) && contextEmpty && exampleOpen == null) {
-        exampleOpen = link;
-      } else if (otherMatch == null && contextMatches) {
-        otherMatch = link;
+      if (!StringUtility.isEmpty(context)) {
+        continue;
+      }
+      final String llCode = link.getTo().getCode().trim();
+      if (StringUtility.isEmpty(llCode)) {
+        continue;
+      }
+      if (emptyContextLl == null) {
+        emptyContextLl = llCode;
+      } else if (!emptyContextLl.equals(llCode)) {
+        LOGGER.warn("multiple distinct empty-context answer lists for links; using {}",
+            emptyContextLl);
+        break;
       }
     }
-    if (preferredMatch != null) {
-      return preferredMatch.getTo().getCode();
-    }
-    if (otherMatch != null) {
-      return otherMatch.getTo().getCode();
-    }
-    // EXAMPLE empty before foreign NORMATIVE (e.g. 39111-0 / LL5065-9).
-    if (exampleOpen != null) {
-      return exampleOpen.getTo().getCode();
-    }
-    // Foreign NORMATIVE before empty NORMATIVE (e.g. 94848-9 / LL4681-4).
-    // C8 empty-before-sole-foreign measured WORSE (missing +335, count +66); do not restore.
-    final String foreignNormative = majorityAnswerListCode(foreignNormativeCount);
-    if (foreignNormative != null) {
-      return foreignNormative;
-    }
-    final String foreignPreferred = majorityAnswerListCode(foreignPreferredCount);
-    if (foreignPreferred != null) {
-      return foreignPreferred;
-    }
-    if (normativeOpen != null) {
-      return normativeOpen.getTo().getCode();
-    }
-    if (preferredOpen != null) {
-      return preferredOpen.getTo().getCode();
-    }
-    return links.get(0).getTo().getCode();
-  }
-
-  /**
-   * Picks the LL code with the highest row count; first-seen wins ties.
-   *
-   * @param counts row counts per LL code (LinkedHashMap for stable ties)
-   * @return majority LL code or null
-   */
-  private static String majorityAnswerListCode(final Map<String, Integer> counts) {
-    if (counts == null || counts.isEmpty()) {
-      return null;
-    }
-    String bestCode = null;
-    int bestCount = -1;
-    for (final Map.Entry<String, Integer> entry : counts.entrySet()) {
-      final int count = entry.getValue() == null ? 0 : entry.getValue().intValue();
-      if (count > bestCount) {
-        bestCount = count;
-        bestCode = entry.getKey();
-      }
-    }
-    return bestCode;
+    return emptyContextLl;
   }
 
   /**
@@ -1375,6 +1434,92 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
+   * Whether the concept's LOINC PROPERTY is ClockTime.
+   *
+   * @param concept the concept
+   * @return true when PROPERTY display is ClockTime
+   */
+  public static boolean isClockTimeProperty(final Concept concept) {
+    final String display = getPropertyDisplay(concept);
+    return display != null && "ClockTime".equalsIgnoreCase(display.trim());
+  }
+
+  /**
+   * Whether questionnaire items should follow fhir.loinc.org score-unit emit:
+   * normalized units equal {@code score}. Prefer {@code EXAMPLE_UNITS}; if empty, fall back to
+   * {@code EXAMPLE_UCUM_UNITS}. Normalization strips surrounding {@code {}} so {@code {score}}
+   * matches. That means {@code decimal} type, no answer-list expansion, and no item {@code code}
+   * / {@code required} / default {@code repeats=false} (Qn non-score units such as {@code #/d}
+   * stay coded). Does not change answer-list selection ({@link #selectAnswerListFromLinks}).
+   * {@code FORMULA} is calculation text only and does not affect this rule.
+   *
+   * @param concept the concept
+   * @return true when normalized EXAMPLE_UNITS or EXAMPLE_UCUM_UNITS is score
+   */
+  public static boolean isScoreExampleUnits(final Concept concept) {
+    if (concept == null) {
+      return false;
+    }
+    final String units = getExampleUnits(concept);
+    if (isNormalizedScoreUnit(units)) {
+      return true;
+    }
+    return StringUtility.isEmpty(units) && isNormalizedScoreUnit(getExampleUcumUnits(concept));
+  }
+
+  /**
+   * Whether a units string is score after trim and stripping one pair of surrounding braces.
+   *
+   * @param units EXAMPLE_UNITS or EXAMPLE_UCUM_UNITS value
+   * @return true when normalized value equals score (ignore case)
+   */
+  private static boolean isNormalizedScoreUnit(final String units) {
+    if (StringUtility.isEmpty(units)) {
+      return false;
+    }
+    String normalized = units.trim();
+    if (normalized.length() >= 2 && normalized.startsWith("{") && normalized.endsWith("}")) {
+      normalized = normalized.substring(1, normalized.length() - 1).trim();
+    }
+    return "score".equalsIgnoreCase(normalized);
+  }
+
+  /**
+   * LOINC {@code EXAMPLE_UNITS} attribute value.
+   *
+   * @param concept the concept
+   * @return units string or null
+   */
+  public static String getExampleUnits(final Concept concept) {
+    return getConceptAttribute(concept, LoincConstants.ATTR_EXAMPLE_UNITS);
+  }
+
+  /**
+   * LOINC {@code EXAMPLE_UCUM_UNITS} attribute value.
+   *
+   * @param concept the concept
+   * @return UCUM units string or null
+   */
+  public static String getExampleUcumUnits(final Concept concept) {
+    return getConceptAttribute(concept, LoincConstants.ATTR_EXAMPLE_UCUM_UNITS);
+  }
+
+  /**
+   * Reads a string concept attribute by LOINC property code.
+   *
+   * @param concept the concept
+   * @param attrCode the LOINC attribute / property code
+   * @return value or null
+   */
+  private static String getConceptAttribute(final Concept concept, final String attrCode) {
+    if (concept == null || StringUtility.isEmpty(attrCode) || concept.getAttributes() == null) {
+      return null;
+    }
+    final String value = concept.getAttributes().get(attrCode);
+    return StringUtility.isEmpty(value) ? null : value;
+  }
+
+  /**
    * LOINC PROPERTY display for a concept.
    *
    * @param concept the concept
@@ -1523,48 +1668,76 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Builds questionnaire copyright: CodeSystem copyright plus unique external
-   * notices for LOINC codes appearing in the questionnaire (depth-first order).
+   * Adds a concept's {@link LoincConstants#ATTR_EXTERNAL_COPYRIGHT_NOTICE} to a collector when
+   * present.
+   *
+   * @param concept the concept already loaded during questionnaire expand
+   * @param notices unique notice collector (may be null)
+   */
+  public static void addExternalCopyrightNotice(final Concept concept, final Set<String> notices) {
+    if (notices == null) {
+      return;
+    }
+    final String notice = getExternalCopyrightNotice(concept);
+    if (!StringUtility.isEmpty(notice)) {
+      notices.add(notice);
+    }
+  }
+
+  /**
+   * Reads {@link LoincConstants#ATTR_ADDITIONAL_COPYRIGHT} from a panel-member relationship.
+   *
+   * @param rel the panel membership edge
+   * @return notice text or null
+   */
+  public static String getAdditionalCopyrightNotice(final ConceptRelationship rel) {
+    final String notice = getRelationshipAttribute(rel, LoincConstants.ATTR_ADDITIONAL_COPYRIGHT);
+    return StringUtility.isEmpty(notice) ? null : notice;
+  }
+
+  /**
+   * Adds a panel edge's {@link LoincConstants#ATTR_ADDITIONAL_COPYRIGHT} to a collector when
+   * present. Call only for form-scoped member edges already selected for expand.
+   *
+   * @param rel the panel membership edge
+   * @param notices unique notice collector (may be null)
+   */
+  public static void addAdditionalCopyrightNotice(final ConceptRelationship rel,
+    final Set<String> notices) {
+    if (notices == null) {
+      return;
+    }
+    final String notice = getAdditionalCopyrightNotice(rel);
+    if (!StringUtility.isEmpty(notice)) {
+      notices.add(notice);
+    }
+  }
+
+  /**
+   * Builds questionnaire copyright: CodeSystem copyright plus unique external notices collected
+   * during panel expand.
    *
    * @param terminologyCopyright the CodeSystem root copyright
-   * @param loincCodes LOINC codes referenced in the questionnaire
-   * @param searchService the search service
-   * @param abbreviation the terminology abbreviation
-   * @param publisher the publisher
-   * @param version the terminology version
+   * @param externalNotices unique instrument notices (may be null or empty)
    * @return combined copyright or null
-   * @throws Exception the exception
    */
   public static String buildQuestionnaireCopyright(final String terminologyCopyright,
-    final Iterable<String> loincCodes, final EntityRepositoryService searchService,
-    final String abbreviation, final String publisher, final String version) throws Exception {
+    final Iterable<String> externalNotices) {
 
     final StringBuilder copyright = new StringBuilder();
     if (!StringUtility.isEmpty(terminologyCopyright)) {
       copyright.append(terminologyCopyright);
     }
-    if (searchService == null || loincCodes == null) {
-      return copyright.length() == 0 ? null : copyright.toString();
-    }
-
-    final Set<String> seenNotices = new LinkedHashSet<>();
-    for (final String code : loincCodes) {
-      if (StringUtility.isEmpty(code)) {
-        continue;
+    if (externalNotices != null) {
+      for (final String notice : externalNotices) {
+        if (StringUtility.isEmpty(notice)) {
+          continue;
+        }
+        if (copyright.length() > 0) {
+          copyright.append("\r\n");
+        }
+        copyright.append(notice);
       }
-      final Concept concept =
-          TerminologyUtility.getConcept(searchService, abbreviation, publisher, version, code);
-      final String notice = getExternalCopyrightNotice(concept);
-      if (!StringUtility.isEmpty(notice)) {
-        seenNotices.add(notice);
-      }
-    }
-
-    for (final String notice : seenNotices) {
-      if (copyright.length() > 0) {
-        copyright.append("\r\n");
-      }
-      copyright.append(notice);
     }
     return copyright.length() == 0 ? null : copyright.toString();
   }

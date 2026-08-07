@@ -1061,6 +1061,65 @@ public final class FhirUtility {
   }
 
   /**
+   * Finds LOINC terminology for the given CodeSystem version, or the latest when version is blank.
+   *
+   * @param searchService the search service
+   * @param version LOINC release version (e.g. 2.78), or null/blank for latest
+   * @return LOINC terminology or null
+   */
+  public static Terminology findLoincTerminology(final EntityRepositoryService searchService,
+    final String version) {
+    if (version == null || version.isBlank()) {
+      return findLoincTerminology(searchService);
+    }
+    try {
+      Terminology term = TerminologyUtility.getTerminology(searchService,
+          LoincConstants.LOINC_SYSTEM, LoincConstants.LOINC_PUBLISHER, version);
+      if (term != null) {
+        return term;
+      }
+      term = TerminologyUtility.getTerminology(searchService, LoincConstants.LOINC_SYSTEM,
+          LoincConstants.LOINC_PUBLISHER_ALT, version);
+      if (term != null) {
+        return term;
+      }
+      term = TerminologyUtility.getTerminology(searchService, LoincConstants.LOINC_SYSTEM_ALT,
+          LoincConstants.LOINC_PUBLISHER, version);
+      if (term != null && term.getUri() != null && isLoincUri(term.getUri())) {
+        return term;
+      }
+      term = TerminologyUtility.getTerminology(searchService, LoincConstants.LOINC_SYSTEM_ALT,
+          LoincConstants.LOINC_PUBLISHER_ALT, version);
+      if (term != null && term.getUri() != null && isLoincUri(term.getUri())) {
+        return term;
+      }
+      final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
+          StringUtility.escapeKeywordField("abbreviation", LoincConstants.LOINC_SYSTEM),
+          StringUtility.escapeKeywordField("version", version)), 50, 0);
+      ResultList<Terminology> list = searchService.find(params, Terminology.class);
+      List<Terminology> loincTerms = list.getItems().stream()
+          .filter(t -> t.getUri() != null && isLoincUri(t.getUri())).toList();
+      if (loincTerms.isEmpty()) {
+        final SearchParameters lncParams = new SearchParameters(StringUtility.composeQuery("AND",
+            StringUtility.escapeKeywordField("abbreviation", LoincConstants.LOINC_SYSTEM_ALT),
+            StringUtility.escapeKeywordField("version", version)), 50, 0);
+        list = searchService.find(lncParams, Terminology.class);
+        loincTerms = list.getItems().stream()
+            .filter(t -> t.getUri() != null && isLoincUri(t.getUri())).toList();
+      }
+      if (loincTerms.isEmpty()) {
+        return null;
+      }
+      return loincTerms.get(0);
+    } catch (final Exception e) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("LOINC terminology version {} not found: {}", version, e.getMessage());
+      }
+      return null;
+    }
+  }
+
+  /**
    * True when the URI is the LOINC code system or a LOINC sub-path.
    *
    * @param uri the URI

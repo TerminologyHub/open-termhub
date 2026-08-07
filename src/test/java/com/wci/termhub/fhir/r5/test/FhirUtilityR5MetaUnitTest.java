@@ -384,4 +384,28 @@ public class FhirUtilityR5MetaUnitTest {
     assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getTitle());
     assertEquals("Filaria Ab.IgG + IgM Pnl Ser", q.getCodeFirstRep().getDisplay());
   }
+
+  /**
+   * Questionnaire resource id is the Concept UUID; LOINC code stays on code and url.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testQuestionnaireIdIsConceptUuid() throws Exception {
+    final Concept concept = new Concept();
+    concept.setId("concept-uuid-100105-6");
+    concept.setCode("100105-6");
+    concept.setName("Filaria IgG and IgM panel - Serum");
+    concept.setTerminology("LOINC");
+    concept.setPublisher("Regenstrief Institute, Inc.");
+    concept.setVersion("2.81");
+    final Map<String, String> attrs = new HashMap<>();
+    attrs.put("SHORTNAME", "Filaria Ab.IgG + IgM Pnl Ser");
+    concept.setAttributes(attrs);
+
+    final Questionnaire q = FhirUtilityR5.toR5Questionnaire(concept, null, null);
+    assertEquals("concept-uuid-100105-6", q.getId());
+    assertEquals("100105-6", q.getCodeFirstRep().getCode());
+    assertTrue(q.getUrl().endsWith("/q/100105-6"));
+  }
 }

@@ -130,6 +130,15 @@ public final class LoincConstants {
   /** LOINC PROPERTY concept attribute / property code. */
   public static final String ATTR_PROPERTY = "PROPERTY";
 
+  /** LOINC example units concept attribute (e.g. {@code score}). */
+  public static final String ATTR_EXAMPLE_UNITS = "EXAMPLE_UNITS";
+
+  /** LOINC example UCUM units concept attribute (e.g. {@code {score}}). */
+  public static final String ATTR_EXAMPLE_UCUM_UNITS = "EXAMPLE_UCUM_UNITS";
+
+  /** LOINC formula concept attribute. */
+  public static final String ATTR_FORMULA = "FORMULA";
+
   /**
    * Uppercase LOINC property codes that duplicate lowercase {@code valueCoding} axes in the same
    * CodeSystem (legacy string row vs part code row).
@@ -145,6 +154,12 @@ public final class LoincConstants {
 
   /** External copyright notice on a LOINC concept. */
   public static final String ATTR_EXTERNAL_COPYRIGHT_NOTICE = "EXTERNAL_COPYRIGHT_NOTICE";
+
+  /**
+   * PanelsAndForms / panel-member relationship attribute: instrument copyright for this form
+   * context (PRAPARE, HELP/CAM, SILS, etc.).
+   */
+  public static final String ATTR_ADDITIONAL_COPYRIGHT = "AdditionalCopyright";
 
   private LoincConstants() {
     // utility class
