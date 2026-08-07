@@ -1243,8 +1243,25 @@ public final class CodeSystemLoaderUtil {
           final String attrName = url.substring(url.lastIndexOf('/') + 1);
           if (extension.has("valueString")) {
             final String attrValue = extension.path("valueString").asText();
-            if ("SEQUENC#".equals(attrName)) {
-              relationship.getAttributes().put(LoincConstants.ATTR_SEQ_NO, attrValue);
+            if ("SEQUENCE".equals(attrName)) {
+              relationship.getAttributes().put(LoincConstants.ATTR_SEQUENCE, attrValue);
+            } else if ("ID".equals(attrName)) {
+              relationship.getAttributes().put(LoincConstants.ATTR_REL_ID, attrValue);
+            } else if ("ParentID".equals(attrName) || "ParentId".equals(attrName)
+                || "ParentFormLinkId".equals(attrName)) {
+              relationship.getAttributes().put(LoincConstants.ATTR_PARENT_FORM_LINK_ID, attrValue);
+            } else if ("Cardinality".equals(attrName) || "CARDINALITY".equals(attrName)
+                || "QuestionCardinality".equals(attrName)) {
+              relationship.getAttributes().put(LoincConstants.ATTR_CARDINALITY, attrValue);
+              if ("QuestionCardinality".equals(attrName)) {
+                relationship.getAttributes().put(LoincConstants.ATTR_QUESTION_CARDINALITY, attrValue);
+              }
+            } else if ("ObservationRequiredInPanel".equals(attrName)) {
+              relationship.getAttributes().put(LoincConstants.ATTR_OBSERVATION_REQUIRED_IN_PANEL,
+                  attrValue);
+            } else if ("AnswerListIdOverride".equals(attrName)) {
+              relationship.getAttributes().put(LoincConstants.ATTR_ANSWER_LIST_ID_OVERRIDE,
+                  attrValue);
             } else {
               relationship.getAttributes().put(attrName, attrValue);
             }

@@ -144,7 +144,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
       final String idPart = id != null ? id.getIdPart() : null;
       if (idPart != null && loincValueSetHelper.isLllgId(idPart)) {
         if (!loincValueSetHelper.isEnabled()) {
-          logger.info("GET ValueSet/{}: LL/LG path skipped (server).mode is not regenstrief)",
+          logger.info(
+              "GET ValueSet/{}: LL/LG path skipped (server.mode is not regenstrief)",
               idPart);
         } else {
           final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
