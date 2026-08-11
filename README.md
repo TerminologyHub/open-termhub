@@ -15,6 +15,15 @@ container works seamlessly with terminology content provided by
 ## Other Resources
 * [FAQ - Frequently Asked Questions](doc/FAQ.md)
 * [More details on building and deploying with real data](doc/DEPLOY.md)
+* [Docker image and environment variables](doc/DOCKER.md)
+
+## Configuration highlights
+
+Common environment variables (full list in [DEPLOY.md](doc/DEPLOY.md) and [DOCKER.md](doc/DOCKER.md)):
+
+* `READ_ONLY=true` — rejects HTTP APIs that add, alter, or remove content (403) and disables startup/cron syndication. Read APIs (including FHIR `$` operations and `POST /concept/bulk`) remain available at runtime. Swagger/OpenAPI hides DELETE, PUT, PATCH, and POST operations.
+* `ENABLE_POST_LOAD_COMPUTATIONS` — enable tree-position computations used by the hierarchy browser (default: false).
+* `PROJECT_API_KEY` / `ADMIN_KEY` — required for TermHub syndication and protected local admin endpoints.
 
 
 ## Contributing

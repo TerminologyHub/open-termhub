@@ -17,10 +17,13 @@ import org.aspectj.lang.annotation.Aspect;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.wci.termhub.ReadOnlyMode;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.lucene.LuceneDataAccess;
+import com.wci.termhub.rest.ReadOnlyFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -37,6 +40,10 @@ public class WriteAspect {
   /** The write in progress. */
   private final AtomicBoolean writeInProgress = new AtomicBoolean(false);
 
+  /** The read only mode. */
+  @Autowired
+  private ReadOnlyMode readOnlyMode;
+
   /**
    * Around write.
    *
@@ -48,6 +55,10 @@ public class WriteAspect {
   public Object aroundWrite(final ProceedingJoinPoint pjp) throws Throwable {
     if (logger.isTraceEnabled()) {
       logger.trace("Write operation started");
+    }
+    if (readOnlyMode != null && readOnlyMode.isEnabled()) {
+      throw FhirUtilityR4.exception(ReadOnlyFilter.FORBIDDEN_MESSAGE,
+          OperationOutcome.IssueType.FORBIDDEN, HttpServletResponse.SC_FORBIDDEN);
     }
     if (!writeInProgress.compareAndSet(false, true)) {
       throw FhirUtilityR4.exception(

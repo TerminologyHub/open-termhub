@@ -19,6 +19,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import com.wci.termhub.ReadOnlyMode;
+
 /**
  * Service for scheduled syndication checks.
  */
@@ -33,6 +35,10 @@ public class SyndicationSchedulerService {
   /** The syndication manager. */
   @Autowired
   private SyndicationManager syndicationManager;
+
+  /** The read only mode. */
+  @Autowired
+  private ReadOnlyMode readOnlyMode;
 
   /** The syndication check cron (overrides interval when present). */
   @Value("${syndication.check.cron:}")
@@ -67,6 +73,10 @@ public class SyndicationSchedulerService {
    * Perform the actual syndication check.
    */
   private void performSyndicationCheck() {
+    if (readOnlyMode != null && readOnlyMode.isEnabled()) {
+      logger.info("Syndication check skipped - read-only mode is enabled");
+      return;
+    }
     try {
 
       // Use the syndication manager to perform the complete check and load

@@ -75,6 +75,7 @@ import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
+import com.wci.termhub.rest.ReadOnlyOpenApiSupport;
 import com.wci.termhub.util.StringUtility;
 
 import ca.uhn.fhir.context.ConfigurationException;
@@ -771,6 +772,10 @@ public class TermhubOpenApiInterceptorR4 {
         addFhirOperation(ctx, openApi, theRequestDetails, capabilitiesProvider, paths, resourceType,
             nextOperation);
       }
+    }
+
+    if (ReadOnlyOpenApiSupport.isReadOnlyEnabled()) {
+      ReadOnlyOpenApiSupport.removeFhirMutatingOperations(paths);
     }
 
     return openApi;
