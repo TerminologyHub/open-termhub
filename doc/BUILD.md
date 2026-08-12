@@ -16,6 +16,7 @@ Syndication is disabled unless a token is provided. Configure via properties or 
 - `syndication.check.on-startup` (or `SYNDICATION_CHECK_ON_STARTUP`) — optional; when `true`, performs a one-time syndication load at startup; if not set/false, no startup syndication occurs
 - `syndication.check.cron` (or `SYNDICATION_CHECK_CRON`) — optional; a Spring cron expression to enable periodic re-syndication; if not set/empty, no schedule is registered
 - `admin.key` (or `ADMIN_KEY`) — optional for startup/cron syndication; required to call protected local admin endpoints such as on-demand `POST /syndicate`
+- `read.only` (or `READ_ONLY`) — optional; when `true`, rejects content-mutating HTTP APIs and skips syndication loads
 
 Example `application.properties` entries:
 

@@ -11,11 +11,15 @@ package com.wci.termhub.syndication.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.wci.termhub.ReadOnlyMode;
 import com.wci.termhub.syndication.SyndicationManager;
 import com.wci.termhub.syndication.SyndicationSchedulerService;
 
@@ -30,20 +34,23 @@ public class SyndicationSchedulerServiceUnitTest {
   /** The mock manager. */
   private SyndicationManager mockManager;
 
+  /** The read only mode. */
+  private ReadOnlyMode readOnlyMode;
+
   /**
    * Sets the up.
    */
   @BeforeEach
   public void setUp() {
     mockManager = mock(SyndicationManager.class);
+    readOnlyMode = mock(ReadOnlyMode.class);
     scheduler = new SyndicationSchedulerService();
 
-    // Inject mock using reflection - ensure the field is properly set
     ReflectionTestUtils.setField(scheduler, "syndicationManager", mockManager);
+    ReflectionTestUtils.setField(scheduler, "readOnlyMode", readOnlyMode);
 
-    // Verify the mock was injected correctly
-    SyndicationManager injectedManager = (SyndicationManager) ReflectionTestUtils.getField(scheduler,
-        "syndicationManager");
+    final SyndicationManager injectedManager =
+        (SyndicationManager) ReflectionTestUtils.getField(scheduler, "syndicationManager");
     if (injectedManager != mockManager) {
       throw new RuntimeException(
           "Mock injection failed - expected mock but got: " + injectedManager);
@@ -55,8 +62,38 @@ public class SyndicationSchedulerServiceUnitTest {
    */
   @Test
   public void testConstructor() {
-    SyndicationSchedulerService scheduler = new SyndicationSchedulerService();
-    assertNotNull(scheduler);
+    final SyndicationSchedulerService newScheduler = new SyndicationSchedulerService();
+    assertNotNull(newScheduler);
+  }
+
+  /**
+   * Skips syndication when read-only mode is enabled.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testSkipsSyndicationWhenReadOnly() throws Exception {
+    when(readOnlyMode.isEnabled()).thenReturn(true);
+
+    scheduler.syndicationCheck();
+
+    verify(mockManager, never()).performSyndicationCheck();
+  }
+
+  /**
+   * Runs syndication when read-only mode is disabled.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testRunsSyndicationWhenNotReadOnly() throws Exception {
+    when(readOnlyMode.isEnabled()).thenReturn(false);
+    when(mockManager.performSyndicationCheck())
+        .thenReturn(new com.wci.termhub.syndication.SyndicationResults(true, "ok", 0, 0, 0, 0L));
+
+    scheduler.syndicationCheck();
+
+    verify(mockManager).performSyndicationCheck();
   }
 
 }
