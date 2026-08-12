@@ -62,11 +62,12 @@ public final class ValueSetExpandCache {
    * @param filter text filter (may be null)
    * @param activeOnly active-only flag
    * @param languages display languages (may be null)
+   * @param includeDesignations whether designations are included
    * @return cache key
    */
   public static String buildKey(final FhirVersionEnum fhirVersion, final String id, final String url,
     final String version, final int offset, final int count, final String filter,
-    final boolean activeOnly, final Set<String> languages) {
+    final boolean activeOnly, final Set<String> languages, final boolean includeDesignations) {
     final String langs;
     if (languages == null || languages.isEmpty()) {
       langs = "*";
@@ -77,7 +78,7 @@ public final class ValueSetExpandCache {
     }
     return fhirVersion.name() + "|" + nullToEmpty(id) + "|" + nullToEmpty(url) + "|"
         + nullToEmpty(version) + "|" + offset + "|" + count + "|" + nullToEmpty(filter) + "|"
-        + activeOnly + "|" + langs;
+        + activeOnly + "|" + langs + "|" + includeDesignations;
   }
 
   /**

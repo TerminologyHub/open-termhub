@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
@@ -220,10 +221,12 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   @Test
   public void testExpandLllgValueSet() throws Exception {
     final ValueSet vs = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
-        null, null, null, null, null);
+        null, null, null, null, null, null);
     assertNotNull(vs);
     assertNotNull(vs.getExpansion(), "Expansion should be present");
     assertTrue(vs.getExpansion().getTotal() >= 0, "Total should be non-negative");
+    assertNotNull(vs.getVersion(), "Expanded ValueSet should have version");
+    assertFalse(vs.getVersion().isEmpty(), "Expanded ValueSet version should not be empty");
     if (vs.getId() != null) {
       assertFalse(LL_VS_ID.equals(vs.getId()), "Expanded ValueSet id should not be the LL/LG code");
     }
@@ -233,8 +236,53 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     assertTrue(vs.getExpansion().getParameter().stream().anyMatch(p -> "count".equals(p.getName())),
         "Expansion should have count parameter");
     assertTrue(vs.getExpansion().getContains() != null, "Expansion should have contains list");
+    assertTrue(
+        vs.getExpansion().getContains().stream()
+            .noneMatch(c -> c.hasDesignation() && !c.getDesignation().isEmpty()),
+        "Default expand must not include designations");
     assertNotEquals(Boolean.TRUE, vs.getExperimental(),
         "LL value set expansion should not be experimental");
+  }
+
+  /**
+   * includeDesignations=false must omit designations.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testExpandLllgWithoutDesignations() throws Exception {
+    final ValueSet vs = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
+        null, null, null, null, null, new BooleanType(false));
+    assertNotNull(vs.getExpansion());
+    assertNotNull(vs.getVersion(), "Expanded ValueSet should have version");
+    assertTrue(
+        vs.getExpansion().getContains().stream()
+            .noneMatch(c -> c.hasDesignation() && !c.getDesignation().isEmpty()),
+        "includeDesignations=false must not include designations");
+  }
+
+  /**
+   * includeDesignations=true must include designations in fhir.loinc.org shape when terms exist.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testExpandLllgWithDesignations() throws Exception {
+    final ValueSet vs = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
+        null, null, null, null, null, new BooleanType(true));
+    assertNotNull(vs.getExpansion());
+    assertNotNull(vs.getVersion(), "Expanded ValueSet should have version");
+    assumeTrue(vs.getExpansion().getContains() != null && !vs.getExpansion().getContains().isEmpty(),
+        "LL expansion has no contains to check designations");
+    final boolean anyDesignation = vs.getExpansion().getContains().stream()
+        .anyMatch(c -> c.hasDesignation() && !c.getDesignation().isEmpty());
+    assumeTrue(anyDesignation, "Loaded LOINC concepts lack terms for designation assertions");
+    assertTrue(
+        vs.getExpansion().getContains().stream().flatMap(c -> c.getDesignation().stream())
+            .anyMatch(d -> d.hasValue() && !d.hasLanguage() && !d.hasUse())
+            || vs.getExpansion().getContains().stream().flatMap(c -> c.getDesignation().stream())
+                .anyMatch(d -> d.hasUse() && "http://loinc.org".equals(d.getUse().getSystem())),
+        "LOINC designations should be value-only (English) or use.system=http://loinc.org");
   }
 
   /**
@@ -246,7 +294,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   public void testExpandLgValueSetExperimental() throws Exception {
     final ValueSet vs =
         provider.expandInstance(request, details, new IdType(LG_VS_ID), null, null, null, null,
-            null, null, null);
+            null, null, null, null);
     assertNotNull(vs);
     assertNotNull(vs.getExpansion(), "Expansion should be present");
     assertEquals(Boolean.TRUE, vs.getExperimental(),
@@ -312,7 +360,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   @Test
   public void testExpandLllgValueSetWithCorrectVersion() throws Exception {
     final ValueSet vs = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
-        new StringType("277"), null, null, null, null);
+        new StringType("277"), null, null, null, null, null);
     assertNotNull(vs, "ValueSet should be found for loaded version 277");
     assertNotNull(vs.getExpansion(), "Expansion should be present");
     assertEquals("277", vs.getVersion(), "Returned ValueSet should have the requested version");
@@ -327,7 +375,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   public void testExpandLllgValueSetWithWrongVersionNotFound() {
     assertThrows(FHIRServerResponseException.class,
         () -> provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
-            new StringType("9.99"), null, null, null, null),
+            new StringType("9.99"), null, null, null, null, null),
         "Requesting a non-existent valueSetVersion should throw FHIRServerResponseException");
   }
 

@@ -52,12 +52,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Sets;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
+import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 import com.wci.termhub.fhir.util.ValueSetExpandCache;
 import com.wci.termhub.fhir.util.ValueSetSearchCache;
@@ -303,6 +303,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @param offset the offset
    * @param count the count
    * @param displayLanguage the display language
+   * @param includeDesignations the include designations
    * @return the value set
    * @throws Exception the exception
    */
@@ -321,7 +322,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
         typeName = "integer") final IntegerType offset,
     @OperationParam(name = "count", min = 0, max = 1, typeName = "integer") final IntegerType count,
     @OperationParam(name = "displayLanguage", min = 0, max = 1,
-        typeName = "code") final List<CodeType> displayLanguage)
+        typeName = "code") final List<CodeType> displayLanguage,
+    @OperationParam(name = "includeDesignations", min = 0, max = 1,
+        typeName = "boolean") final BooleanType includeDesignations)
     throws Exception {
 
     // Reject post
@@ -337,10 +340,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
       }
       FhirUtilityR5.notSupported("valueSet", valueSet);
 
-      final ValueSet vs =
-          getExpandedValueSet(null, url, version, filter, offset != null ? offset.getValue() : 0,
-              count != null ? count.getValue() : 100, false, displayLanguage == null ? null
-                  : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()));
+      final ValueSet vs = getExpandedValueSet(null, url, version, filter,
+          offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100, false,
+          displayLanguage == null ? null
+              : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()),
+          includeDesignations);
 
       if (vs == null) {
         throw FhirUtilityR5.exception("Value set not found = " + url, IssueType.NOTFOUND,
@@ -359,7 +363,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
   /**
    * Expand instance. See ca.uhn.fhir.jpa.provider.ValueSetOperationProvider
-   *
+   * 
    * <pre>
    * https://hl7.org/fhir/R5/valueset-operation-expand.html
    * </pre>
@@ -374,6 +378,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @param offset the offset
    * @param count the count
    * @param displayLanguage the display language
+   * @param includeDesignations the include designations
    * @return the value set
    * @throws Exception the exception
    */
@@ -391,7 +396,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
         typeName = "integer") final IntegerType offset,
     @OperationParam(name = "count", min = 0, max = 1, typeName = "integer") final IntegerType count,
     @OperationParam(name = "displayLanguage", min = 0, max = 1,
-        typeName = "code") final Set<CodeType> displayLanguage)
+        typeName = "code") final Set<CodeType> displayLanguage,
+    @OperationParam(name = "includeDesignations", min = 0, max = 1,
+        typeName = "boolean") final BooleanType includeDesignations)
     throws Exception {
 
     // Reject post
@@ -402,10 +409,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
     try {
 
-      final ValueSet vs =
-          getExpandedValueSet(id, null, version, filter, offset != null ? offset.getValue() : 0,
-              count != null ? count.getValue() : 100, false, displayLanguage == null ? null
-                  : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()));
+      final ValueSet vs = getExpandedValueSet(id, null, version, filter,
+          offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100, false,
+          displayLanguage == null ? null
+              : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()),
+          includeDesignations);
 
       if (vs == null) {
         throw FhirUtilityR5.exception("Value set not found = " + id.getIdPart(), IssueType.NOTFOUND,
@@ -687,7 +695,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
   }
 
   /**
-   * Gets the implicit code system value set.
+   * Gets the expanded value set.
    *
    * @param id the id
    * @param url the url
@@ -696,17 +704,21 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @param offset the offset
    * @param count the count
    * @param activeOnly the active only
-   * @param languages the languages
-   * @return the implicit code system value set
+   * @param languages display languages; when non-null, filter designations to these locales
+   * @param includeDesignationsParam whether to include designations (null =
+   *          false)
+   * @return the expanded value set
    * @throws Exception the exception
    */
   private ValueSet getExpandedValueSet(final IdType id, final UriType url, final StringType version,
     final StringType filter, final int offset, final int count, final boolean activeOnly,
-    final Set<String> languages) throws Exception {
+    final Set<String> languages, final BooleanType includeDesignationsParam) throws Exception {
+    final boolean includeDesignations = includeDesignationsParam != null
+        && Boolean.TRUE.equals(includeDesignationsParam.getValue());
     final String cacheKey = ValueSetExpandCache.buildKey(FhirVersionEnum.R5,
-        id == null ? null : id.getIdPart(),
-        url == null ? null : url.getValue(), version == null ? null : version.getValue(), offset,
-        count, filter == null ? null : filter.getValue(), activeOnly, languages);
+        id == null ? null : id.getIdPart(), url == null ? null : url.getValue(),
+        version == null ? null : version.getValue(), offset, count,
+        filter == null ? null : filter.getValue(), activeOnly, languages, includeDesignations);
     final ValueSet cached = ValueSetExpandCache.getR5(cacheKey);
     if (cached != null) {
       return cached;
@@ -765,51 +777,17 @@ public class ValueSetProviderR5 implements IResourceProvider {
         if (systemUri != null) {
           FhirUtilityR5.setR5LllgCompose(vs, systemUri, composeStructure);
         }
-        final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
+        final ValueSetExpansionComponent expansion = buildExpansionHeader(offset, ct, filter,
+            version, expanded.getTotal(), includeDesignationsParam);
         expansion.setIdentifier(UUID.randomUUID().toString());
-        expansion.setTimestamp(new Date());
-        expansion.setTotal(expanded.getTotal());
-        expansion.setOffset(offset);
-        expansion.addParameter(new ValueSetExpansionParameterComponent().setName("offset")
-            .setValue(new IntegerType(offset)));
-        if (filter != null) {
-          expansion.addParameter(
-              new ValueSetExpansionParameterComponent().setName("filter").setValue(filter));
-        }
-        expansion.addParameter(new ValueSetExpansionParameterComponent().setName("count")
-            .setValue(new IntegerType(ct)));
-        if (version != null) {
-          expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
-              .setValue(new StringType(version.getValue())));
-        }
+        final boolean isLoinc =
+            terminology.getUri() != null && terminology.getUri().contains("loinc.org");
         for (final Concept concept : items) {
           final ValueSetExpansionContainsComponent code =
               new ValueSetExpansionContainsComponent().setSystem(terminology.getUri())
                   .setCode(concept.getCode()).setDisplay(concept.getName());
-          if (languages != null) {
-            final boolean isLoinc =
-                terminology.getUri() != null && terminology.getUri().contains("loinc.org");
-            for (final Term term : concept.getTerms()) {
-              if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
-                final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService,
-                    concept.getTerminology(), concept.getPublisher(), concept.getVersion());
-                final Coding coding = new Coding();
-                coding.setCode(term.getType());
-                if (isLoinc) {
-                  coding.setDisplay(term.getType());
-                } else {
-                  final String useDisplay = term.getAttributes().get("designationUseDisplay");
-                  if (useDisplay != null) {
-                    coding.setDisplay(useDisplay);
-                  } else if (displayMap.containsKey(term.getType())) {
-                    coding.setDisplay(displayMap.get(term.getType()));
-                  }
-                }
-                code.addDesignation(new ConceptReferenceDesignationComponent().setLanguage(
-                    Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
-                    .setUse(coding).setValue(term.getName()));
-              }
-            }
+          if (includeDesignations) {
+            addExpandDesignations(code, concept, isLoinc, languages);
           }
           expansion.addContains(code);
         }
@@ -839,17 +817,19 @@ public class ValueSetProviderR5 implements IResourceProvider {
     final int ct = count < 0 ? 0 : (count > 2000 ? 2000 : count);
 
     // Loaded ValueSet (Subset): expand from SubsetMembers; keep full compose.
-    // Concept path is used only for displayLanguage / ECL.
+    // Concept path is used only for includeDesignations / ECL.
     if (!terminologyFlag) {
       final Subset loadedSubset = searchService.get(vs.getId(), Subset.class);
       if (loadedSubset == null) {
-        final ValueSet empty = createEmptyValueSetExpansion(vs, offset, ct, filter, version);
+        final ValueSet empty =
+            createEmptyValueSetExpansion(vs, offset, ct, filter, version, includeDesignationsParam);
         ValueSetExpandCache.putR5(cacheKey, empty);
         return empty;
       }
       final List<SubsetMember> members = findSubsetMembersForSubset(loadedSubset);
       if (members.isEmpty()) {
-        final ValueSet empty = createEmptyValueSetExpansion(vs, offset, ct, filter, version);
+        final ValueSet empty =
+            createEmptyValueSetExpansion(vs, offset, ct, filter, version, includeDesignationsParam);
         ValueSetExpandCache.putR5(cacheKey, empty);
         return empty;
       }
@@ -865,14 +845,15 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
       // Designations need Concept.terms — keep legacy Concept expand only then.
       final Query expressionQuery = getExpressionQuery(url == null ? null : url.getValue());
-      if (languages == null && expressionQuery == null) {
-        final ValueSet expanded =
-            expandLoadedSubsetFromMembers(vs, members, systemUri, offset, ct, filter, version);
+      if (!includeDesignations && expressionQuery == null) {
+        final ValueSet expanded = expandLoadedSubsetFromMembers(vs, members, systemUri, offset, ct,
+            filter, version, includeDesignationsParam);
         ValueSetExpandCache.putR5(cacheKey, expanded);
         return expanded;
       }
 
-      // Fallback: Concept path for displayLanguage / ECL (compose already set)
+      // Fallback: Concept path for includeDesignations / ECL (compose already
+      // set)
       final Query terminologyQuery =
           LuceneQueryBuilder.parse(TerminologyUtility.getTerminologyQuery(m0.getTerminology(),
               m0.getPublisher(), m0.getVersion()), Concept.class);
@@ -904,34 +885,13 @@ public class ValueSetProviderR5 implements IResourceProvider {
       }
       final ResultList<Concept> list = searchService.find(params, Concept.class);
       final ValueSetExpansionComponent expansion = buildExpansionHeader(offset, ct, filter, version,
-          (int) Math.min(list.getTotal(), Integer.MAX_VALUE));
+          (int) Math.min(list.getTotal(), Integer.MAX_VALUE), includeDesignationsParam);
       final boolean isLoinc = systemUri != null && systemUri.contains("loinc.org");
       for (final Concept concept : list.getItems()) {
         final ValueSetExpansionContainsComponent code = new ValueSetExpansionContainsComponent()
             .setSystem(systemUri).setCode(concept.getCode()).setDisplay(concept.getName());
-        if (languages != null) {
-          for (final Term term : concept.getTerms()) {
-            if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
-              final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService,
-                  concept.getTerminology(), concept.getPublisher(), concept.getVersion());
-              final Coding coding = new Coding();
-              coding.setCode(term.getType());
-              if (isLoinc) {
-                coding.setDisplay(term.getType());
-              } else {
-                final String useDisplay = term.getAttributes().get("designationUseDisplay");
-                if (useDisplay != null) {
-                  coding.setDisplay(useDisplay);
-                } else if (displayMap.containsKey(term.getType())) {
-                  coding.setDisplay(displayMap.get(term.getType()));
-                }
-              }
-              code.addDesignation(new ConceptReferenceDesignationComponent()
-                  .setLanguage(
-                      Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
-                  .setUse(coding).setValue(term.getName()));
-            }
-          }
+        if (includeDesignations) {
+          addExpandDesignations(code, concept, isLoinc, languages);
         }
         expansion.addContains(code);
       }
@@ -955,35 +915,14 @@ public class ValueSetProviderR5 implements IResourceProvider {
     }
     final ResultList<Concept> list = searchService.find(params, Concept.class);
     final ValueSetExpansionComponent expansion = buildExpansionHeader(offset, ct, filter, version,
-        (int) Math.min(list.getTotal(), Integer.MAX_VALUE));
+        (int) Math.min(list.getTotal(), Integer.MAX_VALUE), includeDesignationsParam);
+    final boolean isLoinc =
+        terminology.getUri() != null && terminology.getUri().contains("loinc.org");
     for (final Concept concept : list.getItems()) {
       final ValueSetExpansionContainsComponent code = new ValueSetExpansionContainsComponent()
           .setSystem(terminology.getUri()).setCode(concept.getCode()).setDisplay(concept.getName());
-      if (languages != null) {
-        final boolean isLoinc =
-            terminology.getUri() != null && terminology.getUri().contains("loinc.org");
-        for (final Term term : concept.getTerms()) {
-          if (!Sets.intersection(languages, term.getLocaleMap().keySet()).isEmpty()) {
-            final Map<String, String> displayMap = FhirUtility.getDisplayMap(searchService,
-                concept.getTerminology(), concept.getPublisher(), concept.getVersion());
-            final Coding coding = new Coding();
-            coding.setCode(term.getType());
-            if (isLoinc) {
-              coding.setDisplay(term.getType());
-            } else {
-              final String useDisplay = term.getAttributes().get("designationUseDisplay");
-              if (useDisplay != null) {
-                coding.setDisplay(useDisplay);
-              } else if (displayMap.containsKey(term.getType())) {
-                coding.setDisplay(displayMap.get(term.getType()));
-              }
-            }
-            code.addDesignation(new ConceptReferenceDesignationComponent()
-                .setLanguage(
-                    Sets.intersection(languages, term.getLocaleMap().keySet()).iterator().next())
-                .setUse(coding).setValue(term.getName()));
-          }
-        }
+      if (includeDesignations) {
+        addExpandDesignations(code, concept, isLoinc, languages);
       }
       expansion.addContains(code);
     }
@@ -1004,11 +943,12 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @param ct expansion count
    * @param filter optional filter
    * @param version valueSetVersion param
+   * @param includeDesignationsParam the include designations param
    * @return value set with expansion
    */
   private ValueSet expandLoadedSubsetFromMembers(final ValueSet vs,
     final List<SubsetMember> members, final String systemUri, final int offset, final int ct,
-    final StringType filter, final StringType version) {
+    final StringType filter, final StringType version, final BooleanType includeDesignationsParam) {
     final String filterValue =
         filter == null || filter.getValue() == null ? null : filter.getValue().trim().toLowerCase();
     final List<SubsetMember> eligible = new ArrayList<>();
@@ -1034,7 +974,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
     final int total = eligible.size();
     final ValueSetExpansionComponent expansion =
-        buildExpansionHeader(offset, ct, filter, version, total);
+        buildExpansionHeader(offset, ct, filter, version, total, includeDesignationsParam);
     if (ct > 0 && offset < total) {
       final int to = Math.min(offset + ct, total);
       for (final SubsetMember member : eligible.subList(offset, to)) {
@@ -1055,15 +995,20 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @param filter the filter
    * @param version the version
    * @param total the total
+   * @param includeDesignationsParam includeDesignations request param (may be
+   *          null)
    * @return expansion component
    */
   private ValueSetExpansionComponent buildExpansionHeader(final int offset, final int ct,
-    final StringType filter, final StringType version, final int total) {
+    final StringType filter, final StringType version, final int total,
+    final BooleanType includeDesignationsParam) {
     final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
     expansion.setId(UUID.randomUUID().toString());
     expansion.setTimestamp(new Date());
     expansion.setTotal(total);
     expansion.setOffset(offset);
+    expansion.addParameter(new ValueSetExpansionParameterComponent().setName("offset")
+        .setValue(new IntegerType(offset)));
     if (filter != null) {
       expansion.addParameter(
           new ValueSetExpansionParameterComponent().setName("filter").setValue(filter));
@@ -1074,7 +1019,103 @@ public class ValueSetProviderR5 implements IResourceProvider {
       expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
           .setValue(new StringType(version.getValue())));
     }
+    if (includeDesignationsParam != null) {
+      expansion.addParameter(new ValueSetExpansionParameterComponent()
+          .setName("includeDesignations").setValue(includeDesignationsParam));
+    }
     return expansion;
+  }
+
+  /**
+   * Adds $expand designations for a contains entry. LOINC matches
+   * fhir.loinc.org shape. When languages is non-null, only matching term locales
+   * are included.
+   *
+   * @param code the contains component
+   * @param concept the concept
+   * @param isLoinc whether this is LOINC
+   * @param languages optional displayLanguage filter (null = all locales)
+   * @throws Exception the exception
+   */
+  private void addExpandDesignations(final ValueSetExpansionContainsComponent code,
+    final Concept concept, final boolean isLoinc, final Set<String> languages) throws Exception {
+    if (concept.getTerms() == null || concept.getTerms().isEmpty()) {
+      return;
+    }
+    final String display = code.getDisplay();
+    Map<String, String> displayMap = null;
+    for (final Term term : concept.getTerms()) {
+      if (term.getName() == null || term.getName().isEmpty()) {
+        continue;
+      }
+      if (display != null && display.equals(term.getName())) {
+        continue;
+      }
+      final String matchedLang = matchTermLanguage(term, languages);
+      if (languages != null && matchedLang == null) {
+        continue;
+      }
+      final String lang = matchedLang != null ? matchedLang : term.computeSingleLanguage();
+      if (isLoinc) {
+        if (lang == null || lang.equals("en") || lang.startsWith("en-")) {
+          code.addDesignation(new ConceptReferenceDesignationComponent().setValue(term.getName()));
+        } else {
+          final Coding coding = new Coding();
+          final String useSystem = term.getAttributes() == null ? null
+              : term.getAttributes().get("designationUseSystem");
+          coding.setSystem(useSystem != null ? useSystem : LoincConstants.LOINC_URI);
+          coding.setCode(term.getType());
+          coding.setDisplay(term.getType());
+          code.addDesignation(new ConceptReferenceDesignationComponent().setLanguage(lang)
+              .setUse(coding).setValue(term.getName()));
+        }
+      } else {
+        if (displayMap == null) {
+          displayMap = FhirUtility.getDisplayMap(searchService, concept.getTerminology(),
+              concept.getPublisher(), concept.getVersion());
+        }
+        final Coding coding = new Coding();
+        coding.setCode(term.getType());
+        final String useSystem =
+            term.getAttributes() == null ? null : term.getAttributes().get("designationUseSystem");
+        if (useSystem != null) {
+          coding.setSystem(useSystem);
+        }
+        final String useDisplay =
+            term.getAttributes() == null ? null : term.getAttributes().get("designationUseDisplay");
+        if (useDisplay != null) {
+          coding.setDisplay(useDisplay);
+        } else if (displayMap.containsKey(term.getType())) {
+          coding.setDisplay(displayMap.get(term.getType()));
+        }
+        final ConceptReferenceDesignationComponent designation =
+            new ConceptReferenceDesignationComponent().setUse(coding).setValue(term.getName());
+        if (lang != null) {
+          designation.setLanguage(lang);
+        }
+        code.addDesignation(designation);
+      }
+    }
+  }
+
+  /**
+   * Returns a locale from the term that is in languages, or null if none.
+   *
+   * @param term the term
+   * @param languages requested languages (may be null)
+   * @return matched language or null
+   */
+  private static String matchTermLanguage(final Term term, final Set<String> languages) {
+    if (languages == null || languages.isEmpty() || term.getLocaleMap() == null
+        || term.getLocaleMap().isEmpty()) {
+      return null;
+    }
+    for (final String lang : term.getLocaleMap().keySet()) {
+      if (languages.contains(lang)) {
+        return lang;
+      }
+    }
+    return null;
   }
 
   /**
@@ -1102,25 +1143,14 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @param ct the ct
    * @param filter the filter
    * @param version the version
+   * @param includeDesignationsParam includeDesignations request param (may be
+   *          null)
    * @return the value set
    */
   private ValueSet createEmptyValueSetExpansion(final ValueSet vs, final int offset, final int ct,
-    final StringType filter, final StringType version) {
-    final ValueSetExpansionComponent expansion = new ValueSetExpansionComponent();
-    expansion.setId(UUID.randomUUID().toString());
-    expansion.setTimestamp(new Date());
-    expansion.setTotal(0);
-    expansion.setOffset(offset);
-    expansion.addParameter(
-        new ValueSetExpansionParameterComponent().setName("count").setValue(new IntegerType(ct)));
-    if (filter != null) {
-      expansion.addParameter(
-          new ValueSetExpansionParameterComponent().setName("filter").setValue(filter));
-    }
-    if (version != null) {
-      expansion.addParameter(new ValueSetExpansionParameterComponent().setName("version")
-          .setValue(new StringType(version.getValue())));
-    }
+    final StringType filter, final StringType version, final BooleanType includeDesignationsParam) {
+    final ValueSetExpansionComponent expansion =
+        buildExpansionHeader(offset, ct, filter, version, 0, includeDesignationsParam);
     vs.setExpansion(expansion);
     vs.setMeta(null);
     return vs;
