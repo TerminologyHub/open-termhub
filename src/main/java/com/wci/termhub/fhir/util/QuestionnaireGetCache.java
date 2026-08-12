@@ -51,14 +51,17 @@ public final class QuestionnaireGetCache {
   }
 
   /**
-   * Builds a cache key for a Questionnaire GET by id.
+   * Builds a cache key for a Questionnaire GET by id and LOINC CodeSystem version.
    *
    * @param fhirVersion FHIR version
-   * @param id questionnaire / LOINC panel concept code
+   * @param loincVersion LOINC release version (e.g. 2.78); null treated as empty
+   * @param id questionnaire Concept UUID or LOINC panel concept code
    * @return cache key
    */
-  public static String buildKey(final FhirVersionEnum fhirVersion, final String id) {
-    return fhirVersion.name() + "|" + (id == null ? "" : id);
+  public static String buildKey(final FhirVersionEnum fhirVersion, final String loincVersion,
+    final String id) {
+    return fhirVersion.name() + "|" + (loincVersion == null ? "" : loincVersion) + "|"
+        + (id == null ? "" : id);
   }
 
   /**

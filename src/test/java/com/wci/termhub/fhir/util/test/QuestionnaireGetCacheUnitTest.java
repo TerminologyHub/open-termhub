@@ -41,7 +41,7 @@ public class QuestionnaireGetCacheUnitTest {
    */
   @Test
   public void testPutGetR4() {
-    final String key = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "12345-6");
+    final String key = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "2.78", "12345-6");
     assertFalse(QuestionnaireGetCache.containsKey(key));
 
     final Questionnaire questionnaire = new Questionnaire();
@@ -60,7 +60,7 @@ public class QuestionnaireGetCacheUnitTest {
    */
   @Test
   public void testClear() {
-    final String key = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "99999-9");
+    final String key = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "2.78", "99999-9");
     final Questionnaire questionnaire = new Questionnaire();
     questionnaire.setId("99999-9");
     QuestionnaireGetCache.putR4(key, questionnaire);
@@ -76,9 +76,19 @@ public class QuestionnaireGetCacheUnitTest {
    */
   @Test
   public void testBuildKeyIncludesFhirVersion() {
-    final String r4 = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "12345-6");
-    final String r5 = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5, "12345-6");
+    final String r4 = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "2.78", "12345-6");
+    final String r5 = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5, "2.78", "12345-6");
     assertFalse(r4.equals(r5));
+  }
+
+  /**
+   * LOINC version is part of the cache key.
+   */
+  @Test
+  public void testBuildKeyIncludesLoincVersion() {
+    final String v278 = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "2.78", "12345-6");
+    final String v281 = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "2.81", "12345-6");
+    assertFalse(v278.equals(v281));
   }
 
   /**
@@ -88,7 +98,7 @@ public class QuestionnaireGetCacheUnitTest {
    */
   @Test
   public void testGetOrLoadR4Coalesces() throws Exception {
-    final String key = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "55555-5");
+    final String key = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4, "2.78", "55555-5");
     final java.util.concurrent.atomic.AtomicInteger builds =
         new java.util.concurrent.atomic.AtomicInteger();
     final java.util.concurrent.CountDownLatch started =

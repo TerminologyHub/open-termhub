@@ -474,6 +474,18 @@ public class LoincValueSetHelper {
   }
 
   /**
+   * Finds LOINC terminology for the given CodeSystem version, or the latest when version is blank.
+   *
+   * @param searchService the search service
+   * @param version LOINC release version, or null/blank for latest
+   * @return LOINC terminology or null
+   */
+  public Terminology findLoincTerminology(final EntityRepositoryService searchService,
+    final String version) {
+    return FhirUtility.findLoincTerminology(searchService, version);
+  }
+
+  /**
    * Resolves membership for an LL value set. In full LOINC, answer (LA)
    * concepts link to the answer list (LL) via parent: each LA has one or more
    * parent valueCodings with code = LL. So members of LL1162-8 are concepts

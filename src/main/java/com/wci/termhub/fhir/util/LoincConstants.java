@@ -34,6 +34,15 @@ public final class LoincConstants {
   /** LOINC survey instruments concept code. */
   public static final String LOINC_SURVEY_INSTRUMENTS_CODE = "LP29696-9";
 
+  /** LOINC CLASS part code for HEDIS panels (excluded from FHIR Questionnaire). */
+  public static final String LOINC_EXCLUDED_PANEL_CLASS_CODE = "LP71800-4";
+
+  /** LOINC CLASS name for HEDIS panels (excluded from FHIR Questionnaire). */
+  public static final String LOINC_EXCLUDED_PANEL_CLASS_NAME = "PANEL.HEDIS";
+
+  /** LOINC CLASSTYPE concept attribute (1=Laboratory, 2=Clinical, 3=Claims, 4=Surveys). */
+  public static final String ATTR_CLASSTYPE = "CLASSTYPE";
+
   /** URL prefix for LOINC value sets (query form). */
   public static final String LOINC_VS_URL_PREFIX = "http://loinc.org?fhir_vs";
 
@@ -46,23 +55,56 @@ public final class LoincConstants {
   /** Concept attribute for answer list ID (LOINC). */
   public static final String ATTR_ANSWER_LIST_ID = "ANSWER_LIST_ID";
 
-  /** LOINC short common name concept attribute. */
-  public static final String ATTR_SHORT_COMMON_NAME = "SHORT_COMMON_NAME";
-
-  /** LOINC short common name term/designation type. */
-  public static final String TERM_TYPE_SHORT_COMMON_NAME = "SHORT_COMMON_NAME";
-
   /** LOINC short name concept attribute (official LOINC column). */
   public static final String ATTR_SHORTNAME = "SHORTNAME";
 
+  /** LOINC survey question text (form label when DisplayNameForForm is absent). */
+  public static final String ATTR_SURVEY_QUEST_TEXT = "SURVEY_QUEST_TEXT";
+
+  /** LOINC long common name concept attribute. */
+  public static final String ATTR_LONG_COMMON_NAME = "LONG_COMMON_NAME";
+
+  /** LOINC long common name designation type. */
+  public static final String TERM_TYPE_LONG_COMMON_NAME = "LONG_COMMON_NAME";
+
   /** LOINC short name term/designation type. */
   public static final String TERM_TYPE_SHORTNAME = "SHORTNAME";
+
+  /** LOINC component part property code on indexed concepts. */
+  public static final String ATTR_COMPONENT = "COMPONENT";
+
+  /** LOINC fully specified name designation type. */
+  public static final String TERM_TYPE_FULLY_SPECIFIED_NAME = "FullySpecifiedName";
 
   /** Panel membership relationship (full LOINC loads). */
   public static final String LOINC_REL_PANEL_MEMBER = "member";
 
   /** Panel membership relationship (sandbox / legacy). */
   public static final String LOINC_REL_HAS_MEMBER = "has_member";
+
+  /** LoincAnswerListLink row indexed as concept → answer-list association. */
+  public static final String LOINC_REL_ANSWER_LIST_LINK = "answer-list";
+
+  /** PanelsAndForms ObservationRequiredInPanel (R/O). */
+  public static final String ATTR_OBSERVATION_REQUIRED_IN_PANEL = "ObservationRequiredInPanel";
+
+  /** PanelsAndForms AnswerListIdOverride on a form row. */
+  public static final String ATTR_ANSWER_LIST_ID_OVERRIDE = "AnswerListIdOverride";
+
+  /** LL concept flag that its answers are externally defined ({@code Y}/{@code N}). */
+  public static final String ATTR_ANSWER_EXT_DEFINED = "AnswerExtDefinedYNListOID";
+
+  /** LoincAnswerListLink AnswerListLinkType (NORMATIVE, EXAMPLE, …). */
+  public static final String ATTR_ANSWER_LIST_LINK_TYPE = "AnswerListLinkType";
+
+  /** LoincAnswerListLink ApplicableContext questionnaire LOINC. */
+  public static final String ATTR_APPLICABLE_CONTEXT = "ApplicableContext";
+
+  /** Loader key for QuestionCardinality (PanelsAndForms column). */
+  public static final String ATTR_QUESTION_CARDINALITY = "QuestionCardinality";
+
+  /** PanelsAndForms AnswerCardinality on a form/member edge (e.g. {@code 0..4}). */
+  public static final String ATTR_ANSWER_CARDINALITY = "AnswerCardinality";
 
   /** Member-edge form link id (parent relationship extension). */
   public static final String ATTR_REL_ID = "ID";
@@ -73,11 +115,29 @@ public final class LoincConstants {
   /** Member-edge form display text (parent relationship extension). */
   public static final String ATTR_DISPLAY_NAME_FOR_FORM = "DisplayNameForForm";
 
-  /** Member-edge sequence number on indexed relationships. */
-  public static final String ATTR_SEQ_NO = "SEQ_NO";
+  /** Member-edge sequence number on indexed relationships (LOINC export: SEQUENCE). */
+  public static final String ATTR_SEQUENCE = "SEQUENCE";
+
+  /** Parent form row {@code ID} on a panel member edge (PanelsAndForms ParentID). */
+  public static final String ATTR_PARENT_FORM_LINK_ID = "ParentFormLinkId";
+
+  /** Panel member cardinality within a form (e.g. {@code 1..7}). */
+  public static final String ATTR_CARDINALITY = "Cardinality";
+
+  /** LOINC scale type concept attribute. */
+  public static final String ATTR_SCALE_TYP = "SCALE_TYP";
 
   /** LOINC PROPERTY concept attribute / property code. */
   public static final String ATTR_PROPERTY = "PROPERTY";
+
+  /** LOINC example units concept attribute (e.g. {@code score}). */
+  public static final String ATTR_EXAMPLE_UNITS = "EXAMPLE_UNITS";
+
+  /** LOINC example UCUM units concept attribute (e.g. {@code {score}}). */
+  public static final String ATTR_EXAMPLE_UCUM_UNITS = "EXAMPLE_UCUM_UNITS";
+
+  /** LOINC formula concept attribute. */
+  public static final String ATTR_FORMULA = "FORMULA";
 
   /**
    * Uppercase LOINC property codes that duplicate lowercase {@code valueCoding} axes in the same
@@ -94,6 +154,12 @@ public final class LoincConstants {
 
   /** External copyright notice on a LOINC concept. */
   public static final String ATTR_EXTERNAL_COPYRIGHT_NOTICE = "EXTERNAL_COPYRIGHT_NOTICE";
+
+  /**
+   * PanelsAndForms / panel-member relationship attribute: instrument copyright for this form
+   * context (PRAPARE, HELP/CAM, SILS, etc.).
+   */
+  public static final String ATTR_ADDITIONAL_COPYRIGHT = "AdditionalCopyright";
 
   private LoincConstants() {
     // utility class

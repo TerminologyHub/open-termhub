@@ -106,33 +106,47 @@ public class QuestionnaireProviderR5 implements IResourceProvider {
             HttpServletResponse.SC_BAD_REQUEST);
       }
 
-      final String conceptCode = id.getIdPart().contains("/")
+      final String idPart = id.getIdPart().contains("/")
           ? id.getIdPart().substring(id.getIdPart().indexOf("/") + 1) : id.getIdPart();
 
-      final String cacheKey = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5, conceptCode);
+      // 1. Concept UUID (version-specific Questionnaire.id)
+      final Concept byId = searchService.get(idPart, Concept.class);
+      if (byId != null && isQuestionnaireConcept(byId)) {
+        Terminology terminology = TerminologyUtility.getTerminology(searchService,
+            byId.getTerminology(), byId.getPublisher(), byId.getVersion());
+        if (terminology == null) {
+          terminology = requireLoincTerminology();
+        }
+        final Terminology resolvedTerminology = terminology;
+        final String cacheKey = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5,
+            resolvedTerminology.getVersion(), byId.getId());
+        return QuestionnaireGetCache.getOrLoadR5(cacheKey, () -> {
+          final Questionnaire questionnaire =
+              FhirUtilityR5.toR5Questionnaire(byId, searchService, resolvedTerminology);
+          FhirUtilityR5.populateQuestionnaire(questionnaire, searchService, resolvedTerminology);
+          return questionnaire;
+        });
+      }
+
+      // 2. LOINC panel code against latest LOINC (returned id is Concept UUID)
+      final Terminology latestTerminologyVersion = requireLoincTerminology();
+      final String cacheKey = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5,
+          latestTerminologyVersion.getVersion(), idPart);
       return QuestionnaireGetCache.getOrLoadR5(cacheKey, () -> {
-        // Find LOINC concept using TerminologyUtility
-        final Terminology latestTerminologyVersion = requireLoincTerminology();
         final Concept concept =
-            TerminologyUtility.getConcept(searchService, latestTerminologyVersion, conceptCode);
+            TerminologyUtility.getConcept(searchService, latestTerminologyVersion, idPart);
         if (concept == null) {
-          throw FhirUtilityR5.exception(
-              "Questionnaire not found = " + (id == null ? "null" : id.getIdPart()),
-              IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+          throw FhirUtilityR5.exception("Questionnaire not found = " + idPart, IssueType.NOTFOUND,
+              HttpServletResponse.SC_NOT_FOUND);
         }
 
-        // Verify the code represents a questionnaire (has PanelType:Panel
-        // attribute)
         if (!isQuestionnaireConcept(concept)) {
-          throw FhirUtilityR5.exception("Concept " + conceptCode + " is not a questionnaire",
+          throw FhirUtilityR5.exception("Concept " + idPart + " is not a questionnaire",
               IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
         }
 
-        // Convert found concept to Questionnaire resource and return
         final Questionnaire questionnaire =
             FhirUtilityR5.toR5Questionnaire(concept, searchService, latestTerminologyVersion);
-
-        // Populate with questions and answers
         FhirUtilityR5.populateQuestionnaire(questionnaire, searchService, latestTerminologyVersion);
         return questionnaire;
       });
@@ -348,19 +362,37 @@ public class QuestionnaireProviderR5 implements IResourceProvider {
   }
 
   /**
-   * Resolves the latest LOINC terminology (e.g. 2.81). Questionnaire read/search always uses the
-   * latest loaded LOINC release, not historical versions.
+   * Resolves LOINC terminology for Questionnaire operations. When {@code version} is set, uses that
+   * CodeSystem release; otherwise uses the latest loaded LOINC release.
+   *
+   * @param version optional LOINC CodeSystem version (null/blank = latest)
+   * @return the resolved LOINC terminology
+   * @throws FHIRServerResponseException if LOINC is not in the index
+   */
+  private Terminology requireLoincTerminology(final StringParam version)
+    throws FHIRServerResponseException {
+    final String versionValue = version == null ? null : version.getValue();
+    final Terminology terminology =
+        loincValueSetHelper.findLoincTerminology(searchService, versionValue);
+    if (terminology == null) {
+      if (versionValue != null && !versionValue.isBlank()) {
+        throw FhirUtilityR5.exception("LOINC terminology version not found = " + versionValue,
+            IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+      }
+      throw FhirUtilityR5.exception("LOINC terminology not found", IssueType.NOTFOUND,
+          HttpServletResponse.SC_NOT_FOUND);
+    }
+    return terminology;
+  }
+
+  /**
+   * Resolves the latest LOINC terminology.
    *
    * @return the latest LOINC terminology
    * @throws FHIRServerResponseException if LOINC is not in the index
    */
   private Terminology requireLoincTerminology() throws FHIRServerResponseException {
-    final Terminology terminology = loincValueSetHelper.findLoincTerminology(searchService);
-    if (terminology == null) {
-      throw FhirUtilityR5.exception("LOINC terminology not found", IssueType.NOTFOUND,
-          HttpServletResponse.SC_NOT_FOUND);
-    }
-    return terminology;
+    return requireLoincTerminology(null);
   }
 
   /**
@@ -405,7 +437,7 @@ public class QuestionnaireProviderR5 implements IResourceProvider {
     final StringParam title, final UriParam url, final StringParam version) throws Exception {
 
     final List<Questionnaire> list = new ArrayList<>();
-    final Terminology loincTerminology = requireLoincTerminology();
+    final Terminology loincTerminology = requireLoincTerminology(version);
 
     String codeValue = (url != null) ? extractCodeFromUrl(url.getValue()) : null;
     if (StringUtils.isBlank(codeValue) && id != null) {
@@ -421,13 +453,18 @@ public class QuestionnaireProviderR5 implements IResourceProvider {
             TerminologyUtility.getConcept(searchService, loincTerminology, codeValue);
 
         if (concept != null && isQuestionnaireConcept(concept)) {
-          final String cacheKey = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5, codeValue);
-          list.add(QuestionnaireGetCache.getOrLoadR5(cacheKey, () -> {
-            final Questionnaire questionnaire = FhirUtilityR5.toR5Questionnaire(concept,
-                searchService, loincTerminology);
-            FhirUtilityR5.populateQuestionnaire(questionnaire, searchService, loincTerminology);
-            return questionnaire;
-          }));
+          final String cacheKey = QuestionnaireGetCache.buildKey(FhirVersionEnum.R5,
+              loincTerminology.getVersion(), codeValue);
+          final Questionnaire questionnaire = QuestionnaireGetCache.getOrLoadR5(cacheKey, () -> {
+            final Questionnaire built = FhirUtilityR5.toR5Questionnaire(concept, searchService,
+                loincTerminology);
+            FhirUtilityR5.populateQuestionnaire(built, searchService, loincTerminology);
+            return built;
+          });
+          if (matchesSearchCriteria(questionnaire, id, code, date, description, identifier, name,
+              publisher, title, url, version)) {
+            list.add(questionnaire);
+          }
         }
       } catch (final Exception e) {
         logger.error("Error looking up concept by code: {}", e.getMessage());
@@ -539,12 +576,13 @@ public class QuestionnaireProviderR5 implements IResourceProvider {
    * @return true if the concept is a questionnaire, false otherwise
    */
   private boolean isQuestionnaireConcept(final Concept concept) {
-    if (QuestionnaireSearchHelper.isPanelConcept(concept)) {
-      return true;
+    try {
+      return questionnaireSearchHelper.isQuestionnairePanel(searchService, concept);
+    } catch (final Exception e) {
+      logger.debug("Error checking questionnaire eligibility for concept {}: {}",
+          concept.getCode(), e.getMessage());
+      return false;
     }
-
-    // Secondary criteria: LP29696-9 | Survey instruments |
-    return hasSurveyInstrumentsRelationship(concept);
   }
 
   /**
@@ -656,10 +694,9 @@ public class QuestionnaireProviderR5 implements IResourceProvider {
         return false;
       }
 
-      if (code != null && !code.getValue().equals(questionnaire.getId())) {
+      if (code != null && !matchesQuestionnaireCode(questionnaire, code.getValue())) {
         if (logger.isDebugEnabled()) {
-          logger.debug("Code mismatch: request='{}' vs questionnaire='{}'", code.getValue(),
-              questionnaire.getId());
+          logger.debug("Code mismatch: request='{}' vs questionnaire codes", code.getValue());
         }
         return false;
       }
@@ -691,5 +728,21 @@ public class QuestionnaireProviderR5 implements IResourceProvider {
           e.getMessage());
       return false;
     }
+  }
+
+  /**
+   * Returns true when the code search value matches any Questionnaire.code coding.
+   *
+   * @param questionnaire the questionnaire
+   * @param codeValue the code search value
+   * @return true if matches
+   */
+  private boolean matchesQuestionnaireCode(final Questionnaire questionnaire,
+    final String codeValue) {
+    if (codeValue == null || questionnaire == null || !questionnaire.hasCode()) {
+      return false;
+    }
+    return questionnaire.getCode().stream()
+        .anyMatch(coding -> codeValue.equals(coding.getCode()));
   }
 }
