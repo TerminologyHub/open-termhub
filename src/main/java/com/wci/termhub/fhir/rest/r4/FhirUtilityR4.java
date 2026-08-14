@@ -68,6 +68,7 @@ import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
 import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirDateTimeUtil;
+import com.wci.termhub.fhir.util.FhirPublicRequestUrl;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
 import com.wci.termhub.fhir.util.LoincConstants;
@@ -1731,8 +1732,7 @@ public final class FhirUtilityR4 {
 
     final int countInt = count == null ? 25 : count.getValue().intValue();
     final int offsetInt = offset == null ? 0 : offset.getValue().intValue();
-    final String thisUrl = request.getQueryString() == null ? request.getRequestURL().toString()
-        : request.getRequestURL().append('?').append(request.getQueryString()).toString();
+    final String thisUrl = FhirPublicRequestUrl.forRequest(request);
 
     final Bundle bundle = new Bundle();
     bundle.setId(UUID.randomUUID().toString());
@@ -1754,10 +1754,10 @@ public final class FhirUtilityR4 {
     }
 
     // Add entries for current page
+    final String baseUrl = FhirPublicRequestUrl.forRequestPath(request);
     for (int i = offsetInt; i < offsetInt + countInt && i < list.size(); i++) {
       final BundleEntryComponent component = new BundleEntryComponent();
       component.setResource(list.get(i));
-      final String baseUrl = request.getRequestURL().toString().replaceAll("/$", "");
       component.setFullUrl(baseUrl + "/" + list.get(i).getIdElement().getIdPart());
       bundle.addEntry(component);
     }
