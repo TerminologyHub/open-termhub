@@ -196,7 +196,7 @@ public final class FhirUtilityR4 {
       final CodeSystem cs = toR4(terminology);
       // Skip non-matching id
       // Skip nonmatching system
-      if ((id != null && !id.getIdPart().equals(cs.getId()))
+      if ((id != null && !FhirUtility.matchesIdOrCode(id.getIdPart(), cs.getId(), cs.getTitle()))
           || (system != null && !system.getValue().equals(cs.getUrl()))) {
         continue;
       }

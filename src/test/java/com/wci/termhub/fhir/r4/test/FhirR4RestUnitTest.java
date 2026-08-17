@@ -466,6 +466,26 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
+   * Test retrieving a CodeSystem by abbreviation.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemByAbbreviation() throws Exception {
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
+    final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/SNOMEDCT_US";
+    LOGGER.info("endpoint = {}", endpoint);
+
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final CodeSystem codeSystem = parser.parseResource(CodeSystem.class, content);
+
+    assertNotNull(codeSystem);
+    assertEquals("SNOMEDCT_US", codeSystem.getTitle());
+    assertEquals(csId, codeSystem.getIdElement().getIdPart());
+  }
+
+  /**
    * Test CodeSystem _search operation.
    *
    * @throws Exception the exception
@@ -992,6 +1012,46 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(valueSet.getDate());
     assertNotNull(valueSet.getPublisher());
     assertNotNull(valueSet.getDescription());
+  }
+
+  /**
+   * Test retrieving a ValueSet by subset code.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetBySubsetCode() throws Exception {
+    final String vsId = ValueSetLoaderUtil.mapOriginalId("0c042a2e-2c3e-46ad-9a6d-328b9cbb0c0c");
+    final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/731000124108";
+    LOGGER.info("endpoint = {}", endpoint);
+
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final ValueSet valueSet = parser.parseResource(ValueSet.class, content);
+
+    assertNotNull(valueSet);
+    assertEquals("SNOMEDCT_US extension concepts", valueSet.getName());
+    assertTrue(valueSet.getUrl() != null && valueSet.getUrl().contains("731000124108"));
+    assertEquals(vsId, valueSet.getIdElement().getIdPart());
+  }
+
+  /**
+   * Test retrieving a ConceptMap by identifier code.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testConceptMapByCode() throws Exception {
+    final String endpoint = LOCALHOST + port + FHIR_CONCEPTMAP + "/6011000124106";
+    LOGGER.info("endpoint = {}", endpoint);
+
+    final String content = this.restTemplate.getForObject(endpoint, String.class);
+    final ConceptMap conceptMap = parser.parseResource(ConceptMap.class, content);
+
+    assertNotNull(conceptMap);
+    assertEquals("SNOMEDCT_US-ICD10CM", conceptMap.getTitle());
+    assertNotEquals("6011000124106", conceptMap.getIdElement().getIdPart());
   }
 
   /**
@@ -2445,6 +2505,24 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(response.getBody(), "Response should not be null");
     assertTrue(response.getBody().contains("OperationOutcome"),
         "Response should contain OperationOutcome");
+  }
+
+  /**
+   * Test ValueSet read by LL code with server.mode=default.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetReadLllgByCodeDefaultMode() throws Exception {
+    final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + LL_VS_ID;
+    LOGGER.info("endpoint = {}", endpoint);
+
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(endpoint, String.class);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    final ValueSet vs = parser.parseResource(ValueSet.class, response.getBody());
+    assertEquals(LL_VS_URL, vs.getUrl());
+    assertNotEquals(LL_VS_ID, vs.getIdElement().getIdPart());
   }
 
   /**

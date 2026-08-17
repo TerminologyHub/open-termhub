@@ -143,29 +143,24 @@ public class ValueSetProviderR5 implements IResourceProvider {
       // always uses this path
       final String idPart = id != null ? id.getIdPart() : null;
       if (idPart != null && loincValueSetHelper.isLllgId(idPart)) {
-        if (!loincValueSetHelper.isEnabled()) {
-          logger.debug("GET ValueSet/{}: LL/LG path skipped (server.mode is not regenstrief)",
-              idPart);
-        } else {
-          final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
-          if (loinc != null) {
-            final int memberLimit = 100_000;
-            final ResultList<Concept> list =
-                loincValueSetHelper.findLllgMembers(searchService, loinc, idPart, 0, memberLimit);
-            final List<Concept> items = new ArrayList<>(list.getItems());
-            loincValueSetHelper.sortDirectLllgMembers(idPart, items);
-            final LoincValueSetHelper.LllgComposeStructure composeStructure =
-                loincValueSetHelper.buildLllgComposeStructure(items);
-            logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}",
-                idPart, items.size());
-            final Concept lllgConcept =
-                loincValueSetHelper.findLllgConcept(searchService, loinc, idPart);
-            final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
-            return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loinc, idPart, valueSetId,
-                composeStructure);
-          }
-          logger.debug("GET ValueSet/{}: LL/LG path skipped (LOINC terminology not found)", idPart);
+        final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
+        if (loinc != null) {
+          final int memberLimit = 100_000;
+          final ResultList<Concept> list =
+              loincValueSetHelper.findLllgMembers(searchService, loinc, idPart, 0, memberLimit);
+          final List<Concept> items = new ArrayList<>(list.getItems());
+          loincValueSetHelper.sortDirectLllgMembers(idPart, items);
+          final LoincValueSetHelper.LllgComposeStructure composeStructure =
+              loincValueSetHelper.buildLllgComposeStructure(items);
+          logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}",
+              idPart, items.size());
+          final Concept lllgConcept =
+              loincValueSetHelper.findLllgConcept(searchService, loinc, idPart);
+          final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
+          return FhirUtilityR5.toR5LllgValueSetWithComposeOnly(loinc, idPart, valueSetId,
+              composeStructure);
         }
+        logger.debug("GET ValueSet/{}: LL/LG path skipped (LOINC terminology not found)", idPart);
       }
       // 2. Check implicit ValueSets
       final ValueSet vs = findPossibleValueSets(false, id, null, null).stream()
@@ -174,7 +169,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
         return vs;
       }
       // 2.5 LOINC LL/LG by Concept UUID
-      if (idPart != null && loincValueSetHelper.isEnabled()) {
+      if (idPart != null) {
         final Concept concept = searchService.get(idPart, Concept.class);
         if (concept != null && concept.getCode() != null
             && loincValueSetHelper.isLllgId(concept.getCode())) {
@@ -199,7 +194,8 @@ public class ValueSetProviderR5 implements IResourceProvider {
         }
       }
       // 3. Check explicit subsets
-      final Subset subset = idPart != null ? searchService.get(idPart, Subset.class) : null;
+      final Subset subset =
+          idPart != null ? FhirUtility.findSubsetByIdOrCode(searchService, idPart) : null;
       if (subset != null) {
         final List<SubsetMember> members = findSubsetMembersForSubset(subset);
         return FhirUtilityR5.toR5ValueSet(subset, members, false, searchService);
@@ -1168,7 +1164,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
   private List<Subset> findLoadedValueSetSubsets(final TokenParam id, final UriParam url)
     throws Exception {
     if (id != null && id.getValue() != null) {
-      final Subset subset = searchService.get(id.getValue(), Subset.class);
+      final Subset subset = FhirUtility.findSubsetByIdOrCode(searchService, id.getValue());
       if (subset != null && "ValueSet".equals(subset.getCategory())) {
         return List.of(subset);
       }
@@ -1533,7 +1529,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
       final ValueSet set = FhirUtilityR5.toR5ValueSet(subset, new ArrayList<SubsetMember>(0),
           metaFlag, searchService);
       // Apply the same filtering as above
-      if ((id != null && !id.getValue().equals(set.getId()))
+      if ((id != null && !FhirUtility.matchesIdOrCode(id.getValue(), set.getId(), subset.getCode()))
           || (url != null && !url.getValue().equals(set.getUrl()))) {
         continue;
       }

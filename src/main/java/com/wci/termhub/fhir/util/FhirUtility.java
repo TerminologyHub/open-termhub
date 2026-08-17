@@ -37,7 +37,9 @@ import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
+import com.wci.termhub.model.Subset;
 import com.wci.termhub.model.Terminology;
+import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
@@ -213,6 +215,87 @@ public final class FhirUtility {
    */
   private static String systemVersionKey(final String system, final String version) {
     return system + "|" + (version == null ? "" : version);
+  }
+
+  /**
+   * Returns true when the request id matches the resource UUID or the alternate code.
+   *
+   * @param idPart the FHIR id path or _id search value
+   * @param uuid the resource UUID
+   * @param code the alternate code (abbreviation, identifier value, etc.)
+   * @return true if idPart equals uuid or code
+   */
+  public static boolean matchesIdOrCode(final String idPart, final String uuid, final String code) {
+    if (idPart == null) {
+      return false;
+    }
+    return idPart.equals(uuid) || (code != null && !code.isEmpty() && idPart.equals(code));
+  }
+
+  /**
+   * Finds a mapset by UUID or {@code code}, preferring the latest version on code match.
+   *
+   * @param searchService the search service
+   * @param idPart the UUID or mapset code
+   * @return the mapset or null
+   * @throws Exception the exception
+   */
+  public static Mapset findMapsetByIdOrCode(final EntityRepositoryService searchService,
+    final String idPart) throws Exception {
+    if (idPart == null || idPart.isEmpty()) {
+      return null;
+    }
+    final Mapset byId = searchService.get(idPart, Mapset.class);
+    if (byId != null) {
+      return byId;
+    }
+    final ResultList<Mapset> list = searchService.find(
+        new SearchParameters(StringUtility.escapeKeywordField("code", idPart), 0, 50, null, null),
+        Mapset.class);
+    return pickLatestRef(list.getItems());
+  }
+
+  /**
+   * Finds a ValueSet subset by UUID or {@code code}, preferring the latest version on code match.
+   *
+   * @param searchService the search service
+   * @param idPart the UUID or subset code
+   * @return the subset or null
+   * @throws Exception the exception
+   */
+  public static Subset findSubsetByIdOrCode(final EntityRepositoryService searchService,
+    final String idPart) throws Exception {
+    if (idPart == null || idPart.isEmpty()) {
+      return null;
+    }
+    final Subset byId = searchService.get(idPart, Subset.class);
+    if (byId != null) {
+      return byId;
+    }
+    final String query = StringUtility.composeQuery("AND", "category:ValueSet",
+        StringUtility.escapeKeywordField("code", idPart));
+    final ResultList<Subset> list =
+        searchService.find(new SearchParameters(query, 0, 50, null, null), Subset.class);
+    return pickLatestRef(list.getItems());
+  }
+
+  /**
+   * Picks the candidate marked latest, otherwise the first.
+   *
+   * @param <T> terminology ref type
+   * @param candidates the candidates
+   * @return the latest or first, or null if empty
+   */
+  private static <T extends TerminologyRef> T pickLatestRef(final List<T> candidates) {
+    if (candidates == null || candidates.isEmpty()) {
+      return null;
+    }
+    if (candidates.size() == 1) {
+      return candidates.get(0);
+    }
+    final T markedLatest = candidates.stream().filter(t -> Boolean.TRUE.equals(t.getLatest()))
+        .findFirst().orElse(null);
+    return markedLatest != null ? markedLatest : candidates.get(0);
   }
 
   /**
