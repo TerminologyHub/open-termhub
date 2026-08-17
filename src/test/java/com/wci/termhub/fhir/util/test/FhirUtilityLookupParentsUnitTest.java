@@ -10,6 +10,7 @@
 package com.wci.termhub.fhir.util.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -97,5 +98,19 @@ public class FhirUtilityLookupParentsUnitTest {
     r.setFrom(from);
     r.setTo(to);
     return r;
+  }
+
+  /**
+   * Request id matches resource UUID or alternate code.
+   */
+  @Test
+  public void testMatchesIdOrCode() {
+    final String uuid = "619263d2-dc73-45b3-afc8-0ab8a471cf97";
+    final String code = "LL1162-8";
+    assertTrue(FhirUtility.matchesIdOrCode(uuid, uuid, code));
+    assertTrue(FhirUtility.matchesIdOrCode(code, uuid, code));
+    assertFalse(FhirUtility.matchesIdOrCode("SNOMEDCT_US", uuid, code));
+    assertFalse(FhirUtility.matchesIdOrCode(null, uuid, code));
+    assertFalse(FhirUtility.matchesIdOrCode(code, uuid, null));
   }
 }

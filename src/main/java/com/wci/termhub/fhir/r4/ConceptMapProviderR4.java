@@ -118,7 +118,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       }
       final String cacheKey = ConceptMapGetCache.buildKey(FhirVersionEnum.R4, id.getIdPart());
       return ConceptMapGetCache.getOrLoadR4(cacheKey, () -> {
-        final Mapset mapset = searchService.get(id.getIdPart(), Mapset.class);
+        final Mapset mapset = FhirUtility.findMapsetByIdOrCode(searchService, id.getIdPart());
         if (mapset == null) {
           throw FhirUtilityR4.exception(
               "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
@@ -270,7 +270,8 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       for (final ConceptMap cm : candidates) {
 
         // Skip non-matching
-        if ((id != null && !id.getValue().equals(cm.getId()))
+        if ((id != null && !FhirUtility.matchesIdOrCode(id.getValue(), cm.getId(),
+            cm.hasIdentifier() ? cm.getIdentifier().getValue() : null))
             || (url != null && !url.getValue().equals(cm.getUrl()))) {
           continue;
         }
@@ -443,7 +444,8 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       for (final ConceptMap cm : candidates) {
 
         // Skip non-matching
-        if ((id != null && !id.getIdPart().equals(cm.getId()))
+        if ((id != null && !FhirUtility.matchesIdOrCode(id.getIdPart(), cm.getId(),
+            cm.hasIdentifier() ? cm.getIdentifier().getValue() : null))
             || (url != null && !url.getValue().equals(cm.getUrl()))) {
           continue;
         }

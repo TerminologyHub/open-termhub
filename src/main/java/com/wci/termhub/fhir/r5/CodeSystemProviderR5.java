@@ -126,21 +126,24 @@ public class CodeSystemProviderR5 implements IResourceProvider {
         logger.debug("Looking for code system with ID: {}", id != null ? id.getIdPart() : "null");
       }
 
+      final String idPart = id != null ? id.getIdPart() : null;
+      Terminology uuidMatch = null;
+      final List<Terminology> codeMatches = new ArrayList<>();
       for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
+        if (idPart != null && idPart.equals(terminology.getId())) {
+          uuidMatch = terminology;
+          break;
+        }
+        if (idPart != null && idPart.equals(terminology.getAbbreviation())) {
+          codeMatches.add(terminology);
+        }
+      }
+      final Terminology match =
+          uuidMatch != null ? uuidMatch : TerminologyUtility.getLatestTerminology(codeMatches);
+      if (match != null) {
         final java.util.List<Metadata> metadata =
-            CodeSystemMetadataLookupUtility.getMetadataForTerminology(searchService, terminology);
-        final CodeSystem cs = FhirUtilityR5.toR5(terminology, metadata);
-        if (logger.isDebugEnabled()) {
-          logger.debug("Checking code system {} with ID: {}", cs.getTitle(), cs.getId());
-        }
-
-        // Skip non-matching - comparing just the ID parts
-        if (id != null && id.getIdPart().equals(cs.getId())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Found matching code system: {}", cs.getTitle());
-          }
-          return cs;
-        }
+            CodeSystemMetadataLookupUtility.getMetadataForTerminology(searchService, match);
+        return FhirUtilityR5.toR5(match, metadata);
       }
       throw FhirUtilityR5.exception(
           "Code system not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
@@ -230,7 +233,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
         }
 
         // Skip non-matching
-        if ((id != null && !id.getValue().equals(cs.getId()))
+        if ((id != null && !FhirUtility.matchesIdOrCode(id.getValue(), cs.getId(), cs.getTitle()))
             || (url != null && !url.getValue().equals(cs.getUrl()))
             || (system != null && !system.getValue().equals(cs.getUrl()))) {
           continue;
