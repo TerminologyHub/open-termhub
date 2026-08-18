@@ -1360,7 +1360,7 @@ public final class TerminologyUtility {
     final ResultList<Terminology> list = searchService.find(
         new SearchParameters(StringUtility.composeQuery("AND",
             StringUtility.escapeKeywordField("abbreviation", abbreviation),
-            StringUtility.escapeKeywordField("publisher", publisher)), null, null, null, null),
+            StringUtility.escapeKeywordField("publisher", publisher)), 100_000, 0),
         Terminology.class);
     Date maxDate = null;
     Terminology closest = null;
@@ -1418,11 +1418,18 @@ public final class TerminologyUtility {
   public static Terminology getLatestTerminologyVersion(final EntityRepositoryService searchService,
     final String terminology, final String publisher) throws Exception {
 
-    final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
+    final String baseQuery = StringUtility.composeQuery("AND",
         StringUtility.escapeKeywordField("abbreviation", terminology),
-        StringUtility.escapeKeywordField("publisher", publisher)), null, null, null, null);
+        StringUtility.escapeKeywordField("publisher", publisher));
+    final ResultList<Terminology> marked = searchService.find(
+        new SearchParameters(StringUtility.composeQuery("AND", baseQuery, "latest:true"), 1, 0),
+        Terminology.class);
+    if (!marked.getItems().isEmpty()) {
+      return marked.getItems().get(0);
+    }
 
-    final ResultList<Terminology> list = searchService.find(params, Terminology.class);
+    final ResultList<Terminology> list =
+        searchService.find(new SearchParameters(baseQuery, 100000, 0), Terminology.class);
 
     if (list.getItems().isEmpty()) {
       return null;
@@ -1430,11 +1437,6 @@ public final class TerminologyUtility {
 
     if (list.getItems().size() == 1) {
       return list.getItems().get(0);
-    }
-    final Terminology markedLatest =
-        list.getItems().stream().filter(t -> Boolean.TRUE.equals(t.getLatest())).findFirst().orElse(null);
-    if (markedLatest != null) {
-      return markedLatest;
     }
     return list.getItems().stream()
         .max((a, b) -> compareVersionStrings(a.getVersion(), b.getVersion()))
