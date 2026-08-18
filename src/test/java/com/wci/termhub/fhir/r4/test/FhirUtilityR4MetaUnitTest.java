@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hl7.fhir.r4.model.CodeSystem;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.fhir.util.LoincConstants;
+import com.wci.termhub.fhir.util.LoincValueSetHelper.LllgComposeStructure;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.Mapset;
@@ -174,6 +176,40 @@ public class FhirUtilityR4MetaUnitTest {
     assertNotNull(vs.getContact());
     assertEquals("Regenstrief Institute, Inc.", vs.getContactFirstRep().getName());
     assertEquals("http://loinc.org", vs.getContactFirstRep().getTelecomFirstRep().getValue());
+  }
+
+  /**
+   * Test LL ValueSet identifier from concept AnswerListOID.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testLllgValueSetAnswerListOid() throws Exception {
+    final Terminology terminology = new Terminology();
+    terminology.setUri("http://loinc.org");
+    terminology.setVersion("2.83");
+    terminology.setPublisher("Regenstrief Institute, Inc.");
+    terminology.setReleaseDate("2026-08-18");
+    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+
+    final Concept concept = new Concept();
+    concept.setId("test-uuid");
+    concept.setCode("LL1162-8");
+    concept.setName("Quantity (5 answers, ord)");
+    concept.getAttributes().put(LoincConstants.ATTR_ANSWER_LIST_OID, "1.3.6.1.4.1.12009.10.1.333");
+
+    final ValueSet vs = FhirUtilityR4.toR4LllgValueSetFromConcept(terminology, concept, false);
+
+    assertEquals("Quantity (5 answers, ord)", vs.getName());
+    assertEquals(1, vs.getIdentifier().size());
+    assertEquals("urn:ietf:rfc:3986", vs.getIdentifierFirstRep().getSystem());
+    assertEquals("urn:oid:1.3.6.1.4.1.12009.10.1.333", vs.getIdentifierFirstRep().getValue());
+
+    final ValueSet getVs = FhirUtilityR4.toR4LllgValueSetWithComposeOnly(terminology,
+        concept.getCode(), concept.getId(), new LllgComposeStructure(List.of(), List.of()),
+        concept);
+    assertEquals("Quantity (5 answers, ord)", getVs.getName());
+    assertEquals("urn:oid:1.3.6.1.4.1.12009.10.1.333", getVs.getIdentifierFirstRep().getValue());
   }
 
   /**

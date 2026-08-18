@@ -91,6 +91,9 @@ public final class LoincConstants {
   /** PanelsAndForms AnswerListIdOverride on a form row. */
   public static final String ATTR_ANSWER_LIST_ID_OVERRIDE = "AnswerListIdOverride";
 
+  /** LL answer list OID concept attribute. */
+  public static final String ATTR_ANSWER_LIST_OID = "AnswerListOID";
+
   /** LL concept flag that its answers are externally defined ({@code Y}/{@code N}). */
   public static final String ATTR_ANSWER_EXT_DEFINED = "AnswerExtDefinedYNListOID";
 

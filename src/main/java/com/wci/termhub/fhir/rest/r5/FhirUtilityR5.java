@@ -1084,10 +1084,40 @@ public final class FhirUtilityR5 {
     final Concept concept, final boolean metaFlag) throws Exception {
     final ValueSet set =
         toR5LllgValueSet(terminology, concept.getCode(), concept.getId(), metaFlag);
-    if (concept.getName() != null) {
-      set.setName(concept.getName());
-    }
+    applyLllgConceptName(set, concept);
+    applyAnswerListOid(set, concept);
     return set;
+  }
+
+  /**
+   * Copies LL/LG concept display onto ValueSet.name.
+   *
+   * @param set the value set
+   * @param concept the LL or LG concept
+   */
+  public static void applyLllgConceptName(final ValueSet set, final Concept concept) {
+    if (set == null || concept == null || concept.getName() == null) {
+      return;
+    }
+    set.setName(concept.getName());
+  }
+
+  /**
+   * Copies {@code AnswerListOID} from an LL concept onto ValueSet.identifier as {@code urn:oid:}.
+   *
+   * @param set the value set
+   * @param concept the LL or LG concept
+   */
+  public static void applyAnswerListOid(final ValueSet set, final Concept concept) {
+    if (set == null || concept == null || concept.getAttributes() == null) {
+      return;
+    }
+    final String oid = concept.getAttributes().get(LoincConstants.ATTR_ANSWER_LIST_OID);
+    if (StringUtility.isEmpty(oid)) {
+      return;
+    }
+    final String value = oid.startsWith("urn:oid:") ? oid : "urn:oid:" + oid;
+    set.addIdentifier(new Identifier().setSystem("urn:ietf:rfc:3986").setValue(value));
   }
 
   /**
@@ -1173,13 +1203,17 @@ public final class FhirUtilityR5 {
    * @param lllgId the LL or LG id (e.g. LL1162-8, LG51018-6-2.78)
    * @param valueSetId the FHIR resource id (Concept UUID)
    * @param composeStructure partitioned compose structure from direct members
+   * @param lllgConcept the LL or LG concept (AnswerListOID)
    * @return the value set with compose.include set, no expansion
    * @throws Exception the exception
    */
   public static ValueSet toR5LllgValueSetWithComposeOnly(final Terminology terminology,
-    final String lllgId, final String valueSetId, final LllgComposeStructure composeStructure)
+    final String lllgId, final String valueSetId, final LllgComposeStructure composeStructure,
+    final Concept lllgConcept)
     throws Exception {
     final ValueSet set = toR5LllgValueSet(terminology, lllgId, valueSetId, false);
+    applyLllgConceptName(set, lllgConcept);
+    applyAnswerListOid(set, lllgConcept);
     setR5LllgCompose(set, terminology.getUri(), composeStructure);
     return set;
   }

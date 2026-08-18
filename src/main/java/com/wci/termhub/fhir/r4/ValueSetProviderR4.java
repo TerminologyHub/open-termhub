@@ -158,7 +158,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
               loincValueSetHelper.findLllgConcept(searchService, loinc, idPart);
           final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
           return FhirUtilityR4.toR4LllgValueSetWithComposeOnly(loinc, idPart, valueSetId,
-              composeStructure);
+              composeStructure, lllgConcept);
         }
         logger.info("GET ValueSet/{}: LL/LG path skipped (LOINC terminology not found)", idPart);
       }
@@ -189,7 +189,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
             logger.info("GET ValueSet/{}: returning LL/LG compose by concept UUID, members={}",
                 idPart, items.size());
             return FhirUtilityR4.toR4LllgValueSetWithComposeOnly(loincTerm, concept.getCode(),
-                concept.getId(), composeStructure);
+                concept.getId(), composeStructure, concept);
           }
         }
       }
@@ -1629,6 +1629,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
             final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
             final ValueSet lllgVs =
                 FhirUtilityR4.toR4LllgValueSet(loincForLllg, lllgId, valueSetId, metaFlag);
+            FhirUtilityR4.applyAnswerListOid(lllgVs, lllgConcept);
+            FhirUtilityR4.applyLllgConceptName(lllgVs, lllgConcept);
             final boolean idUrlMatch =
                 (id == null || FhirUtilityR4.matchesLllgValueSetId(id.getValue(), lllgVs))
                     && (url == null || url.getValue().equals(lllgVs.getUrl()));
