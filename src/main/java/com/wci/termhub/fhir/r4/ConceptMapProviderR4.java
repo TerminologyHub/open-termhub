@@ -23,6 +23,7 @@ import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.ConceptMap;
+import org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
@@ -43,13 +44,13 @@ import com.wci.termhub.fhir.util.ConceptMapGetCache;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.lucene.eventing.Write;
+import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.Mapping;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ConceptMapLoaderUtil;
-import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
@@ -439,47 +440,14 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       final Terminology terminology = FhirUtilityR4.getTerminology(searchService, null, code,
           "system", system, version, coding, true);
 
-      // Get all mapsets and then restrict
-      final List<ConceptMap> candidates = findCandidates();
-      for (final ConceptMap cm : candidates) {
-
-        // Skip non-matching
-        if ((id != null && !FhirUtility.matchesIdOrCode(id.getIdPart(), cm.getId(),
-            cm.hasIdentifier() ? cm.getIdentifier().getValue() : null))
-            || (url != null && !url.getValue().equals(cm.getUrl()))) {
-          continue;
-        }
-
-        if (conceptMapVersion != null && !conceptMapVersion.getValue().equals(cm.getVersion())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP concept map version mismatch = {}", cm.getVersion());
-          }
-          continue;
-        }
-        if (source != null && !source.getValue().equals(cm.getSourceUriType().getValue())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP source mismatch = {}, {}", source.getValue(),
-                cm.getSourceUriType().getValue());
-          }
-          continue;
-        }
-        if (target != null && !target.getValue().equals(cm.getTargetUriType().getValue())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP target mismatch = {}, {}", target.getValue(),
-                cm.getTargetUriType().getValue());
-          }
-          continue;
-        }
-        if (targetSystem != null
-            && !cm.getTargetUriType().getValue().startsWith(targetSystem.getValue())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP targetSystem mismatch = {}, {}", targetSystem.getValue(),
-                cm.getTargetUriType().getValue());
-          }
-          continue;
-        }
-        return translateHelper(ModelUtility.asList(cm), terminology, codeStr,
-            reverse != null && reverse.getValue());
+      final List<Mapset> selected = FhirUtility.filterTranslateMapsets(
+          FhirUtility.lookupMapsets(searchService), url == null ? null : url.getValue(),
+          id == null ? null : id.getIdPart(),
+          conceptMapVersion == null ? null : conceptMapVersion.getValue(),
+          system == null ? null : system.getValue(), version == null ? null : version.getValue());
+      final List<ConceptMap> list = toTranslateConceptMaps(selected, source, target, targetSystem);
+      if (!list.isEmpty()) {
+        return translateHelper(list, terminology, codeStr, reverse != null && reverse.getValue());
       }
 
       throw FhirUtilityR4.exception("Concept map not found = " + url, IssueType.NOTFOUND,
@@ -561,47 +529,11 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       final Terminology terminology = FhirUtilityR4.getTerminology(searchService, null, code,
           "system", system, version, coding, true);
 
-      // Get all mapsets and then restrict
-      final List<ConceptMap> candidates = findCandidates();
-      final List<ConceptMap> list = new ArrayList<>();
-      for (final ConceptMap cm : candidates) {
-
-        // Skip non-matching
-        if ((url != null && !url.getValue().equals(cm.getUrl()))) {
-          continue;
-        }
-        if (conceptMapVersion != null && !conceptMapVersion.getValue().equals(cm.getVersion())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP concept map version mismatch = {}", cm.getVersion());
-          }
-          continue;
-        }
-        if (source != null && !source.getValue().equals(cm.getSourceUriType().getValue())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP source mismatch = " + source.getValue() + ", "
-                + cm.getSourceUriType().getValue());
-          }
-          continue;
-        }
-        if (target != null && !target.getValue().equals(cm.getTargetUriType().getValue())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP target mismatch = " + target.getValue() + ", "
-                + cm.getTargetUriType().getValue());
-          }
-          continue;
-        }
-        if (targetSystem != null
-            && !cm.getTargetUriType().getValue().startsWith(targetSystem.getValue())) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("  SKIP targetSystem mismatch = " + targetSystem.getValue() + ", "
-                + cm.getTargetUriType().getValue());
-          }
-          continue;
-        }
-
-        list.add(cm);
-      }
-
+      final List<Mapset> selected = FhirUtility.filterTranslateMapsets(
+          FhirUtility.lookupMapsets(searchService), url == null ? null : url.getValue(), null,
+          conceptMapVersion == null ? null : conceptMapVersion.getValue(),
+          system == null ? null : system.getValue(), version == null ? null : version.getValue());
+      final List<ConceptMap> list = toTranslateConceptMaps(selected, source, target, targetSystem);
       if (!list.isEmpty()) {
         return translateHelper(list, terminology, codeStr, reverse != null && reverse.getValue());
       }
@@ -713,6 +645,36 @@ public class ConceptMapProviderR4 implements IResourceProvider {
   }
 
   /**
+   * Converts selected mapsets to ConceptMaps, applying source/target filters.
+   *
+   * @param mapsets the mapsets
+   * @param source the source
+   * @param target the target
+   * @param targetSystem the target system
+   * @return the concept maps
+   * @throws Exception the exception
+   */
+  private List<ConceptMap> toTranslateConceptMaps(final List<Mapset> mapsets, final UriType source,
+    final UriType target, final UriType targetSystem) throws Exception {
+    final List<ConceptMap> list = new ArrayList<>();
+    for (final Mapset mapset : mapsets) {
+      final ConceptMap cm = FhirUtilityR4.toR4(mapset, resolveContactTerminology(mapset));
+      if (source != null && !source.getValue().equals(cm.getSourceUriType().getValue())) {
+        continue;
+      }
+      if (target != null && !target.getValue().equals(cm.getTargetUriType().getValue())) {
+        continue;
+      }
+      if (targetSystem != null
+          && !cm.getTargetUriType().getValue().startsWith(targetSystem.getValue())) {
+        continue;
+      }
+      list.add(cm);
+    }
+    return list;
+  }
+
+  /**
    * Translate helper.
    *
    * @param maps the maps
@@ -759,26 +721,21 @@ public class ConceptMapProviderR4 implements IResourceProvider {
     // } ]
     // }
     for (final ConceptMap map : maps) {
-      // Get the identifier from the map (or the id if blank)
-      String mapsetCode = map.getIdentifier().getValue();
-      if (StringUtility.isEmpty(mapsetCode)) {
-        mapsetCode = map.getId();
+      final Mapset mapset = FhirUtility.findMapsetByIdOrCode(searchService, map.getId());
+      if (mapset == null) {
+        continue;
       }
       if (logger.isDebugEnabled()) {
-        logger.debug("Processing concept map: id={}, code={}, url={}", map.getId(), mapsetCode,
-            map.getUrl());
+        logger.debug("Processing concept map: id={}, abbreviation={}, version={}", map.getId(),
+            mapset.getAbbreviation(), mapset.getVersion());
       }
 
       final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-          // code clause
           (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
-          // terminology clause (null if null) - no reversing
-          terminology == null ? null
-              : ("from.terminology:" + StringUtility.escapeQuery(terminology.getAbbreviation())),
-          // mapset clauses
-          "mapset.abbreviation:" + StringUtility.escapeQuery(map.getTitle()),
-          "mapset.version:" + StringUtility.escapeQuery(map.getVersion()),
-          "mapset.code:" + StringUtility.escapeQuery(mapsetCode)), null, 2000, null, null);
+          "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
+          "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
+          "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())), null, 2000, null,
+          null);
 
       final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
 
@@ -786,23 +743,30 @@ public class ConceptMapProviderR4 implements IResourceProvider {
         for (final Mapping mapping : mappings) {
           final ParametersParameterComponent match = new ParametersParameterComponent();
           match.setName("match");
-          match.addPart().setName("equivalence").setValue(new StringType("inexact"));
-          if (reverse) {
-            match.addPart().setName("concept")
-                .setValue(new Coding()
-                    .setSystem(FhirUtility.getCodeSystemUri(searchService, mapping.getFrom()))
-                    .setCode(mapping.getFrom().getCode()).setDisplay(mapping.getFrom().getName()));
-          } else {
-            // Skip blank mappings
-            if (mapping.getTo().getCode().isEmpty()) {
-              continue;
-            }
-            match.addPart().setName("concept")
-                .setValue(new Coding()
-                    .setSystem(FhirUtility.getCodeSystemUri(searchService, mapping.getTo()))
-                    .setCode(mapping.getTo().getCode()).setDisplay(mapping.getTo().getName()));
+          final ConceptMapEquivalence eq = FhirUtilityR4.toEquivalence(mapping.getType());
+          match.addPart().setName("equivalence").setValue(new CodeType(eq.toCode()));
+          final ConceptRef ref =
+              reverse ? mapping.getFrom() : mapping.getTo();
+          if (!reverse && (ref.getCode() == null || ref.getCode().isEmpty())) {
+            continue;
           }
-          match.addPart().setName("source").setValue(new StringType(map.getUrl()));
+          final String fallbackUri = reverse
+              ? (map.getSourceUriType() == null ? null : map.getSourceUriType().getValue())
+              : (map.getTargetUriType() == null ? null : map.getTargetUriType().getValue());
+          final Coding concept = new Coding();
+          final String systemUri =
+              FhirUtility.resolveTranslateSystemUri(searchService, ref, fallbackUri);
+          if (!StringUtility.isEmpty(systemUri)) {
+            concept.setSystem(systemUri);
+          }
+          if (!StringUtility.isEmpty(ref.getCode())) {
+            concept.setCode(ref.getCode());
+          }
+          if (!StringUtility.isEmpty(ref.getName())) {
+            concept.setDisplay(ref.getName());
+          }
+          match.addPart().setName("concept").setValue(concept);
+          match.addPart().setName("source").setValue(new UriType(map.getUrl()));
           matches.add(match);
         }
       }

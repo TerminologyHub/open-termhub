@@ -14,6 +14,7 @@ import static java.lang.String.format;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -280,7 +281,7 @@ public final class FhirUtility {
   }
 
   /**
-   * Picks the candidate marked latest, otherwise the first.
+   * Picks the candidate marked latest, otherwise the newest releaseDate, otherwise the first.
    *
    * @param <T> terminology ref type
    * @param candidates the candidates
@@ -295,7 +296,174 @@ public final class FhirUtility {
     }
     final T markedLatest = candidates.stream().filter(t -> Boolean.TRUE.equals(t.getLatest()))
         .findFirst().orElse(null);
-    return markedLatest != null ? markedLatest : candidates.get(0);
+    if (markedLatest != null) {
+      return markedLatest;
+    }
+    return candidates.stream()
+        .max(Comparator.comparing(t -> ModelUtility.nvl(t.getReleaseDate(), ""), String::compareTo))
+        .orElse(candidates.get(0));
+  }
+
+  /**
+   * Filters mapsets for ConceptMap $translate.
+   *
+   * When {@code conceptMapVersion} and {@code sourceVersion} are both omitted, keeps one mapset
+   * per map URL with the highest version string. Does not use {@code latest=true} (that flag
+   * can be wrong when {@code releaseDate} was missing at mark-latest).
+   *
+   * @param mapsets candidate mapsets
+   * @param url ConceptMap url, or null
+   * @param idOrCode instance id or mapset code, or null
+   * @param conceptMapVersion ConceptMap version, or null
+   * @param system source code system URI, or null
+   * @param sourceVersion source code system version, or null
+   * @return filtered mapsets
+   */
+  public static List<Mapset> filterTranslateMapsets(final List<Mapset> mapsets, final String url,
+    final String idOrCode, final String conceptMapVersion, final String system,
+    final String sourceVersion) {
+    if (mapsets == null || mapsets.isEmpty()) {
+      return new ArrayList<>();
+    }
+    final List<Mapset> matching = new ArrayList<>();
+    for (final Mapset mapset : mapsets) {
+      if (url != null && !url.equals(mapset.getUri())) {
+        continue;
+      }
+      if (idOrCode != null
+          && !matchesIdOrCode(idOrCode, mapset.getId(), mapset.getCode())) {
+        continue;
+      }
+      final String mapVersion = mapsetFhirVersion(mapset);
+      if (conceptMapVersion != null && !conceptMapVersion.equals(mapVersion)
+          && !conceptMapVersion.equals(mapset.getVersion())) {
+        continue;
+      }
+      if (system != null && !matchesTranslateSourceSystem(mapset, system)) {
+        continue;
+      }
+      matching.add(mapset);
+    }
+    List<Mapset> selected = matching;
+    if (sourceVersion != null) {
+      final List<Mapset> versionMatched = new ArrayList<>();
+      for (final Mapset mapset : matching) {
+        if (matchesTranslateSourceVersion(mapset, sourceVersion)) {
+          versionMatched.add(mapset);
+        }
+      }
+      if (!versionMatched.isEmpty()) {
+        selected = versionMatched;
+      }
+    }
+    if (conceptMapVersion == null && sourceVersion == null) {
+      return keepLatestMapsetsPerUri(selected);
+    }
+    return selected;
+  }
+
+  /**
+   * Keeps one mapset per URI with the highest version string.
+   *
+   * @param mapsets the mapsets
+   * @return latest mapsets per uri
+   */
+  public static List<Mapset> keepLatestMapsetsPerUri(final List<Mapset> mapsets) {
+    if (mapsets == null || mapsets.isEmpty()) {
+      return new ArrayList<>();
+    }
+    final Map<String, Mapset> byUri = new LinkedHashMap<>();
+    for (final Mapset mapset : mapsets) {
+      final String key = mapset.getUri() == null ? "" : mapset.getUri();
+      final Mapset existing = byUri.get(key);
+      if (existing == null || TerminologyUtility.compareVersionStrings(mapset.getVersion(),
+          existing.getVersion()) > 0) {
+        byUri.put(key, mapset);
+      }
+    }
+    return new ArrayList<>(byUri.values());
+  }
+
+  /**
+   * ConceptMap version stored on the mapset.
+   *
+   * @param mapset the mapset
+   * @return fhirVersion attribute or mapset version
+   */
+  public static String mapsetFhirVersion(final Mapset mapset) {
+    if (mapset == null) {
+      return null;
+    }
+    if (mapset.getAttributes() != null && mapset.getAttributes().containsKey("fhirVersion")) {
+      final String fhirVersion = mapset.getAttributes().get("fhirVersion");
+      if (!StringUtility.isEmpty(fhirVersion)) {
+        return fhirVersion;
+      }
+    }
+    return mapset.getVersion();
+  }
+
+  /**
+   * Resolves the code system URI for a $translate match Coding.
+   *
+   * @param searchService the search service
+   * @param concept the from or to concept
+   * @param fallbackUri map source or target URI when terminology lookup is empty
+   * @return system URI or null
+   * @throws Exception the exception
+   */
+  public static String resolveTranslateSystemUri(final EntityRepositoryService searchService,
+    final ConceptRef concept, final String fallbackUri) throws Exception {
+    final String uri = getCodeSystemUri(searchService, concept);
+    if (!StringUtility.isEmpty(uri)) {
+      return uri;
+    }
+    return stripFhirVs(fallbackUri);
+  }
+
+  /**
+   * Whether the mapset source URI matches the $translate system parameter.
+   *
+   * @param mapset the mapset
+   * @param system the system
+   * @return true if they match
+   */
+  private static boolean matchesTranslateSourceSystem(final Mapset mapset, final String system) {
+    if (mapset.getAttributes() == null) {
+      return false;
+    }
+    final String sourceUri = stripFhirVs(mapset.getAttributes().get("fhirSourceUri"));
+    final String systemUri = stripFhirVs(system);
+    return !StringUtility.isEmpty(sourceUri) && sourceUri.equals(systemUri);
+  }
+
+  /**
+   * Whether the mapset version matches the $translate version parameter.
+   *
+   * @param mapset the mapset
+   * @param sourceVersion the source version
+   * @return true if they match
+   */
+  private static boolean matchesTranslateSourceVersion(final Mapset mapset,
+    final String sourceVersion) {
+    if (sourceVersion.equals(mapset.getVersion())
+        || sourceVersion.equals(mapset.getFromVersion())) {
+      return true;
+    }
+    return sourceVersion.equals(mapsetFhirVersion(mapset));
+  }
+
+  /**
+   * Strips a trailing ?fhir_vs from a URI.
+   *
+   * @param uri the uri
+   * @return stripped uri, or null
+   */
+  private static String stripFhirVs(final String uri) {
+    if (uri == null) {
+      return null;
+    }
+    return uri.replaceFirst("\\?fhir_vs$", "");
   }
 
   /**

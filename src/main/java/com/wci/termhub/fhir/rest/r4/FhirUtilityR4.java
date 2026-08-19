@@ -1705,18 +1705,29 @@ public final class FhirUtilityR4 {
             target.setDisplay(toDisplay);
           }
         }
-        final String equiv =
-            m.getType() != null ? m.getType().toLowerCase().replace("-", "") : "relatedto";
-        try {
-          target.setEquivalence(
-              org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence.fromCode(equiv));
-        } catch (final Exception e) {
-          target.setEquivalence(org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence.RELATEDTO);
-        }
+        target.setEquivalence(toEquivalence(m.getType()));
       }
     }
 
     return cm;
+  }
+
+  /**
+   * Map stored Mapping.type to R4 ConceptMapEquivalence.
+   *
+   * @param type the mapping type (R4 equivalence or R5 relationship code)
+   * @return the equivalence, or RELATEDTO when type is null/blank/unknown
+   */
+  public static Enumerations.ConceptMapEquivalence toEquivalence(final String type) {
+    if (StringUtility.isEmpty(type)) {
+      return Enumerations.ConceptMapEquivalence.RELATEDTO;
+    }
+    final String equiv = type.toLowerCase().replace("-", "");
+    try {
+      return Enumerations.ConceptMapEquivalence.fromCode(equiv);
+    } catch (final Exception e) {
+      return Enumerations.ConceptMapEquivalence.RELATEDTO;
+    }
   }
 
   /**

@@ -1722,7 +1722,7 @@ public final class FhirUtilityR5 {
             target.setDisplay(toDisplay);
           }
         }
-        final String rel = mapRelationshipTo(m.getType());
+        final String rel = toRelationship(m.getType());
         try {
           target.setRelationship(
               org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship.fromCode(rel));
@@ -1737,13 +1737,13 @@ public final class FhirUtilityR5 {
   }
 
   /**
-   * Map relationship to.
+   * Map stored Mapping.type to R5 ConceptMapRelationship code.
    *
-   * @param type the type
-   * @return the string
+   * @param type the mapping type (R4 equivalence or R5 relationship code)
+   * @return the relationship code, or related-to when type is null/blank/unknown
    */
-  private static String mapRelationshipTo(final String type) {
-    if (type == null) {
+  public static String toRelationship(final String type) {
+    if (StringUtility.isEmpty(type)) {
       return "related-to";
     }
     final String t = type.toLowerCase().replace("_", "-");
