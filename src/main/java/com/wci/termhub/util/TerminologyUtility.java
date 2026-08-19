@@ -1451,7 +1451,7 @@ public final class TerminologyUtility {
    * @param b the b
    * @return the int
    */
-  private static int compareVersionStrings(final String a, final String b) {
+  public static int compareVersionStrings(final String a, final String b) {
     if (a == null && b == null) {
       return 0;
     }

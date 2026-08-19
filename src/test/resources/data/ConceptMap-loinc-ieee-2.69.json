@@ -1,0 +1,36 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "loinc-ieee-269",
+  "url": "http://loinc.org/cm/loinc-to-ieee-11073-10101",
+  "identifier": {
+    "system": "http://loinc.org",
+    "value": "loinc-to-ieee-11073-10101"
+  },
+  "version": "2.69",
+  "name": "LOINC to IEEE 11073-10101",
+  "title": "LOINC-IEEE-11073",
+  "status": "active",
+  "date": "2019-12-09",
+  "publisher": "TEST",
+  "sourceUri": "http://loinc.org",
+  "targetUri": "urn:iso:std:iso:11073:10101",
+  "group": [
+    {
+      "source": "http://loinc.org",
+      "target": "urn:iso:std:iso:11073:10101",
+      "element": [
+        {
+          "code": "11556-8",
+          "display": "Oxygen [Partial pressure] in Blood",
+          "target": [
+            {
+              "code": "160116",
+              "display": "MDC_CONC_PO2_GEN_269",
+              "equivalence": "equal"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

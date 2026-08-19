@@ -36,6 +36,16 @@ public class TerminologyUtilityUnitTest {
   private final Logger logger = LoggerFactory.getLogger(TerminologyUtilityUnitTest.class);
 
   /**
+   * Test version string compare used for CodeSystem and ConceptMap latest.
+   */
+  @Test
+  public void testCompareVersionStrings() {
+    assertTrue(TerminologyUtility.compareVersionStrings("2.83", "2.69") > 0);
+    assertTrue(TerminologyUtility.compareVersionStrings("2.69", "2.83") < 0);
+    assertEquals(0, TerminologyUtility.compareVersionStrings("2.83", "2.83"));
+  }
+
+  /**
    * Test is sty expression.
    */
   @Test

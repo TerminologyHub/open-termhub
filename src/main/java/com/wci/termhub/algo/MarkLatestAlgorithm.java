@@ -27,12 +27,14 @@ import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
+import com.wci.termhub.util.TerminologyUtility;
 
 /**
  * Algorithm to mark the latest version for a terminology/publisher (and
- * corresponding mapsets and subsets) based on {@code releaseDate}. The newest
- * release is marked {@code latest=true}, and all other versions for the same
- * abbreviation/publisher are set to {@code latest=false}.
+ * corresponding mapsets and subsets) based on {@code releaseDate}, then
+ * {@code version} when dates are missing or tied. The newest release is marked
+ * {@code latest=true}, and all other versions for the same abbreviation/publisher
+ * are set to {@code latest=false}.
  *
  * This is stateless aside from the configured terminology and publisher and is
  * thread-safe when used as a prototype-scoped bean.
@@ -108,10 +110,14 @@ public class MarkLatestAlgorithm extends AbstractTerminologyAlgorithm {
     }
 
     boolean first = true;
-    for (final T item : list.getItems().stream()
-        .sorted((a, b) -> ModelUtility.nvl(b.getReleaseDate(), "1000-01-01")
-            .compareTo(ModelUtility.nvl(a.getReleaseDate(), "1000-01-01")))
-        .collect(Collectors.toList())) {
+    for (final T item : list.getItems().stream().sorted((a, b) -> {
+      final int dateCmp = ModelUtility.nvl(b.getReleaseDate(), "1000-01-01")
+          .compareTo(ModelUtility.nvl(a.getReleaseDate(), "1000-01-01"));
+      if (dateCmp != 0) {
+        return dateCmp;
+      }
+      return TerminologyUtility.compareVersionStrings(b.getVersion(), a.getVersion());
+    }).collect(Collectors.toList())) {
 
       final boolean latest = first;
       first = false;

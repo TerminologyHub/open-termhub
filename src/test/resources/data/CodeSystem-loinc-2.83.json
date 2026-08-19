@@ -1,0 +1,19 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "loinc-283",
+  "url": "http://loinc.org",
+  "version": "2.83",
+  "name": "LOINC",
+  "title": "LOINC",
+  "status": "active",
+  "date": "2024-08-06",
+  "publisher": "TEST",
+  "content": "complete",
+  "count": 1,
+  "concept": [
+    {
+      "code": "11556-8",
+      "display": "Oxygen [Partial pressure] in Blood"
+    }
+  ]
+}

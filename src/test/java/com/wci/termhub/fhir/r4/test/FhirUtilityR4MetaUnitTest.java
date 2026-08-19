@@ -499,4 +499,19 @@ public class FhirUtilityR4MetaUnitTest {
     final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, false);
     assertEquals("2024-08-06T00:00:00+00:00", vs.getDateElement().getValueAsString());
   }
+
+  /**
+   * Mapping.type converts to R4 ConceptMapEquivalence; blank/unknown is relatedto.
+   */
+  @Test
+  public void testToEquivalence() {
+    assertEquals("relatedto", FhirUtilityR4.toEquivalence(null).toCode());
+    assertEquals("relatedto", FhirUtilityR4.toEquivalence("").toCode());
+    assertEquals("relatedto", FhirUtilityR4.toEquivalence("relatedto").toCode());
+    assertEquals("relatedto", FhirUtilityR4.toEquivalence("related-to").toCode());
+    assertEquals("equal", FhirUtilityR4.toEquivalence("equal").toCode());
+    assertEquals("equivalent", FhirUtilityR4.toEquivalence("equivalent").toCode());
+    assertEquals("narrower", FhirUtilityR4.toEquivalence("narrower").toCode());
+    assertEquals("relatedto", FhirUtilityR4.toEquivalence("not-a-code").toCode());
+  }
 }

@@ -445,4 +445,20 @@ public class FhirUtilityR5MetaUnitTest {
     assertEquals("100105-6", q.getCodeFirstRep().getCode());
     assertTrue(q.getUrl().endsWith("/q/100105-6"));
   }
+
+  /**
+   * Mapping.type converts to R5 ConceptMapRelationship; blank/unknown is related-to.
+   */
+  @Test
+  public void testToRelationship() {
+    assertEquals("related-to", FhirUtilityR5.toRelationship(null));
+    assertEquals("related-to", FhirUtilityR5.toRelationship(""));
+    assertEquals("related-to", FhirUtilityR5.toRelationship("related-to"));
+    assertEquals("equivalent", FhirUtilityR5.toRelationship("equivalent"));
+    assertEquals("equivalent", FhirUtilityR5.toRelationship("equal"));
+    assertEquals("source-is-narrower-than-target",
+        FhirUtilityR5.toRelationship("source-is-narrower-than-target"));
+    assertEquals("source-is-narrower-than-target", FhirUtilityR5.toRelationship("narrower"));
+    assertEquals("related-to", FhirUtilityR5.toRelationship("not-a-code"));
+  }
 }
