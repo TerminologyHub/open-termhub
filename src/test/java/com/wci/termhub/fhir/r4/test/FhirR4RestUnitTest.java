@@ -30,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
@@ -1963,7 +1962,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         "Expected status|active property, got: " + propertyKeys);
     assertTrue(propertyKeys.contains("STATUS|Active"),
         "Expected STATUS|Active property, got: " + propertyKeys);
-    assertTrue(((BooleanType) result.getParameter("active").getValue()).getValue());
+    assertEquals("active", ((CodeType) result.getParameter("status").getValue()).getValue());
   }
 
   /**
@@ -1984,7 +1983,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
           "status should be suppressed when STATUS is present in Regenstrief mode: " + propertyKeys);
       assertTrue(propertyKeys.contains("STATUS|Active"),
           "Expected STATUS|Active property, got: " + propertyKeys);
-      assertTrue(((BooleanType) result.getParameter("active").getValue()).getValue());
+      assertEquals("active", ((CodeType) result.getParameter("status").getValue()).getValue());
     } finally {
       ReflectionTestUtils.setField(loincValueSetHelper, "mode", ServerMode.DEFAULT);
     }
