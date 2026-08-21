@@ -654,10 +654,6 @@ public final class CodeSystemLoaderUtil {
     concept.setNormName(StringUtility.normalize(concept.getName()));
     concept.setStemName(StringUtility.normalizeWithStemming(concept.getName()));
 
-    // Set defined status - default to true, will be updated based on
-    // definitionStatusId
-    concept.setDefined(true);
-
     // Set concept ID if different from code
     final String conceptId = conceptNode.path("conceptId").asText(null);
     if (conceptId != null && !conceptId.equals(concept.getCode())) {

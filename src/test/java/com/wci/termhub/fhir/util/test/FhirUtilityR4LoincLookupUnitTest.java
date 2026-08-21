@@ -102,6 +102,7 @@ public class FhirUtilityR4LoincLookupUnitTest {
     final Set<String> codes = propertyCodes(parameters);
     assertFalse(codes.contains("status"));
     assertTrue(codes.contains("STATUS"));
+    assertEquals("active", ((CodeType) parameters.getParameter("status").getValue()).getValue());
   }
 
   /**
@@ -117,6 +118,7 @@ public class FhirUtilityR4LoincLookupUnitTest {
     final Set<String> codes = propertyCodes(parameters);
     assertTrue(codes.contains("status"));
     assertTrue(codes.contains("STATUS"));
+    assertEquals("active", ((CodeType) parameters.getParameter("status").getValue()).getValue());
   }
 
   /**

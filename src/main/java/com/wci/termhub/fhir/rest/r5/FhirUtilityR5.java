@@ -674,6 +674,9 @@ public final class FhirUtilityR5 {
     final boolean regenstriefMode) throws Exception {
     final Parameters parameters = new Parameters();
 
+    final boolean isLoinc =
+      codeSystem.getUrl() != null && codeSystem.getUrl().contains(LoincConstants.LOINC_URI);
+
     // Properties to include by default from
     // https://hl7.org/fhir/R5/codesystem-operation-lookup.html
     // url, name, version, display, definition,designation, parent and child,
@@ -686,15 +689,18 @@ public final class FhirUtilityR5 {
     parameters.addParameter("name", codeSystem.getTitle());
     parameters.addParameter("version", codeSystem.getVersion());
     parameters.addParameter("display", concept.getName());
-    parameters.addParameter(new Parameters.ParametersParameterComponent().setName("active")
-        .setValue(new BooleanType(concept.getActive())));
-    if (properties == null || properties.contains("sufficientlyDefined")) {
-      parameters.addParameter(new Parameters.ParametersParameterComponent()
-          .setName("sufficientlyDefined").setValue(new BooleanType(concept.getDefined())));
-    }
 
-    final boolean isLoinc =
-        codeSystem.getUrl() != null && codeSystem.getUrl().contains("loinc.org");
+    if (!isLoinc) {
+      if (properties == null || properties.contains("sufficientlyDefined")) {
+        parameters.addParameter(new Parameters.ParametersParameterComponent()
+            .setName("sufficientlyDefined").setValue(new BooleanType(concept.getDefined())));
+      }
+      parameters.addParameter(new Parameters.ParametersParameterComponent().setName("active")
+          .setValue(new BooleanType(concept.getActive())));
+    } else {
+      parameters.addParameter(new Parameters.ParametersParameterComponent().setName("status")
+          .setValue(new CodeType(Boolean.TRUE.equals(concept.getActive()) ? "active" : "retired")));
+    }
 
     final List<ConceptRef> distinctHierarchicalParents =
         FhirUtility.distinctHierarchicalParents(relationships);

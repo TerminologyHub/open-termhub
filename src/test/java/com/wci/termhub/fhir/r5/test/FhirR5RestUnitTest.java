@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
@@ -1685,7 +1684,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
         "Expected status|active property, got: " + propertyKeys);
     assertTrue(propertyKeys.contains("STATUS|Active"),
         "Expected STATUS|Active property, got: " + propertyKeys);
-    assertTrue(((BooleanType) result.getParameter("active").getValue()).getValue());
+    assertEquals("active", ((CodeType) result.getParameter("status").getValue()).getValue());
   }
 
   /**
@@ -1706,7 +1705,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
           "status should be suppressed when STATUS is present in Regenstrief mode: " + propertyKeys);
       assertTrue(propertyKeys.contains("STATUS|Active"),
           "Expected STATUS|Active property, got: " + propertyKeys);
-      assertTrue(((BooleanType) result.getParameter("active").getValue()).getValue());
+      assertEquals("active", ((CodeType) result.getParameter("status").getValue()).getValue());
     } finally {
       ReflectionTestUtils.setField(loincValueSetHelper, "mode", ServerMode.DEFAULT);
     }
