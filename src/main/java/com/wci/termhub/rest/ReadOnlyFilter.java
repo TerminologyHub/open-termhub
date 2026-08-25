@@ -13,11 +13,13 @@ import java.io.IOException;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import com.wci.termhub.ReadOnlyMode;
+import com.wci.termhub.fhir.rest.FHIRConfig;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -42,9 +44,16 @@ public class ReadOnlyFilter implements Filter {
   private static final Pattern CONCEPT_TREES_POST =
       Pattern.compile("^/concept/[^/]+/trees$");
 
-  /** FHIR create POST: /fhir/r4|r5/{ResourceType}. */
-  private static final Pattern FHIR_CREATE_POST =
-      Pattern.compile("^/fhir/r[45]/[A-Za-z][A-Za-z0-9]*$");
+  /** FHIR R4 context path. Default for unit tests without Spring injection. */
+  @Value("${fhir.r4.context.path}")
+  private String r4ContextPath = "/fhir/r4";
+
+  /** FHIR R5 context path. Default for unit tests without Spring injection. */
+  @Value("${fhir.r5.context.path}")
+  private String r5ContextPath = "/fhir/r5";
+
+  /** FHIR create POST: {r4|r5 context path}/{ResourceType}. */
+  private Pattern fhirCreatePost;
 
   /** The read only mode. */
   @Autowired
@@ -99,7 +108,7 @@ public class ReadOnlyFilter implements Filter {
    * @param path the normalized path
    * @return true, if mutating
    */
-  public static boolean isMutatingPost(final String path) {
+  public boolean isMutatingPost(final String path) {
     if ("/terminology/admin".equals(path) || path.startsWith("/terminology/admin/")) {
       return true;
     }
@@ -115,13 +124,30 @@ public class ReadOnlyFilter implements Filter {
     if (path.contains("/$load")) {
       return true;
     }
-    if ("/fhir/r4".equals(path) || "/fhir/r5".equals(path)) {
+    final String r4 = FHIRConfig.normalizeContextPath(r4ContextPath);
+    final String r5 = FHIRConfig.normalizeContextPath(r5ContextPath);
+    if (r4.equals(path) || r5.equals(path)) {
       return true;
     }
-    if (FHIR_CREATE_POST.matcher(path).matches()) {
+    if (getFhirCreatePost().matcher(path).matches()) {
       return true;
     }
     return false;
+  }
+
+  /**
+   * FHIR create POST pattern for the configured context paths.
+   *
+   * @return the pattern
+   */
+  private Pattern getFhirCreatePost() {
+    if (fhirCreatePost == null) {
+      final String r4 = FHIRConfig.normalizeContextPath(r4ContextPath);
+      final String r5 = FHIRConfig.normalizeContextPath(r5ContextPath);
+      fhirCreatePost = Pattern.compile(
+          "^(" + Pattern.quote(r4) + "|" + Pattern.quote(r5) + ")/[A-Za-z][A-Za-z0-9]*$");
+    }
+    return fhirCreatePost;
   }
 
   /**

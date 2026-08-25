@@ -75,6 +75,7 @@ import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
+import com.wci.termhub.fhir.rest.FHIRConfig;
 import com.wci.termhub.rest.ReadOnlyOpenApiSupport;
 import com.wci.termhub.util.StringUtility;
 
@@ -277,7 +278,8 @@ public class TermhubOpenApiInterceptorR4 {
             serverBase =
                 addressStrategy.determineServerBase(theRequest.getServletContext(), theRequest);
           }
-          final String redirectUrl = theResponse.encodeRedirectURL(serverBase + "/swagger-ui/");
+          final String redirectUrl =
+              theResponse.encodeRedirectURL(FHIRConfig.joinPath(serverBase, "/swagger-ui/"));
           theResponse.sendRedirect(redirectUrl);
           theResponse.getWriter().close();
           return false;

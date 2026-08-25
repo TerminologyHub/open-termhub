@@ -25,6 +25,7 @@ Common environment variables (full list in [DEPLOY.md](doc/DEPLOY.md) and [DOCKE
 * `ENABLE_POST_LOAD_COMPUTATIONS` — enable tree-position computations used by the hierarchy browser (default: false).
 * `PROJECT_API_KEY` / `ADMIN_KEY` — required for TermHub syndication and protected local admin endpoints.
 * `PROXY_URL` — optional public origin for Bundle `fullUrl` and next/previous/self when the request has no `X-Forwarded-Host`. Must include a scheme (e.g. `https://fhir.example.org`). `X-Forwarded-Host` / `X-Forwarded-Proto` win when present (including port). Swagger follows those headers or the browser host, not this variable.
+* `FHIR_R4_CONTEXT_PATH` / `FHIR_R5_CONTEXT_PATH` — servlet paths for the R4 and R5 FHIR endpoints (defaults `/fhir/r4` and `/fhir/r5`). They must differ.
 
 
 ## Contributing

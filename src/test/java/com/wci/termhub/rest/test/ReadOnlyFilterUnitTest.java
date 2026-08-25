@@ -58,20 +58,37 @@ public class ReadOnlyFilterUnitTest {
    */
   @Test
   public void testIsMutatingPost() {
-    assertTrue(ReadOnlyFilter.isMutatingPost("/terminology/admin"));
-    assertTrue(ReadOnlyFilter.isMutatingPost("/syndicate"));
-    assertTrue(ReadOnlyFilter.isMutatingPost("/terminology"));
-    assertTrue(ReadOnlyFilter.isMutatingPost("/concept/SNOMEDCT_US/trees"));
-    assertTrue(ReadOnlyFilter.isMutatingPost("/fhir/CodeSystem/$load"));
-    assertTrue(ReadOnlyFilter.isMutatingPost("/fhir/r4"));
-    assertTrue(ReadOnlyFilter.isMutatingPost("/fhir/r5"));
-    assertTrue(ReadOnlyFilter.isMutatingPost("/fhir/r4/CodeSystem"));
-    assertTrue(ReadOnlyFilter.isMutatingPost("/fhir/r5/ValueSet"));
+    assertTrue(filter.isMutatingPost("/terminology/admin"));
+    assertTrue(filter.isMutatingPost("/syndicate"));
+    assertTrue(filter.isMutatingPost("/terminology"));
+    assertTrue(filter.isMutatingPost("/concept/SNOMEDCT_US/trees"));
+    assertTrue(filter.isMutatingPost("/fhir/CodeSystem/$load"));
+    assertTrue(filter.isMutatingPost("/fhir/r4"));
+    assertTrue(filter.isMutatingPost("/fhir/r5"));
+    assertTrue(filter.isMutatingPost("/fhir/r4/CodeSystem"));
+    assertTrue(filter.isMutatingPost("/fhir/r5/ValueSet"));
 
-    assertFalse(ReadOnlyFilter.isMutatingPost("/concept/bulk"));
-    assertFalse(ReadOnlyFilter.isMutatingPost("/fhir/r4/CodeSystem/$lookup"));
-    assertFalse(ReadOnlyFilter.isMutatingPost("/fhir/r4/ValueSet/$expand"));
-    assertFalse(ReadOnlyFilter.isMutatingPost("/terminology/health"));
+    assertFalse(filter.isMutatingPost("/concept/bulk"));
+    assertFalse(filter.isMutatingPost("/fhir/r4/CodeSystem/$lookup"));
+    assertFalse(filter.isMutatingPost("/fhir/r4/ValueSet/$expand"));
+    assertFalse(filter.isMutatingPost("/terminology/health"));
+  }
+
+  /**
+   * Custom FHIR context paths are used for mutating POST detection.
+   */
+  @Test
+  public void testIsMutatingPostCustomFhirPaths() {
+    ReflectionTestUtils.setField(filter, "r4ContextPath", "/custom/r4");
+    ReflectionTestUtils.setField(filter, "r5ContextPath", "/custom/r5");
+    ReflectionTestUtils.setField(filter, "fhirCreatePost", null);
+
+    assertTrue(filter.isMutatingPost("/custom/r4"));
+    assertTrue(filter.isMutatingPost("/custom/r5"));
+    assertTrue(filter.isMutatingPost("/custom/r4/CodeSystem"));
+    assertTrue(filter.isMutatingPost("/custom/r5/ValueSet"));
+    assertFalse(filter.isMutatingPost("/fhir/r4"));
+    assertFalse(filter.isMutatingPost("/fhir/r4/CodeSystem"));
   }
 
   /**
