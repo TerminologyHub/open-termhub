@@ -17,10 +17,12 @@ import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CapabilityStatement;
+import org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementImplementationComponent;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Enumerations;
+import org.hl7.fhir.r4.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationDefinition;
@@ -42,10 +44,12 @@ import ca.uhn.fhir.rest.annotation.Metadata;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.server.IServerAddressStrategy;
 import ca.uhn.fhir.rest.server.RestfulServer;
 import ca.uhn.fhir.rest.server.RestfulServerConfiguration;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import ca.uhn.fhir.rest.server.provider.ServerCapabilityStatementProvider;
+import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import ca.uhn.fhir.rest.server.util.ISearchParamRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -143,14 +147,27 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
                 .setName("Open Termhub R4 FHIR Terminology Server").setVersion(version)
                 .setReleaseDate(new Date()));
 
-        capabilityStatement.setUrl("https://www.terminologyhub.com/fhir/4/metadata");
+        // url reflects the currently deployed server base
+        final String serverBase = getServerBase(request, requestDetails);
+        if (serverBase != null) {
+          capabilityStatement.setUrl(serverBase + "/metadata");
+        }
         capabilityStatement.setVersion(version);
         capabilityStatement.setName("Open Termhub R4 FHIR Terminology Server");
         capabilityStatement.setTitle("Open Termhub R4 FHIR Terminology Server");
         capabilityStatement.setStatus(Enumerations.PublicationStatus.ACTIVE);
-        capabilityStatement.setExperimental(true);
-        capabilityStatement.setPublisher("TERMHUB");
+        capabilityStatement.setExperimental(false);
+        if (PropertyUtility.getServerMode().equals("regenstrief")) {
+          setPublisher("Regenstrief");
+          capabilityStatement.setImplementation(new CapabilityStatementImplementationComponent()
+              .setDescription("FHIR Endpoint powered by TermHub").setUrl("https://fhir.loinc.org"));
+        } else {
+          capabilityStatement.setPublisher("TERMHUB");
+          capabilityStatement.setImplementation(new CapabilityStatementImplementationComponent()
+              .setDescription("FHIR Endpoint powered by TermHub"));
+        }
         capabilityStatement.setDate(new Date());
+        capabilityStatement.setFhirVersion(FHIRVersion._4_0_1);
 
         addExtensions(capabilityStatement);
 
@@ -199,6 +216,24 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
       throw FhirUtilityR4.exception("Failed to find metadata", OperationOutcome.IssueType.EXCEPTION,
           500);
     }
+  }
+
+  /**
+   * Returns the deployed server base URL (e.g. {@code http://host/fhir/r4}) for the current
+   * request, or null if it cannot be determined.
+   *
+   * @param request the request
+   * @param requestDetails the request details
+   * @return the server base URL, or null
+   */
+  private static String getServerBase(final HttpServletRequest request,
+    final RequestDetails requestDetails) {
+    if (!(requestDetails instanceof ServletRequestDetails) || request == null) {
+      return null;
+    }
+    final IServerAddressStrategy addressStrategy =
+        ((ServletRequestDetails) requestDetails).getServer().getServerAddressStrategy();
+    return addressStrategy.determineServerBase(request.getServletContext(), request);
   }
 
   /**

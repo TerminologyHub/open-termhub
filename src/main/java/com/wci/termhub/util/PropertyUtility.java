@@ -171,4 +171,13 @@ public class PropertyUtility {
     sb.append(path);
     return sb.toString();
   }
+
+  /**
+   * Gets the server mode.
+   *
+   * @return the server mode
+   */
+  public static String getServerMode() {
+    return getProperty("server.mode");
+  }
 }

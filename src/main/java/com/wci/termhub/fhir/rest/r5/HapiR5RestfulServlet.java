@@ -82,7 +82,7 @@ public class HapiR5RestfulServlet extends RestfulServer {
     registerInterceptor(new TermhubOpenApiInterceptorR5());
 
     final ResponseHighlighterInterceptor responseHighlighterInterceptor =
-        new ResponseHighlighterInterceptor();
+        new TermhubResponseHighlighterInterceptorR5();
     responseHighlighterInterceptor.setShowRequestHeaders(false);
     responseHighlighterInterceptor.setShowResponseHeaders(true);
     registerInterceptor(responseHighlighterInterceptor);

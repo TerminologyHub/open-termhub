@@ -46,6 +46,7 @@ import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ResourceType;
+import org.hl7.fhir.r4.model.TerminologyCapabilities;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.AfterAll;
@@ -258,6 +259,23 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(data.getFhirVersion());
     assertNotNull(data.getFormat());
     assertFalse(data.getRest().isEmpty());
+    // url reflects the currently deployed server base
+    assertEquals(LOCALHOST + port + "/fhir/r4/metadata", data.getUrl());
+
+    // mode=terminology returns a TerminologyCapabilities (which has no 'format'
+    // element). Ensure the response highlighter does not choke on it.
+    final String tcContent =
+        this.restTemplate.getForObject(endpoint + "?mode=terminology", String.class);
+    final TerminologyCapabilities tcData =
+        parser.parseResource(TerminologyCapabilities.class, tcContent);
+    assertNotNull(tcData);
+    LOGGER.info("  terminology metadata = {}", parser.encodeResourceToString(tcData));
+    assertEquals(ResourceType.TerminologyCapabilities, tcData.getResourceType());
+    assertNotNull(tcData.getStatus());
+    assertNotNull(tcData.getDate());
+    assertFalse(tcData.getCodeSystem().isEmpty());
+    // url reflects the currently deployed server base
+    assertEquals(LOCALHOST + port + "/fhir/r4/metadata?mode=terminology", tcData.getUrl());
   }
 
   /**
