@@ -158,7 +158,7 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
         capabilityStatement.setStatus(Enumerations.PublicationStatus.ACTIVE);
         capabilityStatement.setExperimental(false);
         if (PropertyUtility.getServerMode().equals("regenstrief")) {
-          setPublisher("Regenstrief");
+          capabilityStatement.setPublisher("Regenstrief");
           capabilityStatement.setImplementation(new CapabilityStatementImplementationComponent()
               .setDescription("FHIR Endpoint powered by TermHub").setUrl("https://fhir.loinc.org"));
         } else {
