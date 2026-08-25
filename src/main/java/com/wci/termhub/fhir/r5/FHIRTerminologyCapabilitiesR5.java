@@ -92,7 +92,8 @@ public class FHIRTerminologyCapabilitiesR5 extends TerminologyCapabilities
     setExpansion();
 
     if (PropertyUtility.getServerMode().equals("regenstrief")) {
-      setPublisher("Regenstrief");
+      setPublisher("Regenstrief Institute, Inc.");
+      setCopyright("© Regenstrief Institute, Inc.");
       this.setImplementation(new TerminologyCapabilitiesImplementationComponent()
           .setDescription("FHIR Endpoint powered by TermHub").setUrl("https://fhir.loinc.org"));
 
