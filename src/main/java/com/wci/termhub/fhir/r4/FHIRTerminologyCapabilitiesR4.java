@@ -32,6 +32,8 @@ import com.wci.termhub.util.PropertyUtility;
 import ca.uhn.fhir.model.api.annotation.ChildOrder;
 import ca.uhn.fhir.model.api.annotation.ResourceDef;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.server.IServerAddressStrategy;
+import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -63,10 +65,16 @@ public class FHIRTerminologyCapabilitiesR4 extends TerminologyCapabilities
   public FHIRTerminologyCapabilitiesR4 withDefaults(final HttpServletRequest request,
     final RequestDetails requestDetails) {
     setName("Open Termhub R4 Terminology Capabilities");
-    setStatus(Enumerations.PublicationStatus.DRAFT);
+    setStatus(Enumerations.PublicationStatus.ACTIVE);
     setTitle("Open Termhub R4 Terminology Capability Statement");
+    // Canonical url reflects the currently deployed server base
+    final String serverBase = getServerBase(request, requestDetails);
+    if (serverBase != null) {
+      setUrl(serverBase + "/metadata?mode=terminology");
+    }
     final String version = String.valueOf(PropertyUtility.getProperties().get("server.version"));
     setVersion(version);
+
     setDate(new java.util.Date());
     setPurpose(
         "The Open Termhub Terminology Capability Statement provides a summary of the Open Termhub API's"
@@ -74,17 +82,42 @@ public class FHIRTerminologyCapabilitiesR4 extends TerminologyCapabilities
     setKind(CapabilityStatementKind.CAPABILITY);
     setSoftware(new TerminologyCapabilitiesSoftwareComponent()
         .setName("Open Termhub R4 FHIR Terminology Server").setVersion(version));
-    this.setExperimental(true);
-    this.setPublisher("TERMHUB");
+    setExperimental(false);
+    setPublisher("TERMHUB");
     final Meta meta = new Meta();
     meta.addProfile("http://hl7.org/fhir/StructureDefinition/TerminologyCapabilities");
     this.setMeta(meta);
 
     setCodeSystems(request, requestDetails);
-    setContact();
+    // setContact();
     setExpansion();
 
+    if (PropertyUtility.getServerMode().equals("regenstrief")) {
+      setPublisher("Regenstrief");
+      this.setImplementation(new TerminologyCapabilitiesImplementationComponent()
+          .setDescription("FHIR Endpoint powered by TermHub").setUrl("https://fhir.loinc.org"));
+
+    }
+
     return this;
+  }
+
+  /**
+   * Returns the deployed server base URL (e.g. {@code http://host/fhir/r4}) for the current
+   * request, or null if it cannot be determined.
+   *
+   * @param request the request
+   * @param requestDetails the request details
+   * @return the server base URL, or null
+   */
+  private static String getServerBase(final HttpServletRequest request,
+    final RequestDetails requestDetails) {
+    if (!(requestDetails instanceof ServletRequestDetails) || request == null) {
+      return null;
+    }
+    final IServerAddressStrategy addressStrategy =
+        ((ServletRequestDetails) requestDetails).getServer().getServerAddressStrategy();
+    return addressStrategy.determineServerBase(request.getServletContext(), request);
   }
 
   /**
@@ -172,6 +205,7 @@ public class FHIRTerminologyCapabilitiesR4 extends TerminologyCapabilities
   /**
    * Sets the contact.
    */
+  @SuppressWarnings("unused")
   private void setContact() {
     final ContactPoint contactPoint = new ContactPoint();
     contactPoint.setSystem(ContactPoint.ContactPointSystem.EMAIL);
