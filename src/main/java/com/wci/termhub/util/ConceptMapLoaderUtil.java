@@ -581,6 +581,9 @@ public final class ConceptMapLoaderUtil {
     // Store the original URIs in attributes
     mapset.setUri(root.path("url").asText());
 
+    // Preserve any remaining top-level ConceptMap properties not otherwise stored
+    FhirExtraAttributeUtil.storeExtraConceptMapAttributes(mapset, root);
+
     // LOGGER.info(" terminology URIs: source={}, target={}",
     // mapset.getFromTerminology(),
     // mapset.getToTerminology());

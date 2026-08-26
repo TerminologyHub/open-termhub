@@ -536,6 +536,9 @@ public final class CodeSystemLoaderUtil {
         Boolean.toString(enablePostLoadComputations));
     terminology.setAttributes(attributes);
 
+    // Preserve any remaining top-level CodeSystem properties not otherwise stored
+    FhirExtraAttributeUtil.storeExtraCodeSystemAttributes(terminology, root);
+
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("CodeSystemLoaderUtil: terminology: {}", terminology);
     }
