@@ -43,7 +43,8 @@ public final class ReadOnlyOpenApiSupport {
    * @return true, if the server mode is read-only
    */
   public static boolean isReadOnlyServerMode() {
-    return READ_ONLY_SERVER_MODES.contains(PropertyUtility.getServerMode());
+    return PropertyUtility.getServerMode() != null
+        && READ_ONLY_SERVER_MODES.contains(PropertyUtility.getServerMode());
   }
 
   /**

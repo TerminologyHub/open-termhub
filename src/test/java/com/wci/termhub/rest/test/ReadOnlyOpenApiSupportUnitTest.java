@@ -15,8 +15,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.rest.ReadOnlyOpenApiSupport;
+import com.wci.termhub.test.AbstractTest;
 import com.wci.termhub.util.PropertyUtility;
 
 import io.swagger.v3.oas.models.Operation;
@@ -26,7 +32,11 @@ import io.swagger.v3.oas.models.Paths;
 /**
  * Unit tests for {@link ReadOnlyOpenApiSupport}.
  */
-public class ReadOnlyOpenApiSupportUnitTest {
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ActiveProfiles("test")
+public class ReadOnlyOpenApiSupportUnitTest extends AbstractTest {
 
   /**
    * Removes REST DELETE/PUT/PATCH/POST including concept bulk.
@@ -84,7 +94,7 @@ public class ReadOnlyOpenApiSupportUnitTest {
     assertTrue(ReadOnlyOpenApiSupport.isReadOnlyServerMode());
     PropertyUtility.setProperty("server.mode", "default");
     assertFalse(ReadOnlyOpenApiSupport.isReadOnlyServerMode());
-    PropertyUtility.setProperty("server.mode", null);
+    PropertyUtility.getProperties().remove("server.mode");
     assertFalse(ReadOnlyOpenApiSupport.isReadOnlyServerMode());
     PropertyUtility.setProperty("server.mode", origMode);
 
