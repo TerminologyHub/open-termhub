@@ -12,9 +12,12 @@ package com.wci.termhub.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Iterator;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,6 +30,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.wci.termhub.util.PropertyUtility;
+
+import io.swagger.v3.core.util.Yaml;
 
 /**
  * Test for swagger urls.
@@ -79,5 +87,105 @@ public class SwaggerTest {
     assertEquals(HttpStatus.OK, response.getStatusCode(), "Path: " + path);
     assertNotNull(response.getBody(), "Body should not be null for: " + path);
     assertFalse(response.getBody().length == 0, "Body should not be empty for: " + path);
+  }
+
+  /**
+   * In default server mode, the R4/R5 swagger page loads with the expected base URL and the
+   * api-docs retrieves as expected (mutating operations present).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testDefaultModeSwaggerAndApiDocs() throws Exception {
+    final String origMode = PropertyUtility.getServerMode();
+    try {
+      PropertyUtility.setProperty("server.mode", "default");
+      for (final String version : new String[] {"r4", "r5"}) {
+        final JsonNode apiDocs = verifySwaggerAndApiDocs(version);
+        // default mode is NOT read-only, so mutating operations remain in the docs
+        assertTrue(apiDocsHasMethod(apiDocs, "post") || apiDocsHasMethod(apiDocs, "delete"),
+            version + " default mode api-docs should expose mutating operations");
+      }
+    } finally {
+      PropertyUtility.setProperty("server.mode", origMode);
+    }
+  }
+
+  /**
+   * In regenstrief server mode, the R4/R5 swagger page loads with the expected base URL and the
+   * api-docs retrieves without any POST, PUT, PATCH, or DELETE operations (read-only).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testRegenstriefModeApiDocsIsReadOnly() throws Exception {
+    final String origMode = PropertyUtility.getServerMode();
+    try {
+      PropertyUtility.setProperty("server.mode", "regenstrief");
+      for (final String version : new String[] {"r4", "r5"}) {
+        final JsonNode apiDocs = verifySwaggerAndApiDocs(version);
+        // regenstrief mode is read-only, so no mutating operations may appear
+        for (final String method : new String[] {"post", "put", "patch", "delete"}) {
+          assertFalse(apiDocsHasMethod(apiDocs, method),
+              version + " regenstrief mode api-docs must not expose " + method + " operations");
+        }
+        // ...but read (GET) operations must still be present
+        assertTrue(apiDocsHasMethod(apiDocs, "get"),
+            version + " regenstrief mode api-docs should still expose GET operations");
+      }
+    } finally {
+      PropertyUtility.setProperty("server.mode", origMode);
+    }
+  }
+
+  /**
+   * Verifies the swagger page loads and references the expected base URL, and that the api-docs
+   * retrieves with the expected {@code servers} base URL. Returns the parsed api-docs.
+   *
+   * @param version the FHIR version path segment (e.g. {@code r4})
+   * @return the parsed api-docs document
+   * @throws Exception the exception
+   */
+  private JsonNode verifySwaggerAndApiDocs(final String version) throws Exception {
+    final String base = "http://localhost:" + port + "/fhir/" + version;
+
+    // Swagger page loads and points at the expected api-docs URL
+    final ResponseEntity<String> page =
+        restTemplate.getForEntity(base + "/swagger-ui/index.html", String.class);
+    assertEquals(HttpStatus.OK, page.getStatusCode(), version + " swagger page status");
+    assertNotNull(page.getBody(), version + " swagger page body");
+    assertTrue(page.getBody().contains(base + "/api-docs"),
+        version + " swagger page should reference base url " + base + "/api-docs");
+
+    // api-docs retrieves and declares the expected server base URL
+    final ResponseEntity<String> docs =
+        restTemplate.getForEntity(base + "/api-docs", String.class);
+    assertEquals(HttpStatus.OK, docs.getStatusCode(), version + " api-docs status");
+    assertNotNull(docs.getBody(), version + " api-docs body");
+
+    final JsonNode apiDocs = Yaml.mapper().readTree(docs.getBody());
+    assertEquals(base, apiDocs.at("/servers/0/url").asText(),
+        version + " api-docs server base url");
+    return apiDocs;
+  }
+
+  /**
+   * Indicates whether any path in the api-docs declares the given HTTP method.
+   *
+   * @param apiDocs the parsed api-docs document
+   * @param method the lower-case HTTP method (e.g. {@code post})
+   * @return true, if any path declares the method
+   */
+  private static boolean apiDocsHasMethod(final JsonNode apiDocs, final String method) {
+    final JsonNode paths = apiDocs.get("paths");
+    if (paths == null) {
+      return false;
+    }
+    for (final Iterator<JsonNode> it = paths.elements(); it.hasNext();) {
+      if (it.next().has(method)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

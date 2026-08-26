@@ -9,12 +9,15 @@
  */
 package com.wci.termhub.rest.test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
 import com.wci.termhub.rest.ReadOnlyOpenApiSupport;
+import com.wci.termhub.util.PropertyUtility;
 
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
@@ -31,7 +34,8 @@ public class ReadOnlyOpenApiSupportUnitTest {
   @Test
   public void testRemoveRestMutatingOperations() {
     final Paths paths = new Paths();
-    paths.addPathItem("/terminology/{id}", new PathItem().get(new Operation()).delete(new Operation()));
+    paths.addPathItem("/terminology/{id}",
+        new PathItem().get(new Operation()).delete(new Operation()));
     paths.addPathItem("/syndicate", new PathItem().post(new Operation()));
     paths.addPathItem("/concept/bulk", new PathItem().post(new Operation()));
     paths.addPathItem("/mapset/{id}", new PathItem().delete(new Operation()));
@@ -52,8 +56,7 @@ public class ReadOnlyOpenApiSupportUnitTest {
   public void testRemoveFhirMutatingOperations() {
     final Paths paths = new Paths();
     paths.addPathItem("/", new PathItem().post(new Operation()));
-    paths.addPathItem("/CodeSystem",
-        new PathItem().get(new Operation()).post(new Operation()));
+    paths.addPathItem("/CodeSystem", new PathItem().get(new Operation()).post(new Operation()));
     paths.addPathItem("/CodeSystem/{id}",
         new PathItem().get(new Operation()).delete(new Operation()).put(new Operation()));
     paths.addPathItem("/CodeSystem/$lookup",
@@ -69,5 +72,21 @@ public class ReadOnlyOpenApiSupportUnitTest {
     assertNull(paths.get("/CodeSystem/{id}").getPut());
     assertNotNull(paths.get("/CodeSystem/$lookup").getGet());
     assertNull(paths.get("/CodeSystem/$lookup").getPost());
+  }
+
+  /**
+   * Read-only server modes (e.g. regenstrief) are recognized; others are not.
+   */
+  @Test
+  public void testIsReadOnlyServerMode() {
+    final String origMode = PropertyUtility.getServerMode();
+    PropertyUtility.setProperty("server.mode", "regenstrief");
+    assertTrue(ReadOnlyOpenApiSupport.isReadOnlyServerMode());
+    PropertyUtility.setProperty("server.mode", "default");
+    assertFalse(ReadOnlyOpenApiSupport.isReadOnlyServerMode());
+    PropertyUtility.setProperty("server.mode", null);
+    assertFalse(ReadOnlyOpenApiSupport.isReadOnlyServerMode());
+    PropertyUtility.setProperty("server.mode", origMode);
+
   }
 }

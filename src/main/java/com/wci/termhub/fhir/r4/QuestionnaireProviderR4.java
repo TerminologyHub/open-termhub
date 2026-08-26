@@ -89,7 +89,6 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
    * @return the questionnaire
    * @throws Exception the exception
    */
-  @SuppressWarnings("null")
   @Read
   public Questionnaire getQuestionnaire(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id) throws Exception {
@@ -456,8 +455,8 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
           final String cacheKey = QuestionnaireGetCache.buildKey(FhirVersionEnum.R4,
               loincTerminology.getVersion(), codeValue);
           final Questionnaire questionnaire = QuestionnaireGetCache.getOrLoadR4(cacheKey, () -> {
-            final Questionnaire built = FhirUtilityR4.toR4Questionnaire(concept, searchService,
-                loincTerminology);
+            final Questionnaire built =
+                FhirUtilityR4.toR4Questionnaire(concept, searchService, loincTerminology);
             FhirUtilityR4.populateQuestionnaire(built, searchService, loincTerminology);
             return built;
           });
@@ -476,20 +475,18 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
         : TerminologyUtility.getTerminologyQuery(loincTerminology.getAbbreviation(),
             loincTerminology.getPublisher(), loincTerminology.getVersion());
     final String shellsKey = QuestionnaireSearchCache.buildKey(FhirVersionEnum.R4, terminologyKey);
-    final List<Questionnaire> shells =
-        QuestionnaireSearchCache.getOrLoadR4(shellsKey, () -> {
-          final List<Concept> concepts =
-              questionnaireSearchHelper.findPanelConcepts(searchService, loincTerminology);
-          if (logger.isDebugEnabled()) {
-            logger.debug("Found {} LOINC questionnaire concepts", concepts.size());
-          }
-          final List<Questionnaire> built = new ArrayList<>(concepts.size());
-          for (final Concept concept : concepts) {
-            built.add(
-                FhirUtilityR4.toR4Questionnaire(concept, searchService, loincTerminology));
-          }
-          return built;
-        });
+    final List<Questionnaire> shells = QuestionnaireSearchCache.getOrLoadR4(shellsKey, () -> {
+      final List<Concept> concepts =
+          questionnaireSearchHelper.findPanelConcepts(searchService, loincTerminology);
+      if (logger.isDebugEnabled()) {
+        logger.debug("Found {} LOINC questionnaire concepts", concepts.size());
+      }
+      final List<Questionnaire> built = new ArrayList<>(concepts.size());
+      for (final Concept concept : concepts) {
+        built.add(FhirUtilityR4.toR4Questionnaire(concept, searchService, loincTerminology));
+      }
+      return built;
+    });
 
     for (final Questionnaire questionnaire : shells) {
       if (!matchesSearchCriteria(questionnaire, id, code, date, description, identifier, name,
@@ -579,8 +576,8 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
     try {
       return questionnaireSearchHelper.isQuestionnairePanel(searchService, concept);
     } catch (final Exception e) {
-      logger.debug("Error checking questionnaire eligibility for concept {}: {}",
-          concept.getCode(), e.getMessage());
+      logger.debug("Error checking questionnaire eligibility for concept {}: {}", concept.getCode(),
+          e.getMessage());
       return false;
     }
   }
@@ -591,6 +588,7 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
    * @param concept the concept to check
    * @return true if the concept is related to Survey instruments, false otherwise
    */
+  @SuppressWarnings("unused")
   private boolean hasSurveyInstrumentsRelationship(final Concept concept) {
     if (concept == null || StringUtils.isBlank(concept.getCode())) {
       return false;
@@ -742,7 +740,6 @@ public class QuestionnaireProviderR4 implements IResourceProvider {
     if (codeValue == null || questionnaire == null || !questionnaire.hasCode()) {
       return false;
     }
-    return questionnaire.getCode().stream()
-        .anyMatch(coding -> codeValue.equals(coding.getCode()));
+    return questionnaire.getCode().stream().anyMatch(coding -> codeValue.equals(coding.getCode()));
   }
 }

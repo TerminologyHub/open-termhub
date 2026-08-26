@@ -34,8 +34,7 @@ import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * LOINC questionnaire item fields derived from indexed panel member
- * relationships.
+ * LOINC questionnaire item fields derived from indexed panel member relationships.
  */
 public final class LoincQuestionnaireHelper {
 
@@ -48,105 +47,48 @@ public final class LoincQuestionnaireHelper {
   private static final int FORM_LINK_ID_LOWER_MARGIN = 50;
 
   /**
-   * Panels whose standalone Questionnaire uses a nest-copy {@code ParentId} (not the self-ref
-   * row where {@code ID == ParentId}). Same {@code ParentLoinc} often has multiple member
-   * ParentId blocks in PanelsAndForms / CodeSystem; gold picks the nest instance's {@code ID}s
-   * as linkIds.
+   * Panels whose standalone Questionnaire uses a nest-copy {@code ParentId} (not the self-ref row
+   * where {@code ID == ParentId}). Same {@code ParentLoinc} often has multiple member ParentId
+   * blocks in PanelsAndForms / CodeSystem; gold picks the nest instance's {@code ID}s as linkIds.
    *
-   * <p>Verified offline against fhir.loinc.org: each entry is the ParentId whose member
-   * {@code ID}s match gold linkIds. Preferring "any non-self ParentId" regresses panels that
-   * correctly keep the self-ref root. No CodeSystem-only discriminator found for the rest.
+   * <p>
+   * Verified offline against fhir.loinc.org: each entry is the ParentId whose member {@code ID}s
+   * match gold linkIds. Preferring "any non-self ParentId" regresses panels that correctly keep the
+   * self-ref root. No CodeSystem-only discriminator found for the rest.
    */
-  private static final Map<String, String> LEAF_EMBEDDED_QUESTIONNAIRE_ROOT_FORM =
-      Map.ofEntries(
-          Map.entry("24314-7", "26111"),
-          Map.entry("24358-4", "10793"),
-          Map.entry("29580-8", "12491"),
-          Map.entry("29581-6", "12712"),
-          Map.entry("29584-0", "27991"),
-          Map.entry("34528-0", "12358"),
-          Map.entry("34529-8", "18588"),
-          Map.entry("34546-2", "28004"),
-          Map.entry("34564-5", "27985"),
-          Map.entry("42360-8", "25494"),
-          Map.entry("49657-0", "19243"),
-          Map.entry("49658-8", "11844"),
-          Map.entry("49661-2", "19275"),
-          Map.entry("49662-0", "19271"),
-          Map.entry("49663-8", "11875"),
-          Map.entry("49664-6", "19262"),
-          Map.entry("49665-3", "11873"),
-          Map.entry("50556-0", "25085"),
-          Map.entry("50738-4", "20064"),
-          Map.entry("51956-1", "70576"),
-          Map.entry("52491-8", "97929"),
-          Map.entry("52495-9", "32622"),
-          Map.entry("53261-4", "138179"),
-          Map.entry("54076-5", "27729"),
-          Map.entry("54078-1", "27712"),
-          Map.entry("54079-9", "138364"),
-          Map.entry("54081-5", "27750"),
-          Map.entry("54082-3", "27761"),
-          Map.entry("55207-5", "30117"),
-          Map.entry("55232-3", "30074"),
-          Map.entry("58406-0", "38642"),
-          Map.entry("60342-3", "128969"),
-          Map.entry("60343-1", "125242"),
-          Map.entry("62294-4", "47505"),
-          Map.entry("62295-1", "47142"),
-          Map.entry("62296-9", "47160"),
-          Map.entry("62297-7", "47156"),
-          Map.entry("62298-5", "47170"),
-          Map.entry("62333-0", "138433"),
-          Map.entry("62335-5", "47172"),
-          Map.entry("62343-9", "47402"),
-          Map.entry("62355-3", "47376"),
-          Map.entry("62367-8", "47385"),
-          Map.entry("62386-8", "47490"),
-          Map.entry("69738-3", "57552"),
-          Map.entry("70495-7", "58645"),
-          Map.entry("70496-5", "58665"),
-          Map.entry("70497-3", "58664"),
-          Map.entry("70498-1", "58677"),
-          Map.entry("70499-9", "58676"),
-          Map.entry("70500-4", "60836"),
-          Map.entry("70501-2", "60469"),
-          Map.entry("70503-8", "58663"),
-          Map.entry("70571-5", "60059"),
-          Map.entry("70585-5", "60073"),
-          Map.entry("70606-9", "60094"),
-          Map.entry("70624-2", "60113"),
-          Map.entry("70635-8", "60212"),
-          Map.entry("70636-6", "60258"),
-          Map.entry("70637-4", "60263"),
-          Map.entry("70649-9", "60319"),
-          Map.entry("70655-6", "60388"),
-          Map.entry("72110-0", "124858"),
-          Map.entry("74078-7", "66162"),
-          Map.entry("76452-2", "72158"),
-          Map.entry("76453-0", "72157"),
-          Map.entry("76454-8", "72156"),
-          Map.entry("76455-5", "72155"),
-          Map.entry("76456-3", "72154"),
-          Map.entry("76463-9", "72153"),
-          Map.entry("77637-7", "73319"),
-          Map.entry("77638-5", "73318"),
-          Map.entry("79563-3", "138421"),
-          Map.entry("82307-0", "110886"),
-          Map.entry("85267-3", "138445"),
-          Map.entry("88368-6", "112681"),
-          Map.entry("92005-8", "138440"),
-          Map.entry("92252-6", "110869"),
-          Map.entry("93187-3", "113410"),
-          Map.entry("93784-7", "118268"),
-          Map.entry("94128-6", "118684"),
-          Map.entry("94391-0", "120323"),
-          Map.entry("94537-8", "126140"),
-          Map.entry("95249-9", "147022"),
-          Map.entry("95619-3", "146259"),
-          Map.entry("95800-9", "122386"),
-          Map.entry("104188-8", "144301"),
-          Map.entry("111825-6", "152212"));
+  private static final Map<String, String> LEAF_EMBEDDED_QUESTIONNAIRE_ROOT_FORM = Map.ofEntries(
+      Map.entry("24314-7", "26111"), Map.entry("24358-4", "10793"), Map.entry("29580-8", "12491"),
+      Map.entry("29581-6", "12712"), Map.entry("29584-0", "27991"), Map.entry("34528-0", "12358"),
+      Map.entry("34529-8", "18588"), Map.entry("34546-2", "28004"), Map.entry("34564-5", "27985"),
+      Map.entry("42360-8", "25494"), Map.entry("49657-0", "19243"), Map.entry("49658-8", "11844"),
+      Map.entry("49661-2", "19275"), Map.entry("49662-0", "19271"), Map.entry("49663-8", "11875"),
+      Map.entry("49664-6", "19262"), Map.entry("49665-3", "11873"), Map.entry("50556-0", "25085"),
+      Map.entry("50738-4", "20064"), Map.entry("51956-1", "70576"), Map.entry("52491-8", "97929"),
+      Map.entry("52495-9", "32622"), Map.entry("53261-4", "138179"), Map.entry("54076-5", "27729"),
+      Map.entry("54078-1", "27712"), Map.entry("54079-9", "138364"), Map.entry("54081-5", "27750"),
+      Map.entry("54082-3", "27761"), Map.entry("55207-5", "30117"), Map.entry("55232-3", "30074"),
+      Map.entry("58406-0", "38642"), Map.entry("60342-3", "128969"), Map.entry("60343-1", "125242"),
+      Map.entry("62294-4", "47505"), Map.entry("62295-1", "47142"), Map.entry("62296-9", "47160"),
+      Map.entry("62297-7", "47156"), Map.entry("62298-5", "47170"), Map.entry("62333-0", "138433"),
+      Map.entry("62335-5", "47172"), Map.entry("62343-9", "47402"), Map.entry("62355-3", "47376"),
+      Map.entry("62367-8", "47385"), Map.entry("62386-8", "47490"), Map.entry("69738-3", "57552"),
+      Map.entry("70495-7", "58645"), Map.entry("70496-5", "58665"), Map.entry("70497-3", "58664"),
+      Map.entry("70498-1", "58677"), Map.entry("70499-9", "58676"), Map.entry("70500-4", "60836"),
+      Map.entry("70501-2", "60469"), Map.entry("70503-8", "58663"), Map.entry("70571-5", "60059"),
+      Map.entry("70585-5", "60073"), Map.entry("70606-9", "60094"), Map.entry("70624-2", "60113"),
+      Map.entry("70635-8", "60212"), Map.entry("70636-6", "60258"), Map.entry("70637-4", "60263"),
+      Map.entry("70649-9", "60319"), Map.entry("70655-6", "60388"), Map.entry("72110-0", "124858"),
+      Map.entry("74078-7", "66162"), Map.entry("76452-2", "72158"), Map.entry("76453-0", "72157"),
+      Map.entry("76454-8", "72156"), Map.entry("76455-5", "72155"), Map.entry("76456-3", "72154"),
+      Map.entry("76463-9", "72153"), Map.entry("77637-7", "73319"), Map.entry("77638-5", "73318"),
+      Map.entry("79563-3", "138421"), Map.entry("82307-0", "110886"),
+      Map.entry("85267-3", "138445"), Map.entry("88368-6", "112681"),
+      Map.entry("92005-8", "138440"), Map.entry("92252-6", "110869"),
+      Map.entry("93187-3", "113410"), Map.entry("93784-7", "118268"),
+      Map.entry("94128-6", "118684"), Map.entry("94391-0", "120323"),
+      Map.entry("94537-8", "126140"), Map.entry("95249-9", "147022"),
+      Map.entry("95619-3", "146259"), Map.entry("95800-9", "122386"),
+      Map.entry("104188-8", "144301"), Map.entry("111825-6", "152212"));
 
   /**
    * Upper bound above parent linkId when scoping shared organizer member edges.
@@ -213,10 +155,9 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * When the same organizer LOINC panel appears in multiple questionnaires,
-   * member edges duplicate per child code with different form {@code ID}s. Keep
-   * the edge whose {@link LoincConstants#ATTR_PARENT_FORM_LINK_ID} matches the
-   * parent group linkId.
+   * When the same organizer LOINC panel appears in multiple questionnaires, member edges duplicate
+   * per child code with different form {@code ID}s. Keep the edge whose
+   * {@link LoincConstants#ATTR_PARENT_FORM_LINK_ID} matches the parent group linkId.
    *
    * @param relationships candidate member relationships
    * @param parentLinkId parent group item linkId
@@ -272,8 +213,7 @@ public final class LoincQuestionnaireHelper {
       return null;
     }
 
-    final List<ConceptRelationship> pool =
-        restrictToParentFormScope(candidates, parentLinkId);
+    final List<ConceptRelationship> pool = restrictToParentFormScope(candidates, parentLinkId);
     if (pool.isEmpty()) {
       return null;
     }
@@ -293,10 +233,11 @@ public final class LoincQuestionnaireHelper {
   /**
    * Keeps member edges for a parent form row ({@code ParentId} equals {@code parentLinkId}).
    *
-   * <p>Shared organizer panels (e.g. FACT {@code 70500-4}) carry every form copy's members on the
-   * same {@code from.code}. Exact ParentId match is required. Sibling ParentIds are never mixed
-   * in. Edges with no ParentId are used only when the candidate set has no ParentId metadata at
-   * all (legacy).
+   * <p>
+   * Shared organizer panels (e.g. FACT {@code 70500-4}) carry every form copy's members on the same
+   * {@code from.code}. Exact ParentId match is required. Sibling ParentIds are never mixed in.
+   * Edges with no ParentId are used only when the candidate set has no ParentId metadata at all
+   * (legacy).
    *
    * @param candidates member edges (often same child LOINC, different form IDs)
    * @param parentLinkId parent group linkId in the questionnaire form tree
@@ -386,6 +327,7 @@ public final class LoincQuestionnaireHelper {
    * @param rel the relationship
    * @return true when {@link LoincConstants#ATTR_DISPLAY_NAME_FOR_FORM} is present
    */
+  @SuppressWarnings("unused")
   private static boolean hasFormScopedDisplay(final ConceptRelationship rel) {
     return !StringUtility.isEmpty(resolveFormDisplayName(rel));
   }
@@ -398,14 +340,12 @@ public final class LoincQuestionnaireHelper {
    */
   private static ConceptRelationship tieBreakMemberEdges(
     final List<ConceptRelationship> candidates) {
-    return candidates.stream()
-        .min(Comparator.comparingInt(LoincQuestionnaireHelper::relationshipSequenceNumber)
-            .thenComparing(rel -> {
-              final ConceptRef ref = getMemberConceptRef(rel);
-              final String linkId = resolveMemberLinkId(rel, ref);
-              return linkId == null ? "" : linkId;
-            }))
-        .orElse(candidates.get(0));
+    return candidates.stream().min(Comparator
+        .comparingInt(LoincQuestionnaireHelper::relationshipSequenceNumber).thenComparing(rel -> {
+          final ConceptRef ref = getMemberConceptRef(rel);
+          final String linkId = resolveMemberLinkId(rel, ref);
+          return linkId == null ? "" : linkId;
+        })).orElse(candidates.get(0));
   }
 
   /**
@@ -428,13 +368,14 @@ public final class LoincQuestionnaireHelper {
   /**
    * Infers the questionnaire root form linkId from top-level member edges.
    *
-   * <p>Order of preference:
+   * <p>
+   * Order of preference:
    * <ol>
-   *   <li>Leaf-embedding nest form for {@code panelCode} when that ParentId appears on the member
-   *       edges (see {@link #LEAF_EMBEDDED_QUESTIONNAIRE_ROOT_FORM})
-   *   <li>Panel self-reference row ({@code member} target equals {@code panelCode} with
-   *       {@link LoincConstants#ATTR_PARENT_FORM_LINK_ID} equal to {@link LoincConstants#ATTR_REL_ID})
-   *   <li>Mode {@code ParentID} among remaining members
+   * <li>Leaf-embedding nest form for {@code panelCode} when that ParentId appears on the member
+   * edges (see {@link #LEAF_EMBEDDED_QUESTIONNAIRE_ROOT_FORM})
+   * <li>Panel self-reference row ({@code member} target equals {@code panelCode} with
+   * {@link LoincConstants#ATTR_PARENT_FORM_LINK_ID} equal to {@link LoincConstants#ATTR_REL_ID})
+   * <li>Mode {@code ParentID} among remaining members
    * </ol>
    *
    * @param rootMemberRelationships direct members of the questionnaire panel (including self-ref)
@@ -532,11 +473,11 @@ public final class LoincQuestionnaireHelper {
   /**
    * Whether a panel member question repeats.
    *
-   * <p>{@code AnswerCardinality} with multi max ({@code *} or {@code >1}) means
-   * {@code item.repeats} only when the question has an answer-list (multi-select).
-   * Without an answer-list that multi answer capacity is ignored (fhir.loinc.org).
-   * {@code QuestionCardinality} then decides repeats (e.g. {@code 1..n} with
-   * {@code AnswerCardinality} {@code 1..1}).
+   * <p>
+   * {@code AnswerCardinality} with multi max ({@code *} or {@code >1}) means {@code item.repeats}
+   * only when the question has an answer-list (multi-select). Without an answer-list that multi
+   * answer capacity is ignored (fhir.loinc.org). {@code QuestionCardinality} then decides repeats
+   * (e.g. {@code 1..n} with {@code AnswerCardinality} {@code 1..1}).
    *
    * @param rel the member or form_placement relationship
    * @param memberConcept the question concept (optional; needed for answer-list gate)
@@ -556,8 +497,8 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Whether a LOINC cardinality string allows more than one (e.g. {@code 0..*},
-   * {@code 1..n}, {@code 0..4}).
+   * Whether a LOINC cardinality string allows more than one (e.g. {@code 0..*}, {@code 1..n},
+   * {@code 0..4}).
    *
    * @param cardinality AnswerCardinality or QuestionCardinality value
    * @return true when max is unbounded or greater than 1
@@ -597,8 +538,8 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Whether the question has an answer list (override on the edge or answer-list
-   * property on the concept).
+   * Whether the question has an answer list (override on the edge or answer-list property on the
+   * concept).
    *
    * @param rel the member relationship
    * @param concept the question concept
@@ -629,17 +570,17 @@ public final class LoincQuestionnaireHelper {
   /**
    * Whether a panel member is required.
    *
-   * <p>{@code ObservationRequiredInPanel} {@code R}/{@code R-a} are required
-   * (case-sensitive; lowercase {@code r} is not). {@code Rflx}/{@code Rflx-a} are
-   * not. When that attribute is absent or optional, {@code AnswerCardinality}
-   * {@code 1..1} also means required (fhir.loinc.org).
+   * <p>
+   * {@code ObservationRequiredInPanel} {@code R}/{@code R-a} are required (case-sensitive;
+   * lowercase {@code r} is not). {@code Rflx}/{@code Rflx-a} are not. When that attribute is absent
+   * or optional, {@code AnswerCardinality} {@code 1..1} also means required (fhir.loinc.org).
    *
    * @param rel the member or form_placement relationship
    * @return true when required in panel
    */
   public static boolean resolveMemberRequired(final ConceptRelationship rel) {
-    final String required = getRelationshipAttribute(rel,
-        LoincConstants.ATTR_OBSERVATION_REQUIRED_IN_PANEL);
+    final String required =
+        getRelationshipAttribute(rel, LoincConstants.ATTR_OBSERVATION_REQUIRED_IN_PANEL);
     if (required != null) {
       final String trimmed = required.trim();
       if ("R".equals(trimmed) || "R-a".equals(trimmed)) {
@@ -739,8 +680,8 @@ public final class LoincQuestionnaireHelper {
 
   /**
    * Display text for a questionnaire item, using {@code memberLinkId} for leaf-embed detection.
-   * Leaf-embedded panels: SHORTNAME when present (lab panels), else full FullySpecifiedName
-   * (survey panels with empty SHORTNAME). DisplayNameForForm does not override either.
+   * Leaf-embedded panels: SHORTNAME when present (lab panels), else full FullySpecifiedName (survey
+   * panels with empty SHORTNAME). DisplayNameForForm does not override either.
    *
    * @param memberRel the member relationship
    * @param memberConcept the member concept
@@ -796,8 +737,7 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Resolves FHIR Questionnaire.item.text / code.display from the parent member
-   * edge.
+   * Resolves FHIR Questionnaire.item.text / code.display from the parent member edge.
    *
    * @param rel the member relationship
    * @return form display or null
@@ -1036,8 +976,7 @@ public final class LoincQuestionnaireHelper {
       return null;
     }
     for (final ConceptPropertyValueCoding coding : concept.getFhirPropertyCodings()) {
-      if (coding != null
-          && LoincConstants.ATTR_COMPONENT.equalsIgnoreCase(coding.getPropertyCode())
+      if (coding != null && LoincConstants.ATTR_COMPONENT.equalsIgnoreCase(coding.getPropertyCode())
           && !StringUtility.isEmpty(coding.getValueDisplay())) {
         return coding.getValueDisplay();
       }
@@ -1046,9 +985,9 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Converts a LOINC SHORTNAME / short common name to a FHIR {@code Questionnaire.name},
-   * matching fhir.loinc.org: drop pure-numeric tokens, strip leading digits from other
-   * tokens, join with underscores, preserve embedded letter-digit tokens (e.g. {@code D25}).
+   * Converts a LOINC SHORTNAME / short common name to a FHIR {@code Questionnaire.name}, matching
+   * fhir.loinc.org: drop pure-numeric tokens, strip leading digits from other tokens, join with
+   * underscores, preserve embedded letter-digit tokens (e.g. {@code D25}).
    *
    * @param shortCommonName the LOINC short name
    * @return machine name
@@ -1198,9 +1137,8 @@ public final class LoincQuestionnaireHelper {
     final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
         terminology.getPublisher(), terminology.getVersion());
     final String query = StringUtility.composeQuery("AND", termQuery,
-        StringUtility.escapeKeywordField("from.code", loincCode),
-        StringUtility.escapeKeywordField("additionalType",
-            LoincConstants.LOINC_REL_ANSWER_LIST_LINK));
+        StringUtility.escapeKeywordField("from.code", loincCode), StringUtility
+            .escapeKeywordField("additionalType", LoincConstants.LOINC_REL_ANSWER_LIST_LINK));
     final List<ConceptRelationship> links =
         searchService.findAll(query, null, ConceptRelationship.class);
     return selectAnswerListFromLinks(links);
@@ -1243,8 +1181,7 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * LA answer concepts for an LL answer list (via indexed
-   * {@code parents.code}).
+   * LA answer concepts for an LL answer list (via indexed {@code parents.code}).
    *
    * @param searchService the search service
    * @param terminology the terminology
@@ -1313,8 +1250,8 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Orders LA answer-list members by concept {@code SequenceNumber} (matches
-   * fhir.loinc.org LL expansion).
+   * Orders LA answer-list members by concept {@code SequenceNumber} (matches fhir.loinc.org LL
+   * expansion).
    *
    * @param members LA concepts to order in place
    */
@@ -1368,8 +1305,7 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * LA answer concepts for an LL list via indexed {@code member} edges on the
-   * LL concept.
+   * LA answer concepts for an LL list via indexed {@code member} edges on the LL concept.
    *
    * @param searchService the search service
    * @param terminology the terminology
@@ -1445,12 +1381,12 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Whether questionnaire items should follow fhir.loinc.org score-unit emit:
-   * normalized units equal {@code score}. Prefer {@code EXAMPLE_UNITS}; if empty, fall back to
+   * Whether questionnaire items should follow fhir.loinc.org score-unit emit: normalized units
+   * equal {@code score}. Prefer {@code EXAMPLE_UNITS}; if empty, fall back to
    * {@code EXAMPLE_UCUM_UNITS}. Normalization strips surrounding {@code {}} so {@code {score}}
-   * matches. That means {@code decimal} type, no answer-list expansion, and no item {@code code}
-   * / {@code required} / default {@code repeats=false} (Qn non-score units such as {@code #/d}
-   * stay coded). Does not change answer-list selection ({@link #selectAnswerListFromLinks}).
+   * matches. That means {@code decimal} type, no answer-list expansion, and no item {@code code} /
+   * {@code required} / default {@code repeats=false} (Qn non-score units such as {@code #/d} stay
+   * coded). Does not change answer-list selection ({@link #selectAnswerListFromLinks}).
    * {@code FORMULA} is calculation text only and does not affect this rule.
    *
    * @param concept the concept
@@ -1588,8 +1524,8 @@ public final class LoincQuestionnaireHelper {
   }
 
   /**
-   * Whether a LOINC panel type becomes a nested FHIR Questionnaire {@code group} item (not the
-   * root questionnaire resource).
+   * Whether a LOINC panel type becomes a nested FHIR Questionnaire {@code group} item (not the root
+   * questionnaire resource).
    *
    * @param panelType the LOINC panel type
    * @return true for Organizer, Panel, or Convenience group
@@ -1619,9 +1555,9 @@ public final class LoincQuestionnaireHelper {
 
   /**
    * Whether this member row is the leaf-embedding occurrence of a panel (coded question, not an
-   * expanded group). fhir.loinc.org emits the panel LOINC as a leaf item when the member
-   * {@code ID} equals the nest ParentId in {@link #LEAF_EMBEDDED_QUESTIONNAIRE_ROOT_FORM}; the
-   * same panel under a different form ID is still expanded as an uncoded group.
+   * expanded group). fhir.loinc.org emits the panel LOINC as a leaf item when the member {@code ID}
+   * equals the nest ParentId in {@link #LEAF_EMBEDDED_QUESTIONNAIRE_ROOT_FORM}; the same panel
+   * under a different form ID is still expanded as an uncoded group.
    *
    * @param panelCode member LOINC code
    * @param memberLinkId member edge {@code ID} / item linkId

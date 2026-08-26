@@ -9,7 +9,6 @@
  */
 package com.wci.termhub.fhir.util;
 
-import com.wci.termhub.AppConfig;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.wci.termhub.AppConfig;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.ResultList;
@@ -35,13 +35,15 @@ import com.wci.termhub.util.TerminologyUtility;
  * latest loaded LOINC release (e.g. 2.81); callers must pass the terminology from
  * {@link LoincValueSetHelper#findLoincTerminology(EntityRepositoryService)}.
  *
- * <p>A concept is exposed as a Questionnaire when it has form children, a {@code CLASS} starting
- * with {@code PANEL}, and is not {@code PANEL.HEDIS}.
+ * <p>
+ * A concept is exposed as a Questionnaire when it has form children, a {@code CLASS} starting with
+ * {@code PANEL}, and is not {@code PANEL.HEDIS}.
  */
 @Component
 public class QuestionnaireSearchHelper {
 
   /** The app config. */
+  @SuppressWarnings("unused")
   private final AppConfig appConfig;
 
   /** The logger. */
@@ -293,7 +295,7 @@ public class QuestionnaireSearchHelper {
     final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
         terminology.getPublisher(), terminology.getVersion());
     // final String query =
-    //     StringUtility.composeQuery("AND", termQuery, PANEL_TYPE_CLAUSE, CLASS_TYPE_LAB_CLAUSE);
+    // StringUtility.composeQuery("AND", termQuery, PANEL_TYPE_CLAUSE, CLASS_TYPE_LAB_CLAUSE);
     final String query = StringUtility.composeQuery("AND", termQuery, PANEL_TYPE_CLAUSE);
     return fetchAllConcepts(searchService, query);
   }
@@ -386,8 +388,8 @@ public class QuestionnaireSearchHelper {
 
     final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
         terminology.getPublisher(), terminology.getVersion());
-    final String query = StringUtility.composeQuery("AND", termQuery, StringUtility
-        .escapeKeywordField("additionalType", LoincConstants.LOINC_REL_PANEL_MEMBER));
+    final String query = StringUtility.composeQuery("AND", termQuery,
+        StringUtility.escapeKeywordField("additionalType", LoincConstants.LOINC_REL_PANEL_MEMBER));
     final Set<String> codes = new HashSet<>();
     int offset = 0;
     long total = Long.MAX_VALUE;
@@ -432,8 +434,8 @@ public class QuestionnaireSearchHelper {
     final String termQuery = TerminologyUtility.getTerminologyQuery(concept.getTerminology(),
         concept.getPublisher(), concept.getVersion());
     final String query = StringUtility.composeQuery("AND", termQuery,
-        "from.code:" + StringUtility.escapeQuery(concept.getCode()), StringUtility
-            .escapeKeywordField("additionalType", LoincConstants.LOINC_REL_PANEL_MEMBER));
+        "from.code:" + StringUtility.escapeQuery(concept.getCode()),
+        StringUtility.escapeKeywordField("additionalType", LoincConstants.LOINC_REL_PANEL_MEMBER));
 
     final SearchParameters params = new SearchParameters();
     params.setQuery(query);

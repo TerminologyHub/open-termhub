@@ -35,12 +35,10 @@ import jakarta.servlet.http.HttpServletResponse;
 public class ReadOnlyFilter implements Filter {
 
   /** Forbidden response message. */
-  public static final String FORBIDDEN_MESSAGE =
-      "Read-only mode: content mutations are disabled";
+  public static final String FORBIDDEN_MESSAGE = "Read-only mode: content mutations are disabled";
 
   /** Tree compute POST: /concept/{terminology}/trees. */
-  private static final Pattern CONCEPT_TREES_POST =
-      Pattern.compile("^/concept/[^/]+/trees$");
+  private static final Pattern CONCEPT_TREES_POST = Pattern.compile("^/concept/[^/]+/trees$");
 
   /** FHIR create POST: /fhir/r4|r5/{ResourceType}. */
   private static final Pattern FHIR_CREATE_POST =
@@ -151,6 +149,7 @@ public class ReadOnlyFilter implements Filter {
    * @param response the response
    * @throws IOException Signals that an I/O exception has occurred.
    */
+  @SuppressWarnings("resource")
   private static void reject(final HttpServletResponse response) throws IOException {
     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
     response.setContentType("text/plain;charset=UTF-8");

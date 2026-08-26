@@ -11,6 +11,7 @@ package com.wci.termhub.rest;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import com.wci.termhub.util.PropertyUtility;
 
@@ -23,6 +24,12 @@ import io.swagger.v3.oas.models.Paths;
 public final class ReadOnlyOpenApiSupport {
 
   /**
+   * Server modes that are inherently read-only, regardless of the {@code read.only} property. Add
+   * future read-only modes here to have their APIs presented without mutating operations.
+   */
+  private static final Set<String> READ_ONLY_SERVER_MODES = Set.of("regenstrief");
+
+  /**
    * Instantiates a new read only open api support.
    */
   private ReadOnlyOpenApiSupport() {
@@ -30,13 +37,13 @@ public final class ReadOnlyOpenApiSupport {
   }
 
   /**
-   * Indicates whether read-only mode is enabled (via property cache).
+   * Indicates whether the given server mode is inherently read-only.
    *
-   * @return true, if enabled
+   * @param serverMode the server mode
+   * @return true, if the server mode is read-only
    */
-  public static boolean isReadOnlyEnabled() {
-    return Boolean
-        .parseBoolean(PropertyUtility.getProperties().getProperty("read.only", "false"));
+  public static boolean isReadOnlyServerMode() {
+    return READ_ONLY_SERVER_MODES.contains(PropertyUtility.getServerMode());
   }
 
   /**

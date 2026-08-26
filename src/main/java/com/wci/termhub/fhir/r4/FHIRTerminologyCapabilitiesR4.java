@@ -96,7 +96,7 @@ public class FHIRTerminologyCapabilitiesR4 extends TerminologyCapabilities
       setPublisher("Regenstrief Institute, Inc.");
       setCopyright("© Regenstrief Institute, Inc.");
       this.setImplementation(new TerminologyCapabilitiesImplementationComponent()
-          .setDescription("FHIR Endpoint powered by TermHub").setUrl("https://fhir.loinc.org"));
+          .setDescription("FHIR Endpoint powered by TermHub").setUrl(serverBase));
     }
 
     return this;

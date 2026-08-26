@@ -359,9 +359,16 @@ public class TermhubOpenApiInterceptorR4 {
       return true;
     }
 
-    try (
-        final InputStream resource = ClasspathUtil.loadResourceAsStream(
-            "/META-INF/resources/webjars/swagger-ui/" + mySwaggerUiVersion + "/" + resourcePath);
+    final String classpathResource =
+        "/META-INF/resources/webjars/swagger-ui/" + mySwaggerUiVersion + "/" + resourcePath;
+    if (getClass().getResource(classpathResource) == null) {
+      // Some referenced assets (e.g. swagger-ui.css.map source maps) are not shipped in the
+      // webjar. Respond with 404 instead of letting ClasspathUtil throw a 500.
+      theResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
+      return true;
+    }
+
+    try (final InputStream resource = ClasspathUtil.loadResourceAsStream(classpathResource);
         final ServletOutputStream os = theResponse.getOutputStream()) {
 
       if (resourcePath.endsWith(".js") || resourcePath.endsWith(".map")) {
@@ -408,7 +415,9 @@ public class TermhubOpenApiInterceptorR4 {
     if (url.contains("localhost")) {
       return url;
     }
-    return url.replaceFirst("http", "https");
+    // Upgrade plain http to https, but only when it is not already https (otherwise
+    // replaceFirst("http", "https") would turn "https://" into "httpss://").
+    return url.replaceFirst("^http://", "https://");
   }
 
   /**
@@ -447,7 +456,11 @@ public class TermhubOpenApiInterceptorR4 {
     final HttpServletResponse theResponse) throws IOException {
     final CapabilityStatement cs = getCapabilityStatement(theRequestDetails);
 
-    final String baseUrl = removeTrailingSlash(cs.getImplementation().getUrl());
+    String baseUrl = removeTrailingSlash(cs.getImplementation().getUrl());
+    if (isBlank(baseUrl)) {
+      // Fall back to the incoming request's server base so we never emit "null/api-docs"
+      baseUrl = removeTrailingSlash(theRequestDetails.getFhirServerBase());
+    }
     theResponse.setStatus(HttpServletResponse.SC_OK);
     theResponse.setContentType(Constants.CT_HTML);
 
@@ -597,7 +610,10 @@ public class TermhubOpenApiInterceptorR4 {
 
     final Server server = new Server();
     openApi.addServersItem(server);
-    final String baseUrl = removeTrailingSlash(cs.getImplementation().getUrl());
+    String baseUrl = removeTrailingSlash(cs.getImplementation().getUrl());
+    if (isBlank(baseUrl)) {
+      baseUrl = removeTrailingSlash(theRequestDetails.getFhirServerBase());
+    }
     server.setUrl(baseUrl);
     server.setDescription(cs.getSoftware().getName());
 
@@ -774,7 +790,7 @@ public class TermhubOpenApiInterceptorR4 {
       }
     }
 
-    if (ReadOnlyOpenApiSupport.isReadOnlyEnabled()) {
+    if (ReadOnlyOpenApiSupport.isReadOnlyServerMode()) {
       ReadOnlyOpenApiSupport.removeFhirMutatingOperations(paths);
     }
 

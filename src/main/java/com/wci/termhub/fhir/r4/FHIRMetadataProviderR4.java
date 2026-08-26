@@ -161,11 +161,11 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
           capabilityStatement.setPublisher("Regenstrief Institute, Inc.");
           capabilityStatement.setCopyright("© Regenstrief Institute, Inc.");
           capabilityStatement.setImplementation(new CapabilityStatementImplementationComponent()
-              .setDescription("FHIR Endpoint powered by TermHub").setUrl("https://fhir.loinc.org"));
+              .setDescription("FHIR Endpoint powered by TermHub").setUrl(serverBase));
         } else {
           capabilityStatement.setPublisher("TERMHUB");
           capabilityStatement.setImplementation(new CapabilityStatementImplementationComponent()
-              .setDescription("FHIR Endpoint powered by TermHub"));
+              .setDescription("FHIR Endpoint powered by TermHub").setUrl(serverBase));
         }
         capabilityStatement.setDate(new Date());
         capabilityStatement.setFhirVersion(FHIRVersion._4_0_1);
