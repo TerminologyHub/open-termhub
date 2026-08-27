@@ -28,7 +28,7 @@ import ca.uhn.fhir.context.FhirVersionEnum;
  */
 public final class ValueSetSearchCache {
 
-  /** Cache TTL: 5 minutes. */
+  /** Cache TTL: 5 minutes (indefinite when {@code read.only=true}). */
   private static final int CACHE_TTL_MS = 300_000;
 
   /**

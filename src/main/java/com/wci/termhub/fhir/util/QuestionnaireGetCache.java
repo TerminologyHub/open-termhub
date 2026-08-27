@@ -25,11 +25,11 @@ import ca.uhn.fhir.parser.IParser;
  */
 public final class QuestionnaireGetCache {
 
-  /** Cache TTL: 5 minutes. */
+  /** Cache TTL: 5 minutes (indefinite when {@code read.only=true}). */
   private static final int CACHE_TTL_MS = 300_000;
 
   /** Max cached responses. */
-  private static final int CACHE_SIZE = 2000;
+  private static final int CACHE_SIZE = 10000;
 
   /** R4 FHIR context. */
   private static final FhirContext FHIR_R4 = FhirContext.forR4Cached();

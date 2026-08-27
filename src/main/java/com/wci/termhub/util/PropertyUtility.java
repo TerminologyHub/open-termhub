@@ -180,4 +180,13 @@ public class PropertyUtility {
   public static String getServerMode() {
     return getProperty("server.mode");
   }
+
+  /**
+   * Indicates whether or not read only is the case.
+   *
+   * @return true when {@code read.only=true}
+   */
+  public static boolean isReadOnly() {
+    return Boolean.parseBoolean(getProperty("read.only"));
+  }
 }
