@@ -11,6 +11,7 @@ package com.wci.termhub.fhir.util.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -115,5 +116,28 @@ public class ValueSetSearchCacheUnitTest {
     } finally {
       pool.shutdownNow();
     }
+  }
+
+  /**
+   * Cache hit returns the same shell instances (no JSON round-trip).
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testGetOrLoadR4ReturnsCachedInstances() throws Exception {
+    final String key = ValueSetSearchCache.buildKey(FhirVersionEnum.R4, "identity-test", false);
+    final List<ValueSet> first = ValueSetSearchCache.getOrLoadR4(key, () -> {
+      final ValueSet vs = new ValueSet();
+      vs.setId("LG1");
+      return List.of(vs);
+    });
+    final AtomicInteger builds = new AtomicInteger();
+    final List<ValueSet> second = ValueSetSearchCache.getOrLoadR4(key, () -> {
+      builds.incrementAndGet();
+      return List.of();
+    });
+    assertEquals(0, builds.get());
+    assertEquals(1, second.size());
+    assertSame(first.get(0), second.get(0));
   }
 }

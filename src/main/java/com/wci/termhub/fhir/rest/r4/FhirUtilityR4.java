@@ -1804,12 +1804,13 @@ public final class FhirUtilityR4 {
       bundle.addLink(FhirUtilityR4.getNextLink(thisUrl, offset, offsetInt, count, countInt));
     }
 
-    // Add entries for current page
+    // Add entries for current page (copy so cached shells are not mutated)
     for (int i = offsetInt; i < offsetInt + countInt && i < list.size(); i++) {
+      final Resource resource = list.get(i);
       final BundleEntryComponent component = new BundleEntryComponent();
-      component.setResource(list.get(i));
+      component.setResource(resource.copy());
       final String baseUrl = request.getRequestURL().toString().replaceAll("/$", "");
-      component.setFullUrl(baseUrl + "/" + list.get(i).getIdElement().getIdPart());
+      component.setFullUrl(baseUrl + "/" + resource.getIdElement().getIdPart());
       bundle.addEntry(component);
     }
 

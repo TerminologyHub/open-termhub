@@ -9,25 +9,22 @@
  */
 package com.wci.termhub.fhir.util;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Bundle.BundleType;
 
 import com.wci.termhub.util.SingleFlight;
 import com.wci.termhub.util.SingleFlight.ThrowingSupplier;
 import com.wci.termhub.util.TimerCache;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
-import ca.uhn.fhir.parser.IParser;
 
 /**
  * Interim cache of ValueSet search shells (metadata-only LL/LG resources for
  * unfiltered search). Concurrent builds for the same key are coalesced via
  * {@link SingleFlight}.
+ *
+ * <p>
+ * Stores the shell list in memory. Callers must not mutate returned instances;
+ * search paging copies the page into the response Bundle.
  */
 public final class ValueSetSearchCache {
 
@@ -40,14 +37,8 @@ public final class ValueSetSearchCache {
    */
   private static final int CACHE_SIZE = 32;
 
-  /** R4 FHIR context. */
-  private static final FhirContext FHIR_R4 = FhirContext.forR4Cached();
-
-  /** R5 FHIR context. */
-  private static final FhirContext FHIR_R5 = FhirContext.forR5Cached();
-
-  /** Serialized shell Bundle JSON by cache key. */
-  private static TimerCache<String> cache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+  /** Shell lists by cache key. */
+  private static TimerCache<List<?>> cache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
 
   /** Coalesces concurrent shell-list builds. */
   private static final SingleFlight FLIGHT = new SingleFlight();
@@ -78,7 +69,7 @@ public final class ValueSetSearchCache {
    *
    * @param key the cache key
    * @param loader builds the shell list on miss
-   * @return shell value sets (detached copies from cache JSON)
+   * @return shell value sets (cached instances; do not mutate)
    * @throws Exception if the loader fails
    */
   public static List<org.hl7.fhir.r4.model.ValueSet> getOrLoadR4(final String key,
@@ -104,7 +95,7 @@ public final class ValueSetSearchCache {
    *
    * @param key the cache key
    * @param loader builds the shell list on miss
-   * @return shell value sets (detached copies from cache JSON)
+   * @return shell value sets (cached instances; do not mutate)
    * @throws Exception if the loader fails
    */
   public static List<org.hl7.fhir.r5.model.ValueSet> getOrLoadR5(final String key,
@@ -149,19 +140,13 @@ public final class ValueSetSearchCache {
    * @param key the key
    * @return shells or null on miss
    */
+  @SuppressWarnings("unchecked")
   private static List<org.hl7.fhir.r4.model.ValueSet> getR4(final String key) {
-    final String json = cache.get(key);
-    if (json == null) {
+    final List<?> cached = cache.get(key);
+    if (cached == null) {
       return null;
     }
-    final Bundle bundle = FHIR_R4.newJsonParser().parseResource(Bundle.class, json);
-    final List<org.hl7.fhir.r4.model.ValueSet> list = new ArrayList<>();
-    for (final Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-      if (entry.getResource() instanceof final org.hl7.fhir.r4.model.ValueSet vs) {
-        list.add(vs);
-      }
-    }
-    return list;
+    return (List<org.hl7.fhir.r4.model.ValueSet>) cached;
   }
 
   /**
@@ -175,12 +160,7 @@ public final class ValueSetSearchCache {
     if (key == null || valueSets == null) {
       return;
     }
-    final Bundle bundle = new Bundle();
-    bundle.setType(BundleType.COLLECTION);
-    for (final org.hl7.fhir.r4.model.ValueSet vs : valueSets) {
-      bundle.addEntry().setResource(vs);
-    }
-    cache.put(key, encode(FHIR_R4, bundle));
+    cache.put(key, List.copyOf(valueSets));
   }
 
   /**
@@ -189,20 +169,13 @@ public final class ValueSetSearchCache {
    * @param key the key
    * @return shells or null on miss
    */
+  @SuppressWarnings("unchecked")
   private static List<org.hl7.fhir.r5.model.ValueSet> getR5(final String key) {
-    final String json = cache.get(key);
-    if (json == null) {
+    final List<?> cached = cache.get(key);
+    if (cached == null) {
       return null;
     }
-    final org.hl7.fhir.r5.model.Bundle bundle =
-        FHIR_R5.newJsonParser().parseResource(org.hl7.fhir.r5.model.Bundle.class, json);
-    final List<org.hl7.fhir.r5.model.ValueSet> list = new ArrayList<>();
-    for (final org.hl7.fhir.r5.model.Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-      if (entry.getResource() instanceof final org.hl7.fhir.r5.model.ValueSet vs) {
-        list.add(vs);
-      }
-    }
-    return list;
+    return (List<org.hl7.fhir.r5.model.ValueSet>) cached;
   }
 
   /**
@@ -216,23 +189,6 @@ public final class ValueSetSearchCache {
     if (key == null || valueSets == null) {
       return;
     }
-    final org.hl7.fhir.r5.model.Bundle bundle = new org.hl7.fhir.r5.model.Bundle();
-    bundle.setType(org.hl7.fhir.r5.model.Bundle.BundleType.COLLECTION);
-    for (final org.hl7.fhir.r5.model.ValueSet vs : valueSets) {
-      bundle.addEntry().setResource(vs);
-    }
-    cache.put(key, encode(FHIR_R5, bundle));
-  }
-
-  /**
-   * Encode.
-   *
-   * @param ctx FHIR context
-   * @param resource resource
-   * @return JSON
-   */
-  private static String encode(final FhirContext ctx, final IBaseResource resource) {
-    final IParser parser = ctx.newJsonParser();
-    return parser.encodeResourceToString(resource);
+    cache.put(key, List.copyOf(valueSets));
   }
 }

@@ -1666,6 +1666,9 @@ public class ValueSetProviderR5 implements IResourceProvider {
           final List<Terminology> loincTerminologies = allTerminologies.stream()
               .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org")).toList();
           for (final Terminology loincTerm : loincTerminologies) {
+            if (version != null && !FhirUtility.compareString(version, loincTerm.getVersion())) {
+              continue;
+            }
             final String terminologyKey = loincTerm.getId() != null ? loincTerm.getId()
                 : TerminologyUtility.getTerminologyQuery(loincTerm.getAbbreviation(),
                     loincTerm.getPublisher(), loincTerm.getVersion());
@@ -1673,7 +1676,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
                 ValueSetSearchCache.buildKey(FhirVersionEnum.R5, terminologyKey, metaFlag);
             final List<ValueSet> shells = ValueSetSearchCache.getOrLoadR5(shellsKey, () -> {
               final ResultList<Concept> lllgConcepts =
-                  loincValueSetHelper.findAllLllgConcepts(searchService, loincTerm, 10_000, 0);
+                  loincValueSetHelper.findAllLllgConcepts(searchService, loincTerm, 100_000, 0);
               final List<ValueSet> built = new ArrayList<>(lllgConcepts.getItems().size());
               for (final Concept concept : lllgConcepts.getItems()) {
                 if (!loincValueSetHelper.isLllgId(concept.getCode())) {
