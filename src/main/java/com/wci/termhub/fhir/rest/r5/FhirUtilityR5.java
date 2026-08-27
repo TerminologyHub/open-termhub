@@ -1807,6 +1807,37 @@ public final class FhirUtilityR5 {
   }
 
   /**
+   * Returns the previous link.
+   *
+   * @param uri the uri
+   * @param offset the offset
+   * @param offsetInt the offset int
+   * @param count the count
+   * @param countInt the count int
+   * @return the previous link
+   */
+  public static BundleLinkComponent getPreviousLink(final String uri, final NumberParam offset,
+    final int offsetInt, final NumberParam count, final int countInt) {
+    final int prevOffset = Math.max(0, offsetInt - countInt);
+    String prevUri = uri;
+    if (!uri.contains("?")) {
+      prevUri = prevUri + "?";
+    }
+    if (offset != null) {
+      prevUri = prevUri.replaceFirst("_offset=\\d+", "_offset=" + prevOffset);
+    } else {
+      prevUri += (prevUri.endsWith("?") ? "" : "&") + "_offset=" + prevOffset;
+    }
+    if (count != null) {
+      prevUri = prevUri.replaceFirst("_count=\\d+", "_count=" + countInt);
+    } else {
+      prevUri += (prevUri.endsWith("?") ? "" : "&") + "_count=" + countInt;
+    }
+
+    return new BundleLinkComponent().setUrl(prevUri).setRelation(LinkRelationTypes.PREVIOUS);
+  }
+
+  /**
    * Make bundle.
    *
    * @param request the request
@@ -1826,10 +1857,9 @@ public final class FhirUtilityR5 {
     bundle.setId(UUID.randomUUID().toString());
     bundle.setType(BundleType.SEARCHSET);
     bundle.setTotal(list.size());
-    // This seems to be automatically added
-    // bundle.addLink(
-    // new
-    // BundleLinkComponent().setUrl(thisUrl).setRelation(LinkRelationTypes.SELF));
+    if (offsetInt > 0) {
+      bundle.addLink(FhirUtilityR5.getPreviousLink(thisUrl, offset, offsetInt, count, countInt));
+    }
     if (offsetInt + countInt < list.size()) {
       bundle.addLink(FhirUtilityR5.getNextLink(thisUrl, offset, offsetInt, count, countInt));
     }
@@ -1837,10 +1867,11 @@ public final class FhirUtilityR5 {
       if (i > list.size() - 1) {
         break;
       }
+      final Resource resource = list.get(i);
       final BundleEntryComponent component = new BundleEntryComponent();
-      component.setResource(list.get(i));
+      component.setResource(resource.copy());
       final String baseUrl = request.getRequestURL().toString().replaceAll("/$", "");
-      component.setFullUrl(baseUrl + "/" + list.get(i).getIdElement().getIdPart());
+      component.setFullUrl(baseUrl + "/" + resource.getIdElement().getIdPart());
       bundle.addEntry(component);
     }
     return bundle;

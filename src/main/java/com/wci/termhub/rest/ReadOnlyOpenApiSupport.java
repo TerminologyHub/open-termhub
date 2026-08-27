@@ -39,7 +39,6 @@ public final class ReadOnlyOpenApiSupport {
   /**
    * Indicates whether the given server mode is inherently read-only.
    *
-   * @param serverMode the server mode
    * @return true, if the server mode is read-only
    */
   public static boolean isReadOnlyServerMode() {

@@ -1684,6 +1684,9 @@ public class ValueSetProviderR4 implements IResourceProvider {
           final List<Terminology> loincTerminologies = allTerminologies.stream()
               .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org")).toList();
           for (final Terminology loincTerm : loincTerminologies) {
+            if (version != null && !FhirUtility.compareString(version, loincTerm.getVersion())) {
+              continue;
+            }
             final String terminologyKey = loincTerm.getId() != null ? loincTerm.getId()
                 : TerminologyUtility.getTerminologyQuery(loincTerm.getAbbreviation(),
                     loincTerm.getPublisher(), loincTerm.getVersion());
