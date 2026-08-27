@@ -148,15 +148,20 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(TerminologyServiceRestImpl.class);
 
+  /** Cache TTL: 10 seconds (indefinite when {@code read.only=true}). */
+  private static final int CACHE_TTL_MS = 10_000;
+
   /** The terminologies cache. */
   private static TimerCache<Map<String, Terminology>> terminologyCache =
-      new TimerCache<>(1000, 10000);
+      new TimerCache<>(10000, CACHE_TTL_MS);
 
   /** The terminologies cache. */
-  private static TimerCache<Map<String, Mapset>> mapsetCache = new TimerCache<>(1000, 10000);
+  private static TimerCache<Map<String, Mapset>> mapsetCache =
+      new TimerCache<>(10000, CACHE_TTL_MS);
 
   /** The subset cache. */
-  private static TimerCache<Map<String, Subset>> subsetCache = new TimerCache<>(1000, 10000);
+  private static TimerCache<Map<String, Subset>> subsetCache =
+      new TimerCache<>(10000, CACHE_TTL_MS);
 
   /** The request. */
   @SuppressWarnings("unused")

@@ -30,7 +30,7 @@ import ca.uhn.fhir.parser.IParser;
  */
 public final class QuestionnaireSearchCache {
 
-  /** Cache TTL: 5 minutes. */
+  /** Cache TTL: 5 minutes (indefinite when {@code read.only=true}). */
   private static final int CACHE_TTL_MS = 300_000;
 
   /**

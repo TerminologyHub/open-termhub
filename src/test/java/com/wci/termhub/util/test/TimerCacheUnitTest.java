@@ -24,14 +24,24 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import com.wci.termhub.util.PropertyUtility;
 import com.wci.termhub.util.TimerCache;
 
 /**
  * Unit tests for {@link TimerCache}.
  */
 public class TimerCacheUnitTest {
+
+  /**
+   * Reset read-only so expiry tests are not order-dependent.
+   */
+  @AfterEach
+  public void resetReadOnly() {
+    PropertyUtility.setProperty("read.only", "false");
+  }
 
   /**
    * Put and get round-trip.
@@ -52,6 +62,33 @@ public class TimerCacheUnitTest {
     cache.put("a", "one");
     cache.put("a", null);
     assertNull(cache.get("a"));
+  }
+
+  /**
+   * Timeout of 0 never expires.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testZeroTimeoutNeverExpires() throws Exception {
+    final TimerCache<String> cache = new TimerCache<>(10, 0);
+    cache.put("a", "one");
+    Thread.sleep(5);
+    assertEquals("one", cache.get("a"));
+  }
+
+  /**
+   * Read-only mode does not expire entries.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testReadOnlyNeverExpires() throws Exception {
+    PropertyUtility.setProperty("read.only", "true");
+    final TimerCache<String> cache = new TimerCache<>(10, 1);
+    cache.put("a", "one");
+    Thread.sleep(5);
+    assertEquals("one", cache.get("a"));
   }
 
   /**
