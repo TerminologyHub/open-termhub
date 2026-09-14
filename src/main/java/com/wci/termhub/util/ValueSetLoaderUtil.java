@@ -1338,8 +1338,8 @@ public final class ValueSetLoaderUtil {
         query = StringUtility.composeQuery("AND", query,
             "attributes." + filter.getProperty() + ":*");
       } else {
-        throw FhirUtilityR4.exception("Unsupported ValueSet compose.filter.op: " + op,
-            IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
+        LOGGER.warn("Skipping ValueSet compose.filter.op={} (only = and regex are evaluated)", op);
+        return List.of();
       }
     }
     final List<Concept> concepts = service.findAll(query, null, Concept.class);
@@ -1382,8 +1382,8 @@ public final class ValueSetLoaderUtil {
         query = StringUtility.composeQuery("AND", query,
             "attributes." + filter.getProperty() + ":*");
       } else {
-        throw FhirUtilityR4.exception("Unsupported ValueSet compose.filter.op: " + op,
-            IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
+        LOGGER.warn("Skipping ValueSet compose.filter.op={} (only = and regex are evaluated)", op);
+        return List.of();
       }
     }
     final List<Concept> concepts = service.findAll(query, null, Concept.class);
@@ -1464,8 +1464,7 @@ public final class ValueSetLoaderUtil {
             IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
       }
     }
-    throw FhirUtilityR4.exception("Unsupported ValueSet compose.filter.op: " + op,
-        IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
+    return false;
   }
 
   /**

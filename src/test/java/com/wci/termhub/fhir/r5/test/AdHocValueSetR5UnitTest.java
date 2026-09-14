@@ -26,6 +26,7 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r5.model.ValueSet.ConceptSetFilterComponent;
 import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -40,6 +41,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -49,6 +51,9 @@ import ca.uhn.fhir.parser.IParser;
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
+@TestPropertySource(properties = {
+    "lucene.index.directory=build/index/lucene-fhir-r5-adhoc"
+})
 public class AdHocValueSetR5UnitTest extends AbstractFhirR5ServerTest {
 
   /** FHIR ValueSet path. */
@@ -260,5 +265,13 @@ public class AdHocValueSetR5UnitTest extends AbstractFhirR5ServerTest {
    */
   private static String readClasspath(final String path) throws Exception {
     return Files.readString(new ClassPathResource(path).getFile().toPath(), StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Teardown. POSTed CodeSystems/ValueSets must not leak into later FHIR R5 tests.
+   */
+  @AfterAll
+  public static void teardown() {
+    setSetupOnce(false);
   }
 }
