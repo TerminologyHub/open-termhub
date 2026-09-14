@@ -1,0 +1,25 @@
+{
+  "resourceType": "ValueSet",
+  "id": "valid-hl7-attachment-responses",
+  "url": "http://example.org/vs/valid-hl7-attachment-responses",
+  "name": "Valid HL7 Attachment Responses",
+  "title": "Valid HL7 Attachment Responses",
+  "status": "draft",
+  "experimental": true,
+  "publisher": "AdHoc Filter Test",
+  "description": "HL7 attachment structure regex.",
+  "compose": {
+    "include": [
+      {
+        "system": "http://example.org/adhoc-loinc-props",
+        "filter": [
+          {
+            "property": "HL7_ATTACHMENT_STRUCTURE",
+            "op": "regex",
+            "value": "^[No ]*IG exists$"
+          }
+        ]
+      }
+    ]
+  }
+}

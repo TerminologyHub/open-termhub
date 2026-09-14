@@ -1,0 +1,75 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "adhoc-filter-props",
+  "url": "http://example.org/adhoc-loinc-props",
+  "version": "2.83",
+  "name": "AdHocFilterProps",
+  "title": "AdHocFilterProps",
+  "status": "active",
+  "publisher": "AdHoc Filter Test",
+  "content": "complete",
+  "concept": [
+    {
+      "code": "A-YES",
+      "display": "Attachment yes",
+      "property": [
+        {
+          "code": "ValidHL7AttachmentRequest",
+          "valueString": "Y"
+        },
+        {
+          "code": "HL7_ATTACHMENT_STRUCTURE",
+          "valueString": "IG exists"
+        },
+        {
+          "code": "STATUS",
+          "valueString": "ACTIVE"
+        },
+        {
+          "code": "COMMON_TEST_RANK",
+          "valueString": "12"
+        }
+      ]
+    },
+    {
+      "code": "A-NO",
+      "display": "Attachment no",
+      "property": [
+        {
+          "code": "ValidHL7AttachmentRequest",
+          "valueString": "N"
+        },
+        {
+          "code": "HL7_ATTACHMENT_STRUCTURE",
+          "valueString": "No IG exists"
+        },
+        {
+          "code": "STATUS",
+          "valueString": "DEPRECATED"
+        },
+        {
+          "code": "COMMON_TEST_RANK",
+          "valueString": "0"
+        }
+      ]
+    },
+    {
+      "code": "A-RANK",
+      "display": "Ranked observation",
+      "property": [
+        {
+          "code": "HL7_ATTACHMENT_STRUCTURE",
+          "valueString": "No IG exists"
+        },
+        {
+          "code": "STATUS",
+          "valueString": "ACTIVE"
+        },
+        {
+          "code": "COMMON_TEST_RANK",
+          "valueString": "5"
+        }
+      ]
+    }
+  ]
+}

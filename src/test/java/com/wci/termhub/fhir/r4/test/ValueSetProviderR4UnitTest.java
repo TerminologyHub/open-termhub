@@ -407,6 +407,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
     final boolean hasSnomedMember = members.getItems().stream()
         .anyMatch(m -> "105724001".equals(m.getCode())
             && (m.getTerminology() != null && (m.getTerminology().equals("SNOMEDCT")
+                || m.getTerminology().equals("SNOMEDCT_US")
                 || m.getTerminology().equals("SNOMEDCT_HL7_COMBINED_TEST"))));
     assertTrue(hasSnomedMember, "Should have SNOMED CT member with code 105724001");
 

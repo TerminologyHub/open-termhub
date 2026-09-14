@@ -16,11 +16,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.algo.ProgressEvent;
@@ -175,6 +179,7 @@ public final class ValueSetLoaderUtil {
         abbreviation = StringUtility.deriveTitleFromUrl(valueSet.getUrl());
       }
       final String publisher = valueSet.getPublisher();
+      injectVersionFromCodeSystemR4(service, valueSet, publisher);
       final String version = valueSet.getVersion();
       if (abbreviation == null || abbreviation.isEmpty() || publisher == null || publisher.isEmpty()
           || version == null || version.isEmpty()) {
@@ -227,18 +232,8 @@ public final class ValueSetLoaderUtil {
             valueSet.getCompose().getIncludeFirstRep();
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
-          final TerminologyRef fromRef = new TerminologyRef();
-          String fromAbbreviation =
-              lookupTerminologyFromUri(service, include.getSystem(), subset.getPublisher(),
-                  subset.getVersion());
-          if (fromAbbreviation == null) {
-            fromAbbreviation = abbreviation.split("-")[0];
-          }
-          fromRef.setAbbreviation(fromAbbreviation);
-          fromRef.setUri(include.getSystem());
-          fromRef.setPublisher(valueSet.getPublisher());
-          fromRef.setVersion(valueSet.getVersion());
-
+          final TerminologyRef fromRef = resolveTerminologyRef(service, include.getSystem(),
+              valueSet.getPublisher(), valueSet.getVersion(), abbreviation);
           subset.setFromTerminology(fromRef.getAbbreviation());
           subset.setFromPublisher(fromRef.getPublisher());
           subset.setFromVersion(fromRef.getVersion());
@@ -261,6 +256,9 @@ public final class ValueSetLoaderUtil {
         subset.getAttributes().put("copyright", valueSet.getCopyright());
       }
       storeValueSetContactR4(subset, valueSet);
+      storeValueSetStatusR4(subset, valueSet);
+      storeValueSetUseContextR4(subset, valueSet);
+      storeValueSetComposeR4(subset, valueSet);
 
       subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
@@ -282,50 +280,54 @@ public final class ValueSetLoaderUtil {
                 IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
           }
 
-          final TerminologyRef ref = new TerminologyRef();
-          ref.setUri(includes.getSystem());
-          ref.setPublisher(subset.getPublisher());
-          ref.setVersion(subset.getVersion());
+          final TerminologyRef ref = resolveTerminologyRef(service, includes.getSystem(),
+              subset.getPublisher(), subset.getVersion(), abbreviation);
 
-          // Look up terminology abbreviation from database
-          String termAbbreviation = lookupTerminologyFromUri(service, includes.getSystem(),
-              subset.getPublisher(), subset.getVersion());
-          if (termAbbreviation == null) {
-            // Fallback to title-based extraction
-            termAbbreviation = abbreviation.split("-")[0];
-          }
-          ref.setAbbreviation(termAbbreviation);
-
-          for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : includes
-              .getConcept()) {
-
-            if (c.getCode() == null) {
-              LOGGER.warn("    Value set includes component reference without a code = " + c);
-              continue;
+          final boolean hasConcepts = includes.hasConcept() && !includes.getConcept().isEmpty();
+          final boolean hasFilters = includes.hasFilter() && !includes.getFilter().isEmpty();
+          if (hasFilters && hasConcepts) {
+            for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : includes
+                .getConcept()) {
+              if (c.getCode() == null) {
+                LOGGER.warn("    Value set includes component reference without a code = " + c);
+                continue;
+              }
+              final Concept existingConcept = TerminologyUtility.getConcept(service,
+                  ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+              if (existingConcept == null
+                  || !matchesFiltersR4(existingConcept, includes.getFilter())) {
+                continue;
+              }
+              addSubsetMember(service, pendingConceptSubsetUpdates, members, subsetRef, ref,
+                  existingConcept, c.getCode());
+              memberProcessedR4++;
+              logValueSetMemberProgress(listener, memberProcessedR4, memberTotalEstimateR4);
             }
+          } else if (hasConcepts) {
+            for (final org.hl7.fhir.r4.model.ValueSet.ConceptReferenceComponent c : includes
+                .getConcept()) {
 
-            final Concept existingConcept = TerminologyUtility.getConcept(service,
-                ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+              if (c.getCode() == null) {
+                LOGGER.warn("    Value set includes component reference without a code = " + c);
+                continue;
+              }
 
-            final SubsetMember m = new SubsetMember();
-            m.setId(UUID.randomUUID().toString());
-            m.setActive(true);
-            m.setTerminology(ref.getAbbreviation());
-            m.setPublisher(ref.getPublisher());
-            m.setVersion(ref.getVersion());
-            m.setCode(c.getCode());
-            m.setName(
-                existingConcept == null ? "Unable to determine name" : existingConcept.getName());
-            m.setSubset(subsetRef);
-            members.add(m);
-
-            // Add subsetRef to the concept corresponding to this
-            if (existingConcept != null) {
-              accumulateConceptSubsetMaybeFlush(service, pendingConceptSubsetUpdates,
-                  existingConcept, subsetRef);
+              final Concept existingConcept = TerminologyUtility.getConcept(service,
+                  ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+              addSubsetMember(service, pendingConceptSubsetUpdates, members, subsetRef, ref,
+                  existingConcept, c.getCode());
+              memberProcessedR4++;
+              logValueSetMemberProgress(listener, memberProcessedR4, memberTotalEstimateR4);
             }
-            memberProcessedR4++;
-            logValueSetMemberProgress(listener, memberProcessedR4, memberTotalEstimateR4);
+          } else if (hasFilters) {
+            final List<Concept> matching = findConceptsMatchingFiltersR4(service, ref,
+                includes.getFilter());
+            for (final Concept existingConcept : matching) {
+              addSubsetMember(service, pendingConceptSubsetUpdates, members, subsetRef, ref,
+                  existingConcept, existingConcept.getCode());
+              memberProcessedR4++;
+              logValueSetMemberProgress(listener, memberProcessedR4, memberTotalEstimateR4);
+            }
           }
         }
       }
@@ -347,21 +349,8 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            final TerminologyRef ref = new TerminologyRef();
-            ref.setUri(c.getSystem());
-            ref.setPublisher(subset.getPublisher());
-            ref.setVersion(subset.getVersion());
-
-            // Look up terminology abbreviation from database
-            String termAbbreviation = lookupTerminologyFromUri(service, c.getSystem(),
-                subset.getPublisher(), subset.getVersion());
-            if (termAbbreviation == null) {
-              // Fallback to title-based extraction
-              termAbbreviation = abbreviation.split("-")[0];
-            }
-            ref.setAbbreviation(termAbbreviation);
-
-            map.put(c.getSystem(), ref);
+            map.put(c.getSystem(), resolveTerminologyRef(service, c.getSystem(),
+                subset.getPublisher(), subset.getVersion(), abbreviation));
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -463,7 +452,14 @@ public final class ValueSetLoaderUtil {
         abbreviation = StringUtility.deriveTitleFromUrl(valueSet.getUrl());
       }
       final String publisher = valueSet.getPublisher();
+      injectVersionFromCodeSystemR5(service, valueSet, publisher);
       final String version = valueSet.getVersion();
+      if (abbreviation == null || abbreviation.isEmpty() || publisher == null || publisher.isEmpty()
+          || version == null || version.isEmpty()) {
+        throw FhirUtilityR4.exception(
+            "ValueSet requires title (or url), publisher, and version for import (missing one or more)",
+            IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+      }
       Subset subset = findSubset(service, abbreviation, publisher, version);
       if (subset != null) {
         throw FhirUtilityR4.exception(
@@ -509,18 +505,8 @@ public final class ValueSetLoaderUtil {
             valueSet.getCompose().getIncludeFirstRep();
         if (include.hasSystem() && include.getSystem() != null && !include.getSystem().isEmpty()) {
 
-          final TerminologyRef fromRef = new TerminologyRef();
-          String fromAbbreviation =
-              lookupTerminologyFromUri(service, include.getSystem(), subset.getPublisher(),
-                  subset.getVersion());
-          if (fromAbbreviation == null) {
-            fromAbbreviation = abbreviation.split("-")[0];
-          }
-          fromRef.setAbbreviation(fromAbbreviation);
-          fromRef.setUri(include.getSystem());
-          fromRef.setPublisher(valueSet.getPublisher());
-          fromRef.setVersion(valueSet.getVersion());
-
+          final TerminologyRef fromRef = resolveTerminologyRef(service, include.getSystem(),
+              valueSet.getPublisher(), valueSet.getVersion(), abbreviation);
           subset.setFromTerminology(fromRef.getAbbreviation());
           subset.setFromPublisher(fromRef.getPublisher());
           subset.setFromVersion(fromRef.getVersion());
@@ -543,6 +529,9 @@ public final class ValueSetLoaderUtil {
         subset.getAttributes().put("copyright", valueSet.getCopyright());
       }
       storeValueSetContactR5(subset, valueSet);
+      storeValueSetStatusR5(subset, valueSet);
+      storeValueSetUseContextR5(subset, valueSet);
+      storeValueSetComposeR5(subset, valueSet);
 
       subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
@@ -564,51 +553,54 @@ public final class ValueSetLoaderUtil {
                 IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
           }
 
-          final TerminologyRef ref = new TerminologyRef();
-          ref.setUri(includes.getSystem());
-          ref.setPublisher(subset.getPublisher());
-          ref.setVersion(subset.getVersion());
+          final TerminologyRef ref = resolveTerminologyRef(service, includes.getSystem(),
+              subset.getPublisher(), subset.getVersion(), abbreviation);
 
-          // Look up terminology abbreviation from database
-          String termAbbreviation = lookupTerminologyFromUri(service, includes.getSystem(),
-              subset.getPublisher(), subset.getVersion());
-          if (termAbbreviation == null) {
-            // Fallback to title-based extraction
-            termAbbreviation = abbreviation.split("-")[0];
-          }
-          ref.setAbbreviation(termAbbreviation);
-
-          for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : includes
-              .getConcept()) {
-
-            if (c.getCode() == null) {
-              LOGGER.warn("    Value set includes component reference without a code = " + c);
-              continue;
+          final boolean hasConcepts = includes.hasConcept() && !includes.getConcept().isEmpty();
+          final boolean hasFilters = includes.hasFilter() && !includes.getFilter().isEmpty();
+          if (hasFilters && hasConcepts) {
+            for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : includes
+                .getConcept()) {
+              if (c.getCode() == null) {
+                LOGGER.warn("    Value set includes component reference without a code = " + c);
+                continue;
+              }
+              final Concept existingConcept = TerminologyUtility.getConcept(service,
+                  ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+              if (existingConcept == null
+                  || !matchesFiltersR5(existingConcept, includes.getFilter())) {
+                continue;
+              }
+              addSubsetMember(service, pendingConceptSubsetUpdatesR5, members, subsetRef, ref,
+                  existingConcept, c.getCode());
+              memberProcessedR5++;
+              logValueSetMemberProgress(listener, memberProcessedR5, memberTotalEstimateR5);
             }
+          } else if (hasConcepts) {
+            for (final org.hl7.fhir.r5.model.ValueSet.ConceptReferenceComponent c : includes
+                .getConcept()) {
 
-            final Concept existingConcept = TerminologyUtility.getConcept(service,
-                ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+              if (c.getCode() == null) {
+                LOGGER.warn("    Value set includes component reference without a code = " + c);
+                continue;
+              }
 
-            final SubsetMember m = new SubsetMember();
-            m.setId(UUID.randomUUID().toString());
-            m.setActive(true);
-            m.setTerminology(ref.getAbbreviation());
-            m.setPublisher(ref.getPublisher());
-            m.setVersion(ref.getVersion());
-            m.setCode(c.getCode());
-            m.setName(
-                existingConcept == null ? "Unable to determine name" : existingConcept.getName());
-            m.setSubset(subsetRef);
-            members.add(m);
-
-            // Add subsetRef to the concept corresponding to this
-            if (existingConcept != null) {
-              accumulateConceptSubsetMaybeFlush(service, pendingConceptSubsetUpdatesR5,
-                  existingConcept, subsetRef);
+              final Concept existingConcept = TerminologyUtility.getConcept(service,
+                  ref.getAbbreviation(), ref.getPublisher(), ref.getVersion(), c.getCode());
+              addSubsetMember(service, pendingConceptSubsetUpdatesR5, members, subsetRef, ref,
+                  existingConcept, c.getCode());
+              memberProcessedR5++;
+              logValueSetMemberProgress(listener, memberProcessedR5, memberTotalEstimateR5);
             }
-            memberProcessedR5++;
-            logValueSetMemberProgress(listener, memberProcessedR5, memberTotalEstimateR5);
-
+          } else if (hasFilters) {
+            final List<Concept> matching = findConceptsMatchingFiltersR5(service, ref,
+                includes.getFilter());
+            for (final Concept existingConcept : matching) {
+              addSubsetMember(service, pendingConceptSubsetUpdatesR5, members, subsetRef, ref,
+                  existingConcept, existingConcept.getCode());
+              memberProcessedR5++;
+              logValueSetMemberProgress(listener, memberProcessedR5, memberTotalEstimateR5);
+            }
           }
         }
       }
@@ -626,21 +618,8 @@ public final class ValueSetLoaderUtil {
           }
 
           if (!map.containsKey(c.getSystem())) {
-            final TerminologyRef ref = new TerminologyRef();
-            ref.setUri(c.getSystem());
-            ref.setPublisher(subset.getPublisher());
-            ref.setVersion(subset.getVersion());
-
-            // Look up terminology abbreviation from database
-            String termAbbreviation = lookupTerminologyFromUri(service, c.getSystem(),
-                subset.getPublisher(), subset.getVersion());
-            if (termAbbreviation == null) {
-              // Fallback to title-based extraction
-              termAbbreviation = abbreviation.split("-")[0];
-            }
-            ref.setAbbreviation(termAbbreviation);
-
-            map.put(c.getSystem(), ref);
+            map.put(c.getSystem(), resolveTerminologyRef(service, c.getSystem(),
+                subset.getPublisher(), subset.getVersion(), abbreviation));
           }
           final TerminologyRef ref = map.get(c.getSystem());
 
@@ -896,37 +875,597 @@ public final class ValueSetLoaderUtil {
   }
 
   /**
-   * Looks up terminology abbreviation from system URI using database.
+   * If ValueSet.version is missing, set it from the loaded CodeSystem for compose.include.system.
    *
-   * @param searchService the search service
-   * @param systemUri the system URI
+   * @param service the service
+   * @param valueSet the value set
+   * @param publisher the publisher
+   * @throws Exception the exception
+   */
+  private static void injectVersionFromCodeSystemR4(final EntityRepositoryService service,
+    final org.hl7.fhir.r4.model.ValueSet valueSet, final String publisher) throws Exception {
+    if (!StringUtility.isEmpty(valueSet.getVersion())) {
+      return;
+    }
+    final String systemUri = firstIncludeSystemR4(valueSet);
+    if (StringUtility.isEmpty(systemUri)) {
+      return;
+    }
+    final Terminology terminology = findTerminologyForSystem(service, systemUri, publisher, null);
+    if (terminology == null || StringUtility.isEmpty(terminology.getVersion())) {
+      throw FhirUtilityR4.exception(
+          "ValueSet.version is required, or a CodeSystem must be loaded for compose.include.system",
+          IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+    }
+    LOGGER.info("  Injecting ValueSet.version={} from CodeSystem {}", terminology.getVersion(),
+        systemUri);
+    valueSet.setVersion(terminology.getVersion());
+  }
+
+  /**
+   * If ValueSet.version is missing, set it from the loaded CodeSystem for compose.include.system.
+   *
+   * @param service the service
+   * @param valueSet the value set
+   * @param publisher the publisher
+   * @throws Exception the exception
+   */
+  private static void injectVersionFromCodeSystemR5(final EntityRepositoryService service,
+    final org.hl7.fhir.r5.model.ValueSet valueSet, final String publisher) throws Exception {
+    if (!StringUtility.isEmpty(valueSet.getVersion())) {
+      return;
+    }
+    final String systemUri = firstIncludeSystemR5(valueSet);
+    if (StringUtility.isEmpty(systemUri)) {
+      return;
+    }
+    final Terminology terminology = findTerminologyForSystem(service, systemUri, publisher, null);
+    if (terminology == null || StringUtility.isEmpty(terminology.getVersion())) {
+      throw FhirUtilityR4.exception(
+          "ValueSet.version is required, or a CodeSystem must be loaded for compose.include.system",
+          IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+    }
+    LOGGER.info("  Injecting ValueSet.version={} from CodeSystem {}", terminology.getVersion(),
+        systemUri);
+    valueSet.setVersion(terminology.getVersion());
+  }
+
+  /**
+   * First include system R4.
+   *
+   * @param valueSet the value set
+   * @return the string
+   */
+  private static String firstIncludeSystemR4(final org.hl7.fhir.r4.model.ValueSet valueSet) {
+    if (valueSet == null || !valueSet.hasCompose() || !valueSet.getCompose().hasInclude()) {
+      return null;
+    }
+    final org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent include =
+        valueSet.getCompose().getIncludeFirstRep();
+    return include.hasSystem() ? include.getSystem() : null;
+  }
+
+  /**
+   * First include system R5.
+   *
+   * @param valueSet the value set
+   * @return the string
+   */
+  private static String firstIncludeSystemR5(final org.hl7.fhir.r5.model.ValueSet valueSet) {
+    if (valueSet == null || !valueSet.hasCompose() || !valueSet.getCompose().hasInclude()) {
+      return null;
+    }
+    final org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent include =
+        valueSet.getCompose().getIncludeFirstRep();
+    return include.hasSystem() ? include.getSystem() : null;
+  }
+
+  /**
+   * Resolve terminology ref from the loaded CodeSystem when present.
+   *
+   * @param service the service
+   * @param systemUri the system uri
    * @param publisher the publisher
    * @param version the version
-   * @return the terminology abbreviation or null if not found
+   * @param abbreviationFallback the abbreviation fallback
+   * @return the terminology ref
    */
-  private static String lookupTerminologyFromUri(final EntityRepositoryService searchService,
+  private static TerminologyRef resolveTerminologyRef(final EntityRepositoryService service,
+    final String systemUri, final String publisher, final String version,
+    final String abbreviationFallback) {
+    final TerminologyRef ref = new TerminologyRef();
+    ref.setUri(systemUri);
+    final Terminology terminology =
+        findTerminologyForSystem(service, systemUri, publisher, version);
+    if (terminology != null) {
+      ref.setAbbreviation(terminology.getAbbreviation());
+      ref.setPublisher(terminology.getPublisher());
+      ref.setVersion(terminology.getVersion());
+      return ref;
+    }
+    String abbreviation = abbreviationFallback;
+    if (!StringUtility.isEmpty(abbreviationFallback) && abbreviationFallback.contains("-")) {
+      abbreviation = abbreviationFallback.split("-")[0];
+    }
+    ref.setAbbreviation(abbreviation);
+    ref.setPublisher(publisher);
+    ref.setVersion(version);
+    return ref;
+  }
+
+  /**
+   * Find terminology for system URI, preferring publisher and version when present.
+   *
+   * @param service the service
+   * @param systemUri the system uri
+   * @param publisher the publisher
+   * @param version the version
+   * @return the terminology
+   */
+  private static Terminology findTerminologyForSystem(final EntityRepositoryService service,
     final String systemUri, final String publisher, final String version) {
+    if (StringUtility.isEmpty(systemUri)) {
+      return null;
+    }
     try {
-      // First try with URI, publisher, and version for exact match
-      final String query =
-          StringUtility.composeQuery("AND", StringUtility.escapeKeywordField("uri", systemUri),
-              StringUtility.escapeKeywordField("publisher", publisher),
-              StringUtility.escapeKeywordField("version", version));
-
-      final SearchParameters params = new SearchParameters(query, null, 10, null, null);
-      final ResultList<Terminology> results = searchService.find(params, Terminology.class);
-
-      if (results.getTotal() == 1) {
-        return results.getItems().get(0).getAbbreviation();
+      if (!StringUtility.isEmpty(version)) {
+        final Terminology exact = findTerminologies(service,
+            StringUtility.composeQuery("AND", StringUtility.escapeKeywordField("uri", systemUri),
+                StringUtility.escapeKeywordField("publisher", publisher),
+                StringUtility.escapeKeywordField("version", version)));
+        if (exact != null) {
+          return exact;
+        }
       }
-
-      // If exact match fails, try just URI (might return multiple)
-      return FhirUtility.lookupTerminology(searchService, systemUri);
-
+      Terminology byPublisher = findTerminologies(service, StringUtility.composeQuery("AND",
+          StringUtility.escapeKeywordField("uri", systemUri),
+          StringUtility.escapeKeywordField("publisher", publisher)));
+      if (byPublisher != null) {
+        return byPublisher;
+      }
+      return findTerminologies(service, StringUtility.escapeKeywordField("uri", systemUri));
     } catch (final Exception e) {
       LOGGER.warn("Failed to lookup terminology for URI {}: {}", systemUri, e.getMessage());
       return null;
     }
+  }
+
+  /**
+   * Find terminologies and pick latest when several match.
+   *
+   * @param service the service
+   * @param query the query
+   * @return the terminology
+   * @throws Exception the exception
+   */
+  private static Terminology findTerminologies(final EntityRepositoryService service,
+    final String query) throws Exception {
+    if (StringUtility.isEmpty(query)) {
+      return null;
+    }
+    final SearchParameters params = new SearchParameters(query, null, 100, null, null);
+    final ResultList<Terminology> results = service.find(params, Terminology.class);
+    if (results == null || results.getItems() == null || results.getItems().isEmpty()) {
+      return null;
+    }
+    if (results.getItems().size() == 1) {
+      return results.getItems().get(0);
+    }
+    return TerminologyUtility.getLatestTerminology(results.getItems());
+  }
+
+  /**
+   * Store FHIR publication status.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetStatusR4(final Subset subset,
+    final org.hl7.fhir.r4.model.ValueSet valueSet) {
+    if (valueSet.hasStatus() && valueSet.getStatus() != null) {
+      subset.getAttributes().put(Subset.Attributes.fhirStatus.name(),
+          valueSet.getStatus().toCode());
+      subset.setActive(
+          org.hl7.fhir.r4.model.Enumerations.PublicationStatus.ACTIVE == valueSet.getStatus());
+    }
+  }
+
+  /**
+   * Store FHIR publication status.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetStatusR5(final Subset subset,
+    final org.hl7.fhir.r5.model.ValueSet valueSet) {
+    if (valueSet.hasStatus() && valueSet.getStatus() != null) {
+      subset.getAttributes().put(Subset.Attributes.fhirStatus.name(),
+          valueSet.getStatus().toCode());
+      subset.setActive(
+          org.hl7.fhir.r5.model.Enumerations.PublicationStatus.ACTIVE == valueSet.getStatus());
+    }
+  }
+
+  /**
+   * Store FHIR useContext JSON.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetUseContextR4(final Subset subset,
+    final org.hl7.fhir.r4.model.ValueSet valueSet) {
+    final String json = extractResourceFieldR4(valueSet, "useContext");
+    if (json != null) {
+      subset.getAttributes().put(Subset.Attributes.fhirUseContext.name(), json);
+    }
+  }
+
+  /**
+   * Store FHIR useContext JSON.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetUseContextR5(final Subset subset,
+    final org.hl7.fhir.r5.model.ValueSet valueSet) {
+    final String json = extractResourceFieldR5(valueSet, "useContext");
+    if (json != null) {
+      subset.getAttributes().put(Subset.Attributes.fhirUseContext.name(), json);
+    }
+  }
+
+  /**
+   * Store original FHIR compose JSON.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetComposeR4(final Subset subset,
+    final org.hl7.fhir.r4.model.ValueSet valueSet) {
+    final String json = extractResourceFieldR4(valueSet, "compose");
+    if (json != null) {
+      subset.getAttributes().put(Subset.Attributes.fhirCompose.name(), json);
+    }
+  }
+
+  /**
+   * Store original FHIR compose JSON.
+   *
+   * @param subset the subset
+   * @param valueSet the value set
+   */
+  private static void storeValueSetComposeR5(final Subset subset,
+    final org.hl7.fhir.r5.model.ValueSet valueSet) {
+    final String json = extractResourceFieldR5(valueSet, "compose");
+    if (json != null) {
+      subset.getAttributes().put(Subset.Attributes.fhirCompose.name(), json);
+    }
+  }
+
+  /**
+   * Extract a top-level JSON field from an encoded R4 ValueSet.
+   *
+   * @param valueSet the value set
+   * @param field the field
+   * @return the string
+   */
+  private static String extractResourceFieldR4(final org.hl7.fhir.r4.model.ValueSet valueSet,
+    final String field) {
+    try {
+      final String encoded = FHIR_CONTEXT_R4.newJsonParser().encodeResourceToString(valueSet);
+      final JsonNode node = ThreadLocalMapper.get().readTree(encoded).get(field);
+      return node == null || node.isNull() ? null : node.toString();
+    } catch (final Exception e) {
+      LOGGER.warn("Failed to store ValueSet.{}", field, e);
+      return null;
+    }
+  }
+
+  /**
+   * Extract a top-level JSON field from an encoded R5 ValueSet.
+   *
+   * @param valueSet the value set
+   * @param field the field
+   * @return the string
+   */
+  private static String extractResourceFieldR5(final org.hl7.fhir.r5.model.ValueSet valueSet,
+    final String field) {
+    try {
+      final String encoded = FHIR_CONTEXT_R5.newJsonParser().encodeResourceToString(valueSet);
+      final JsonNode node = ThreadLocalMapper.get().readTree(encoded).get(field);
+      return node == null || node.isNull() ? null : node.toString();
+    } catch (final Exception e) {
+      LOGGER.warn("Failed to store ValueSet.{}", field, e);
+      return null;
+    }
+  }
+
+  /**
+   * Apply stored FHIR metadata (status, useContext, compose) onto an R4 ValueSet.
+   *
+   * @param valueSet the value set
+   * @param subset the subset
+   */
+  public static void applyStoredMetadataR4(final org.hl7.fhir.r4.model.ValueSet valueSet,
+    final Subset subset) {
+    if (valueSet == null || subset == null || subset.getAttributes() == null) {
+      return;
+    }
+    final Map<String, String> attrs = subset.getAttributes();
+    final String status = attrs.get(Subset.Attributes.fhirStatus.name());
+    if (!StringUtility.isEmpty(status)) {
+      try {
+        valueSet.setStatus(org.hl7.fhir.r4.model.Enumerations.PublicationStatus.fromCode(status));
+      } catch (final Exception e) {
+        LOGGER.warn("Failed to restore ValueSet.status={}", status, e);
+      }
+    }
+    applyStoredFieldR4(valueSet, attrs.get(Subset.Attributes.fhirUseContext.name()), "useContext");
+    applyStoredFieldR4(valueSet, attrs.get(Subset.Attributes.fhirCompose.name()), "compose");
+  }
+
+  /**
+   * Apply stored FHIR metadata (status, useContext, compose) onto an R5 ValueSet.
+   *
+   * @param valueSet the value set
+   * @param subset the subset
+   */
+  public static void applyStoredMetadataR5(final org.hl7.fhir.r5.model.ValueSet valueSet,
+    final Subset subset) {
+    if (valueSet == null || subset == null || subset.getAttributes() == null) {
+      return;
+    }
+    final Map<String, String> attrs = subset.getAttributes();
+    final String status = attrs.get(Subset.Attributes.fhirStatus.name());
+    if (!StringUtility.isEmpty(status)) {
+      try {
+        valueSet.setStatus(org.hl7.fhir.r5.model.Enumerations.PublicationStatus.fromCode(status));
+      } catch (final Exception e) {
+        LOGGER.warn("Failed to restore ValueSet.status={}", status, e);
+      }
+    }
+    applyStoredFieldR5(valueSet, attrs.get(Subset.Attributes.fhirUseContext.name()), "useContext");
+    applyStoredFieldR5(valueSet, attrs.get(Subset.Attributes.fhirCompose.name()), "compose");
+  }
+
+  /**
+   * Apply stored field R4.
+   *
+   * @param valueSet the value set
+   * @param json the json
+   * @param field the field
+   */
+  private static void applyStoredFieldR4(final org.hl7.fhir.r4.model.ValueSet valueSet,
+    final String json, final String field) {
+    if (StringUtility.isEmpty(json)) {
+      return;
+    }
+    try {
+      final org.hl7.fhir.r4.model.ValueSet wrapper = FHIR_CONTEXT_R4.newJsonParser()
+          .parseResource(org.hl7.fhir.r4.model.ValueSet.class,
+              "{\"resourceType\":\"ValueSet\",\"" + field + "\":" + json + "}");
+      if ("compose".equals(field) && wrapper.hasCompose()) {
+        valueSet.setCompose(wrapper.getCompose());
+      } else if ("useContext".equals(field) && wrapper.hasUseContext()) {
+        valueSet.setUseContext(wrapper.getUseContext());
+      }
+    } catch (final Exception e) {
+      LOGGER.warn("Failed to restore ValueSet.{}", field, e);
+    }
+  }
+
+  /**
+   * Apply stored field R5.
+   *
+   * @param valueSet the value set
+   * @param json the json
+   * @param field the field
+   */
+  private static void applyStoredFieldR5(final org.hl7.fhir.r5.model.ValueSet valueSet,
+    final String json, final String field) {
+    if (StringUtility.isEmpty(json)) {
+      return;
+    }
+    try {
+      final org.hl7.fhir.r5.model.ValueSet wrapper = FHIR_CONTEXT_R5.newJsonParser()
+          .parseResource(org.hl7.fhir.r5.model.ValueSet.class,
+              "{\"resourceType\":\"ValueSet\",\"" + field + "\":" + json + "}");
+      if ("compose".equals(field) && wrapper.hasCompose()) {
+        valueSet.setCompose(wrapper.getCompose());
+      } else if ("useContext".equals(field) && wrapper.hasUseContext()) {
+        valueSet.setUseContext(wrapper.getUseContext());
+      }
+    } catch (final Exception e) {
+      LOGGER.warn("Failed to restore ValueSet.{}", field, e);
+    }
+  }
+
+  /**
+   * Add a subset member and optional concept back-reference.
+   *
+   * @param service the service
+   * @param pending the pending
+   * @param members the members
+   * @param subsetRef the subset ref
+   * @param ref the terminology ref
+   * @param existingConcept the existing concept
+   * @param code the code
+   * @throws Exception the exception
+   */
+  private static void addSubsetMember(final EntityRepositoryService service,
+    final Map<String, Concept> pending, final List<SubsetMember> members,
+    final SubsetRef subsetRef, final TerminologyRef ref, final Concept existingConcept,
+    final String code) throws Exception {
+    final SubsetMember m = new SubsetMember();
+    m.setId(UUID.randomUUID().toString());
+    m.setActive(true);
+    m.setTerminology(ref.getAbbreviation());
+    m.setPublisher(ref.getPublisher());
+    m.setVersion(ref.getVersion());
+    m.setCode(code);
+    m.setName(existingConcept == null ? "Unable to determine name" : existingConcept.getName());
+    m.setSubset(subsetRef);
+    members.add(m);
+    if (existingConcept != null) {
+      accumulateConceptSubsetMaybeFlush(service, pending, existingConcept, subsetRef);
+    }
+  }
+
+  /**
+   * Find concepts matching R4 compose filters (= and regex).
+   *
+   * @param service the service
+   * @param ref the ref
+   * @param filters the filters
+   * @return the list
+   * @throws Exception the exception
+   */
+  private static List<Concept> findConceptsMatchingFiltersR4(final EntityRepositoryService service,
+    final TerminologyRef ref,
+    final List<org.hl7.fhir.r4.model.ValueSet.ConceptSetFilterComponent> filters)
+    throws Exception {
+    String query = TerminologyUtility.getTerminologyQuery(ref.getAbbreviation(),
+        ref.getPublisher(), ref.getVersion());
+    boolean hasRegex = false;
+    for (final org.hl7.fhir.r4.model.ValueSet.ConceptSetFilterComponent filter : filters) {
+      final String op = filter.getOp() == null ? null : filter.getOp().toCode();
+      if ("=".equals(op)) {
+        query = StringUtility.composeQuery("AND", query,
+            StringUtility.escapeKeywordField("attributes." + filter.getProperty(),
+                filter.getValue()));
+      } else if ("regex".equals(op)) {
+        hasRegex = true;
+        query = StringUtility.composeQuery("AND", query,
+            "attributes." + filter.getProperty() + ":*");
+      } else {
+        throw FhirUtilityR4.exception("Unsupported ValueSet compose.filter.op: " + op,
+            IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
+      }
+    }
+    final List<Concept> concepts = service.findAll(query, null, Concept.class);
+    if (!hasRegex) {
+      return concepts;
+    }
+    final List<Concept> matched = new ArrayList<>();
+    for (final Concept concept : concepts) {
+      if (matchesFiltersR4(concept, filters)) {
+        matched.add(concept);
+      }
+    }
+    return matched;
+  }
+
+  /**
+   * Find concepts matching R5 compose filters (= and regex).
+   *
+   * @param service the service
+   * @param ref the ref
+   * @param filters the filters
+   * @return the list
+   * @throws Exception the exception
+   */
+  private static List<Concept> findConceptsMatchingFiltersR5(final EntityRepositoryService service,
+    final TerminologyRef ref,
+    final List<org.hl7.fhir.r5.model.ValueSet.ConceptSetFilterComponent> filters)
+    throws Exception {
+    String query = TerminologyUtility.getTerminologyQuery(ref.getAbbreviation(),
+        ref.getPublisher(), ref.getVersion());
+    boolean hasRegex = false;
+    for (final org.hl7.fhir.r5.model.ValueSet.ConceptSetFilterComponent filter : filters) {
+      final String op = filter.getOp() == null ? null : filter.getOp().toCode();
+      if ("=".equals(op)) {
+        query = StringUtility.composeQuery("AND", query,
+            StringUtility.escapeKeywordField("attributes." + filter.getProperty(),
+                filter.getValue()));
+      } else if ("regex".equals(op)) {
+        hasRegex = true;
+        query = StringUtility.composeQuery("AND", query,
+            "attributes." + filter.getProperty() + ":*");
+      } else {
+        throw FhirUtilityR4.exception("Unsupported ValueSet compose.filter.op: " + op,
+            IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
+      }
+    }
+    final List<Concept> concepts = service.findAll(query, null, Concept.class);
+    if (!hasRegex) {
+      return concepts;
+    }
+    final List<Concept> matched = new ArrayList<>();
+    for (final Concept concept : concepts) {
+      if (matchesFiltersR5(concept, filters)) {
+        matched.add(concept);
+      }
+    }
+    return matched;
+  }
+
+  /**
+   * Matches filters R4.
+   *
+   * @param concept the concept
+   * @param filters the filters
+   * @return true, if successful
+   */
+  private static boolean matchesFiltersR4(final Concept concept,
+    final List<org.hl7.fhir.r4.model.ValueSet.ConceptSetFilterComponent> filters) {
+    for (final org.hl7.fhir.r4.model.ValueSet.ConceptSetFilterComponent filter : filters) {
+      if (!matchesFilter(concept, filter.getProperty(),
+          filter.getOp() == null ? null : filter.getOp().toCode(), filter.getValue())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Matches filters R5.
+   *
+   * @param concept the concept
+   * @param filters the filters
+   * @return true, if successful
+   */
+  private static boolean matchesFiltersR5(final Concept concept,
+    final List<org.hl7.fhir.r5.model.ValueSet.ConceptSetFilterComponent> filters) {
+    for (final org.hl7.fhir.r5.model.ValueSet.ConceptSetFilterComponent filter : filters) {
+      if (!matchesFilter(concept, filter.getProperty(),
+          filter.getOp() == null ? null : filter.getOp().toCode(), filter.getValue())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Matches a single compose filter against concept attributes.
+   *
+   * @param concept the concept
+   * @param property the property
+   * @param op the op
+   * @param value the value
+   * @return true, if successful
+   */
+  private static boolean matchesFilter(final Concept concept, final String property,
+    final String op, final String value) {
+    if (concept == null || concept.getAttributes() == null || StringUtility.isEmpty(property)) {
+      return false;
+    }
+    final String attr = concept.getAttributes().get(property);
+    if (attr == null) {
+      return false;
+    }
+    if ("=".equals(op)) {
+      return attr.equals(value);
+    }
+    if ("regex".equals(op)) {
+      try {
+        return Pattern.compile(value).matcher(attr).matches();
+      } catch (final PatternSyntaxException e) {
+        throw FhirUtilityR4.exception("Invalid ValueSet compose.filter regex: " + value,
+            IssueType.INVALID, HttpServletResponse.SC_BAD_REQUEST);
+      }
+    }
+    throw FhirUtilityR4.exception("Unsupported ValueSet compose.filter.op: " + op,
+        IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
   }
 
   /**

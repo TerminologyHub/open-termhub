@@ -50,7 +50,19 @@ public class Subset extends SubsetRef implements TerminologyComponent, HasAttrib
     fhirExperimental("experimental"),
 
     /** The identifier - e.g. "900000000000012004". */
-    fhirIdentifier("identifier");
+    fhirIdentifier("identifier"),
+
+    /** FHIR contact details JSON. */
+    fhirContact("contact"),
+
+    /** FHIR useContext JSON. */
+    fhirUseContext("useContext"),
+
+    /** FHIR publication status - e.g. "active" or "draft". */
+    fhirStatus("status"),
+
+    /** Original FHIR compose JSON. */
+    fhirCompose("compose");
 
     /** The name. */
     @SuppressWarnings("unused")
