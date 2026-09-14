@@ -1,0 +1,42 @@
+{
+  "resourceType": "ValueSet",
+  "id": "deprecated-loinc-terms",
+  "url": "http://loinc.org/vs/deprecated-loinc-terms",
+  "name": "Deprecated LOINC terms",
+  "title": "Deprecated LOINC terms",
+  "status": "active",
+  "experimental": true,
+  "publisher": "Regenstrief Institute, Inc.",
+  "description": "LOINC terms with STATUS=DEPRECATED.",
+  "contact": [
+    {
+      "name": "Regenstrief Institute, Inc.",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://loinc.org"
+        }
+      ]
+    }
+  ],
+  "identifier": [
+    {
+      "system": "http://loinc.org",
+      "value": "deprecated-loinc-terms"
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "http://loinc.org",
+        "filter": [
+          {
+            "property": "STATUS",
+            "op": "=",
+            "value": "DEPRECATED"
+          }
+        ]
+      }
+    ]
+  }
+}
