@@ -60,7 +60,7 @@ public final class FhirUtility {
   /** The logger. */
   private static Logger logger = LoggerFactory.getLogger(FhirUtility.class);
 
-  /** Cache TTL: 5 minutes. */
+  /** Cache TTL: 5 minutes (indefinite when {@code read.only=true}). */
   private static final int CACHE_TTL_MS = 300_000;
 
   /** Default cache size. */
