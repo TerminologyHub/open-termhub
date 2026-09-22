@@ -14,9 +14,8 @@ import com.wci.termhub.util.PropertyUtility;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * Builds public FHIR request URLs for Bundle {@code fullUrl} and paging links
- * when the server is behind a reverse proxy (e.g.
- * {@code https://fhir.example.org}).
+ * Rewrites Bundle {@code fullUrl} and paging links to the public origin from
+ * {@code proxy.url.base} ({@code PROXY_URL}) when set.
  */
 public final class FhirPublicRequestUrl {
 
@@ -31,16 +30,17 @@ public final class FhirPublicRequestUrl {
   }
 
   /**
-   * Returns the configured public FHIR server base, or null if unset.
+   * Returns the configured public FHIR origin (scheme + host[:port]), or null
+   * if unset. Path components in {@code PROXY_URL} are ignored.
    *
-   * @return the base without a trailing slash, or null
+   * @return the origin without a trailing slash, or null
    */
   public static String configuredServerBase() {
     final String value = PropertyUtility.getProperty(PROXY_URL_PROPERTY);
     if (value == null || value.isBlank()) {
       return null;
     }
-    return stripTrailingSlash(value.trim());
+    return toOrigin(value.trim());
   }
 
   /**
@@ -68,10 +68,10 @@ public final class FhirPublicRequestUrl {
   }
 
   /**
-   * Rewrites {@code url} to the public FHIR base when configured or when
-   * forwarded headers are present.
+   * Rewrites {@code url} to the configured public origin when {@code PROXY_URL}
+   * is set; otherwise returns {@code url} unchanged.
    *
-   * @param request the request
+   * @param request the request (used for scheme when PROXY_URL is host-only)
    * @param url the internal request URL (may include query)
    * @return the public URL
    */
@@ -79,7 +79,7 @@ public final class FhirPublicRequestUrl {
     if (url == null || url.isEmpty()) {
       return url;
     }
-    final String publicOrigin = publicOrigin(request);
+    final String publicOrigin = configuredOrigin(request);
     if (publicOrigin != null) {
       return replaceOrigin(url, publicOrigin);
     }
@@ -87,43 +87,8 @@ public final class FhirPublicRequestUrl {
   }
 
   /**
-   * Returns the HAPI server base. Honors {@code X-Forwarded-*} so Swagger/OpenAPI
-   * stay on the host that served the page. Does not use {@code proxy.url.base}
-   * (that applies only to Bundle {@code fullUrl} and paging links).
-   *
-   * @param request the request
-   * @param fallback internal server base from the incoming request
-   * @return the public server base
-   */
-  public static String publicServerBase(final HttpServletRequest request, final String fallback) {
-    if (fallback == null || fallback.isEmpty()) {
-      return fallback;
-    }
-    final String forwardedOrigin = forwardedOrigin(request);
-    if (forwardedOrigin != null) {
-      return replaceOrigin(fallback, forwardedOrigin);
-    }
-    return fallback;
-  }
-
-  /**
-   * {@code X-Forwarded-*} origin when the request is proxied, else
-   * {@code proxy.url.base}. Origin always includes a scheme.
-   *
-   * @param request the request
-   * @return {@code scheme://host[:port]} or null
-   */
-  private static String publicOrigin(final HttpServletRequest request) {
-    final String forwardedOrigin = forwardedOrigin(request);
-    if (forwardedOrigin != null) {
-      return forwardedOrigin;
-    }
-    return configuredOrigin(request);
-  }
-
-  /**
    * {@code proxy.url.base} as {@code scheme://host[:port]}. A host-only value
-   * gets the request scheme.
+   * gets the request scheme. Path after the host is dropped.
    *
    * @param request the request
    * @return the origin or null
@@ -140,25 +105,24 @@ public final class FhirPublicRequestUrl {
   }
 
   /**
-   * Origin from {@code X-Forwarded-Proto} and {@code X-Forwarded-Host}, or
-   * null.
+   * Keeps only {@code scheme://host[:port]} (or host[:port] if no scheme).
    *
-   * @param request the request
-   * @return {@code scheme://host[:port]} or null
+   * @param value the configured PROXY_URL
+   * @return origin without trailing slash
    */
-  private static String forwardedOrigin(final HttpServletRequest request) {
-    final String host = firstForwarded(request, "X-Forwarded-Host");
-    if (host == null) {
-      return null;
+  private static String toOrigin(final String value) {
+    final String schemeSep = "://";
+    final int schemeIdx = value.indexOf(schemeSep);
+    if (schemeIdx < 0) {
+      final int slash = value.indexOf('/');
+      final String host = slash < 0 ? value : value.substring(0, slash);
+      return stripTrailingSlash(host);
     }
-    final String protoHeader = firstForwarded(request, "X-Forwarded-Proto");
-    final String scheme = protoHeader != null ? protoHeader : request.getScheme();
-    String hostPart = host;
-    final String port = firstForwarded(request, "X-Forwarded-Port");
-    if (port != null && hostPart.indexOf(':') < 0 && !isDefaultPort(scheme, port)) {
-      hostPart = hostPart + ":" + port;
+    final int pathStart = value.indexOf('/', schemeIdx + schemeSep.length());
+    if (pathStart < 0) {
+      return stripTrailingSlash(value);
     }
-    return scheme + "://" + hostPart;
+    return value.substring(0, pathStart);
   }
 
   /**
@@ -179,35 +143,6 @@ public final class FhirPublicRequestUrl {
       return origin;
     }
     return origin + url.substring(pathStart);
-  }
-
-  /**
-   * First value of a possibly comma-separated forwarded header.
-   *
-   * @param request the request
-   * @param name the header name
-   * @return the value or null
-   */
-  private static String firstForwarded(final HttpServletRequest request, final String name) {
-    final String raw = request.getHeader(name);
-    if (raw == null || raw.isBlank()) {
-      return null;
-    }
-    final int comma = raw.indexOf(',');
-    final String value = (comma < 0 ? raw : raw.substring(0, comma)).trim();
-    return value.isEmpty() ? null : value;
-  }
-
-  /**
-   * Whether {@code port} is the default for {@code scheme}.
-   *
-   * @param scheme the scheme
-   * @param port the port
-   * @return true if default
-   */
-  private static boolean isDefaultPort(final String scheme, final String port) {
-    return ("https".equalsIgnoreCase(scheme) && "443".equals(port))
-        || ("http".equalsIgnoreCase(scheme) && "80".equals(port));
   }
 
   /**

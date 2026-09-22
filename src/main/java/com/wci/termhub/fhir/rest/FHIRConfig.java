@@ -128,11 +128,13 @@ public class FHIRConfig {
     if (description == null) {
       return null;
     }
+    final String r4Token = "\0R4_SWAGGER\0";
+    final String r5Token = "\0R5_SWAGGER\0";
     return description
-        .replace("/fhir/r4/swagger-ui/index.html",
-            joinPath(normalizeContextPath(r4), "/swagger-ui/index.html"))
-        .replace("/fhir/r5/swagger-ui/index.html",
-            joinPath(normalizeContextPath(r5), "/swagger-ui/index.html"));
+        .replace("/fhir/r4/swagger-ui/index.html", r4Token)
+        .replace("/fhir/r5/swagger-ui/index.html", r5Token)
+        .replace(r4Token, joinPath(normalizeContextPath(r4), "/swagger-ui/index.html"))
+        .replace(r5Token, joinPath(normalizeContextPath(r5), "/swagger-ui/index.html"));
   }
 
   /**

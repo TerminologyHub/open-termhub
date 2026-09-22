@@ -57,14 +57,18 @@ public class FhirPublicRequestUrlUnitTest {
   }
 
   /**
-   * X-Forwarded-Host rewrites origin and keeps /fhir/r4.
+   * X-Forwarded-* headers are ignored; only PROXY_URL rewrites the origin.
    */
   @Test
-  public void testForwardedHostRewritesOrigin() {
+  public void testForwardedHeadersIgnored() {
     final MockHttpServletRequest request = searchRequest();
-    request.addHeader("X-Forwarded-Host", "fhir.example.org");
+    request.addHeader("X-Forwarded-Host", "evil.example");
     request.addHeader("X-Forwarded-Proto", "https");
 
+    assertEquals("http://localhost:8080/fhir/r4/ValueSet?_count=1",
+        FhirPublicRequestUrl.forRequest(request));
+
+    PropertyUtility.setProperty(FhirPublicRequestUrl.PROXY_URL_PROPERTY, PUBLIC_ORIGIN);
     assertEquals(PUBLIC_ORIGIN + "/fhir/r4/ValueSet?_count=1",
         FhirPublicRequestUrl.forRequest(request));
   }
@@ -114,33 +118,15 @@ public class FhirPublicRequestUrlUnitTest {
   }
 
   /**
-   * X-Forwarded-Host wins over proxy.url.base and keeps a non-default port.
+   * Path in PROXY_URL is dropped; only scheme + host[:port] is used.
    */
   @Test
-  public void testForwardedHostWinsOverConfiguredBase() {
-    PropertyUtility.setProperty(FhirPublicRequestUrl.PROXY_URL_PROPERTY, PUBLIC_ORIGIN);
+  public void testConfiguredBaseDropsPath() {
+    PropertyUtility.setProperty(FhirPublicRequestUrl.PROXY_URL_PROPERTY,
+        "https://fhir.example.org/termhub");
     final MockHttpServletRequest request = searchRequest();
-    request.addHeader("X-Forwarded-Host", "fhir.example.org:8100");
-    request.addHeader("X-Forwarded-Proto", "http");
-    assertEquals("http://fhir.example.org:8100/fhir/r4/ValueSet?_count=1",
+    assertEquals(PUBLIC_ORIGIN + "/fhir/r4/ValueSet?_count=1",
         FhirPublicRequestUrl.forRequest(request));
-  }
-
-  /**
-   * HAPI/Swagger server base ignores proxy.url.base and uses X-Forwarded-Host.
-   */
-  @Test
-  public void testPublicServerBaseIgnoresConfiguredUsesForwardedHost() {
-    PropertyUtility.setProperty(FhirPublicRequestUrl.PROXY_URL_PROPERTY, PUBLIC_ORIGIN);
-    final MockHttpServletRequest request = searchRequest();
-    final String fallback = "http://localhost:8080/fhir/r4";
-
-    assertEquals(fallback, FhirPublicRequestUrl.publicServerBase(request, fallback));
-
-    request.addHeader("X-Forwarded-Host", "fhir.example.org");
-    request.addHeader("X-Forwarded-Proto", "https");
-    assertEquals(PUBLIC_ORIGIN + "/fhir/r4",
-        FhirPublicRequestUrl.publicServerBase(request, fallback));
   }
 
   /**

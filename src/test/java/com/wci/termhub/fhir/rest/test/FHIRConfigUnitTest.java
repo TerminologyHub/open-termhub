@@ -99,6 +99,20 @@ public class FHIRConfigUnitTest {
   }
 
   /**
+   * Swapped R4/R5 paths do not double-rewrite each other.
+   */
+  @Test
+  public void testRewriteSwaggerLinksSwappedPaths() {
+    final String description =
+        "<p>Also see <a href=\"/fhir/r4/swagger-ui/index.html\">FHIR R4 API</a></p>"
+            + "<p>Also see <a href=\"/fhir/r5/swagger-ui/index.html\">FHIR R5 API</a></p>";
+    final String rewritten =
+        FHIRConfig.rewriteSwaggerLinks(description, "/fhir/r5", "/fhir/r4");
+    assertEquals("<p>Also see <a href=\"/fhir/r5/swagger-ui/index.html\">FHIR R4 API</a></p>"
+        + "<p>Also see <a href=\"/fhir/r4/swagger-ui/index.html\">FHIR R5 API</a></p>", rewritten);
+  }
+
+  /**
    * Root context path maps to {@code /*} and does not produce a double slash.
    */
   @Test

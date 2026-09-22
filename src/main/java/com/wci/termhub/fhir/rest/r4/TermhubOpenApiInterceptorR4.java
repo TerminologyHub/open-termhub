@@ -418,8 +418,8 @@ public class TermhubOpenApiInterceptorR4 {
   }
 
   /**
-   * FHIR server base for this request (forwarded host/scheme/port). Used by Swagger so api-docs
-   * matches the browser origin.
+   * FHIR server base for this request from the HAPI address strategy (incoming
+   * request). Used by Swagger so api-docs matches the browser origin.
    *
    * @param theRequestDetails the request details
    * @return the server base with no trailing slash

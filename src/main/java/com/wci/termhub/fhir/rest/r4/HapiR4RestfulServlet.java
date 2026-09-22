@@ -21,7 +21,6 @@ import com.wci.termhub.fhir.r4.FHIRTerminologyCapabilitiesR4;
 import com.wci.termhub.fhir.r4.QuestionnaireProviderR4;
 import com.wci.termhub.fhir.r4.SystemTransactionProviderR4;
 import com.wci.termhub.fhir.r4.ValueSetProviderR4;
-import com.wci.termhub.fhir.rest.FhirServerAddressStrategy;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;
@@ -55,7 +54,7 @@ public class HapiR4RestfulServlet extends RestfulServer {
     fhirContext.setParserErrorHandler(new LenientErrorHandler());
     setFhirContext(fhirContext);
 
-    setServerAddressStrategy(new FhirServerAddressStrategy());
+    setServerAddressStrategy(new ca.uhn.fhir.rest.server.IncomingRequestAddressStrategy());
 
     /*
      * The servlet defines any number of resource providers, and configures itself to use them by

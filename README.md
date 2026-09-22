@@ -24,7 +24,7 @@ Common environment variables (full list in [DEPLOY.md](doc/DEPLOY.md) and [DOCKE
 * `READ_ONLY=true` — rejects HTTP APIs that add, alter, or remove content (403) and disables startup/cron syndication. Read APIs (including FHIR `$` operations and `POST /concept/bulk`) remain available at runtime. Swagger/OpenAPI hides DELETE, PUT, PATCH, and POST operations.
 * `ENABLE_POST_LOAD_COMPUTATIONS` — enable tree-position computations used by the hierarchy browser (default: false).
 * `PROJECT_API_KEY` / `ADMIN_KEY` — required for TermHub syndication and protected local admin endpoints.
-* `PROXY_URL` — optional public origin for Bundle `fullUrl` and next/previous/self when the request has no `X-Forwarded-Host`. Must include a scheme (e.g. `https://fhir.example.org`). `X-Forwarded-Host` / `X-Forwarded-Proto` win when present (including port). Swagger follows those headers or the browser host, not this variable.
+* `PROXY_URL` — optional public origin for Bundle `fullUrl` and next/previous/self (e.g. `https://fhir.example.org`). Scheme + host[:port] only; path is ignored. Empty = use the incoming request URL. Swagger uses the browser/request host, not this variable.
 * `FHIR_R4_CONTEXT_PATH` / `FHIR_R5_CONTEXT_PATH` — servlet paths for the R4 and R5 FHIR endpoints (defaults `/fhir/r4` and `/fhir/r5`). They must differ.
 
 
