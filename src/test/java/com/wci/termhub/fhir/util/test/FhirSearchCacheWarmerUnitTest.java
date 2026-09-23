@@ -69,6 +69,7 @@ public class FhirSearchCacheWarmerUnitTest {
   /**
    * Sets up mocks.
    */
+  @SuppressWarnings("resource")
   @BeforeEach
   public void setUp() {
     MockitoAnnotations.openMocks(this);
