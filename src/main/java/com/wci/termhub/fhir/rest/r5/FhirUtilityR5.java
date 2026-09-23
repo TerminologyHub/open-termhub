@@ -292,6 +292,21 @@ public final class FhirUtilityR5 {
   }
 
   /**
+   * Require a non-blank code value, from either the {@code code} or
+   * {@code coding} parameter.
+   *
+   * @param code the code
+   * @param coding the coding
+   */
+  public static void requireCode(final CodeType code, final Coding coding) {
+    final String value = code != null ? code.getValue() : (coding != null ? coding.getCode() : null);
+    if (value == null || value.isBlank()) {
+      throw exception("Missing required parameter 'code' (or 'coding.code').",
+          OperationOutcome.IssueType.REQUIRED, HttpServletResponse.SC_BAD_REQUEST);
+    }
+  }
+
+  /**
    * Not supported.
    *
    * @param paramName the param name

@@ -1582,6 +1582,37 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   }
 
   /**
+   * Test CodeSystem $lookup with blank code query parameter returns 400 instead of 500.
+   * See OP-2835: an empty {@code code} param was falling through to an unhandled Lucene
+   * parse exception and surfacing as a 500 instead of a 400.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testCodeSystemLookupBlankCodeReturnsBadRequest() throws Exception {
+    final String endpoint =
+        LOCALHOST + port + "/fhir/r5/CodeSystem/$lookup?system=http://loinc.org&code=";
+    LOGGER.info("Testing endpoint: {}", endpoint);
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.set("Accept", "application/fhir+json");
+    final HttpEntity<String> requestEntity = new HttpEntity<>("", headers);
+
+    final ResponseEntity<String> response =
+        this.restTemplate.exchange(endpoint, HttpMethod.GET, requestEntity, String.class);
+    LOGGER.info("Response status: {}", response.getStatusCode());
+    LOGGER.info("Response body: {}", response.getBody());
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(),
+        "Blank code parameter should return 400, not 500");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+    assertTrue(response.getBody().contains("issue"), "Response should contain issue");
+  }
+
+  /**
    * Test CodeSystem $lookup with invalid code returns 404.
    *
    * @throws Exception the exception

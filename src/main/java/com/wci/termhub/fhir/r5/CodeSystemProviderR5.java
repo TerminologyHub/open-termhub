@@ -337,6 +337,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
 
     try {
       FhirUtilityR5.mutuallyExclusive("code", code, "coding", coding);
+      FhirUtilityR5.requireCode(code, coding);
 
       final Terminology terminology = FhirUtilityR5.getTerminology(searchService, null, code,
           "system", system, version, coding);
@@ -398,6 +399,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
     try {
 
       FhirUtilityR5.mutuallyExclusive("code", code, "coding", coding);
+      FhirUtilityR5.requireCode(code, coding);
 
       final Terminology terminology =
           FhirUtilityR5.getTerminology(searchService, id, null, null, null, null, null);
