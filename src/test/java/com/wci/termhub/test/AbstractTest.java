@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.wci.termhub.util.PropertyUtility;
@@ -25,6 +26,7 @@ import com.wci.termhub.util.PropertyUtility;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("test")
+@TestPropertySource(locations = "classpath:application-test.properties")
 public abstract class AbstractTest {
 
   /** The logger. */

@@ -57,6 +57,8 @@ public class HapiR5RestfulServlet extends RestfulServer {
     fhirContext.setParserErrorHandler(new LenientErrorHandler());
     setFhirContext(fhirContext);
 
+    setServerAddressStrategy(new ca.uhn.fhir.rest.server.IncomingRequestAddressStrategy());
+
     /*
      * The servlet defines any number of resource providers, and configures itself to use them by
      * calling setResourceProviders()

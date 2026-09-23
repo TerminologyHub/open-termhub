@@ -3,7 +3,7 @@ buildscript {
     springBootVersion = "3.5.16"
     log4jVersion = "2.25.4"
     tomcatEmbedVersion = "10.1.59"
-    hapiFhirVersion = "6.9.10"
+    hapiFhirVersion = "6.9.12"
   }
   repositories {
     mavenLocal()
