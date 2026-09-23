@@ -54,9 +54,6 @@ public class HapiR4RestfulServlet extends RestfulServer {
     fhirContext.setParserErrorHandler(new LenientErrorHandler());
     setFhirContext(fhirContext);
 
-    // Set the server's base path to be just "/" since the servlet mapping
-    // handles
-    // "/r4"
     setServerAddressStrategy(new ca.uhn.fhir.rest.server.IncomingRequestAddressStrategy());
 
     /*

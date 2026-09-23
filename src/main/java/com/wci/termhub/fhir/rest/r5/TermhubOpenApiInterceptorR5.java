@@ -77,6 +77,7 @@ import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
+import com.wci.termhub.fhir.rest.FHIRConfig;
 import com.wci.termhub.rest.ReadOnlyOpenApiSupport;
 import com.wci.termhub.util.StringUtility;
 
@@ -279,7 +280,8 @@ public class TermhubOpenApiInterceptorR5 {
             serverBase =
                 addressStrategy.determineServerBase(theRequest.getServletContext(), theRequest);
           }
-          final String redirectUrl = theResponse.encodeRedirectURL(serverBase + "/swagger-ui/");
+          final String redirectUrl =
+              theResponse.encodeRedirectURL(FHIRConfig.joinPath(serverBase, "/swagger-ui/"));
           theResponse.sendRedirect(redirectUrl);
           theResponse.getWriter().close();
           return false;
@@ -414,12 +416,22 @@ public class TermhubOpenApiInterceptorR5 {
     while (url != null && url.endsWith("/")) {
       url = url.substring(0, url.length() - 1);
     }
-    if (url.contains("localhost")) {
-      return url;
-    }
-    // Upgrade plain http to https, but only when it is not already https (otherwise
-    // replaceFirst("http", "https") would turn "https://" into "httpss://").
-    return url.replaceFirst("^http://", "https://");
+    return url;
+  }
+
+  /**
+   * FHIR server base for this request from the HAPI address strategy (incoming
+   * request). Used by Swagger so api-docs matches the browser origin.
+   *
+   * @param theRequestDetails the request details
+   * @return the server base with no trailing slash
+   */
+  private String fhirRequestBaseUrl(final ServletRequestDetails theRequestDetails) {
+    final HttpServletRequest request = theRequestDetails.getServletRequest();
+    final IServerAddressStrategy addressStrategy =
+        theRequestDetails.getServer().getServerAddressStrategy();
+    return removeTrailingSlash(
+        addressStrategy.determineServerBase(request.getServletContext(), request));
   }
 
   /**
@@ -458,11 +470,7 @@ public class TermhubOpenApiInterceptorR5 {
     final HttpServletResponse theResponse) throws IOException {
     final CapabilityStatement cs = getCapabilityStatement(theRequestDetails);
 
-    String baseUrl = removeTrailingSlash(cs.getImplementation().getUrl());
-    if (isBlank(baseUrl)) {
-      // Fall back to the incoming request's server base so we never emit "null/api-docs"
-      baseUrl = removeTrailingSlash(theRequestDetails.getFhirServerBase());
-    }
+    final String baseUrl = fhirRequestBaseUrl(theRequestDetails);
     theResponse.setStatus(HttpServletResponse.SC_OK);
     theResponse.setContentType(Constants.CT_HTML);
 
@@ -479,7 +487,7 @@ public class TermhubOpenApiInterceptorR5 {
     context.setVariable("SERVER_VERSION", cs.getSoftware().getVersion());
     context.setVariable("BASE_URL", baseUrl);
     context.setVariable("BANNER_IMAGE_URL", getBannerImage());
-    context.setVariable("OPENAPI_DOCS", baseUrl + "/api-docs");
+    context.setVariable("OPENAPI_DOCS", "../api-docs");
     context.setVariable("FHIR_VERSION", cs.getFhirVersion().toCode());
     context.setVariable("ADDITIONAL_CSS_TEXT", getCssText());
     context.setVariable("USE_RESOURCE_PAGES", "false");
@@ -612,10 +620,7 @@ public class TermhubOpenApiInterceptorR5 {
 
     final Server server = new Server();
     openApi.addServersItem(server);
-    String baseUrl = removeTrailingSlash(cs.getImplementation().getUrl());
-    if (isBlank(baseUrl)) {
-      baseUrl = removeTrailingSlash(theRequestDetails.getFhirServerBase());
-    }
+    final String baseUrl = fhirRequestBaseUrl(theRequestDetails);
     server.setUrl(baseUrl);
     server.setDescription(cs.getSoftware().getName());
 

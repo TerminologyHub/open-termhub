@@ -29,6 +29,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,6 +44,7 @@ import io.swagger.v3.core.util.Yaml;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
+@TestPropertySource(locations = "classpath:application-test.properties")
 public class SwaggerTest {
 
   /** The port. */
@@ -149,13 +151,13 @@ public class SwaggerTest {
   private JsonNode verifySwaggerAndApiDocs(final String version) throws Exception {
     final String base = "http://localhost:" + port + "/fhir/" + version;
 
-    // Swagger page loads and points at the expected api-docs URL
+    // Swagger page loads and points at api-docs via relative path (works behind proxies)
     final ResponseEntity<String> page =
         restTemplate.getForEntity(base + "/swagger-ui/index.html", String.class);
     assertEquals(HttpStatus.OK, page.getStatusCode(), version + " swagger page status");
     assertNotNull(page.getBody(), version + " swagger page body");
-    assertTrue(page.getBody().contains(base + "/api-docs"),
-        version + " swagger page should reference base url " + base + "/api-docs");
+    assertTrue(page.getBody().contains("../api-docs"),
+        version + " swagger page should reference relative ../api-docs");
 
     // api-docs retrieves and declares the expected server base URL
     final ResponseEntity<String> docs =

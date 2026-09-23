@@ -68,6 +68,7 @@ import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
 import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.FhirDateTimeUtil;
+import com.wci.termhub.fhir.util.FhirPublicRequestUrl;
 import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
 import com.wci.termhub.fhir.util.LoincConstants;
@@ -94,6 +95,7 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ThreadLocalMapper;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.rest.param.NumberParam;
 import jakarta.servlet.http.HttpServletRequest;
@@ -1282,6 +1284,7 @@ public final class FhirUtilityR4 {
 
     applyCopyrightFromTerminology(valueSet, subset, searchService);
     applySubsetContact(valueSet, subset);
+    ValueSetLoaderUtil.applyStoredMetadataR4(valueSet, subset);
 
     // Set experimental from attributes if present, else fallback
     final String experimentalStr = subset.getAttributes() != null
@@ -1293,28 +1296,30 @@ public final class FhirUtilityR4 {
     FhirIdentifierUtil.applyToR4ValueSet(valueSet,
         subset.getAttributes().get(Subset.Attributes.fhirIdentifier.name()));
 
-    // Compose/include
-    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
-    final ConceptSetComponent include = new ConceptSetComponent();
+    if (!valueSet.hasCompose() || !valueSet.getCompose().hasInclude()) {
+      // Compose/include from members when original compose was not stored
+      final ValueSetComposeComponent compose = new ValueSetComposeComponent();
+      final ConceptSetComponent include = new ConceptSetComponent();
 
-    include.setSystem(subset.getAttributes().get("fhirIncludesUri"));
-    if (members != null) {
-      for (final SubsetMember member : members) {
-        if (member.getCode() == null
-            || (member.getCodeActive() != null && !member.getCodeActive())) {
-          continue;
+      include.setSystem(subset.getAttributes().get("fhirIncludesUri"));
+      if (members != null) {
+        for (final SubsetMember member : members) {
+          if (member.getCode() == null
+              || (member.getCodeActive() != null && !member.getCodeActive())) {
+            continue;
+          }
+          final ConceptReferenceComponent concept = new ConceptReferenceComponent();
+          concept.setCode(member.getCode());
+          if (member.getName() != null) {
+            concept.setDisplay(member.getName());
+          }
+          include.addConcept(concept);
         }
-        final ConceptReferenceComponent concept = new ConceptReferenceComponent();
-        concept.setCode(member.getCode());
-        if (member.getName() != null) {
-          concept.setDisplay(member.getName());
-        }
-        include.addConcept(concept);
       }
-    }
-    if (!include.getConcept().isEmpty()) {
-      compose.addInclude(include);
-      valueSet.setCompose(compose);
+      if (!include.getConcept().isEmpty()) {
+        compose.addInclude(include);
+        valueSet.setCompose(compose);
+      }
     }
 
     // Add "from" info for members
@@ -1797,8 +1802,7 @@ public final class FhirUtilityR4 {
 
     final int countInt = count == null ? 25 : count.getValue().intValue();
     final int offsetInt = offset == null ? 0 : offset.getValue().intValue();
-    final String thisUrl = request.getQueryString() == null ? request.getRequestURL().toString()
-        : request.getRequestURL().append('?').append(request.getQueryString()).toString();
+    final String thisUrl = FhirPublicRequestUrl.forRequest(request);
 
     final Bundle bundle = new Bundle();
     bundle.setId(UUID.randomUUID().toString());
@@ -1820,11 +1824,11 @@ public final class FhirUtilityR4 {
     }
 
     // Add entries for current page (copy so cached shells are not mutated)
+    final String baseUrl = FhirPublicRequestUrl.forRequestPath(request);
     for (int i = offsetInt; i < offsetInt + countInt && i < list.size(); i++) {
       final Resource resource = list.get(i);
       final BundleEntryComponent component = new BundleEntryComponent();
       component.setResource(resource.copy());
-      final String baseUrl = request.getRequestURL().toString().replaceAll("/$", "");
       component.setFullUrl(baseUrl + "/" + resource.getIdElement().getIdPart());
       bundle.addEntry(component);
     }
