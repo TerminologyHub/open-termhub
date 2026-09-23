@@ -19,7 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility for caching objects with a timeout. Thread-safe; get never throws on map/timeMap drift.
+ * Utility for caching objects with an optional timeout. Thread-safe; get never throws on
+ * map/timeMap drift. Timeout of 0 or less means entries do not expire (LRU size eviction still
+ * applies). When {@code read.only=true}, entries also do not expire.
  *
  * @param <T> the generic type
  */
@@ -44,7 +46,7 @@ public class TimerCache<T> {
    * Instantiates a new timer cache.
    *
    * @param size the size
-   * @param timeoutMilliseconds the timeout milliseconds
+   * @param timeoutMilliseconds the timeout milliseconds; 0 or less means never expire
    */
   public TimerCache(final int size, final int timeoutMilliseconds) {
     this.size = size;
@@ -74,9 +76,11 @@ public class TimerCache<T> {
     if (key == null) {
       return null;
     }
-    final long now = System.currentTimeMillis();
     final Long cachedAt = timeMap.get(key);
-    if (map.containsKey(key) && cachedAt != null && (now - cachedAt.longValue()) < timeout) {
+    final int effectiveTimeout = PropertyUtility.isReadOnly() ? 0 : timeout;
+    final boolean unexpired = cachedAt != null && (effectiveTimeout <= 0
+        || (System.currentTimeMillis() - cachedAt.longValue()) < effectiveTimeout);
+    if (map.containsKey(key) && unexpired) {
       if (logger.isDebugEnabled()) {
         logger.debug("   CACHE HIT = " + StringUtility.substr(key, 20));
       }
