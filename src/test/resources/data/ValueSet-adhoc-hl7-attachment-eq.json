@@ -1,0 +1,53 @@
+{
+  "resourceType": "ValueSet",
+  "id": "valid-hl7-attachment-requests",
+  "url": "http://example.org/vs/valid-hl7-attachment-requests",
+  "name": "Valid HL7 Attachment Requests",
+  "title": "Valid HL7 Attachment Requests",
+  "status": "active",
+  "experimental": true,
+  "publisher": "AdHoc Filter Test",
+  "description": "LOINC terms that can be sent as an HL7 attachment request.",
+  "contact": [
+    {
+      "name": "Regenstrief Institute, Inc.",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://loinc.org"
+        }
+      ]
+    }
+  ],
+  "useContext": [
+    {
+      "code": {
+        "system": "http://hl7.org/fhir/usage-context-type",
+        "code": "workflow"
+      },
+      "valueCodeableConcept": {
+        "text": "Requests for additional information"
+      }
+    }
+  ],
+  "identifier": [
+    {
+      "system": "http://loinc.org",
+      "value": "valid-hl7-attachment-requests"
+    }
+  ],
+  "compose": {
+    "include": [
+      {
+        "system": "http://example.org/adhoc-loinc-props",
+        "filter": [
+          {
+            "property": "ValidHL7AttachmentRequest",
+            "op": "=",
+            "value": "Y"
+          }
+        ]
+      }
+    ]
+  }
+}

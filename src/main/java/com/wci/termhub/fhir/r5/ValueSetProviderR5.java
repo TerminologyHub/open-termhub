@@ -596,9 +596,6 @@ public class ValueSetProviderR5 implements IResourceProvider {
 
       FileUtils.delete(file);
 
-      valueSet.getCompose().getInclude().clear();
-      valueSet.getCompose().getExclude().clear();
-
       final MethodOutcome out = new MethodOutcome();
       final IdType id = new IdType("ValueSet", valueSet.getId());
       out.setId(id);
@@ -1211,6 +1208,10 @@ public class ValueSetProviderR5 implements IResourceProvider {
    */
   private void setComposeFromLoadedSubset(final ValueSet vs, final Subset subset,
     final List<SubsetMember> members, final String systemFallback) {
+    ValueSetLoaderUtil.applyStoredMetadataR5(vs, subset);
+    if (vs.hasCompose() && vs.getCompose().hasInclude()) {
+      return;
+    }
     String includesUri =
         subset.getAttributes() != null ? subset.getAttributes().get("fhirIncludesUri") : null;
     if (includesUri == null || includesUri.isEmpty()) {

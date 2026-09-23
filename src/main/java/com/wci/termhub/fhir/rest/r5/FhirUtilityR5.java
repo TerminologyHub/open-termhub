@@ -97,6 +97,7 @@ import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ThreadLocalMapper;
+import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.rest.param.NumberParam;
 import jakarta.servlet.http.HttpServletRequest;
@@ -1293,6 +1294,7 @@ public final class FhirUtilityR5 {
 
     applyCopyrightFromTerminology(valueSet, subset, searchService);
     applySubsetContact(valueSet, subset);
+    ValueSetLoaderUtil.applyStoredMetadataR5(valueSet, subset);
 
     // Set experimental from attributes if present, else fallback
     final String experimentalStr = subset.getAttributes() != null
@@ -1304,28 +1306,30 @@ public final class FhirUtilityR5 {
     FhirIdentifierUtil.applyToR5ValueSet(valueSet,
         subset.getAttributes().get(Subset.Attributes.fhirIdentifier.name()));
 
-    // Compose/include
-    final ValueSetComposeComponent compose = new ValueSetComposeComponent();
-    final ConceptSetComponent include = new ConceptSetComponent();
+    if (!valueSet.hasCompose() || !valueSet.getCompose().hasInclude()) {
+      // Compose/include from members when original compose was not stored
+      final ValueSetComposeComponent compose = new ValueSetComposeComponent();
+      final ConceptSetComponent include = new ConceptSetComponent();
 
-    include.setSystem(subset.getAttributes().get("fhirIncludesUri"));
-    if (members != null) {
-      for (final SubsetMember member : members) {
-        if (member.getCode() == null
-            || (member.getCodeActive() != null && !member.getCodeActive())) {
-          continue;
+      include.setSystem(subset.getAttributes().get("fhirIncludesUri"));
+      if (members != null) {
+        for (final SubsetMember member : members) {
+          if (member.getCode() == null
+              || (member.getCodeActive() != null && !member.getCodeActive())) {
+            continue;
+          }
+          final ConceptReferenceComponent concept = new ConceptReferenceComponent();
+          concept.setCode(member.getCode());
+          if (member.getName() != null) {
+            concept.setDisplay(member.getName());
+          }
+          include.addConcept(concept);
         }
-        final ConceptReferenceComponent concept = new ConceptReferenceComponent();
-        concept.setCode(member.getCode());
-        if (member.getName() != null) {
-          concept.setDisplay(member.getName());
-        }
-        include.addConcept(concept);
       }
-    }
-    if (!include.getConcept().isEmpty()) {
-      compose.addInclude(include);
-      valueSet.setCompose(compose);
+      if (!include.getConcept().isEmpty()) {
+        compose.addInclude(include);
+        valueSet.setCompose(compose);
+      }
     }
 
     // Add "from" info for members

@@ -1,0 +1,65 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "fullUrl": "http://loinc.org/vs/loincs-for-sars-cov-2-aoe-bundle",
+      "resource": {
+        "resourceType": "ValueSet",
+        "id": "loincs-for-sars-cov-2-aoe-bundle",
+        "url": "http://loinc.org/vs/loincs-for-sars-cov-2-aoe-bundle",
+        "name": "LOINC SARS AOE Bundle",
+        "title": "LOINC SARS AOE Bundle",
+        "status": "active",
+        "publisher": "Regenstrief Institute, Inc.",
+        "compose": {
+          "include": [
+            {
+              "system": "http://loinc.org",
+              "concept": [
+                {
+                  "code": "30525-0",
+                  "display": "Age"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "ValueSet/loincs-for-sars-cov-2-aoe-bundle"
+      }
+    },
+    {
+      "fullUrl": "http://loinc.org/vs/deprecated-loinc-terms-bundle",
+      "resource": {
+        "resourceType": "ValueSet",
+        "id": "deprecated-loinc-terms-bundle",
+        "url": "http://loinc.org/vs/deprecated-loinc-terms-bundle",
+        "name": "Deprecated LOINC Bundle",
+        "title": "Deprecated LOINC Bundle",
+        "status": "active",
+        "publisher": "Regenstrief Institute, Inc.",
+        "compose": {
+          "include": [
+            {
+              "system": "http://loinc.org",
+              "filter": [
+                {
+                  "property": "STATUS",
+                  "op": "=",
+                  "value": "DEPRECATED"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "ValueSet/deprecated-loinc-terms-bundle"
+      }
+    }
+  ]
+}
