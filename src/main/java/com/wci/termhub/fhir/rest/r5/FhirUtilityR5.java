@@ -93,6 +93,7 @@ import com.wci.termhub.model.Terminology;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.DateUtility;
 import com.wci.termhub.util.FhirIdentifierUtil;
+import com.wci.termhub.util.FhirExtraAttributeUtil;
 import com.wci.termhub.util.ModelUtility;
 import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
@@ -1342,7 +1343,8 @@ public final class FhirUtilityR5 {
     FhirDateTimeUtil.setR5InstantUtc(valueSet.getMeta().getLastUpdatedElement(),
         DateUtility.toFhirUtcInstantString(subset.getCreated()));
 
-    return valueSet;
+    // Reconstruct any extra top-level ValueSet properties preserved on load
+    return FhirExtraAttributeUtil.applyExtraToR5ValueSet(valueSet, subset);
   }
 
   /**
@@ -1538,7 +1540,8 @@ public final class FhirUtilityR5 {
       cs.setCount(terminology.getConceptCt().intValue());
     }
 
-    return cs;
+    // Reconstruct any extra top-level CodeSystem properties preserved on load
+    return FhirExtraAttributeUtil.applyExtraToR5CodeSystem(cs, terminology);
   }
 
   /**
@@ -1632,6 +1635,7 @@ public final class FhirUtilityR5 {
     cm.setTitle(mapset.getAbbreviation());
     cm.setPublisher(mapset.getPublisher());
     cm.setStatus(Enumerations.PublicationStatus.ACTIVE);
+    cm.setDescription(mapset.getDescription());
     cm.setCopyright(mapset.getAttributes().get("copyright"));
     applyConceptMapContact(cm, mapset, contactTerminology);
     FhirIdentifierUtil.applyToR5ConceptMap(cm,
@@ -1656,7 +1660,8 @@ public final class FhirUtilityR5 {
     }
     cm.setMeta(cmMeta);
 
-    return cm;
+    // Reconstruct any extra top-level ConceptMap properties preserved on load
+    return FhirExtraAttributeUtil.applyExtraToR5ConceptMap(cm, mapset);
   }
 
   /**

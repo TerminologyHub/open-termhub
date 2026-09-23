@@ -1,0 +1,74 @@
+{
+  "resourceType": "ValueSet",
+  "id": "vs-extra-fields-r5",
+  "meta": {
+    "profile": [ "http://example.org/StructureDefinition/example-valueset" ],
+    "tag": [ { "system": "http://example.org/tags", "code": "sample" } ]
+  },
+  "language": "en",
+  "text": {
+    "status": "generated",
+    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Extra Fields Test ValueSet</div>"
+  },
+  "contained": [
+    { "resourceType": "Organization", "id": "org1", "name": "Example Organization" }
+  ],
+  "extension": [
+    { "url": "http://example.org/ext/managingOrg", "valueReference": { "reference": "#org1" } },
+    { "url": "http://example.org/ext/note", "valueString": "valueset-note" }
+  ],
+  "url": "http://example.org/ValueSet/extra-fields-test",
+  "identifier": [
+    { "system": "http://example.org/ids", "value": "VS-EXTRA-1" }
+  ],
+  "version": "1.0.0",
+  "versionAlgorithmString": "semver",
+  "name": "ExtraFieldsTestValueSet",
+  "title": "Extra Fields Test ValueSet",
+  "status": "active",
+  "experimental": true,
+  "date": "2024-03-01T00:00:00+00:00",
+  "publisher": "Example Publisher",
+  "contact": [
+    { "name": "Example Contact", "telecom": [ { "system": "url", "value": "http://example.org/contact" } ] }
+  ],
+  "description": "A ValueSet exercising all top-level fields",
+  "useContext": [
+    {
+      "code": { "system": "http://terminology.hl7.org/CodeSystem/usage-context-type", "code": "focus" },
+      "valueCodeableConcept": { "coding": [ { "system": "http://snomed.info/sct", "code": "12345", "display": "Example focus" } ] }
+    }
+  ],
+  "jurisdiction": [
+    { "coding": [ { "system": "urn:iso:std:iso:3166", "code": "US", "display": "United States" } ] }
+  ],
+  "immutable": true,
+  "purpose": "To test round-tripping of ValueSet top-level fields",
+  "copyright": "Copyright example for ValueSet",
+  "copyrightLabel": "Example copyright label",
+  "approvalDate": "2024-01-15",
+  "lastReviewDate": "2024-02-15",
+  "effectivePeriod": { "start": "2024-03-01", "end": "2025-03-01" },
+  "topic": [
+    { "coding": [ { "system": "http://example.org/topics", "code": "testing", "display": "Testing" } ] }
+  ],
+  "author": [
+    { "name": "Author One", "telecom": [ { "system": "email", "value": "author@example.org" } ] }
+  ],
+  "compose": {
+    "lockedDate": "2024-02-01",
+    "inactive": false,
+    "include": [
+      {
+        "system": "http://snomed.info/sct",
+        "concept": [
+          { "code": "73211009", "display": "Diabetes mellitus" }
+        ]
+      }
+    ]
+  },
+  "scope": {
+    "inclusionCriteria": "All diabetes-related concepts",
+    "exclusionCriteria": "Deprecated concepts"
+  }
+}

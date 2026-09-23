@@ -262,6 +262,9 @@ public final class ValueSetLoaderUtil {
       }
       storeValueSetContactR4(subset, valueSet);
 
+      // Preserve any remaining top-level ValueSet properties not otherwise stored
+      FhirExtraAttributeUtil.storeExtraValueSetAttributesR4(subset, valueSet);
+
       subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
 
@@ -543,6 +546,9 @@ public final class ValueSetLoaderUtil {
         subset.getAttributes().put("copyright", valueSet.getCopyright());
       }
       storeValueSetContactR5(subset, valueSet);
+
+      // Preserve any remaining top-level ValueSet properties not otherwise stored
+      FhirExtraAttributeUtil.storeExtraValueSetAttributesR5(subset, valueSet);
 
       subset.setCategory("ValueSet");
       service.add(Subset.class, subset);
