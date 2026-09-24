@@ -15,6 +15,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +33,8 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.OperationOutcome;
@@ -134,6 +138,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
     @IdParam final IdType id) throws Exception {
 
     try {
+      FhirUtilityR4.notSupportedValueSetReadSearchParams(request);
       if (id != null && id.hasVersionIdPart() && !"1".equals(id.getVersionIdPart())) {
         throw FhirUtilityR4.exception("Value set " + id.getIdPart()
             + " exists but does not have history version " + id.getVersionIdPart(),
@@ -143,21 +148,29 @@ public class ValueSetProviderR4 implements IResourceProvider {
       // always uses this path
       final String idPart = id != null ? id.getIdPart() : null;
       if (idPart != null && loincValueSetHelper.isLllgId(idPart)) {
-        final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
+        final String versionFromId = loincValueSetHelper.getVersionFromLllgId(idPart);
+        final Terminology loinc =
+            loincValueSetHelper.findLoincTerminology(searchService, versionFromId);
+        if (loinc == null && versionFromId != null) {
+          throw FhirUtilityR4.exception(
+              "Value set not found = " + idPart, IssueType.NOTFOUND,
+              HttpServletResponse.SC_NOT_FOUND);
+        }
         if (loinc != null) {
+          final String lllgCode = loincValueSetHelper.getBaseLllgCode(idPart);
           final int memberLimit = 10_000;
           final ResultList<Concept> list =
-              loincValueSetHelper.findLllgMembers(searchService, loinc, idPart, 0, memberLimit);
+              loincValueSetHelper.findLllgMembers(searchService, loinc, lllgCode, 0, memberLimit);
           final List<Concept> items = new ArrayList<>(list.getItems());
-          loincValueSetHelper.sortDirectLllgMembers(idPart, items);
+          loincValueSetHelper.sortDirectLllgMembers(lllgCode, items);
           final LoincValueSetHelper.LllgComposeStructure composeStructure =
               loincValueSetHelper.buildLllgComposeStructure(items);
           logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}",
               idPart, items.size());
           final Concept lllgConcept =
-              loincValueSetHelper.findLllgConcept(searchService, loinc, idPart);
+              loincValueSetHelper.findLllgConcept(searchService, loinc, lllgCode);
           final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
-          return FhirUtilityR4.toR4LllgValueSetWithComposeOnly(loinc, idPart, valueSetId,
+          return FhirUtilityR4.toR4LllgValueSetWithComposeOnly(loinc, lllgCode, valueSetId,
               composeStructure, lllgConcept);
         }
         logger.info("GET ValueSet/{}: LL/LG path skipped (LOINC terminology not found)", idPart);
@@ -226,11 +239,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * &#64;OptionalParam(name="context-type") TokenParam contextType,
    * &#64;OptionalParam(name="context-type-quantity") QuantityParam contextTypeQuantity,
    * &#64;OptionalParam(name="context-type-value") CompositeParam contextTypeValue,
-   * &#64;OptionalParam(name="date") DateParam date,
    * &#64;OptionalParam(name="expansion") String expansion,
-   * &#64;OptionalParam(name="identifier") TokenParam identifier,
    * &#64;OptionalParam(name="jurisdiction") TokenParam jurisdiction,
-   * &#64;OptionalParam(name="reference") String reference,
    * </pre>
    *
    * @param request the request
@@ -242,6 +252,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @param identifier the identifier
    * @param name the name
    * @param publisher the publisher
+   * @param reference the compose include system
+   * @param status the status
    * @param title the title
    * @param url the url
    * @param version the version
@@ -259,6 +271,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
     @OptionalParam(name = "identifier") final TokenParam identifier,
     @OptionalParam(name = "name") final StringParam name,
     @OptionalParam(name = "publisher") final StringParam publisher,
+    @OptionalParam(name = "reference") final UriParam reference,
+    @OptionalParam(name = "status") final TokenParam status,
     @OptionalParam(name = "title") final StringParam title,
     @OptionalParam(name = "url") final UriParam url,
     @OptionalParam(name = "version") final StringParam version,
@@ -273,7 +287,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       // Get possible value sets
       final List<ValueSet> list = findPossibleValueSets(false, id, code, date, description,
-          identifier, name, publisher, title, url, version);
+          identifier, name, publisher, title, url, version, reference, status);
 
       // Bound page size so clients cannot request huge slices of the in-memory list.
       final NumberParam clampedCount = clampSearchCount(count);
@@ -301,6 +315,10 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @param count the count
    * @param displayLanguage the display language
    * @param includeDesignations the include designations
+   * @param date the expand date
+   * @param includeDefinition whether to include compose
+   * @param activeOnly whether to include only active codes
+   * @param property requested expansion properties
    * @return the value set
    * @throws Exception the exception
    */
@@ -321,7 +339,14 @@ public class ValueSetProviderR4 implements IResourceProvider {
     @OperationParam(name = "displayLanguage", min = 0, max = 1,
         typeName = "code") final List<CodeType> displayLanguage,
     @OperationParam(name = "includeDesignations", min = 0, max = 1,
-        typeName = "boolean") final BooleanType includeDesignations)
+        typeName = "boolean") final BooleanType includeDesignations,
+    @OperationParam(name = "date", min = 0, max = 1, typeName = "dateTime") final DateTimeType date,
+    @OperationParam(name = "includeDefinition", min = 0, max = 1,
+        typeName = "boolean") final BooleanType includeDefinition,
+    @OperationParam(name = "activeOnly", min = 0, max = 1,
+        typeName = "boolean") final BooleanType activeOnly,
+    @OperationParam(name = "property", min = 0, max = OperationParam.MAX_UNLIMITED,
+        typeName = "code") final List<CodeType> property)
     throws Exception {
 
     // Reject post
@@ -338,10 +363,11 @@ public class ValueSetProviderR4 implements IResourceProvider {
       FhirUtilityR4.notSupported("valueSet", valueSet);
 
       final ValueSet vs = getExpandedValueSet(null, url, version, filter,
-          offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100, false,
+          offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100,
+          isActiveOnly(activeOnly),
           displayLanguage == null ? null
               : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()),
-          includeDesignations);
+          includeDesignations, toDateRange(date), includeDefinition, toPropertySet(property));
 
       if (vs == null) {
         throw FhirUtilityR4.exception("Value set not found = " + url, IssueType.NOTFOUND,
@@ -376,6 +402,10 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @param count the count
    * @param displayLanguage the display language
    * @param includeDesignations the include designations
+   * @param date the expand date
+   * @param includeDefinition whether to include compose
+   * @param activeOnly whether to include only active codes
+   * @param property requested expansion properties
    * @return the value set
    * @throws Exception the exception
    */
@@ -395,7 +425,14 @@ public class ValueSetProviderR4 implements IResourceProvider {
     @OperationParam(name = "displayLanguage", min = 0, max = 1,
         typeName = "code") final Set<CodeType> displayLanguage,
     @OperationParam(name = "includeDesignations", min = 0, max = 1,
-        typeName = "boolean") final BooleanType includeDesignations)
+        typeName = "boolean") final BooleanType includeDesignations,
+    @OperationParam(name = "date", min = 0, max = 1, typeName = "dateTime") final DateTimeType date,
+    @OperationParam(name = "includeDefinition", min = 0, max = 1,
+        typeName = "boolean") final BooleanType includeDefinition,
+    @OperationParam(name = "activeOnly", min = 0, max = 1,
+        typeName = "boolean") final BooleanType activeOnly,
+    @OperationParam(name = "property", min = 0, max = OperationParam.MAX_UNLIMITED,
+        typeName = "code") final List<CodeType> property)
     throws Exception {
 
     // Reject post
@@ -407,10 +444,11 @@ public class ValueSetProviderR4 implements IResourceProvider {
     try {
 
       final ValueSet vs = getExpandedValueSet(id, null, version, filter,
-          offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100, false,
+          offset != null ? offset.getValue() : 0, count != null ? count.getValue() : 100,
+          isActiveOnly(activeOnly),
           displayLanguage == null ? null
               : displayLanguage.stream().map(c -> c.getValue()).collect(Collectors.toSet()),
-          includeDesignations);
+          includeDesignations, toDateRange(date), includeDefinition, toPropertySet(property));
 
       if (vs == null) {
         throw FhirUtilityR4.exception("Value set not found = " + id.getIdPart(), IssueType.NOTFOUND,
@@ -704,25 +742,34 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @param languages display languages; when non-null, filter designations to these locales
    * @param includeDesignationsParam whether to include designations (null =
    *          false)
+   * @param date the expand date
+   * @param includeDefinitionParam whether to include compose (null = false)
+   * @param properties requested expansion properties
    * @return the expanded value set
    * @throws Exception the exception
    */
   private ValueSet getExpandedValueSet(final IdType id, final UriType url, final StringType version,
     final StringType filter, final int offset, final int count, final boolean activeOnly,
-    final Set<String> languages, final BooleanType includeDesignationsParam) throws Exception {
+    final Set<String> languages, final BooleanType includeDesignationsParam,
+    final DateRangeParam date, final BooleanType includeDefinitionParam,
+    final Set<String> properties) throws Exception {
     final boolean includeDesignations = includeDesignationsParam != null
         && Boolean.TRUE.equals(includeDesignationsParam.getValue());
+    final boolean includeDefinition = includeDefinitionParam != null
+        && Boolean.TRUE.equals(includeDefinitionParam.getValue());
+    final boolean includeProperties = properties != null && !properties.isEmpty();
     final String cacheKey = ValueSetExpandCache.buildKey(FhirVersionEnum.R4,
         id == null ? null : id.getIdPart(), url == null ? null : url.getValue(),
         version == null ? null : version.getValue(), offset, count,
-        filter == null ? null : filter.getValue(), activeOnly, languages, includeDesignations);
+        filter == null ? null : filter.getValue(), activeOnly, languages, includeDesignations,
+        ValueSetExpandCache.extraKey(includeDefinition, dateRangeKey(date), properties));
     final ValueSet cached = ValueSetExpandCache.getR4(cacheKey);
     if (cached != null) {
       return cached;
     }
 
     // Look up implicit value sets for code systems
-    final List<ValueSet> valueSets = findPossibleValueSets(true, id, url, version);
+    final List<ValueSet> valueSets = findPossibleValueSets(true, id, url, version, date);
 
     // Expect a single value set
     if (valueSets.isEmpty()) {
@@ -782,9 +829,13 @@ public class ValueSetProviderR4 implements IResourceProvider {
         for (final Concept concept : items) {
           final ValueSetExpansionContainsComponent code =
               new ValueSetExpansionContainsComponent().setSystem(terminology.getUri())
-                  .setCode(concept.getCode()).setDisplay(concept.getName());
+                  .setCode(concept.getCode())
+                  .setDisplay(FhirUtility.preferredDisplay(concept, languages));
           if (includeDesignations) {
             addExpandDesignations(code, concept, isLoinc, languages);
+          }
+          if (includeProperties) {
+            addExpandProperties(code, concept, isLoinc, terminology.getUri(), properties);
           }
           expansion.addContains(code);
         }
@@ -793,8 +844,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
           vs.setExperimental(true);
         }
         vs.setMeta(null);
-        ValueSetExpandCache.putR4(cacheKey, vs);
-        return vs;
+        return finishExpansion(vs, cacheKey, includeDefinition);
       }
     }
 
@@ -820,15 +870,13 @@ public class ValueSetProviderR4 implements IResourceProvider {
       if (loadedSubset == null) {
         final ValueSet empty =
             createEmptyValueSetExpansion(vs, offset, ct, filter, version, includeDesignationsParam);
-        ValueSetExpandCache.putR4(cacheKey, empty);
-        return empty;
+        return finishExpansion(empty, cacheKey, includeDefinition);
       }
       final List<SubsetMember> members = findSubsetMembersForSubset(loadedSubset);
       if (members.isEmpty()) {
         final ValueSet empty =
             createEmptyValueSetExpansion(vs, offset, ct, filter, version, includeDesignationsParam);
-        ValueSetExpandCache.putR4(cacheKey, empty);
-        return empty;
+        return finishExpansion(empty, cacheKey, includeDefinition);
       }
       final SubsetMember m0 = members.get(0);
       final Terminology terminologyFromMember = TerminologyUtility.getTerminology(searchService,
@@ -842,11 +890,11 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       // Designations need Concept.terms — keep legacy Concept expand only then.
       final Query expressionQuery = getExpressionQuery(url == null ? null : url.getValue());
-      if (!includeDesignations && expressionQuery == null) {
+      if (!includeDesignations && !includeProperties && (languages == null || languages.isEmpty())
+          && expressionQuery == null) {
         final ValueSet expanded = expandLoadedSubsetFromMembers(vs, members, systemUri, offset, ct,
             filter, version, includeDesignationsParam);
-        ValueSetExpandCache.putR4(cacheKey, expanded);
-        return expanded;
+        return finishExpansion(expanded, cacheKey, includeDefinition);
       }
 
       // Fallback: Concept path for includeDesignations / ECL (compose already
@@ -886,16 +934,19 @@ public class ValueSetProviderR4 implements IResourceProvider {
       final boolean isLoinc = systemUri != null && systemUri.contains("loinc.org");
       for (final Concept concept : list.getItems()) {
         final ValueSetExpansionContainsComponent code = new ValueSetExpansionContainsComponent()
-            .setSystem(systemUri).setCode(concept.getCode()).setDisplay(concept.getName());
+            .setSystem(systemUri).setCode(concept.getCode())
+            .setDisplay(FhirUtility.preferredDisplay(concept, languages));
         if (includeDesignations) {
           addExpandDesignations(code, concept, isLoinc, languages);
+        }
+        if (includeProperties) {
+          addExpandProperties(code, concept, isLoinc, systemUri, properties);
         }
         expansion.addContains(code);
       }
       vs.setExpansion(expansion);
       vs.setMeta(null);
-      ValueSetExpandCache.putR4(cacheKey, vs);
-      return vs;
+      return finishExpansion(vs, cacheKey, includeDefinition);
     }
 
     final Query terminologyQuery = LuceneQueryBuilder.parse(
@@ -917,17 +968,20 @@ public class ValueSetProviderR4 implements IResourceProvider {
         terminology.getUri() != null && terminology.getUri().contains("loinc.org");
     for (final Concept concept : list.getItems()) {
       final ValueSetExpansionContainsComponent code = new ValueSetExpansionContainsComponent()
-          .setSystem(terminology.getUri()).setCode(concept.getCode()).setDisplay(concept.getName());
+          .setSystem(terminology.getUri()).setCode(concept.getCode())
+          .setDisplay(FhirUtility.preferredDisplay(concept, languages));
       if (includeDesignations) {
         addExpandDesignations(code, concept, isLoinc, languages);
+      }
+      if (includeProperties) {
+        addExpandProperties(code, concept, isLoinc, terminology.getUri(), properties);
       }
       expansion.addContains(code);
     }
     vs.setExpansion(expansion);
     vs.setMeta(null);
 
-    ValueSetExpandCache.putR4(cacheKey, vs);
-    return vs;
+    return finishExpansion(vs, cacheKey, includeDefinition);
   }
 
   /**
@@ -1048,7 +1102,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
       if (display != null && display.equals(term.getName())) {
         continue;
       }
-      final String matchedLang = matchTermLanguage(term, languages);
+      final String matchedLang = FhirUtility.matchPreferredLanguage(term, languages);
       if (languages != null && matchedLang == null) {
         continue;
       }
@@ -1093,26 +1147,6 @@ public class ValueSetProviderR4 implements IResourceProvider {
         code.addDesignation(designation);
       }
     }
-  }
-
-  /**
-   * Returns a locale from the term that is in languages, or null if none.
-   *
-   * @param term the term
-   * @param languages requested languages (may be null)
-   * @return matched language or null
-   */
-  private static String matchTermLanguage(final Term term, final Set<String> languages) {
-    if (languages == null || languages.isEmpty() || term.getLocaleMap() == null
-        || term.getLocaleMap().isEmpty()) {
-      return null;
-    }
-    for (final String lang : term.getLocaleMap().keySet()) {
-      if (languages.contains(lang)) {
-        return lang;
-      }
-    }
-    return null;
   }
 
   /**
@@ -1449,11 +1483,27 @@ public class ValueSetProviderR4 implements IResourceProvider {
    */
   public List<ValueSet> findPossibleValueSets(final boolean metaFlag, final IdType id,
     final UriType url, final StringType version) throws Exception {
+    return findPossibleValueSets(metaFlag, id, url, version, null);
+  }
+
+  /**
+   * Find possible value sets.
+   *
+   * @param metaFlag the meta flag
+   * @param id the id
+   * @param url the url
+   * @param version the version
+   * @param date the date
+   * @return the list
+   * @throws Exception the exception
+   */
+  public List<ValueSet> findPossibleValueSets(final boolean metaFlag, final IdType id,
+    final UriType url, final StringType version, final DateRangeParam date) throws Exception {
     final TokenParam idParam = id == null ? null : new TokenParam(id.getIdPart());
     final UriParam urlParam = url == null ? null : new UriParam(url.getValue());
     final StringParam versionParam = version == null ? null : new StringParam(version.getValue());
-    return findPossibleValueSets(metaFlag, idParam, null, null, null, null, null, null, null,
-        urlParam, versionParam);
+    return findPossibleValueSets(metaFlag, idParam, null, date, null, null, null, null, null,
+        urlParam, versionParam, null, null);
   }
 
   /**
@@ -1470,6 +1520,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @param title the title
    * @param url the url
    * @param version the version
+   * @param reference the compose include system
+   * @param status the status
    * @return the list
    * @throws Exception the exception
    */
@@ -1477,7 +1529,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
   public List<ValueSet> findPossibleValueSets(final boolean metaFlag, final TokenParam id,
     final TokenParam code, final DateRangeParam date, final StringParam description,
     final TokenParam identifier, final StringParam name, final StringParam publisher,
-    final StringParam title, final UriParam url, final StringParam version) throws Exception {
+    final StringParam title, final UriParam url, final StringParam version,
+    final UriParam reference, final TokenParam status) throws Exception {
 
     final List<ValueSet> list = new ArrayList<>();
     // For now (until we have real value sets)
@@ -1528,7 +1581,15 @@ public class ValueSetProviderR4 implements IResourceProvider {
         }
         continue;
       }
+      if (!FhirUtilityR4.matchesIdentifier(identifier, vs)
+          || !FhirUtilityR4.matchesStatus(status, vs)
+          || !FhirUtilityR4.matchesReference(reference, vs, terminology.getUri())) {
+        continue;
+      }
 
+      if (code != null && code.getValue() != null && loincValueSetHelper.isLllgId(code.getValue())) {
+        continue;
+      }
       if (code != null
           && TerminologyUtility.getConcept(searchService, terminology, code.getValue()) == null) {
         if (logger.isDebugEnabled()) {
@@ -1543,6 +1604,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
     // --- Add loaded ValueSets (Subset/SubsetMember) ---
     // Prefer direct id/url lookup; avoid findAll of every ValueSet subset.
+    final Set<String> memberSubsetKeys = findSubsetKeysByMemberCode(code);
     final List<Subset> subsets = findLoadedValueSetSubsets(id, url);
     for (final Subset subset : subsets) {
       final ValueSet set = FhirUtilityR4.toR4ValueSet(subset, new ArrayList<SubsetMember>(0),
@@ -1588,7 +1650,18 @@ public class ValueSetProviderR4 implements IResourceProvider {
         }
         continue;
       }
-      // No code filter for loaded sets
+      final String includesUri = subset.getAttributes() == null ? null
+          : subset.getAttributes().get("fhirIncludesUri");
+      if (!FhirUtilityR4.matchesIdentifier(identifier, set)
+          || !FhirUtilityR4.matchesStatus(status, set)
+          || !FhirUtilityR4.matchesReference(reference, set, includesUri)) {
+        continue;
+      }
+      if (memberSubsetKeys != null && !memberSubsetKeys.contains(subset.getId())
+          && !memberSubsetKeys.contains(subset.getCode())
+          && !memberSubsetKeys.contains(set.getId())) {
+        continue;
+      }
       list.add(set);
     }
 
@@ -1615,26 +1688,21 @@ public class ValueSetProviderR4 implements IResourceProvider {
           lllgId = code.getValue();
         }
         if (lllgId != null) {
-          final Terminology loincForLllg;
-          if (version != null && !version.isEmpty()) {
-            final String requestedVersion = version.getValue();
-            loincForLllg = allTerminologies.stream()
-                .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
-                .filter(t -> requestedVersion.equals(t.getVersion())).findFirst().orElse(null);
-          } else {
-            loincForLllg = loinc;
-          }
+          final Terminology loincForLllg = resolveLoincForLllg(lllgId, version, loinc,
+              allTerminologies);
           if (loincForLllg != null) {
+            final String lllgCode = loincValueSetHelper.getBaseLllgCode(lllgId);
             final Concept lllgConcept =
-                loincValueSetHelper.findLllgConcept(searchService, loincForLllg, lllgId);
+                loincValueSetHelper.findLllgConcept(searchService, loincForLllg, lllgCode);
             final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
             final ValueSet lllgVs =
-                FhirUtilityR4.toR4LllgValueSet(loincForLllg, lllgId, valueSetId, metaFlag);
+                FhirUtilityR4.toR4LllgValueSet(loincForLllg, lllgCode, valueSetId, metaFlag);
             FhirUtilityR4.applyAnswerListOid(lllgVs, lllgConcept);
             FhirUtilityR4.applyLllgConceptName(lllgVs, lllgConcept);
             final boolean idUrlMatch =
                 (id == null || FhirUtilityR4.matchesLllgValueSetId(id.getValue(), lllgVs))
-                    && (url == null || url.getValue().equals(lllgVs.getUrl()));
+                    && (url == null || loincValueSetHelper.matchesLllgUrl(url.getValue(),
+                        lllgVs.getUrl()));
             final boolean dateMatch =
                 date == null || FhirUtility.compareDate(date, lllgVs.getDate());
             final boolean versionMatch =
@@ -1647,8 +1715,17 @@ public class ValueSetProviderR4 implements IResourceProvider {
                 title == null || FhirUtility.compareString(title, lllgVs.getTitle());
             final boolean descriptionMatch = description == null
                 || FhirUtility.compareString(description, lllgVs.getDescription());
+            final boolean identifierMatch = FhirUtilityR4.matchesIdentifier(identifier, lllgVs);
+            final boolean statusMatch = FhirUtilityR4.matchesStatus(status, lllgVs);
+            final boolean referenceMatch =
+                FhirUtilityR4.matchesReference(reference, lllgVs, loincForLllg.getUri());
+            final boolean codeMatch = code == null || code.getValue() == null
+                || loincValueSetHelper.isLllgId(code.getValue())
+                || loincValueSetHelper.hasLllgMember(searchService, loincForLllg, lllgId,
+                    code.getValue());
             if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch && titleMatch
-                && descriptionMatch) {
+                && descriptionMatch && identifierMatch && statusMatch && referenceMatch
+                && codeMatch) {
               list.add(lllgVs);
             }
           }
@@ -1674,12 +1751,21 @@ public class ValueSetProviderR4 implements IResourceProvider {
                   FhirUtilityR4.toR4LllgValueSetFromConcept(loincTerm, concept, metaFlag);
               final boolean versionMatch =
                   version == null || FhirUtility.compareString(version, lgVs.getVersion());
-              if (versionMatch) {
+              final boolean extraMatch = FhirUtilityR4.matchesIdentifier(identifier, lgVs)
+                  && FhirUtilityR4.matchesStatus(status, lgVs)
+                  && FhirUtilityR4.matchesReference(reference, lgVs, loincTerm.getUri())
+                  && (code == null || code.getValue() == null
+                      || loincValueSetHelper.isLllgId(code.getValue())
+                      || loincValueSetHelper.hasLllgMember(searchService, loincTerm,
+                          concept.getCode(), code.getValue()));
+              if (versionMatch && extraMatch) {
                 list.add(lgVs);
               }
             }
           }
-        } else if (loincValueSetHelper.isEnabled() && id == null && url == null) {
+        } else if (loincValueSetHelper.isEnabled() && id == null && url == null
+            && (code == null || code.getValue() == null
+                || loincValueSetHelper.isLllgId(code.getValue()))) {
           // General listing only: enumerate LL/LG concepts when not targeting id/url.
           // Cache + SingleFlight so concurrent unfiltered searches do not each reload all LL/LG.
           final List<Terminology> loincTerminologies = allTerminologies.stream()
@@ -1722,7 +1808,10 @@ public class ValueSetProviderR4 implements IResourceProvider {
               final boolean descriptionMatch = description == null
                   || FhirUtility.compareString(description, lgVs.getDescription());
               if (idUrlMatch && dateMatch && versionMatch && nameMatch && publisherMatch
-                  && titleMatch && descriptionMatch) {
+                  && titleMatch && descriptionMatch
+                  && FhirUtilityR4.matchesIdentifier(identifier, lgVs)
+                  && FhirUtilityR4.matchesStatus(status, lgVs)
+                  && FhirUtilityR4.matchesReference(reference, lgVs, loincTerm.getUri())) {
                 list.add(lgVs);
               }
             }
@@ -1750,6 +1839,164 @@ public class ValueSetProviderR4 implements IResourceProvider {
       return count;
     }
     return new NumberParam(100);
+  }
+
+  /**
+   * Cache and optionally strip compose from an expansion.
+   *
+   * @param vs the value set
+   * @param cacheKey the cache key
+   * @param includeDefinition whether to keep compose
+   * @return the value set
+   */
+  private static ValueSet finishExpansion(final ValueSet vs, final String cacheKey,
+    final boolean includeDefinition) {
+    if (!includeDefinition) {
+      vs.setCompose(null);
+    }
+    ValueSetExpandCache.putR4(cacheKey, vs);
+    return vs;
+  }
+
+  /**
+   * ActiveOnly request flag.
+   *
+   * @param activeOnly the param
+   * @return true if active only
+   */
+  private static boolean isActiveOnly(final BooleanType activeOnly) {
+    return activeOnly != null && Boolean.TRUE.equals(activeOnly.getValue());
+  }
+
+  /**
+   * Convert expand date to a search date range.
+   *
+   * @param date the date
+   * @return date range or null
+   */
+  private static DateRangeParam toDateRange(final DateTimeType date) {
+    if (date == null || date.getValue() == null) {
+      return null;
+    }
+    return new DateRangeParam(date.getValue(), date.getValue());
+  }
+
+  /**
+   * Stable cache key fragment for a date range.
+   *
+   * @param date the date
+   * @return key fragment
+   */
+  private static String dateRangeKey(final DateRangeParam date) {
+    if (date == null) {
+      return null;
+    }
+    final String lower = date.getLowerBound() == null ? "" : date.getLowerBound().getValueAsString();
+    final String upper = date.getUpperBound() == null ? "" : date.getUpperBound().getValueAsString();
+    return lower + ".." + upper;
+  }
+
+  /**
+   * Property codes from $expand property param.
+   *
+   * @param property the property
+   * @return set or null
+   */
+  private static Set<String> toPropertySet(final List<CodeType> property) {
+    if (property == null || property.isEmpty()) {
+      return null;
+    }
+    final Set<String> codes = new LinkedHashSet<>();
+    for (final CodeType code : property) {
+      if (code != null && code.getValue() != null && !code.getValue().isEmpty()) {
+        codes.add(code.getValue());
+      }
+    }
+    return codes.isEmpty() ? null : codes;
+  }
+
+  /**
+   * Subset id/code keys that contain the member code. Null means no code filter.
+   *
+   * @param code the code
+   * @return keys or null
+   * @throws Exception the exception
+   */
+  private Set<String> findSubsetKeysByMemberCode(final TokenParam code) throws Exception {
+    if (code == null || code.getValue() == null || code.getValue().isEmpty()
+        || loincValueSetHelper.isLllgId(code.getValue())) {
+      return null;
+    }
+    final String query = StringUtility.escapeKeywordField("code", code.getValue());
+    final List<SubsetMember> members = searchService.findAll(query, null, SubsetMember.class);
+    final Set<String> keys = new HashSet<>();
+    for (final SubsetMember member : members) {
+      if (member.getSubset() == null) {
+        continue;
+      }
+      if (member.getSubset().getId() != null) {
+        keys.add(member.getSubset().getId());
+      }
+      if (member.getSubset().getCode() != null) {
+        keys.add(member.getSubset().getCode());
+      }
+    }
+    return keys;
+  }
+
+  /**
+   * Adds requested properties onto an expansion contains entry.
+   *
+   * @param contains the contains
+   * @param concept the concept
+   * @param isLoinc whether LOINC
+   * @param systemUri system URI
+   * @param properties requested properties
+   */
+  private void addExpandProperties(final ValueSetExpansionContainsComponent contains,
+    final Concept concept, final boolean isLoinc, final String systemUri,
+    final Set<String> properties) {
+    final List<FhirUtility.ExpandProperty> items =
+        FhirUtility.collectExpandProperties(concept, properties, isLoinc, systemUri);
+    for (final FhirUtility.ExpandProperty item : items) {
+      final Extension ext = new Extension(
+          "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.expansion.contains.property");
+      ext.addExtension(new Extension("code", new CodeType(item.getCode())));
+      if (item.isCoding()) {
+        final Coding coding = new Coding(item.getCodingSystem(), item.getCodingCode(),
+            item.getCodingDisplay());
+        ext.addExtension(new Extension("value", coding));
+      } else {
+        ext.addExtension(new Extension("value", new StringType(item.getValue())));
+      }
+      contains.addExtension(ext);
+    }
+  }
+
+  /**
+   * Resolves LOINC terminology for a targeted LL/LG lookup. Version comes from the
+   * search/expand param, or from an LG id suffix (e.g. LG51018-6-2.81).
+   *
+   * @param lllgId the LL/LG id, possibly versioned
+   * @param version the search or valueSetVersion param
+   * @param latestLoinc latest LOINC terminology
+   * @param allTerminologies loaded terminologies
+   * @return the terminology, or null if the version is not loaded or conflicts
+   */
+  private Terminology resolveLoincForLllg(final String lllgId, final StringParam version,
+    final Terminology latestLoinc, final List<Terminology> allTerminologies) {
+    final String versionFromId = loincValueSetHelper.getVersionFromLllgId(lllgId);
+    final String versionParam = version != null && !version.isEmpty() ? version.getValue() : null;
+    if (versionFromId != null && versionParam != null && !versionFromId.equals(versionParam)) {
+      return null;
+    }
+    final String requestedVersion = versionParam != null ? versionParam : versionFromId;
+    if (requestedVersion == null) {
+      return latestLoinc;
+    }
+    return allTerminologies.stream()
+        .filter(t -> t.getUri() != null && t.getUri().contains("loinc.org"))
+        .filter(t -> requestedVersion.equals(t.getVersion())).findFirst().orElse(null);
   }
 
   /**

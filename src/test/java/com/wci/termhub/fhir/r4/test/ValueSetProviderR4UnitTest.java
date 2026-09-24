@@ -9,6 +9,7 @@
  */
 package com.wci.termhub.fhir.r4.test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,8 +22,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.IntegerType;
+import org.hl7.fhir.r4.model.UriType;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -124,6 +129,8 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null, // TokenParam identifier
         null, // StringParam name
         null, // StringParam publisher
+        null, // UriParam reference
+        null, // TokenParam status
         null, // StringParam title
         null, // UriParam url
         null, // StringParam version
@@ -159,6 +166,8 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null, // TokenParam identifier
         null, // StringParam name
         null, // StringParam publisher
+        null, // UriParam reference
+        null, // TokenParam status
         null, // StringParam title
         url, // UriParam url
         null, // StringParam version
@@ -187,6 +196,8 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null, // TokenParam identifier
         name, // StringParam name
         null, // StringParam publisher
+        null, // UriParam reference
+        null, // TokenParam status
         null, // StringParam title
         null, // UriParam url
         null, // StringParam version
@@ -215,6 +226,8 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null, // TokenParam identifier
         null, // StringParam name
         null, // StringParam publisher
+        null, // UriParam reference
+        null, // TokenParam status
         null, // StringParam title
         null, // UriParam url
         version, // StringParam version
@@ -244,6 +257,8 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null, // TokenParam identifier
         null, // StringParam name
         null, // StringParam publisher
+        null, // UriParam reference
+        null, // TokenParam status
         null, // StringParam title
         null, // UriParam url
         null, // StringParam version
@@ -266,6 +281,8 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null, // TokenParam identifier
         null, // StringParam name
         null, // StringParam publisher
+        null, // UriParam reference
+        null, // TokenParam status
         null, // StringParam title
         null, // UriParam url
         null, // StringParam version
@@ -275,6 +292,97 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(vsBundle);
     assertTrue(vsBundle.getEntry().stream()
         .anyMatch(e -> e.getResource() instanceof ValueSet && id.equals(e.getResource().getId())));
+  }
+
+  /**
+   * GET by id rejects search parameters such as version.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testGetValueSetRejectsSearchParams() throws Exception {
+    final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
+        null, null, null, null, null, new UriParam(TEST_VALUESET_URL), null, null, null);
+    final String id = bundle.getEntry().stream().map(e -> (ValueSet) e.getResource())
+        .filter(vs -> TEST_VALUESET_URL.equals(vs.getUrl())).findFirst()
+        .orElseThrow(() -> new AssertionError("Test ValueSet not found")).getIdElement()
+        .getIdPart();
+    request.addParameter("version", "2.81");
+    final FHIRServerResponseException ex = assertThrows(FHIRServerResponseException.class,
+        () -> provider.getValueSet(request, details, new IdType(id)));
+    assertTrue(ex.getMessage().contains("version"));
+  }
+
+  /**
+   * Search identifier, status, reference, and member code with AND.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testFindValueSetNewSearchParams() throws Exception {
+    final Bundle byStatus = provider.findValueSets(request, details, null, null, null, null, null,
+        null, null, null, new TokenParam("active"), null, new UriParam(TEST_VALUESET_URL), null,
+        null, null);
+    assertTrue(byStatus.getEntry().stream().anyMatch(e -> TEST_VALUESET_URL
+        .equals(((ValueSet) e.getResource()).getUrl())));
+
+    final Bundle byIdentifier = provider.findValueSets(request, details, null, null, null, null,
+        new TokenParam("731000124108"), null, null, null, null, null,
+        new UriParam(TEST_VALUESET_URL), null, null, null);
+    assertTrue(byIdentifier.getEntry().stream()
+        .anyMatch(e -> TEST_VALUESET_URL.equals(((ValueSet) e.getResource()).getUrl())));
+
+    final Bundle byReference = provider.findValueSets(request, details, null, null, null, null,
+        null, null, null, new UriParam("http://snomed.info/sct"), null, null,
+        new UriParam(TEST_VALUESET_URL), null, null, null);
+    assertTrue(byReference.getEntry().stream()
+        .anyMatch(e -> TEST_VALUESET_URL.equals(((ValueSet) e.getResource()).getUrl())));
+
+    final Bundle byCode = provider.findValueSets(request, details, null,
+        new TokenParam("731000124108"), null, null, null, null, null, null, null, null,
+        new UriParam(TEST_VALUESET_URL), null, null, null);
+    assertTrue(byCode.getEntry().stream()
+        .anyMatch(e -> TEST_VALUESET_URL.equals(((ValueSet) e.getResource()).getUrl())));
+
+    final Bundle andMiss = provider.findValueSets(request, details, null, null, null, null, null,
+        null, null, null, new TokenParam("draft"), null, new UriParam(TEST_VALUESET_URL), null,
+        null, null);
+    assertTrue(andMiss.getEntry() == null || andMiss.getEntry().isEmpty());
+  }
+
+  /**
+   * $expand includeDefinition, activeOnly, property, and paging.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testExpandNewParams() throws Exception {
+    final UriType url = new UriType(TEST_VALUESET_URL);
+    final ValueSet withoutDef = provider.expandImplicit(request, details, null, url, null, null,
+        new IntegerType(0), new IntegerType(10), null, null, null, null, null, null);
+    assertNotNull(withoutDef.getExpansion());
+    assertFalse(withoutDef.hasCompose());
+
+    final ValueSet withDef = provider.expandImplicit(request, details, null, url, null, null,
+        new IntegerType(0), new IntegerType(10), null, null, null, new BooleanType(true), null,
+        null);
+    assertTrue(withDef.hasCompose());
+    assertTrue(withDef.getCompose().hasInclude());
+
+    final ValueSet active = provider.expandImplicit(request, details, null, url, null, null,
+        new IntegerType(0), new IntegerType(10), null, null, null, null, new BooleanType(true),
+        null);
+    assertNotNull(active.getExpansion());
+
+    final ValueSet withProp = provider.expandImplicit(request, details, null, url, null, null,
+        new IntegerType(0), new IntegerType(10), null, null, null, null, null,
+        List.of(new CodeType("semanticType")));
+    assertNotNull(withProp.getExpansion());
+
+    final ValueSet withLang = provider.expandImplicit(request, details, null, url, null, null,
+        new IntegerType(0), new IntegerType(10), List.of(new CodeType("en")), null, null, null,
+        null, null);
+    assertNotNull(withLang.getExpansion());
   }
 
   /**
