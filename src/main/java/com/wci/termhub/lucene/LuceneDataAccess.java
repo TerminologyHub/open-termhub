@@ -289,9 +289,15 @@ public class LuceneDataAccess {
               }
               final String indexName = field.getName() + "." + entry.getKey();
               final String indexValue = String.valueOf(entry.getValue());
+              final BytesRef bytes = new BytesRef(indexValue);
+              // Skip keyword indexing for values over Lucene's max term length;
+              // value remains available via the entity StoredField.
+              if (bytes.length > IndexWriter.MAX_TERM_LENGTH) {
+                continue;
+              }
               document.add(new StringField(indexName, indexValue,
                   org.apache.lucene.document.Field.Store.NO));
-              document.add(new SortedSetDocValuesField(indexName, new BytesRef(indexValue)));
+              document.add(new SortedSetDocValuesField(indexName, bytes));
             }
           }
 
