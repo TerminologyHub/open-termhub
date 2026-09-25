@@ -386,7 +386,7 @@ public class LoincValueSetHelper {
    * @param lllgId the full id
    * @return version or null
    */
-  public String getVersionFromLllgId(final String lllgId) {
+  public static String getVersionFromLllgId(final String lllgId) {
     if (lllgId == null || !lllgId.startsWith("LG")) {
       return null;
     }
@@ -410,7 +410,7 @@ public class LoincValueSetHelper {
    * @param lllgId the full id
    * @return base code
    */
-  public String getBaseLllgCode(final String lllgId) {
+  public static String getBaseLllgCode(final String lllgId) {
     if (lllgId == null) {
       return null;
     }
@@ -418,6 +418,29 @@ public class LoincValueSetHelper {
       return lllgId.substring(0, lllgId.lastIndexOf('-'));
     }
     return lllgId;
+  }
+
+  /**
+   * True when the requested url is the same LL/LG value set as the actual url,
+   * including versioned aliases (LG51018-6-2.81 vs LG51018-6).
+   *
+   * @param requestedUrl the request url
+   * @param actualUrl the value set url
+   * @return true if they identify the same LL/LG code
+   */
+  public boolean matchesLllgUrl(final String requestedUrl, final String actualUrl) {
+    if (requestedUrl == null) {
+      return true;
+    }
+    if (requestedUrl.equals(actualUrl)) {
+      return true;
+    }
+    final String requestedId = parseIdFromUrl(requestedUrl);
+    final String actualId = parseIdFromUrl(actualUrl);
+    if (requestedId == null || actualId == null) {
+      return false;
+    }
+    return getBaseLllgCode(requestedId).equals(getBaseLllgCode(actualId));
   }
 
   /**
@@ -627,6 +650,33 @@ public class LoincValueSetHelper {
     empty.setTotal(0);
     empty.setItems(List.of());
     return empty;
+  }
+
+  /**
+   * Whether the LL/LG value set has a direct member with the given code.
+   *
+   * @param searchService the search service
+   * @param terminology LOINC terminology
+   * @param lllgId the LL or LG id
+   * @param code member code
+   * @return true if a member exists
+   * @throws Exception the exception
+   */
+  public boolean hasLllgMember(final EntityRepositoryService searchService,
+    final Terminology terminology, final String lllgId, final String code) throws Exception {
+    if (searchService == null || terminology == null || lllgId == null || code == null
+        || code.isEmpty()) {
+      return false;
+    }
+    final String baseCode = getBaseLllgCode(lllgId);
+    final String termQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+        terminology.getPublisher(), terminology.getVersion());
+    final String parentClause = "parents.code:" + StringUtility.escapeQuery(baseCode);
+    final String codeClause = StringUtility.escapeKeywordField("code", code);
+    final String query = StringUtility.composeQuery("AND", termQuery, parentClause, codeClause);
+    final SearchParameters params = new SearchParameters(query, 1, 0);
+    final ResultList<Concept> result = searchService.find(params, Concept.class);
+    return result != null && result.getTotal() > 0;
   }
 
   /**

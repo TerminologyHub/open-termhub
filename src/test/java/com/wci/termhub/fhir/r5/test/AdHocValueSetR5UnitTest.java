@@ -236,7 +236,7 @@ public class AdHocValueSetR5UnitTest extends AbstractFhirR5ServerTest {
    */
   private ValueSet expandByUrl(final String url) {
     final ResponseEntity<String> response = restTemplate.getForEntity(
-        "http://localhost:" + port + FHIR_VALUESET + "/$expand?url={url}",
+        "http://localhost:" + port + FHIR_VALUESET + "/$expand?url={url}&includeDefinition=true",
         String.class, url);
     assertEquals(HttpStatus.OK, response.getStatusCode(), response.getBody());
     return parser.parseResource(ValueSet.class, response.getBody());
