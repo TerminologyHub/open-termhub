@@ -61,7 +61,8 @@ public class FhirUtilityR4MetaUnitTest {
     final Map<String, String> attrs = new HashMap<>();
     terminology.setAttributes(attrs);
     terminology.setConceptCt(10L);
-    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    terminology.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final CodeSystem cs = FhirUtilityR4.toR4(terminology);
     assertNotNull(cs.getMeta());
@@ -106,14 +107,14 @@ public class FhirUtilityR4MetaUnitTest {
    */
   @Test
   public void testCodeSystemDescriptionCopyrightIdentifierValueSetContactCaseSensitiveVersionNeeded()
-      throws Exception {
+    throws Exception {
     final String description =
         "LOINC is a freely available international standard for tests, measurements, and observations";
     final String copyright =
         "This material contains content from LOINC (http://loinc.org). LOINC is copyright Regenstrief Institute, Inc.";
     final String fhirIdentifier =
         "[{\"system\":\"urn:ietf:rfc:3986\",\"value\":\"urn:oid:2.16.840.1.113883.6.1\"}]";
-    final String valueSet = "http://loinc.org/?fhir_vs";
+    final String valueSet = "http://loinc.org/vs";
     final String fhirContact =
         "[{\"telecom\":[{\"system\":\"url\",\"value\":\"http://loinc.org\"}]}]";
 
@@ -135,7 +136,8 @@ public class FhirUtilityR4MetaUnitTest {
     attrs.put("versionNeeded", "false");
     terminology.setAttributes(attrs);
     terminology.setConceptCt(100L);
-    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    terminology.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final CodeSystem cs = FhirUtilityR4.toR4(terminology);
 
@@ -168,7 +170,8 @@ public class FhirUtilityR4MetaUnitTest {
     terminology.setVersion("2.78");
     terminology.setPublisher("Regenstrief Institute, Inc.");
     terminology.setReleaseDate("2022-04-11");
-    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    terminology.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final ValueSet vs =
         FhirUtilityR4.toR4LllgValueSet(terminology, "LG10030-1", "test-uuid", false);
@@ -190,7 +193,8 @@ public class FhirUtilityR4MetaUnitTest {
     terminology.setVersion("2.83");
     terminology.setPublisher("Regenstrief Institute, Inc.");
     terminology.setReleaseDate("2026-08-18");
-    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    terminology.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final Concept concept = new Concept();
     concept.setId("test-uuid");
@@ -205,9 +209,9 @@ public class FhirUtilityR4MetaUnitTest {
     assertEquals("urn:ietf:rfc:3986", vs.getIdentifierFirstRep().getSystem());
     assertEquals("urn:oid:1.3.6.1.4.1.12009.10.1.333", vs.getIdentifierFirstRep().getValue());
 
-    final ValueSet getVs = FhirUtilityR4.toR4LllgValueSetWithComposeOnly(terminology,
-        concept.getCode(), concept.getId(), new LllgComposeStructure(List.of(), List.of()),
-        concept);
+    final ValueSet getVs =
+        FhirUtilityR4.toR4LllgValueSetWithComposeOnly(terminology, concept.getCode(),
+            concept.getId(), new LllgComposeStructure(List.of(), List.of()), concept);
     assertEquals("Quantity (5 answers, ord)", getVs.getName());
     assertEquals("urn:oid:1.3.6.1.4.1.12009.10.1.333", getVs.getIdentifierFirstRep().getValue());
   }
@@ -231,7 +235,8 @@ public class FhirUtilityR4MetaUnitTest {
     attrs.put("originalId", "orig-1");
     terminology.setAttributes(attrs);
     terminology.setConceptCt(10L);
-    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    terminology.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, true);
     assertNotNull(vs.getMeta());
@@ -256,7 +261,8 @@ public class FhirUtilityR4MetaUnitTest {
     mapset.setPublisher("Test");
     final Map<String, String> attrs = new HashMap<>();
     mapset.setAttributes(attrs);
-    mapset.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    mapset.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final ConceptMap cm = FhirUtilityR4.toR4(mapset);
     assertNotNull(cm.getMeta());
@@ -285,7 +291,8 @@ public class FhirUtilityR4MetaUnitTest {
     final Map<String, String> attrs = new HashMap<>();
     attrs.put("fhirContact", fhirContact);
     mapset.setAttributes(attrs);
-    mapset.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    mapset.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final ConceptMap cm = FhirUtilityR4.toR4(mapset);
 
@@ -363,7 +370,8 @@ public class FhirUtilityR4MetaUnitTest {
     final Map<String, String> attrs = new HashMap<>();
     attrs.put("copyright", copyright);
     mapset.setAttributes(attrs);
-    mapset.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    mapset.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final ConceptMap cm = FhirUtilityR4.toR4(mapset);
 
@@ -390,7 +398,8 @@ public class FhirUtilityR4MetaUnitTest {
     final Map<String, String> attrs = new HashMap<>();
     attrs.put("copyright", copyright);
     terminology.setAttributes(attrs);
-    terminology.setCreated(Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    terminology.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final Questionnaire q = FhirUtilityR4.toR4Questionnaire(terminology, true);
     assertNotNull(q.getMeta());
@@ -490,8 +499,8 @@ public class FhirUtilityR4MetaUnitTest {
     terminology.setPublisher("Regenstrief Institute, Inc.");
     terminology.setAttributes(new HashMap<>());
     terminology.setConceptCt(1L);
-    terminology.setCreated(
-        Date.from(LocalDate.of(2024, 8, 6).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    terminology
+        .setCreated(Date.from(LocalDate.of(2024, 8, 6).atStartOfDay(ZoneOffset.UTC).toInstant()));
 
     final CodeSystem cs = FhirUtilityR4.toR4(terminology);
     assertEquals("2024-08-06T00:00:00+00:00", cs.getDateElement().getValueAsString());

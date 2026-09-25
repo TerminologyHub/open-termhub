@@ -34,29 +34,28 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.wci.termhub.fhir.r5.ValueSetProviderR5;
 import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
+import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.UriParam;
-import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 
 /**
- * Unit tests for LOINC LL/LG value set support (Regenstrief mode) with
- * server.mode=regenstrief. Uses LOINC sandbox data loaded by
- * AbstractFhirR5ServerTest.
+ * Unit tests for LOINC LL/LG value set support (Regenstrief mode) with server.mode=regenstrief.
+ * Uses LOINC sandbox data loaded by AbstractFhirR5ServerTest.
  */
 @TestPropertySource(properties = "server.mode=regenstrief")
 public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
 
   /** The Constant LG_VS_URL. */
-  private static final String LG_VS_URL = "http://loinc.org?fhir_vs=LG50982-4";
+  private static final String LG_VS_URL = "http://loinc.org/vs/LG50982-4";
 
   /** The Constant LG_VS_ID. */
   private static final String LG_VS_ID = "LG50982-4";
 
   /** The Constant LL_VS_URL. */
-  private static final String LL_VS_URL = "http://loinc.org?fhir_vs=LL1772-4";
+  private static final String LL_VS_URL = "http://loinc.org/vs/LL1772-4";
 
   /** The Constant LL_VS_ID. */
   private static final String LL_VS_ID = "LL1772-4";
@@ -159,13 +158,9 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, url, null, null, null);
     assertNotNull(bundle);
-    final ValueSet found = bundle.getEntry().stream()
-        .map(e -> e.getResource())
-        .filter(ValueSet.class::isInstance)
-        .map(ValueSet.class::cast)
-        .filter(v -> LG_VS_URL.equals(v.getUrl()))
-        .findFirst()
-        .orElse(null);
+    final ValueSet found = bundle.getEntry().stream().map(e -> e.getResource())
+        .filter(ValueSet.class::isInstance).map(ValueSet.class::cast)
+        .filter(v -> LG_VS_URL.equals(v.getUrl())).findFirst().orElse(null);
     assertNotNull(found, "Bundle should contain LG value set for " + LG_VS_URL);
     assertLllgValueSetHasUuidId(found, LG_VS_ID);
     assertLllgValueSetContact(found);
@@ -207,10 +202,11 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     assertNotNull(vs.getExpansion(), "ValueSet should have expansion like fhir.loinc.org");
     assertTrue(vs.getExpansion().getTotal() >= 0, "Expansion total should be non-negative");
     // assertTrue(
-    //     vs.getExpansion().getParameter().stream().anyMatch(p -> "offset".equals(p.getName())),
-    //     "Expansion should have offset parameter");
-    // assertTrue(vs.getExpansion().getParameter().stream().anyMatch(p -> "count".equals(p.getName())),
-    //     "Expansion should have count parameter");
+    // vs.getExpansion().getParameter().stream().anyMatch(p -> "offset".equals(p.getName())),
+    // "Expansion should have offset parameter");
+    // assertTrue(vs.getExpansion().getParameter().stream().anyMatch(p ->
+    // "count".equals(p.getName())),
+    // "Expansion should have count parameter");
   }
 
   /**
@@ -272,7 +268,8 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
         null, null, null, null, null, new BooleanType(true));
     assertNotNull(vs.getExpansion());
     assertNotNull(vs.getVersion(), "Expanded ValueSet should have version");
-    assumeTrue(vs.getExpansion().getContains() != null && !vs.getExpansion().getContains().isEmpty(),
+    assumeTrue(
+        vs.getExpansion().getContains() != null && !vs.getExpansion().getContains().isEmpty(),
         "LL expansion has no contains to check designations");
     final boolean anyDesignation = vs.getExpansion().getContains().stream()
         .anyMatch(c -> c.hasDesignation() && !c.getDesignation().isEmpty());
@@ -292,9 +289,8 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
    */
   @Test
   public void testExpandLgValueSetExperimental() throws Exception {
-    final ValueSet vs =
-        provider.expandInstance(request, details, new IdType(LG_VS_ID), null, null, null, null,
-            null, null, null, null);
+    final ValueSet vs = provider.expandInstance(request, details, new IdType(LG_VS_ID), null, null,
+        null, null, null, null, null, null);
     assertNotNull(vs);
     assertNotNull(vs.getExpansion(), "Expansion should be present");
     assertEquals(Boolean.TRUE, vs.getExperimental(),
@@ -341,14 +337,12 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   public void testValueSetReadLgByUuid() throws Exception {
     final ValueSet byCode = provider.getValueSet(request, details, new IdType(LG_VS_ID));
     assertNotNull(byCode.getId());
-    final ValueSet byUuid =
-        provider.getValueSet(request, details, new IdType(byCode.getId()));
+    final ValueSet byUuid = provider.getValueSet(request, details, new IdType(byCode.getId()));
     assertNotNull(byUuid);
     assertEquals(byCode.getId(), byUuid.getId());
     assertEquals(LG_VS_URL, byUuid.getUrl());
     assertLllgValueSetHasUuidId(byUuid, LG_VS_ID);
   }
-
 
   /**
    * Test expand lllg value set with correct version. Verifies that valueSetVersion matching the
@@ -368,8 +362,8 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
 
   /**
    * Test expand lllg value set with wrong version. Verifies that a valueSetVersion that does not
-   * match any loaded LOINC terminology returns a not-found error instead of silently falling back to
-   * the latest version.
+   * match any loaded LOINC terminology returns a not-found error instead of silently falling back
+   * to the latest version.
    */
   @Test
   public void testExpandLllgValueSetWithWrongVersionNotFound() {

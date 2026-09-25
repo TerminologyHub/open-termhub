@@ -43,21 +43,21 @@ import ca.uhn.fhir.rest.param.UriParam;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 
 /**
- * Unit tests for LOINC LL/LG value set support (Regenstrief mode) with
- * server.mode=regenstrief. Uses LOINC sandbox data loaded by
- * AbstractFhirR4ServerTest (e.g. concepts with ANSWER_LIST_ID LL1772-4).
+ * Unit tests for LOINC LL/LG value set support (Regenstrief mode) with server.mode=regenstrief.
+ * Uses LOINC sandbox data loaded by AbstractFhirR4ServerTest (e.g. concepts with ANSWER_LIST_ID
+ * LL1772-4).
  */
 @TestPropertySource(properties = "server.mode=regenstrief")
 public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** The Constant LG_VS_URL. */
-  private static final String LG_VS_URL = "http://loinc.org?fhir_vs=LG50982-4";
+  private static final String LG_VS_URL = "http://loinc.org/vs/LG50982-4";
 
   /** The Constant LG_VS_ID. */
   private static final String LG_VS_ID = "LG50982-4";
 
   /** The Constant LL_VS_URL. */
-  private static final String LL_VS_URL = "http://loinc.org?fhir_vs=LL1772-4";
+  private static final String LL_VS_URL = "http://loinc.org/vs/LL1772-4";
 
   /** The Constant LL_VS_ID. */
   private static final String LL_VS_ID = "LL1772-4";
@@ -270,7 +270,8 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
         null, null, null, null, null, new BooleanType(true));
     assertNotNull(vs.getExpansion());
     assertNotNull(vs.getVersion(), "Expanded ValueSet should have version");
-    assumeTrue(vs.getExpansion().getContains() != null && !vs.getExpansion().getContains().isEmpty(),
+    assumeTrue(
+        vs.getExpansion().getContains() != null && !vs.getExpansion().getContains().isEmpty(),
         "LL expansion has no contains to check designations");
     final boolean anyDesignation = vs.getExpansion().getContains().stream()
         .anyMatch(c -> c.hasDesignation() && !c.getDesignation().isEmpty());
