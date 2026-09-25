@@ -165,8 +165,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
           loincValueSetHelper.sortDirectLllgMembers(lllgCode, items);
           final LoincValueSetHelper.LllgComposeStructure composeStructure =
               loincValueSetHelper.buildLllgComposeStructure(items);
-          logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}",
-              idPart, items.size());
+          logger.info("GET ValueSet/{}: returning compose only (no expansion), members={}", idPart,
+              items.size());
           final Concept lllgConcept =
               loincValueSetHelper.findLllgConcept(searchService, loinc, lllgCode);
           final String valueSetId = lllgConcept != null ? lllgConcept.getId() : null;
@@ -1046,8 +1046,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @param filter the filter
    * @param version the version
    * @param total the total
-   * @param includeDesignationsParam includeDesignations request param (may be
-   *          null)
+   * @param includeDesignationsParam includeDesignations request param (may be null)
    * @return expansion component
    */
   private ValueSetExpansionComponent buildExpansionHeader(final int offset, final int ct,
@@ -1078,9 +1077,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
   }
 
   /**
-   * Adds $expand designations for a contains entry. LOINC matches
-   * fhir.loinc.org shape. When languages is non-null, only matching term locales
-   * are included.
+   * Adds $expand designations for a contains entry. LOINC matches fhir.loinc.org shape. When
+   * languages is non-null, only matching term locales are included.
    *
    * @param code the contains component
    * @param concept the concept
@@ -1174,8 +1172,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @param ct the ct
    * @param filter the filter
    * @param version the version
-   * @param includeDesignationsParam includeDesignations request param (may be
-   *          null)
+   * @param includeDesignationsParam includeDesignations request param (may be null)
    * @return the value set
    */
   private ValueSet createEmptyValueSetExpansion(final ValueSet vs, final int offset, final int ct,
@@ -1422,6 +1419,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
     if (url == null) {
       return null;
     }
+    // e.g. http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009
     final String part = url.replaceFirst(".*fhir_vs", "");
     String expression = null;
     if (part.startsWith("=")) {

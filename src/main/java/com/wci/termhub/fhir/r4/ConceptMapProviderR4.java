@@ -122,8 +122,8 @@ public class ConceptMapProviderR4 implements IResourceProvider {
         final Mapset mapset = FhirUtility.findMapsetByIdOrCode(searchService, id.getIdPart());
         if (mapset == null) {
           throw FhirUtilityR4.exception(
-              "Concept map not found = " + (id == null ? "null" : id.getIdPart()), IssueType.NOTFOUND,
-              HttpServletResponse.SC_NOT_FOUND);
+              "Concept map not found = " + (id == null ? "null" : id.getIdPart()),
+              IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
         }
         final SearchParameters params = new SearchParameters(
             StringUtility.composeQuery("AND",
@@ -324,18 +324,21 @@ public class ConceptMapProviderR4 implements IResourceProvider {
           logger.debug(" sourceSystem = {}, targetSystem = {}", cm.getSource(), cm.getTarget());
         }
 
-        if (sourceSystem != null && (cm.getSourceUriType() == null
-            || cm.getSourceUriType().getValue() == null || !cm.getSourceUriType().getValue()
-                .replace("?fhir_vs", "").equals(sourceSystem.getValue()))) {
+        // For sourceSystem and targetSystem
+        // Match https://loinc.org to https://loinc.org/vs
+        // Match https://snomed.info/sct to https://snomed.info/sct?fhir_vs
+        if (sourceSystem != null
+            && (cm.getSourceUriType() == null || cm.getSourceUriType().getValue() == null
+                || !cm.getSourceUriType().getValue().startsWith(sourceSystem.getValue()))) {
           if (logger.isDebugEnabled()) {
             logger.debug("  SKIP sourceSystem mismatch = {}, {}", sourceSystem.getValue(),
                 cm.getSourceUriType() != null ? cm.getSourceUriType().getValue() : "null");
           }
           continue;
         }
-        if (targetSystem != null && (cm.getTargetUriType() == null
-            || cm.getTargetUriType().getValue() == null || !cm.getTargetUriType().getValue()
-                .replace("?fhir_vs", "").equals(targetSystem.getValue()))) {
+        if (targetSystem != null
+            && (cm.getTargetUriType() == null || cm.getTargetUriType().getValue() == null
+                || !cm.getTargetUriType().getValue().startsWith(targetSystem.getValue()))) {
           if (logger.isDebugEnabled()) {
             logger.debug("  SKIP targetSystem mismatch = {}, {}", targetSystem.getValue(),
                 cm.getTargetUriType() != null ? cm.getTargetUriType().getValue() : "null");
@@ -615,8 +618,7 @@ public class ConceptMapProviderR4 implements IResourceProvider {
       // Lookup and filter mapsets
       final List<ConceptMap> list = new ArrayList<>();
       for (final Mapset mapset : FhirUtility.lookupMapsets(searchService)) {
-        final ConceptMap cm =
-            FhirUtilityR4.toR4(mapset, resolveContactTerminology(mapset));
+        final ConceptMap cm = FhirUtilityR4.toR4(mapset, resolveContactTerminology(mapset));
         list.add(cm);
       }
       return list;
@@ -730,12 +732,13 @@ public class ConceptMapProviderR4 implements IResourceProvider {
             mapset.getAbbreviation(), mapset.getVersion());
       }
 
-      final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-          (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
-          "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
-          "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
-          "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())), null, 2000, null,
-          null);
+      final SearchParameters params = new SearchParameters(
+          StringUtility.composeQuery("AND",
+              (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
+              "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
+              "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
+              "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
+          null, 2000, null, null);
 
       final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
 
@@ -745,14 +748,13 @@ public class ConceptMapProviderR4 implements IResourceProvider {
           match.setName("match");
           final ConceptMapEquivalence eq = FhirUtilityR4.toEquivalence(mapping.getType());
           match.addPart().setName("equivalence").setValue(new CodeType(eq.toCode()));
-          final ConceptRef ref =
-              reverse ? mapping.getFrom() : mapping.getTo();
+          final ConceptRef ref = reverse ? mapping.getFrom() : mapping.getTo();
           if (!reverse && (ref.getCode() == null || ref.getCode().isEmpty())) {
             continue;
           }
-          final String fallbackUri = reverse
-              ? (map.getSourceUriType() == null ? null : map.getSourceUriType().getValue())
-              : (map.getTargetUriType() == null ? null : map.getTargetUriType().getValue());
+          final String fallbackUri =
+              reverse ? (map.getSourceUriType() == null ? null : map.getSourceUriType().getValue())
+                  : (map.getTargetUriType() == null ? null : map.getTargetUriType().getValue());
           final Coding concept = new Coding();
           final String systemUri =
               FhirUtility.resolveTranslateSystemUri(searchService, ref, fallbackUri);

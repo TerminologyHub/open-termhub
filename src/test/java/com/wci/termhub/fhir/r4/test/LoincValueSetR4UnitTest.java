@@ -48,21 +48,21 @@ import ca.uhn.fhir.rest.param.UriParam;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 
 /**
- * Unit tests for LOINC LL/LG value set support (Regenstrief mode) with
- * server.mode=regenstrief. Uses LOINC sandbox data loaded by
- * AbstractFhirR4ServerTest (e.g. concepts with ANSWER_LIST_ID LL1772-4).
+ * Unit tests for LOINC LL/LG value set support (Regenstrief mode) with server.mode=regenstrief.
+ * Uses LOINC sandbox data loaded by AbstractFhirR4ServerTest (e.g. concepts with ANSWER_LIST_ID
+ * LL1772-4).
  */
 @TestPropertySource(properties = "server.mode=regenstrief")
 public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** The Constant LG_VS_URL. */
-  private static final String LG_VS_URL = "http://loinc.org?fhir_vs=LG50982-4";
+  private static final String LG_VS_URL = "http://loinc.org/vs/LG50982-4";
 
   /** The Constant LG_VS_ID. */
   private static final String LG_VS_ID = "LG50982-4";
 
   /** The Constant LL_VS_URL. */
-  private static final String LL_VS_URL = "http://loinc.org?fhir_vs=LL1772-4";
+  private static final String LL_VS_URL = "http://loinc.org/vs/LL1772-4";
 
   /** The Constant LL_VS_ID. */
   private static final String LL_VS_ID = "LL1772-4";
@@ -139,8 +139,8 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
         loincValueSetHelper.parseIdFromUrl("http://loinc.org/vs/LG51018-6-2.72"));
     assertEquals("LG51018-6-2.72",
         loincValueSetHelper.parseIdFromUrl("https://loinc.org/vs/LG51018-6-2.72"));
-    assertEquals("2.72", loincValueSetHelper.getVersionFromLllgId("LG51018-6-2.72"));
-    assertEquals("LG51018-6", loincValueSetHelper.getBaseLllgCode("LG51018-6-2.72"));
+    assertEquals("2.72", LoincValueSetHelper.getVersionFromLllgId("LG51018-6-2.72"));
+    assertEquals("LG51018-6", LoincValueSetHelper.getBaseLllgCode("LG51018-6-2.72"));
     assertEquals("LG51018-6", loincValueSetHelper.parseIdFromUrl("http://loinc.org/vs/LG51018-6"));
   }
 
@@ -283,7 +283,8 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
         null, null, null, null, null, new BooleanType(true), null, null, null, null);
     assertNotNull(vs.getExpansion());
     assertNotNull(vs.getVersion(), "Expanded ValueSet should have version");
-    assumeTrue(vs.getExpansion().getContains() != null && !vs.getExpansion().getContains().isEmpty(),
+    assumeTrue(
+        vs.getExpansion().getContains() != null && !vs.getExpansion().getContains().isEmpty(),
         "LL expansion has no contains to check designations");
     final boolean anyDesignation = vs.getExpansion().getContains().stream()
         .anyMatch(c -> c.hasDesignation() && !c.getDesignation().isEmpty());
@@ -381,8 +382,8 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     final ValueSet latest = provider.getValueSet(request, details, new IdType(LG_VS_ID));
     assertNotNull(latest.getVersion());
     final String versionedId = LG_VS_ID + "-" + latest.getVersion();
-    final ValueSet vs = provider.expandInstance(request, details, new IdType(versionedId), null, null,
-        null, null, null, null, null, null, null, null, null, null);
+    final ValueSet vs = provider.expandInstance(request, details, new IdType(versionedId), null,
+        null, null, null, null, null, null, null, null, null, null, null);
     assertNotNull(vs);
     assertEquals(latest.getVersion(), vs.getVersion());
     assertEquals(LG_VS_URL, vs.getUrl());
@@ -598,9 +599,9 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
 
     final StringParam descriptionContains = new StringParam("entire");
     descriptionContains.setContains(true);
-    final Bundle byDescription = provider.findValueSets(request, details, null, null, null,
-        descriptionContains, null, null, null, null, null, null, new UriParam(IMPLICIT_VS_URL),
-        null, null, null);
+    final Bundle byDescription =
+        provider.findValueSets(request, details, null, null, null, descriptionContains, null, null,
+            null, null, null, null, new UriParam(IMPLICIT_VS_URL), null, null, null);
     assertTrue(bundleHasUrl(byDescription, IMPLICIT_VS_URL));
 
     final Bundle byDateGe = provider.findValueSets(request, details, null, null,
@@ -645,28 +646,27 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
    */
   @Test
   public void testExpandSandboxLllgParams() throws Exception {
-    final FHIRServerResponseException missingUrl = assertThrows(FHIRServerResponseException.class,
-        () -> provider.expandImplicit(request, details, null, null, null, null, null, null, null,
-            null, null, null, null, null));
+    final FHIRServerResponseException missingUrl =
+        assertThrows(FHIRServerResponseException.class, () -> provider.expandImplicit(request,
+            details, null, null, null, null, null, null, null, null, null, null, null, null));
     assertEquals(400, missingUrl.getStatusCode());
 
-    final ValueSet filtered = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
-        null, new StringType("Diabetes"), null, null, null, null, null, null, null, null);
+    final ValueSet filtered =
+        provider.expandImplicit(request, details, null, new UriType(LL_VS_URL), null,
+            new StringType("Diabetes"), null, null, null, null, null, null, null, null);
     assertEquals(1, filtered.getExpansion().getContains().size());
     assertEquals("LA10529-8", filtered.getExpansion().getContainsFirstRep().getCode());
 
     final ValueSet spanish = provider.expandImplicit(request, details, null, new UriType(LG_VS_URL),
         null, null, null, null, List.of(new CodeType("es-ES")), null, null, null, null, null);
-    assertTrue(spanish.getExpansion().getContains().stream()
-        .anyMatch(c -> LOINC_CODE_IN_LL.equals(c.getCode())
-            && SPANISH_DISPLAY_66480.equals(c.getDisplay())));
+    assertTrue(spanish.getExpansion().getContains().stream().anyMatch(
+        c -> LOINC_CODE_IN_LL.equals(c.getCode()) && SPANISH_DISPLAY_66480.equals(c.getDisplay())));
 
-    final ValueSet withProp = provider.expandImplicit(request, details, null, new UriType(LG_VS_URL),
-        null, null, null, null, null, null, null, null, null,
+    final ValueSet withProp = provider.expandImplicit(request, details, null,
+        new UriType(LG_VS_URL), null, null, null, null, null, null, null, null, null,
         List.of(new CodeType("CLASS"), new CodeType("STATUS")));
-    assertTrue(withProp.getExpansion().getContains().stream()
-        .anyMatch(c -> LOINC_CODE_IN_LL.equals(c.getCode())
-            && hasR4ExpandProperty(c, "CLASS", "PHENX")
+    assertTrue(withProp.getExpansion().getContains().stream().anyMatch(
+        c -> LOINC_CODE_IN_LL.equals(c.getCode()) && hasR4ExpandProperty(c, "CLASS", "PHENX")
             && hasR4ExpandProperty(c, "STATUS", "Active")));
 
     final ValueSet paged = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
@@ -683,10 +683,10 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     assertTrue(withDef.hasCompose());
     assertTrue(withDef.getCompose().hasInclude());
 
-    final ValueSet filterDesignations = provider.expandImplicit(request, details, null,
-        new UriType(LL_VS_URL), new StringType("277"), new StringType("Diabetes"),
-        new IntegerType(0), new IntegerType(10), null, new BooleanType(true), null, null, null,
-        null);
+    final ValueSet filterDesignations =
+        provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
+            new StringType("277"), new StringType("Diabetes"), new IntegerType(0),
+            new IntegerType(10), null, new BooleanType(true), null, null, null, null);
     assertEquals("277", filterDesignations.getVersion());
     assertTrue(filterDesignations.getExpansion().getContainsFirstRep().hasDesignation());
 
@@ -705,9 +705,10 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
         () -> provider.getValueSet(request, details, new IdType("does-not-exist")));
     assertEquals(404, missing.getStatusCode());
 
-    final FHIRServerResponseException missingExpand = assertThrows(FHIRServerResponseException.class,
-        () -> provider.expandInstance(request, details, new IdType("does-not-exist"), null, null,
-            null, null, null, null, null, null, null, null, null, null));
+    final FHIRServerResponseException missingExpand =
+        assertThrows(FHIRServerResponseException.class,
+            () -> provider.expandInstance(request, details, new IdType("does-not-exist"), null,
+                null, null, null, null, null, null, null, null, null, null, null));
     assertEquals(404, missingExpand.getStatusCode());
 
     request.addParameter("url", IMPLICIT_VS_URL);
@@ -730,8 +731,8 @@ public class LoincValueSetR4UnitTest extends AbstractFhirR4ServerTest {
    * @return true if present
    */
   private static boolean bundleHasUrl(final Bundle bundle, final String url) {
-    return bundle != null && bundle.getEntry() != null && bundle.getEntry().stream()
-        .anyMatch(e -> e.getResource() instanceof ValueSet
+    return bundle != null && bundle.getEntry() != null
+        && bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
             && url.equals(((ValueSet) e.getResource()).getUrl()));
   }
 

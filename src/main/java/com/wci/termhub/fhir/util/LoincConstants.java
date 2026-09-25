@@ -44,7 +44,7 @@ public final class LoincConstants {
   public static final String ATTR_CLASSTYPE = "CLASSTYPE";
 
   /** URL prefix for LOINC value sets (query form). */
-  public static final String LOINC_VS_URL_PREFIX = "http://loinc.org?fhir_vs";
+  public static final String LOINC_VS_URL_PREFIX = "http://loinc.org/vs";
 
   /** Path prefix for LOINC value set URLs (e.g. http://loinc.org/vs/LG51018-6-2.72). */
   public static final String LOINC_VS_PATH_PREFIX = "http://loinc.org/vs/";

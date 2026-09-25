@@ -28,9 +28,9 @@ import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.LinkRelationTypes;
 import org.hl7.fhir.r5.model.CapabilityStatement;
-import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
+import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.IdType;
@@ -40,8 +40,8 @@ import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.ResourceType;
-import org.hl7.fhir.r5.model.TerminologyCapabilities;
 import org.hl7.fhir.r5.model.StringType;
+import org.hl7.fhir.r5.model.TerminologyCapabilities;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -90,9 +90,8 @@ import ca.uhn.fhir.parser.IParser;
 /**
  * Class tests for FhirR5Tests. Tests the functionality of the FHIR R5 endpoints, CodeSystem,
  * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set
- * id's. With server.mode=regenstrief, LOINC LL/LG value sets from
- * CodeSystem-lnc-sandbox-277-r5 (e.g. LL1772-4) are exposed via ValueSet search by url and read by
- * id.
+ * id's. With server.mode=regenstrief, LOINC LL/LG value sets from CodeSystem-lnc-sandbox-277-r5
+ * (e.g. LL1772-4) are exposed via ValueSet search by url and read by id.
  */
 @AutoConfigureMockMvc
 @TestMethodOrder(OrderAnnotation.class)
@@ -129,7 +128,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   private static final String LL_VS_ID = "LL1772-4";
 
   /** LL value set url (fhir_vs form). */
-  private static final String LL_VS_URL = "http://loinc.org?fhir_vs=LL1772-4";
+  private static final String LL_VS_URL = "http://loinc.org/vs/LL1772-4";
 
   /** LOINC sandbox concept with both {@code status} and {@code STATUS} properties. */
   private static final String LOINC_STATUS_TEST_CODE = "LG50982-4";
@@ -1582,9 +1581,9 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   }
 
   /**
-   * Test CodeSystem $lookup with blank code query parameter returns 400 instead of 500.
-   * See OP-2835: an empty {@code code} param was falling through to an unhandled Lucene
-   * parse exception and surfacing as a 500 instead of a 400.
+   * Test CodeSystem $lookup with blank code query parameter returns 400 instead of 500. See
+   * OP-2835: an empty {@code code} param was falling through to an unhandled Lucene parse exception
+   * and surfacing as a 500 instead of a 400.
    *
    * @throws Exception the exception
    */
@@ -1751,7 +1750,8 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
       final Set<String> propertyKeys = collectLookupPropertyKeys(result);
 
       assertFalse(propertyKeys.contains("status|active"),
-          "status should be suppressed when STATUS is present in Regenstrief mode: " + propertyKeys);
+          "status should be suppressed when STATUS is present in Regenstrief mode: "
+              + propertyKeys);
       assertTrue(propertyKeys.contains("STATUS|Active"),
           "Expected STATUS|Active property, got: " + propertyKeys);
       assertEquals("active", ((CodeType) result.getParameter("status").getValue()).getValue());
