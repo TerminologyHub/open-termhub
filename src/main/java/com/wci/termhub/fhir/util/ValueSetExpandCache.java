@@ -63,11 +63,13 @@ public final class ValueSetExpandCache {
    * @param activeOnly active-only flag
    * @param languages display languages (may be null)
    * @param includeDesignations whether designations are included
+   * @param extra extra key fragment (includeDefinition, date, properties)
    * @return cache key
    */
   public static String buildKey(final FhirVersionEnum fhirVersion, final String id, final String url,
     final String version, final int offset, final int count, final String filter,
-    final boolean activeOnly, final Set<String> languages, final boolean includeDesignations) {
+    final boolean activeOnly, final Set<String> languages, final boolean includeDesignations,
+    final String extra) {
     final String langs;
     if (languages == null || languages.isEmpty()) {
       langs = "*";
@@ -78,7 +80,28 @@ public final class ValueSetExpandCache {
     }
     return fhirVersion.name() + "|" + nullToEmpty(id) + "|" + nullToEmpty(url) + "|"
         + nullToEmpty(version) + "|" + offset + "|" + count + "|" + nullToEmpty(filter) + "|"
-        + activeOnly + "|" + langs + "|" + includeDesignations;
+        + activeOnly + "|" + langs + "|" + includeDesignations + "|" + nullToEmpty(extra);
+  }
+
+  /**
+   * Extra cache-key fragment for includeDefinition, date, and properties.
+   *
+   * @param includeDefinition whether compose is included
+   * @param date expand date (may be null)
+   * @param properties requested property codes (may be null)
+   * @return extra key fragment
+   */
+  public static String extraKey(final boolean includeDefinition, final String date,
+    final Set<String> properties) {
+    final String props;
+    if (properties == null || properties.isEmpty()) {
+      props = "";
+    } else {
+      final List<String> sorted = new ArrayList<>(properties);
+      Collections.sort(sorted);
+      props = sorted.stream().collect(Collectors.joining(","));
+    }
+    return includeDefinition + "|" + nullToEmpty(date) + "|" + props;
   }
 
   /**

@@ -174,6 +174,14 @@ public class FhirUtilityR5MetaUnitTest {
     final ValueSet vs =
         FhirUtilityR5.toR5LllgValueSet(terminology, "LG10030-1", "test-uuid", false);
 
+    assertEquals("http://loinc.org?fhir_vs=LG10030-1", vs.getUrl());
+    assertEquals("2.78", vs.getVersion());
+
+    final ValueSet versioned =
+        FhirUtilityR5.toR5LllgValueSet(terminology, "LG10030-1-2.78", "test-uuid", false);
+    assertEquals("http://loinc.org?fhir_vs=LG10030-1", versioned.getUrl());
+    assertEquals("2.78", versioned.getVersion());
+
     assertNotNull(vs.getContact());
     assertEquals("Regenstrief Institute, Inc.", vs.getContactFirstRep().getName());
     assertEquals("http://loinc.org", vs.getContactFirstRep().getTelecomFirstRep().getValue());

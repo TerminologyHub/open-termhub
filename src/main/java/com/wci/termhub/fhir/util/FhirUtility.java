@@ -17,10 +17,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.wci.termhub.model.Concept;
+import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
 import com.wci.termhub.model.Mapset;
@@ -39,6 +42,7 @@ import com.wci.termhub.model.Metadata;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Subset;
+import com.wci.termhub.model.Term;
 import com.wci.termhub.model.Terminology;
 import com.wci.termhub.model.TerminologyRef;
 import com.wci.termhub.service.EntityRepositoryService;
@@ -50,6 +54,7 @@ import com.wci.termhub.util.TimerCache;
 import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.StringParam;
+import ca.uhn.fhir.rest.param.TokenParam;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
@@ -93,6 +98,12 @@ public final class FhirUtility {
   /** The concept name map cache. */
   private static TimerCache<Map<String, String>> conceptNameMapCache =
       new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+
+  /** Search parameters that are invalid on ValueSet GET-by-id. */
+  public static final String[] VALUE_SET_READ_SEARCH_PARAMS = new String[] {
+      "code", "date", "description", "identifier", "name", "publisher", "reference", "status",
+      "title", "url", "version"
+  };
 
   /** system|version -> Terminology for FHIR $lookup resolution. */
   private static TimerCache<Terminology> systemVersionTerminologyCache =
@@ -807,6 +818,266 @@ public final class FhirUtility {
       return s2.toLowerCase().contains(s1.getValue().toLowerCase());
     } else {
       return s2.toLowerCase().startsWith(s1.getValue().toLowerCase());
+    }
+  }
+
+  /**
+   * Compare a FHIR token against an identifier or status code. Empty token matches anything.
+   *
+   * @param token the token
+   * @param system the target system (may be null)
+   * @param value the target value (may be null)
+   * @return true if the token matches
+   */
+  public static boolean compareToken(final TokenParam token, final String system,
+    final String value) {
+    if (token == null) {
+      return true;
+    }
+    final String tokenSystem = token.getSystem();
+    final String tokenValue = token.getValue();
+    if (StringUtils.isEmpty(tokenSystem) && StringUtils.isEmpty(tokenValue)) {
+      return true;
+    }
+    if (value == null) {
+      return false;
+    }
+    if (!StringUtils.isEmpty(tokenSystem) && !tokenSystem.equals(system)) {
+      return false;
+    }
+    if (!StringUtils.isEmpty(tokenValue) && !tokenValue.equals(value)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Preferred term name for requested languages. Matches {@code localeMap} keys
+   * exactly or by language prefix ({@code es} → {@code es-ES}). Prefers
+   * {@code true} entries, then any matching locale (LOINC translations are often
+   * FSN with preferred=false).
+   *
+   * @param concept the concept
+   * @param languages requested languages (null = use concept name)
+   * @return display string
+   */
+  public static String preferredDisplay(final Concept concept, final Set<String> languages) {
+    if (concept == null) {
+      return null;
+    }
+    if (languages == null || languages.isEmpty() || concept.getTerms() == null) {
+      return concept.getName();
+    }
+    String fallback = null;
+    for (final Term term : concept.getTerms()) {
+      if (term.getName() == null || term.getName().isEmpty()) {
+        continue;
+      }
+      final String matched = matchPreferredLanguage(term, languages);
+      if (matched == null) {
+        continue;
+      }
+      if (Boolean.TRUE.equals(term.getLocaleMap().get(matched))) {
+        return term.getName();
+      }
+      if (fallback == null) {
+        fallback = term.getName();
+      }
+    }
+    return fallback != null ? fallback : concept.getName();
+  }
+
+  /**
+   * Locale from the term that matches requested languages. Exact or prefix
+   * ({@code es} / {@code es-ES}). Preferred ({@code true}) wins; otherwise any
+   * matching locale.
+   *
+   * @param term the term
+   * @param languages requested languages (may be null)
+   * @return matched language or null
+   */
+  public static String matchPreferredLanguage(final Term term, final Set<String> languages) {
+    if (languages == null || languages.isEmpty() || term == null || term.getLocaleMap() == null
+        || term.getLocaleMap().isEmpty()) {
+      return null;
+    }
+    String fallback = null;
+    for (final String requested : languages) {
+      if (requested == null || requested.isEmpty()) {
+        continue;
+      }
+      for (final Map.Entry<String, Boolean> entry : term.getLocaleMap().entrySet()) {
+        final String stored = entry.getKey();
+        if (!languageTagMatches(requested, stored)) {
+          continue;
+        }
+        if (Boolean.TRUE.equals(entry.getValue())) {
+          return stored;
+        }
+        if (fallback == null) {
+          fallback = stored;
+        }
+      }
+    }
+    return fallback;
+  }
+
+  /**
+   * Language tag match: exact, or same primary subtag ({@code es} vs {@code es-ES}).
+   *
+   * @param requested requested tag
+   * @param stored stored tag
+   * @return true if they match
+   */
+  static boolean languageTagMatches(final String requested, final String stored) {
+    if (requested == null || stored == null) {
+      return false;
+    }
+    if (requested.equalsIgnoreCase(stored)) {
+      return true;
+    }
+    final String reqBase = requested.split("-", 2)[0];
+    final String storedBase = stored.split("-", 2)[0];
+    return reqBase.equalsIgnoreCase(storedBase);
+  }
+
+  /**
+   * Properties to attach to a ValueSet expansion contains, filtered by requested codes.
+   *
+   * @param concept the concept
+   * @param requested requested property codes (empty/null = none)
+   * @param isLoinc whether this is LOINC
+   * @param systemUri coding system URI for valueCoding
+   * @return ordered properties
+   */
+  public static List<ExpandProperty> collectExpandProperties(final Concept concept,
+    final Set<String> requested, final boolean isLoinc, final String systemUri) {
+    final List<ExpandProperty> result = new ArrayList<>();
+    if (concept == null || requested == null || requested.isEmpty()) {
+      return result;
+    }
+    final Set<String> emitted = new HashSet<>();
+    if (isLoinc && concept.getFhirPropertyCodings() != null
+        && !concept.getFhirPropertyCodings().isEmpty()) {
+      for (final ConceptPropertyValueCoding entry : LoincConceptPropertyHelper
+          .selectFhirPropertyCodingsForLookup(concept.getFhirPropertyCodings())) {
+        final String propertyCode = entry.getPropertyCode();
+        if (propertyCode == null || !requested.contains(propertyCode)) {
+          continue;
+        }
+        if (LoincConceptPropertyHelper.suppressRelationshipPropertyOnLookupOutput(propertyCode)) {
+          continue;
+        }
+        result.add(new ExpandProperty(propertyCode, null, systemUri, entry.getValueCode(),
+            entry.getValueDisplay()));
+        emitted.add(propertyCode);
+      }
+    }
+    if (concept.getAttributes() != null) {
+      for (final Map.Entry<String, String> entry : concept.getAttributes().entrySet()) {
+        final String key = entry.getKey();
+        if (key == null || !requested.contains(key) || emitted.contains(key)) {
+          continue;
+        }
+        if (isLoinc && LoincConceptPropertyHelper.isLoincLookupInternalDisplayKey(key)) {
+          continue;
+        }
+        result.add(new ExpandProperty(key, entry.getValue(), null, null, null));
+      }
+    }
+    return result;
+  }
+
+  /**
+   * One expansion contains property.
+   */
+  public static final class ExpandProperty {
+
+    /** Property code. */
+    private final String code;
+
+    /** String value when not a coding. */
+    private final String value;
+
+    /** Coding system. */
+    private final String codingSystem;
+
+    /** Coding code. */
+    private final String codingCode;
+
+    /** Coding display. */
+    private final String codingDisplay;
+
+    /**
+     * Instantiates an {@link ExpandProperty}.
+     *
+     * @param code the code
+     * @param value the string value
+     * @param codingSystem the coding system
+     * @param codingCode the coding code
+     * @param codingDisplay the coding display
+     */
+    public ExpandProperty(final String code, final String value, final String codingSystem,
+      final String codingCode, final String codingDisplay) {
+      this.code = code;
+      this.value = value;
+      this.codingSystem = codingSystem;
+      this.codingCode = codingCode;
+      this.codingDisplay = codingDisplay;
+    }
+
+    /**
+     * Returns the code.
+     *
+     * @return the code
+     */
+    public String getCode() {
+      return code;
+    }
+
+    /**
+     * Returns the value.
+     *
+     * @return the value
+     */
+    public String getValue() {
+      return value;
+    }
+
+    /**
+     * Returns the coding system.
+     *
+     * @return the coding system
+     */
+    public String getCodingSystem() {
+      return codingSystem;
+    }
+
+    /**
+     * Returns the coding code.
+     *
+     * @return the coding code
+     */
+    public String getCodingCode() {
+      return codingCode;
+    }
+
+    /**
+     * Returns the coding display.
+     *
+     * @return the coding display
+     */
+    public String getCodingDisplay() {
+      return codingDisplay;
+    }
+
+    /**
+     * Whether this property is a coding.
+     *
+     * @return true if coding
+     */
+    public boolean isCoding() {
+      return codingCode != null && !codingCode.isEmpty();
     }
   }
 

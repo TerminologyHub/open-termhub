@@ -75,6 +75,7 @@ import com.wci.termhub.fhir.util.FhirUtility;
 import com.wci.termhub.fhir.util.LoincConceptPropertyHelper;
 import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincQuestionnaireHelper;
+import com.wci.termhub.fhir.util.LoincValueSetHelper;
 import com.wci.termhub.fhir.util.LoincValueSetHelper.LllgComposeStructure;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
@@ -365,6 +366,81 @@ public final class FhirUtilityR5 {
         .count() > 0) {
       notSupported(request, "_has");
     }
+  }
+
+  /**
+   * Reject ValueSet search parameters on GET-by-id.
+   *
+   * @param request the request
+   */
+  public static void notSupportedValueSetReadSearchParams(final HttpServletRequest request) {
+    for (final String param : FhirUtility.VALUE_SET_READ_SEARCH_PARAMS) {
+      notSupported(request, param);
+    }
+  }
+
+  /**
+   * Whether identifier search matches a ValueSet identifier.
+   *
+   * @param token the identifier token
+   * @param valueSet the value set
+   * @return true if matches
+   */
+  public static boolean matchesIdentifier(final ca.uhn.fhir.rest.param.TokenParam token,
+    final ValueSet valueSet) {
+    if (token == null) {
+      return true;
+    }
+    if (valueSet == null || !valueSet.hasIdentifier()) {
+      return FhirUtility.compareToken(token, null, null);
+    }
+    for (final Identifier identifier : valueSet.getIdentifier()) {
+      if (FhirUtility.compareToken(token, identifier.getSystem(), identifier.getValue())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Whether status search matches a ValueSet status.
+   *
+   * @param token the status token
+   * @param valueSet the value set
+   * @return true if matches
+   */
+  public static boolean matchesStatus(final ca.uhn.fhir.rest.param.TokenParam token,
+    final ValueSet valueSet) {
+    if (token == null) {
+      return true;
+    }
+    final String status =
+        valueSet != null && valueSet.hasStatus() ? valueSet.getStatus().toCode() : null;
+    return FhirUtility.compareToken(token, null, status);
+  }
+
+  /**
+   * Whether reference search matches compose.include.system or a fallback URI.
+   *
+   * @param reference the reference
+   * @param valueSet the value set
+   * @param fallbackSystem fallback include system
+   * @return true if matches
+   */
+  public static boolean matchesReference(final ca.uhn.fhir.rest.param.UriParam reference,
+    final ValueSet valueSet, final String fallbackSystem) {
+    if (reference == null || reference.getValue() == null || reference.getValue().isEmpty()) {
+      return true;
+    }
+    final String wanted = reference.getValue();
+    if (valueSet != null && valueSet.hasCompose() && valueSet.getCompose().hasInclude()) {
+      for (final ConceptSetComponent include : valueSet.getCompose().getInclude()) {
+        if (wanted.equals(include.getSystem())) {
+          return true;
+        }
+      }
+    }
+    return wanted.equals(fallbackSystem);
   }
 
   /**
@@ -1060,8 +1136,8 @@ public final class FhirUtilityR5 {
     if (valueSetId != null) {
       set.setId(valueSetId);
     }
-    // Use /vs/ instead of "?fhir_vs=" because this is just for LOINC
-    set.setUrl(terminology.getUri() + "/vs/" + lllgId);
+    final String urlCode = LoincValueSetHelper.getBaseLllgCode(lllgId);
+    set.setUrl(terminology.getUri() + "/vs/" + (urlCode != null ? urlCode : lllgId));
     set.setVersion(terminology.getVersion());
     set.setPublisher(terminology.getPublisher());
     set.setStatus(PublicationStatus.ACTIVE);
@@ -1159,7 +1235,11 @@ public final class FhirUtilityR5 {
       return true;
     }
     final String lllgIdFromUrl = parseLllgIdFromValueSetUrl(vs.getUrl());
-    return idValue.equals(lllgIdFromUrl);
+    if (idValue.equals(lllgIdFromUrl)) {
+      return true;
+    }
+    return lllgIdFromUrl != null
+        && lllgIdFromUrl.equals(LoincValueSetHelper.getBaseLllgCode(idValue));
   }
 
   /**
