@@ -238,6 +238,10 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           continue;
         }
 
+        // For sourceSystem and targetSystem
+        // Match https://loinc.org to https://loinc.org/vs
+        // Match https://snomed.info/sct to https://snomed.info/sct?fhir_vs
+
         // Check source system
         if (sourceSystem != null) {
           if (logger.isDebugEnabled()) {
@@ -247,8 +251,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           }
 
           if (cm.getSourceScope() == null || ((UriType) cm.getSourceScope()).getValue() == null
-              || !((UriType) cm.getSourceScope()).getValue().replace("?fhir_vs", "")
-                  .equals(sourceSystem.getValue())) {
+              || !((UriType) cm.getSourceScope()).getValue().startsWith(sourceSystem.getValue())) {
             if (logger.isDebugEnabled()) {
               logger.debug("  SKIP sourceSystem mismatch = {}", sourceSystem.getValue());
             }
@@ -265,8 +268,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           }
 
           if (cm.getTargetScope() == null || ((UriType) cm.getTargetScope()).getValue() == null
-              || !((UriType) cm.getTargetScope()).getValue().replace("?fhir_vs", "")
-                  .equals(targetSystem.getValue())) {
+              || !((UriType) cm.getTargetScope()).getValue().startsWith(targetSystem.getValue())) {
             if (logger.isDebugEnabled()) {
               logger.debug("  SKIP targetSystem mismatch = {}", targetSystem.getValue());
             }
@@ -394,12 +396,12 @@ public class ConceptMapProviderR5 implements IResourceProvider {
             targetTerminology != null ? targetTerminology.getAbbreviation() : "null");
       }
 
-      final List<Mapset> selected = FhirUtility.filterTranslateMapsets(
-          FhirUtility.lookupMapsets(searchService), url == null ? null : url.getValue(),
-          id == null ? null : id.getIdPart(),
-          conceptMapVersion == null ? null : conceptMapVersion.getValue(),
-          sourceSystem == null ? null : sourceSystem.getValue(),
-          sourceVersion == null ? null : sourceVersion.getValue());
+      final List<Mapset> selected =
+          FhirUtility.filterTranslateMapsets(FhirUtility.lookupMapsets(searchService),
+              url == null ? null : url.getValue(), id == null ? null : id.getIdPart(),
+              conceptMapVersion == null ? null : conceptMapVersion.getValue(),
+              sourceSystem == null ? null : sourceSystem.getValue(),
+              sourceVersion == null ? null : sourceVersion.getValue());
       final List<ConceptMap> list =
           toTranslateConceptMaps(selected, sourceScope, targetScope, targetSystem);
       if (!list.isEmpty()) {
@@ -582,8 +584,7 @@ public class ConceptMapProviderR5 implements IResourceProvider {
       // Lookup and filter mapsets
       final List<ConceptMap> list = new ArrayList<>();
       for (final Mapset mapset : FhirUtility.lookupMapsets(searchService)) {
-        final ConceptMap cm =
-            FhirUtilityR5.toR5(mapset, resolveContactTerminology(mapset));
+        final ConceptMap cm = FhirUtilityR5.toR5(mapset, resolveContactTerminology(mapset));
         list.add(cm);
       }
       return list;
@@ -696,12 +697,13 @@ public class ConceptMapProviderR5 implements IResourceProvider {
             mapset.getAbbreviation(), mapset.getVersion());
       }
 
-      final SearchParameters params = new SearchParameters(StringUtility.composeQuery("AND",
-          (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
-          "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
-          "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
-          "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())), null, 2000, null,
-          null);
+      final SearchParameters params = new SearchParameters(
+          StringUtility.composeQuery("AND",
+              (reverse ? "to.code:" : "from.code:") + StringUtility.escapeQuery(code),
+              "mapset.abbreviation:" + StringUtility.escapeQuery(mapset.getAbbreviation()),
+              "mapset.publisher:" + StringUtility.escapeQuery(mapset.getPublisher()),
+              "mapset.version:" + StringUtility.escapeQuery(mapset.getVersion())),
+          null, 2000, null, null);
       final List<Mapping> mappings = searchService.find(params, Mapping.class).getItems();
 
       if (logger.isDebugEnabled()) {
@@ -717,8 +719,8 @@ public class ConceptMapProviderR5 implements IResourceProvider {
           if (!reverse && (ref.getCode() == null || ref.getCode().isEmpty())) {
             continue;
           }
-          final String fallbackUri = reverse ? r5ScopeUri(map.getSourceScope())
-              : r5ScopeUri(map.getTargetScope());
+          final String fallbackUri =
+              reverse ? r5ScopeUri(map.getSourceScope()) : r5ScopeUri(map.getTargetScope());
           final Coding concept = new Coding();
           final String systemUri =
               FhirUtility.resolveTranslateSystemUri(searchService, ref, fallbackUri);

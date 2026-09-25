@@ -201,7 +201,8 @@ public final class ConceptMapLoaderUtil {
       if (conceptMap.has("sourceUri")) {
         source = conceptMap.get("sourceUri").asText();
       } else if (conceptMap.has("sourceScopeUri")) {
-        source = conceptMap.get("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
+        source = conceptMap.get("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "")
+            .replaceFirst("/vs$", "");
       } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
           && conceptMap.get("group").get(0).has("source")) {
         source = conceptMap.get("group").get(0).get("source").asText();
@@ -216,7 +217,8 @@ public final class ConceptMapLoaderUtil {
       if (conceptMap.has("targetUri")) {
         target = conceptMap.get("targetUri").asText();
       } else if (conceptMap.has("targetScopeUri")) {
-        target = conceptMap.get("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
+        target = conceptMap.get("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "")
+            .replaceFirst("/vs$", "");
       } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
           && conceptMap.get("group").get(0).has("target")) {
         target = conceptMap.get("group").get(0).get("target").asText();
@@ -498,7 +500,8 @@ public final class ConceptMapLoaderUtil {
 
     String fromTerminology = null;
     if (root.has("sourceScopeUri")) {
-      fromTerminology = root.path("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
+      fromTerminology = root.path("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "")
+          .replaceFirst("/vs$", "");
     } else if (root.has("sourceUri")) {
       fromTerminology = root.path("sourceUri").asText();
     } else if (root.has("group") && (root.get("group").isArray())) {
@@ -528,7 +531,8 @@ public final class ConceptMapLoaderUtil {
     if (root.has("group") && (root.get("group").isArray())) {
       toTerminology = root.path("group").get(0).path("target").asText();
     } else if (root.has("targetScopeUri")) {
-      toTerminology = root.path("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "");
+      toTerminology = root.path("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "")
+          .replaceFirst("/vs$", "");
     } else if (root.has("targetUri")) {
       toTerminology = root.path("targetUri").asText();
     }

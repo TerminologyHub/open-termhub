@@ -39,11 +39,10 @@ import com.wci.termhub.util.StringUtility;
 import com.wci.termhub.util.TerminologyUtility;
 
 /**
- * Helper for LOINC LL/LG value set support. When {@code server.mode=regenstrief},
- * value set providers expose value sets at http://loinc.org?fhir_vs/LL* and
- * http://loinc.org?fhir_vs/LG*, and at http://loinc.org/vs/{id} (path form).
- * In Regenstrief mode, LG ids may include a version suffix (e.g.
- * LG51018-6-2.72) and expansion is scoped to that LOINC version.
+ * Helper for LOINC LL/LG value set support. When {@code server.mode=regenstrief}, value set
+ * providers expose value sets at http://loinc.org/vs/LL* and http://loinc.org/vs/LG*, and at
+ * http://loinc.org/vs/{id} (path form). In Regenstrief mode, LG ids may include a version suffix
+ * (e.g. LG51018-6-2.72) and expansion is scoped to that LOINC version.
  */
 @Component
 public class LoincValueSetHelper {
@@ -55,8 +54,8 @@ public class LoincValueSetHelper {
   private static final Pattern LL_PATTERN = Pattern.compile("^LL\\d+-\\d+$");
 
   /**
-   * LG pattern: LG followed by digits, hyphen, digits, optional -version (e.g.
-   * LG51018-6 or LG51018-6-2.78).
+   * LG pattern: LG followed by digits, hyphen, digits, optional -version (e.g. LG51018-6 or
+   * LG51018-6-2.78).
    */
   private static final Pattern LG_PATTERN = Pattern.compile("^LG\\d+-\\d+(-[\\d.]+)?$");
 
@@ -83,11 +82,9 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Checks if the URL is a LOINC LL/LG value set URL. Accepts either the legacy
-   * http://loinc.org/?fhir_vs/{id} form or the implicit ValueSet style
-   * http://loinc.org/?fhir_vs={id}.
+   * Checks if the URL is a LOINC LL/LG value set URL. Accepts http://loinc.org/vs/{id} form.
    *
-   * @param url the url (e.g. http://loinc.org/?fhir_vs=LL1162-8)
+   * @param url the url (e.g. http://loinc.org/vs/LL1162-8)
    * @return true if matches
    */
   public boolean isLllgValueSetUrl(final String url) {
@@ -95,8 +92,7 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Checks if the id is an LL or LG value set id (e.g. LL1162-8,
-   * LG51018-6-2.78).
+   * Checks if the id is an LL or LG value set id (e.g. LL1162-8, LG51018-6-2.78).
    *
    * @param id the id
    * @return true if matches
@@ -109,9 +105,8 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Returns true if the id is an LL (answer list) value set id (e.g. LL1162-8).
-   * LL value set members (LA concepts) have SequenceNumber and should be sorted
-   * by it.
+   * Returns true if the id is an LL (answer list) value set id (e.g. LL1162-8). LL value set
+   * members (LA concepts) have SequenceNumber and should be sorted by it.
    *
    * @param id the id
    * @return true if LL
@@ -131,8 +126,7 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Returns true when a member code is itself an LL/LG value set (nested
-   * reference).
+   * Returns true when a member code is itself an LL/LG value set (nested reference).
    *
    * @param code the concept code
    * @return true if nested LL/LG value set
@@ -235,8 +229,7 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Builds compose structure: nested LL/LG members as value set references,
-   * others as concepts.
+   * Builds compose structure: nested LL/LG members as value set references, others as concepts.
    *
    * @param members direct members (sorted by caller)
    * @return compose structure
@@ -258,8 +251,7 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Sorts direct LL/LG members for compose (sequence order for LL, code order
-   * for LG).
+   * Sorts direct LL/LG members for compose (sequence order for LL, code order for LG).
    *
    * @param lllgId the value set id
    * @param members members to sort in place
@@ -286,9 +278,9 @@ public class LoincValueSetHelper {
   private static final int LLLG_MEMBER_FETCH_LIMIT = 100_000;
 
   /**
-   * Sorts LL value set members (LA concepts) by SequenceNumber so expansion
-   * order matches fhir.loinc.org (e.g. None, Rare, Few, Moderate, Many). Falls
-   * back to code order if SequenceNumber is missing. Sorts the list in place.
+   * Sorts LL value set members (LA concepts) by SequenceNumber so expansion order matches
+   * fhir.loinc.org (e.g. None, Rare, Few, Moderate, Many). Falls back to code order if
+   * SequenceNumber is missing. Sorts the list in place.
    *
    * @param members the list to sort (modified in place)
    */
@@ -324,18 +316,15 @@ public class LoincValueSetHelper {
   /**
    * Extracts the value set id from a LOINC value set URL.
    *
-   * @param url the url (e.g. http://loinc.org/?fhir_vs=LL1162-8)
+   * @param url the url (e.g. http://loinc.org/vs/LL1162-8)
    * @return the id or null
    */
   public String parseIdFromUrl(final String url) {
     if (url == null) {
       return null;
     }
-    // Implicit ValueSet form: ...?fhir_vs={id} or ...&fhir_vs={id} (check first
-    // so URL
-    // http://loinc.org?fhir_vs=LL1162-8 is not treated as legacy prefix +
-    // "=LL1162-8")
-    final String marker = "fhir_vs=";
+    // Implicit ValueSet form: /vs/{id}
+    final String marker = "vs/";
     final int idx = url.indexOf(marker);
     if (idx >= 0) {
       String id = url.substring(idx + marker.length()).trim();
@@ -349,8 +338,7 @@ public class LoincValueSetHelper {
       }
       return isLllgId(id) ? id : null;
     }
-    // Legacy form: http://loinc.org?fhir_vs/{id} or prefix with = or / before
-    // id
+    // e.g http://loinc.org/vs/{id}
     if (url.startsWith(LOINC_VS_URL_PREFIX)) {
       String id = url.substring(LOINC_VS_URL_PREFIX.length()).trim();
       if (id.startsWith("=")) {
@@ -361,9 +349,9 @@ public class LoincValueSetHelper {
       return isLllgId(id) ? id : null;
     }
     // Path form: http://loinc.org/vs/{id} or https://loinc.org/vs/{id} (e.g. LG51018-6-2.72)
-    if (url.startsWith(LOINC_VS_PATH_PREFIX) || url.startsWith(LOINC_VS_PATH_PREFIX_HTTPS)) {
-      final String prefix = url.startsWith(LOINC_VS_PATH_PREFIX_HTTPS)
-          ? LOINC_VS_PATH_PREFIX_HTTPS : LOINC_VS_PATH_PREFIX;
+    else if (url.startsWith(LOINC_VS_PATH_PREFIX) || url.startsWith(LOINC_VS_PATH_PREFIX_HTTPS)) {
+      final String prefix = url.startsWith(LOINC_VS_PATH_PREFIX_HTTPS) ? LOINC_VS_PATH_PREFIX_HTTPS
+          : LOINC_VS_PATH_PREFIX;
       String id = url.substring(prefix.length()).trim();
       final int q = id.indexOf('?');
       if (q >= 0) {
@@ -379,9 +367,9 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * For LG ids with version suffix (e.g. LG51018-6-2.78), returns the version
-   * part (2.78). For LG ids with only one hyphen (e.g. LG33055-1) the trailing
-   * segment is part of the id, not a version, so returns null.
+   * For LG ids with version suffix (e.g. LG51018-6-2.78), returns the version part (2.78). For LG
+   * ids with only one hyphen (e.g. LG33055-1) the trailing segment is part of the id, not a
+   * version, so returns null.
    *
    * @param lllgId the full id
    * @return version or null
@@ -455,16 +443,16 @@ public class LoincValueSetHelper {
    * Builds the canonical URL for an LL/LG value set id.
    *
    * @param id the id (e.g. LL1162-8)
-   * @return http://loinc.org/?fhir_vs={id}
+   * @return http://loinc.org/vs/{id}
    */
   public String toLllgUrl(final String id) {
-    return id == null ? null : LOINC_URI + "/?fhir_vs=" + id;
+    return id == null ? null : LOINC_URI + "/vs/" + id;
   }
 
   /**
-   * Finds LOINC terminology (any version) for LL/LG resolution. Prefers LOINC +
-   * Regenstrief Institute; if not found (e.g. sandbox with different
-   * publisher), falls back to any terminology whose URI contains "loinc.org".
+   * Finds LOINC terminology (any version) for LL/LG resolution. Prefers LOINC + Regenstrief
+   * Institute; if not found (e.g. sandbox with different publisher), falls back to any terminology
+   * whose URI contains "loinc.org".
    *
    * @param searchService the search service
    * @return LOINC terminology or null
@@ -486,13 +474,11 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Resolves membership for an LL value set. In full LOINC, answer (LA)
-   * concepts link to the answer list (LL) via parent: each LA has one or more
-   * parent valueCodings with code = LL. So members of LL1162-8 are concepts
-   * that have parents.code = LL1162-8 (the LA codes in that list). The sandbox
-   * model (ANSWER_LIST_ID on question concepts) is not used here; use full
-   * LOINC with LL/LA concepts and parent relationships for expand to return LA
-   * members.
+   * Resolves membership for an LL value set. In full LOINC, answer (LA) concepts link to the answer
+   * list (LL) via parent: each LA has one or more parent valueCodings with code = LL. So members of
+   * LL1162-8 are concepts that have parents.code = LL1162-8 (the LA codes in that list). The
+   * sandbox model (ANSWER_LIST_ID on question concepts) is not used here; use full LOINC with LL/LA
+   * concepts and parent relationships for expand to return LA members.
    *
    * @param searchService the search service
    * @param terminology LOINC terminology (abbreviation, publisher, version)
@@ -515,12 +501,11 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Resolves membership for an LG value set. LG can have an optional version
-   * suffix (e.g. LG51018-6-2.78). For now we resolve: (1) the concept with code
-   * = LG id (base part if versioned), and (2) concepts that reference this LG
-   * (e.g. panel members). If the model stores group membership in an attribute,
-   * we use it; otherwise we return concepts whose code equals the LG code
-   * (single-member value set).
+   * Resolves membership for an LG value set. LG can have an optional version suffix (e.g.
+   * LG51018-6-2.78). For now we resolve: (1) the concept with code = LG id (base part if
+   * versioned), and (2) concepts that reference this LG (e.g. panel members). If the model stores
+   * group membership in an attribute, we use it; otherwise we return concepts whose code equals the
+   * LG code (single-member value set).
    *
    * @param searchService the search service
    * @param terminology LOINC terminology
@@ -555,7 +540,8 @@ public class LoincValueSetHelper {
     if (!result.getItems().isEmpty()) {
       return result;
     }
-    final String relTermQuery = TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
+    final String relTermQuery =
+        TerminologyUtility.getTerminologyQuery(terminology.getAbbreviation(),
             terminology.getPublisher(), versionFilter == null ? "*" : versionFilter);
     final String toCodeClause = "to.code:" + StringUtility.escapeQuery(baseLgCode);
     final String relQuery =
@@ -567,8 +553,8 @@ public class LoincValueSetHelper {
     for (final ConceptRelationship rel : relResult.getItems()) {
       if (rel.getFrom() != null && rel.getFrom().getCode() != null
           && !baseLgCode.equals(rel.getFrom().getCode())) {
-        final Concept c = TerminologyUtility.getConcept(searchService, terminology,
-            rel.getFrom().getCode());
+        final Concept c =
+            TerminologyUtility.getConcept(searchService, terminology, rel.getFrom().getCode());
         if (c != null) {
           concepts.add(c);
         }
@@ -630,8 +616,8 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Recursively expands an LL/LG value set to leaf LOINC concepts, then applies
-   * filter and pagination.
+   * Recursively expands an LL/LG value set to leaf LOINC concepts, then applies filter and
+   * pagination.
    *
    * @param searchService the search service
    * @param terminology LOINC terminology
@@ -718,9 +704,9 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Finds all LL and LG concepts in the given LOINC terminology using Lucene wildcard
-   * queries. Used when {@code server.mode=regenstrief} to
-   * enumerate value sets for a general {@code GET /ValueSet} listing.
+   * Finds all LL and LG concepts in the given LOINC terminology using Lucene wildcard queries. Used
+   * when {@code server.mode=regenstrief} to enumerate value sets for a general
+   * {@code GET /ValueSet} listing.
    *
    * @param searchService the search service
    * @param terminology LOINC terminology
@@ -770,10 +756,9 @@ public class LoincValueSetHelper {
   }
 
   /**
-   * Finds a concept that is a panel member of the given LG by querying
-   * ConceptRelationship for to.code=LG and from.code=code (parent relationship
-   * is stored in the relationship index when the loader processes the parent
-   * property).
+   * Finds a concept that is a panel member of the given LG by querying ConceptRelationship for
+   * to.code=LG and from.code=code (parent relationship is stored in the relationship index when the
+   * loader processes the parent property).
    *
    * @param searchService the search service
    * @param terminology LOINC terminology

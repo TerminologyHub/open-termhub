@@ -84,8 +84,7 @@ public final class FhirUtility {
   private static TimerCache<List<Mapset>> mapsetCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
 
   /** The code system uri cache. */
-  private static TimerCache<String> codeSystemUriCache =
-      new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
+  private static TimerCache<String> codeSystemUriCache = new TimerCache<>(CACHE_SIZE, CACHE_TTL_MS);
 
   /** The display map cache. */
   private static TimerCache<Map<String, String>> displayMapCache =
@@ -107,9 +106,9 @@ public final class FhirUtility {
   }
 
   /**
-   * Hierarchical parents from {@code relationships}, at most one {@link ConceptRef} per parent
-   * code (first occurrence wins; insertion order preserved). Used for CodeSystem $lookup so
-   * duplicate isa/parent edges are not emitted as repeated {@code parent} properties.
+   * Hierarchical parents from {@code relationships}, at most one {@link ConceptRef} per parent code
+   * (first occurrence wins; insertion order preserved). Used for CodeSystem $lookup so duplicate
+   * isa/parent edges are not emitted as repeated {@code parent} properties.
    *
    * @param relationships the concept relationships (may be null or empty)
    * @return distinct parents; empty list if none
@@ -307,9 +306,9 @@ public final class FhirUtility {
   /**
    * Filters mapsets for ConceptMap $translate.
    *
-   * When {@code conceptMapVersion} and {@code sourceVersion} are both omitted, keeps one mapset
-   * per map URL with the highest version string. Does not use {@code latest=true} (that flag
-   * can be wrong when {@code releaseDate} was missing at mark-latest).
+   * When {@code conceptMapVersion} and {@code sourceVersion} are both omitted, keeps one mapset per
+   * map URL with the highest version string. Does not use {@code latest=true} (that flag can be
+   * wrong when {@code releaseDate} was missing at mark-latest).
    *
    * @param mapsets candidate mapsets
    * @param url ConceptMap url, or null
@@ -330,8 +329,7 @@ public final class FhirUtility {
       if (url != null && !url.equals(mapset.getUri())) {
         continue;
       }
-      if (idOrCode != null
-          && !matchesIdOrCode(idOrCode, mapset.getId(), mapset.getCode())) {
+      if (idOrCode != null && !matchesIdOrCode(idOrCode, mapset.getId(), mapset.getCode())) {
         continue;
       }
       final String mapVersion = mapsetFhirVersion(mapset);
@@ -454,7 +452,7 @@ public final class FhirUtility {
   }
 
   /**
-   * Strips a trailing ?fhir_vs from a URI.
+   * Strips a trailing "?fhir_vs" or "/vs" from a URI.
    *
    * @param uri the uri
    * @return stripped uri, or null
@@ -463,7 +461,8 @@ public final class FhirUtility {
     if (uri == null) {
       return null;
     }
-    return uri.replaceFirst("\\?fhir_vs$", "");
+    // Replace both implicit value set patterns
+    return uri.replaceFirst("\\?fhir_vs$", "").replaceFirst("/vs$", "");
   }
 
   /**
@@ -1023,17 +1022,16 @@ public final class FhirUtility {
       if (map != null) {
         return map;
       }
-      map = loadDisplayMap(searchService, terminology.getAbbreviation(),
-          terminology.getPublisher(), terminology.getVersion());
+      map = loadDisplayMap(searchService, terminology.getAbbreviation(), terminology.getPublisher(),
+          terminology.getVersion());
       displayMapCache.put(key, map);
       return map;
     }
   }
 
   /**
-   * Gets the concept name map (name -> code) and code map (code -> code) for
-   * property lookups. Returns a map that allows lookup by both concept name and
-   * concept code.
+   * Gets the concept name map (name -> code) and code map (code -> code) for property lookups.
+   * Returns a map that allows lookup by both concept name and concept code.
    *
    * @param searchService the search service
    * @param terminology the terminology
@@ -1245,8 +1243,8 @@ public final class FhirUtility {
 
   /**
    * Resolves the terminology whose contact should appear on a ConceptMap when
-   * {@code server.mode=regenstrief}: always the loaded LOINC terminology (same as
-   * CodeSystem and ValueSet), not the map source or target.
+   * {@code server.mode=regenstrief}: always the loaded LOINC terminology (same as CodeSystem and
+   * ValueSet), not the map source or target.
    *
    * @param searchService the search service
    * @param mapset unused; kept for call-site compatibility
@@ -1262,9 +1260,9 @@ public final class FhirUtility {
   }
 
   /**
-   * Finds LOINC terminology (any version) for Regenstrief FHIR contact and LL/LG
-   * resolution. Prefers LOINC + Regenstrief Institute; falls back to any
-   * terminology whose URI contains {@code loinc.org}.
+   * Finds LOINC terminology (any version) for Regenstrief FHIR contact and LL/LG resolution.
+   * Prefers LOINC + Regenstrief Institute; falls back to any terminology whose URI contains
+   * {@code loinc.org}.
    *
    * @param searchService the search service
    * @return LOINC terminology or null
@@ -1383,8 +1381,7 @@ public final class FhirUtility {
     final String normalized = uri.toLowerCase(Locale.ROOT);
     return normalized.equals(LoincConstants.LOINC_URI)
         || normalized.startsWith(LoincConstants.LOINC_URI + "/")
-        || normalized.equals("https://loinc.org")
-        || normalized.startsWith("https://loinc.org/");
+        || normalized.equals("https://loinc.org") || normalized.startsWith("https://loinc.org/");
   }
 
   /**
