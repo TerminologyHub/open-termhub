@@ -176,12 +176,12 @@ public class FhirUtilityR4MetaUnitTest {
     final ValueSet vs =
         FhirUtilityR4.toR4LllgValueSet(terminology, "LG10030-1", "test-uuid", false);
 
-    assertEquals("http://loinc.org?fhir_vs=LG10030-1", vs.getUrl());
+    assertEquals("http://loinc.org/vs/LG10030-1", vs.getUrl());
     assertEquals("2.78", vs.getVersion());
 
     final ValueSet versioned =
         FhirUtilityR4.toR4LllgValueSet(terminology, "LG10030-1-2.78", "test-uuid", false);
-    assertEquals("http://loinc.org?fhir_vs=LG10030-1", versioned.getUrl());
+    assertEquals("http://loinc.org/vs/LG10030-1", versioned.getUrl());
     assertEquals("2.78", versioned.getVersion());
 
     assertNotNull(vs.getContact());
