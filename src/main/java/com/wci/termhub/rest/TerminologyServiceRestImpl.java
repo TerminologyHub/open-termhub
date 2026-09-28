@@ -2392,10 +2392,6 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
           description = "<code>true</code> for active mappings only, "
               + "<code>false</code> for inactive mappings only," + " <code>null</code> for both",
           required = false, schema = @Schema(implementation = Boolean.class)),
-      @Parameter(name = "leaf",
-          description = "<code>true</code> for leaf nodes only, "
-              + "<code>false</code> for non-leaf nodes," + " <code>null</code> for either",
-          required = false, schema = @Schema(implementation = Boolean.class)),
   })
   public ResponseEntity<ResultListMapping> findMapsetMappings(
     @PathVariable("mapset") final String mapsetId,

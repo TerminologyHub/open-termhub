@@ -19,6 +19,7 @@ import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -77,6 +78,12 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
   private String[] getIndexLocations() {
     return Arrays.stream(resourceProperties.getStaticLocations())
         .map((location) -> location + "index.html").toArray(String[]::new);
+  }
+
+  /* see superclass */
+  @Override
+  public void addInterceptors(final InterceptorRegistry registry) {
+    registry.addInterceptor(new UnknownQueryParameterInterceptor());
   }
 
   /* see superclass */

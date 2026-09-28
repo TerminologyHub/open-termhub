@@ -9,6 +9,7 @@
  */
 package com.wci.termhub.fhir.rest.r5;
 
+import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.context.WebApplicationContext;
@@ -21,13 +22,17 @@ import com.wci.termhub.fhir.r5.FHIRTerminologyCapabilitiesR5;
 import com.wci.termhub.fhir.r5.SystemTransactionProviderR5;
 import com.wci.termhub.fhir.r5.QuestionnaireProviderR5;
 import com.wci.termhub.fhir.r5.ValueSetProviderR5;
+import com.wci.termhub.fhir.util.UnknownQueryParameter;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.LenientErrorHandler;
 import ca.uhn.fhir.rest.api.EncodingEnum;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.RestfulServer;
 import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
+import ca.uhn.fhir.rest.server.method.BaseMethodBinding;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * The Hapi servlet itself.
@@ -93,5 +98,24 @@ public class HapiR5RestfulServlet extends RestfulServer {
     registerProvider(applicationContext.getBean(SystemTransactionProviderR5.class));
 
     logger.info("FHIR Resource providers and interceptors registered");
+  }
+
+  /**
+   * Rejects query parameters that the matched method does not declare.
+   *
+   * @param requestDetails the request details
+   * @param requestPath the request path
+   * @return the method binding
+   */
+  @Override
+  public BaseMethodBinding determineResourceMethod(final RequestDetails requestDetails,
+    final String requestPath) {
+    final BaseMethodBinding binding = super.determineResourceMethod(requestDetails, requestPath);
+    final String unknown = UnknownQueryParameter.firstUnknown(requestDetails, binding);
+    if (unknown != null) {
+      throw FhirUtilityR5.exception("Input parameter '" + unknown + "' is not supported",
+          IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
+    }
+    return binding;
   }
 }
