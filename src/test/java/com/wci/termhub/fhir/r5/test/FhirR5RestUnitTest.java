@@ -1859,6 +1859,59 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   }
 
   /**
+   * Test ValueSet $expand rejects the unknown version parameter.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetExpandUnknownVersionReturnsBadRequest() throws Exception {
+    final String expandParams =
+        "/$expand?url=http://www.nlm.nih.gov/research/umls/rxnorm?fhir_vs&version=2.81";
+    final String endpoint = LOCALHOST + port + FHIR_VALUESET + expandParams;
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(endpoint, String.class);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode(),
+        "Unknown version parameter should return 400");
+    assertNotNull(response.getBody(), "Response should not be null");
+    assertTrue(response.getBody().contains("OperationOutcome"),
+        "Response should contain OperationOutcome");
+    assertTrue(response.getBody().contains("Input parameter 'version' is not supported"),
+        "Diagnostics should name the unknown parameter");
+  }
+
+  /**
+   * Test ValueSet $expand accepts valueSetVersion and rejects an unknown search parameter.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testValueSetExpandValueSetVersionAndUnknownSearchParam() throws Exception {
+    final String base = "/$expand?url=http://www.nlm.nih.gov/research/umls/rxnorm?fhir_vs&count=1";
+    final String endpoint = LOCALHOST + port + FHIR_VALUESET + base;
+    final ResponseEntity<String> expandedResponse =
+        this.restTemplate.getForEntity(endpoint, String.class);
+    assertEquals(HttpStatus.OK, expandedResponse.getStatusCode(), expandedResponse.getBody());
+    final ValueSet expanded = parser.parseResource(ValueSet.class, expandedResponse.getBody());
+    assertNotNull(expanded.getVersion(), "Expanded value set should have a version");
+
+    final String versioned = endpoint + "&valueSetVersion="
+        + URLEncoder.encode(expanded.getVersion(), StandardCharsets.UTF_8);
+    final ResponseEntity<String> versionedResponse =
+        this.restTemplate.getForEntity(versioned, String.class);
+    assertEquals(HttpStatus.OK, versionedResponse.getStatusCode(),
+        "Declared valueSetVersion should expand");
+
+    final String search = LOCALHOST + port + FHIR_VALUESET + "?notAParam=1";
+    final ResponseEntity<String> searchResponse =
+        this.restTemplate.getForEntity(search, String.class);
+    assertEquals(HttpStatus.BAD_REQUEST, searchResponse.getStatusCode(), searchResponse.getBody());
+    assertNotNull(searchResponse.getBody(), "Response should not be null");
+    assertTrue(searchResponse.getBody().contains("notAParam"), searchResponse.getBody());
+  }
+
+  /**
    * Test ValueSet $validate-code with missing parameters returns 400.
    *
    * @throws Exception the exception
