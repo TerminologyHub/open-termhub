@@ -24,6 +24,7 @@ import java.util.Map;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.Questionnaire;
+import org.hl7.fhir.r5.model.UriType;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.junit.jupiter.api.Test;
 
@@ -275,6 +276,83 @@ public class FhirUtilityR5MetaUnitTest {
     assertEquals("1", cm.getMeta().getVersionId());
     assertNotNull(cm.getMeta().getLastUpdated());
     assertTrue(cm.getContact().isEmpty());
+  }
+
+  /**
+   * A stored trailing {@code ?fhir_vs} is not appended again. LOINC uses {@code /vs} when
+   * {@code server.mode=regenstrief}, and a single {@code ?fhir_vs} otherwise.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConceptMapSourceTargetUriDoesNotDoubleFhirVs() throws Exception {
+    final String priorMode = PropertyUtility.getProperty("server.mode");
+    try {
+      PropertyUtility.setProperty("server.mode", "default");
+      final ConceptMap loincDefault = toR5Scopes("http://loinc.org?fhir_vs", "http://fdasis.nlm.nih.gov");
+      assertEquals("http://loinc.org?fhir_vs", ((UriType) loincDefault.getSourceScope()).getValue());
+      assertEquals("http://fdasis.nlm.nih.gov?fhir_vs",
+          ((UriType) loincDefault.getTargetScope()).getValue());
+
+      final ConceptMap chebiDefault =
+          toR5Scopes("https://www.ebi.ac.uk/chebi?fhir_vs", "http://loinc.org");
+      assertEquals("https://www.ebi.ac.uk/chebi?fhir_vs",
+          ((UriType) chebiDefault.getSourceScope()).getValue());
+      assertEquals("http://loinc.org?fhir_vs", ((UriType) chebiDefault.getTargetScope()).getValue());
+
+      PropertyUtility.setProperty("server.mode", "regenstrief");
+      final ConceptMap loincRegenstrief =
+          toR5Scopes("http://loinc.org?fhir_vs", "http://fdasis.nlm.nih.gov");
+      assertEquals("http://loinc.org/vs", ((UriType) loincRegenstrief.getSourceScope()).getValue());
+      assertEquals("http://fdasis.nlm.nih.gov?fhir_vs",
+          ((UriType) loincRegenstrief.getTargetScope()).getValue());
+
+      final ConceptMap chebiRegenstrief =
+          toR5Scopes("https://www.ebi.ac.uk/chebi?fhir_vs", "http://loinc.org");
+      assertEquals("https://www.ebi.ac.uk/chebi?fhir_vs",
+          ((UriType) chebiRegenstrief.getSourceScope()).getValue());
+      assertEquals("http://loinc.org/vs", ((UriType) chebiRegenstrief.getTargetScope()).getValue());
+    } finally {
+      if (priorMode != null) {
+        PropertyUtility.setProperty("server.mode", priorMode);
+      }
+    }
+  }
+
+  /**
+   * Builds an R5 ConceptMap from source and target code system URIs.
+   *
+   * @param sourceUri the source uri
+   * @param targetUri the target uri
+   * @return the concept map
+   * @throws Exception the exception
+   */
+  private static ConceptMap toR5Scopes(final String sourceUri, final String targetUri)
+    throws Exception {
+    final Mapset mapset = conceptMapMapset();
+    mapset.getAttributes().put("fhirSourceUri", sourceUri);
+    mapset.getAttributes().put("fhirTargetUri", targetUri);
+    return FhirUtilityR5.toR5(mapset);
+  }
+
+  /**
+   * Mapset with the fields {@link com.wci.termhub.fhir.rest.r5.FhirUtilityR5#toR5(Mapset)} requires.
+   *
+   * @return the mapset
+   */
+  private static Mapset conceptMapMapset() {
+    final Mapset mapset = new Mapset();
+    mapset.setId("test-cm");
+    mapset.setReleaseDate("2022-04-11");
+    mapset.setUri("http://example.org/cm");
+    mapset.setVersion("1");
+    mapset.setName("Test ConceptMap");
+    mapset.setAbbreviation("TCM");
+    mapset.setPublisher("Test");
+    mapset.setAttributes(new HashMap<>());
+    mapset.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    return mapset;
   }
 
   /**
