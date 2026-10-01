@@ -129,26 +129,6 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
    */
   private static final String LOCALHOST = "http://localhost:";
 
-  /**
-   * The fhir metadata.
-   */
-  private static final String FHIR_METADATA = "/fhir/r4/metadata";
-
-  /**
-   * Fhir url paths.
-   */
-  private static final String FHIR_CODESYSTEM = "/fhir/r4/CodeSystem";
-
-  /**
-   * The Constant FHIR_CONCEPTMAP.
-   */
-  private static final String FHIR_CONCEPTMAP = "/fhir/r4/ConceptMap";
-
-  /**
-   * The fhir VS path.
-   */
-  private static final String FHIR_VALUESET = "/fhir/r4/ValueSet";
-
   /** LL value set id from CodeSystem-lnc-sandbox-277-r4 (ANSWER_LIST_ID). */
   private static final String LL_VS_ID = "LL1772-4";
 
@@ -157,9 +137,6 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
   /** LOINC sandbox concept with both {@code status} and {@code STATUS} properties. */
   private static final String LOINC_STATUS_TEST_CODE = "LG50982-4";
-
-  /** LOINC sandbox version from CodeSystem-lnc-sandbox-277-r4.json. */
-  private static final String LOINC_SANDBOX_VERSION = "277";
 
   /** The Constant FIND. */
   private static final int FIND = 10;

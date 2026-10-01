@@ -11,7 +11,6 @@ package com.wci.termhub.fhir.r4;
 
 import java.io.File;
 
-import com.wci.termhub.lucene.eventing.Write;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.ConceptMap;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Component;
 import com.wci.termhub.EnablePostLoadComputations;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
+import com.wci.termhub.lucene.eventing.Write;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.util.CodeSystemLoaderUtil;
 import com.wci.termhub.util.ConceptMapLoaderUtil;

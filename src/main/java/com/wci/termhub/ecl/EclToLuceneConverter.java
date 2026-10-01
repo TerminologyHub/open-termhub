@@ -9,9 +9,11 @@
  */
 package com.wci.termhub.ecl;
 
-import com.wci.termhub.lucene.LuceneEclDataAccess;
-import com.wci.termhub.model.Concept;
-import com.wci.termhub.util.PropertyUtility;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -22,10 +24,9 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import com.wci.termhub.lucene.LuceneEclDataAccess;
+import com.wci.termhub.model.Concept;
+import com.wci.termhub.util.PropertyUtility;
 
 @SuppressWarnings("all")
 public class EclToLuceneConverter {
