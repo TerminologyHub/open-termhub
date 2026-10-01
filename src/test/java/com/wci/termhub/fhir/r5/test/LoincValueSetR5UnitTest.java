@@ -32,6 +32,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.TestPropertySource;
 
@@ -40,7 +44,9 @@ import com.wci.termhub.fhir.rest.r5.FhirUtilityR5;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.param.DateRangeParam;
+import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
@@ -78,6 +84,14 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   /** The provider. */
   @Autowired
   private ValueSetProviderR5 provider;
+
+  /** The port. */
+  @LocalServerPort
+  private int port;
+
+  /** The rest template. */
+  @Autowired
+  private TestRestTemplate restTemplate;
 
   /** The loinc lllg helper. */
   @Autowired
@@ -153,6 +167,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, null, null, url, null, null, null);
     assertNotNull(bundle);
+    assertOmitsCompose(bundle);
     assertTrue(
         bundle.getEntry().stream()
             .anyMatch(e -> e.getResource() instanceof ValueSet
@@ -171,6 +186,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, null, null, url, null, null, null);
     assertNotNull(bundle);
+    assertOmitsCompose(bundle);
     final ValueSet found = bundle.getEntry().stream().map(e -> e.getResource())
         .filter(ValueSet.class::isInstance).map(ValueSet.class::cast)
         .filter(v -> LG_VS_URL.equals(v.getUrl())).findFirst().orElse(null);
@@ -446,6 +462,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, null, null, url, new StringParam("277"), null, null);
     assertNotNull(bundle);
+    assertOmitsCompose(bundle);
     assertTrue(
         bundle.getEntry().stream()
             .anyMatch(e -> e.getResource() instanceof ValueSet
@@ -465,6 +482,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, null, null, url, new StringParam("9.99"), null, null);
     assertNotNull(bundle);
+    assertOmitsCompose(bundle);
     assertTrue(bundle.getEntry() == null || bundle.getEntry().isEmpty(),
         "Bundle should be empty for a non-existent LOINC version");
   }
@@ -549,6 +567,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
         new DateRangeParam(null, "le2010-01-01"), null, null, null, null, null, null, null,
         new UriParam(IMPLICIT_VS_URL), null, null, null);
     assertTrue(byDateLe.getEntry() == null || byDateLe.getEntry().isEmpty());
+    assertOmitsCompose(byDateLe);
 
     final Bundle byCode = provider.findValueSets(request, details, null, new TokenParam(LG_VS_ID),
         null, null, null, null, null, null, null, null, null, null, null, null);
@@ -573,6 +592,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
         null, null, null, null, new TokenParam("draft"), null, new UriParam(LG_VS_URL),
         new StringParam("277"), null, null);
     assertTrue(byStatusMiss.getEntry() == null || byStatusMiss.getEntry().isEmpty());
+    assertOmitsCompose(byStatusMiss);
   }
 
   /**
@@ -591,12 +611,14 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
         null, new StringType("Diabetes"), null, null, null, null, null, null, null, null);
     assertEquals(1, filtered.getExpansion().getContains().size());
     assertEquals("LA10529-8", filtered.getExpansion().getContainsFirstRep().getCode());
+    assertOmitsCompose(filtered);
 
     final ValueSet spanish = provider.expandImplicit(request, details, null, new UriType(LG_VS_URL),
         null, null, null, null, List.of(new CodeType("es-ES")), null, null, null, null, null);
     assertTrue(spanish.getExpansion().getContains().stream()
         .anyMatch(c -> LOINC_CODE_IN_LL.equals(c.getCode())
             && SPANISH_DISPLAY_66480.equals(c.getDisplay())));
+    assertOmitsCompose(spanish);
 
     final ValueSet withProp = provider.expandImplicit(request, details, null, new UriType(LG_VS_URL),
         null, null, null, null, null, null, null, null, null,
@@ -605,20 +627,22 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
         .anyMatch(c -> LOINC_CODE_IN_LL.equals(c.getCode())
             && hasR5ExpandProperty(c, "CLASS", "PHENX")
             && hasR5ExpandProperty(c, "STATUS", "Active")));
+    assertOmitsCompose(withProp);
 
     final ValueSet paged = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
         null, null, new IntegerType(0), new IntegerType(1), null, null, null, null, null, null);
     assertEquals(2, paged.getExpansion().getTotal());
     assertEquals(1, paged.getExpansion().getContains().size());
+    assertOmitsCompose(paged);
 
     final ValueSet withoutDef = provider.expandImplicit(request, details, null,
         new UriType(LL_VS_URL), null, null, null, null, null, null, null, null, null, null);
-    assertFalse(withoutDef.hasCompose());
+    assertOmitsCompose(withoutDef);
 
     final ValueSet withDef = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
         null, null, null, null, null, null, null, new BooleanType(true), null, null);
-    assertTrue(withDef.hasCompose());
-    assertTrue(withDef.getCompose().hasInclude());
+    assertNotNull(withDef.getExpansion());
+    assertOmitsCompose(withDef);
 
     final ValueSet filterDesignations = provider.expandImplicit(request, details, null,
         new UriType(LL_VS_URL), new StringType("277"), new StringType("Diabetes"),
@@ -626,11 +650,13 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
         null);
     assertEquals("277", filterDesignations.getVersion());
     assertTrue(filterDesignations.getExpansion().getContainsFirstRep().hasDesignation());
+    assertOmitsCompose(filterDesignations);
 
     final ValueSet instancePage = provider.expandInstance(request, details, new IdType(LL_VS_ID),
         null, null, null, new StringType("Heart"), new IntegerType(0), new IntegerType(10), null,
         new BooleanType(true), null, null, null, null);
     assertEquals("LA16990-6", instancePage.getExpansion().getContainsFirstRep().getCode());
+    assertOmitsCompose(instancePage);
   }
 
   /**
@@ -667,6 +693,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
    * @return true if present
    */
   private static boolean bundleHasUrl(final Bundle bundle, final String url) {
+    assertOmitsCompose(bundle);
     return bundle != null && bundle.getEntry() != null && bundle.getEntry().stream()
         .anyMatch(e -> e.getResource() instanceof ValueSet
             && url.equals(((ValueSet) e.getResource()).getUrl()));
@@ -686,6 +713,98 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     return contains.getProperty().stream().anyMatch(p -> code.equals(p.getCode())
         && p.getValue() instanceof StringType
         && value.equals(((StringType) p.getValue()).getValue()));
+  }
+
+  /**
+   * LL and LG search and $expand omit compose. GET still returns it.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testLllgOmitsComposeExceptOnRead() throws Exception {
+    final ValueSet ll = provider.getValueSet(request, details, new IdType(LL_VS_ID));
+    assertTrue(ll.hasCompose());
+    assertFalse(ll.hasExpansion());
+    final String llJson = FhirContext.forR5().newJsonParser().encodeResourceToString(ll);
+    assertTrue(llJson.contains("\"compose\""));
+    final ValueSet lg = provider.getValueSet(request, details, new IdType(LG_VS_ID));
+    assertTrue(lg.hasCompose());
+    assertFalse(lg.hasExpansion());
+    final String lgUuid = lg.getIdElement().getIdPart();
+    final ValueSet byUuid = provider.getValueSet(request, details, new IdType(lgUuid));
+    assertTrue(byUuid.hasCompose());
+    assertFalse(byUuid.hasExpansion());
+
+    assertOmitsCompose(provider.findValueSets(request, details, null, new TokenParam(LL_VS_ID),
+        null, null, null, null, null, null, null, null, null, null, null, null));
+    assertOmitsCompose(provider.findValueSets(request, details, new TokenParam(lgUuid), null, null,
+        null, null, null, null, null, null, null, null, null, null, null));
+    assertOmitsCompose(provider.findValueSets(request, details, null, null, null, null, null, null,
+        null, null, null, null, new UriParam(LL_VS_URL), null, new NumberParam(1),
+        new NumberParam(0)));
+
+    final UriType llUrl = new UriType(LL_VS_URL);
+    final ValueSet once = provider.expandImplicit(request, details, null, llUrl, null, null, null,
+        null, null, null, null, new BooleanType(false), null, null);
+    final ValueSet twice = provider.expandImplicit(request, details, null, llUrl, null, null, null,
+        null, null, null, null, new BooleanType(false), null, null);
+    assertOmitsCompose(once);
+    assertOmitsCompose(twice);
+    assertOmitsCompose(provider.expandImplicit(request, details, null, new UriType(LG_VS_URL), null,
+        null, new IntegerType(0), new IntegerType(0), null, null, null, new BooleanType(true),
+        null, null));
+    assertOmitsCompose(provider.expandInstance(request, details, new IdType(lgUuid), null, null,
+        null, new StringType("___nomatch___"), new IntegerType(0), new IntegerType(1), null, null,
+        null, null, null, null));
+
+    assertHttpOmitsCompose("/fhir/r5/ValueSet?url={url}", LL_VS_URL);
+    assertHttpOmitsCompose("/fhir/r5/ValueSet?url={url}", LG_VS_URL);
+    assertHttpOmitsCompose("/fhir/r5/ValueSet?url={url}", IMPLICIT_VS_URL);
+    assertHttpOmitsCompose("/fhir/r5/ValueSet/$expand?url={url}&includeDefinition=true", LL_VS_URL);
+    assertHttpOmitsCompose("/fhir/r5/ValueSet/" + LL_VS_ID + "/$expand", null);
+  }
+
+  /**
+   * Asserts a bundle has no compose.
+   *
+   * @param bundle the bundle
+   */
+  private static void assertOmitsCompose(final Bundle bundle) {
+    if (bundle == null || bundle.getEntry() == null) {
+      return;
+    }
+    for (final Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+      if (entry.getResource() instanceof ValueSet) {
+        assertOmitsCompose((ValueSet) entry.getResource());
+      }
+    }
+  }
+
+  /**
+   * Asserts a value set has no compose in the model or the JSON.
+   *
+   * @param valueSet the value set
+   */
+  private static void assertOmitsCompose(final ValueSet valueSet) {
+    assertFalse(valueSet.hasCompose(), valueSet.getUrl());
+    final String json = FhirContext.forR5().newJsonParser().encodeResourceToString(valueSet);
+    assertFalse(json.contains("\"compose\""), valueSet.getUrl());
+  }
+
+  /**
+   * Asserts an HTTP body has no compose.
+   *
+   * @param pathAndQuery the path and query
+   * @param url the url template variable, or null
+   */
+  private void assertHttpOmitsCompose(final String pathAndQuery, final String url) {
+    final String endpoint = "http://localhost:" + port + pathAndQuery;
+    final ResponseEntity<String> response = url == null
+        ? restTemplate.getForEntity(endpoint, String.class)
+        : restTemplate.getForEntity(endpoint, String.class, url);
+    assertEquals(HttpStatus.OK, response.getStatusCode(), response.getBody());
+    assertNotNull(response.getBody());
+    assertFalse(response.getBody().contains("\"compose\""), pathAndQuery);
   }
 
 }

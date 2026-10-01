@@ -45,6 +45,24 @@ public abstract class AbstractFhirR5ServerTest extends AbstractServerTest {
   /** The logger. */
   private final Logger logger = LoggerFactory.getLogger(AbstractFhirR5ServerTest.class);
 
+  /** FHIR metadata. */
+  protected static final String FHIR_METADATA = "/fhir/r5/metadata";
+
+  /** FHIR ValueSet path. */
+  protected static final String FHIR_VALUESET = "/fhir/r5/ValueSet";
+
+  /** FHIR CodeSystem path. */
+  protected static final String FHIR_CODESYSTEM = "/fhir/r5/CodeSystem";
+
+  /** The Constant FHIR_CONCEPTMAP. */
+  protected static final String FHIR_CONCEPTMAP = "/fhir/r5/ConceptMap";
+
+  /** FHIR transaction path (HAPI @Transaction is POST to the FHIR base). */
+  protected static final String FHIR_TRANSACTION = "/fhir/r5";
+
+  /** LOINC sandbox version from CodeSystem-lnc-sandbox-277-r5.json. */
+  protected static final String LOINC_SANDBOX_VERSION = "277";
+
   /** The search service. */
   @Autowired
   private EntityRepositoryService searchService;

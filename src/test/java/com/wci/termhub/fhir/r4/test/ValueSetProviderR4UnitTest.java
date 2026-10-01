@@ -9,6 +9,7 @@
  */
 package com.wci.termhub.fhir.r4.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,6 +28,7 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.IntegerType;
+import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.UriType;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.Assertions;
@@ -36,8 +38,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.wci.termhub.algo.DefaultProgressListener;
@@ -51,6 +57,8 @@ import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.param.DateRangeParam;
+import ca.uhn.fhir.rest.param.NumberParam;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
@@ -69,6 +77,14 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** The context. */
   private static FhirContext context = FhirContext.forR4();
+
+  /** The port. */
+  @LocalServerPort
+  private int port;
+
+  /** The rest template. */
+  @Autowired
+  private TestRestTemplate restTemplate;
 
   /**
    * The search service.
@@ -138,6 +154,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null // NumberParam offset
     );
     assertNotNull(bundle);
+    assertOmitsCompose(bundle);
     bundle.getEntry().forEach(entry -> {
       if (entry.getResource() instanceof ValueSet) {
         final ValueSet vs = (ValueSet) entry.getResource();
@@ -175,6 +192,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null // NumberParam offset
     );
     assertNotNull(bundle);
+    assertOmitsCompose(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
         && TEST_VALUESET_URL.equals(((ValueSet) e.getResource()).getUrl())));
   }
@@ -205,6 +223,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null // NumberParam offset
     );
     assertNotNull(bundle);
+    assertOmitsCompose(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
         && "SNOMEDCT_US extension concepts".equals(((ValueSet) e.getResource()).getName())));
   }
@@ -236,6 +255,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
     );
 
     assertNotNull(bundle);
+    assertOmitsCompose(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
         && "20240301".equals(((ValueSet) e.getResource()).getVersion())));
   }
@@ -267,6 +287,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
     );
 
     assertNotNull(bundle);
+    assertOmitsCompose(bundle);
     final ValueSet found = bundle.getEntry().stream()
         .filter(e -> e.getResource() instanceof ValueSet).map(e -> (ValueSet) e.getResource())
         .filter(vs -> TEST_VALUESET_URL.equals(vs.getUrl())).findFirst()
@@ -290,6 +311,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null // NumberParam offset
     );
     assertNotNull(vsBundle);
+    assertOmitsCompose(vsBundle);
     assertTrue(vsBundle.getEntry().stream()
         .anyMatch(e -> e.getResource() instanceof ValueSet && id.equals(e.getResource().getId())));
   }
@@ -303,6 +325,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
   public void testGetValueSetRejectsSearchParams() throws Exception {
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, null, null, new UriParam(TEST_VALUESET_URL), null, null, null);
+    assertOmitsCompose(bundle);
     final String id = bundle.getEntry().stream().map(e -> (ValueSet) e.getResource())
         .filter(vs -> TEST_VALUESET_URL.equals(vs.getUrl())).findFirst()
         .orElseThrow(() -> new AssertionError("Test ValueSet not found")).getIdElement()
@@ -325,29 +348,34 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
         null, null);
     assertTrue(byStatus.getEntry().stream().anyMatch(e -> TEST_VALUESET_URL
         .equals(((ValueSet) e.getResource()).getUrl())));
+    assertOmitsCompose(byStatus);
 
     final Bundle byIdentifier = provider.findValueSets(request, details, null, null, null, null,
         new TokenParam("731000124108"), null, null, null, null, null,
         new UriParam(TEST_VALUESET_URL), null, null, null);
     assertTrue(byIdentifier.getEntry().stream()
         .anyMatch(e -> TEST_VALUESET_URL.equals(((ValueSet) e.getResource()).getUrl())));
+    assertOmitsCompose(byIdentifier);
 
     final Bundle byReference = provider.findValueSets(request, details, null, null, null, null,
         null, null, null, new UriParam("http://snomed.info/sct"), null, null,
         new UriParam(TEST_VALUESET_URL), null, null, null);
     assertTrue(byReference.getEntry().stream()
         .anyMatch(e -> TEST_VALUESET_URL.equals(((ValueSet) e.getResource()).getUrl())));
+    assertOmitsCompose(byReference);
 
     final Bundle byCode = provider.findValueSets(request, details, null,
         new TokenParam("731000124108"), null, null, null, null, null, null, null, null,
         new UriParam(TEST_VALUESET_URL), null, null, null);
     assertTrue(byCode.getEntry().stream()
         .anyMatch(e -> TEST_VALUESET_URL.equals(((ValueSet) e.getResource()).getUrl())));
+    assertOmitsCompose(byCode);
 
     final Bundle andMiss = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, new TokenParam("draft"), null, new UriParam(TEST_VALUESET_URL), null,
         null, null);
     assertTrue(andMiss.getEntry() == null || andMiss.getEntry().isEmpty());
+    assertOmitsCompose(andMiss);
   }
 
   /**
@@ -361,28 +389,31 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
     final ValueSet withoutDef = provider.expandImplicit(request, details, null, url, null, null,
         new IntegerType(0), new IntegerType(10), null, null, null, null, null, null);
     assertNotNull(withoutDef.getExpansion());
-    assertFalse(withoutDef.hasCompose());
+    assertOmitsCompose(withoutDef);
 
     final ValueSet withDef = provider.expandImplicit(request, details, null, url, null, null,
         new IntegerType(0), new IntegerType(10), null, null, null, new BooleanType(true), null,
         null);
-    assertTrue(withDef.hasCompose());
-    assertTrue(withDef.getCompose().hasInclude());
+    assertNotNull(withDef.getExpansion());
+    assertOmitsCompose(withDef);
 
     final ValueSet active = provider.expandImplicit(request, details, null, url, null, null,
         new IntegerType(0), new IntegerType(10), null, null, null, null, new BooleanType(true),
         null);
     assertNotNull(active.getExpansion());
+    assertOmitsCompose(active);
 
     final ValueSet withProp = provider.expandImplicit(request, details, null, url, null, null,
         new IntegerType(0), new IntegerType(10), null, null, null, null, null,
         List.of(new CodeType("semanticType")));
     assertNotNull(withProp.getExpansion());
+    assertOmitsCompose(withProp);
 
     final ValueSet withLang = provider.expandImplicit(request, details, null, url, null, null,
         new IntegerType(0), new IntegerType(10), List.of(new CodeType("en")), null, null, null,
         null, null);
     assertNotNull(withLang.getExpansion());
+    assertOmitsCompose(withLang);
   }
 
   /**
@@ -538,6 +569,225 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
 
     assertTrue(snomedCount == 6, "Should have 6 SNOMED CT members");
     assertTrue(roleCount == 16, "Should have 16 HL7 Role members");
+  }
+
+  /**
+   * Loaded extensional and implicit value sets omit compose on every search and $expand.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testSearchAndExpandOmitCompose() throws Exception {
+    final UriParam extensionalUrl = new UriParam(TEST_VALUESET_URL);
+    final UriParam entireUrl = new UriParam("http://snomed.info/sct?fhir_vs");
+    assertFound(search(null, null, null, null, null, null, null, null, null, null, extensionalUrl,
+        null), TEST_VALUESET_URL);
+    assertFound(search(null, null, null, null, null, null, null, null, null, null, entireUrl, null),
+        "http://snomed.info/sct?fhir_vs");
+
+    final Bundle extensional = search(null, null, null, null, null, null, null, null, null, null,
+        extensionalUrl, null);
+    final ValueSet shell = valueSetWithUrl(extensional, TEST_VALUESET_URL);
+    final String id = shell.getIdElement().getIdPart();
+    assertFound(search(new TokenParam(id), null, null, null, null, null, null, null, null, null,
+        null, null), TEST_VALUESET_URL);
+    assertFound(search(null, null, null, null, null, new StringParam("SNOMEDCT_US"), null, null,
+        null, null, extensionalUrl, null), TEST_VALUESET_URL);
+    final ValueSet entire = valueSetWithUrl(
+        search(null, null, null, null, null, null, null, null, null, null, entireUrl, null),
+        "http://snomed.info/sct?fhir_vs");
+    assertTrue(entire.hasTitle());
+    assertFound(search(null, null, null, null, null, null, null, null, null,
+        new StringParam(entire.getTitle()), entireUrl, null), entire.getUrl());
+    assertFound(search(null, null, null, null, null, null, new StringParam("SANDBOX"), null, null,
+        null, extensionalUrl, null), TEST_VALUESET_URL);
+    assertFound(search(null, null, null, new StringParam("US National"), null, null, null, null,
+        null, null, extensionalUrl, null), TEST_VALUESET_URL);
+    assertFound(search(null, null, null, null, null, null, null, null, null, null, extensionalUrl,
+        new StringParam("20240301")), TEST_VALUESET_URL);
+    assertFound(search(null, null, new DateRangeParam("ge2024-01-01", null), null, null, null,
+        null, null, null, null, extensionalUrl, null), TEST_VALUESET_URL);
+    assertFound(search(null, null, new DateRangeParam(null, "le2024-12-31"), null, null, null,
+        null, null, null, null, extensionalUrl, null), TEST_VALUESET_URL);
+    assertFound(search(null, null, null, null, null, null, null, null, new TokenParam("active"),
+        null, extensionalUrl, null), TEST_VALUESET_URL);
+    assertFound(search(null, null, null, null, new TokenParam("731000124108"), null, null, null,
+        null, null, extensionalUrl, null), TEST_VALUESET_URL);
+    assertFound(search(null, null, null, null, null, null, null,
+        new UriParam("http://snomed.info/sct"), null, null, extensionalUrl, null),
+        TEST_VALUESET_URL);
+    assertFound(search(null, new TokenParam("731000124108"), null, null, null, null, null, null,
+        null, null, extensionalUrl, null), TEST_VALUESET_URL);
+    assertFound(searchPage(1, 0), null);
+    assertFound(searchPage(1, 1), null);
+    final Bundle miss = search(null, null, null, null, null, null, null, null,
+        new TokenParam("draft"), null, extensionalUrl, null);
+    assertTrue(miss.getEntry() == null || miss.getEntry().isEmpty());
+
+    final ValueSet read = provider.getValueSet(request, details, new IdType(id));
+    assertTrue(read.hasCompose());
+    assertFalse(read.getCompose().getIncludeFirstRep().getConcept().isEmpty());
+    assertTrue(context.newJsonParser().encodeResourceToString(read).contains("\"compose\""));
+
+    final UriType expandUrl = new UriType(TEST_VALUESET_URL);
+    final IdType expandId = new IdType(id);
+    assertExpandOmitsCompose(provider.expandImplicit(request, details, null, expandUrl, null, null,
+        null, null, null, null, null, null, null, null));
+    assertExpandOmitsCompose(provider.expandImplicit(request, details, null, expandUrl, null, null,
+        null, null, null, null, null, new BooleanType(true), null, null));
+    assertExpandOmitsCompose(provider.expandImplicit(request, details, null, expandUrl, null, null,
+        null, null, null, null, null, new BooleanType(false), null, null));
+    assertExpandOmitsCompose(provider.expandImplicit(request, details, null, expandUrl, null,
+        new StringType("___nomatch___"), new IntegerType(0),
+        new IntegerType(10), null, null, null, null, null, null));
+    assertExpandOmitsCompose(provider.expandImplicit(request, details, null, expandUrl, null, null,
+        new IntegerType(0), new IntegerType(1), null, null, null, null, new BooleanType(true),
+        List.of(new CodeType("semanticType"))));
+    assertExpandOmitsCompose(provider.expandImplicit(request, details, null, expandUrl, null, null,
+        null, null, List.of(new CodeType("en")), new BooleanType(true), null, null, null, null));
+    assertExpandOmitsCompose(provider.expandInstance(request, details, expandId, null, null, null,
+        null, null, null, null, null, null, new BooleanType(true), null, null));
+    final ValueSet cached = provider.expandImplicit(request, details, null, expandUrl, null, null,
+        null, null, null, null, null, new BooleanType(true), null, null);
+    assertExpandOmitsCompose(cached);
+    final UriType entireExpand = new UriType("http://snomed.info/sct?fhir_vs");
+    final StringType noMatch = new StringType("___nomatch___");
+    assertExpandOmitsCompose(provider.expandImplicit(request, details, null, entireExpand, null, noMatch,
+        new IntegerType(0), new IntegerType(0), null, null, null, null, null, null));
+
+    assertHttpOmitsCompose("/fhir/r4/ValueSet?url={url}", TEST_VALUESET_URL);
+    assertHttpOmitsCompose("/fhir/r4/ValueSet?_count=1&_offset=0", null);
+    assertHttpOmitsCompose("/fhir/r4/ValueSet?_count=1&_offset=1", null);
+    assertHttpOmitsCompose("/fhir/r4/ValueSet/$expand?url={url}&includeDefinition=true",
+        TEST_VALUESET_URL);
+    assertHttpOmitsCompose("/fhir/r4/ValueSet/$expand?url={url}&includeDefinition=false",
+        TEST_VALUESET_URL);
+    assertHttpOmitsCompose("/fhir/r4/ValueSet/" + id + "/$expand?includeDefinition=true", null);
+  }
+
+  /**
+   * Search.
+   *
+   * @param id the id
+   * @param code the code
+   * @param date the date
+   * @param description the description
+   * @param identifier the identifier
+   * @param name the name
+   * @param publisher the publisher
+   * @param reference the reference
+   * @param status the status
+   * @param title the title
+   * @param url the url
+   * @param version the version
+   * @return the bundle
+   * @throws Exception the exception
+   */
+  private Bundle search(final TokenParam id, final TokenParam code, final DateRangeParam date,
+    final StringParam description, final TokenParam identifier, final StringParam name,
+    final StringParam publisher, final UriParam reference, final TokenParam status,
+    final StringParam title, final UriParam url, final StringParam version) throws Exception {
+    final Bundle bundle = provider.findValueSets(request, details, id, code, date, description,
+        identifier, name, publisher, reference, status, title, url, version, null, null);
+    assertOmitsCompose(bundle);
+    return bundle;
+  }
+
+  /**
+   * Unfiltered search page.
+   *
+   * @param count the count
+   * @param offset the offset
+   * @return the bundle
+   * @throws Exception the exception
+   */
+  private Bundle searchPage(final int count, final int offset) throws Exception {
+    final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
+        null, null, null, null, null, null, null, new NumberParam(count), new NumberParam(offset));
+    assertOmitsCompose(bundle);
+    return bundle;
+  }
+
+  /**
+   * Asserts the url is present when expected.
+   *
+   * @param bundle the bundle
+   * @param url the url, or null to only require a non-empty page
+   */
+  private static void assertFound(final Bundle bundle, final String url) {
+    assertNotNull(bundle.getEntry());
+    assertFalse(bundle.getEntry().isEmpty());
+    if (url != null) {
+      assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
+          && url.equals(((ValueSet) e.getResource()).getUrl())));
+    }
+  }
+
+  /**
+   * Value set with url.
+   *
+   * @param bundle the bundle
+   * @param url the url
+   * @return the value set
+   */
+  private static ValueSet valueSetWithUrl(final Bundle bundle, final String url) {
+    return bundle.getEntry().stream().map(e -> (ValueSet) e.getResource())
+        .filter(vs -> url.equals(vs.getUrl())).findFirst()
+        .orElseThrow(() -> new AssertionError(url));
+  }
+
+  /**
+   * Asserts a bundle has no compose in the model or the JSON.
+   *
+   * @param bundle the bundle
+   */
+  private static void assertOmitsCompose(final Bundle bundle) {
+    assertNotNull(bundle);
+    if (bundle.getEntry() == null) {
+      return;
+    }
+    for (final Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+      if (entry.getResource() instanceof ValueSet) {
+        assertOmitsCompose((ValueSet) entry.getResource());
+      }
+    }
+  }
+
+  /**
+   * Asserts a value set has no compose in the model or the JSON.
+   *
+   * @param valueSet the value set
+   */
+  private static void assertOmitsCompose(final ValueSet valueSet) {
+    assertFalse(valueSet.hasCompose(), valueSet.getUrl());
+    final String json = context.newJsonParser().encodeResourceToString(valueSet);
+    assertFalse(json.contains("\"compose\""), valueSet.getUrl());
+  }
+
+  /**
+   * Asserts an expansion has no compose.
+   *
+   * @param valueSet the value set
+   */
+  private static void assertExpandOmitsCompose(final ValueSet valueSet) {
+    assertNotNull(valueSet.getExpansion());
+    assertOmitsCompose(valueSet);
+  }
+
+  /**
+   * Asserts an HTTP body has no compose.
+   *
+   * @param pathAndQuery path and query after /fhir/r4/ValueSet
+   * @param url the url template variable, or null
+   */
+  private void assertHttpOmitsCompose(final String pathAndQuery, final String url) {
+    final String endpoint = "http://localhost:" + port + pathAndQuery;
+    final ResponseEntity<String> response = url == null
+        ? restTemplate.getForEntity(endpoint, String.class)
+        : restTemplate.getForEntity(endpoint, String.class, url);
+    assertEquals(HttpStatus.OK, response.getStatusCode(), response.getBody());
+    assertNotNull(response.getBody());
+    assertFalse(response.getBody().contains("\"compose\""), pathAndQuery);
   }
 
 }

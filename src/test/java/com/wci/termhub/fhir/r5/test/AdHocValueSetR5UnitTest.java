@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Set;
@@ -55,18 +56,6 @@ import ca.uhn.fhir.parser.IParser;
     "lucene.index.directory=build/index/lucene-fhir-r5-adhoc"
 })
 public class AdHocValueSetR5UnitTest extends AbstractFhirR5ServerTest {
-
-  /** FHIR ValueSet path. */
-  private static final String FHIR_VALUESET = "/fhir/r5/ValueSet";
-
-  /** FHIR CodeSystem path. */
-  private static final String FHIR_CODESYSTEM = "/fhir/r5/CodeSystem";
-
-  /** FHIR transaction path (HAPI @Transaction is POST to the FHIR base). */
-  private static final String FHIR_TRANSACTION = "/fhir/r5";
-
-  /** LOINC sandbox version from CodeSystem-lnc-sandbox-277-r5.json. */
-  private static final String LOINC_SANDBOX_VERSION = "277";
 
   /** The port. */
   @LocalServerPort
@@ -161,7 +150,7 @@ public class AdHocValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     final Set<String> codes = expanded.getExpansion().getContains().stream()
         .map(ValueSetExpansionContainsComponent::getCode).collect(Collectors.toSet());
     assertEquals(Set.of("A-YES"), codes);
-    assertFalse(expanded.getCompose().getIncludeFirstRep().getFilter().isEmpty());
+    assertFalse(expanded.hasCompose());
   }
 
   /**
@@ -185,6 +174,113 @@ public class AdHocValueSetR5UnitTest extends AbstractFhirR5ServerTest {
         .map(ValueSetExpansionContainsComponent::getCode).collect(Collectors.toSet());
     assertEquals(Set.of("A-YES", "A-NO", "A-RANK"), codes);
     assertEquals(PublicationStatus.DRAFT, getValueSet(created.getIdPart()).getStatus());
+    assertFalse(httpExpand("http://example.org/vs/valid-hl7-attachment-responses",
+        "&includeDefinition=true").contains("\"compose\""));
+  }
+
+  /**
+   * Search and $expand omit compose for extensional and intensional value sets. GET keeps it.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(5)
+  public void testSearchAndExpandOmitCompose() throws Exception {
+    postCodeSystem("data/CodeSystem-adhoc-filter-props.json");
+    postValueSet("data/ValueSet-adhoc-deprecated-loinc.json");
+    postValueSet("data/ValueSet-hl7-body-site-r5.json");
+    final String[] urls = {
+        "http://loinc.org/vs/loincs-for-sars-cov-2-aoe",
+        "http://loinc.org/vs/loincs-for-sars-cov-2-aoe-bundle",
+        "http://example.org/vs/valid-hl7-attachment-requests",
+        "http://example.org/vs/valid-hl7-attachment-responses",
+        "http://loinc.org/vs/deprecated-loinc-terms",
+        "http://hl7.org/fhir/ValueSet/body-site"
+    };
+    for (final String url : urls) {
+      final String searchBody = httpGet(FHIR_VALUESET + "?url={url}", url);
+      assertFalse(searchBody.contains("\"compose\""), url);
+      final Bundle found = parser.parseResource(Bundle.class, searchBody);
+      assertFalse(found.getEntry().isEmpty(), url);
+      final ValueSet shell = (ValueSet) found.getEntryFirstRep().getResource();
+      final ValueSet read = getValueSet(shell.getIdElement().getIdPart());
+      assertTrue(read.hasCompose(), url);
+      final String once = httpExpand(url, "&includeDefinition=true");
+      final String twice = httpExpand(url, "&includeDefinition=true");
+      assertFalse(once.contains("\"compose\""), url);
+      assertFalse(twice.contains("\"compose\""), url);
+      assertFalse(once.contains("\"filter\""), url);
+      assertFalse(httpExpand(url, "&includeDefinition=false").contains("\"compose\""), url);
+      assertFalse(httpExpand(url, "&filter=zzzz&offset=0&count=1").contains("\"compose\""), url);
+      assertFalse(httpExpand(url, "&activeOnly=true&includeDesignations=true&displayLanguage=en")
+          .contains("\"compose\""), url);
+      final String byId = httpGet(FHIR_VALUESET + "/" + shell.getIdElement().getIdPart()
+          + "/$expand?includeDefinition=true", null);
+      assertFalse(byId.contains("\"compose\""), url);
+    }
+    assertFalse(httpGet(FHIR_VALUESET + "?name=Valid%20HL7&status=active&_count=10", null)
+        .contains("\"compose\""));
+    final String reference = URLEncoder.encode("http://example.org/adhoc-loinc-props",
+        StandardCharsets.UTF_8);
+    final String eqUrl = URLEncoder.encode("http://example.org/vs/valid-hl7-attachment-requests",
+        StandardCharsets.UTF_8);
+    assertFalse(httpGet(FHIR_VALUESET + "?reference=" + reference + "&url=" + eqUrl, null)
+        .contains("\"compose\""));
+    assertFalse(httpGet(FHIR_VALUESET + "?_count=1&_offset=0", null).contains("\"compose\""));
+    assertFalse(httpGet(FHIR_VALUESET + "?_count=1&_offset=1", null).contains("\"compose\""));
+    final ValueSet eq = getByUrl("http://example.org/vs/valid-hl7-attachment-requests");
+    final ConceptSetFilterComponent filter =
+        eq.getCompose().getIncludeFirstRep().getFilterFirstRep();
+    assertEquals("ValidHL7AttachmentRequest", filter.getProperty());
+    assertEquals("=", filter.getOp().toCode());
+    assertEquals("Y", filter.getValue());
+    final ValueSet regex = getByUrl("http://example.org/vs/valid-hl7-attachment-responses");
+    assertEquals("regex",
+        regex.getCompose().getIncludeFirstRep().getFilterFirstRep().getOp().toCode());
+    final ValueSet bodySite = getByUrl("http://hl7.org/fhir/ValueSet/body-site");
+    assertEquals("is-a", bodySite.getCompose().getIncludeFirstRep().getFilterFirstRep().getOp()
+        .toCode());
+  }
+
+  /**
+   * Gets a value set by url.
+   *
+   * @param url the url
+   * @return the value set
+   */
+  private ValueSet getByUrl(final String url) {
+    final Bundle bundle = parser.parseResource(Bundle.class,
+        httpGet(FHIR_VALUESET + "?url={url}", url));
+    final ValueSet shell = (ValueSet) bundle.getEntryFirstRep().getResource();
+    return getValueSet(shell.getIdElement().getIdPart());
+  }
+
+  /**
+   * Expand raw.
+   *
+   * @param url the url
+   * @param extraQuery extra query starting with &amp;
+   * @return the body
+   */
+  private String httpExpand(final String url, final String extraQuery) {
+    return httpGet(FHIR_VALUESET + "/$expand?url={url}" + extraQuery, url);
+  }
+
+  /**
+   * HTTP GET.
+   *
+   * @param pathAndQuery the path and query
+   * @param url the url variable, or null
+   * @return the body
+   */
+  private String httpGet(final String pathAndQuery, final String url) {
+    final String endpoint = "http://localhost:" + port + pathAndQuery;
+    final ResponseEntity<String> response = url == null
+        ? restTemplate.getForEntity(endpoint, String.class)
+        : restTemplate.getForEntity(endpoint, String.class, url);
+    assertEquals(HttpStatus.OK, response.getStatusCode(), response.getBody());
+    assertNotNull(response.getBody());
+    return response.getBody();
   }
 
   /**

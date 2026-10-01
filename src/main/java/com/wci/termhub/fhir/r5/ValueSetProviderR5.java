@@ -288,6 +288,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
       final List<ValueSet> list = findPossibleValueSets(false, id, code, date, description,
           identifier, name, publisher, title, url, version, reference, status);
 
+      // Compose is returned only by GET. Search matches reference against compose first.
+      for (final ValueSet valueSet : list) {
+        valueSet.setCompose(null);
+      }
+
       final NumberParam clampedCount = clampSearchCount(count);
       return FhirUtilityR5.makeBundle(request, list, clampedCount, offset);
 
@@ -1821,17 +1826,18 @@ public class ValueSetProviderR5 implements IResourceProvider {
   }
 
   /**
-   * Cache and optionally strip compose from an expansion.
+   * Cache an expansion and strip compose. Compose is returned only by GET.
    *
    * @param vs the value set
    * @param cacheKey the cache key
-   * @param includeDefinition whether to keep compose
+   * @param includeDefinition accepted for the operation signature; compose is always removed
    * @return the value set
    */
   private static ValueSet finishExpansion(final ValueSet vs, final String cacheKey,
     final boolean includeDefinition) {
-    if (!includeDefinition) {
-      vs.setCompose(null);
+    vs.setCompose(null);
+    if (includeDefinition) {
+      logger.debug("includeDefinition ignored; compose omitted from expansion {}", cacheKey);
     }
     ValueSetExpandCache.putR5(cacheKey, vs);
     return vs;
