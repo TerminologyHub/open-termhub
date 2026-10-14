@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Iterator;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -24,7 +23,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,15 +32,18 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.wci.termhub.util.PropertyUtility;
+import org.yaml.snakeyaml.Yaml;
 
-import io.swagger.v3.core.util.Yaml;
+import tools.jackson.databind.JsonNode;
+
+import com.wci.termhub.util.PropertyUtility;
+import com.wci.termhub.util.ThreadLocalMapper;
 
 /**
  * Test for swagger urls.
  */
 @ExtendWith(SpringExtension.class)
+@AutoConfigureTestRestTemplate
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
@@ -165,8 +168,10 @@ public class SwaggerTest {
     assertEquals(HttpStatus.OK, docs.getStatusCode(), version + " api-docs status");
     assertNotNull(docs.getBody(), version + " api-docs body");
 
-    final JsonNode apiDocs = Yaml.mapper().readTree(docs.getBody());
-    assertEquals(base, apiDocs.at("/servers/0/url").asText(),
+    // FHIR OpenAPI interceptors emit YAML (Yaml.pretty), not JSON
+    final Object yamlDoc = new Yaml().load(docs.getBody());
+    final JsonNode apiDocs = ThreadLocalMapper.get().valueToTree(yamlDoc);
+    assertEquals(base, apiDocs.at("/servers/0/url").asString(),
         version + " api-docs server base url");
     return apiDocs;
   }
@@ -180,11 +185,12 @@ public class SwaggerTest {
    */
   private static boolean apiDocsHasMethod(final JsonNode apiDocs, final String method) {
     final JsonNode paths = apiDocs.get("paths");
-    if (paths == null) {
+    if (paths == null || !paths.isObject()) {
       return false;
     }
-    for (final Iterator<JsonNode> it = paths.elements(); it.hasNext();) {
-      if (it.next().has(method)) {
+    for (final String pathName : paths.propertyNames()) {
+      final JsonNode pathItem = paths.get(pathName);
+      if (pathItem != null && pathItem.has(method)) {
         return true;
       }
     }

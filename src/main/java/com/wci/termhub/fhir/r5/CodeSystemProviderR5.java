@@ -55,7 +55,6 @@ import com.wci.termhub.fhir.util.LoincConstants;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
-import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.Delete;
@@ -315,7 +314,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_LOOKUP, idempotent = true)
+  @Operation(name = "$lookup", idempotent = true)
   public Parameters lookupImplicit(final HttpServletRequest request,
     final HttpServletResponse response, final ServletRequestDetails details,
     @OperationParam(name = "code", min = 0, max = 1, typeName = "code") final CodeType code,
@@ -375,7 +374,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_LOOKUP, idempotent = true)
+  @Operation(name = "$lookup", idempotent = true)
   public Parameters lookupInstance(final HttpServletRequest request,
     final HttpServletResponse response, final ServletRequestDetails details,
     @IdParam final IdType id,
@@ -440,7 +439,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true)
+  @Operation(name = "$validate-code", idempotent = true)
   public Parameters validateCodeImplicit(final HttpServletRequest request,
     final HttpServletResponse response, final ServletRequestDetails details,
     @OperationParam(name = "url", min = 0, max = 1, typeName = "uri") final UriType url,
@@ -503,7 +502,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true)
+  @Operation(name = "$validate-code", idempotent = true)
   public Parameters validateCodeInstance(final HttpServletRequest request,
     final HttpServletResponse response, final ServletRequestDetails details,
     @IdParam final IdType id,
@@ -563,7 +562,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_SUBSUMES, idempotent = true)
+  @Operation(name = "$subsumes", idempotent = true)
   public Parameters subsumesImplicit(final HttpServletRequest request,
     final HttpServletResponse response, final ServletRequestDetails details,
     @OperationParam(name = "codeA", min = 0, max = 1, typeName = "code") final CodeType codeA,
@@ -615,7 +614,7 @@ public class CodeSystemProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_SUBSUMES, idempotent = true)
+  @Operation(name = "$subsumes", idempotent = true)
   public Parameters subsumesInstance(final HttpServletRequest request,
     final HttpServletResponse response, final ServletRequestDetails details,
     @IdParam final IdType id,

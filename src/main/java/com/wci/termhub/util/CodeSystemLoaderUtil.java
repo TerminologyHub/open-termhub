@@ -26,10 +26,10 @@ import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
@@ -186,13 +186,13 @@ public final class CodeSystemLoaderUtil {
       }
 
       // check for existing
-      final String url = jsonContent.path("url").asText();
-      String abbreviation = jsonContent.path("title").asText();
+      final String url = jsonContent.path("url").asString();
+      String abbreviation = jsonContent.path("title").asString();
       if (StringUtility.isEmpty(abbreviation)) {
         abbreviation = StringUtility.deriveTitleFromUrl(url);
       }
-      final String publisher = jsonContent.path("publisher").asText();
-      final String version = jsonContent.path("version").asText();
+      final String publisher = jsonContent.path("publisher").asString();
+      final String version = jsonContent.path("version").asString();
       Terminology terminology = findTerminology(service, abbreviation, publisher, version);
 
       if (terminology != null) {
@@ -227,7 +227,7 @@ public final class CodeSystemLoaderUtil {
       int relationshipCount = 0;
       int termCount = 0;
       LOGGER.info("  initialize terminology cache");
-      try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+      try (JsonParser parser = ThreadLocalMapper.get().createParser(file)) {
 
         // You can iterate through the tokens one by one
         while (parser.nextToken() != null) {
@@ -256,7 +256,7 @@ public final class CodeSystemLoaderUtil {
       conceptCount = 0;
 
       LOGGER.info("  index concepts");
-      try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+      try (JsonParser parser = ThreadLocalMapper.get().createParser(file)) {
 
         // You can iterate through the tokens one by one
         while (parser.nextToken() != null) {
@@ -455,7 +455,7 @@ public final class CodeSystemLoaderUtil {
     final JsonNode root, final boolean enablePostLoadComputations) throws Exception {
 
     // Validate that this is a CodeSystem resource
-    if (!root.has("resourceType") || !"CodeSystem".equals(root.get("resourceType").asText())) {
+    if (!root.has("resourceType") || !"CodeSystem".equals(root.get("resourceType").asString())) {
       throw FhirUtilityR4.exception("Invalid resource type - expected CodeSystem",
           IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
@@ -469,29 +469,29 @@ public final class CodeSystemLoaderUtil {
     attributes.put("loaded", "false");
 
     // Set "originalId" if provided
-    final String originalId = root.path("id").asText();
+    final String originalId = root.path("id").asString();
     if (isNotBlank(originalId)) {
       attributes.put("originalId", originalId);
       idMap.put(originalId, terminology.getId());
     }
 
     terminology.setActive(true);
-    terminology.setUri(root.path("url").asText());
-    terminology.setName(root.path("name").asText());
-    String abbreviation = root.path("title").asText();
+    terminology.setUri(root.path("url").asString());
+    terminology.setName(root.path("name").asString());
+    String abbreviation = root.path("title").asString();
     if (StringUtility.isEmpty(abbreviation)) {
       abbreviation = StringUtility.deriveTitleFromUrl(terminology.getUri());
     }
     terminology.setAbbreviation(abbreviation);
-    terminology.setPublisher(root.path("publisher").asText());
-    terminology.setVersion(root.path("version").asText());
+    terminology.setPublisher(root.path("publisher").asString());
+    terminology.setVersion(root.path("version").asString());
     // For SNOMED, set the terminology version to just the base version at the
     // end of the URL
     if (terminology.getUri().contains("snomed") && terminology.getVersion().contains("/")) {
       terminology.setVersion(terminology.getVersion().replaceFirst(".*/", ""));
     }
     // Store the full date string with timezone information
-    final String fullDateString = root.path("date").asText();
+    final String fullDateString = root.path("date").asString();
     terminology.setReleaseDate(fullDateString);
     terminology.setFamily(terminology.getAbbreviation());
     terminology.setConceptCt(root.path("count").asLong(0));
@@ -499,25 +499,25 @@ public final class CodeSystemLoaderUtil {
     // Set terminology attributes
     final JsonNode properties = root.path("property");
     for (final JsonNode property : properties) {
-      final String uri = property.path("uri").asText();
+      final String uri = property.path("uri").asString();
       // [ https:, , terminologyhub.com, model, terminology, attributes,
       // autocomplete ]
       if (uri == null || uri.isEmpty() || !uri.contains("terminology/attributes")) {
         continue;
       }
-      attributes.put(property.path("code").asText(), property.path("description").asText());
+      attributes.put(property.path("code").asString(), property.path("description").asString());
     }
     if (!root.path("description").isMissingNode()) {
-      attributes.put("description", root.path("description").asText());
+      attributes.put("description", root.path("description").asString());
     }
     if (!root.path("copyright").isMissingNode()) {
-      attributes.put("copyright", root.path("copyright").asText());
+      attributes.put("copyright", root.path("copyright").asString());
     }
     if (root.has("identifier") && root.get("identifier").isArray()) {
       attributes.put("fhirIdentifier", root.get("identifier").toString());
     }
     if (!root.path("valueSet").isMissingNode()) {
-      attributes.put("valueSet", root.path("valueSet").asText());
+      attributes.put("valueSet", root.path("valueSet").asString());
     }
     if (root.has("contact") && root.get("contact").isArray()) {
       attributes.put("fhirContact", root.get("contact").toString());
@@ -531,7 +531,7 @@ public final class CodeSystemLoaderUtil {
     if (!root.path("compositional").isMissingNode()) {
       attributes.put("fhirCompositional", Boolean.toString(root.path("compositional").asBoolean()));
     }
-    attributes.put("fhirVersion", root.path("version").asText());
+    attributes.put("fhirVersion", root.path("version").asString());
     attributes.put(Terminology.Attributes.treePositions.property(),
         Boolean.toString(enablePostLoadComputations));
     terminology.setAttributes(attributes);
@@ -569,7 +569,7 @@ public final class CodeSystemLoaderUtil {
       // "uri":"https://terminologyhub.com/model/concept/semanticType/
       // MorphologicAbnormality","type":"string"}
 
-      final String uri = property.path("uri").asText();
+      final String uri = property.path("uri").asString();
       if (StringUtility.isEmpty(uri) || !uri.contains("/")) {
         continue;
       }
@@ -587,10 +587,10 @@ public final class CodeSystemLoaderUtil {
         continue;
       }
 
-      final String code = property.path("code").asText();
-      final String description = property.path("description").asText();
+      final String code = property.path("code").asString();
+      final String description = property.path("description").asString();
       final String fieldType = uriParts[uriParts.length - 2];
-      final String fhirType = property.path("type").asText();
+      final String fhirType = property.path("type").asString();
 
       try {
 
@@ -639,11 +639,11 @@ public final class CodeSystemLoaderUtil {
 
     final String id = UUID.randomUUID().toString();
     if (conceptNode.has("id")) {
-      concept.getAttributes().put("originalId", conceptNode.path("id").asText());
+      concept.getAttributes().put("originalId", conceptNode.path("id").asString());
     }
 
     concept.setId(id);
-    concept.setCode(conceptNode.path("code").asText());
+    concept.setCode(conceptNode.path("code").asString());
     concept.setTerminology(terminology.getAbbreviation());
     concept.setVersion(terminology.getVersion());
     concept.setPublisher(terminology.getPublisher());
@@ -655,7 +655,7 @@ public final class CodeSystemLoaderUtil {
     concept.setStemName(StringUtility.normalizeWithStemming(concept.getName()));
 
     // Set concept ID if different from code
-    final String conceptId = conceptNode.path("conceptId").asText(null);
+    final String conceptId = conceptNode.path("conceptId").asString(null);
     if (conceptId != null && !conceptId.equals(concept.getCode())) {
       concept.getAttributes().put("conceptId", conceptId);
     }
@@ -669,13 +669,13 @@ public final class CodeSystemLoaderUtil {
     // Process common properties
     final JsonNode properties = conceptNode.path("property");
     for (final JsonNode property : properties) {
-      final String code = property.path("code").asText();
+      final String code = property.path("code").asString();
       String value = null;
 
       if (property.has("valueString")) {
-        value = property.path("valueString").asText();
+        value = property.path("valueString").asString();
       } else if (property.has("valueBoolean")) {
-        value = property.path("valueBoolean").asText();
+        value = property.path("valueBoolean").asString();
       }
 
       // Handle * properties with valueCoding
@@ -685,7 +685,7 @@ public final class CodeSystemLoaderUtil {
       if (property.has("valueCoding")) {
         final JsonNode valueCoding = property.path("valueCoding");
         if (valueCoding.has("code")) {
-          final String codingCode = valueCoding.path("code").asText();
+          final String codingCode = valueCoding.path("code").asString();
           // Primary properties that should only be stored once
           final boolean isPrimary = "system".equals(code) || "property".equals(code)
               || "component".equals(code) || "class".equals(code)
@@ -699,7 +699,7 @@ public final class CodeSystemLoaderUtil {
             // Store primary property without index
             concept.getAttributes().put(code, codingCode);
             if (valueCoding.has("display")) {
-              final String display = valueCoding.path("display").asText();
+              final String display = valueCoding.path("display").asString();
               concept.getAttributes().put(code + "_display", display);
             }
           } else {
@@ -707,15 +707,15 @@ public final class CodeSystemLoaderUtil {
             entry.setPropertyCode(code);
             entry.setValueCode(codingCode);
             if (valueCoding.has("display")) {
-              entry.setValueDisplay(valueCoding.path("display").asText());
+              entry.setValueDisplay(valueCoding.path("display").asString());
             }
             if (property.has("extension")) {
               for (final JsonNode ext : property.get("extension")) {
-                final String url = ext.path("url").asText(null);
+                final String url = ext.path("url").asString(null);
                 if (url == null || !ext.has("valueString")) {
                   continue;
                 }
-                final String extValue = ext.path("valueString").asText(null);
+                final String extValue = ext.path("valueString").asString(null);
                 if (extValue == null || extValue.isBlank()) {
                   continue;
                 }
@@ -744,7 +744,7 @@ public final class CodeSystemLoaderUtil {
       }
       else if ("status".equals(code)) {
         if (property.has("valueCode")) {
-          final String statusCode = property.path("valueCode").asText();
+          final String statusCode = property.path("valueCode").asString();
           concept.setActive("active".equalsIgnoreCase(statusCode));
           if (!ServerModeUtility.isRegenstriefImportMode()) {
             concept.getAttributes().put("status", statusCode);
@@ -781,7 +781,7 @@ public final class CodeSystemLoaderUtil {
         concept.getAttributes().put(code, value);
       }
       else if (property.has("valueCode")) {
-        concept.getAttributes().put(code, property.path("valueCode").asText());
+        concept.getAttributes().put(code, property.path("valueCode").asString());
       }
 
     }
@@ -891,18 +891,18 @@ public final class CodeSystemLoaderUtil {
     // active/defined/name/par/chd
 
     final Concept concept = new Concept();
-    concept.setCode(conceptNode.path("code").asText());
-    concept.setName(conceptNode.path("display").asText());
+    concept.setCode(conceptNode.path("code").asString());
+    concept.setName(conceptNode.path("display").asString());
     // Process common properties
     final JsonNode properties = conceptNode.path("property");
     for (final JsonNode property : properties) {
-      final String code = property.path("code").asText();
+      final String code = property.path("code").asString();
       String value = null;
 
       if (property.has("valueString")) {
-        value = property.path("valueString").asText();
+        value = property.path("valueString").asString();
       } else if (property.has("valueBoolean")) {
-        value = property.path("valueBoolean").asText();
+        value = property.path("valueBoolean").asString();
       }
 
       // redirect active
@@ -911,7 +911,7 @@ public final class CodeSystemLoaderUtil {
       }
       // FHIR standard status (valueCode active/inactive) drives concept active flag
       else if ("status".equals(code) && property.has("valueCode")) {
-        final String statusCode = property.path("valueCode").asText();
+        final String statusCode = property.path("valueCode").asString();
         concept.setActive("active".equalsIgnoreCase(statusCode));
       }
       // redirect defined
@@ -929,18 +929,18 @@ public final class CodeSystemLoaderUtil {
       // Cache parent/child relationship here
       else if ("parent".equals(code)) {
         if (property.has("valueCoding") && property.get("valueCoding").has("code")) {
-          cache.addParChd(property.get("valueCoding").get("code").asText(),
-              conceptNode.path("code").asText());
+          cache.addParChd(property.get("valueCoding").get("code").asString(),
+              conceptNode.path("code").asString());
         } else if (property.has("valueCode")) {
-          cache.addParChd(property.get("valueCode").asText(), conceptNode.path("code").asText());
+          cache.addParChd(property.get("valueCode").asString(), conceptNode.path("code").asString());
         }
       }
       // LOINC panel membership: relationship to LG code means concept is a panel member
       else if ("relationship".equals(code)) {
         if (property.has("valueCoding") && property.get("valueCoding").has("code")) {
-          final String toCode = property.get("valueCoding").get("code").asText();
+          final String toCode = property.get("valueCoding").get("code").asString();
           if (toCode.startsWith("LG")) {
-            cache.addParChd(toCode, conceptNode.path("code").asText());
+            cache.addParChd(toCode, conceptNode.path("code").asString());
           }
         }
       }
@@ -968,7 +968,7 @@ public final class CodeSystemLoaderUtil {
     for (final JsonNode propertyNode : relationshipArrayNode) {
 
       // The standard FHIR "status" property has a valueCode but is not a relationship
-      if (propertyNode.has("code") && propertyNode.get("code").asText().equals("status")) {
+      if (propertyNode.has("code") && propertyNode.get("code").asString().equals("status")) {
         continue;
       }
       // If the value is not "valueCode" or "valueCoding", skip - not a relationship
@@ -977,7 +977,7 @@ public final class CodeSystemLoaderUtil {
       }
 
       final String propertyType =
-          propertyNode.has("code") ? propertyNode.path("code").asText() : "";
+          propertyNode.has("code") ? propertyNode.path("code").asString() : "";
 
       if ("parent".equals(propertyType)) {
         final ConceptRelationship relationship =
@@ -987,9 +987,9 @@ public final class CodeSystemLoaderUtil {
         final JsonNode valueCode = propertyNode.path("valueCode");
         final String parentCode;
         if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-          parentCode = valueCoding.path("code").asText();
+          parentCode = valueCoding.path("code").asString();
         } else if (!valueCode.isMissingNode()) {
-          parentCode = valueCode.asText();
+          parentCode = valueCode.asString();
         } else {
           parentCode = null;
         }
@@ -1036,7 +1036,7 @@ public final class CodeSystemLoaderUtil {
           PreferredTermConfig.findByAbbreviation(terminology.getAbbreviation());
 
       if (ptConfig != null) {
-        final String language = designation.path("language").asText();
+        final String language = designation.path("language").asString();
         final boolean isPriority = ptConfig.getPreferredTermCode().equals(term.getType());
         term.getLocaleMap().put(language, isPriority);
 
@@ -1076,7 +1076,7 @@ public final class CodeSystemLoaderUtil {
     final Definition definition = new Definition();
     definition.setId(UUID.randomUUID().toString());
     definition.setActive(true);
-    definition.setDefinition(definitionNode.asText());
+    definition.setDefinition(definitionNode.asString());
 
     // Set terminology metadata
     definition.setTerminology(terminology.getAbbreviation());
@@ -1105,21 +1105,21 @@ public final class CodeSystemLoaderUtil {
     final Term term = new Term();
     term.setId(UUID.randomUUID().toString());
     term.setActive(true);
-    term.setName(designation.path("value").asText());
+    term.setName(designation.path("value").asString());
     term.setNormName(StringUtility.normalize(term.getName()));
     term.setStemName(StringUtility.normalizeWithStemming(term.getName()));
 
     // Safely set term type with null checks
     if (designation.has("use") && designation.path("use").has("code")) {
-      term.setType(designation.path("use").path("code").asText());
+      term.setType(designation.path("use").path("code").asString());
 
       // Store designation.use.system and display in term attributes for FHIR output
       final JsonNode useNode = designation.path("use");
       if (useNode.has("system")) {
-        term.getAttributes().put("designationUseSystem", useNode.path("system").asText());
+        term.getAttributes().put("designationUseSystem", useNode.path("system").asString());
       }
       if (useNode.has("display")) {
-        term.getAttributes().put("designationUseDisplay", useNode.path("display").asText());
+        term.getAttributes().put("designationUseDisplay", useNode.path("display").asString());
       }
     } else {
       // Default to PT (Preferred Term) if no type is specified
@@ -1134,11 +1134,11 @@ public final class CodeSystemLoaderUtil {
     term.setCode(concept.getCode());
     term.setConceptId(concept.getCode());
 
-    final String language = designation.path("language").asText();
+    final String language = designation.path("language").asString();
     term.getLocaleMap().put(language, false);
 
     // Set component ID if available
-    final String componentId = designation.path("id").asText(null);
+    final String componentId = designation.path("id").asString(null);
     if (componentId != null) {
       term.setComponentId(componentId);
     }
@@ -1147,11 +1147,11 @@ public final class CodeSystemLoaderUtil {
     // Extract caseSignificanceId and moduleId from concept properties
     final JsonNode properties = conceptNode.path("property");
     for (final JsonNode property : properties) {
-      final String code = property.path("code").asText();
+      final String code = property.path("code").asString();
       if ("caseSignificanceId".equals(code) && property.has("valueString")) {
-        term.getAttributes().put("caseSignificanceId", property.path("valueString").asText());
+        term.getAttributes().put("caseSignificanceId", property.path("valueString").asString());
       } else if ("moduleId".equals(code) && property.has("valueString")) {
-        term.getAttributes().put("moduleId", property.path("valueString").asText());
+        term.getAttributes().put("moduleId", property.path("valueString").asString());
       }
     }
 
@@ -1188,7 +1188,7 @@ public final class CodeSystemLoaderUtil {
     relationship.setPublisher(terminology.getPublisher());
 
     // Get type
-    final String relationshipType = relationshipNode.get("code").asText();
+    final String relationshipType = relationshipNode.get("code").asString();
 
     relationship.setType("relationship");
     relationship.setAdditionalType(relationshipType);
@@ -1208,19 +1208,19 @@ public final class CodeSystemLoaderUtil {
     final JsonNode extensions = relationshipNode.path("extension");
     if (!extensions.isMissingNode()) {
       for (final JsonNode extension : extensions) {
-        final String url = extension.path("url").asText();
+        final String url = extension.path("url").asString();
         if (url.endsWith("/additionalType")) {
           // Support "valueCode"
           if (extension.has("valueCode")) {
-            relationship.setAdditionalType(extension.get("valueCode").asText());
+            relationship.setAdditionalType(extension.get("valueCode").asString());
           }
           // Support "valueCoding"
           else if (extension.has("valueCoding")) {
             final JsonNode valueCoding = extension.path("valueCoding");
             if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-              relationship.setAdditionalType(valueCoding.path("code").asText());
+              relationship.setAdditionalType(valueCoding.path("code").asString());
             } else if (!valueCoding.isMissingNode() && valueCoding.has("display")) {
-              relationship.setAdditionalType(valueCoding.path("display").asText());
+              relationship.setAdditionalType(valueCoding.path("display").asString());
             }
           }
           // otherwise fail
@@ -1228,7 +1228,7 @@ public final class CodeSystemLoaderUtil {
             throw new Exception("Unexpected missing valueCode/valueCoding for additional type");
           }
         } else if (url.endsWith("/group")) {
-          relationship.setGroup(extension.path("valueString").asText());
+          relationship.setGroup(extension.path("valueString").asString());
         } else if (url.endsWith("/historical")) {
           // Check for historical relationship extension
           final JsonNode valueBoolean = extension.path("valueBoolean");
@@ -1238,7 +1238,7 @@ public final class CodeSystemLoaderUtil {
         } else if (url.contains("/relationship/attribute/")) {
           final String attrName = url.substring(url.lastIndexOf('/') + 1);
           if (extension.has("valueString")) {
-            final String attrValue = extension.path("valueString").asText();
+            final String attrValue = extension.path("valueString").asString();
             if ("SEQUENCE".equals(attrName)) {
               relationship.getAttributes().put(LoincConstants.ATTR_SEQUENCE, attrValue);
             } else if ("ID".equals(attrName)) {
@@ -1275,9 +1275,9 @@ public final class CodeSystemLoaderUtil {
     final JsonNode valueCoding = relationshipNode.path("valueCoding");
     final JsonNode valueCode = relationshipNode.path("valueCode");
     if (!valueCoding.isMissingNode() && valueCoding.has("code")) {
-      relatedCode = valueCoding.path("code").asText();
+      relatedCode = valueCoding.path("code").asString();
     } else if (!valueCode.isMissingNode()) {
-      relatedCode = valueCode.asText();
+      relatedCode = valueCode.asString();
     }
     if (relatedCode != null) {
       final ConceptRef toRef = terminologyCache.newConceptRef(relatedCode,
@@ -1345,7 +1345,7 @@ public final class CodeSystemLoaderUtil {
   private static JsonNode getRootWithoutConcepts(final File file) throws Exception {
 
     // Use try-with-resources to ensure the parser is closed
-    try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+    try (JsonParser parser = ThreadLocalMapper.get().createParser(file)) {
 
       // The first token should be the start of the root object: {
       if (parser.nextToken() != JsonToken.START_OBJECT) {

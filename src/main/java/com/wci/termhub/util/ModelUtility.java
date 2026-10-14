@@ -38,10 +38,10 @@ import org.springframework.data.elasticsearch.annotations.InnerField;
 import org.springframework.data.elasticsearch.annotations.MultiField;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.SerializationFeature;
 import com.wci.termhub.model.HasId;
 import com.wci.termhub.service.RootService;
 
@@ -281,9 +281,9 @@ public final class ModelUtility<T> {
      *
      * @param input the input
      * @return the string
-     * @throws JsonProcessingException the json processing exception
+     * @throws JacksonException the json processing exception
      */
-    public static String prettyFormatJson(final Object input) throws JsonProcessingException {
+    public static String prettyFormatJson(final Object input) throws JacksonException {
         return ThreadLocalMapper.get().writerWithDefaultPrettyPrinter().writeValueAsString(input);
     }
 

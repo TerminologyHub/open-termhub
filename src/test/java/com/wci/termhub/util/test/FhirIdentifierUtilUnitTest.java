@@ -23,7 +23,7 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.wci.termhub.fhir.rest.r4.FhirUtilityR4;
 import com.wci.termhub.model.Mapset;
 import com.wci.termhub.model.Subset;
@@ -47,8 +47,8 @@ public class FhirIdentifierUtilUnitTest {
     final String stored = FhirIdentifierUtil.normalizeForStorage(input, "http://loinc.org?fhir_vs");
     assertNotNull(stored);
     final JsonNode out = ThreadLocalMapper.get().readTree(stored);
-    assertEquals("http://loinc.org", out.get(0).path("system").asText());
-    assertEquals("loinc-document-ontology", out.get(0).path("value").asText());
+    assertEquals("http://loinc.org", out.get(0).path("system").asString());
+    assertEquals("loinc-document-ontology", out.get(0).path("value").asString());
   }
 
   /**

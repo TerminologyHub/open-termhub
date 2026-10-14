@@ -35,9 +35,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.JsonNode;
 import com.wci.termhub.EnablePostLoadComputations;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.algo.ProgressEvent;
@@ -135,7 +135,7 @@ public class BulkLoadRestImpl {
     }
 
     logger.info("  progress " + processId + " = " + processProgressMap.get(processId));
-    return new ResponseEntity<String>("" + processProgressMap.get(processId), null, 200);
+    return ResponseEntity.ok("" + processProgressMap.get(processId));
 
   }
 
@@ -174,7 +174,7 @@ public class BulkLoadRestImpl {
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_NOT_FOUND);
     }
 
-    return new ResponseEntity<String>(processExceptionMap.get(processId).getMessage(), null, 200);
+    return ResponseEntity.ok(processExceptionMap.get(processId).getMessage());
 
   }
 
@@ -213,7 +213,7 @@ public class BulkLoadRestImpl {
           OperationOutcome.IssueType.EXCEPTION, HttpServletResponse.SC_NOT_FOUND);
     }
 
-    return new ResponseEntity<String>(processResultMap.get(processId).toString(), null, 200);
+    return ResponseEntity.ok(processResultMap.get(processId).toString());
 
   }
 
@@ -269,8 +269,8 @@ public class BulkLoadRestImpl {
         // Use existing loader utility
         final CodeSystem codeSystem = bulkLoaderService.doCodeSystemLoad(file);
 
-        return new ResponseEntity<>(
-            FhirContext.forR5().newJsonParser().encodeResourceToString(codeSystem), null, 200);
+        return ResponseEntity.ok(
+            FhirContext.forR5().newJsonParser().encodeResourceToString(codeSystem));
 
       }
 
@@ -296,7 +296,7 @@ public class BulkLoadRestImpl {
             processProgressMap, processExceptionMap);
 
         // Return the process id
-        return new ResponseEntity<>(processId, null, 200);
+        return ResponseEntity.ok(processId);
 
       }
 
@@ -365,8 +365,8 @@ public class BulkLoadRestImpl {
 
         FileUtils.delete(file);
 
-        return new ResponseEntity<>(
-            FhirContext.forR5().newJsonParser().encodeResourceToString(valueSet), null, 200);
+        return ResponseEntity.ok(
+            FhirContext.forR5().newJsonParser().encodeResourceToString(valueSet));
 
       }
 
@@ -414,7 +414,7 @@ public class BulkLoadRestImpl {
         t.start();
 
         // Return the process id
-        return new ResponseEntity<>(processId, null, 200);
+        return ResponseEntity.ok(processId);
 
       }
 
@@ -483,8 +483,8 @@ public class BulkLoadRestImpl {
 
         FileUtils.delete(file);
 
-        return new ResponseEntity<>(
-            FhirContext.forR5().newJsonParser().encodeResourceToString(conceptMap), null, 200);
+        return ResponseEntity.ok(
+            FhirContext.forR5().newJsonParser().encodeResourceToString(conceptMap));
 
       }
 
@@ -532,7 +532,7 @@ public class BulkLoadRestImpl {
         t.start();
 
         // Return the process id
-        return new ResponseEntity<>(processId, null, 200);
+        return ResponseEntity.ok(processId);
 
       }
 
@@ -601,7 +601,7 @@ public class BulkLoadRestImpl {
         handleBundle(searchService, new DefaultProgressListener(), file, results);
         FileUtils.delete(file);
 
-        return new ResponseEntity<>(results.toString(), null, 200);
+        return ResponseEntity.ok(results.toString());
       }
 
       // If running in the background, load and return the process id
@@ -640,7 +640,7 @@ public class BulkLoadRestImpl {
         t.start();
 
         // Return the process id
-        return new ResponseEntity<>(processId, null, 200);
+        return ResponseEntity.ok(processId);
 
       }
 
@@ -670,13 +670,13 @@ public class BulkLoadRestImpl {
     long totalEntryCount = 0;
 
     // Use try-with-resources to ensure the JsonParser is safely closed
-    try (final JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+    try (final JsonParser parser = ThreadLocalMapper.get().createParser(file)) {
 
       // We iterate through all tokens until the end of the file
       while (parser.nextToken() != null) {
 
         // 1. Check for the "entry" field name
-        if (parser.currentToken() == JsonToken.FIELD_NAME && "entry".equals(parser.getText())) {
+        if (parser.currentToken() == JsonToken.PROPERTY_NAME && "entry".equals(parser.getString())) {
 
           // Advance the parser one token: it should now be at the start of the array ([)
           if (parser.nextToken() != JsonToken.START_ARRAY) {
@@ -707,7 +707,7 @@ public class BulkLoadRestImpl {
 
     // Go through the bundle and determine which resource type we're on
     // save that to a file and make the appropriate loader call
-    try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+    try (JsonParser parser = ThreadLocalMapper.get().createParser(file)) {
 
       // You can iterate through the tokens one by one
       while (parser.nextToken() != null) {
@@ -729,7 +729,7 @@ public class BulkLoadRestImpl {
             final JsonNode entryNode = parser.readValueAsTree();
             if (entryNode.has("resource")) {
               final JsonNode resource = entryNode.get("resource");
-              final String resourceType = resource.get("resourceType").asText(null);
+              final String resourceType = resource.get("resourceType").asString(null);
               final String resourceId = describeBundleResource(resource);
               logger.info("  resource = " + resourceType);
 
@@ -793,10 +793,10 @@ public class BulkLoadRestImpl {
    * @return the string
    */
   private static String describeBundleResource(final JsonNode resource) {
-    final String resourceType = resource.path("resourceType").asText("?");
-    final String title = resource.path("title").asText(null);
-    final String url = resource.path("url").asText(null);
-    final String id = resource.path("id").asText(null);
+    final String resourceType = resource.path("resourceType").asString("?");
+    final String title = resource.path("title").asString(null);
+    final String url = resource.path("url").asString(null);
+    final String id = resource.path("id").asString(null);
 
     final StringBuilder sb = new StringBuilder(resourceType);
     if (title != null) {

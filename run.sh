@@ -54,6 +54,6 @@ else
     exit 1
 fi
 
-echo "java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -jar $jar_file"
-java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -Dspring.profiles.active=deploy -jar $jar_file
+echo "java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -Dspring.profiles.active=deploy -jar $jar_file"
+java ${JAVA_OPTS:=} -Xms512M -XX:+UseZGC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -Dspring.profiles.active=deploy -jar $jar_file
 

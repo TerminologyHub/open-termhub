@@ -25,6 +25,9 @@ public final class LuceneIndexManager {
   /** The instance. */
   private static LuceneIndexManager instance;
 
+  /** Lock for lazy singleton initialization. */
+  private static final Object INSTANCE_LOCK = new Object();
+
   /** The index reader. */
   private IndexReader indexReader;
 
@@ -63,12 +66,14 @@ public final class LuceneIndexManager {
    * @return single instance of LuceneIndexManager
    * @throws IOException Signals that an I/O exception has occurred.
    */
-  public static synchronized LuceneIndexManager getInstance(final String indexRootDirectory,
+  public static LuceneIndexManager getInstance(final String indexRootDirectory,
     final String indexDirectory) throws IOException {
-    if (instance == null) {
-      instance = new LuceneIndexManager(indexRootDirectory, indexDirectory);
+    synchronized (INSTANCE_LOCK) {
+      if (instance == null) {
+        instance = new LuceneIndexManager(indexRootDirectory, indexDirectory);
+      }
+      return instance;
     }
-    return instance;
   }
 
   /**

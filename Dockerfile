@@ -4,7 +4,7 @@
 #
 # This is the build container
 #
-FROM gradle:8.11.0-jdk17 AS gradle-build
+FROM gradle:9.1.0-jdk25 AS gradle-build
 USER root
 RUN apt-get install -y bash procps
 
@@ -39,7 +39,7 @@ RUN gradle bootJar -x test -x spotbugsMain -x spotbugsTest
 #
 # This is the runtime container
 #
-FROM bellsoft/liberica-openjre-alpine:17.0.19
+FROM bellsoft/liberica-openjre-alpine:25.0.4
 RUN apk update && apk upgrade --no-cache
 
 # Create the user that will be used to run the product and set up the directory it'll reside in.

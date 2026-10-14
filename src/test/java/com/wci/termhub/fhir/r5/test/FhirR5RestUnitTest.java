@@ -54,9 +54,9 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.json.JacksonTester;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
@@ -71,7 +71,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.app.ServerMode;
 import com.wci.termhub.fhir.util.LoincValueSetHelper;
@@ -146,7 +146,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   private static IParser parser;
 
   /** The object mapper. */
-  private ObjectMapper objectMapper = null;
+  private JsonMapper objectMapper = null;
 
   /** The search service. */
   @Autowired

@@ -16,6 +16,6 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '25'
       - name: Run Build & Tests
         run: make test

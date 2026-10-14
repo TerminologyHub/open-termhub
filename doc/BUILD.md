@@ -2,7 +2,7 @@
 Instructions on building this project, running tests, making a docker image, and more.
 
 ## Prerequisites/Setup
-* Java 17+
+* Java 25+
 
 ### Developer Setup
 

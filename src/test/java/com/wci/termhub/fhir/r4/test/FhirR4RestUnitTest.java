@@ -61,9 +61,9 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.json.JacksonTester;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
@@ -74,8 +74,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.app.ServerMode;
 import com.wci.termhub.fhir.util.CodeSystemLookupCache;
@@ -175,7 +175,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
   /**
    * The object mapper.
    */
-  private ObjectMapper objectMapper = null;
+  private JsonMapper objectMapper = null;
 
   /**
    * The search service.
@@ -2121,7 +2121,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
         for (final JsonNode actualParam : actualParams) {
           if (actualParam.has("name")) {
-            final String name = actualParam.get("name").asText();
+            final String name = actualParam.get("name").asString();
             if ("designation".equals(name)) {
               final String key = buildDesignationKey(actualParam);
               if (key != null) {
@@ -2139,7 +2139,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
         // Compare expected designations/properties against actual sets
         for (final JsonNode expectedParam : expectedParams) {
           if (expectedParam.has("name")) {
-            final String name = expectedParam.get("name").asText();
+            final String name = expectedParam.get("name").asString();
 
             if ("designation".equals(name)) {
               final String key = buildDesignationKey(expectedParam);
@@ -2191,18 +2191,18 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
       if (!part.has("name")) {
         continue;
       }
-      final String partName = part.get("name").asText();
+      final String partName = part.get("name").asString();
       if ("language".equals(partName) && part.has("valueCode")) {
-        language = part.get("valueCode").asText();
+        language = part.get("valueCode").asString();
       } else if ("use".equals(partName) && part.has("valueCoding")) {
         final JsonNode coding = part.get("valueCoding");
         if (coding.has("code")) {
-          use = coding.get("code").asText();
+          use = coding.get("code").asString();
         } else if (coding.has("display")) {
-          use = coding.get("display").asText();
+          use = coding.get("display").asString();
         }
       } else if ("value".equals(partName) && part.has("valueString")) {
-        value = part.get("valueString").asText();
+        value = part.get("valueString").asString();
       }
     }
 
@@ -2229,20 +2229,20 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
       if (!part.has("name")) {
         continue;
       }
-      final String partName = part.get("name").asText();
+      final String partName = part.get("name").asString();
       if ("code".equals(partName) && part.has("valueCode")) {
-        code = part.get("valueCode").asText();
+        code = part.get("valueCode").asString();
       } else if ("value".equals(partName)) {
         if (part.has("valueString")) {
-          value = part.get("valueString").asText();
+          value = part.get("valueString").asString();
         } else if (part.has("valueCode")) {
-          value = part.get("valueCode").asText();
+          value = part.get("valueCode").asString();
         } else if (part.has("valueCoding")) {
           final JsonNode coding = part.get("valueCoding");
           if (coding.has("code")) {
-            value = coding.get("code").asText();
+            value = coding.get("code").asString();
           } else if (coding.has("display")) {
-            value = coding.get("display").asText();
+            value = coding.get("display").asString();
           }
         }
       }
@@ -2354,13 +2354,13 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     assertNotNull(actual, "Actual JSON node should not be null at path: " + path);
 
     if (expected.isObject()) {
-      expected.fieldNames().forEachRemaining(fieldName -> {
+      expected.propertyNames().iterator().forEachRemaining(fieldName -> {
         final String fieldPath = path.isEmpty() ? fieldName : path + "." + fieldName;
         if (!actual.has(fieldName)) {
           final StringBuilder errorMsg = new StringBuilder("Missing field: ").append(fieldPath);
           if (actual.isObject()) {
             errorMsg.append("\nActual fields present: ");
-            actual.fieldNames().forEachRemaining(f -> errorMsg.append(f).append(", "));
+            actual.propertyNames().iterator().forEachRemaining(f -> errorMsg.append(f).append(", "));
           }
           assertTrue(false, errorMsg.toString());
         }
@@ -2391,7 +2391,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
             for (int k = 0; k < Math.min(actual.size(), 20); k++) {
               final JsonNode param = actual.get(k);
               if (param.has("name")) {
-                errorMsg.append(param.get("name").asText()).append(", ");
+                errorMsg.append(param.get("name").asString()).append(", ");
               }
             }
             if (actual.size() > 20) {

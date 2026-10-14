@@ -31,6 +31,7 @@ import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.RestfulServer;
 import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
 import ca.uhn.fhir.rest.server.method.BaseMethodBinding;
+import ca.uhn.fhir.rest.server.method.IMethodBinding;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -56,7 +57,7 @@ public class HapiR5RestfulServlet extends RestfulServer {
   protected void initialize() throws ServletException {
 
     setDefaultResponseEncoding(EncodingEnum.JSON);
-    setDefaultPrettyPrint(true);
+    setDefaultPrettyPrint(false);
 
     final FhirContext fhirContext = FhirContext.forR5();
     fhirContext.setParserErrorHandler(new LenientErrorHandler());
@@ -108,13 +109,16 @@ public class HapiR5RestfulServlet extends RestfulServer {
    * @return the method binding
    */
   @Override
-  public BaseMethodBinding determineResourceMethod(final RequestDetails requestDetails,
+  public IMethodBinding determineResourceMethod(final RequestDetails requestDetails,
     final String requestPath) {
-    final BaseMethodBinding binding = super.determineResourceMethod(requestDetails, requestPath);
-    final String unknown = UnknownQueryParameter.firstUnknown(requestDetails, binding);
-    if (unknown != null) {
-      throw FhirUtilityR5.exception("Input parameter '" + unknown + "' is not supported",
-          IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
+    final IMethodBinding binding = super.determineResourceMethod(requestDetails, requestPath);
+    if (binding instanceof BaseMethodBinding) {
+      final String unknown =
+          UnknownQueryParameter.firstUnknown(requestDetails, (BaseMethodBinding) binding);
+      if (unknown != null) {
+        throw FhirUtilityR5.exception("Input parameter '" + unknown + "' is not supported",
+            IssueType.NOTSUPPORTED, HttpServletResponse.SC_BAD_REQUEST);
+      }
     }
     return binding;
   }

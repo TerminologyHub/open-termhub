@@ -5,7 +5,7 @@ Instructions on using data local to this project to get Open Termhub up and runn
 
 
 ## Prerequisites/Setup
-* Java 17+ or docker
+* Java 25+ or docker
 * This tutorial assumes you have cloned this open-termhub repository.
 
 

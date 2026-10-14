@@ -34,9 +34,9 @@ import org.apache.lucene.search.join.JoinUtil;
 import org.apache.lucene.search.join.ScoreMode;
 import org.apache.lucene.store.FSDirectory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptRef;
 import com.wci.termhub.model.ConceptRelationship;
@@ -169,9 +169,9 @@ public class LuceneEclDataAccess {
    *
    * @param entity the entity
    * @return the code from entity
-   * @throws JsonProcessingException the json processing exception
+   * @throws JacksonException the json processing exception
    */
-  private String getCodeFromEntity(final String entity) throws JsonProcessingException {
+  private String getCodeFromEntity(final String entity) throws JacksonException {
     final ObjectMapper mapper = ThreadLocalMapper.get();
     final JsonNode node = mapper.readTree(entity);
     return node.get("code").textValue();

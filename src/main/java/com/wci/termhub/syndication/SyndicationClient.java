@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -86,7 +86,7 @@ public class SyndicationClient {
 
     this.syndicationUrl = url;
     this.token = token;
-    restTemplate = new RestTemplateBuilder().rootUri(url)
+    restTemplate = new RestTemplateBuilder().baseUri(url)
         .messageConverters(new StringHttpMessageConverter()).build();
     jaxbContext = JAXBContext.newInstance(SyndicationFeed.class);
 

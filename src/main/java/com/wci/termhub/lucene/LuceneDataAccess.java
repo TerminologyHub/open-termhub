@@ -58,7 +58,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.wci.termhub.model.BaseModel;
 import com.wci.termhub.model.HasAttributes;
 import com.wci.termhub.model.HasId;

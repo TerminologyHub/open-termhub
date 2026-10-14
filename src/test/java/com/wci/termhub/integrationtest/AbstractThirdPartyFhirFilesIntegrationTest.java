@@ -25,8 +25,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -38,17 +39,18 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
 import com.wci.termhub.service.EntityRepositoryService;
 import com.wci.termhub.test.AbstractServerTest;
 
 /**
  * Abstract base for tests that load third-party FHIR resource files via endpoints.
  */
+@AutoConfigureTestRestTemplate
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
@@ -144,17 +146,17 @@ public abstract class AbstractThirdPartyFhirFilesIntegrationTest extends Abstrac
     String publisher = null;
     String version = null;
     if ("ValueSet".equals(resourceType)) {
-      title = node.path("title").asText();
-      publisher = node.path("publisher").asText();
-      version = node.path("version").asText();
+      title = node.path("title").asString();
+      publisher = node.path("publisher").asString();
+      version = node.path("version").asString();
     } else if ("CodeSystem".equals(resourceType)) {
-      title = node.path("title").asText();
-      publisher = node.path("publisher").asText();
-      version = node.path("version").asText();
+      title = node.path("title").asString();
+      publisher = node.path("publisher").asString();
+      version = node.path("version").asString();
     } else if ("ConceptMap".equals(resourceType)) {
-      title = node.path("title").asText();
-      publisher = node.path("publisher").asText();
-      version = node.path("version").asText();
+      title = node.path("title").asString();
+      publisher = node.path("publisher").asString();
+      version = node.path("version").asString();
     }
     if (title != null && !title.isEmpty() && publisher != null && !publisher.isEmpty()
         && version != null && !version.isEmpty()) {
@@ -191,7 +193,7 @@ public abstract class AbstractThirdPartyFhirFilesIntegrationTest extends Abstrac
     final JsonNode concepts = node.path("concept");
     if (concepts != null && concepts.isArray() && concepts.size() > 0) {
       final JsonNode first = concepts.get(0);
-      final String code = first.path("code").asText();
+      final String code = first.path("code").asString();
       return (code == null || code.isEmpty()) ? null : code;
     }
     return null;
@@ -207,11 +209,11 @@ public abstract class AbstractThirdPartyFhirFilesIntegrationTest extends Abstrac
     final JsonNode groupArr = cm.path("group");
     if (groupArr != null && groupArr.isArray() && groupArr.size() > 0) {
       final JsonNode group = groupArr.get(0);
-      final String system = group.path("source").asText();
+      final String system = group.path("source").asString();
       final ArrayNode elementArr = (ArrayNode) group.path("element");
       if (elementArr != null && elementArr.size() > 0) {
         final JsonNode element = elementArr.get(0);
-        final String code = element.path("code").asText();
+        final String code = element.path("code").asString();
         if (system != null && !system.isEmpty() && code != null && !code.isEmpty()) {
           return new TranslateParams(system, code);
         }
@@ -287,7 +289,7 @@ public abstract class AbstractThirdPartyFhirFilesIntegrationTest extends Abstrac
         return null;
       }
       while (p.nextToken() != null) {
-        if (p.currentToken() == JsonToken.FIELD_NAME && "resourceType".equals(p.currentName())) {
+        if (p.currentToken() == JsonToken.PROPERTY_NAME && "resourceType".equals(p.currentName())) {
           p.nextToken();
           return p.getValueAsString();
         }

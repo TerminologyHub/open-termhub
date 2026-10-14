@@ -79,6 +79,7 @@ import com.wci.termhub.fhir.rest.FHIRConfig;
 import com.wci.termhub.rest.ReadOnlyOpenApiSupport;
 import com.wci.termhub.util.StringUtility;
 
+import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
 import ca.uhn.fhir.context.ConfigurationException;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
@@ -281,7 +282,6 @@ public class TermhubOpenApiInterceptorR4 {
           final String redirectUrl =
               theResponse.encodeRedirectURL(FHIRConfig.joinPath(serverBase, "/swagger-ui/"));
           theResponse.sendRedirect(redirectUrl);
-          theResponse.getWriter().close();
           return false;
         }
       }
@@ -307,7 +307,6 @@ public class TermhubOpenApiInterceptorR4 {
         }
         writer.write(response);
       }
-      theResponse.getWriter().close();
       return false;
     }
 
@@ -341,7 +340,6 @@ public class TermhubOpenApiInterceptorR4 {
       try (InputStream resource = ClasspathUtil.loadResourceAsStream(resourceClasspath);
           final ServletOutputStream os = theResponse.getOutputStream()) {
         IOUtils.copy(resource, os);
-        theResponse.getOutputStream().close();
       }
       return true;
     }
@@ -377,7 +375,6 @@ public class TermhubOpenApiInterceptorR4 {
         theResponse.setContentType("application/javascript");
         theResponse.setStatus(HttpServletResponse.SC_OK);
         IOUtils.copy(resource, os);
-        theResponse.getOutputStream().close();
         return true;
       }
 
@@ -385,7 +382,6 @@ public class TermhubOpenApiInterceptorR4 {
         theResponse.setContentType("text/css");
         theResponse.setStatus(HttpServletResponse.SC_OK);
         IOUtils.copy(resource, os);
-        theResponse.getOutputStream().close();
         return true;
       }
 
@@ -393,7 +389,6 @@ public class TermhubOpenApiInterceptorR4 {
         theResponse.setContentType(Constants.CT_HTML);
         theResponse.setStatus(HttpServletResponse.SC_OK);
         IOUtils.copy(resource, os);
-        theResponse.getOutputStream().close();
         return true;
       }
     }
@@ -1073,24 +1068,24 @@ public class TermhubOpenApiInterceptorR4 {
           case "url":
           case "code":
           case "string": {
-            final IPrimitiveType<?> type = (IPrimitiveType<?>) FHIR_CONTEXT_CANONICAL
-                .getElementDefinition(paramType).newInstance();
-            type.setValueAsString("example");
-            param.setValue((Type) type);
+            final IPrimitiveType<?> type = newCanonicalPrimitive(paramType, "example");
+            if (type != null) {
+              param.setValue((Type) type);
+            }
             break;
           }
           case "integer": {
-            final IPrimitiveType<?> type = (IPrimitiveType<?>) FHIR_CONTEXT_CANONICAL
-                .getElementDefinition(paramType).newInstance();
-            type.setValueAsString("0");
-            param.setValue((Type) type);
+            final IPrimitiveType<?> type = newCanonicalPrimitive(paramType, "0");
+            if (type != null) {
+              param.setValue((Type) type);
+            }
             break;
           }
           case "boolean": {
-            final IPrimitiveType<?> type = (IPrimitiveType<?>) FHIR_CONTEXT_CANONICAL
-                .getElementDefinition(paramType).newInstance();
-            type.setValueAsString("false");
-            param.setValue((Type) type);
+            final IPrimitiveType<?> type = newCanonicalPrimitive(paramType, "false");
+            if (type != null) {
+              param.setValue((Type) type);
+            }
             break;
           }
           case "CodeableConcept": {
@@ -1137,6 +1132,25 @@ public class TermhubOpenApiInterceptorR4 {
       theOperation.getRequestBody().getContent().addMediaType(Constants.CT_FHIR_JSON_NEW,
           mediaType);
     }
+  }
+
+  /**
+   * Creates a canonical FHIR primitive example value, or null if the type is unknown.
+   *
+   * @param theParamType the FHIR element type name
+   * @param theValue the example string value
+   * @return the primitive, or null if getElementDefinition returned null
+   */
+  private static IPrimitiveType<?> newCanonicalPrimitive(final String theParamType,
+    final String theValue) {
+    final BaseRuntimeElementDefinition<?> elementDefinition =
+        FHIR_CONTEXT_CANONICAL.getElementDefinition(theParamType);
+    if (elementDefinition == null) {
+      return null;
+    }
+    final IPrimitiveType<?> type = (IPrimitiveType<?>) elementDefinition.newInstance();
+    type.setValueAsString(theValue);
+    return type;
   }
 
   /**

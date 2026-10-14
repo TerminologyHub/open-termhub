@@ -1,13 +1,25 @@
 buildscript {
   ext {
-    springBootVersion = "3.5.16"
-    log4jVersion = "2.25.4"
-    tomcatEmbedVersion = "10.1.59"
-    hapiFhirVersion = "6.9.12"
+    springBootVersion = "4.1.1"
+    log4jVersion = "2.26.1"
+    tomcatEmbedVersion = "11.0.25"
+    // Jackson 2 (legacy; still pulled by swagger/HAPI) and Jackson 3 (Boot 4 default)
+    jackson2Version = "2.21.7"
+    jackson3Version = "3.1.7"
+    // org.hl7.fhir.* core libraries (fhir_core_version in HAPI BOM)
+    hapiFhirCoreVersion = "6.10.3"
+    // Boot 4 / Spring 7 support (8.14 line published as 8.13.15-SNAPSHOT)
+    hapiFhirVersion = "8.13.16-SNAPSHOT"
+    luceneVersion = "9.12.3"
   }
   repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+      name = "central-portal-snapshots"
+      url = "https://central.sonatype.com/repository/maven-snapshots/"
+      mavenContent { snapshotsOnly() }
+    }
     maven { url "https://repo.spring.io/release" }
     maven { url "https://repo.spring.io/milestone" }
     maven { url "https://repo.spring.io/snapshot" }
@@ -29,7 +41,7 @@ plugins {
 
     id 'io.spring.dependency-management' version '1.1.4'
     id 'com.github.hierynomus.license' version '0.16.1'
-    id 'com.github.spotbugs' version '6.0.26'
+    id 'com.github.spotbugs' version '6.5.13'
     id 'jacoco'
     id 'checkstyle'
     id 'maven-publish'
@@ -38,6 +50,11 @@ plugins {
 repositories {
   mavenLocal()
   mavenCentral()
+  maven {
+    name = "central-portal-snapshots"
+    url = "https://central.sonatype.com/repository/maven-snapshots/"
+    mavenContent { snapshotsOnly() }
+  }
   maven { url "https://repo.spring.io/release" }
   maven { url "https://repo.spring.io/milestone" }
   maven { url "https://repo.spring.io/snapshot" }
@@ -46,12 +63,9 @@ repositories {
 group = 'com.wci.open-termhub'
 version = '1.3.3-202609'
 
-sourceCompatibility = 17
-targetCompatibility = 17
-
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -65,11 +79,8 @@ dependencyManagement {
         mavenBom "io.opentelemetry:opentelemetry-bom:1.62.0"
     }
     dependencies {
-        dependency('com.fasterxml.jackson.core:jackson-core:2.21.7')
-        dependency('com.fasterxml.jackson.core:jackson-databind:2.21.7')
-        dependency('com.fasterxml.jackson.core:jackson-annotations:2.21')
         dependency('org.codehaus.plexus:plexus-utils:4.0.3')
-        dependency('org.apache.commons:commons-lang3:3.18.0')
+        dependency('org.apache.commons:commons-lang3:3.21.0')
         dependency("org.apache.logging.log4j:log4j-api:${log4jVersion}")
         dependency("org.apache.logging.log4j:log4j-core:${log4jVersion}")
         dependency("org.apache.logging.log4j:log4j-slf4j2-impl:${log4jVersion}")
@@ -77,10 +88,13 @@ dependencyManagement {
         dependency("org.apache.tomcat.embed:tomcat-embed-core:${tomcatEmbedVersion}")
         dependency("org.apache.tomcat.embed:tomcat-embed-el:${tomcatEmbedVersion}")
         dependency("org.apache.tomcat.embed:tomcat-embed-websocket:${tomcatEmbedVersion}")
+        dependency("com.fasterxml.jackson.core:jackson-core:${jackson2Version}")
+        dependency("com.fasterxml.jackson.core:jackson-databind:${jackson2Version}")
+        dependency("tools.jackson.core:jackson-core:${jackson3Version}")
+        dependency("tools.jackson.core:jackson-databind:${jackson3Version}")
         dependency('org.apache.httpcomponents.core5:httpcore5:5.4.3')
         dependency('org.apache.httpcomponents.core5:httpcore5-h2:5.4.3')
         dependency('org.apache.httpcomponents.core5:httpcore5-reactive:5.4.3')
-
     }
 }
 
@@ -94,24 +108,25 @@ dependencies {
   implementation "org.springframework.boot:spring-boot-starter-web"
   implementation "org.springframework.boot:spring-boot-starter-actuator"
   implementation "org.springframework.boot:spring-boot-starter-log4j2"
+  implementation "org.springframework.boot:spring-boot-starter-cache"
+  implementation "org.springframework.boot:spring-boot-jackson"
+  implementation "org.springframework.boot:spring-boot-restclient"
+  implementation "org.springframework.boot:spring-boot-webmvc"
 
-
-  // Vulnerability import
-  implementation "org.apache.tomcat.embed:tomcat-embed-core:${tomcatEmbedVersion}"
   implementation "org.thymeleaf:thymeleaf:3.1.5.RELEASE"
   implementation "org.thymeleaf:thymeleaf-spring6:3.1.5.RELEASE"
 
   implementation "org.fhir:ucum:1.0.9"
-  // These are needed to override dependencies from hapi-fhir-base (until it is fixed)
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.convertors:${hapiFhirVersion}"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2:${hapiFhirVersion}"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2016may:${hapiFhirVersion}"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:${hapiFhirVersion}"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4:${hapiFhirVersion}"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4b:${hapiFhirVersion}"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r5:${hapiFhirVersion}"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.utilities:${hapiFhirVersion}"
-  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.validation:${hapiFhirVersion}"
+  // FHIR core libraries — version must match HAPI BOM fhir_core_version
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.convertors:${hapiFhirCoreVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2:${hapiFhirCoreVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2016may:${hapiFhirCoreVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:${hapiFhirCoreVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4:${hapiFhirCoreVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4b:${hapiFhirCoreVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r5:${hapiFhirCoreVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.utilities:${hapiFhirCoreVersion}"
+  implementation "ca.uhn.hapi.fhir:org.hl7.fhir.validation:${hapiFhirCoreVersion}"
 
   // prometheus
   implementation "io.micrometer:micrometer-registry-prometheus"
@@ -119,28 +134,31 @@ dependencies {
   // Add ANTLR runtime dependency to match code generation version
   implementation 'org.antlr:antlr4-runtime:4.13.2'
 
-  // Docs: https://docs.spring.io/spring-data/elasticsearch/docs/4.2.12/reference/html/#reference
-  implementation 'org.springframework.data:spring-data-elasticsearch:5.3.11'
-  implementation 'org.apache.lucene:lucene-core:9.11.1'
-  implementation 'org.apache.lucene:lucene-analysis-common:9.11.1'
-  implementation 'org.apache.lucene:lucene-queryparser:9.11.1'
-  implementation 'org.apache.lucene:lucene-join:9.11.1'
-  implementation 'org.apache.lucene:lucene-queries:9.11.1'
+  // Annotation-only usage for Lucene field mapping
+  implementation 'org.springframework.data:spring-data-elasticsearch'
+  implementation "org.apache.lucene:lucene-core:${luceneVersion}"
+  implementation "org.apache.lucene:lucene-analysis-common:${luceneVersion}"
+  implementation "org.apache.lucene:lucene-queryparser:${luceneVersion}"
+  implementation "org.apache.lucene:lucene-join:${luceneVersion}"
+  implementation "org.apache.lucene:lucene-queries:${luceneVersion}"
 
   // REST
   implementation 'jakarta.ws.rs:jakarta.ws.rs-api:4.0.0'
+  // Model classes still use JPA annotations (no JPA runtime)
+  implementation 'jakarta.persistence:jakarta.persistence-api:3.2.0'
+  // Syndication Atom/XML parsing (was transitive via removed HAPI JPA stack)
+  implementation 'jakarta.xml.bind:jakarta.xml.bind-api'
+  implementation 'org.glassfish.jaxb:jaxb-runtime'
 
-  // OpenAPI/Swagger UI - Using HAPI FHIR's built-in support
-  implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14") {
-    // Remove slf4j-api 2+
+  // OpenAPI/Swagger UI — springdoc 3.x for Spring Boot 4
+  implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3") {
     exclude group: "org.slf4j", module: "slf4j-simple"
     exclude group: "org.slf4j", module: "slf4j-api"
   }
 
   implementation 'org.apache.commons:commons-text:1.12.0'
   implementation 'org.apache.commons:commons-math3:3.6.1'
-  implementation 'org.springframework.boot:spring-boot-starter-aop'
-  implementation 'org.aspectj:aspectjweaver:1.9.22'
+  implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 
   implementation 'org.reflections:reflections:0.10.2'
   implementation ('com.google.guava:guava:33.4.8-jre') {
@@ -151,48 +169,36 @@ dependencies {
 
 
   // FHIR libraries
-  // The guava exclusion is to avoid things like
-  // - ...Could not resolve com.google.guava:guava:32.0.1-jre
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-base:7.6.1") {
-     exclude group: "com.google.guava", module: "guava"
-     exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
-     exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
-     exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
-  }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:7.6.1") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-base:${hapiFhirVersion}") {
      exclude group: "com.google.guava", module: "guava"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-server:7.6.1") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:${hapiFhirVersion}") {
      exclude group: "com.google.guava", module: "guava"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-jpaserver-base:7.6.1") {
-     exclude group: "ca.uhn.hapi.fhir", module: "hapi-fhir-sql-migrate"
-     exclude group: "org.elasticsearch.client", module: "elasticsearch-rest-high-level-client"
-     exclude group: "org.hibernate.search"
-     exclude group: "org.apache.lucene"
-     exclude group: "com.github.jsonld-java", module: "jsonld-java"
-     exclude group: "com.graphql-java", module: "graphql-java"
-     exclude group: "org.glassfish", module: "javax.el"
-     exclude group: "org.apache.logging.log4j", module: "log4j-to-slf4j"
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-structures-r5:${hapiFhirVersion}") {
      exclude group: "com.google.guava", module: "guava"
-     exclude group: "org.apache.jena"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-server-openapi:7.6.1") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-server:${hapiFhirVersion}") {
+     exclude group: "com.google.guava", module: "guava"
+  }
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-server-openapi:${hapiFhirVersion}") {
      exclude group: "com.google.guava", module: "guava"
      exclude group: "org.springdoc", module: "springdoc-openapi-starter-webmvc-ui"
      exclude group: "org.webjars", module: "swagger-ui"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-structures-dstu2:7.6.1") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-structures-dstu2:${hapiFhirVersion}") {
      exclude group: "com.google.guava", module: "guava"
   }
-  implementation ("ca.uhn.hapi.fhir:hapi-fhir-validation:7.6.1") {
+  implementation ("ca.uhn.hapi.fhir:hapi-fhir-validation:${hapiFhirVersion}") {
      exclude group: "com.google.guava", module: "guava"
   }
 
   // For Test
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
-  testImplementation 'org.junit.platform:junit-platform-suite-api:1.10.5'
-  testImplementation 'org.junit.platform:junit-platform-suite-engine:1.10.5'
+  testImplementation 'org.springframework.boot:spring-boot-resttestclient'
+  testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
+  testImplementation 'org.junit.platform:junit-platform-suite-api'
+  testImplementation 'org.junit.platform:junit-platform-suite-engine'
 }
 
 // ./gradlew clean test
@@ -208,6 +214,11 @@ test {
         showExceptions = true
         showStackTraces = true
     }
+}
+
+// Mockito inline mock maker on JDK 21+; avoids dynamic Java-agent WARNINGs in test stderr
+tasks.withType(Test).configureEach {
+    jvmArgs '-XX:+EnableDynamicAgentLoading'
 }
 
 // ./gradlew clean testR4
@@ -263,8 +274,8 @@ spotbugs {
 spotbugsMain {
     reports {
         html {
-            enabled = true
-            outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            required = true
+            outputLocation = layout.buildDirectory.file("reports/spotbugs/main/spotbugs.html")
             stylesheet = 'fancy-hist.xsl'
         }
     }
@@ -272,8 +283,8 @@ spotbugsMain {
 spotbugsTest {
     reports {
         html {
-            enabled = true
-            outputLocation = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            required = true
+            outputLocation = layout.buildDirectory.file("reports/spotbugs/main/spotbugs.html")
             stylesheet = 'fancy-hist.xsl'
         }
     }
@@ -288,12 +299,12 @@ checkstyle {
 }
 checkstyleMain {
   reports {
-    html.destination = file("$buildDir/reports/checkstyle.html")
+    html.outputLocation = layout.buildDirectory.file("reports/checkstyle.html")
   }
 }
 checkstyleTest {
   reports {
-    html.destination = file("$buildDir/reports/checkstyle.html")
+    html.outputLocation = layout.buildDirectory.file("reports/checkstyle.html")
   }
 }
 
@@ -305,8 +316,9 @@ tasks.withType(JavaExec) {
 
 // Specify "export JAVA_OPTS=-Xmx8g" to set upper memory bound for upload
 bootRun {
+    jvmArgs '-XX:+UseCompactObjectHeaders'
     if (project.hasProperty('debug')) {
-        jvmArgs = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"]
+        jvmArgs = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005", "-XX:+UseCompactObjectHeaders"]
     }
     // Check if the JAVA_OPTS environment variable is set and not empty
     if (System.getenv('JAVA_OPTS')) {
@@ -332,7 +344,7 @@ bootJar {
 }
 
 jacoco {
-  toolVersion = "0.8.11"
+  toolVersion = "0.8.13"
 }
 
 jacocoTestReport {
@@ -341,11 +353,11 @@ jacocoTestReport {
   reports {
     html {
       required = true
-      destination file("${buildDir}/reports/jacoco")
+      outputLocation = layout.buildDirectory.dir("reports/jacoco")
     }
     xml {
       required = true
-      destination file("${buildDir}/reports/jacoco/report.xml")
+      outputLocation = layout.buildDirectory.file("reports/jacoco/report.xml")
     }
     csv.required = false
   }

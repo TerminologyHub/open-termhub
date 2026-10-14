@@ -18,13 +18,6 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
-import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.core.env.Environment;
@@ -41,10 +34,14 @@ import com.wci.termhub.util.SystemReportUtility;
 /**
  * The Application entry point.
  */
-@SpringBootApplication(exclude = {
-    DataSourceAutoConfiguration.class, QuartzAutoConfiguration.class,
-    HibernateJpaAutoConfiguration.class, ThymeleafAutoConfiguration.class,
-    SecurityAutoConfiguration.class, JmxAutoConfiguration.class, MailSenderAutoConfiguration.class
+@SpringBootApplication(excludeName = {
+    "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",
+    "org.springframework.boot.quartz.autoconfigure.QuartzAutoConfiguration",
+    "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration",
+    "org.springframework.boot.thymeleaf.autoconfigure.ThymeleafAutoConfiguration",
+    "org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration",
+    "org.springframework.boot.jmx.autoconfigure.JmxAutoConfiguration",
+    "org.springframework.boot.mail.autoconfigure.MailSenderAutoConfiguration"
 })
 @EnableCaching
 @EnableScheduling

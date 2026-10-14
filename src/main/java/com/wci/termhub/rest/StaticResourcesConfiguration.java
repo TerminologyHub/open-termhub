@@ -36,11 +36,17 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(StaticResourcesConfiguration.class);
 
-  /** The Constant STATIC_RESOURCES. */
-  static final String[] STATIC_RESOURCES = new String[] {
-      "/**/*.css", "/**/*.html", "/**/*.js", "/**/*.json", "/**/*.bmp", "/**/*.jpeg", "/**/*.jpg",
-      "/**/*.png", "/**/*.ttf", "/**/*.eot", "/**/*.svg", "/**/*.woff", "/**/*.woff2"
+  /** Extensions served from the static locations. */
+  private static final String[] STATIC_EXTENSIONS = new String[] {
+      "css", "html", "js", "json", "bmp", "jpeg", "jpg", "png", "ttf", "eot", "svg", "woff",
+      "woff2"
   };
+
+  /** PathPattern allows ** only at the end, so each extension is listed per segment depth. */
+  private static final int MAX_STATIC_PATH_SEGMENTS = 8;
+
+  /** The Constant STATIC_RESOURCES. */
+  static final String[] STATIC_RESOURCES = staticResourcePatterns();
 
   /** The resource properties. */
   @Autowired
@@ -65,19 +71,40 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
           @Override
           protected Resource getResource(final String resourcePath, final Resource location)
             throws IOException {
-            return location.exists() && location.isReadable() ? location : null;
+            final Resource index = location.createRelative("index.html");
+            return index.exists() && index.isReadable() ? index : null;
           }
         });
   }
 
   /**
-   * Gets the index locations.
+   * Path patterns for static files. {@code **} is only legal at the end of a pattern.
+   *
+   * @return the patterns
+   */
+  private static String[] staticResourcePatterns() {
+    final String[] patterns = new String[STATIC_EXTENSIONS.length * MAX_STATIC_PATH_SEGMENTS];
+    int index = 0;
+    for (final String extension : STATIC_EXTENSIONS) {
+      final StringBuilder prefix = new StringBuilder();
+      for (int depth = 1; depth <= MAX_STATIC_PATH_SEGMENTS; depth++) {
+        prefix.append("/*");
+        patterns[index++] = prefix.toString() + "." + extension;
+      }
+    }
+    return patterns;
+  }
+
+  /**
+   * Returns static resource directory locations (trailing slash preserved) used to resolve
+   * {@code index.html} for HTML5-mode fallback.
    *
    * @return the index locations
    */
   private String[] getIndexLocations() {
     return Arrays.stream(resourceProperties.getStaticLocations())
-        .map((location) -> location + "index.html").toArray(String[]::new);
+        .map((location) -> location.endsWith("/") ? location : location + "/")
+        .toArray(String[]::new);
   }
 
   /* see superclass */
@@ -94,9 +121,8 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
     // match a static resource or an API endpoint to the index.html file.
     registry.addViewController("/{path:[^\\.]*}").setViewName("forward:/index.html");
 
-    // Add a second view controller to catch any multi-level paths that do not contain a period.
-    registry.addViewController("/{path:[^\\.]*}/**/{path2:[^\\.]*}")
-        .setViewName("forward:/index.html");
+    // Multi-level paths. ** is only legal at the end under PathPattern.
+    registry.addViewController("/{path:[^\\.]*}/**").setViewName("forward:/index.html");
   }
 
 }

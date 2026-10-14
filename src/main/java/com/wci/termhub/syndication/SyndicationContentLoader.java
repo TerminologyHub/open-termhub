@@ -32,9 +32,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.JsonNode;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.Mapset;
@@ -754,7 +754,7 @@ public class SyndicationContentLoader {
   @SuppressWarnings("unused")
   private JsonNode readFile(final File jsonFile) throws Exception {
     try (final FileInputStream fis = new FileInputStream(jsonFile);
-        final JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(fis)) {
+        final JsonParser parser = ThreadLocalMapper.get().createParser(fis)) {
       return parser.readValueAsTree();
     }
   }
@@ -769,7 +769,7 @@ public class SyndicationContentLoader {
   private String getResourceType(final File file) throws Exception {
 
     // Use try-with-resources to ensure the parser is closed
-    try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+    try (JsonParser parser = ThreadLocalMapper.get().createParser(file)) {
 
       // The first token should be the start of the root object: {
       if (parser.nextToken() != JsonToken.START_OBJECT) {

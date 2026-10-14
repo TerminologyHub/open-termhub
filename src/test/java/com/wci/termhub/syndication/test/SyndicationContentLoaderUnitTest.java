@@ -45,9 +45,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
 import com.wci.termhub.model.Terminology;
@@ -216,7 +216,7 @@ public class SyndicationContentLoaderUnitTest {
     }
     if (object.has("fhirVersion")) {
       final JsonNode fhirVersionNode = object.get("fhirVersion");
-      if (fhirVersionNode != null && fhirVersionNode.isTextual()) {
+      if (fhirVersionNode != null && fhirVersionNode.isString()) {
         object.put("fhirVersion", entry.getContentItemVersion());
       }
     }
