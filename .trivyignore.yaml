@@ -1,0 +1,20 @@
+vulnerabilities:
+  - id: CVE-2026-47884
+    purls:
+      - pkg:maven/org.springframework/spring-webmvc
+    expired_at: 2027-04-22
+    statement: >
+      Not exploitable in this application. Spring requires XsltView plus a
+      /** mapping that renders a view with no explicit view name. This
+      codebase uses Thymeleaf and has no XsltView. Open-source fix is
+      spring-webmvc 7.0.9 (Spring Boot 4). HAPI FHIR has no production
+      release for that line (hapi-fhir#7881). Revisit on expiry.
+  - id: CVE-2026-47890
+    purls:
+      - pkg:maven/org.springframework/spring-webmvc
+    expired_at: 2027-04-22
+    statement: >
+      Not exploitable in this application. Spring requires Server-Sent
+      Events that render view fragments with attacker-controlled data
+      streamed to other users. This codebase has no SSE view fragments.
+      Same upgrade block as CVE-2026-47884. Revisit on expiry.

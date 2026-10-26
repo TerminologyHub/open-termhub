@@ -28,7 +28,7 @@ scan: ## scan for vulnerabilities in dependencies
 fullscan: ## scan for vulnerabilities in dependencies
 	/bin/rm -rf gradle/dependency-locks
 	./gradlew dependencies --write-locks
-	trivy fs gradle.lockfile --format template -o report.html --template "@config/trivy/html.tpl"
+	trivy fs gradle.lockfile --ignorefile .trivyignore.yaml --format template -o report.html --template "@config/trivy/html.tpl"
 	grep CRITICAL report.html
 	/bin/rm -rf gradle.lockfile
 
@@ -64,7 +64,7 @@ scandocker:
 	trivy image --input scan.tar $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION) --format template -o report.html --template "@config/trivy/html.tpl"
 	egrep "CRITICAL|HIGH" report.html
 	/bin/rm -f scan.tar
-	
+
 release: ## publish to dockerhub
 	@echo $(DOCKER_INT_REGISTRY)/$(SERVICE):$(APP_VERSION)
 	docker -D push --platform linux/amd64 $(DOCKER_INT_REGISTRY)/$(SERVICE):latest
