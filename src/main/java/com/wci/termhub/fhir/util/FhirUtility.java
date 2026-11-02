@@ -33,6 +33,7 @@ import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.wci.termhub.app.ServerModeUtility;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ConceptPropertyValueCoding;
 import com.wci.termhub.model.ConceptRef;
@@ -474,6 +475,25 @@ public final class FhirUtility {
     }
     // Replace both implicit value set patterns
     return uri.replaceFirst("\\?fhir_vs$", "").replaceFirst("/vs$", "");
+  }
+
+  /**
+   * Implicit value set URI for a ConceptMap source or target. Strips a trailing {@code ?fhir_vs}
+   * or {@code /vs} so a suffix already stored on the mapset is not appended again. LOINC uses
+   * {@code /vs} when {@code server.mode=regenstrief}, and {@code ?fhir_vs} otherwise.
+   *
+   * @param uri the code system uri
+   * @return the implicit value set uri, or null
+   */
+  public static String toImplicitValueSetUri(final String uri) {
+    final String base = stripFhirVs(uri);
+    if (base == null) {
+      return null;
+    }
+    final boolean loincVsPath =
+        base.contains("loinc.org") && ServerModeUtility.isRegenstriefImportMode();
+    final String vsExt = loincVsPath ? "/vs" : "?fhir_vs";
+    return base + vsExt;
   }
 
   /**

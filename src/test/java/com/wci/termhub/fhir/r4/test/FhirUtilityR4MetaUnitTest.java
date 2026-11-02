@@ -280,6 +280,81 @@ public class FhirUtilityR4MetaUnitTest {
   }
 
   /**
+   * A stored trailing {@code ?fhir_vs} is not appended again. LOINC uses {@code /vs} when
+   * {@code server.mode=regenstrief}, and a single {@code ?fhir_vs} otherwise.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  public void testConceptMapSourceTargetUriDoesNotDoubleFhirVs() throws Exception {
+    final String priorMode = PropertyUtility.getProperty("server.mode");
+    try {
+      PropertyUtility.setProperty("server.mode", "default");
+      final ConceptMap loincDefault = toR4Scopes("http://loinc.org?fhir_vs", "http://fdasis.nlm.nih.gov");
+      assertEquals("http://loinc.org?fhir_vs", loincDefault.getSourceUriType().getValue());
+      assertEquals("http://fdasis.nlm.nih.gov?fhir_vs", loincDefault.getTargetUriType().getValue());
+
+      final ConceptMap chebiDefault =
+          toR4Scopes("https://www.ebi.ac.uk/chebi?fhir_vs", "http://loinc.org");
+      assertEquals("https://www.ebi.ac.uk/chebi?fhir_vs", chebiDefault.getSourceUriType().getValue());
+      assertEquals("http://loinc.org?fhir_vs", chebiDefault.getTargetUriType().getValue());
+
+      PropertyUtility.setProperty("server.mode", "regenstrief");
+      final ConceptMap loincRegenstrief =
+          toR4Scopes("http://loinc.org?fhir_vs", "http://fdasis.nlm.nih.gov");
+      assertEquals("http://loinc.org/vs", loincRegenstrief.getSourceUriType().getValue());
+      assertEquals("http://fdasis.nlm.nih.gov?fhir_vs",
+          loincRegenstrief.getTargetUriType().getValue());
+
+      final ConceptMap chebiRegenstrief =
+          toR4Scopes("https://www.ebi.ac.uk/chebi?fhir_vs", "http://loinc.org");
+      assertEquals("https://www.ebi.ac.uk/chebi?fhir_vs",
+          chebiRegenstrief.getSourceUriType().getValue());
+      assertEquals("http://loinc.org/vs", chebiRegenstrief.getTargetUriType().getValue());
+    } finally {
+      if (priorMode != null) {
+        PropertyUtility.setProperty("server.mode", priorMode);
+      }
+    }
+  }
+
+  /**
+   * Builds an R4 ConceptMap from source and target code system URIs.
+   *
+   * @param sourceUri the source uri
+   * @param targetUri the target uri
+   * @return the concept map
+   * @throws Exception the exception
+   */
+  private static ConceptMap toR4Scopes(final String sourceUri, final String targetUri)
+    throws Exception {
+    final Mapset mapset = conceptMapMapset();
+    mapset.getAttributes().put("fhirSourceUri", sourceUri);
+    mapset.getAttributes().put("fhirTargetUri", targetUri);
+    return FhirUtilityR4.toR4(mapset);
+  }
+
+  /**
+   * Mapset with the fields {@link FhirUtilityR4#toR4(Mapset)} requires.
+   *
+   * @return the mapset
+   */
+  private static Mapset conceptMapMapset() {
+    final Mapset mapset = new Mapset();
+    mapset.setId("test-cm");
+    mapset.setReleaseDate("2022-04-11");
+    mapset.setUri("http://example.org/cm");
+    mapset.setVersion("1");
+    mapset.setName("Test ConceptMap");
+    mapset.setAbbreviation("TCM");
+    mapset.setPublisher("Test");
+    mapset.setAttributes(new HashMap<>());
+    mapset.setCreated(
+        Date.from(LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant()));
+    return mapset;
+  }
+
+  /**
    * Test ConceptMap contact round-trip from mapset {@code fhirContact} attribute.
    *
    * @throws Exception the exception

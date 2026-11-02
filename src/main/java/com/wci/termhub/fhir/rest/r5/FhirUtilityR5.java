@@ -1740,14 +1740,14 @@ public final class FhirUtilityR5 {
     // Set source and target scopes from fromTerminology and toTerminology
     if (mapset.getAttributes().containsKey("fhirSourceUri")) {
       // TODO: we should do the terminology handler thing here
-      final String vsExt = "LOINC".equals(mapset.getFromTerminology()) ? "/vs" : "?fhir_vs";
-      cm.setSourceScope(new UriType(mapset.getAttributes().get("fhirSourceUri") + vsExt));
+      cm.setSourceScope(new UriType(
+          FhirUtility.toImplicitValueSetUri(mapset.getAttributes().get("fhirSourceUri"))));
     }
 
     if (mapset.getAttributes().containsKey("fhirTargetUri")) {
       // TODO: we should do the terminology handler thing here
-      final String vsExt = "LOINC".equals(mapset.getToTerminology()) ? "/vs" : "?fhir_vs";
-      cm.setTargetScope(new UriType(mapset.getAttributes().get("fhirTargetUri") + vsExt));
+      cm.setTargetScope(new UriType(
+          FhirUtility.toImplicitValueSetUri(mapset.getAttributes().get("fhirTargetUri"))));
     }
 
     // Meta: versionId for _history, lastUpdated from created (UTC)
