@@ -160,7 +160,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyIcd10Cm() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("ae64c3e9-f9c3-47b1-ad29-04fb29f30cc0");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("5cc526e2-c607-417a-87dd-9bbbeef44eaa");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -196,7 +196,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologySnomedCtUs() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -218,7 +218,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
     final String url = baseUrl + "/terminology/" + id + "/metadata";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -1182,7 +1182,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   public void testFindMapsetById() throws Exception {
 
     // ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r4.json
-    final String id = ConceptMapLoaderUtil.mapOriginalId("b8ecaf1f-5ebd-4f9e-8375-645f2ec8f1ab");
+    final String id = ConceptMapLoaderUtil.mapOriginalId("90a4c1af-569d-4a77-821d-24d2f9cff003");
     final String url = baseUrl + "/mapset/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();

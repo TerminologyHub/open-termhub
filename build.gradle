@@ -143,7 +143,7 @@ dependencies {
   implementation 'org.aspectj:aspectjweaver:1.9.22'
 
   implementation 'org.reflections:reflections:0.10.2'
-  implementation ('com.google.guava:guava:33.4.8-jre') {
+  implementation ('com.google.guava:guava:33.7.2-jre') {
 	  attributes{
 	    attribute(Attribute.of('org.gradle.jvm.environment', String),'standard-jvm')
 	  }

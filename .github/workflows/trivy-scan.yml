@@ -36,7 +36,7 @@ jobs:
       id: trivy-scan
       run: |
         ./gradlew dependencies --write-locks --configuration runtimeClasspath
-        trivy fs gradle.lockfile --format json --output trivy_report.json --severity HIGH,CRITICAL
+        trivy fs gradle.lockfile --ignorefile .trivyignore.yaml --format json --output trivy_report.json --severity HIGH,CRITICAL
         /bin/rm -rf gradle/dependency-locks
         /bin/rm gradle.lockfile
       env:

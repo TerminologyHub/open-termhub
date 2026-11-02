@@ -1,41 +1,55 @@
 {
-  "resourceType": "ValueSet",
-  "id": "0c042a2e-2c3e-46ad-9a6d-328b9cbb0c0c",
-  "url": "http://snomed.info/sct?fhir_vs=731000124108-instance",
-  "identifier": [ {
-    "system": "https://terminologyhub.com/model/subset/code",
-    "value": "731000124108"
-  } ],
-  "version": "20240301",
-  "name": "SNOMEDCT_US extension concepts",
-  "title": "SNOMEDCT_US-EXTENSION",
-  "status": "active",
-  "experimental": false,
-  "date": "2024-03-01T00:00:00-08:00",
-  "publisher": "SANDBOX",
-  "contact": [ {
-    "telecom": [ {
-      "system": "url",
-      "value": "http://snomed.info/sct"
-    } ]
-  } ],
-  "description": "US National Library of Medicine maintained module",
-  "compose": {
-    "include": [ {
-      "system": "http://snomed.info/sct",
-      "concept": [ {
-        "code": "5991000124107",
-        "display": "SNOMED CT to ICD-10-CM rule-based mapping module"
-      }, {
-        "code": "6011000124106",
-        "display": "ICD-10-CM complex map reference set"
-      }, {
-        "code": "721111000124107",
-        "display": "Diabetes mellitus type 1 stage 1"
-      }, {
-        "code": "731000124108",
-        "display": "US National Library of Medicine maintained module"
-      } ]
-    } ]
-  }
+  "compose" : {
+    "include" : [
+      {
+        "concept" : [
+          {
+            "code" : "5991000124107",
+            "display" : "SNOMED CT to ICD-10-CM rule-based mapping module"
+          },
+          {
+            "code" : "6011000124106",
+            "display" : "ICD-10-CM complex map reference set"
+          },
+          {
+            "code" : "721111000124107",
+            "display" : "Diabetes mellitus type 1 stage 1"
+          },
+          {
+            "code" : "731000124108",
+            "display" : "US National Library of Medicine maintained module"
+          }
+        ],
+        "system" : "http://snomed.info/sct",
+        "version" : "http://snomed.info/sct/731000124108/version/20240301"
+      }
+    ]
+  },
+  "contact" : [
+    {
+      "telecom" : [
+        {
+          "system" : "url",
+          "value" : "http://snomed.info/sct"
+        }
+      ]
+    }
+  ],
+  "date" : "2024-03-01T00:00:00-08:00",
+  "description" : "US National Library of Medicine maintained module",
+  "experimental" : false,
+  "id" : "f317b787-f616-4852-90fc-3cd4367ed482",
+  "identifier" : [
+    {
+      "system" : "https://terminologyhub.com/model/subset/code",
+      "value" : "731000124108"
+    }
+  ],
+  "name" : "SNOMEDCT_US extension concepts",
+  "publisher" : "SANDBOX",
+  "resourceType" : "ValueSet",
+  "status" : "active",
+  "title" : "SNOMEDCT_US-EXTENSION",
+  "url" : "http://snomed.info/sct?fhir_vs=731000124108-instance",
+  "version" : "20240301"
 }
