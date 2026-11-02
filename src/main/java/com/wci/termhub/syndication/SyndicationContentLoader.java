@@ -789,6 +789,8 @@ public class SyndicationContentLoader {
         if ("resourceType".equals(fieldName)) {
           return parser.getValueAsString();
         }
+        // Skip nested objects/arrays so END_OBJECT doesn't terminate the root scan
+        parser.skipChildren();
       }
 
       throw new Exception("Unable to find resourceType field");

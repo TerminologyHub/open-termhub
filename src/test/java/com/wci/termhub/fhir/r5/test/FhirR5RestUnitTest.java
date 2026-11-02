@@ -431,7 +431,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Order(FIND)
   public void testCodeSystemById() throws Exception {
     // Arrange
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -492,7 +492,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemByAbbreviation() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/SNOMEDCT_US";
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -603,7 +603,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Order(FIND)
   public void testCodeSystemValidateCodeById() throws Exception {
     // Arrange
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("ae64c3e9-f9c3-47b1-ad29-04fb29f30cc0");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("5cc526e2-c607-417a-87dd-9bbbeef44eaa");
     final String code = "E10";
     final String validateParams = "/$validate-code?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + validateParams;
@@ -944,7 +944,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testValueSetBySubsetCode() throws Exception {
-    final String vsId = ValueSetLoaderUtil.mapOriginalId("0c042a2e-2c3e-46ad-9a6d-328b9cbb0c0c");
+    final String vsId = ValueSetLoaderUtil.mapOriginalId("f317b787-f616-4852-90fc-3cd4367ed482");
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/731000124108";
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -1789,7 +1789,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemVreadHistoryVersion1ReturnsOk() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/1";
     LOGGER.info("Testing endpoint: {}", endpoint);
 
@@ -1811,7 +1811,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemVreadHistoryVersionNonExistentReturnsNotFound() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("348b2151-d20d-48c8-adce-474bb50f8381");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/22";
     LOGGER.info("Testing endpoint: {}", endpoint);
 
