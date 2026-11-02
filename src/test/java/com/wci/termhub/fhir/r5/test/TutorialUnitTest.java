@@ -129,14 +129,14 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
   @SuppressWarnings("unchecked")
   // Test for: curl -s
   // 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106
-  // &sourceSystem=http://snomed.info/sct&sourceCode=300862005'
+  // &system=http://snomed.info/sct&sourceCode=300862005'
   // | jq
   @Test
   @Order(4)
   void testConceptMapTranslate() {
     final String url =
         "/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106-instance"
-            + "&sourceSystem=http://snomed.info/sct&sourceCode=300862005";
+            + "&system=http://snomed.info/sct&sourceCode=300862005";
     final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     final String body = response.getBody();

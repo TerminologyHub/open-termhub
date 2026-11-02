@@ -289,6 +289,22 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
+   * Test find terminologies rejects an unknown query parameter.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testGetTerminologyUnknownParameter() throws Exception {
+    final String url = baseUrl + "/terminology?notAParam=1";
+    LOGGER.info("Testing url - {}", url);
+    final MvcResult result =
+        mockMvc.perform(get(url)).andExpect(status().isBadRequest()).andReturn();
+    final String content = result.getResponse().getContentAsString();
+    assertThat(content).contains("Input parameter 'notAParam' is not supported");
+  }
+
+  /**
    * Test get terminology with query.
    *
    * @throws Exception the exception
@@ -1054,7 +1070,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testFindMapsetsWithMultipleSort() throws Exception {
     final String url = "/mapset/SNOMEDCT_US-ICD10CM/mapping?query=&offset=0&limit=20&"
-        + "sort=from.code,group,priority&ascending=true&leaf=null";
+        + "sort=from.code,group,priority&ascending=true";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
@@ -1131,7 +1147,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testFindMapsetsWithQuery() throws Exception {
-    final String query = "terminology=SNOMEDCT_US-ICD10CM&offset=0&limit=10";
+    final String query = "query=abbreviation:SNOMEDCT_US-ICD10CM&offset=0&limit=10";
     final String url = baseUrl + "/mapset?" + query;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -1804,7 +1820,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   public void testMetadataSortedByName() throws Exception {
     final String terminology = "LNC";
     final String url =
-        baseUrl + "/metadata?terminology=" + terminology + "&sort=name&ascending=true&limit=10";
+        baseUrl + "/metadata?query=terminology:" + terminology + "&sort=name&ascending=true&limit=10";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
@@ -1831,7 +1847,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
         continue; // Previous is null, current is not, which is correct for
         // ascending
       } else {
-        assertTrue(currentName.compareToIgnoreCase(previousName) >= 0,
+        assertTrue(currentName.compareTo(previousName) >= 0,
             "Metadata should be sorted by name. Found '" + currentName + "' after '" + previousName
                 + "'");
       }

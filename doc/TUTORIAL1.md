@@ -247,7 +247,7 @@ curl -s 'http://localhost:8080/fhir/r5/CodeSystem/$lookup?system=http://snomed.i
 curl -s 'http://localhost:8080/fhir/r5/ConceptMap' | jq
 
 # Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
-curl -s 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106-instance&sourceSystem=http://snomed.info/sct&sourceCode=300862005' | jq
+curl -s 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106-instance&system=http://snomed.info/sct&sourceCode=300862005' | jq
 
 # Find implied ValueSets for CodeSystems and explicit value sets
 curl -s 'http://localhost:8080/fhir/r5/ValueSet' | jq
