@@ -562,8 +562,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
 
     // Verify result parameter
     assertTrue(result.hasParameter("result"), "Should have result parameter");
-    assertEquals("true", result.getParameter("result").getValue().toString(),
-        "Result should be true");
+    assertTrue(result.getParameterBool("result"), "Result should be true");
 
     // Verify code parameter
     assertTrue(result.hasParameter("code"), "Should have code parameter");
@@ -613,7 +612,7 @@ public class FhirR4RestUnitTest extends AbstractFhirR4ServerTest {
     // Assert
     assertNotNull(result);
     LOGGER.info("Parameters = {}", parser.encodeResourceToString(result));
-    assertEquals("true", result.getParameter("result").getValue().toString());
+    assertTrue(result.getParameterBool("result"));
     assertEquals(code, result.getParameter("code").getValue().toString());
     assertNotNull(result.getParameter("display"));
     assertNotNull(result.getParameter("active"));
