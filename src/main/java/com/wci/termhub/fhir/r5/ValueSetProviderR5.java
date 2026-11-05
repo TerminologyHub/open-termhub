@@ -483,7 +483,12 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true, typeName = "ValueSet")
+  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true, typeName = "ValueSet",
+      returnParameters = {
+          @OperationParam(name = "result", min = 1, max = 1, type = BooleanType.class),
+          @OperationParam(name = "message", min = 0, max = 1, type = StringType.class),
+          @OperationParam(name = "display", min = 0, max = 1, type = StringType.class)
+      })
   public Parameters validateCodeImplicit(final HttpServletRequest request,
     final ServletRequestDetails details,
     @OperationParam(name = "url", min = 0, max = 1, typeName = "uri") final UriType url,
@@ -548,7 +553,11 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true)
+  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true, returnParameters = {
+      @OperationParam(name = "result", min = 1, max = 1, type = BooleanType.class),
+      @OperationParam(name = "message", min = 0, max = 1, type = StringType.class),
+      @OperationParam(name = "display", min = 0, max = 1, type = StringType.class)
+  })
   public Parameters validateCodeInstance(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id,
     @OperationParam(name = "url", min = 0, max = 1, typeName = "uri") final UriType uri,

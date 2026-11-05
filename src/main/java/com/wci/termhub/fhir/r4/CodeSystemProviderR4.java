@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import com.wci.termhub.lucene.eventing.Write;
 import org.apache.commons.io.FileUtils;
+import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
@@ -441,7 +442,15 @@ public class CodeSystemProviderR4 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true)
+  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true, returnParameters = {
+      @OperationParam(name = "result", min = 1, max = 1, type = BooleanType.class),
+      @OperationParam(name = "message", min = 0, max = 1, type = StringType.class),
+      @OperationParam(name = "display", min = 0, max = 1, type = StringType.class),
+      @OperationParam(name = "code", min = 0, max = 1, type = CodeType.class),
+      @OperationParam(name = "system", min = 0, max = 1, type = UriType.class),
+      @OperationParam(name = "version", min = 0, max = 1, type = StringType.class),
+      @OperationParam(name = "active", min = 0, max = 1, type = BooleanType.class)
+  })
   public Parameters validateCodeImplicit(final HttpServletRequest request,
     final HttpServletResponse response, final ServletRequestDetails details,
     @OperationParam(name = "url", min = 0, max = 1, typeName = "uri") final UriType url,
@@ -505,7 +514,15 @@ public class CodeSystemProviderR4 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true)
+  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true, returnParameters = {
+      @OperationParam(name = "result", min = 1, max = 1, type = BooleanType.class),
+      @OperationParam(name = "message", min = 0, max = 1, type = StringType.class),
+      @OperationParam(name = "display", min = 0, max = 1, type = StringType.class),
+      @OperationParam(name = "code", min = 0, max = 1, type = CodeType.class),
+      @OperationParam(name = "system", min = 0, max = 1, type = UriType.class),
+      @OperationParam(name = "version", min = 0, max = 1, type = StringType.class),
+      @OperationParam(name = "active", min = 0, max = 1, type = BooleanType.class)
+  })
   public Parameters validateCodeInstance(final HttpServletRequest request,
     final HttpServletResponse response, final ServletRequestDetails details,
     @IdParam final IdType id,
