@@ -111,11 +111,11 @@
   "subset": {
     "subsetMembers": "Miembros del Subconjunto",
     "title": "Explorar Subconjuntos",
-    "subsets": "Subconjuntos",
+    "subsets": "Miembros",
     "code": "Código del Subconjunto",
     "name": "Nombre del Subconjunto",
-    "notFound": "No se encontraron Subconjuntos",
-    "searchPlaceholder": "Buscar Subconjuntos"
+    "notFound": "No se encontraron Miembros",
+    "searchPlaceholder": "Buscar Miembros"
   },
   "bulk": {
     "title": "Buscar Términos",

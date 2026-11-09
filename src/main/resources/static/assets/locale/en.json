@@ -111,11 +111,11 @@
   "subset": {
     "subsetMembers": "Subset Members",
     "title": "Browse Subsets",
-    "subsets": "Subsets",
+    "subsets": "Members",
     "code": "Subset Code",
     "name": "Subset Name",
-    "notFound": "No Subsets found",
-    "searchPlaceholder": "Search Subsets"
+    "notFound": "No Members found",
+    "searchPlaceholder": "Search Members"
   },
   "bulk": {
     "title": "Search Terms",
