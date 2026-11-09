@@ -47,7 +47,6 @@ import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.IServerAddressStrategy;
 import ca.uhn.fhir.rest.server.RestfulServer;
 import ca.uhn.fhir.rest.server.RestfulServerConfiguration;
-import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import ca.uhn.fhir.rest.server.provider.ServerCapabilityStatementProvider;
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails;
 import ca.uhn.fhir.rest.server.util.ISearchParamRegistry;
@@ -273,10 +272,12 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
    * Read OperationDefinition resources.
    *
    * @param theId the the id
+   * @param theRequestDetails the the request details
    * @return the operation definition
    */
   @Read(type = OperationDefinition.class)
-  public OperationDefinition readOperationDefinition(@IdParam final IdType theId) {
+  public OperationDefinition readOperationDefinition(@IdParam final IdType theId,
+    final RequestDetails theRequestDetails) {
     if ("versions".equals(theId.getIdPart()) || "-versions".equals(theId.getIdPart())) {
       return createVersionsOperationDefinition();
     }
@@ -285,7 +286,7 @@ public class FHIRMetadataProviderR4 extends ServerCapabilityStatementProvider {
         && theId.getValue().equals("http://hl7.org/fhir/OperationDefinition/-versions")) {
       return createVersionsOperationDefinition();
     }
-    throw new ResourceNotFoundException("OperationDefinition/" + theId.getIdPart());
+    return (OperationDefinition) super.readOperationDefinition(theId, theRequestDetails);
   }
 
   /**

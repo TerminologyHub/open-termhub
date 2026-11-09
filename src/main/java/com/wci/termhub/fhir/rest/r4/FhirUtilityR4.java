@@ -1029,7 +1029,7 @@ public final class FhirUtilityR4 {
     final Parameters parameters = new Parameters();
     final boolean result =
         concept != null && (display == null || display.equals(concept.getName()));
-    parameters.addParameter("result", "" + result);
+    parameters.addParameter("result", result);
     if (!result) {
       if (concept == null) {
         parameters.addParameter("message",

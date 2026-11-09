@@ -32,9 +32,11 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.CodeSystemHierarchyMeaning;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.ConceptMap;
+import org.hl7.fhir.r5.model.Enumerations;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.Identifier;
+import org.hl7.fhir.r5.model.OperationDefinition;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r5.model.Parameters;
@@ -244,6 +246,45 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertFalse(tcData.getCodeSystem().isEmpty());
     // url reflects the currently deployed server base
     assertEquals(LOCALHOST + port + "/fhir/r5/metadata?mode=terminology", tcData.getUrl());
+  }
+
+  /**
+   * Test OperationDefinition read for versions and CapabilityStatement-advertised validate-code.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(FIND)
+  public void testOperationDefinitionRead() throws Exception {
+    final String versionsEndpoint = LOCALHOST + port + "/fhir/r5/OperationDefinition/versions";
+    final ResponseEntity<String> versionsResponse =
+        this.restTemplate.getForEntity(versionsEndpoint, String.class);
+    assertEquals(HttpStatus.OK, versionsResponse.getStatusCode());
+    final OperationDefinition versions =
+        parser.parseResource(OperationDefinition.class, versionsResponse.getBody());
+    assertEquals("versions", versions.getCode());
+
+    final String metadataContent =
+        this.restTemplate.getForObject(LOCALHOST + port + FHIR_METADATA, String.class);
+    final CapabilityStatement capabilityStatement =
+        parser.parseResource(CapabilityStatement.class, metadataContent);
+    final String definition = capabilityStatement.getRestFirstRep().getResource().stream()
+        .filter(r -> "CodeSystem".equals(r.getType())).flatMap(r -> r.getOperation().stream())
+        .filter(op -> "validate-code".equals(op.getName())).map(op -> op.getDefinition()).findFirst()
+        .orElseThrow();
+    final String opDefId = new IdType(definition).getIdPart();
+    final String endpoint = LOCALHOST + port + "/fhir/r5/OperationDefinition/" + opDefId;
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(endpoint, String.class);
+    assertEquals(HttpStatus.OK, response.getStatusCode(),
+        "CapabilityStatement OperationDefinition should be readable: " + endpoint);
+    final OperationDefinition opDef =
+        parser.parseResource(OperationDefinition.class, response.getBody());
+    assertEquals("validate-code", opDef.getCode());
+    assertTrue(opDef.getParameter().stream()
+        .anyMatch(p -> "result".equals(p.getName())
+            && p.getUse() == Enumerations.OperationParameterUse.OUT
+            && p.getType() == Enumerations.FHIRTypes.BOOLEAN),
+        "validate-code OperationDefinition should declare result as OUT boolean");
   }
 
   /**
@@ -564,8 +605,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
     // Verify result parameter
     assertTrue(result.hasParameter("result"), "Should have result parameter");
-    assertEquals("true", result.getParameter("result").getValue().toString(),
-        "Result should be true");
+    assertTrue(result.getParameterBool("result"), "Result should be true");
 
     // Verify code parameter
     assertTrue(result.hasParameter("code"), "Should have code parameter");
@@ -616,7 +656,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     // Assert
     assertNotNull(result);
     LOGGER.info("Parameters = {}", parser.encodeResourceToString(result));
-    assertEquals("true", result.getParameter("result").getValue().toString());
+    assertTrue(result.getParameterBool("result"));
     assertEquals(code, result.getParameter("code").getValue().toString());
     assertNotNull(result.getParameter("display"));
     assertNotNull(result.getParameter("active"));
