@@ -522,7 +522,8 @@ public class ValueSetProviderR4 implements IResourceProvider {
       FhirUtilityR4.requireExactlyOneOf("code", code, "coding", coding);
       FhirUtilityR4.notSupported("codeableConcept", codeableConcept);
       final String lcode = FhirUtilityR4.getCode(code, coding);
-      return validateCodeHelper(null, url, version, lcode, display);
+      final String effectiveSystem = resolveValidateCodeSystem(system, coding);
+      return validateCodeHelper(null, url, version, lcode, display, effectiveSystem, systemVersion);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
@@ -586,8 +587,10 @@ public class ValueSetProviderR4 implements IResourceProvider {
     try {
 
       FhirUtilityR4.requireExactlyOneOf("code", code, "coding", coding);
+      FhirUtilityR4.notSupported("codeableConcept", codeableConcept);
       final String lcode = FhirUtilityR4.getCode(code, coding);
-      return validateCodeHelper(id, null, version, lcode, display);
+      final String effectiveSystem = resolveValidateCodeSystem(system, coding);
+      return validateCodeHelper(id, uri, version, lcode, display, effectiveSystem, systemVersion);
 
     } catch (final FHIRServerResponseException e) {
       throw e;
@@ -1292,129 +1295,342 @@ public class ValueSetProviderR4 implements IResourceProvider {
    * @param version the version
    * @param code the code
    * @param display the display
+   * @param system the effective system URI (from system and/or coding)
+   * @param systemVersion the system version
    * @return the parameters
    * @throws Exception the exception
    */
   private Parameters validateCodeHelper(final IdType id, final UriType url,
-    final StringType version, final String code, final StringType display) throws Exception {
-    // Look up implicit value sets for code systems
-    for (final Terminology terminology : FhirUtility.lookupTerminologies(searchService)) {
-      final ValueSet vs = FhirUtilityR4.toR4ValueSet(terminology, false);
+    final StringType version, final String code, final StringType display, final String system,
+    final StringType systemVersion) throws Exception {
 
-      // Skip non-matching
-      if ((id != null && !id.getIdPart().equals(vs.getId()))
-          || (url != null && !url.getValue().equals(vs.getUrl())
-              && !url.getValue().startsWith(vs.getUrl() + "="))) {
-
-        // for SNOMED, check whether the url matches the terminology FHIR
-        // version
-        if (url == null) {
-          continue;
-        }
-        final String versionUrl = terminology.getAttributes().get("fhirVersion") + "?fhir_vs";
-        if (!url.getValue().equals(versionUrl) && !url.getValue().startsWith(versionUrl + "=")) {
-          continue;
-        }
+    final List<ValueSet> valueSets = findPossibleValueSets(true, id, url, version, null);
+    if (valueSets.isEmpty()) {
+      throw FhirUtilityR4.exception("Failed to find matching value set",
+          OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+    }
+    final ValueSet vs;
+    if (valueSets.size() > 1) {
+      if (version == null || version.isEmpty()) {
+        vs = valueSets.stream().filter(v -> v.getDate() != null)
+            .max(Comparator.comparing(ValueSet::getDate)).orElse(valueSets.get(0));
+      } else {
+        throw FhirUtilityR4.exception("Too many matching value sets found",
+            OperationOutcome.IssueType.MULTIPLEMATCHES, HttpServletResponse.SC_EXPECTATION_FAILED);
       }
+    } else {
+      vs = valueSets.get(0);
+    }
 
-      if (version != null && !version.getValue().equals(vs.getVersion())) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("  SKIP version mismatch = {}", vs.getVersion());
-        }
-        continue;
+    // LOINC LL/LG (same detection order as $expand)
+    String lllgId = loincValueSetHelper.parseIdFromUrl(vs.getUrl());
+    if (lllgId == null && loincValueSetHelper.isLllgId(vs.getId())) {
+      lllgId = vs.getId();
+    }
+    if (lllgId == null && id != null && loincValueSetHelper.isLllgId(id.getIdPart())) {
+      lllgId = id.getIdPart();
+    }
+    if (lllgId == null && url != null && loincValueSetHelper.isLllgValueSetUrl(url.getValue())) {
+      lllgId = loincValueSetHelper.parseIdFromUrl(url.getValue());
+    }
+    if (lllgId != null && loincValueSetHelper.isLllgId(lllgId)) {
+      return validateLllgCode(vs, lllgId, code, display, system, systemVersion);
+    }
+
+    // Implicit entire-code-system ValueSet
+    if (vs.getId() != null && vs.getId().endsWith("_entire")) {
+      return validateImplicitCode(vs, code, display, system, systemVersion);
+    }
+
+    // Loaded ValueSet (Subset)
+    final Subset loadedSubset =
+        vs.getId() == null ? null : searchService.get(vs.getId(), Subset.class);
+    if (loadedSubset != null) {
+      return validateLoadedSubsetCode(loadedSubset, vs, code, display, system, systemVersion);
+    }
+
+    throw FhirUtilityR4.exception("Failed to find matching value set",
+        OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+  }
+
+  /**
+   * Resolves the effective code system URI from system and/or coding parameters.
+   *
+   * @param system the system param
+   * @param coding the coding param
+   * @return the effective system URI, or null
+   */
+  private String resolveValidateCodeSystem(final UriType system, final Coding coding) {
+    final String systemFromParam =
+        system == null || system.isEmpty() ? null : system.getValue();
+    final String systemFromCoding = coding == null ? null : coding.getSystem();
+    if (systemFromParam != null && systemFromCoding != null
+        && !systemFromParam.equals(systemFromCoding)) {
+      throw FhirUtilityR4.exception(
+          "Conflicting system values = " + systemFromParam + ", " + systemFromCoding,
+          OperationOutcome.IssueType.INVARIANT, HttpServletResponse.SC_BAD_REQUEST);
+    }
+    return systemFromParam != null ? systemFromParam : systemFromCoding;
+  }
+
+  /**
+   * Validates a code against a loaded Subset ValueSet.
+   *
+   * @param subset the subset
+   * @param vs the resolved value set
+   * @param code the code
+   * @param display the display
+   * @param system the effective system URI
+   * @param systemVersion the system version
+   * @return the parameters
+   * @throws Exception the exception
+   */
+  private Parameters validateLoadedSubsetCode(final Subset subset, final ValueSet vs,
+    final String code, final StringType display, final String system,
+    final StringType systemVersion) throws Exception {
+    Terminology terminology = null;
+    if (subset.getFromTerminology() != null) {
+      terminology = TerminologyUtility.getTerminology(searchService, subset.getFromTerminology(),
+          subset.getFromPublisher(), subset.getFromVersion());
+    }
+    final String expectedSystem = resolveLoadedSubsetSystemUri(subset, terminology);
+    final Parameters systemMismatch =
+        checkSystemAndVersion(code, system, expectedSystem, systemVersion,
+            terminology != null ? terminology.getVersion()
+                : (subset.getFromVersion() != null ? subset.getFromVersion() : subset.getVersion()));
+    if (systemMismatch != null) {
+      return systemMismatch;
+    }
+
+    final SubsetMember member = findSubsetMemberByCode(subset, code);
+    if (member == null || (member.getCodeActive() != null && !member.getCodeActive())) {
+      return notInValueSet(code);
+    }
+
+    final Parameters parameters = new Parameters();
+    parameters.addParameter(
+        new ParametersParameterComponent().setName("result").setValue(new BooleanType(true)));
+    final String displayName = member.getName() != null ? member.getName()
+        : (vs.getTitle() != null ? vs.getTitle() : code);
+    parameters.addParameter(new ParametersParameterComponent().setName("display")
+        .setValue(new StringType(displayName)));
+
+    if (display != null) {
+      boolean displayMatch =
+          member.getName() != null && display.getValue().equals(member.getName());
+      if (!displayMatch && terminology != null) {
+        final Concept concept =
+            TerminologyUtility.getConcept(searchService, terminology, code);
+        displayMatch = concept != null && concept.getTerms() != null && concept.getTerms().stream()
+            .anyMatch(t -> display.getValue().equals(t.getName()));
       }
-
-      // Perform the lookup - result, message, display
-      // "valueString": "The code '16224591000119104' from CodeSystem
-      // 'http://snomed.info/sct'
-      // was not found in this ValueSet."
-      // "valueString": "The code '16224591000119103' was found in the ValueSet,
-      // however the
-      // display 'abc' did not match any designations."
-      final Query codeQuery =
-          LuceneQueryBuilder.parse("code:" + StringUtility.escapeQuery(code), Concept.class);
-      final Query expression = getExpressionQuery(vs.getUrl());
-      final Query booleanQuery = getAndQuery(codeQuery, expression);
-      final List<Concept> list = searchService.findAll(null, booleanQuery, Concept.class);
-      final Parameters parameters = new Parameters();
-      // If no match
-      if (list.isEmpty()) {
-        parameters.addParameter(
-            new ParametersParameterComponent().setName("result").setValue(new BooleanType(false)));
-        parameters.addParameter(new ParametersParameterComponent().setName("message")
-            .setValue(new StringType("The code '" + code + "' was not found in this value set")));
-        return parameters;
-      }
-      parameters.addParameter(
-          new ParametersParameterComponent().setName("result").setValue(new BooleanType(true)));
-      parameters.addParameter(new ParametersParameterComponent().setName("display")
-          .setValue(new StringType(list.get(0).getName())));
-
-      // display doesn't match
-      if (display != null && list.get(0).getTerms().stream()
-          .filter(t -> display.getValue().equals(t.getName())).count() == 0) {
+      if (!displayMatch) {
         parameters.addParameter(new ParametersParameterComponent().setName("message")
             .setValue(new StringType(
                 "The code '" + code + "' was found in this value set, however the display '"
                     + display + "' did not match any designations")));
-        return parameters;
       }
+    }
+    return parameters;
+  }
 
-      return parameters;
+  /**
+   * Finds a single SubsetMember by code for the given subset.
+   *
+   * @param subset the subset
+   * @param code the code
+   * @return the member or null
+   * @throws Exception the exception
+   */
+  private SubsetMember findSubsetMemberByCode(final Subset subset, final String code)
+    throws Exception {
+    if (subset == null || code == null) {
+      return null;
+    }
+    final String query = StringUtility.composeQuery("AND",
+        StringUtility.escapeKeywordField("subset.abbreviation", subset.getAbbreviation()),
+        StringUtility.escapeKeywordField("subset.publisher", subset.getPublisher()),
+        StringUtility.escapeKeywordField("subset.version", subset.getVersion()),
+        StringUtility.escapeKeywordField("subset.code", subset.getCode()),
+        StringUtility.escapeKeywordField("code", code));
+    final List<SubsetMember> members = searchService.findAll(query, null, SubsetMember.class);
+    return members.isEmpty() ? null : members.get(0);
+  }
+
+  /**
+   * Validates a code against a LOINC LL/LG ValueSet.
+   *
+   * @param vs the value set
+   * @param lllgId the LL/LG id
+   * @param code the code
+   * @param display the display
+   * @param system the effective system URI
+   * @param systemVersion the system version
+   * @return the parameters
+   * @throws Exception the exception
+   */
+  private Parameters validateLllgCode(final ValueSet vs, final String lllgId, final String code,
+    final StringType display, final String system, final StringType systemVersion)
+    throws Exception {
+    final Terminology loinc = resolveLllgTerminology(vs);
+    if (loinc == null) {
+      throw FhirUtilityR4.exception("Failed to find LOINC terminology for value set",
+          OperationOutcome.IssueType.NOTFOUND, HttpServletResponse.SC_NOT_FOUND);
+    }
+    final Parameters systemMismatch =
+        checkSystemAndVersion(code, system, loinc.getUri(), systemVersion, loinc.getVersion());
+    if (systemMismatch != null) {
+      return systemMismatch;
+    }
+    final Concept member =
+        loincValueSetHelper.findMemberByCode(searchService, loinc, lllgId, code);
+    if (member == null) {
+      return notInValueSet(code);
+    }
+    final Parameters parameters = new Parameters();
+    parameters.addParameter(
+        new ParametersParameterComponent().setName("result").setValue(new BooleanType(true)));
+    parameters.addParameter(new ParametersParameterComponent().setName("display")
+        .setValue(new StringType(member.getName())));
+    if (display != null && (member.getTerms() == null || member.getTerms().stream()
+        .noneMatch(t -> display.getValue().equals(t.getName())))) {
+      parameters.addParameter(new ParametersParameterComponent().setName("message")
+          .setValue(new StringType(
+              "The code '" + code + "' was found in this value set, however the display '"
+                  + display + "' did not match any designations")));
+    }
+    return parameters;
+  }
+
+  /**
+   * Validates a code against an implicit entire-code-system ValueSet.
+   *
+   * @param vs the value set
+   * @param code the code
+   * @param display the display
+   * @param system the effective system URI
+   * @param systemVersion the system version
+   * @return the parameters
+   * @throws Exception the exception
+   */
+  private Parameters validateImplicitCode(final ValueSet vs, final String code,
+    final StringType display, final String system, final StringType systemVersion)
+    throws Exception {
+    final String fromTerminology = metaTagCode(vs, "fromTerminology");
+    final String fromPublisher = metaTagCode(vs, "fromPublisher");
+    final String fromVersion = metaTagCode(vs, "fromVersion");
+    final String includesUri = metaTagCode(vs, "includesUri");
+    Terminology terminology = null;
+    if (fromTerminology != null) {
+      terminology =
+          TerminologyUtility.getTerminology(searchService, fromTerminology, fromPublisher,
+              fromVersion);
+    }
+    final String expectedSystem =
+        includesUri != null ? includesUri : (terminology != null ? terminology.getUri() : null);
+    final Parameters systemMismatch = checkSystemAndVersion(code, system, expectedSystem,
+        systemVersion, terminology != null ? terminology.getVersion() : fromVersion);
+    if (systemMismatch != null) {
+      return systemMismatch;
     }
 
-    // LOINC LL/LG validate-code (Regenstrief mode)
-    if (loincValueSetHelper.isEnabled()) {
-      String lllgId = null;
-      if (url != null && loincValueSetHelper.isLllgValueSetUrl(url.getValue())) {
-        lllgId = loincValueSetHelper.parseIdFromUrl(url.getValue());
-      }
-      if (lllgId == null && id != null && loincValueSetHelper.isLllgId(id.getIdPart())) {
-        lllgId = id.getIdPart();
-      }
-      logger.info("ValueSet $validate-code: LL/LG enabled, lllgId={}, code={}, id={}, url={}",
-          lllgId, code, id != null ? id.getIdPart() : null, url != null ? url.getValue() : null);
-      if (lllgId != null) {
-        final Terminology loinc = loincValueSetHelper.findLoincTerminology(searchService);
-        logger.info(
-            "ValueSet $validate-code: findLoincTerminology {} for lllgId={} (abbrev={}, publisher={}, version={})",
-            loinc != null ? "found" : "null", lllgId,
-            loinc != null ? loinc.getAbbreviation() : null,
-            loinc != null ? loinc.getPublisher() : null, loinc != null ? loinc.getVersion() : null);
-        if (loinc != null) {
-          final Concept member =
-              loincValueSetHelper.findMemberByCode(searchService, loinc, lllgId, code);
-          logger.info("ValueSet $validate-code: findMemberByCode for lllgId={} code={} => {}",
-              lllgId, code, member != null ? "found" : "null");
-          final Parameters parameters = new Parameters();
-          if (member == null) {
-            parameters.addParameter(new ParametersParameterComponent().setName("result")
-                .setValue(new BooleanType(false)));
-            parameters.addParameter(new ParametersParameterComponent().setName("message").setValue(
-                new StringType("The code '" + code + "' was not found in this value set")));
-            return parameters;
-          }
-          parameters.addParameter(
-              new ParametersParameterComponent().setName("result").setValue(new BooleanType(true)));
-          parameters.addParameter(new ParametersParameterComponent().setName("display")
-              .setValue(new StringType(member.getName())));
-          if (display != null && member.getTerms().stream()
-              .filter(t -> display.getValue().equals(t.getName())).count() == 0) {
-            parameters.addParameter(new ParametersParameterComponent().setName("message")
-                .setValue(new StringType(
-                    "The code '" + code + "' was found in this value set, however the display '"
-                        + display + "' did not match any designations")));
-          }
-          return parameters;
-        } else {
-          logger.info("ValueSet $validate-code: LOINC terminology null for lllgId={}", lllgId);
-        }
+    final Query codeQuery =
+        LuceneQueryBuilder.parse("code:" + StringUtility.escapeQuery(code), Concept.class);
+    final Query expression = getExpressionQuery(vs.getUrl());
+    // Prefer terminology-scoped lookup when meta tags are present; fall back to code+expression
+    // (preserves {fhirVersion}?fhir_vs behavior used by existing clients/tests).
+    List<Concept> list;
+    if (fromTerminology != null) {
+      final Query terminologyQuery = LuceneQueryBuilder.parse(
+          TerminologyUtility.getTerminologyQuery(fromTerminology, fromPublisher, fromVersion),
+          Concept.class);
+      list = searchService.findAll(null, getAndQuery(terminologyQuery, codeQuery, expression),
+          Concept.class);
+      if (list.isEmpty()) {
+        list = searchService.findAll(null, getAndQuery(codeQuery, expression), Concept.class);
       }
     } else {
-      logger.info("ValueSet $validate-code: LL/LG path skipped (enabled={})",
-          loincValueSetHelper.isEnabled());
+      list = searchService.findAll(null, getAndQuery(codeQuery, expression), Concept.class);
+    }
+    if (list.isEmpty()) {
+      return notInValueSet(code);
+    }
+    final Parameters parameters = new Parameters();
+    parameters.addParameter(
+        new ParametersParameterComponent().setName("result").setValue(new BooleanType(true)));
+    parameters.addParameter(new ParametersParameterComponent().setName("display")
+        .setValue(new StringType(list.get(0).getName())));
+    if (display != null && (list.get(0).getTerms() == null || list.get(0).getTerms().stream()
+        .noneMatch(t -> display.getValue().equals(t.getName())))) {
+      parameters.addParameter(new ParametersParameterComponent().setName("message")
+          .setValue(new StringType(
+              "The code '" + code + "' was found in this value set, however the display '"
+                  + display + "' did not match any designations")));
+    }
+    return parameters;
+  }
+
+  /**
+   * Returns Parameters with result=false when system or systemVersion does not match.
+   *
+   * @param code the code
+   * @param system the requested system
+   * @param expectedSystem the expected system
+   * @param systemVersion the requested system version
+   * @param expectedVersion the expected system version
+   * @return mismatch parameters, or null if OK
+   */
+  private Parameters checkSystemAndVersion(final String code, final String system,
+    final String expectedSystem, final StringType systemVersion, final String expectedVersion) {
+    if (system != null && expectedSystem != null && !system.equals(expectedSystem)) {
+      final Parameters parameters = new Parameters();
+      parameters.addParameter(
+          new ParametersParameterComponent().setName("result").setValue(new BooleanType(false)));
+      parameters.addParameter(new ParametersParameterComponent().setName("message")
+          .setValue(new StringType("The code '" + code + "' from CodeSystem '" + system
+              + "' was not found in this ValueSet.")));
+      return parameters;
+    }
+    if (systemVersion != null && systemVersion.getValue() != null && expectedVersion != null
+        && !systemVersion.getValue().equals(expectedVersion)) {
+      final Parameters parameters = new Parameters();
+      parameters.addParameter(
+          new ParametersParameterComponent().setName("result").setValue(new BooleanType(false)));
+      parameters.addParameter(new ParametersParameterComponent().setName("message")
+          .setValue(new StringType("The code '" + code + "' was not found in this value set")));
+      return parameters;
     }
     return null;
+  }
+
+  /**
+   * Builds a result=false Parameters for a code not in the value set.
+   *
+   * @param code the code
+   * @return the parameters
+   */
+  private Parameters notInValueSet(final String code) {
+    final Parameters parameters = new Parameters();
+    parameters.addParameter(
+        new ParametersParameterComponent().setName("result").setValue(new BooleanType(false)));
+    parameters.addParameter(new ParametersParameterComponent().setName("message")
+        .setValue(new StringType("The code '" + code + "' was not found in this value set")));
+    return parameters;
+  }
+
+  /**
+   * Reads a meta tag code by system name.
+   *
+   * @param vs the value set
+   * @param system the tag system
+   * @return the tag code or null
+   */
+  private String metaTagCode(final ValueSet vs, final String system) {
+    if (vs == null || vs.getMeta() == null || system == null) {
+      return null;
+    }
+    return vs.getMeta().getTag().stream().filter(t -> system.equals(t.getSystem()))
+        .map(t -> t.getCode()).findFirst().orElse(null);
   }
 
   /**
@@ -1465,6 +1681,47 @@ public class ValueSetProviderR4 implements IResourceProvider {
       return null;
     }
     return url.replaceFirst("=(ecl|isa|refset)/.+", "");
+  }
+
+  /**
+   * Whether a request url matches an implicit terminology ValueSet url, including
+   * {@code {fhirVersion}?fhir_vs} shortcuts.
+   *
+   * @param requestUrl the request url
+   * @param vsUrl the value set url
+   * @param terminology the terminology
+   * @return true if matched
+   */
+  private boolean matchesImplicitValueSetUrl(final String requestUrl, final String vsUrl,
+    final Terminology terminology) {
+    if (requestUrl == null || vsUrl == null) {
+      return false;
+    }
+    if (getBaseUrl(requestUrl).equals(vsUrl) || requestUrl.equals(vsUrl)
+        || isImplicitFilterUrl(requestUrl, vsUrl)) {
+      return true;
+    }
+    if (terminology.getAttributes() != null
+        && terminology.getAttributes().get("fhirVersion") != null) {
+      final String versionUrl = terminology.getAttributes().get("fhirVersion") + "?fhir_vs";
+      if (requestUrl.equals(versionUrl) || isImplicitFilterUrl(requestUrl, versionUrl)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * True when requestUrl is vsUrl with an implicit filter suffix ({@code =ecl/}, {@code =isa/},
+   * or {@code =refset/}). Does not match arbitrary suffixes like {@code =731000124108-instance}.
+   *
+   * @param requestUrl the request url
+   * @param vsUrl the value set base url
+   * @return true if matched
+   */
+  private boolean isImplicitFilterUrl(final String requestUrl, final String vsUrl) {
+    return requestUrl.startsWith(vsUrl + "=ecl/") || requestUrl.startsWith(vsUrl + "=isa/")
+        || requestUrl.startsWith(vsUrl + "=refset/");
   }
 
   /**
@@ -1548,7 +1805,7 @@ public class ValueSetProviderR4 implements IResourceProvider {
 
       // Skip non-matching
       if ((id != null && !id.getValue().equals(vs.getId()))
-          || (url != null && !getBaseUrl(url.getValue()).equals(vs.getUrl()))) {
+          || (url != null && !matchesImplicitValueSetUrl(url.getValue(), vs.getUrl(), terminology))) {
         continue;
       }
 

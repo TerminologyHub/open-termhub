@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent;
 import org.hl7.fhir.r4.model.ValueSet.ConceptSetFilterComponent;
@@ -188,6 +189,46 @@ public class AdHocValueSetR4UnitTest extends AbstractFhirR4ServerTest {
   }
 
   /**
+   * Loaded Subset $validate-code: member hit, miss, wrong system, coding.system, instance+url,
+   * unknown url.
+   *
+   * @throws Exception the exception
+   */
+  @Test
+  @Order(5)
+  public void testValidateCodeLoadedSubset() throws Exception {
+    final String vsUrl = "http://loinc.org/vs/loincs-for-sars-cov-2-aoe";
+    final ValueSet created = ensureValueSet("data/ValueSet-adhoc-sars-cov-2-aoe.json", vsUrl);
+    final String memberCode = "65222-2";
+    final String system = "http://loinc.org";
+
+    final Parameters hit = validateCodeByUrl(vsUrl, memberCode, system);
+    assertTrue(hit.getParameterBool("result"), parser.encodeResourceToString(hit));
+    assertTrue(hit.hasParameter("display"), "display should be set for member hit");
+
+    final Parameters miss = validateCodeByUrl(vsUrl, "99999-9", system);
+    assertFalse(miss.getParameterBool("result"), parser.encodeResourceToString(miss));
+
+    final Parameters wrongSystem = validateCodeByUrl(vsUrl, memberCode, "http://example.org/other");
+    assertFalse(wrongSystem.getParameterBool("result"), parser.encodeResourceToString(wrongSystem));
+
+    final Parameters codingSystem = validateCodeByCoding(vsUrl, system, memberCode);
+    assertTrue(codingSystem.getParameterBool("result"), parser.encodeResourceToString(codingSystem));
+
+    final Parameters byId = validateCodeById(created.getIdPart(), vsUrl, memberCode, system);
+    assertTrue(byId.getParameterBool("result"), parser.encodeResourceToString(byId));
+
+    final ResponseEntity<String> unknown = restTemplate.getForEntity(
+        "http://localhost:" + port + FHIR_VALUESET
+            + "/$validate-code?url={url}&code={code}&system={system}",
+        String.class, "http://loinc.org/vs/does-not-exist", memberCode, system);
+    assertEquals(HttpStatus.NOT_FOUND, unknown.getStatusCode(), unknown.getBody());
+    assertNotNull(unknown.getBody());
+    assertTrue(unknown.getBody().contains("OperationOutcome"), unknown.getBody());
+    assertFalse(unknown.getBody().contains("HAPI-0436"), unknown.getBody());
+  }
+
+  /**
    * Post value set.
    *
    * @param classpath the classpath
@@ -199,6 +240,27 @@ public class AdHocValueSetR4UnitTest extends AbstractFhirR4ServerTest {
     assertTrue(response.getStatusCode() == HttpStatus.CREATED
         || response.getStatusCode() == HttpStatus.OK, response.getBody());
     return parser.parseResource(ValueSet.class, response.getBody());
+  }
+
+  /**
+   * Ensures a ValueSet is loaded; reuses an existing one when a prior test already posted it.
+   *
+   * @param classpath the classpath
+   * @param url the value set url
+   * @return the value set
+   * @throws Exception the exception
+   */
+  private ValueSet ensureValueSet(final String classpath, final String url) throws Exception {
+    final ResponseEntity<String> search = restTemplate.getForEntity(
+        "http://localhost:" + port + FHIR_VALUESET + "?url={url}", String.class, url);
+    if (search.getStatusCode() == HttpStatus.OK && search.getBody() != null) {
+      final Bundle bundle = parser.parseResource(Bundle.class, search.getBody());
+      if (bundle.getEntry() != null && !bundle.getEntry().isEmpty()
+          && bundle.getEntryFirstRep().getResource() instanceof ValueSet) {
+        return (ValueSet) bundle.getEntryFirstRep().getResource();
+      }
+    }
+    return postValueSet(classpath);
   }
 
   /**
@@ -240,6 +302,60 @@ public class AdHocValueSetR4UnitTest extends AbstractFhirR4ServerTest {
         String.class, url);
     assertEquals(HttpStatus.OK, response.getStatusCode(), response.getBody());
     return parser.parseResource(ValueSet.class, response.getBody());
+  }
+
+  /**
+   * Validate code by value set url.
+   *
+   * @param url the value set url
+   * @param code the code
+   * @param system the system
+   * @return the parameters
+   */
+  private Parameters validateCodeByUrl(final String url, final String code, final String system) {
+    final ResponseEntity<String> response = restTemplate.getForEntity(
+        "http://localhost:" + port + FHIR_VALUESET
+            + "/$validate-code?url={url}&code={code}&system={system}",
+        String.class, url, code, system);
+    assertEquals(HttpStatus.OK, response.getStatusCode(), response.getBody());
+    return parser.parseResource(Parameters.class, response.getBody());
+  }
+
+  /**
+   * Validate code using coding.system and coding.code query params.
+   *
+   * @param url the value set url
+   * @param system the coding system
+   * @param code the coding code
+   * @return the parameters
+   */
+  private Parameters validateCodeByCoding(final String url, final String system,
+    final String code) {
+    final ResponseEntity<String> response = restTemplate.getForEntity(
+        "http://localhost:" + port + FHIR_VALUESET
+            + "/$validate-code?url={url}&coding={coding}",
+        String.class, url, system + "|" + code);
+    assertEquals(HttpStatus.OK, response.getStatusCode(), response.getBody());
+    return parser.parseResource(Parameters.class, response.getBody());
+  }
+
+  /**
+   * Validate code by ValueSet id, also passing url.
+   *
+   * @param id the value set id
+   * @param url the url
+   * @param code the code
+   * @param system the system
+   * @return the parameters
+   */
+  private Parameters validateCodeById(final String id, final String url, final String code,
+    final String system) {
+    final ResponseEntity<String> response = restTemplate.getForEntity(
+        "http://localhost:" + port + FHIR_VALUESET
+            + "/{id}/$validate-code?url={url}&code={code}&system={system}",
+        String.class, id, url, code, system);
+    assertEquals(HttpStatus.OK, response.getStatusCode(), response.getBody());
+    return parser.parseResource(Parameters.class, response.getBody());
   }
 
   /**
