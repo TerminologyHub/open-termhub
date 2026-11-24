@@ -10,11 +10,6 @@ buildscript {
   repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-      name = "central-portal-snapshots"
-      url = "https://central.sonatype.com/repository/maven-snapshots/"
-      mavenContent { snapshotsOnly() }
-    }
     maven { url "https://repo.spring.io/release" }
     maven { url "https://repo.spring.io/milestone" }
     maven { url "https://repo.spring.io/snapshot" }
@@ -86,7 +81,7 @@ dependencyManagement {
         dependency('org.apache.httpcomponents.core5:httpcore5:5.4.3')
         dependency('org.apache.httpcomponents.core5:httpcore5-h2:5.4.3')
         dependency('org.apache.httpcomponents.core5:httpcore5-reactive:5.4.3')
-        
+
     }
 }
 
@@ -109,7 +104,7 @@ dependencies {
   implementation "org.thymeleaf:thymeleaf-spring6:3.1.5.RELEASE"
 
   implementation "org.fhir:ucum:1.0.9"
-  // FHIR core libraries — version must match HAPI BOM fhir_core_version
+  // FHIR core libraries version must match HAPI BOM fhir_core_version
   implementation "ca.uhn.hapi.fhir:org.hl7.fhir.convertors:${hapiFhirCoreVersion}"
   implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2:${hapiFhirCoreVersion}"
   implementation "ca.uhn.hapi.fhir:org.hl7.fhir.dstu2016may:${hapiFhirCoreVersion}"
@@ -142,7 +137,7 @@ dependencies {
   implementation 'jakarta.xml.bind:jakarta.xml.bind-api'
   implementation 'org.glassfish.jaxb:jaxb-runtime'
 
-  // OpenAPI/Swagger UI — springdoc 3.x for Spring Boot 4
+  // OpenAPI/Swagger UI ï¿½ springdoc 3.x for Spring Boot 4
   implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3") {
     exclude group: "org.slf4j", module: "slf4j-simple"
     exclude group: "org.slf4j", module: "slf4j-api"
