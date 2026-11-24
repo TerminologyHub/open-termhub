@@ -27,8 +27,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import com.wci.termhub.util.ModelUtility;
 
 /**
@@ -267,7 +267,7 @@ public class ModelUtilityUnitTest {
     // Test JSON to JsonNode
     final JsonNode jsonNode = ModelUtility.toJsonNode(json);
     assertNotNull(jsonNode);
-    assertEquals("Test Name", jsonNode.get("name").asText());
+    assertEquals("Test Name", jsonNode.get("name").asString());
     assertEquals(25, jsonNode.get("age").asInt());
 
     // Test pretty format JSON

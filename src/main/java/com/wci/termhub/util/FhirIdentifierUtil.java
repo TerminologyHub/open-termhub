@@ -17,9 +17,9 @@ import org.hl7.fhir.r4.model.ValueSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Normalizes FHIR resource identifiers on load and restores them on serve.
@@ -99,7 +99,7 @@ public final class FhirIdentifierUtil {
       return null;
     }
     for (final JsonNode item : arr) {
-      final String value = item.path("value").asText(null);
+      final String value = item.path("value").asString(null);
       if (!StringUtility.isEmpty(value)) {
         return value;
       }
@@ -161,14 +161,14 @@ public final class FhirIdentifierUtil {
     final ArrayNode out = ThreadLocalMapper.get().createArrayNode();
     for (final JsonNode item : arr) {
       final ObjectNode normalized = ThreadLocalMapper.get().createObjectNode();
-      String system = item.path("system").asText(null);
+      String system = item.path("system").asString(null);
       if (isTermHubCodeSystem(system) && basis != null) {
         system = basis;
       }
       if (!StringUtility.isEmpty(system)) {
         normalized.put("system", system);
       }
-      final String value = item.path("value").asText(null);
+      final String value = item.path("value").asString(null);
       if (!StringUtility.isEmpty(value)) {
         normalized.put("value", value);
       }
@@ -372,10 +372,10 @@ public final class FhirIdentifierUtil {
   private static Identifier toR4Identifier(final JsonNode item) {
     final Identifier identifier = new Identifier();
     if (!item.path("system").isMissingNode()) {
-      identifier.setSystem(item.path("system").asText());
+      identifier.setSystem(item.path("system").asString());
     }
     if (!item.path("value").isMissingNode()) {
-      identifier.setValue(item.path("value").asText());
+      identifier.setValue(item.path("value").asString());
     }
     return identifier;
   }
@@ -389,10 +389,10 @@ public final class FhirIdentifierUtil {
   private static org.hl7.fhir.r5.model.Identifier toR5Identifier(final JsonNode item) {
     final org.hl7.fhir.r5.model.Identifier identifier = new org.hl7.fhir.r5.model.Identifier();
     if (!item.path("system").isMissingNode()) {
-      identifier.setSystem(item.path("system").asText());
+      identifier.setSystem(item.path("system").asString());
     }
     if (!item.path("value").isMissingNode()) {
-      identifier.setValue(item.path("value").asText());
+      identifier.setValue(item.path("value").asString());
     }
     return identifier;
   }

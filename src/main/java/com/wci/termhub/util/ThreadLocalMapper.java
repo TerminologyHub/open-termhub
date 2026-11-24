@@ -12,11 +12,11 @@ package com.wci.termhub.util;
 import java.util.TimeZone;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+
+import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Supply object mapper per thread.
+ * Shared JSON mapper. {@link JsonMapper} is thread-safe.
  */
 public final class ThreadLocalMapper {
 
@@ -27,23 +27,19 @@ public final class ThreadLocalMapper {
     // n/a
   }
 
-  /** The Constant mapper. */
-  private static final ThreadLocal<ObjectMapper> MAPPER =
-      ThreadLocal.withInitial(ThreadLocalMapper::newMapper);
+  /** The mapper. */
+  private static final JsonMapper MAPPER = newMapper();
 
   /**
    * New mapper.
    *
    * @return the object mapper
    */
-  public static ObjectMapper newMapper() {
-    final ObjectMapper mapper = new ObjectMapper();
-    mapper.setDefaultPropertyInclusion(
-        JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.NON_EMPTY));
-    mapper.findAndRegisterModules().configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,
-        false);
-    mapper.setTimeZone(TimeZone.getDefault());
-    return mapper;
+  public static JsonMapper newMapper() {
+    return JsonMapper.builder().findAndAddModules()
+        .changeDefaultPropertyInclusion(incl -> JsonInclude.Value
+            .construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.NON_EMPTY))
+        .defaultTimeZone(TimeZone.getDefault()).build();
   }
 
   /**
@@ -51,7 +47,7 @@ public final class ThreadLocalMapper {
    *
    * @return the object mapper
    */
-  public static ObjectMapper get() {
-    return MAPPER.get();
+  public static JsonMapper get() {
+    return MAPPER;
   }
 }

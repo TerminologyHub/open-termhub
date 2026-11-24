@@ -57,7 +57,12 @@ public class PropertyUtility {
     StreamSupport.stream(sources.spliterator(), false)
         .filter(ps -> ps instanceof EnumerablePropertySource)
         .map(ps -> ((EnumerablePropertySource) ps).getPropertyNames()).flatMap(Arrays::stream)
-        .distinct().forEach(prop -> properties.setProperty(prop, env.getProperty(prop)));
+        .distinct().forEach(prop -> {
+          final String value = env.getProperty(prop);
+          if (value != null) {
+            properties.setProperty(prop, value);
+          }
+        });
 
     // logger.info("Loaded properties: {}", properties);
   }

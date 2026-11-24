@@ -668,7 +668,6 @@ public class LoincValueSetHelper {
   /**
    * Recursively expands an LL/LG value set to leaf LOINC concepts, then applies
    * filter and pagination.
->>>>>>> develop
    *
    * @param searchService the search service
    * @param terminology LOINC terminology
