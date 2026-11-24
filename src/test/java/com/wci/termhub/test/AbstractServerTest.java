@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.wci.termhub.algo.DefaultProgressListener;
 import com.wci.termhub.lucene.LuceneDataAccess;
 import com.wci.termhub.model.HasId;
@@ -155,7 +155,7 @@ public abstract class AbstractServerTest extends BaseUnitTest {
         // Verify the file is a ConceptMap
         @SuppressWarnings("resource")
         final JsonNode root = ThreadLocalMapper.get().readTree(resource.getInputStream());
-        if (!"ConceptMap".equals(root.path("resourceType").asText())) {
+        if (!"ConceptMap".equals(root.path("resourceType").asString())) {
           throw new IllegalArgumentException("Invalid resource type - expected ConceptMap");
         }
 

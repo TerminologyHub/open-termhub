@@ -283,7 +283,6 @@ public class TermhubOpenApiInterceptorR5 {
           final String redirectUrl =
               theResponse.encodeRedirectURL(FHIRConfig.joinPath(serverBase, "/swagger-ui/"));
           theResponse.sendRedirect(redirectUrl);
-          theResponse.getWriter().close();
           return false;
         }
       }
@@ -309,7 +308,6 @@ public class TermhubOpenApiInterceptorR5 {
         }
         writer.write(response);
       }
-      theResponse.getWriter().close();
       return false;
     }
 
@@ -343,7 +341,6 @@ public class TermhubOpenApiInterceptorR5 {
       try (InputStream resource = ClasspathUtil.loadResourceAsStream(resourceClasspath);
           final ServletOutputStream os = theResponse.getOutputStream()) {
         IOUtils.copy(resource, os);
-        theResponse.getOutputStream().close();
       }
       return true;
     }
@@ -379,7 +376,6 @@ public class TermhubOpenApiInterceptorR5 {
         theResponse.setContentType("application/javascript");
         theResponse.setStatus(HttpServletResponse.SC_OK);
         IOUtils.copy(resource, os);
-        theResponse.getOutputStream().close();
         return true;
       }
 
@@ -387,7 +383,6 @@ public class TermhubOpenApiInterceptorR5 {
         theResponse.setContentType("text/css");
         theResponse.setStatus(HttpServletResponse.SC_OK);
         IOUtils.copy(resource, os);
-        theResponse.getOutputStream().close();
         return true;
       }
 
@@ -395,7 +390,6 @@ public class TermhubOpenApiInterceptorR5 {
         theResponse.setContentType(Constants.CT_HTML);
         theResponse.setStatus(HttpServletResponse.SC_OK);
         IOUtils.copy(resource, os);
-        theResponse.getOutputStream().close();
         return true;
       }
     }

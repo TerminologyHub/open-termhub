@@ -80,7 +80,6 @@ import com.wci.termhub.util.TerminologyUtility;
 import com.wci.termhub.util.ValueSetLoaderUtil;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
-import ca.uhn.fhir.jpa.model.util.JpaConstants;
 import ca.uhn.fhir.model.api.annotation.Description;
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.Delete;
@@ -320,7 +319,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the value set
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_EXPAND, idempotent = true)
+  @Operation(name = "$expand", idempotent = true)
   public ValueSet expandImplicit(final HttpServletRequest request,
     final ServletRequestDetails details,
     // @ResourceParam String rawBody,
@@ -407,7 +406,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the value set
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_EXPAND, idempotent = true)
+  @Operation(name = "$expand", idempotent = true)
   public ValueSet expandInstance(final HttpServletRequest request,
     final ServletRequestDetails details, @IdParam final IdType id,
     @OperationParam(name = "valueSet", min = 0, max = 1) final ValueSet valueSet,
@@ -483,7 +482,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true, typeName = "ValueSet",
+  @Operation(name = "$validate-code", idempotent = true, typeName = "ValueSet",
       returnParameters = {
           @OperationParam(name = "result", min = 1, max = 1, type = BooleanType.class),
           @OperationParam(name = "message", min = 0, max = 1, type = StringType.class),
@@ -554,7 +553,7 @@ public class ValueSetProviderR5 implements IResourceProvider {
    * @return the parameters
    * @throws Exception the exception
    */
-  @Operation(name = JpaConstants.OPERATION_VALIDATE_CODE, idempotent = true, returnParameters = {
+  @Operation(name = "$validate-code", idempotent = true, returnParameters = {
       @OperationParam(name = "result", min = 1, max = 1, type = BooleanType.class),
       @OperationParam(name = "message", min = 0, max = 1, type = StringType.class),
       @OperationParam(name = "display", min = 0, max = 1, type = StringType.class)

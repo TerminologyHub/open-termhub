@@ -27,13 +27,13 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.wci.termhub.model.Concept;
 import com.wci.termhub.model.ResultList;
 import com.wci.termhub.model.SearchParameters;
@@ -108,7 +108,7 @@ public class ThirdPartyFhirR4FilesIntegrationTest
         if (resourceKey != null) {
           loadedResources.add(resourceKey);
         }
-        final String url = node.path("url").asText();
+        final String url = node.path("url").asString();
         assertTrue(url != null && !url.isEmpty());
         final ResponseEntity<String> searchResp = restTemplate
             .exchange(baseUrl + "/ValueSet?url=" + encode(url), HttpMethod.GET, null, String.class);
@@ -163,10 +163,10 @@ public class ThirdPartyFhirR4FilesIntegrationTest
         if (resourceKey != null) {
           loadedResources.add(resourceKey);
         }
-        final String url = node.path("url").asText();
-        final String title = node.path("title").asText();
-        final String publisher = node.path("publisher").asText();
-        final String versionStr = node.path("version").asText();
+        final String url = node.path("url").asString();
+        final String title = node.path("title").asString();
+        final String publisher = node.path("publisher").asString();
+        final String versionStr = node.path("version").asString();
         assertTrue(url != null && !url.isEmpty());
 
         final ResponseEntity<String> searchResp = restTemplate.exchange(
@@ -249,7 +249,7 @@ public class ThirdPartyFhirR4FilesIntegrationTest
         if (resourceKey != null) {
           loadedResources.add(resourceKey);
         }
-        final String url = node.path("url").asText();
+        final String url = node.path("url").asString();
         assertTrue(url != null && !url.isEmpty());
         final ResponseEntity<String> searchResp = restTemplate.exchange(
             baseUrl + "/ConceptMap?url=" + encode(url), HttpMethod.GET, null, String.class);

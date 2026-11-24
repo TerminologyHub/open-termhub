@@ -13,13 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
-import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.util.StringUtils;
@@ -29,10 +22,14 @@ import org.springframework.util.StringUtils;
  * exits, without starting a web server. It is designed to be run as a one-time data loading
  * operation.
  */
-@SpringBootApplication(exclude = {
-    DataSourceAutoConfiguration.class, QuartzAutoConfiguration.class,
-    HibernateJpaAutoConfiguration.class, ThymeleafAutoConfiguration.class,
-    SecurityAutoConfiguration.class, JmxAutoConfiguration.class, MailSenderAutoConfiguration.class
+@SpringBootApplication(excludeName = {
+    "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration",
+    "org.springframework.boot.quartz.autoconfigure.QuartzAutoConfiguration",
+    "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration",
+    "org.springframework.boot.thymeleaf.autoconfigure.ThymeleafAutoConfiguration",
+    "org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration",
+    "org.springframework.boot.jmx.autoconfigure.JmxAutoConfiguration",
+    "org.springframework.boot.mail.autoconfigure.MailSenderAutoConfiguration"
 })
 @ComponentScan(basePackages = "com.wci.termhub")
 

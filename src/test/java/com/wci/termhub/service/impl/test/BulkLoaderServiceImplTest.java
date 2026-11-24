@@ -38,8 +38,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import com.wci.termhub.algo.ProgressListener;
 import com.wci.termhub.fhir.util.FHIRServerResponseException;
 import com.wci.termhub.service.BulkLoaderService;

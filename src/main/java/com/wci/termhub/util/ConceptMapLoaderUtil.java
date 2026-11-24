@@ -25,11 +25,11 @@ import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import com.wci.termhub.algo.MarkLatestRunner;
 import com.wci.termhub.algo.ProgressEvent;
 import com.wci.termhub.algo.ProgressListener;
@@ -161,14 +161,14 @@ public final class ConceptMapLoaderUtil {
       }
 
       // check for existing (require key fields)
-      final String resourceUrl = conceptMap.path("url").asText();
-      String abbreviation = conceptMap.path("title").asText();
+      final String resourceUrl = conceptMap.path("url").asString();
+      String abbreviation = conceptMap.path("title").asString();
       if (StringUtility.isEmpty(abbreviation)) {
         abbreviation = StringUtility.deriveTitleFromUrl(resourceUrl);
       }
 
-      final String publisher = conceptMap.path("publisher").asText();
-      final String version = conceptMap.path("version").asText();
+      final String publisher = conceptMap.path("publisher").asString();
+      final String version = conceptMap.path("version").asString();
       if (abbreviation == null || abbreviation.isEmpty() || publisher == null || publisher.isEmpty()
           || version == null || version.isEmpty()) {
         final List<String> missing = new ArrayList<>();
@@ -199,13 +199,13 @@ public final class ConceptMapLoaderUtil {
       // Get "source" - either "sourceUri", or "sourceScopeUri", or group.source
       final String source;
       if (conceptMap.has("sourceUri")) {
-        source = conceptMap.get("sourceUri").asText();
+        source = conceptMap.get("sourceUri").asString();
       } else if (conceptMap.has("sourceScopeUri")) {
-        source = conceptMap.get("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "")
+        source = conceptMap.get("sourceScopeUri").asString().replaceFirst("\\?fhir_vs$", "")
             .replaceFirst("/vs$", "");
       } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
           && conceptMap.get("group").get(0).has("source")) {
-        source = conceptMap.get("group").get(0).get("source").asText();
+        source = conceptMap.get("group").get(0).get("source").asString();
       } else {
         throw FhirUtilityR4.exception("ConceptMap.source is required", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
@@ -215,13 +215,13 @@ public final class ConceptMapLoaderUtil {
       // Get "source" - either "sourceUri", or "sourceScopeUri", or group.source
       final String target;
       if (conceptMap.has("targetUri")) {
-        target = conceptMap.get("targetUri").asText();
+        target = conceptMap.get("targetUri").asString();
       } else if (conceptMap.has("targetScopeUri")) {
-        target = conceptMap.get("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "")
+        target = conceptMap.get("targetScopeUri").asString().replaceFirst("\\?fhir_vs$", "")
             .replaceFirst("/vs$", "");
       } else if (conceptMap.has("group") && !conceptMap.get("group").isEmpty()
           && conceptMap.get("group").get(0).has("target")) {
-        target = conceptMap.get("group").get(0).get("target").asText();
+        target = conceptMap.get("group").get(0).get("target").asString();
       } else {
         throw FhirUtilityR4.exception("ConceptMap.target is required", IssueType.INVALID,
             HttpServletResponse.SC_BAD_REQUEST);
@@ -238,7 +238,7 @@ public final class ConceptMapLoaderUtil {
 
       int totalCt = conceptMap.get("groupCt").asInt();
 
-      try (final JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+      try (final JsonParser parser = ThreadLocalMapper.get().createParser(file)) {
 
         // You can iterate through the tokens one by one
         while (parser.nextToken() != null) {
@@ -257,8 +257,8 @@ public final class ConceptMapLoaderUtil {
               final JsonNode groupNode = parser.readValueAsTree();
 
               for (final JsonNode elementNode : groupNode.path("element")) {
-                final String sourceCode = elementNode.path("code").asText();
-                final String sourceName = elementNode.path("display").asText();
+                final String sourceCode = elementNode.path("code").asString();
+                final String sourceName = elementNode.path("display").asString();
 
                 // Set source concept
                 final Concept existingFromConcept =
@@ -279,9 +279,9 @@ public final class ConceptMapLoaderUtil {
                 for (final JsonNode targetNode : elementNode.path("target")) {
 
                   final String targetCode =
-                      targetNode.has("code") ? targetNode.get("code").asText() : null;
+                      targetNode.has("code") ? targetNode.get("code").asString() : null;
                   final String targetName = targetNode.has("display")
-                      ? targetNode.get("display").asText() : "Unable to determine name";
+                      ? targetNode.get("display").asString() : "Unable to determine name";
 
                   // Create mapping
                   final Mapping mapping = new Mapping();
@@ -313,17 +313,17 @@ public final class ConceptMapLoaderUtil {
                   mapping.setTo(toConcept);
 
                   if (targetNode.has("equivalence")) {
-                    mapping.setType(targetNode.path("equivalence").asText());
+                    mapping.setType(targetNode.path("equivalence").asString());
                   } else {
-                    mapping.setType(targetNode.path("relationship").asText());
+                    mapping.setType(targetNode.path("relationship").asString());
                   }
 
                   // Set mapping attributes from extensions
                   if (targetNode.has("extension")) {
                     for (final JsonNode extension : targetNode.get("extension")) {
 
-                      final String url = extension.get("url").asText();
-                      final String valueString = extension.get("valueString").asText();
+                      final String url = extension.get("url").asString();
+                      final String valueString = extension.get("valueString").asString();
 
                       if (url.endsWith("concept-map-group")) {
                         mapping.getAttributes().put("group", valueString);
@@ -456,7 +456,7 @@ public final class ConceptMapLoaderUtil {
     throws Exception {
 
     // Validate that this is a CodeSystem resource
-    if (!root.has("resourceType") || !"ConceptMap".equals(root.get("resourceType").asText())) {
+    if (!root.has("resourceType") || !"ConceptMap".equals(root.get("resourceType").asString())) {
       throw FhirUtilityR4.exception("Invalid resource type - expected ConceptMap",
           IssueType.INVALID, HttpServletResponse.SC_EXPECTATION_FAILED);
     }
@@ -467,27 +467,27 @@ public final class ConceptMapLoaderUtil {
     // The HAPI Plan server @Create method blanks the identifier on sending a
     // code system in. Always create a new identifier.
     mapset.setId(UUID.randomUUID().toString());
-    final String originalId = root.path("id").asText();
+    final String originalId = root.path("id").asString();
     if (isNotBlank(originalId)) {
       mapset.getAttributes().put("originalId", originalId);
       idMap.put(originalId, mapset.getId());
     }
     mapset.setActive(true);
-    mapset.setName(root.path("name").asText());
+    mapset.setName(root.path("name").asString());
     mapset.setActive(root.path("active").asBoolean(true));
-    String abbreviation = root.path("title").asText();
+    String abbreviation = root.path("title").asString();
     if (StringUtility.isEmpty(abbreviation)) {
-      abbreviation = StringUtility.deriveTitleFromUrl(root.path("url").asText());
+      abbreviation = StringUtility.deriveTitleFromUrl(root.path("url").asString());
     }
     mapset.setAbbreviation(abbreviation);
-    mapset.setDescription(root.path("description").asText());
-    mapset.setPublisher(root.path("publisher").asText());
-    final String version = root.path("version").asText();
+    mapset.setDescription(root.path("description").asString());
+    mapset.setPublisher(root.path("publisher").asString());
+    final String version = root.path("version").asString();
     mapset.setVersion(version);
     // Use date if available, otherwise fall back to meta.lastUpdated
-    String dateStr = root.path("date").asText();
+    String dateStr = root.path("date").asString();
     if (dateStr == null || dateStr.isEmpty() || dateStr.length() < 10) {
-      dateStr = root.path("meta").path("lastUpdated").asText();
+      dateStr = root.path("meta").path("lastUpdated").asString();
     }
     if (dateStr != null && !dateStr.isEmpty() && dateStr.length() >= 10) {
       mapset.setReleaseDate(dateStr.substring(0, 10));
@@ -500,12 +500,12 @@ public final class ConceptMapLoaderUtil {
 
     String fromTerminology = null;
     if (root.has("sourceScopeUri")) {
-      fromTerminology = root.path("sourceScopeUri").asText().replaceFirst("\\?fhir_vs$", "")
+      fromTerminology = root.path("sourceScopeUri").asString().replaceFirst("\\?fhir_vs$", "")
           .replaceFirst("/vs$", "");
     } else if (root.has("sourceUri")) {
-      fromTerminology = root.path("sourceUri").asText();
+      fromTerminology = root.path("sourceUri").asString();
     } else if (root.has("group") && (root.get("group").isArray())) {
-      fromTerminology = root.path("group").get(0).path("source").asText();
+      fromTerminology = root.path("group").get(0).path("source").asString();
     }
 
     if (fromTerminology == null) {
@@ -515,7 +515,7 @@ public final class ConceptMapLoaderUtil {
 
     final TerminologyRef fromRef = new TerminologyRef();
     fromRef.setUri(fromTerminology);
-    fromRef.setPublisher(root.path("publisher").asText());
+    fromRef.setPublisher(root.path("publisher").asString());
     fromRef.setVersion(version);
     fromRef.setAbbreviation(fromAbbreviation);
 
@@ -529,12 +529,12 @@ public final class ConceptMapLoaderUtil {
 
     String toTerminology = null;
     if (root.has("group") && (root.get("group").isArray())) {
-      toTerminology = root.path("group").get(0).path("target").asText();
+      toTerminology = root.path("group").get(0).path("target").asString();
     } else if (root.has("targetScopeUri")) {
-      toTerminology = root.path("targetScopeUri").asText().replaceFirst("\\?fhir_vs$", "")
+      toTerminology = root.path("targetScopeUri").asString().replaceFirst("\\?fhir_vs$", "")
           .replaceFirst("/vs$", "");
     } else if (root.has("targetUri")) {
-      toTerminology = root.path("targetUri").asText();
+      toTerminology = root.path("targetUri").asString();
     }
 
     if (toTerminology == null) {
@@ -543,7 +543,7 @@ public final class ConceptMapLoaderUtil {
     }
     final TerminologyRef toRef = new TerminologyRef();
     toRef.setUri(toTerminology);
-    toRef.setPublisher(root.path("publisher").asText());
+    toRef.setPublisher(root.path("publisher").asString());
     toRef.setVersion(version);
     toRef.setAbbreviation(toAbbreviation);
 
@@ -578,12 +578,12 @@ public final class ConceptMapLoaderUtil {
     if (root.has("contact") && root.get("contact").isArray()) {
       mapset.getAttributes().put("fhirContact", root.get("contact").toString());
     }
-    if (!root.path("copyright").isMissingNode() && !root.path("copyright").asText().isEmpty()) {
-      mapset.getAttributes().put("copyright", root.path("copyright").asText());
+    if (!root.path("copyright").isMissingNode() && !root.path("copyright").asString().isEmpty()) {
+      mapset.getAttributes().put("copyright", root.path("copyright").asString());
     }
 
     // Store the original URIs in attributes
-    mapset.setUri(root.path("url").asText());
+    mapset.setUri(root.path("url").asString());
 
     // LOGGER.info(" terminology URIs: source={}, target={}",
     // mapset.getFromTerminology(),
@@ -620,7 +620,7 @@ public final class ConceptMapLoaderUtil {
     int groupCt = 0;
 
     // Use try-with-resources to ensure the parser is closed
-    try (JsonParser parser = ThreadLocalMapper.get().getFactory().createParser(file)) {
+    try (JsonParser parser = ThreadLocalMapper.get().createParser(file)) {
 
       // The first token should be the start of the root object: {
       if (parser.nextToken() != JsonToken.START_OBJECT) {

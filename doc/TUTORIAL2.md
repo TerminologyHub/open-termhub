@@ -13,7 +13,7 @@ export SANDBOX_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJodHRwczovL2Fw
 [Tutorial Training Video](https://youtu.be/EhEzIK2p1jE)
 
 ## Prerequisites/Setup
-* Java 17+ or docker
+* Java 25+ or docker
 * This tutorial assumes you have cloned this open-termhub repository.
 
 

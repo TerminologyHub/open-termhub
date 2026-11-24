@@ -62,7 +62,7 @@ import org.hl7.fhir.r4.model.ValueSet.ValueSetExpansionParameterComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.wci.termhub.app.ServerModeUtility;
 import com.wci.termhub.fhir.util.CodeSystemMetadataProperty;
 import com.wci.termhub.fhir.util.CodeSystemMetadataPropertyUtility;
@@ -1578,10 +1578,10 @@ public final class FhirUtilityR4 {
           for (final JsonNode item : arr) {
             final Identifier identifier = new Identifier();
             if (!item.path("system").isMissingNode()) {
-              identifier.setSystem(item.path("system").asText());
+              identifier.setSystem(item.path("system").asString());
             }
             if (!item.path("value").isMissingNode()) {
-              identifier.setValue(item.path("value").asText());
+              identifier.setValue(item.path("value").asString());
             }
             cs.addIdentifier(identifier);
           }
@@ -2059,8 +2059,8 @@ public final class FhirUtilityR4 {
         if (arr.isArray()) {
           for (final JsonNode item : arr) {
             final ContactDetail contact = new ContactDetail();
-            if (!item.path("name").isMissingNode() && !item.path("name").asText().isEmpty()) {
-              contact.setName(item.path("name").asText());
+            if (!item.path("name").isMissingNode() && !item.path("name").asString().isEmpty()) {
+              contact.setName(item.path("name").asString());
             } else if (publisher != null) {
               contact.setName(publisher);
             }
@@ -2070,10 +2070,10 @@ public final class FhirUtilityR4 {
                 final ContactPoint cp = new ContactPoint();
                 if (!tp.path("system").isMissingNode()) {
                   cp.setSystem(
-                      ContactPoint.ContactPointSystem.fromCode(tp.path("system").asText()));
+                      ContactPoint.ContactPointSystem.fromCode(tp.path("system").asString()));
                 }
                 if (!tp.path("value").isMissingNode()) {
-                  cp.setValue(tp.path("value").asText());
+                  cp.setValue(tp.path("value").asString());
                 }
                 contact.addTelecom(cp);
               }

@@ -36,10 +36,14 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
   @SuppressWarnings("unused")
   private static Logger logger = LoggerFactory.getLogger(StaticResourcesConfiguration.class);
 
-  /** The Constant STATIC_RESOURCES. */
+  /**
+   * Angular UI only: root extension handlers plus {@code /assets/**}. Nested
+   * multi-segment extension patterns steal {@code /swagger-ui} from SpringDoc under
+   * Boot 4 PathPattern rules.
+   */
   static final String[] STATIC_RESOURCES = new String[] {
-      "/**/*.css", "/**/*.html", "/**/*.js", "/**/*.json", "/**/*.bmp", "/**/*.jpeg", "/**/*.jpg",
-      "/**/*.png", "/**/*.ttf", "/**/*.eot", "/**/*.svg", "/**/*.woff", "/**/*.woff2"
+    "/*.css", "/*.html", "/*.js", "/*.json", "/*.bmp", "/*.jpeg", "/*.jpg", "/*.png", "/*.ttf",
+    "/*.eot", "/*.svg", "/*.woff", "/*.woff2"
   };
 
   /** The resource properties. */
@@ -49,35 +53,39 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
   /* see superclass */
   @Override
   public void addResourceHandlers(final ResourceHandlerRegistry registry) {
-    // Add all static files
-    // Long cachePeriodLong = resourceProperties.getCache().getPeriod().getSeconds();
     final Long cachePeriodLong = 30L;
     final int cachePeriodInt = cachePeriodLong.intValue();
     final Integer cachePeriod = Integer.valueOf(cachePeriodInt);
 
     registry.addResourceHandler(STATIC_RESOURCES)
         .addResourceLocations(resourceProperties.getStaticLocations()).setCachePeriod(cachePeriod);
-
-    // Create mapping to index.html for Angular HTML5 mode.
+    final String[] assetLocations = Arrays.stream(resourceProperties.getStaticLocations())
+        .map(loc -> (loc.endsWith("/") ? loc : loc + "/") + "assets/")
+        .toArray(String[]::new);
+    registry.addResourceHandler("/assets/**")
+        .addResourceLocations(assetLocations).setCachePeriod(cachePeriod);
     final String[] indexLocations = getIndexLocations();
     registry.addResourceHandler("/**").addResourceLocations(indexLocations)
         .setCachePeriod(cachePeriod).resourceChain(true).addResolver(new PathResourceResolver() {
           @Override
           protected Resource getResource(final String resourcePath, final Resource location)
             throws IOException {
-            return location.exists() && location.isReadable() ? location : null;
+            final Resource index = location.createRelative("index.html");
+            return index.exists() && index.isReadable() ? index : null;
           }
         });
   }
 
   /**
-   * Gets the index locations.
+   * Returns static resource directory locations (trailing slash preserved) used to resolve
+   * {@code index.html} for HTML5-mode fallback.
    *
    * @return the index locations
    */
   private String[] getIndexLocations() {
     return Arrays.stream(resourceProperties.getStaticLocations())
-        .map((location) -> location + "index.html").toArray(String[]::new);
+        .map((location) -> location.endsWith("/") ? location : location + "/")
+        .toArray(String[]::new);
   }
 
   /* see superclass */
@@ -89,14 +97,9 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
   /* see superclass */
   @Override
   public void addViewControllers(final ViewControllerRegistry registry) {
-    // This view controller is the key to solving your problem.
-    // It is a clean way to tell Spring to forward any path that doesn't
-    // match a static resource or an API endpoint to the index.html file.
+    // Extension-less single-segment routes only. Do not use /{path}/** -- it steals
+    // /assets/locale/en.json and similar static files.
     registry.addViewController("/{path:[^\\.]*}").setViewName("forward:/index.html");
-
-    // Add a second view controller to catch any multi-level paths that do not contain a period.
-    registry.addViewController("/{path:[^\\.]*}/**/{path2:[^\\.]*}")
-        .setViewName("forward:/index.html");
   }
 
 }
