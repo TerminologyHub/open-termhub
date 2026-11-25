@@ -154,17 +154,17 @@ The following code block has a number of curl commands that test a few of the FH
 curl -s 'http://localhost:8080/fhir/r4/CodeSystem' | jq
 
 # Perform a SNOMEDCT CodeSystem $lookup for a code
-curl -s 'http://localhost:8080/fhir/r4/CodeSystem/$lookup?system=http://snomed.info/sct&version=http://snomed.info/sct/731000124108/version/20240301&code=73211009' | jq
+curl -s 'http://localhost:8080/fhir/r4/CodeSystem/$lookup?system=http://snomed.info/sct&version=http://snomed.info/sct/731000124108/version/20260901&code=73211009' | jq
 
 # Find ConceptMaps
 curl -s 'http://localhost:8080/fhir/r4/ConceptMap' | jq
 
 # Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
-curl -s 'http://localhost:8080/fhir/r4/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&version=http://snomed.info/sct/731000124108/version/20240301&code=300862005' | jq
+curl -s 'http://localhost:8080/fhir/r4/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&version=http://snomed.info/sct/731000124108/version/20260901&code=300862005' | jq
 
 # Find implied ValueSets for CodeSystem and explicit value set
 curl -s 'http://localhost:8080/fhir/r4/ValueSet' | jq
-curl -s 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs&version=http://snomed.info/sct/731000124108/version/20240301' | jq
+curl -s 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs&version=http://snomed.info/sct/731000124108/version/20260901' | jq
 curl -s 'http://localhost:8080/fhir/r4/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
 
 # Get a value set by id (pick the first one)
@@ -193,17 +193,17 @@ The following code block has a number of curl commands that test a few of the FH
 curl -s 'http://localhost:8080/fhir/r5/CodeSystem' | jq
 
 # Perform a SNOMEDCT CodeSystem $lookup for a code
-curl -s 'http://localhost:8080/fhir/r5/CodeSystem/$lookup?system=http://snomed.info/sct&version=http://snomed.info/sct/731000124108/version/20240301&code=73211009' | jq
+curl -s 'http://localhost:8080/fhir/r5/CodeSystem/$lookup?system=http://snomed.info/sct&version=http://snomed.info/sct/731000124108/version/20260901&code=73211009' | jq
 
 # Find ConceptMaps
 curl -s 'http://localhost:8080/fhir/r5/ConceptMap' | jq
 
 # Perform a ConceptMap $translate to find "target" codes for a SNOMEDCT code
-curl -s 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&version=http://snomed.info/sct/731000124108/version/20240301&sourceCode=300862005' | jq
+curl -s 'http://localhost:8080/fhir/r5/ConceptMap/$translate?url=http://snomed.info/sct?fhir_cm=6011000124106&system=http://snomed.info/sct&version=http://snomed.info/sct/731000124108/version/20260901&sourceCode=300862005' | jq
 
 # Find implied ValueSets for CodeSystems and explicit value sets
 curl -s 'http://localhost:8080/fhir/r5/ValueSet' | jq
-curl -s 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs&version=http://snomed.info/sct/731000124108/version/20240301' | jq
+curl -s 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs&version=http://snomed.info/sct/731000124108/version/20260901' | jq
 curl -s 'http://localhost:8080/fhir/r5/ValueSet?url=http://snomed.info/sct?fhir_vs=731000124108' | jq
 
 # Get a value set by id (pick the first one)

@@ -16,6 +16,10 @@
             "display" : "Is a"
           },
           {
+            "code" : "116688005",
+            "display" : "Procedure approach"
+          },
+          {
             "code" : "1187636009",
             "display" : "Simple map to SNOMED CT"
           },
@@ -26,6 +30,10 @@
           {
             "code" : "1193552004",
             "display" : "Map source to map target correlation not specified"
+          },
+          {
+            "code" : "1217318005",
+            "display" : "Grammatical description error"
           },
           {
             "code" : "123005000",
@@ -40,6 +48,10 @@
             "display" : "Causative agent"
           },
           {
+            "code" : "260507000",
+            "display" : "Access"
+          },
+          {
             "code" : "260686004",
             "display" : "Method"
           },
@@ -52,8 +64,8 @@
             "display" : "Direct device"
           },
           {
-            "code" : "363700003",
-            "display" : "Direct morphology"
+            "code" : "363701004",
+            "display" : "Direct substance"
           },
           {
             "code" : "363702006",
@@ -88,16 +100,20 @@
             "display" : "Procedure device"
           },
           {
-            "code" : "405816004",
-            "display" : "Procedure morphology"
-          },
-          {
             "code" : "410662002",
             "display" : "Concept model attribute"
           },
           {
             "code" : "424226004",
             "display" : "Using device"
+          },
+          {
+            "code" : "424361007",
+            "display" : "Using substance"
+          },
+          {
+            "code" : "424876005",
+            "display" : "Surgical approach"
           },
           {
             "code" : "446608001",
@@ -340,6 +356,10 @@
             "display" : "Concept inactivation value"
           },
           {
+            "code" : "900000000000482003",
+            "display" : "Duplicate"
+          },
+          {
             "code" : "900000000000483008",
             "display" : "Outdated"
           },
@@ -456,6 +476,10 @@
             "display" : "REPLACED BY association reference set"
           },
           {
+            "code" : "900000000000527005",
+            "display" : "SAME AS association reference set"
+          },
+          {
             "code" : "900000000000531004",
             "display" : "REFERS TO concept association reference set"
           },
@@ -521,7 +545,7 @@
           }
         ],
         "system" : "http://snomed.info/sct",
-        "version" : "http://snomed.info/sct/731000124108/version/20240301"
+        "version" : "http://snomed.info/sct/731000124108/version/20260901"
       }
     ]
   },
@@ -535,10 +559,10 @@
       ]
     }
   ],
-  "date" : "2024-03-01T00:00:00-08:00",
+  "date" : "2026-09-01T00:00:00+00:00",
   "description" : "SNOMED CT model component",
   "experimental" : false,
-  "id" : "89625633-c454-4303-9638-f714b57881ba",
+  "id" : "a94d7e72-672c-4073-b2ca-1fdd72e42229",
   "identifier" : [
     {
       "system" : "https://terminologyhub.com/model/subset/code",
@@ -551,5 +575,5 @@
   "status" : "active",
   "title" : "SNOMEDCT_US-MODEL",
   "url" : "http://snomed.info/sct?fhir_vs=900000000000012004-instance",
-  "version" : "20240301"
+  "version" : "20260901"
 }

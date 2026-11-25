@@ -230,9 +230,9 @@ public class SyndicationContentLoaderUnitTest {
    */
   @Test
   public void testLoadContentWithEntriesNoZipLink() throws Exception {
-    final SyndicationFeedEntry entry = SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:icd10cm-2023",
-        "ICD10CM 2023",
-        "SANDBOX", "2023", "ICD10CM", "CodeSystem-icd10cm-sandbox-2023-r5.json");
+    final SyndicationFeedEntry entry = SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:icd10cm-2026",
+        "ICD10CM 2026",
+        "SANDBOX", "2026", "ICD10CM", "CodeSystem-icd10cm-sandbox-2026-r5.json");
     entry.setLinks(null);
 
     assertThrows(NullPointerException.class,
@@ -247,8 +247,8 @@ public class SyndicationContentLoaderUnitTest {
   public void testLoadContentWithSuccessfulProcessing() throws Exception {
     // Given
     final SyndicationFeedEntry entry = SyndicationTestDataHelper.createCodeSystemEntry(
-        "urn:uuid:rxnorm-04012024", "RXNORM 04012024", "SANDBOX", "04012024", "RXNORM",
-        "CodeSystem-rxnorm-sandbox-04012024-r5.json");
+        "urn:uuid:rxnorm-10052026", "RXNORM 10052026", "SANDBOX", "10052026", "RXNORM",
+        "CodeSystem-rxnorm-sandbox-10052026-r5.json");
 
     final List<SyndicationFeedEntry> entries = Arrays.asList(entry);
     final SyndicationFeed feed = new SyndicationFeed();
@@ -294,8 +294,8 @@ public class SyndicationContentLoaderUnitTest {
   public void testLoadContentWithDownloadFailure() throws Exception {
     // Given
     final SyndicationFeedEntry entry = SyndicationTestDataHelper.createCodeSystemEntry(
-        "urn:uuid:snomedct-20240101", "SNOMEDCT 20240101", "SANDBOX", "20240101", "SNOMEDCT",
-        "CodeSystem-snomedct-sandbox-20240101-r5.json");
+        "urn:uuid:snomedct-20260901", "SNOMEDCT 20260901", "SANDBOX", "20260901", "SNOMEDCT",
+        "CodeSystem-snomedct-sandbox-20260901-r5.json");
 
     final List<SyndicationFeedEntry> entries = Arrays.asList(entry);
     final SyndicationFeed feed = new SyndicationFeed();
@@ -323,8 +323,8 @@ public class SyndicationContentLoaderUnitTest {
   public void testLoadContentWithRetry() throws Exception {
     // Given
     final SyndicationFeedEntry entry = SyndicationTestDataHelper.createCodeSystemEntry(
-        "urn:uuid:snomedct-20240101", "SNOMEDCT 20240101", "SANDBOX", "20240101", "SNOMEDCT",
-        "CodeSystem-snomedct-sandbox-20240101-r5.json");
+        "urn:uuid:snomedct-20260901", "SNOMEDCT 20260901", "SANDBOX", "20260901", "SNOMEDCT",
+        "CodeSystem-snomedct-sandbox-20260901-r5.json");
 
     final List<SyndicationFeedEntry> entries = Arrays.asList(entry);
     final SyndicationFeed feed = new SyndicationFeed();
@@ -375,11 +375,11 @@ public class SyndicationContentLoaderUnitTest {
   public void testLoadContentWithDuplicateEntries() throws Exception {
     // Given
     final SyndicationFeedEntry entry1 = SyndicationTestDataHelper.createCodeSystemEntry(
-        "urn:uuid:snomedct-20240101", "SNOMEDCT 20240101", "SANDBOX", "20240101", "SNOMEDCT",
-        "CodeSystem-snomedct-sandbox-20240101-r5.json");
+        "urn:uuid:snomedct-20260901", "SNOMEDCT 20260901", "SANDBOX", "20260901", "SNOMEDCT",
+        "CodeSystem-snomedct-sandbox-20260901-r5.json");
     final SyndicationFeedEntry entry2 = SyndicationTestDataHelper.createCodeSystemEntry(
-        "urn:uuid:snomedct-20240101-dup", "SNOMEDCT 20240101", "SANDBOX", "20240101", "SNOMEDCT",
-        "CodeSystem-snomedct-sandbox-20240101-r5.json");
+        "urn:uuid:snomedct-20260901-dup", "SNOMEDCT 20260901", "SANDBOX", "20260901", "SNOMEDCT",
+        "CodeSystem-snomedct-sandbox-20260901-r5.json");
 
     final List<SyndicationFeedEntry> entries = Arrays.asList(entry1, entry2);
     final SyndicationFeed feed = new SyndicationFeed();
@@ -427,8 +427,8 @@ public class SyndicationContentLoaderUnitTest {
   public void testLoadContentWithAlreadyLoadedEntries() throws Exception {
     // Given
     final SyndicationFeedEntry entry = SyndicationTestDataHelper.createCodeSystemEntry(
-        "urn:uuid:snomedct-20240101", "SNOMEDCT 20240101", "SANDBOX", "20240101", "SNOMEDCT",
-        "CodeSystem-snomedct-sandbox-20240101-r5.json");
+        "urn:uuid:snomedct-20260901", "SNOMEDCT 20260901", "SANDBOX", "20260901", "SNOMEDCT",
+        "CodeSystem-snomedct-sandbox-20260901-r5.json");
 
     final List<SyndicationFeedEntry> entries = Arrays.asList(entry);
     final SyndicationFeed feed = new SyndicationFeed();
@@ -457,14 +457,14 @@ public class SyndicationContentLoaderUnitTest {
   public void testLoadContentWithDifferentContentTypes() throws Exception {
     // Given
     final SyndicationFeedEntry codeSystemEntry = SyndicationTestDataHelper.createCodeSystemEntry(
-        "urn:uuid:icd10cm-2023", "ICD10CM 2023",
-        "SANDBOX", "2023", "ICD10CM", "CodeSystem-icd10cm-sandbox-2023-r5.json");
+        "urn:uuid:icd10cm-2026", "ICD10CM 2026",
+        "SANDBOX", "2026", "ICD10CM", "CodeSystem-icd10cm-sandbox-2026-r5.json");
     final SyndicationFeedEntry valueSetEntry = SyndicationTestDataHelper.createValueSetEntry(
-        "urn:uuid:valueset-old", "HL7 Body Site 20240301", "FHIR Project team", "20240301",
+        "urn:uuid:valueset-old", "HL7 Body Site 20260901", "FHIR Project team", "20260901",
         "HL7 Body Site", "ValueSet-hl7-body-site-r5.json");
     final SyndicationFeedEntry conceptMapEntry = SyndicationTestDataHelper.createConceptMapEntry(
-        "urn:uuid:conceptmap-old", "CPT to HCPCS 20240301", "Example Healthcare Systems",
-        "20240301", "CPT to HCPCS", "ConceptMap-cpt-hcpcs-fake-r5.json");
+        "urn:uuid:conceptmap-old", "CPT to HCPCS 20260901", "Example Healthcare Systems",
+        "20260901", "CPT to HCPCS", "ConceptMap-cpt-hcpcs-fake-r5.json");
 
     final List<SyndicationFeedEntry> entries = Arrays.asList(codeSystemEntry, valueSetEntry, conceptMapEntry);
     final SyndicationFeed feed = new SyndicationFeed();
@@ -512,8 +512,8 @@ public class SyndicationContentLoaderUnitTest {
   public void testLoadContentWithNullFeed() throws Exception {
     // Given
     final SyndicationFeedEntry entry = SyndicationTestDataHelper.createCodeSystemEntry(
-        "urn:uuid:snomedct-20240101", "SNOMEDCT 20240101", "SANDBOX", "20240101", "SNOMEDCT",
-        "CodeSystem-snomedct-sandbox-20240101-r5.json");
+        "urn:uuid:snomedct-20260901", "SNOMEDCT 20260901", "SANDBOX", "20260901", "SNOMEDCT",
+        "CodeSystem-snomedct-sandbox-20260901-r5.json");
 
     final List<SyndicationFeedEntry> entries = Arrays.asList(entry);
     final SyndicationFeed feed = null;
@@ -534,7 +534,7 @@ public class SyndicationContentLoaderUnitTest {
     final Terminology terminology = new Terminology();
     terminology.setAbbreviation("SNOMEDCT");
     terminology.setPublisher("SANDBOX");
-    terminology.setVersion("20240101");
+    terminology.setVersion("20260901");
     terminology.setAttributes(new HashMap<>());
     lenient().when(mockTerminologyList.getItems())
         .thenReturn(Collections.singletonList(terminology));
@@ -572,8 +572,8 @@ public class SyndicationContentLoaderUnitTest {
   public void testLoadContentWithEmptyDownloadResults() throws Exception {
     // Given
     final SyndicationFeedEntry entry = SyndicationTestDataHelper.createCodeSystemEntry(
-        "urn:uuid:snomedct-20240101", "SNOMEDCT 20240101", "SANDBOX", "20240101", "SNOMEDCT",
-        "CodeSystem-snomedct-sandbox-20240101-r5.json");
+        "urn:uuid:snomedct-20260901", "SNOMEDCT 20260901", "SANDBOX", "20260901", "SNOMEDCT",
+        "CodeSystem-snomedct-sandbox-20260901-r5.json");
 
     final List<SyndicationFeedEntry> entries = Arrays.asList(entry);
     final SyndicationFeed feed = new SyndicationFeed();

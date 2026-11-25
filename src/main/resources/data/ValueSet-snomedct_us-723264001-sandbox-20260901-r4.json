@@ -53,7 +53,7 @@
           }
         ],
         "system" : "http://snomed.info/sct",
-        "version" : "http://snomed.info/sct/731000124108/version/20240301"
+        "version" : "http://snomed.info/sct/731000124108/version/20260901"
       }
     ]
   },
@@ -67,10 +67,10 @@
       ]
     }
   ],
-  "date" : "2024-03-01T00:00:00-08:00",
+  "date" : "2026-09-01T00:00:00+00:00",
   "description" : "Lateralizable body structure reference set",
   "experimental" : false,
-  "id" : "be7f258f-7050-4a00-8088-3dfd0ff4906b",
+  "id" : "479a9132-ce5d-4322-8867-eb2178b4e276",
   "identifier" : [
     {
       "system" : "https://terminologyhub.com/model/subset/code",
@@ -83,5 +83,5 @@
   "status" : "active",
   "title" : "SNOMEDCT_US-723264001",
   "url" : "http://snomed.info/sct?fhir_vs=723264001-instance",
-  "version" : "20240301"
+  "version" : "20260901"
 }

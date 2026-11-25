@@ -53,9 +53,10 @@ public class EclNonSnomedTest extends AbstractTerminologyTest {
   public void testLnc() throws Exception {
     String expression = "<LP14855-8";
     List<String> luceneConcepts = handleExpressionWithLucene(expression);
-    assertEquals(4, luceneConcepts.size());
-    assertTrue(
-        luceneConcepts.containsAll(List.of("LP417866-3", "LP417605-5", "LP418774-8", "LP16680-8")));
+    // LP14855-8 (Virus) has 15 descendants in the LOINC 2.83 sandbox
+    assertEquals(15, luceneConcepts.size());
+    assertTrue(luceneConcepts.containsAll(
+        List.of("LP16680-8", "LP17147-7", "LP21025-9", "LP417866-3", "LP418774-8")));
     expression = "* : has_component=LP73603-0";
     luceneConcepts = handleExpressionWithLucene(expression);
 

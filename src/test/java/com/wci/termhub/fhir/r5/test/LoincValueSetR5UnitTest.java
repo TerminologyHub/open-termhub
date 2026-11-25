@@ -22,6 +22,7 @@ import java.util.List;
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeType;
+import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.IdType;
 import org.hl7.fhir.r5.model.IntegerType;
 import org.hl7.fhir.r5.model.Parameters;
@@ -69,11 +70,17 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   private static final String LOINC_CODE_IN_LL = "66480-5";
 
   /** Implicit LOINC value set URL. */
-  private static final String IMPLICIT_VS_URL = "http://loinc.org?fhir_vs";
+  private static final String IMPLICIT_VS_URL = "http://loinc.org/vs";
 
-  /** Spanish display for sandbox LG member 66480-5. */
-  private static final String SPANISH_DISPLAY_66480 =
-      "Historia médica:Hallazgo:Punto temporal:^Paciente:Nom:PhenX";
+  /** LG value set with members in the LOINC 2.83 sandbox (LG50982-4 has none). */
+  private static final String LG_MEMBERS_VS_URL = "http://loinc.org/vs/LG32757-3";
+
+  /** Member of LG32757-3 (Influenza virus). */
+  private static final String LOINC_CODE_IN_LG = "80382-5";
+
+  /** English display of 80382-5; the sandbox has no es-ES designations. */
+  private static final String LG_MEMBER_DISPLAY =
+      "Influenza virus A Ag [Presence] in Upper respiratory specimen by Rapid immunoassay";
 
   /** The provider. */
   @Autowired
@@ -277,7 +284,9 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
    */
   @Test
   public void testExpandLllgWithDesignations() throws Exception {
-    final ValueSet vs = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
+    // LG members are LOINC terms whose FSN/short-name designations differ from the display
+    // (LL answers only carry a DisplayText equal to the display)
+    final ValueSet vs = provider.expandImplicit(request, details, null, new UriType(LG_MEMBERS_VS_URL),
         null, null, null, null, null, new BooleanType(true), null, null, null, null);
     assertNotNull(vs.getExpansion());
     assertNotNull(vs.getVersion(), "Expanded ValueSet should have version");
@@ -312,7 +321,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   }
 
   /**
-   * Test ValueSet read by id for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r4). Requires
+   * Test ValueSet read by id for LOINC LL value set (from CodeSystem-loinc-sandbox-2.83-r4). Requires
    * server.mode=regenstrief.
    *
    * @throws Exception the exception
@@ -415,10 +424,10 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   @Test
   public void testExpandLllgValueSetWithCorrectVersion() throws Exception {
     final ValueSet vs = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
-        new StringType("277"), null, null, null, null, null, null, null, null, null);
-    assertNotNull(vs, "ValueSet should be found for loaded version 277");
+        new StringType("2.83"), null, null, null, null, null, null, null, null, null);
+    assertNotNull(vs, "ValueSet should be found for loaded version 2.83");
     assertNotNull(vs.getExpansion(), "Expansion should be present");
-    assertEquals("277", vs.getVersion(), "Returned ValueSet should have the requested version");
+    assertEquals("2.83", vs.getVersion(), "Returned ValueSet should have the requested version");
   }
 
   /**
@@ -444,13 +453,13 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   public void testFindValueSetsLllgWithCorrectVersion() throws Exception {
     final UriParam url = new UriParam(LL_VS_URL);
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
-        null, null, null, null, null, url, new StringParam("277"), null, null);
+        null, null, null, null, null, url, new StringParam("2.83"), null, null);
     assertNotNull(bundle);
     assertTrue(
         bundle.getEntry().stream()
             .anyMatch(e -> e.getResource() instanceof ValueSet
                 && LL_VS_URL.equals(((ValueSet) e.getResource()).getUrl())),
-        "Bundle should contain LL value set for version 277");
+        "Bundle should contain LL value set for version 2.83");
   }
 
   /**
@@ -527,7 +536,7 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
         null, null);
     assertTrue(bundleHasUrl(byPublisher, LG_VS_URL));
 
-    final StringParam titleExact = new StringParam("LNC-ENTIRE");
+    final StringParam titleExact = new StringParam("LOINC-ENTIRE");
     titleExact.setExact(true);
     final Bundle byTitle = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, null, titleExact, new UriParam(IMPLICIT_VS_URL), null, null, null);
@@ -566,12 +575,12 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
 
     final Bundle byStatusAnd = provider.findValueSets(request, details, null, null, null, null,
         null, null, null, null, new TokenParam("active"), null, new UriParam(LG_VS_URL),
-        new StringParam("277"), null, null);
+        new StringParam("2.83"), null, null);
     assertTrue(bundleHasUrl(byStatusAnd, LG_VS_URL));
 
     final Bundle byStatusMiss = provider.findValueSets(request, details, null, null, null, null,
         null, null, null, null, new TokenParam("draft"), null, new UriParam(LG_VS_URL),
-        new StringParam("277"), null, null);
+        new StringParam("2.83"), null, null);
     assertTrue(byStatusMiss.getEntry() == null || byStatusMiss.getEntry().isEmpty());
   }
 
@@ -592,23 +601,23 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     assertEquals(1, filtered.getExpansion().getContains().size());
     assertEquals("LA10529-8", filtered.getExpansion().getContainsFirstRep().getCode());
 
-    final ValueSet spanish = provider.expandImplicit(request, details, null, new UriType(LG_VS_URL),
-        null, null, null, null, List.of(new CodeType("es-ES")), null, null, null, null, null);
-    assertTrue(spanish.getExpansion().getContains().stream()
-        .anyMatch(c -> LOINC_CODE_IN_LL.equals(c.getCode())
-            && SPANISH_DISPLAY_66480.equals(c.getDisplay())));
+    // No es-ES designations in the sandbox: displayLanguage falls back to the English display
+    final ValueSet spanish = provider.expandImplicit(request, details, null,
+        new UriType(LG_MEMBERS_VS_URL), null, null, null, null, List.of(new CodeType("es-ES")),
+        null, null, null, null, null);
+    assertTrue(spanish.getExpansion().getContains().stream().anyMatch(
+        c -> LOINC_CODE_IN_LG.equals(c.getCode()) && LG_MEMBER_DISPLAY.equals(c.getDisplay())));
 
-    final ValueSet withProp = provider.expandImplicit(request, details, null, new UriType(LG_VS_URL),
-        null, null, null, null, null, null, null, null, null,
+    final ValueSet withProp = provider.expandImplicit(request, details, null,
+        new UriType(LG_MEMBERS_VS_URL), null, null, null, null, null, null, null, null, null,
         List.of(new CodeType("CLASS"), new CodeType("STATUS")));
-    assertTrue(withProp.getExpansion().getContains().stream()
-        .anyMatch(c -> LOINC_CODE_IN_LL.equals(c.getCode())
-            && hasR5ExpandProperty(c, "CLASS", "PHENX")
-            && hasR5ExpandProperty(c, "STATUS", "Active")));
+    assertTrue(withProp.getExpansion().getContains().stream().anyMatch(
+        c -> LOINC_CODE_IN_LG.equals(c.getCode()) && hasR5ExpandProperty(c, "CLASS", "LP7819-8")
+            && hasR5ExpandProperty(c, "STATUS", "ACTIVE")));
 
     final ValueSet paged = provider.expandImplicit(request, details, null, new UriType(LL_VS_URL),
         null, null, new IntegerType(0), new IntegerType(1), null, null, null, null, null, null);
-    assertEquals(2, paged.getExpansion().getTotal());
+    assertEquals(39, paged.getExpansion().getTotal());
     assertEquals(1, paged.getExpansion().getContains().size());
 
     final ValueSet withoutDef = provider.expandImplicit(request, details, null,
@@ -621,11 +630,14 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
     assertTrue(withDef.getCompose().hasInclude());
 
     final ValueSet filterDesignations = provider.expandImplicit(request, details, null,
-        new UriType(LL_VS_URL), new StringType("277"), new StringType("Diabetes"),
+        new UriType(LL_VS_URL), new StringType("2.83"), new StringType("Diabetes"),
         new IntegerType(0), new IntegerType(10), null, new BooleanType(true), null, null, null,
         null);
-    assertEquals("277", filterDesignations.getVersion());
-    assertTrue(filterDesignations.getExpansion().getContainsFirstRep().hasDesignation());
+    assertEquals("2.83", filterDesignations.getVersion());
+    // LA answers only carry a DisplayText designation equal to the display, which the
+    // expansion omits as redundant
+    assertEquals("LA10529-8", filterDesignations.getExpansion().getContainsFirstRep().getCode());
+    assertFalse(filterDesignations.getExpansion().getContainsFirstRep().hasDesignation());
 
     final ValueSet instancePage = provider.expandInstance(request, details, new IdType(LL_VS_ID),
         null, null, null, new StringType("Heart"), new IntegerType(0), new IntegerType(10), null,
@@ -683,9 +695,12 @@ public class LoincValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   private static boolean hasR5ExpandProperty(
     final ValueSet.ValueSetExpansionContainsComponent contains, final String code,
     final String value) {
+    // Coded properties (e.g. CLASS) are matched on the coding's code
     return contains.getProperty().stream().anyMatch(p -> code.equals(p.getCode())
-        && p.getValue() instanceof StringType
-        && value.equals(((StringType) p.getValue()).getValue()));
+        && ((p.getValue() instanceof StringType
+            && value.equals(((StringType) p.getValue()).getValue()))
+            || (p.getValue() instanceof Coding
+                && value.equals(((Coding) p.getValue()).getCode()))));
   }
 
 }

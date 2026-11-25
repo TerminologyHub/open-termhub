@@ -61,7 +61,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
     // List<String> clauseList =
     // Arrays.asList("terminology:SNOMEDCT_US", "publisher:SANDBOX", "version:"
     // +
-    // StringUtility.escapeQuery("http://snomed.info/sct/731000124108/version/20240301"));
+    // StringUtility.escapeQuery("http://snomed.info/sct/731000124108/version/20260901"));
     // SEARCH_PARAMETERS.setQuery(StringUtility.composeQuery("AND",
     // clauseList));
     // LOGGER.info("testLogAllConceptTreePositions 1 Query: {}",
@@ -77,7 +77,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
     // clauseList = Arrays.asList("terminology:SNOMEDCT", "publisher:SANDBOX",
     // "version:"
     // +
-    // StringUtility.escapeQuery("http://snomed.info/sct/900000000000207008/version/20240101"));
+    // StringUtility.escapeQuery("http://snomed.info/sct/900000000000207008/version/20260901"));
     // SEARCH_PARAMETERS.setQuery(StringUtility.composeQuery("AND",
     // clauseList));
     // LOGGER.info("testLogAllConceptTreePositions 2 Query: {}",
@@ -101,7 +101,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
   public void testFindConcept() throws Exception {
 
     final TermQueryComposer termQuery =
-        new TermQueryComposer("SNOMEDCT_US", "20240301", "52988006", null);
+        new TermQueryComposer("SNOMEDCT_US", "20260901", "52988006", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery() + " AND publisher:SANDBOX");
     LOGGER.info("testFindConcept Query: {}", SEARCH_PARAMETERS.getQuery());
     final ResultList<Concept> concepts = searchService.find(SEARCH_PARAMETERS, Concept.class);
@@ -117,7 +117,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
   public void testFindConceptTreePositions() throws Exception {
 
     final TermQueryComposer termQuery =
-        new TermQueryComposer("SNOMEDCT_US", "20240301", null, null);
+        new TermQueryComposer("SNOMEDCT_US", "20260901", null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery() + " AND publisher:SANDBOX");
     LOGGER.info("testFindConceptTreePositions Query: {}", SEARCH_PARAMETERS.getQuery());
     final ResultList<ConceptTreePosition> conceptTreePositions =
@@ -142,7 +142,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
   public void testFindConceptTreePositionsForCode() throws Exception {
 
     final TermQueryComposer termQuery =
-        new TermQueryComposer("SNOMEDCT_US", "20240301", null, null);
+        new TermQueryComposer("SNOMEDCT_US", "20260901", null, null);
     SEARCH_PARAMETERS
         .setQuery(termQuery.getQuery() + " AND publisher:SANDBOX AND concept.code:52988006");
     LOGGER.info("testFindConceptTreePositionsForCode Query: {}", SEARCH_PARAMETERS.getQuery());
@@ -169,7 +169,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
   public void testFindConceptTreePositionsWithEmptyAncestor() throws Exception {
 
     final TermQueryComposer termQuery =
-        new TermQueryComposer("SNOMEDCT_US", "20240301", null, null);
+        new TermQueryComposer("SNOMEDCT_US", "20260901", null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery() + " publisher:SANDBOX AND concept.code:52988006"
         + " AND ancestorPath:\"\"");
     LOGGER.info("testFindConceptTreePositionsWithEmptyAncestor Query: {}",
@@ -184,7 +184,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
       assertEquals(termQuery.getVersion(), ctp.getVersion());
       assertEquals(termQuery.getVersion(), ctp.getVersion());
       assertEquals("SANDBOX", ctp.getPublisher());
-      assertEquals("20240301", ctp.getVersion());
+      assertEquals("20260901", ctp.getVersion());
       assertEquals(null, ctp.getAncestorPath());
     }
 
@@ -200,7 +200,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
 
     final String ancestorPath = "138875005~123037004~118956008~49755003";
     final TermQueryComposer termQuery =
-        new TermQueryComposer("SNOMEDCT_US", "20240301", null, null);
+        new TermQueryComposer("SNOMEDCT_US", "20260901", null, null);
     final String ancestorPathEscaped = StringUtility.escapeQuery(ancestorPath);
     SEARCH_PARAMETERS
         .setQuery(termQuery.getQuery() + " AND publisher:SANDBOX AND concept.code:52988006"
@@ -213,7 +213,7 @@ public class ConceptTreePositionSearchUnitTest extends AbstractTerminologyTest {
     for (final ConceptTreePosition ctp : conceptTreePositions.getItems()) {
       assertEquals("SNOMEDCT_US", ctp.getTerminology());
       assertEquals("SANDBOX", ctp.getPublisher());
-      assertEquals("20240301", ctp.getVersion());
+      assertEquals("20260901", ctp.getVersion());
       assertEquals(ancestorPath, ctp.getAncestorPath());
     }
 

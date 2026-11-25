@@ -92,7 +92,7 @@ import ca.uhn.fhir.parser.IParser;
 /**
  * Class tests for FhirR5Tests. Tests the functionality of the FHIR R5 endpoints, CodeSystem,
  * ValueSet, and ConceptMap. All passed ids MUST be lowercase, so they match our internally set
- * id's. With server.mode=regenstrief, LOINC LL/LG value sets from CodeSystem-lnc-sandbox-277-r5
+ * id's. With server.mode=regenstrief, LOINC LL/LG value sets from CodeSystem-loinc-sandbox-2.83-r5
  * (e.g. LL1772-4) are exposed via ValueSet search by url and read by id.
  */
 @AutoConfigureMockMvc
@@ -126,7 +126,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   /** The fhir VS path. */
   private static final String FHIR_VALUESET = "/fhir/r5/ValueSet";
 
-  /** LL value set id from CodeSystem-lnc-sandbox-277-r5 (ANSWER_LIST_ID). */
+  /** LL value set id from CodeSystem-loinc-sandbox-2.83-r5 (ANSWER_LIST_ID). */
   private static final String LL_VS_ID = "LL1772-4";
 
   /** LL value set url (fhir_vs form). */
@@ -135,8 +135,8 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   /** LOINC sandbox concept with both {@code status} and {@code STATUS} properties. */
   private static final String LOINC_STATUS_TEST_CODE = "LG50982-4";
 
-  /** LOINC sandbox version from CodeSystem-lnc-sandbox-277-r5.json. */
-  private static final String LOINC_SANDBOX_VERSION = "277";
+  /** LOINC sandbox version from CodeSystem-loinc-sandbox-2.83-r5.json. */
+  private static final String LOINC_SANDBOX_VERSION = "2.83";
 
   /** The Constant FIND. */
   private static final int FIND = 10;
@@ -318,7 +318,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     // Verify expected code systems
     // missing rxnorm files
     final Set<String> expectedTitles =
-        new HashSet<>(Set.of("ICD10CM", "LNC", "RXNORM", "SNOMEDCT", "SNOMEDCT_US"));
+        new HashSet<>(Set.of("ICD10CM", "LOINC", "RXNORM", "SNOMEDCT", "SNOMEDCT_US"));
     final Set<String> expectedPublishers = new HashSet<>(Set.of("SANDBOX"));
 
     // Assert code systems
@@ -409,7 +409,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   public void testCodeSystemLookupWithDefinition() throws Exception {
     // Arrange
     final String system =
-        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b");
+        CodeSystemLoaderUtil.mapOriginalId("eaa8651d-0a71-4bbf-8807-ac973b486137");
     final String code = "723277005"; // Concept with definition
     final String lookupParams = "/$lookup?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + system + lookupParams;
@@ -472,7 +472,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Order(FIND)
   public void testCodeSystemById() throws Exception {
     // Arrange
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("3e076cb1-02d2-4894-a1cb-a8ff8b76d3e6");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -494,18 +494,18 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
             + codeSystem.getId());
 
     // Verify specific field values
-    assertEquals("http://snomed.info/sct/731000124108/version/20240301", codeSystem.getVersion());
+    assertEquals("http://snomed.info/sct/731000124108/version/20260901", codeSystem.getVersion());
     assertEquals("Mini version of SNOMEDCT_US For testing purposes", codeSystem.getName());
     assertEquals("SNOMEDCT_US", codeSystem.getTitle());
     assertEquals(PublicationStatus.ACTIVE, codeSystem.getStatus());
     assertFalse(codeSystem.getExperimental());
     // ignore time component of date for assertion
-    assertEquals("2024-03-01", codeSystem.getDate().toInstant().toString().substring(0, 10));
+    assertEquals("2026-09-01", codeSystem.getDate().toInstant().toString().substring(0, 10));
     assertEquals("SANDBOX", codeSystem.getPublisher());
     assertEquals(CodeSystemHierarchyMeaning.ISA, codeSystem.getHierarchyMeaning());
     assertFalse(codeSystem.getCompositional());
     assertEquals("fragment", codeSystem.getContent().toString().toLowerCase());
-    assertEquals(456, codeSystem.getCount());
+    assertEquals(581, codeSystem.getCount());
 
     // Verify CodeSystem properties
     assertFalse(codeSystem.getProperty().isEmpty());
@@ -533,7 +533,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemByAbbreviation() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("3e076cb1-02d2-4894-a1cb-a8ff8b76d3e6");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/SNOMEDCT_US";
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -589,7 +589,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     // Arrange
     final String code = "385487005";
     final String url = "http://snomed.info/sct";
-    final String version = "http://snomed.info/sct/900000000000207008/version/20240101";
+    final String version = "http://snomed.info/sct/900000000000207008/version/20260901";
     final String validateParams =
         "/$validate-code?url=" + url + "&code=" + code + "&version=" + version;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + validateParams;
@@ -629,7 +629,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
     // Verify version parameter
     assertTrue(result.hasParameter("version"), "Should have version parameter");
-    assertEquals("http://snomed.info/sct/900000000000207008/version/20240101",
+    assertEquals("http://snomed.info/sct/900000000000207008/version/20260901",
         result.getParameter("version").getValue().toString(),
         "Version should match expected value");
   }
@@ -643,7 +643,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Order(FIND)
   public void testCodeSystemValidateCodeById() throws Exception {
     // Arrange
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("5cc526e2-c607-417a-87dd-9bbbeef44eaa");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("6a693b00-93e3-44f4-9cf2-757a686daa0f");
     final String code = "E10";
     final String validateParams = "/$validate-code?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + validateParams;
@@ -675,7 +675,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     final String codeA = "73211009";
     final String codeB = "727499001";
     final String system = "http://snomed.info/sct";
-    final String version = "http://snomed.info/sct/731000124108/version/20240301";
+    final String version = "http://snomed.info/sct/731000124108/version/20260901";
     final String subsumesParams = "/$subsumes?codeA=" + codeA + "&codeB=" + codeB + "&system="
         + system + "&version=" + version;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + subsumesParams;
@@ -704,7 +704,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Order(FIND)
   public void testCodeSystemSubsumesById() throws Exception {
     // Arrange
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("eaa8651d-0a71-4bbf-8807-ac973b486137");
     final String codeA = "73211009";
     final String codeB = "727499001";
     final String subsumesParams = "/$subsumes?codeA=" + codeA + "&codeB=" + codeB;
@@ -734,7 +734,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     // Arrange
     final String code = "73211009";
     final String csId = "http://snomed.info/sct";
-    final String version = "http://snomed.info/sct/900000000000207008/version/20240101";
+    final String version = "http://snomed.info/sct/900000000000207008/version/20260901";
     final String lookupParams = "/$lookup?code=" + code + "&system=" + csId + "&version=" + version;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + lookupParams;
     LOGGER.info("endpoint = {}", endpoint);
@@ -818,7 +818,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   public void testCodeSystemLookupById() throws Exception {
     // Arrange
     final String system =
-        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b");
+        CodeSystemLoaderUtil.mapOriginalId("eaa8651d-0a71-4bbf-8807-ac973b486137");
     final String code = "73211009";
     final String lookupParams = "/$lookup?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + system + lookupParams;
@@ -846,7 +846,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
     // Verify version parameter
     assertTrue(result.hasParameter("version"), "Should have version parameter");
-    assertEquals("http://snomed.info/sct/900000000000207008/version/20240101",
+    assertEquals("http://snomed.info/sct/900000000000207008/version/20260901",
         result.getParameter("version").getValue().toString());
 
     // Verify display parameter
@@ -944,7 +944,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   public void testValueSetById() throws Exception {
     // Arrange
     final String vsId =
-        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b") + "_entire";
+        CodeSystemLoaderUtil.mapOriginalId("eaa8651d-0a71-4bbf-8807-ac973b486137") + "_entire";
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId;
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -984,7 +984,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testValueSetBySubsetCode() throws Exception {
-    final String vsId = ValueSetLoaderUtil.mapOriginalId("f317b787-f616-4852-90fc-3cd4367ed482");
+    final String vsId = ValueSetLoaderUtil.mapOriginalId("c834904b-2c85-4a29-ac64-bb7a1aa5d8b8");
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/731000124108";
     LOGGER.info("endpoint = {}", endpoint);
 
@@ -1066,7 +1066,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
         data.getEntry().stream().map(Bundle.BundleEntryComponent::getResource).toList();
 
     // Assert bundle has expected number of entries
-    // plus one for the lnc-sandbox-277-r4 code system (testCodeSystemLookupLoincWithVersion)
+    // plus one for the loinc-sandbox-2.83-r4 code system (testCodeSystemLookupLoincWithVersion)
     final int expectedCount = CODE_SYSTEM_FILES.size() + VALUE_SET_FILES.size() + 1;
     assertEquals(expectedCount, valueSets.size(),
         "Should have " + expectedCount + " ValueSet entries, found " + valueSets.size());
@@ -1109,7 +1109,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   public void testValueSetValidateCode() throws Exception {
     // Arrange
     final String code = "73211009";
-    final String url = "2023?fhir_vs";
+    final String url = "http://snomed.info/sct?fhir_vs";
     final String validateParams = "/$validate-code?url=" + url + "&code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + validateParams;
     LOGGER.info("endpoint = {}", endpoint);
@@ -1142,7 +1142,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   public void testValueSetValidateCodeById() throws Exception {
     // Arrange
     final String vsId =
-        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b") + "_entire";
+        CodeSystemLoaderUtil.mapOriginalId("eaa8651d-0a71-4bbf-8807-ac973b486137") + "_entire";
     final String code = "73211009";
     final String validateParams = "/$validate-code?code=" + code;
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId + validateParams;
@@ -1194,7 +1194,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertNotNull(valueSet.getExpansion(), "Expansion should not be null");
     assertNotNull(valueSet.getExpansion().getId(), "Expansion ID should not be null");
     assertNotNull(valueSet.getExpansion().getTimestamp(), "Expansion timestamp should not be null");
-    assertEquals(816, valueSet.getExpansion().getTotal());
+    assertEquals(871, valueSet.getExpansion().getTotal());
     assertEquals(0, valueSet.getExpansion().getOffset(), "Offset should be 0");
 
     // Verify expansion contains
@@ -1218,7 +1218,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   public void testValueSetExpandById() throws Exception {
     // Arrange
     final String vsId =
-        CodeSystemLoaderUtil.mapOriginalId("3e8e4d7c-7d3a-4682-a1e4-c5db5bc33d4b") + "_entire";
+        CodeSystemLoaderUtil.mapOriginalId("eaa8651d-0a71-4bbf-8807-ac973b486137") + "_entire";
     final int count = 50;
     final String expandParams = "/$expand?count=" + count;
     final String endpoint = LOCALHOST + port + FHIR_VALUESET + "/" + vsId + expandParams;
@@ -1238,7 +1238,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     assertEquals("SNOMEDCT-ENTIRE", valueSet.getTitle(), "Title should match");
     assertEquals("VS Mini version of SNOMEDCT For testing purposes", valueSet.getName(),
         "Name should match");
-    assertEquals("http://snomed.info/sct/900000000000207008/version/20240101",
+    assertEquals("http://snomed.info/sct/900000000000207008/version/20260901",
         valueSet.getVersion(), "Version should match");
     assertEquals(PublicationStatus.ACTIVE, valueSet.getStatus(), "Status should be active");
     assertEquals("SANDBOX", valueSet.getPublisher(), "Publisher should match");
@@ -1250,8 +1250,8 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
     // The total should represent all available concepts, not the count
     // parameter
-    assertEquals(434, valueSet.getExpansion().getTotal(),
-        "Total should be 434 but is " + valueSet.getExpansion().getTotal());
+    assertEquals(483, valueSet.getExpansion().getTotal(),
+        "Total should be 483 but is " + valueSet.getExpansion().getTotal());
     assertEquals(0, valueSet.getExpansion().getOffset(), "Offset should be 0");
 
     // Verify expansion contains - should have at most 'count' items
@@ -1345,7 +1345,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
     params.setQuery("*:*");
     params.setLimit(100);
 
-    // list terminologies to verify the LNC terminology is loaded
+    // list terminologies to verify the LOINC terminology is loaded
     final ResultList<Terminology> terminologies = searchService.find(params, Terminology.class);
     for (final Terminology t : terminologies.getItems()) {
       LOGGER.info("Terminology: {} - {}", t.getName(), t.getVersion());
@@ -1680,7 +1680,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
 
   /**
    * Test CodeSystem $lookup with LOINC code when multiple versions exist. This test loads a fake
-   * version 278 based on version 277, verifies that lookup works correctly with version specified,
+   * version 2.84 based on version 2.83, verifies that lookup works correctly with version specified,
    * then cleans up the fake version.
    *
    * @throws Exception the exception
@@ -1688,39 +1688,39 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemLookupLoincWithVersion() throws Exception {
-    // Load a fake version 278 based on 277
-    final ClassPathResource resource277 =
-        new ClassPathResource("data/CodeSystem-lnc-sandbox-277-r5.json");
-    final String json277 = Files.readString(resource277.getFile().toPath(), StandardCharsets.UTF_8);
+    // Load a fake version 2.84 based on 2.83
+    final ClassPathResource baseResource =
+        new ClassPathResource("data/CodeSystem-loinc-sandbox-2.83-r5.json");
+    final String baseJson = Files.readString(baseResource.getFile().toPath(), StandardCharsets.UTF_8);
 
-    // Replace version 277 with 278
-    final String json278 = json277.replace("\"version\": \"277\"", "\"version\": \"278\"")
-        .replace("\"277\"", "\"278\"").replace("-277-", "-278-");
+    // Replace version 2.83 with 2.84
+    final String fakeJson = baseJson.replace("\"version\": \"2.83\"", "\"version\": \"2.84\"")
+        .replace("\"2.83\"", "\"2.84\"").replace("-2.83-", "-2.84-");
 
     // Create temporary file
-    final File tempFile = File.createTempFile("CodeSystem-lnc-sandbox-278-r5", ".json");
+    final File tempFile = File.createTempFile("CodeSystem-loinc-sandbox-2.84-r5", ".json");
     tempFile.deleteOnExit();
-    Files.write(tempFile.toPath(), json278.getBytes(StandardCharsets.UTF_8));
+    Files.write(tempFile.toPath(), fakeJson.getBytes(StandardCharsets.UTF_8));
 
-    Terminology terminology278 = null;
+    Terminology fakeTerminology = null;
     try {
-      // Load the fake version 278
-      LOGGER.info("Loading fake LOINC version 278 for testing");
+      // Load the fake version 2.84
+      LOGGER.info("Loading fake LOINC version 2.84 for testing");
       CodeSystemLoaderUtil.loadCodeSystem(searchService, tempFile, false, CodeSystem.class,
           new DefaultProgressListener());
 
       // Find the terminology that was just loaded
       final SearchParameters params = new SearchParameters(
-          "terminology:LNC AND version:278 AND publisher:SANDBOX", 0, 1, null, null);
+          "terminology:LOINC AND version:2.84 AND publisher:SANDBOX", 0, 1, null, null);
       final ResultList<Terminology> results = searchService.find(params, Terminology.class);
       if (!results.getItems().isEmpty()) {
-        terminology278 = results.getItems().get(0);
+        fakeTerminology = results.getItems().get(0);
       }
 
-      // Now test lookup with version 278 - should work without "multiple objects" error
+      // Now test lookup with version 2.84 - should work without "multiple objects" error
       final String code = "66480-5";
       final String system = "http://loinc.org";
-      final String version = "278";
+      final String version = "2.84";
       final String lookupParams =
           "/$lookup?code=" + code + "&system=" + system + "&version=" + version;
       final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + lookupParams;
@@ -1742,10 +1742,10 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
       }
 
     } finally {
-      // Clean up: remove the fake version 278
-      if (terminology278 != null) {
-        LOGGER.info("Cleaning up fake LOINC version 278");
-        TerminologyUtility.removeTerminology(searchService, terminology278.getId());
+      // Clean up: remove the fake version 2.84
+      if (fakeTerminology != null) {
+        LOGGER.info("Cleaning up fake LOINC version 2.84");
+        TerminologyUtility.removeTerminology(searchService, fakeTerminology.getId());
       }
       // Delete temp file
       if (tempFile.exists()) {
@@ -1829,7 +1829,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemVreadHistoryVersion1ReturnsOk() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("3e076cb1-02d2-4894-a1cb-a8ff8b76d3e6");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/1";
     LOGGER.info("Testing endpoint: {}", endpoint);
 
@@ -1851,7 +1851,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   @Test
   @Order(FIND)
   public void testCodeSystemVreadHistoryVersionNonExistentReturnsNotFound() throws Exception {
-    final String csId = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
+    final String csId = CodeSystemLoaderUtil.mapOriginalId("3e076cb1-02d2-4894-a1cb-a8ff8b76d3e6");
     final String endpoint = LOCALHOST + port + FHIR_CODESYSTEM + "/" + csId + "/_history/22";
     LOGGER.info("Testing endpoint: {}", endpoint);
 
@@ -2018,7 +2018,7 @@ public class FhirR5RestUnitTest extends AbstractFhirR5ServerTest {
   }
 
   /**
-   * Test ValueSet search by url for LOINC LL value set (from CodeSystem-lnc-sandbox-277-r5).
+   * Test ValueSet search by url for LOINC LL value set (from CodeSystem-loinc-sandbox-2.83-r5).
    * Requires server.mode=regenstrief.
    *
    * @throws Exception the exception

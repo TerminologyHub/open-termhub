@@ -369,13 +369,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{API_URL}}/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes",
+							"raw": "{{API_URL}}/subset/SNOMEDCT_US-CORE/member?query=diabetes",
 							"host": [
 								"{{API_URL}}"
 							],
 							"path": [
 								"subset",
-								"SNOMEDCT_US-EXTENSION",
+								"SNOMEDCT_US-CORE",
 								"member"
 							],
 							"query": [

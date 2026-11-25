@@ -49,10 +49,10 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindConceptIcd10cm() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("ICD10CM", "2023", "C50", null);
+    final TermQueryComposer termQuery = new TermQueryComposer("ICD10CM", "2026", "C50", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Term> terms = searchService.find(SEARCH_PARAMETERS, Term.class);
-    assertEquals(4, terms.getItems().size());
+    assertEquals(5, terms.getItems().size());
     terms.getItems().forEach(term -> {
       assertEquals(termQuery.getCode(), term.getCode());
       assertEquals(termQuery.getTerminology(), term.getTerminology());
@@ -68,7 +68,7 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindConceptLoinc() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("LNC", "277", "LA14283-8", null);
+    final TermQueryComposer termQuery = new TermQueryComposer("LOINC", "2.83", "LA14283-8", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Term> terms = searchService.find(SEARCH_PARAMETERS, Term.class);
     assertEquals(1, terms.getItems().size());
@@ -87,7 +87,7 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindConceptRxNorm() throws Exception {
 
-    final TermQueryComposer termQuery = new TermQueryComposer("RXNORM", "04012024", "899989", null);
+    final TermQueryComposer termQuery = new TermQueryComposer("RXNORM", "10052026", "899989", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Term> terms = searchService.find(SEARCH_PARAMETERS, Term.class);
     assertEquals(5, terms.getItems().size());
@@ -108,7 +108,7 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
   public void testFindConceptSnomedCtUs() throws Exception {
 
     final TermQueryComposer termQuery =
-        new TermQueryComposer("SNOMEDCT_US", "20240301", "384719006", null);
+        new TermQueryComposer("SNOMEDCT_US", "20260901", "384719006", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Term> terms = searchService.find(SEARCH_PARAMETERS, Term.class);
     assertEquals(2, terms.getItems().size());
@@ -129,7 +129,7 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
   public void testFindConceptSnomedCt() throws Exception {
 
     final TermQueryComposer termQuery =
-        new TermQueryComposer("SNOMEDCT", "20240101", "277302009", null);
+        new TermQueryComposer("SNOMEDCT", "20260901", "277302009", null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Term> terms = searchService.find(SEARCH_PARAMETERS, Term.class);
     assertEquals(2, terms.getItems().size());
@@ -151,7 +151,7 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
 
     final String term = "Procedure gastrointestinal tract";
     final String terminology = "SNOMEDCT_US";
-    final String version = "20240301";
+    final String version = "20260901";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, term);
     final SearchParameters sp = new SearchParameters(termQuery.getQuery(), 100, 0);
 
@@ -178,7 +178,7 @@ public class TermSearchUnitTest extends AbstractTerminologyTest {
 
     final String term = "procedure";
     final String terminology = "SNOMEDCT_US";
-    final String version = "20240301";
+    final String version = "20260901";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, term);
 
     final SearchParameters sp = new SearchParameters(termQuery.getQuery(), 10, 0);

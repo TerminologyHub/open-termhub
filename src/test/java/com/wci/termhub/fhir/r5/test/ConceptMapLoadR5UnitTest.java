@@ -39,7 +39,7 @@ public class ConceptMapLoadR5UnitTest {
 
   /** List of FHIR ConceptMap files to load. */
   private static final List<String> CONCEPT_MAP_FILES =
-      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json");
+      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20260901-r5.json");
 
   /**
    * Test reload of concept map.

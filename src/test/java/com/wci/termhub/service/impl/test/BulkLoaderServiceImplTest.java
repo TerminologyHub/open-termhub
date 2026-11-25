@@ -73,7 +73,7 @@ class BulkLoaderServiceImplTest extends AbstractServerTest {
   private EntityRepositoryService searchService;
 
   /** The code system resource. */
-  @Value("classpath:data/CodeSystem-icd10cm-sandbox-2023-r4.json")
+  @Value("classpath:data/CodeSystem-icd10cm-sandbox-2026-r4.json")
   private Resource codeSystemResource;
 
   /** The temp dir. */

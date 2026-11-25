@@ -65,7 +65,7 @@ public class CodeSystemLoaderUtilRegenstriefUnitTest extends AbstractServerTest 
   private static final String LOINC_STATUS_TEST_CODE = "LG50982-4";
 
   /** LOINC sandbox version. */
-  private static final String LOINC_SANDBOX_VERSION = "277";
+  private static final String LOINC_SANDBOX_VERSION = "2.83";
 
   /** The search service. */
   @Autowired
@@ -125,7 +125,7 @@ public class CodeSystemLoaderUtilRegenstriefUnitTest extends AbstractServerTest 
   public void testLoadSuppressesStatusAttributeOnConcept() throws Exception {
     loadLoincSandbox();
 
-    final Concept concept = TerminologyUtility.getConcept(searchService, LoincConstants.LOINC_SYSTEM_ALT,
+    final Concept concept = TerminologyUtility.getConcept(searchService, LoincConstants.LOINC_SYSTEM,
         "SANDBOX", LOINC_SANDBOX_VERSION, LOINC_STATUS_TEST_CODE);
 
     assertNotNull(concept);
@@ -143,7 +143,7 @@ public class CodeSystemLoaderUtilRegenstriefUnitTest extends AbstractServerTest 
   public void testLoadLookupOmitsStatusProperty() throws Exception {
     loadLoincSandbox();
 
-    final Concept concept = TerminologyUtility.getConcept(searchService, LoincConstants.LOINC_SYSTEM_ALT,
+    final Concept concept = TerminologyUtility.getConcept(searchService, LoincConstants.LOINC_SYSTEM,
         "SANDBOX", LOINC_SANDBOX_VERSION, LOINC_STATUS_TEST_CODE);
     assertNotNull(concept);
 
@@ -169,7 +169,7 @@ public class CodeSystemLoaderUtilRegenstriefUnitTest extends AbstractServerTest 
    */
   private void loadLoincSandbox() throws Exception {
     final ClassPathResource sourceResource =
-        new ClassPathResource("data/CodeSystem-lnc-sandbox-277-r4.json");
+        new ClassPathResource("data/CodeSystem-loinc-sandbox-2.83-r4.json");
     CodeSystemLoaderUtil.loadCodeSystem(searchService, sourceResource.getFile(), false,
         CodeSystem.class, new DefaultProgressListener());
   }

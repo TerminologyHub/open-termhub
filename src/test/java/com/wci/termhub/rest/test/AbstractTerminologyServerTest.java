@@ -58,18 +58,19 @@ public abstract class AbstractTerminologyServerTest extends AbstractServerTest {
 
   /** List of FHIR Code System files to load. */
   private static final List<String> CODE_SYSTEM_FILES =
-      List.of("CodeSystem-snomedct_us-sandbox-20240301-r5.json",
-          "CodeSystem-snomedct-sandbox-20240101-r5.json", "CodeSystem-lnc-sandbox-277-r5.json",
-          "CodeSystem-icd10cm-sandbox-2023-r5.json", "CodeSystem-rxnorm-sandbox-04012024-r5.json");
+      List.of("CodeSystem-snomedct_us-sandbox-20260901-r5.json",
+          "CodeSystem-snomedct-sandbox-20260901-r5.json", "CodeSystem-loinc-sandbox-2.83-r5.json",
+          "CodeSystem-icd10cm-sandbox-2026-r5.json", "CodeSystem-rxnorm-sandbox-10052026-r5.json");
 
   /** List of FHIR ConceptMap files to load. */
   private static final List<String> CONCEPT_MAP_FILES =
-      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json",
+      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20260901-r5.json",
           "ConceptMap-cpt-hcpcs-fake-r5.json");
 
   /** The Constant VALUE_SET_FILES. */
   private static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json",
+      List.of("ValueSet-snomedct_us-extension-sandbox-20260901-r5.json",
+          "ValueSet-snomedct_us-core-sandbox-20260901-r5.json",
           "ValueSet-hl7-body-site-r5.json", "ValueSet-personal-hl7-relationship-uv-ips-r5.json");
 
   /** The setup once. */

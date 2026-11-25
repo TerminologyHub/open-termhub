@@ -66,8 +66,8 @@ public class AdHocValueSetR5UnitTest extends AbstractFhirR5ServerTest {
   /** FHIR transaction path (HAPI @Transaction is POST to the FHIR base). */
   private static final String FHIR_TRANSACTION = "/fhir/r5";
 
-  /** LOINC sandbox version from CodeSystem-lnc-sandbox-277-r5.json. */
-  private static final String LOINC_SANDBOX_VERSION = "277";
+  /** LOINC sandbox version from CodeSystem-loinc-sandbox-2.83-r5.json. */
+  private static final String LOINC_SANDBOX_VERSION = "2.83";
 
   /** The port. */
   @LocalServerPort
