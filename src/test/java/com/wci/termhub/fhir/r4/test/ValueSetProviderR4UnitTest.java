@@ -80,7 +80,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
    * List of FHIR Code System files to load.
    */
   private static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r4.json");
+      List.of("ValueSet-snomedct_us-extension-sandbox-20260901-r4.json");
 
   /**
    * The provider.
@@ -216,7 +216,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
    */
   @Test
   public void testFindValueSetByVersion() throws Exception {
-    final StringParam version = new StringParam("20240301");
+    final StringParam version = new StringParam("20260901");
     final Bundle bundle = provider.findValueSets(request, details,
 
         null, // TokenParam id
@@ -237,7 +237,7 @@ public class ValueSetProviderR4UnitTest extends AbstractFhirR4ServerTest {
 
     assertNotNull(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
-        && "20240301".equals(((ValueSet) e.getResource()).getVersion())));
+        && "20260901".equals(((ValueSet) e.getResource()).getVersion())));
   }
 
   /**

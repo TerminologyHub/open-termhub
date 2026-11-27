@@ -52,7 +52,7 @@ public class RemoveDescendantsUnitTest extends AbstractTerminologyTest {
   public void testRemoveDescendants() throws Exception {
     // 1. Find a concept with children in SNOMEDCT_US
     Terminology term =
-        TerminologyUtility.getTerminology(searchService, "SNOMEDCT_US", "SANDBOX", "20240301");
+        TerminologyUtility.getTerminology(searchService, "SNOMEDCT_US", "SANDBOX", "20260901");
     if (term == null) {
       throw new Exception("Could not find terminology SNOMEDCT_US");
     }

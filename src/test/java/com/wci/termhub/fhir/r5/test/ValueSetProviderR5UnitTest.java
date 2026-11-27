@@ -67,7 +67,7 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
 
   /** List of FHIR Code System files to load. */
   private static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r5.json");
+      List.of("ValueSet-snomedct_us-extension-sandbox-20260901-r5.json");
 
   /** The Constant TEST_VALUESET_URL. */
   private static final String TEST_VALUESET_URL = "http://snomed.info/sct?fhir_vs=731000124108-instance";
@@ -140,12 +140,12 @@ public class ValueSetProviderR5UnitTest extends AbstractFhirR5ServerTest {
    */
   @Test
   public void testFindValueSetByVersion() throws Exception {
-    final StringParam version = new StringParam("20240301");
+    final StringParam version = new StringParam("20260901");
     final Bundle bundle = provider.findValueSets(request, details, null, null, null, null, null,
         null, null, null, null, null, null, version, null, null);
     assertNotNull(bundle);
     assertTrue(bundle.getEntry().stream().anyMatch(e -> e.getResource() instanceof ValueSet
-        && "20240301".equals(((ValueSet) e.getResource()).getVersion())));
+        && "20260901".equals(((ValueSet) e.getResource()).getVersion())));
   }
 
   /**

@@ -136,7 +136,7 @@ public class ConceptCodeSystemUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindLoincConcepts() throws Exception {
     final SearchParameters params = new SearchParameters();
-    params.setQuery("terminology: LNC");
+    params.setQuery("terminology: LOINC");
     params.setLimit(10);
 
     final ResultList<Concept> results = searchService.find(params, Concept.class);
@@ -145,7 +145,7 @@ public class ConceptCodeSystemUnitTest extends AbstractTerminologyTest {
     LOGGER.info("Found {} LOINC concepts (limited to 10)", results.getItems().size());
 
     for (final Concept concept : results.getItems()) {
-      assertEquals("LNC", concept.getTerminology());
+      assertEquals("LOINC", concept.getTerminology());
       LOGGER.info("LOINC concept: code={}, name={}", concept.getCode(), concept.getName());
     }
   }

@@ -3118,10 +3118,12 @@ public class TerminologyServiceRestImpl extends RootServiceRestImpl
     throws Exception {
 
     try {
-      // Get project terminologies (that support autocomplete)
+      // Get project terminologies that support autocomplete. Autocomplete is on by default
+      // (current TermHub FHIR exports no longer carry terminology attributes); a terminology
+      // opts out only with an explicit autocomplete=false attribute.
       final List<Terminology> tlist = lookupTerminologies(terminology, false).stream()
-          .filter(
-              t -> t.getAttributes().containsKey(Terminology.Attributes.autocomplete.property()))
+          .filter(t -> !"false".equalsIgnoreCase(
+              t.getAttributes().get(Terminology.Attributes.autocomplete.property())))
           .collect(Collectors.toList());
 
       if (tlist.isEmpty()) {

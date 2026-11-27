@@ -71,7 +71,7 @@ resources.
 ```
 curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
   -H 'Content-Type: multipart/form-data' \
-  -F 'resource=@src/main/resources/data/CodeSystem-snomedct_us-sandbox-20240301-r5.json' | jq
+  -F 'resource=@src/main/resources/data/CodeSystem-snomedct_us-sandbox-20260901-r5.json' | jq
 ```
 
 #### Load Sandbox RXNORM
@@ -79,7 +79,7 @@ curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
 ```
 curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
   -H 'Content-Type: multipart/form-data' \
-  -F 'resource=@src/main/resources/data/CodeSystem-rxnorm-sandbox-04012024-r5.json' | jq
+  -F 'resource=@src/main/resources/data/CodeSystem-rxnorm-sandbox-10052026-r5.json' | jq
 ```
 
 #### Load Sandbox ICD10CM
@@ -87,15 +87,15 @@ curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
 ```
 curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
   -H 'Content-Type: multipart/form-data' \
-  -F 'resource=@src/main/resources/data/CodeSystem-icd10cm-sandbox-2023-r5.json' | jq
+  -F 'resource=@src/main/resources/data/CodeSystem-icd10cm-sandbox-2026-r5.json' | jq
 ```
 
-#### Load Sandbox LNC
+#### Load Sandbox LOINC
 
 ```
 curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
   -H 'Content-Type: multipart/form-data' \
-  -F 'resource=@src/main/resources/data/CodeSystem-lnc-sandbox-277-r5.json' | jq
+  -F 'resource=@src/main/resources/data/CodeSystem-loinc-sandbox-2.83-r5.json' | jq
 ```
 
 #### Load the SNOMEDCT_US to ICD10CM concept maps
@@ -103,7 +103,7 @@ curl -X POST 'http://localhost:8080/fhir/CodeSystem/$load' \
 ```
 curl -X POST 'http://localhost:8080/fhir/ConceptMap/$load' \
   -H 'Content-Type: multipart/form-data' \
-  -F 'resource=@src/main/resources/data/ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r5.json' | jq
+  -F 'resource=@src/main/resources/data/ConceptMap-snomedct_us-icd10cm-sandbox-20260901-r5.json' | jq
 ```
 
 #### Load the SNOMEDCT_US EXTENSION value set
@@ -111,7 +111,15 @@ curl -X POST 'http://localhost:8080/fhir/ConceptMap/$load' \
 ```
 curl -X POST 'http://localhost:8080/fhir/ValueSet/$load' \
   -H 'Content-Type: multipart/form-data' \
-  -F 'resource=@src/main/resources/data/ValueSet-snomedct_us-extension-sandbox-20240301-r5.json' | jq
+  -F 'resource=@src/main/resources/data/ValueSet-snomedct_us-extension-sandbox-20260901-r5.json' | jq
+```
+
+#### Load the SNOMEDCT_US CORE value set
+
+```
+curl -X POST 'http://localhost:8080/fhir/ValueSet/$load' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'resource=@src/main/resources/data/ValueSet-snomedct_us-core-sandbox-20260901-r5.json' | jq
 ```
 
 After running the commands above, the running server should be loaded with the
@@ -179,11 +187,11 @@ curl -s "http://localhost:8080/member" | jq
 curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member" | jq
 
 # Find members in a particular subset for a particular code
-curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes" | jq
-curl -s "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=name:diabetes" | jq
+curl -s "http://localhost:8080/subset/SNOMEDCT_US-CORE/member?query=diabetes" | jq
+curl -s "http://localhost:8080/subset/SNOMEDCT_US-CORE/member?query=name:diabetes" | jq
 
 # Find concepts using an ECL Expression for this subset
-curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&expression=%5E731000124108&include=minimal" | jq
+curl -s "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&expression=%5E900000000000207008&include=minimal" | jq
 
 # Find concept using bulk search
 # NOTE: Must have carriage return between each term and content type must be text/plain
@@ -226,7 +234,7 @@ curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/s
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter
 curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes' | jq
-curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108-instance&filter=diabetes' | jq
+curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=900000000000207008-instance&filter=diabetes' | jq
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
 curl -s 'http://localhost:8080/fhir/r4/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq
@@ -266,7 +274,7 @@ curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/s
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter parameter
 curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs&filter=diabetes' | jq
-curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108-instance&filter=diabetes' | jq
+curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=900000000000207008-instance&filter=diabetes' | jq
 
 # Perform a SNOMEDCT search via a ValueSet $expand with a filter and an ECL expression
 curl -s 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/%3C%3C128927009&filter=gastrointestinal' | jq

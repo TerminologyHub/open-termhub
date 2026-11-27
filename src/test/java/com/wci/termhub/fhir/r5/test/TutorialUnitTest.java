@@ -44,7 +44,7 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
 
   /** The Constant VERSION_PARAMETER. */
   private static final String VERSION_PARAMETER =
-      "&version=http://snomed.info/sct/731000124108/version/20240301";
+      "&version=http://snomed.info/sct/731000124108/version/20260901";
 
   /** The Constant VALUE_SET_VERSION_PARAMETER. */
   private static final String VALUE_SET_VERSION_PARAMETER =
@@ -302,12 +302,12 @@ class TutorialUnitTest extends AbstractFhirR5ServerTest {
    */
   // Test for: curl -s
   // 'http://localhost:8080/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct
-  // ?fhir_vs=731000124108-instance&filter=diabetes' | jq
+  // ?fhir_vs=900000000000207008-instance&filter=diabetes' | jq
   @Test
   @Order(12)
   void testExpandExplicitValueSetWithFilter() {
     final String url =
-        "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=731000124108-instance&filter=diabetes";
+        "/fhir/r5/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=900000000000207008-instance&filter=diabetes";
     final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     final String body = response.getBody();

@@ -39,7 +39,7 @@ public class ConceptMapLoadR4UnitTest extends AbstractFhirR4ServerTest {
 
   /** List of FHIR ConceptMap files to load. */
   private static final List<String> CONCEPT_MAP_FILES =
-      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r4.json");
+      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20260901-r4.json");
 
   /**
    * Test reload of concept map.

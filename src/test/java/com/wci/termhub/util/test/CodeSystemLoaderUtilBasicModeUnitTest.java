@@ -76,12 +76,12 @@ public class CodeSystemLoaderUtilBasicModeUnitTest extends AbstractServerTest {
   @Test
   public void testBasicModePersistsSemanticTypeOnConcept() throws Exception {
     final ClassPathResource sourceResource =
-        new ClassPathResource("data/CodeSystem-lnc-sandbox-277-r4.json");
+        new ClassPathResource("data/CodeSystem-loinc-sandbox-2.83-r4.json");
     CodeSystemLoaderUtil.loadCodeSystem(searchService, sourceResource.getFile(), false,
         CodeSystem.class, new DefaultProgressListener());
 
-    final Concept concept = TerminologyUtility.getConcept(searchService, LoincConstants.LOINC_SYSTEM_ALT,
-        "SANDBOX", "277", LOINC_PART_CODE);
+    final Concept concept = TerminologyUtility.getConcept(searchService, LoincConstants.LOINC_SYSTEM,
+        "SANDBOX", "2.83", LOINC_PART_CODE);
 
     assertNotNull(concept);
     assertTrue(concept.getAttributes().containsKey("semanticType"));
@@ -96,12 +96,12 @@ public class CodeSystemLoaderUtilBasicModeUnitTest extends AbstractServerTest {
   @Test
   public void testBasicModePersistsStatusOnConcept() throws Exception {
     final ClassPathResource sourceResource =
-        new ClassPathResource("data/CodeSystem-lnc-sandbox-277-r4.json");
+        new ClassPathResource("data/CodeSystem-loinc-sandbox-2.83-r4.json");
     CodeSystemLoaderUtil.loadCodeSystem(searchService, sourceResource.getFile(), false,
         CodeSystem.class, new DefaultProgressListener());
 
-    final Concept concept = TerminologyUtility.getConcept(searchService, LoincConstants.LOINC_SYSTEM_ALT,
-        "SANDBOX", "277", "LG50982-4");
+    final Concept concept = TerminologyUtility.getConcept(searchService, LoincConstants.LOINC_SYSTEM,
+        "SANDBOX", "2.83", "LG50982-4");
 
     assertNotNull(concept);
     assertTrue(concept.getAttributes().containsKey("status"));

@@ -83,19 +83,19 @@ public class SyndicationLoadReloadUnitTest extends AbrstractSyndicationTest {
     SyndicationFeed feed = buildInitialFeed();
     processFeed(feed);
 
-    verifyTerminology("ICD10CM", "SANDBOX", "2023", true);
-    verifyTerminology("RXNORM", "SANDBOX", "04012024", true);
-    verifyTerminology("SNOMEDCT", "SANDBOX", "20240101", true);
+    verifyTerminology("ICD10CM", "SANDBOX", "2026", true);
+    verifyTerminology("RXNORM", "SANDBOX", "10052026", true);
+    verifyTerminology("SNOMEDCT", "SANDBOX", "20260901", true);
 
     feed = buildReloadFeed();
     processFeed(feed);
 
-    verifyTerminology("ICD10CM", "SANDBOX", "2023", false);
+    verifyTerminology("ICD10CM", "SANDBOX", "2026", false);
     verifyTerminology("ICD10CM", "SANDBOX", "2024", true);
-    verifyTerminology("RXNORM", "SANDBOX", "04012024", false);
+    verifyTerminology("RXNORM", "SANDBOX", "10052026", false);
     verifyTerminology("RXNORM", "SANDBOX", "07012024", true);
-    verifyTerminology("SNOMEDCT", "SANDBOX", "20240101", false);
-    verifyTerminology("SNOMEDCT_US", "SANDBOX", "20240301", true);
+    verifyTerminology("SNOMEDCT", "SANDBOX", "20260901", false);
+    verifyTerminology("SNOMEDCT_US", "SANDBOX", "20260901", true);
   }
 
   /**
@@ -106,16 +106,16 @@ public class SyndicationLoadReloadUnitTest extends AbrstractSyndicationTest {
   private SyndicationFeed buildInitialFeed() {
     final SyndicationFeed feed = new SyndicationFeed();
     feed.setEntries(new ArrayList<>());
-    feed.getEntries().add(SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:icd10cm-2023",
-        "ICD10CM 2023", "SANDBOX", "2023", "ICD10CM", "CodeSystem-icd10cm-sandbox-2023-r5.json"));
+    feed.getEntries().add(SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:icd10cm-2026",
+        "ICD10CM 2026", "SANDBOX", "2026", "ICD10CM", "CodeSystem-icd10cm-sandbox-2026-r5.json"));
     feed.getEntries()
-        .add(SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:rxnorm-04012024",
-            "RXNORM 04012024", "SANDBOX", "04012024", "RXNORM",
-            "CodeSystem-rxnorm-sandbox-04012024-r5.json"));
+        .add(SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:rxnorm-10052026",
+            "RXNORM 10052026", "SANDBOX", "10052026", "RXNORM",
+            "CodeSystem-rxnorm-sandbox-10052026-r5.json"));
     feed.getEntries()
-        .add(SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:snomedct-20240101",
-            "SNOMEDCT 20240101", "SANDBOX", "20240101", "SNOMEDCT",
-            "CodeSystem-snomedct-sandbox-20240101-r5.json"));
+        .add(SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:snomedct-20260901",
+            "SNOMEDCT 20260901", "SANDBOX", "20260901", "SNOMEDCT",
+            "CodeSystem-snomedct-sandbox-20260901-r5.json"));
     return feed;
   }
 
@@ -132,17 +132,17 @@ public class SyndicationLoadReloadUnitTest extends AbrstractSyndicationTest {
             "ICD10CM 2024", "SANDBOX", "2024", "ICD10CM",
             // Use existing classpath file; version will be normalized to 2024
             // by mock
-            "CodeSystem-icd10cm-sandbox-2023-r5.json"));
+            "CodeSystem-icd10cm-sandbox-2026-r5.json"));
     feed.getEntries()
         .add(SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:rxnorm-07012024",
             "RXNORM 07012024", "SANDBOX", "07012024", "RXNORM",
             // Use existing classpath file; version will be normalized to
             // 07012024 by mock
-            "CodeSystem-rxnorm-sandbox-04012024-r5.json"));
+            "CodeSystem-rxnorm-sandbox-10052026-r5.json"));
     feed.getEntries()
-        .add(SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:snomedctus-20240301",
-            "SNOMEDCT_US 20240301", "SANDBOX", "20240301", "SNOMEDCT_US",
-            "CodeSystem-snomedct_us-sandbox-20240301-r5.json"));
+        .add(SyndicationTestDataHelper.createCodeSystemEntry("urn:uuid:snomedctus-20260901",
+            "SNOMEDCT_US 20260901", "SANDBOX", "20260901", "SNOMEDCT_US",
+            "CodeSystem-snomedct_us-sandbox-20260901-r5.json"));
     return feed;
   }
 

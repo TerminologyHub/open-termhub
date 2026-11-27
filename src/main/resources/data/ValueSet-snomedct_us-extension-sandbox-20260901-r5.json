@@ -12,16 +12,12 @@
             "display" : "ICD-10-CM complex map reference set"
           },
           {
-            "code" : "721111000124107",
-            "display" : "Diabetes mellitus type 1 stage 1"
-          },
-          {
             "code" : "731000124108",
             "display" : "US National Library of Medicine maintained module"
           }
         ],
         "system" : "http://snomed.info/sct",
-        "version" : "http://snomed.info/sct/731000124108/version/20240301"
+        "version" : "http://snomed.info/sct/731000124108/version/20260901"
       }
     ]
   },
@@ -35,10 +31,10 @@
       ]
     }
   ],
-  "date" : "2024-03-01T00:00:00-08:00",
+  "date" : "2026-09-01T00:00:00+00:00",
   "description" : "US National Library of Medicine maintained module",
   "experimental" : false,
-  "id" : "f317b787-f616-4852-90fc-3cd4367ed482",
+  "id" : "c834904b-2c85-4a29-ac64-bb7a1aa5d8b8",
   "identifier" : [
     {
       "system" : "https://terminologyhub.com/model/subset/code",
@@ -51,5 +47,5 @@
   "status" : "active",
   "title" : "SNOMEDCT_US-EXTENSION",
   "url" : "http://snomed.info/sct?fhir_vs=731000124108-instance",
-  "version" : "20240301"
+  "version" : "20260901"
 }

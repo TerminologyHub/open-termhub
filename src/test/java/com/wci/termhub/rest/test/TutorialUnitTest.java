@@ -110,7 +110,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
     final String body = response.getBody();
     assertThat(body).isNotNull();
     assertThat((String) JsonPath.read(body, "$.terminology")).isEqualTo("SNOMEDCT_US");
-    assertThat((String) JsonPath.read(body, "$.version")).isEqualTo("20240301");
+    assertThat((String) JsonPath.read(body, "$.version")).isEqualTo("20260901");
     assertThat((String) JsonPath.read(body, "$.code")).isEqualTo("107907001");
     tutorialResources.remove(resource);
   }
@@ -338,14 +338,14 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   }
 
   // Test for: curl -s
-  // "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes"
+  // "http://localhost:8080/subset/SNOMEDCT_US-CORE/member?query=diabetes"
   /**
    * Test find subset members by query.
    */
   // | jq
   @Test
   void testFindSubsetMembersByQuery() {
-    final String url = "/subset/SNOMEDCT_US-EXTENSION/member?query=diabetes";
+    final String url = "/subset/SNOMEDCT_US-CORE/member?query=diabetes";
     final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     final String body = response.getBody();
@@ -355,14 +355,14 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   }
 
   // Test for: curl -s
-  // "http://localhost:8080/subset/SNOMEDCT_US-EXTENSION/member?query=name:diabetes"
+  // "http://localhost:8080/subset/SNOMEDCT_US-CORE/member?query=name:diabetes"
   /**
    * Test find subset members by name query.
    */
   // | jq
   @Test
   void testFindSubsetMembersByNameQuery() {
-    final String url = "/subset/SNOMEDCT_US-EXTENSION/member?query=name:diabetes";
+    final String url = "/subset/SNOMEDCT_US-CORE/member?query=name:diabetes";
     final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     final String body = response.getBody();
@@ -372,7 +372,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   }
 
   // Test for: curl -s
-  // "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&expression=%5E731000124108&include=minimal"
+  // "http://localhost:8080/concept?terminology=SNOMEDCT_US&query=diabetes&expression=%5E900000000000207008&include=minimal"
   /**
    * Test find concepts in subset by ecl.
    */
@@ -380,7 +380,7 @@ public class TutorialUnitTest extends AbstractTerminologyServerTest {
   @Test
   void testFindConceptsInSubsetByEcl() {
     final String url =
-        "/concept?terminology=SNOMEDCT_US&query=diabetes&expression=^731000124108&include=minimal";
+        "/concept?terminology=SNOMEDCT_US&query=diabetes&expression=^900000000000207008&include=minimal";
     final ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     final String body = response.getBody();

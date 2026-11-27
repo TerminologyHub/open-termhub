@@ -116,7 +116,7 @@ public class ConceptRelationshipCodeSystemUnitTest extends AbstractTerminologyTe
     for (final ConceptRelationship rel : results.getItems()) {
       assertEquals(conceptCode, rel.getFrom().getCode());
       assertEquals("SNOMEDCT_US", rel.getTerminology());
-      assertEquals("20240301", rel.getVersion());
+      assertEquals("20260901", rel.getVersion());
       assertEquals("SANDBOX", rel.getPublisher());
 
       LOGGER.info("Relationship: type={}, from={}, to={}, additionalType={}", rel.getType(),

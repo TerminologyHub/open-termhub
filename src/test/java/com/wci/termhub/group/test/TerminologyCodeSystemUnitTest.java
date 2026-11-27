@@ -106,13 +106,13 @@ public class TerminologyCodeSystemUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindTerminologyByVersion() throws Exception {
     final SearchParameters params = new SearchParameters();
-    params.setQuery("version:" + StringUtility.escapeQuery("20240301"));
+    params.setQuery("version:" + StringUtility.escapeQuery("20260901"));
 
     final ResultList<Terminology> results = searchService.find(params, Terminology.class);
 
     assertFalse(results.getItems().isEmpty(), "Should find at least one terminology");
     for (final Terminology term : results.getItems()) {
-      assertTrue(term.getVersion().contains("20240301"));
+      assertTrue(term.getVersion().contains("20260901"));
     }
   }
 

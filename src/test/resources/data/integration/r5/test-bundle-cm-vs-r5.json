@@ -13,7 +13,7 @@
           }
         ],
         "url": "http://snomed.info/sct?fhir_cm=6011000124106",
-        "version": "20240301",
+        "version": "20260901",
         "title": "SNOMEDCT_US-ICD10CM",
         "status": "active",
         "date": "2024-03-01T00:00:00+00:00",
@@ -94,7 +94,7 @@
         "resourceType": "ValueSet",
         "id": "dd01be90-f9dd-4531-abb4-810f2090ba17",
         "url": "http://snomed.info/sct?fhir_vs=731000124108",
-        "version": "20240301",
+        "version": "20260901",
         "title": "SNOMEDCT_US-EXTENSION",
         "status": "active",
         "date": "2024-03-01T00:00:00+00:00",

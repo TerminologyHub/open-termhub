@@ -57,7 +57,7 @@ public class ConceptMapProviderR5UnitTest extends AbstractFhirR5ServerTest {
   private ServletRequestDetails details;
 
   /** The Constant VERSION. */
-  private static final String VERSION = "20240301";
+  private static final String VERSION = "20260901";
 
   /** The Constant TEST_MAP_URL. */
   private static final String TEST_MAP_URL = "http://snomed.info/sct";

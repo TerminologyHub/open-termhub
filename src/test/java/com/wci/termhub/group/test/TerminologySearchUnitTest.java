@@ -66,7 +66,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("ICD10CM", terminology.getAbbreviation());
     assertEquals("Mini version of ICD10CM for testing purposes", terminology.getName());
-    assertEquals("2023", terminology.getVersion());
+    assertEquals("2026", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 
@@ -78,14 +78,14 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindTerminologyLnc() throws Exception {
 
-    SEARCH_PARAMETERS.setQuery("abbreviation: LNC");
+    SEARCH_PARAMETERS.setQuery("abbreviation: LOINC");
     final ResultList<Terminology> terminologies =
         searchService.find(SEARCH_PARAMETERS, Terminology.class);
     assertEquals(1, terminologies.getItems().size());
     final Terminology terminology = terminologies.getItems().get(0);
-    assertEquals("LNC", terminology.getAbbreviation());
+    assertEquals("LOINC", terminology.getAbbreviation());
     assertEquals("Mini version of LOINC for testing purposes", terminology.getName());
-    assertEquals("277", terminology.getVersion());
+    assertEquals("2.83", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 
@@ -104,7 +104,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("RXNORM", terminology.getAbbreviation());
     assertEquals("Mini version of RXNORM for testing purposes", terminology.getName());
-    assertEquals("04012024", terminology.getVersion());
+    assertEquals("10052026", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 
@@ -123,7 +123,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("SNOMEDCT_US", terminology.getAbbreviation());
     assertEquals("Mini version of SNOMEDCT_US For testing purposes", terminology.getName());
-    assertEquals("20240301", terminology.getVersion());
+    assertEquals("20260901", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 
@@ -142,7 +142,7 @@ public class TerminologySearchUnitTest extends AbstractTerminologyTest {
     final Terminology terminology = terminologies.getItems().get(0);
     assertEquals("SNOMEDCT", terminology.getAbbreviation());
     assertEquals("Mini version of SNOMEDCT For testing purposes", terminology.getName());
-    assertEquals("20240101", terminology.getVersion());
+    assertEquals("20260901", terminology.getVersion());
     assertEquals("SANDBOX", terminology.getPublisher());
   }
 

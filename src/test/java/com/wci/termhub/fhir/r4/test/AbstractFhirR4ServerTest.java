@@ -60,18 +60,19 @@ public abstract class AbstractFhirR4ServerTest extends AbstractServerTest {
 
   /** List of FHIR Code System files to load. */
   protected static final List<String> CODE_SYSTEM_FILES =
-      List.of("CodeSystem-snomedct_us-sandbox-20240301-r4.json",
-          "CodeSystem-snomedct-sandbox-20240101-r4.json", "CodeSystem-lnc-sandbox-277-r4.json",
-          "CodeSystem-icd10cm-sandbox-2023-r4.json", "CodeSystem-rxnorm-sandbox-04012024-r4.json");
+      List.of("CodeSystem-snomedct_us-sandbox-20260901-r4.json",
+          "CodeSystem-snomedct-sandbox-20260901-r4.json", "CodeSystem-loinc-sandbox-2.83-r4.json",
+          "CodeSystem-icd10cm-sandbox-2026-r4.json", "CodeSystem-rxnorm-sandbox-10052026-r4.json");
 
   /** List of FHIR ConceptMap files to load. */
   protected static final List<String> CONCEPT_MAP_FILES =
-      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r4.json");
+      List.of("ConceptMap-snomedct_us-icd10cm-sandbox-20260901-r4.json");
 
   /** List of FHIR Code System files to load. */
   protected static final List<String> VALUE_SET_FILES =
-      List.of("ValueSet-snomedct_us-extension-sandbox-20240301-r4.json",
-          "ValueSet-snomedct_us-723264001-sandbox-20240301-r4.json",
+      List.of("ValueSet-snomedct_us-extension-sandbox-20260901-r4.json",
+          "ValueSet-snomedct_us-core-sandbox-20260901-r4.json",
+          "ValueSet-snomedct_us-723264001-sandbox-20260901-r4.json",
           "ValueSet-combined-test-20240301-r4.json");
 
   /** The setup once. */

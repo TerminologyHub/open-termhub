@@ -1,13 +1,114 @@
 {
-  "date" : "2024-03-01T00:00:00-08:00",
+  "date" : "2026-09-01T00:00:00+00:00",
   "experimental" : false,
   "group" : [
     {
       "element" : [
         {
+          "code" : "76712006",
+          "display" : "Disorder of digestive organ",
+          "target" : [
+            {
+              "code" : "P78.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 445518008 | Age at onset of clinical finding (observable entity) | < 29.0 days"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            },
+            {
+              "code" : "K92.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "OTHERWISE TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "2"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "code" : "840539006",
           "display" : "COVID-19",
           "target" : [
+            {
+              "code" : "U07.1",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 138389411000119105 | Acute bronchitis caused by SARS-CoV-2 |"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "7"
+                }
+              ]
+            },
+            {
+              "code" : "U07.1",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 119751000146104 | Fever caused by SARS-CoV-2 |"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            },
+            {
+              "code" : "U07.1",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "OTHERWISE TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "9"
+                }
+              ]
+            },
             {
               "code" : "U07.1",
               "display" : "Unable to determine name",
@@ -28,89 +129,13 @@
               ]
             },
             {
-              "code" : "J20.8",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "2"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 138389411000119105 | Acute bronchitis caused by SARS-CoV-2 |"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "8"
-                }
-              ]
-            },
-            {
-              "code" : "T88.0",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "2"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 1217296006 | SARS-CoV-2 breakthrough infection |"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "4"
-                }
-              ]
-            },
-            {
               "code" : "U07.1",
               "display" : "Unable to determine name",
               "equivalence" : "relatedto",
               "extension" : [
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "2"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 894362851000119109 | Disease caused by severe acute respiratory syndrome coronavirus 2 during pregnancy |"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "7"
-                }
-              ]
-            },
-            {
-              "code" : "O98.519",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
                   "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 894362851000119109 | Disease caused by severe acute respiratory syndrome coronavirus 2 during pregnancy |"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "6"
-                }
-              ]
-            },
-            {
-              "code" : "J12.82",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "2"
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
@@ -118,26 +143,7 @@
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "9"
-                }
-              ]
-            },
-            {
-              "code" : "U07.1",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 1217296006 | SARS-CoV-2 breakthrough infection |"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "3"
+                  "valueString" : "8"
                 }
               ]
             },
@@ -161,21 +167,59 @@
               ]
             },
             {
-              "code" : "U07.1",
+              "code" : "T88.0",
               "display" : "Unable to determine name",
               "equivalence" : "relatedto",
               "extension" : [
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
+                  "valueString" : "2"
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 880529761000119102 | Infection of lower respiratory tract caused by SARS-CoV-2 |"
+                  "valueString" : "IFA 1217296006 | SARS-CoV-2 breakthrough infection |"
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "5"
+                  "valueString" : "4"
+                }
+              ]
+            },
+            {
+              "code" : "J12.82",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "2"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 882784691000119100 | Pneumonia caused by SARS-CoV-2 |"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "9"
+                }
+              ]
+            },
+            {
+              "code" : "P28.89",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "2"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 119981000146107 | Dyspnea caused by SARS-CoV-2 | AND IFA 445518008 | Age at onset of clinical finding (observable entity) | < 29.0 days"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "2"
                 }
               ]
             },
@@ -186,11 +230,11 @@
               "extension" : [
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
+                  "valueString" : "2"
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 138389411000119105 | Acute bronchitis caused by SARS-CoV-2 |"
+                  "valueString" : "IFA 894362851000119109 | Disease caused by severe acute respiratory syndrome coronavirus 2 during pregnancy |"
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
@@ -237,7 +281,7 @@
               ]
             },
             {
-              "code" : "U07.1",
+              "code" : "O98.519",
               "display" : "Unable to determine name",
               "equivalence" : "relatedto",
               "extension" : [
@@ -247,49 +291,11 @@
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "OTHERWISE TRUE"
+                  "valueString" : "IFA 894362851000119109 | Disease caused by severe acute respiratory syndrome coronavirus 2 during pregnancy |"
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "9"
-                }
-              ]
-            },
-            {
-              "code" : "P28.89",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "2"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 119981000146107 | Dyspnea caused by SARS-CoV-2 | AND IFA 445518008 | Age at onset of clinical finding (observable entity) | < 29.0 days"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "2"
-                }
-              ]
-            },
-            {
-              "code" : "J06.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "2"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 1240541000000107 | Infection of upper respiratory tract caused by SARS-CoV-2 |"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "5"
+                  "valueString" : "6"
                 }
               ]
             },
@@ -323,7 +329,26 @@
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 882784691000119100 | Pneumonia caused by SARS-CoV-2 |"
+                  "valueString" : "IFA 880529761000119102 | Infection of lower respiratory tract caused by SARS-CoV-2 |"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "5"
+                }
+              ]
+            },
+            {
+              "code" : "J20.8",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "2"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 138389411000119105 | Acute bronchitis caused by SARS-CoV-2 |"
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
@@ -342,11 +367,30 @@
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 119751000146104 | Fever caused by SARS-CoV-2 |"
+                  "valueString" : "IFA 1217296006 | SARS-CoV-2 breakthrough infection |"
                 },
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
+                  "valueString" : "3"
+                }
+              ]
+            },
+            {
+              "code" : "J06.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "2"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 1240541000000107 | Infection of upper respiratory tract caused by SARS-CoV-2 |"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "5"
                 }
               ]
             },
@@ -365,6 +409,241 @@
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
                   "valueString" : "10"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "609623002",
+          "display" : "Finding of upper trunk",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "249561001",
+          "display" : "Abdominal organ finding",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "309524007",
+          "display" : "Mass of trunk",
+          "target" : [
+            {
+              "code" : "R22.2",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "300357002",
+          "display" : "Finding of pancreas",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "186747009",
+          "display" : "Coronavirus infection",
+          "target" : [
+            {
+              "code" : "B34.2",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "73211009",
+          "display" : "Diabetes mellitus",
+          "target" : [
+            {
+              "code" : "E10.9",
+              "display" : "Type 1 diabetes mellitus without complications",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 445518008 | Age at onset of clinical finding (observable entity) | >= 1.0 year AND IFA 445518008 | Age at onset of clinical finding (observable entity) | < 18.0 years"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            },
+            {
+              "code" : "E11.9",
+              "display" : "Type 2 diabetes mellitus without complications",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "OTHERWISE TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "237822008",
+          "display" : "Autoimmune endocrine disease",
+          "target" : [
+            {
+              "code" : "E34.8",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "53619000",
+          "display" : "Disorder of digestive system",
+          "target" : [
+            {
+              "code" : "P78.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 445518008 | Age at onset of clinical finding (observable entity) | < 29.0 days"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            },
+            {
+              "code" : "K92.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "OTHERWISE TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "2"
                 }
               ]
             }
@@ -396,11 +675,104 @@
           ]
         },
         {
-          "code" : "126637008",
-          "display" : "Neoplasm of trunk",
+          "code" : "1290118005",
+          "display" : "Presymptomatic type 1 diabetes mellitus",
           "target" : [
             {
-              "code" : "D49.89",
+              "code" : "E10.9",
+              "display" : "Type 1 diabetes mellitus without complications",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "75934005",
+          "display" : "Metabolic disease",
+          "target" : [
+            {
+              "code" : "E88.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "OTHERWISE TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "2"
+                }
+              ]
+            },
+            {
+              "code" : "P74.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 445518008 | Age at onset of clinical finding (observable entity) | < 29.0 days"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "118228005",
+          "display" : "Functional finding",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "34014006",
+          "display" : "Viral disease",
+          "target" : [
+            {
+              "code" : "B34.9",
               "display" : "Unable to determine name",
               "equivalence" : "relatedto",
               "extension" : [
@@ -421,11 +793,444 @@
           ]
         },
         {
-          "code" : "20957000",
-          "display" : "Disorder of carbohydrate metabolism",
+          "code" : "300862005",
+          "display" : "Mass of body region",
           "target" : [
             {
-              "code" : "E74.9",
+              "code" : "R22.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "362969004",
+          "display" : "Disorder of endocrine system",
+          "target" : [
+            {
+              "code" : "E34.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "OTHERWISE TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "2"
+                }
+              ]
+            },
+            {
+              "code" : "P72.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "IFA 445518008 | Age at onset of clinical finding (observable entity) | < 29.0 days"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "126926005",
+          "display" : "Neoplasm of breast",
+          "target" : [
+            {
+              "code" : "D49.3",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "406123005",
+          "display" : "Viscus structure finding",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "300848003",
+          "display" : "Mass of body structure",
+          "target" : [
+            {
+              "code" : "R22.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "64572001",
+          "display" : "Disease",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "609624008",
+          "display" : "Finding of abdomen",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "399981008",
+          "display" : "Neoplasm and/or hamartoma",
+          "target" : [
+            {
+              "code" : "Q85.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "2"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            },
+            {
+              "code" : "D49.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "116339002",
+          "display" : "Breast finding",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "27619001",
+          "display" : "Disease caused by Coronaviridae",
+          "target" : [
+            {
+              "code" : "B97.29",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "126877002",
+          "display" : "Disorder of glucose metabolism",
+          "target" : [
+            {
+              "code" : "E74.89",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "49601007",
+          "display" : "Disorder of cardiovascular system",
+          "target" : [
+            {
+              "code" : "R94.30",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "734045002",
+          "display" : "Disorder of retroperitoneum",
+          "target" : [
+            {
+              "code" : "K68.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "440299000",
+          "display" : "Mass of thoracic structure",
+          "target" : [
+            {
+              "code" : "R22.2",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "822987005",
+          "display" : "Finding of abdominopelvic segment of trunk",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "290073004",
+          "display" : "Lesion of breast",
+          "target" : [
+            {
+              "code" : "N64.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "3855007",
+          "display" : "Disorder of pancreas",
+          "target" : [
+            {
+              "code" : "K86.9",
               "display" : "Unable to determine name",
               "equivalence" : "relatedto",
               "extension" : [
@@ -494,11 +1299,11 @@
           ]
         },
         {
-          "code" : "55342001",
-          "display" : "Neoplastic disease",
+          "code" : "255058005",
+          "display" : "Neoplasm of thorax",
           "target" : [
             {
-              "code" : "D49.9",
+              "code" : "D49.89",
               "display" : "Unable to determine name",
               "equivalence" : "relatedto",
               "extension" : [
@@ -519,8 +1324,157 @@
           ]
         },
         {
-          "code" : "365860008",
-          "display" : "General clinical state finding",
+          "code" : "52645000",
+          "display" : "Functional disease present",
+          "target" : [
+            {
+              "code" : "R69",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "20957000",
+          "display" : "Disorder of carbohydrate metabolism",
+          "target" : [
+            {
+              "code" : "E74.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "721111000124107",
+          "display" : "Diabetes mellitus type 1 stage 1",
+          "target" : [
+            {
+              "code" : "E10.9",
+              "display" : "Type 1 diabetes mellitus without complications",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "89164003",
+          "display" : "Breast lump",
+          "target" : [
+            {
+              "code" : "N63.0",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "414029004",
+          "display" : "Disorder of immune function",
+          "target" : [
+            {
+              "code" : "D89.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "822988000",
+          "display" : "Disorder of abdominopelvic segment of trunk",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "302292003",
+          "display" : "Finding of trunk structure",
           "target" : [
             {
               "comment" : "No target",
@@ -568,11 +1522,11 @@
           ]
         },
         {
-          "code" : "105724001",
-          "display" : "Disease related state",
+          "code" : "55342001",
+          "display" : "Neoplastic disease",
           "target" : [
             {
-              "code" : "Z78.9",
+              "code" : "D49.9",
               "display" : "Unable to determine name",
               "equivalence" : "relatedto",
               "extension" : [
@@ -593,8 +1547,81 @@
           ]
         },
         {
-          "code" : "52645000",
-          "display" : "Functional disease present",
+          "code" : "17346000",
+          "display" : "Disorder of endocrine pancreas",
+          "target" : [
+            {
+              "code" : "E16.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "128121009",
+          "display" : "Disorder of trunk",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "362965005",
+          "display" : "Disorder of body system",
+          "target" : [
+            {
+              "comment" : "No target",
+              "equivalence" : "unmatched",
+              "extension" : [
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
+                  "valueString" : "1"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
+                  "valueString" : "TRUE"
+                },
+                {
+                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
+                  "valueString" : "1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code" : "62602005",
+          "display" : "Organic disease present",
           "target" : [
             {
               "code" : "R69",
@@ -618,35 +1645,11 @@
           ]
         },
         {
-          "code" : "82832008",
-          "display" : "General body state finding",
+          "code" : "118948005",
+          "display" : "Disorder of abdomen",
           "target" : [
             {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "27619001",
-          "display" : "Disease caused by Coronaviridae",
-          "target" : [
-            {
-              "code" : "B97.29",
+              "code" : "R19.8",
               "display" : "Unable to determine name",
               "equivalence" : "relatedto",
               "extension" : [
@@ -667,12 +1670,13 @@
           ]
         },
         {
-          "code" : "384821006",
-          "display" : "Mental state, behavior and/or psychosocial function finding",
+          "code" : "79604008",
+          "display" : "Disorder of breast",
           "target" : [
             {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
+              "code" : "N64.9",
+              "display" : "Unable to determine name",
+              "equivalence" : "relatedto",
               "extension" : [
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
@@ -685,50 +1689,6 @@
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
                   "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "73211009",
-          "display" : "Diabetes mellitus",
-          "target" : [
-            {
-              "code" : "E10.9",
-              "display" : "Type 1 diabetes mellitus without complications",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 445518008 | Age at onset of clinical finding (observable entity) | >= 1.0 year AND IFA 445518008 | Age at onset of clinical finding (observable entity) | < 18.0 years"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            },
-            {
-              "code" : "E11.9",
-              "display" : "Type 2 diabetes mellitus without complications",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "OTHERWISE TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "2"
                 }
               ]
             }
@@ -779,735 +1739,11 @@
           ]
         },
         {
-          "code" : "46635009",
-          "display" : "Type 1 diabetes mellitus",
-          "target" : [
-            {
-              "code" : "E10.9",
-              "display" : "Type 1 diabetes mellitus without complications",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "34014006",
-          "display" : "Viral disease",
-          "target" : [
-            {
-              "code" : "B34.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "300848003",
-          "display" : "Mass of body structure",
-          "target" : [
-            {
-              "code" : "R22.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "300862005",
-          "display" : "Mass of body region",
-          "target" : [
-            {
-              "code" : "R22.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "237822008",
-          "display" : "Autoimmune endocrine disease",
-          "target" : [
-            {
-              "code" : "E34.8",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "721111000124107",
-          "display" : "Diabetes mellitus type 1 stage 1",
-          "target" : [
-            {
-              "code" : "E10.9",
-              "display" : "Type 1 diabetes mellitus without complications",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "118228005",
-          "display" : "Functional finding",
-          "target" : [
-            {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "365275006",
-          "display" : "General well-being finding",
-          "target" : [
-            {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "362965005",
-          "display" : "Disorder of body system",
-          "target" : [
-            {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "75934005",
-          "display" : "Metabolic disease",
-          "target" : [
-            {
-              "code" : "E88.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "OTHERWISE TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "2"
-                }
-              ]
-            },
-            {
-              "code" : "P74.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 445518008 | Age at onset of clinical finding (observable entity) | < 29.0 days"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "362969004",
-          "display" : "Disorder of endocrine system",
-          "target" : [
-            {
-              "code" : "E34.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "OTHERWISE TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "2"
-                }
-              ]
-            },
-            {
-              "code" : "P72.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "IFA 445518008 | Age at onset of clinical finding (observable entity) | < 29.0 days"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "62602005",
-          "display" : "Organic disease present",
-          "target" : [
-            {
-              "code" : "R69",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "126926005",
-          "display" : "Neoplasm of breast",
-          "target" : [
-            {
-              "code" : "D49.3",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "309524007",
-          "display" : "Mass of trunk",
-          "target" : [
-            {
-              "code" : "R22.2",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "89164003",
-          "display" : "Breast lump",
-          "target" : [
-            {
-              "code" : "N63.0",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "255058005",
-          "display" : "Neoplasm of thorax",
+          "code" : "126637008",
+          "display" : "Neoplasm of trunk",
           "target" : [
             {
               "code" : "D49.89",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "79604008",
-          "display" : "Disorder of breast",
-          "target" : [
-            {
-              "code" : "N64.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "64572001",
-          "display" : "Disease",
-          "target" : [
-            {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "609623002",
-          "display" : "Finding of upper trunk",
-          "target" : [
-            {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "49601007",
-          "display" : "Disorder of cardiovascular system",
-          "target" : [
-            {
-              "code" : "R94.30",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "290073004",
-          "display" : "Lesion of breast",
-          "target" : [
-            {
-              "code" : "N64.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "128121009",
-          "display" : "Disorder of trunk",
-          "target" : [
-            {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "186747009",
-          "display" : "Coronavirus infection",
-          "target" : [
-            {
-              "code" : "B34.2",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "399981008",
-          "display" : "Neoplasm and/or hamartoma",
-          "target" : [
-            {
-              "code" : "D49.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            },
-            {
-              "code" : "Q85.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "2"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "302292003",
-          "display" : "Finding of trunk structure",
-          "target" : [
-            {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "116339002",
-          "display" : "Breast finding",
-          "target" : [
-            {
-              "comment" : "No target",
-              "equivalence" : "unmatched",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "440299000",
-          "display" : "Mass of thoracic structure",
-          "target" : [
-            {
-              "code" : "R22.2",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
-              "extension" : [
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
-                  "valueString" : "1"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-rule",
-                  "valueString" : "TRUE"
-                },
-                {
-                  "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-priority",
-                  "valueString" : "1"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "code" : "126877002",
-          "display" : "Disorder of glucose metabolism",
-          "target" : [
-            {
-              "code" : "E74.89",
               "display" : "Unable to determine name",
               "equivalence" : "relatedto",
               "extension" : [
@@ -1552,13 +1788,12 @@
           ]
         },
         {
-          "code" : "414029004",
-          "display" : "Disorder of immune function",
+          "code" : "386617003",
+          "display" : "Digestive system finding",
           "target" : [
             {
-              "code" : "D89.9",
-              "display" : "Unable to determine name",
-              "equivalence" : "relatedto",
+              "comment" : "No target",
+              "equivalence" : "unmatched",
               "extension" : [
                 {
                   "url" : "https://terminologyhub.com/fhir/StructureDefinition/concept-map-group",
@@ -1581,12 +1816,12 @@
       "target" : "http://hl7.org/fhir/sid/icd-10-cm"
     }
   ],
-  "id" : "90a4c1af-569d-4a77-821d-24d2f9cff003",
+  "id" : "a6d629af-df94-4a6f-b483-f22ca300b678",
   "identifier" : {
     "system" : "https://terminologyhub.com/model/mapset/code",
     "value" : "6011000124106"
   },
-  "name" : "Mapset from SNOMEDCT_US 20240301 to ICD10CM 2023",
+  "name" : "Mapset from SNOMEDCT_US 20260901 to ICD10CM 2026",
   "publisher" : "SANDBOX",
   "resourceType" : "ConceptMap",
   "sourceUri" : "http://snomed.info/sct?fhir_vs",
@@ -1594,5 +1829,5 @@
   "targetUri" : "http://hl7.org/fhir/sid/icd-10-cm?fhir_vs",
   "title" : "SNOMEDCT_US-ICD10CM",
   "url" : "http://snomed.info/sct?fhir_cm=6011000124106-instance",
-  "version" : "20240301"
+  "version" : "20260901"
 }

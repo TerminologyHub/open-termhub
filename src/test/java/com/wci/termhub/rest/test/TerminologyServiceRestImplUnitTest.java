@@ -160,7 +160,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyIcd10Cm() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("5cc526e2-c607-417a-87dd-9bbbeef44eaa");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("6a693b00-93e3-44f4-9cf2-757a686daa0f");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -196,7 +196,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologySnomedCtUs() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("3e076cb1-02d2-4894-a1cb-a8ff8b76d3e6");
     final String url = baseUrl + "/terminology/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -218,7 +218,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetTerminologyMetaDataSnomedCtUs() throws Exception {
-    final String id = CodeSystemLoaderUtil.mapOriginalId("38159d0b-a137-42dc-893b-06b73465811e");
+    final String id = CodeSystemLoaderUtil.mapOriginalId("3e076cb1-02d2-4894-a1cb-a8ff8b76d3e6");
     final String url = baseUrl + "/terminology/" + id + "/metadata";
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -240,7 +240,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(metadata.getCode()).isNotNull();
     }
     /*
-     * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20240301",
+     * {"id":"...","local":false,"active":true,"terminology":"SNOMEDCT_US", "version":"20260901",
      * "publisher":"SANDBOX","model":"relationship","field":"uiLabel","code": "Attributes","rank":0}
      */
     // has no name
@@ -354,11 +354,11 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertEquals(id, concept.getId());
     assertEquals("ICD10CM", concept.getTerminology());
     assertEquals("SANDBOX", concept.getPublisher());
-    assertEquals("2023", concept.getVersion());
+    assertEquals("2026", concept.getVersion());
     assertEquals("E11", concept.getCode());
     assertEquals("Type 2 diabetes mellitus", concept.getName());
     assertThat(concept.getTerms()).isNotNull();
-    assertEquals(4, concept.getTerms().size());
+    assertEquals(5, concept.getTerms().size());
     assertThat(concept.getAttributes()).isNotNull();
     assertThat(concept.getSemanticTypes()).isNotNull();
     assertThat(concept.getParents()).isNotNull();
@@ -407,10 +407,10 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertEquals(terminology, concept.getTerminology());
     assertEquals(code, concept.getCode());
     assertEquals("Type 2 diabetes mellitus", concept.getName());
-    assertEquals("2023", concept.getVersion());
+    assertEquals("2026", concept.getVersion());
     assertEquals("SANDBOX", concept.getPublisher());
     assertThat(concept.getTerms()).isNotNull();
-    assertEquals(4, concept.getTerms().size());
+    assertEquals(5, concept.getTerms().size());
     assertThat(concept.getAttributes()).isNotNull();
     assertThat(concept.getSemanticTypes()).isNotNull();
     assertThat(concept.getParents()).isNotNull();
@@ -445,7 +445,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testGetConceptCodes() throws Exception {
-    final String terminology = "LNC";
+    final String terminology = "LOINC";
     final List<String> codes = List.of("LP32519-8", "LP231645-5", "63904-7", "74291-6", "FAKE");
     final String url = baseUrl + "/concept/" + terminology + "?codes=" + String.join(",", codes);
     LOGGER.info("Testing url - {}", url);
@@ -503,7 +503,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     assertEquals("A component that fails to comply with the current editorial guidance.",
         definition.getDefinition());
     assertEquals("SNOMEDCT", definition.getTerminology());
-    assertEquals("20240101", definition.getVersion());
+    assertEquals("20260901", definition.getVersion());
     assertEquals("SANDBOX", definition.getPublisher());
     assertTrue(definition.getActive(), "Definition should be active");
     assertTrue(definition.getLocaleMap().containsKey("en"), "Should have English locale");
@@ -550,7 +550,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testFindConceptsMultipleTerminologies() throws Exception {
-    final String terminology = "SNOMEDCT,LNC";
+    final String terminology = "SNOMEDCT,LOINC";
     final String query = "diabetes";
     final int limit = 15;
     final String url = baseUrl + "/concept?terminology=" + terminology + "&query=name:" + query
@@ -567,7 +567,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
       assertThat(concept.getId()).isNotNull();
-      assertThat(concept.getTerminology()).isIn("SNOMEDCT", "LNC");
+      assertThat(concept.getTerminology()).isIn("SNOMEDCT", "LOINC");
       assertThat(concept.getName().toLowerCase()).contains(query.toLowerCase());
     }
   }
@@ -580,7 +580,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testFindConcepts2() throws Exception {
-    final String terminology = "LNC";
+    final String terminology = "LOINC";
     final String query = "cancer";
     final int limit = 15;
     final String url =
@@ -609,8 +609,9 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
    */
   @Test
   public void testFindConceptsByAncestorCode() throws Exception {
-    final String terminology = "LNC";
-    final String query = "MTHU000003";
+    final String terminology = "LOINC";
+    // LP14855-8 (Virus) has 15 descendants in the LOINC 2.83 sandbox
+    final String query = "LP14855-8";
     final int limit = 15;
     final String url = baseUrl + "/concept?terminology=" + terminology + "&query=ancestors.code:"
         + query + "&limit=" + limit + "&include=ancestors";
@@ -669,7 +670,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testConceptBulk() throws Exception {
-    final String terminology = "LNC";
+    final String terminology = "LOINC";
     final int limit = 12;
     final String url = baseUrl + "/concept/bulk?terminology=" + terminology + "&limit=" + limit;
     final List<String> codes =
@@ -711,7 +712,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testFindMetadata() throws Exception {
     // GET /metadata
-    final String terminology = "LNC";
+    final String terminology = "LOINC";
     final int limit = 100;
     final String url = baseUrl + "/metadata?query=terminology:" + terminology + "&limit=" + limit;
     LOGGER.info("Testing url - {}", url);
@@ -733,7 +734,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       assertThat(metadata.getModel()).isNotNull();
       assertThat(metadata.getField()).isNotNull();
       assertThat(metadata.getCode()).isNotNull();
-      // LNC "model":"term","field":"language","code":"ENG","rank":0
+      // LOINC "model":"term","field":"language","code":"ENG","rank":0
       // has no name
       // assertThat(metadata.getName()).isNotNull();
     }
@@ -1181,8 +1182,8 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Order(FIND)
   public void testFindMapsetById() throws Exception {
 
-    // ConceptMap-snomedct_us-icd10cm-sandbox-20240301-r4.json
-    final String id = ConceptMapLoaderUtil.mapOriginalId("90a4c1af-569d-4a77-821d-24d2f9cff003");
+    // ConceptMap-snomedct_us-icd10cm-sandbox-20260901-r4.json
+    final String id = ConceptMapLoaderUtil.mapOriginalId("a6d629af-df94-4a6f-b483-f22ca300b678");
     final String url = baseUrl + "/mapset/" + id;
     LOGGER.info("Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -1382,7 +1383,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final ResultListConcept conceptList = objectMapper.readValue(content, ResultListConcept.class);
     assertThat(conceptList).isNotNull();
     assertFalse(conceptList.getItems().isEmpty());
-    assertThat(conceptList.getTotal()).isEqualTo(48);
+    assertThat(conceptList.getTotal()).isEqualTo(73);
     boolean found = false;
     for (final Concept concept : conceptList.getItems()) {
       assertThat(concept).isNotNull();
@@ -1396,14 +1397,14 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   }
 
   /**
-   * Test concept search with browser handler and LNC concept name.
+   * Test concept search with browser handler and LOINC concept name.
    *
    * @throws Exception the exception
    */
   @Test
   @Order(FIND)
   public void testConceptSearchWithBrowserHandlerAndLNCConceptName() throws Exception {
-    final String url = "/concept?terminology=LNC&query=Diagnosis.primary:Imp:Pt:^Patient:Nom"
+    final String url = "/concept?terminology=LOINC&query=Diagnosis.primary:Imp:Pt:^Patient:Nom"
         + "&offset=0&limit=20&leaf=false&include=semanticTypes&handler=browser";
     LOGGER.info(" Testing url - {}", url);
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
@@ -1818,7 +1819,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testMetadataSortedByName() throws Exception {
-    final String terminology = "LNC";
+    final String terminology = "LOINC";
     final String url =
         baseUrl + "/metadata?query=terminology:" + terminology + "&sort=name&ascending=true&limit=10";
     LOGGER.info("Testing url - {}", url);
@@ -1991,16 +1992,16 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
     /*
      * "children": [ {"local":false,"active":true,"name":"Disorder of cardiovascular system"
-     * ,"code":"49601007","terminology":"SNOMEDCT","version":"20240101",
+     * ,"code":"49601007","terminology":"SNOMEDCT","version":"20260901",
      * "publisher":"SANDBOX","leaf":true,"defined":true},
      * {"local":false,"active":true,"name":"Disorder of breast","code":
-     * "79604008","terminology":"SNOMEDCT","version":"20240101","publisher":
+     * "79604008","terminology":"SNOMEDCT","version":"20260901","publisher":
      * "SANDBOX","leaf":false,"defined":true},
      * {"local":false,"active":true,"name":"Disorder of endocrine system","code"
-     * :"362969004","terminology":"SNOMEDCT","version":"20240101","publisher":
+     * :"362969004","terminology":"SNOMEDCT","version":"20260901","publisher":
      * "SANDBOX","leaf":false,"defined":true} ], "parents": [
      * {"local":false,"active":true,"name":"Disease","code":"64572001",
-     * "terminology":"SNOMEDCT","version":"20240101","publisher":"SANDBOX",
+     * "terminology":"SNOMEDCT","version":"20260901","publisher":"SANDBOX",
      * "leaf":false,"defined":false} ], "descendants": [
      * {"local":false,"active":true,"name":"Disorder of breast","code":
      * "79604008","leaf":false,"defined":true,"level":1},
@@ -2028,16 +2029,16 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     final Map<String, String> descendantsErrors = new HashMap<>();
     final Map<String, String> ancestorsErrors = new HashMap<>();
 
-    if (concept.getChildren().size() != 3) {
+    if (concept.getChildren().size() != 2) {
       childrenErrors.put("children",
-          "Should be 3 children, found: " + concept.getChildren().size());
+          "Should be 2 children, found: " + concept.getChildren().size());
     }
     if (concept.getParents().size() != 1) {
       parentsErrors.put("parents", "Should be 1 parent, found: " + concept.getParents().size());
     }
-    if (concept.getDescendants().size() != 6) {
+    if (concept.getDescendants().size() != 3) {
       descendantsErrors.put("descendants",
-          "Should be 6 descendants, found: " + concept.getDescendants().size());
+          "Should be 3 descendants, found: " + concept.getDescendants().size());
     }
     if (concept.getAncestors().size() != 3) {
       ancestorsErrors.put("ancestors",
@@ -2059,24 +2060,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       }
       if (!testConceptRef.getDefined()) {
         childrenErrors.put(testCode, "Should be defined");
-      }
-    }
-
-    final String testCode2 = "79604008";
-    testConceptRef = concept.getChildren().stream().filter(c -> testCode2.equals(c.getCode()))
-        .findFirst().orElse(null);
-    if (testConceptRef == null) {
-      childrenErrors.put(testCode2, "Should have child with code " + testCode2);
-    } else {
-      if (!testConceptRef.getName().equals("Disorder of breast")) {
-        childrenErrors.put(testCode2,
-            "Should have name 'Disorder of breast', found: " + testConceptRef.getName());
-      }
-      if (testConceptRef.getLeaf()) {
-        childrenErrors.put(testCode2, "Should not be leaf");
-      }
-      if (!testConceptRef.getDefined()) {
-        childrenErrors.put(testCode2, "Should be defined");
       }
     }
 
@@ -2118,28 +2101,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
     }
 
     // descendants
-    final String descCode1 = "79604008";
-    testConceptRef = concept.getDescendants().stream().filter(c -> descCode1.equals(c.getCode()))
-        .findFirst().orElse(null);
-    if (testConceptRef == null) {
-      descendantsErrors.put(descCode1, "Should have descendant with code " + descCode1);
-    } else {
-      if (!testConceptRef.getName().equals("Disorder of breast")) {
-        descendantsErrors.put(descCode1,
-            "Should have name 'Disorder of breast', found: " + testConceptRef.getName());
-      }
-      if (testConceptRef.getLeaf()) {
-        descendantsErrors.put(descCode1, "Should not be leaf");
-      }
-      if (!testConceptRef.getDefined()) {
-        descendantsErrors.put(descCode1, "Should be defined");
-      }
-      if (testConceptRef.getLevel() != 1) {
-        descendantsErrors.put(descCode1,
-            "Should have level 1, found: " + testConceptRef.getLevel());
-      }
-    }
-
     final String descCode2 = "49601007";
     testConceptRef = concept.getDescendants().stream().filter(c -> descCode2.equals(c.getCode()))
         .findFirst().orElse(null);
@@ -2204,50 +2165,6 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
       if (testConceptRef.getLevel() != 2) {
         descendantsErrors.put(descCode4,
             "Should have level 2, found: " + testConceptRef.getLevel());
-      }
-    }
-
-    final String descCode5 = "290073004";
-    testConceptRef = concept.getDescendants().stream().filter(c -> descCode5.equals(c.getCode()))
-        .findFirst().orElse(null);
-    if (testConceptRef == null) {
-      descendantsErrors.put(descCode5, "Should have descendant with code " + descCode5);
-    } else {
-      if (!testConceptRef.getName().equals("Lesion of breast")) {
-        descendantsErrors.put(descCode5,
-            "Should have name 'Lesion of breast', found: " + testConceptRef.getName());
-      }
-      if (testConceptRef.getLeaf()) {
-        descendantsErrors.put(descCode5, "Should not be leaf");
-      }
-      if (!testConceptRef.getDefined()) {
-        descendantsErrors.put(descCode5, "Should be defined");
-      }
-      if (testConceptRef.getLevel() != 2) {
-        descendantsErrors.put(descCode5,
-            "Should have level 2, found: " + testConceptRef.getLevel());
-      }
-    }
-
-    final String descCode6 = "126926005";
-    testConceptRef = concept.getDescendants().stream().filter(c -> descCode6.equals(c.getCode()))
-        .findFirst().orElse(null);
-    if (testConceptRef == null) {
-      descendantsErrors.put(descCode6, "Should have descendant with code " + descCode6);
-    } else {
-      if (!testConceptRef.getName().equals("Neoplasm of breast")) {
-        descendantsErrors.put(descCode6,
-            "Should have name 'Neoplasm of breast', found: " + testConceptRef.getName());
-      }
-      if (!testConceptRef.getLeaf()) {
-        descendantsErrors.put(descCode6, "Should be leaf");
-      }
-      if (!testConceptRef.getDefined()) {
-        descendantsErrors.put(descCode6, "Should be defined");
-      }
-      if (testConceptRef.getLevel() != 3) {
-        descendantsErrors.put(descCode6,
-            "Should have level 3, found: " + testConceptRef.getLevel());
       }
     }
 
@@ -2401,7 +2318,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testAutocompleteMultipleTerminologies() throws Exception {
-    final String url = baseUrl + "/autocomplete?terminology=SNOMEDCT,LNC&query=dia mel&limit=100";
+    final String url = baseUrl + "/autocomplete?terminology=SNOMEDCT,LOINC&query=dia mel&limit=100";
     final MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
     final String content = result.getResponse().getContentAsString();
     LOGGER.info(" content = {}", content);
@@ -2615,7 +2532,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testConceptBulkEmptyBodyReturnsNoMatch() throws Exception {
-    final String url = "/concept/bulk?terminology=LNC&limit=5";
+    final String url = "/concept/bulk?terminology=LOINC&limit=5";
     LOGGER.info("Testing url - {}", url);
 
     final MvcResult result =
@@ -2726,7 +2643,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testErrorBodyForMissingRequiredParameter() throws Exception {
-    final String url = "/concept/LNC"; // no codes param
+    final String url = "/concept/LOINC"; // no codes param
     LOGGER.info("Testing url - {}", url);
 
     final MvcResult result =
@@ -2752,7 +2669,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testErrorBodyForEmptyCodesParameter() throws Exception {
-    final String url = "/concept/LNC?codes=";
+    final String url = "/concept/LOINC?codes=";
     LOGGER.info("Testing url - {}", url);
 
     final MvcResult result =
@@ -2777,7 +2694,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
   @Test
   @Order(FIND)
   public void testErrorBodyForExpressionWithMultipleTerminologies() throws Exception {
-    final String url = "/concept?terminology=SNOMEDCT,LNC&expression=%3C%3C128927009";
+    final String url = "/concept?terminology=SNOMEDCT,LOINC&expression=%3C%3C128927009";
     LOGGER.info("Testing url - {}", url);
 
     final MvcResult result =
@@ -2877,7 +2794,7 @@ public class TerminologyServiceRestImplUnitTest extends AbstractTerminologyServe
 
     // Verify we got the expected number of results (sandbox data has 64
     // mappings)
-    assertEquals(69, total1, "Expected 69 total mappings in sandbox data");
+    assertEquals(79, total1, "Expected 79 total mappings in sandbox data");
     LOGGER.info("Wildcard consistency test passed with total={}", total1);
   }
 

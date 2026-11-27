@@ -58,11 +58,11 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
   public void testFindMetadataByTerminologyIcd10cm() throws Exception {
 
     final String terminology = "ICD10CM";
-    final String version = "2023";
+    final String version = "2026";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(13, metadata.getItems().size());
+    assertEquals(15, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -77,12 +77,12 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
   @Test
   public void testFindMetadataByTerminologyLoinc() throws Exception {
 
-    final String terminology = "LNC";
-    final String version = "277";
+    final String terminology = "LOINC";
+    final String version = "2.83";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(73, metadata.getItems().size());
+    assertEquals(109, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -98,7 +98,7 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
   public void testFindMetadataByTerminologyRxNorm() throws Exception {
 
     final String terminology = "RXNORM";
-    final String version = "04012024";
+    final String version = "10052026";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
@@ -118,11 +118,11 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
   public void testFindMetadataByTerminologySnomedCtUs() throws Exception {
 
     final String terminology = "SNOMEDCT_US";
-    final String version = "20240301";
+    final String version = "20260901";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(42, metadata.getItems().size());
+    assertEquals(47, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
@@ -138,11 +138,11 @@ public class MetadataSearchUnitTest extends AbstractTerminologyTest {
   public void testFindMetadataByTerminologySnomedCt() throws Exception {
 
     final String terminology = "SNOMEDCT";
-    final String version = "20240101";
+    final String version = "20260901";
     final TermQueryComposer termQuery = new TermQueryComposer(terminology, version, null, null);
     SEARCH_PARAMETERS.setQuery(termQuery.getQuery());
     final ResultList<Metadata> metadata = searchService.find(SEARCH_PARAMETERS, Metadata.class);
-    assertEquals(50, metadata.getItems().size());
+    assertEquals(44, metadata.getItems().size());
     metadata.getItems().forEach(m -> {
       assertEquals(terminology, m.getTerminology());
       assertEquals(version, m.getVersion());
